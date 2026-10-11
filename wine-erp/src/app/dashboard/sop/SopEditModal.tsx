@@ -119,7 +119,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/80 backdrop-blur-sm flex justify-center p-2 sm:p-4 md:p-6 animate-in fade-in">
             <div className="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col my-auto max-h-[92vh] overflow-hidden">
                 {/* Header */}
-                <div className="p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex justify-between items-center">
+                <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex justify-between items-center">
                     <div>
                         <span className="text-xs font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider">
                             Chế độ Chỉnh Sửa Quản Trị
@@ -141,7 +141,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                 )}
 
                 {/* Form fields */}
-                <div className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+                <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 text-xs">
                     {/* Basic Meta */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
@@ -236,9 +236,9 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                         <div className="space-y-4">
                             {steps.map((st, i) => (
                                 <div key={i} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 space-y-3">
-                                    <div className="flex justify-between items-center gap-2">
-                                        <div className="flex items-center gap-2 flex-1">
-                                            <span className="w-6 h-6 rounded-full bg-rose-700 text-white font-bold flex items-center justify-center text-xs">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                        <div className="flex items-center gap-2 w-full sm:flex-1">
+                                            <span className="w-6 h-6 rounded-full bg-rose-700 text-white font-bold flex items-center justify-center text-xs flex-shrink-0">
                                                 {st.stepNumber}
                                             </span>
                                             <input
@@ -249,23 +249,23 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                                                 className="flex-1 p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold text-xs"
                                             />
                                         </div>
-                                        <div className="w-48">
+                                        <div className="flex items-center gap-2 w-full sm:w-auto">
                                             <input
                                                 type="text"
                                                 value={st.role}
                                                 onChange={(e) => updateStep(i, 'role', e.target.value)}
                                                 placeholder="Vai trò thực hiện..."
-                                                className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs"
+                                                className="flex-1 sm:w-48 p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs"
                                             />
+                                            <button
+                                                type="button"
+                                                onClick={() => removeStep(i)}
+                                                className="p-2 text-rose-600 hover:text-rose-800 flex-shrink-0"
+                                                title="Xóa bước này"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => removeStep(i)}
-                                            className="p-2 text-rose-600 hover:text-rose-800"
-                                            title="Xóa bước này"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
                                     </div>
 
                                     <textarea

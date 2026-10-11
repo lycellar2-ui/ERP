@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Shield, Save, ChevronRight, AlertTriangle, Settings2, DollarSign, Percent, FileText, Loader2, Plus, Trash2, UserCheck, Layers, Edit3, X, Check } from 'lucide-react'
+import { Shield, Save, ChevronRight, AlertTriangle, Settings2, DollarSign, Percent, FileText, Loader2, Plus, Trash2, UserCheck, Layers, Edit3, X, Check, Package } from 'lucide-react'
 import { toast } from 'sonner'
 import { CATEGORY_LABELS } from '../../proposals/constants'
 import { 
@@ -196,7 +196,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
 
                 {/* Matrix table */}
                 <div style={{ overflowX: 'auto' }}>
-                    <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+                    <table className="w-full min-w-[700px]" style={{ borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
                                 <th className="px-5 py-3.5 text-left text-xs uppercase tracking-wider font-bold"
@@ -330,7 +330,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                 </div>
 
                 <div style={{ overflowX: 'auto' }}>
-                    <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+                    <table className="w-full min-w-[700px]" style={{ borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
                                 <th className="px-5 py-3.5 text-left text-xs uppercase tracking-wider font-bold"
@@ -348,8 +348,8 @@ export function ApprovalMatrixClient({ initialData }: Props) {
                         <tbody>
                             <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }} className="hover:bg-slate-50 transition">
                                 <td className="px-5 py-3.5">
-                                    <span className="text-sm font-bold block" style={{ color: '#0F172A' }}>
-                                        📦 Đơn Mua Hàng Quốc Tế & Nội Địa
+                                    <span className="text-sm font-bold flex items-center gap-1.5" style={{ color: '#0F172A' }}>
+                                        <Package size={14} className="text-slate-500 shrink-0" /> Đơn Mua Hàng Quốc Tế & Nội Địa
                                     </span>
                                     <span className="text-[10px] font-mono text-slate-400">procurement.purchase_order</span>
                                 </td>

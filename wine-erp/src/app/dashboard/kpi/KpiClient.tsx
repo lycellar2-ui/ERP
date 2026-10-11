@@ -14,10 +14,10 @@ import {
 } from './actions'
 
 const STATUS_CFG = {
-    ON_TRACK: { label: '✅ Đúng KH', color: '#15803D', icon: CheckCircle2 },
-    AT_RISK: { label: '⚠️ Chú ý', color: '#B45309', icon: AlertCircle },
-    BEHIND: { label: '🔴 Chậm', color: '#B91C1C', icon: TrendingDown },
-    EXCEEDED: { label: '🌟 Vượt KH', color: '#0891B2', icon: TrendingUp },
+    ON_TRACK: { label: 'Đúng KH', color: '#15803D', icon: CheckCircle2 },
+    AT_RISK: { label: 'Chú ý', color: '#B45309', icon: AlertCircle },
+    BEHIND: { label: 'Chậm', color: '#B91C1C', icon: TrendingDown },
+    EXCEEDED: { label: 'Vượt KH', color: '#0891B2', icon: TrendingUp },
 }
 
 function formatValue(val: number, unit: string) {
@@ -223,7 +223,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                                         growthMultiplier: 1 + growthPct / 100,
                                     })
                                     if (res.success) {
-                                        setCopyResult(`✅ Đã copy ${res.copied} chỉ tiêu từ ${year - 1} (+${growthPct}%)`)
+                                        setCopyResult(`Đã copy ${res.copied} chỉ tiêu từ ${year - 1} (+${growthPct}%)`)
                                         loadSetup()
                                     } else setCopyResult(res.error || 'Lỗi copy')
                                     setCopying(false)
@@ -246,7 +246,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                                 <h4 className="text-xs font-bold" style={{ color: '#0891B2' }}>Thêm / Cập Nhật Chỉ Tiêu</h4>
                                 <button onClick={() => setAddOpen(false)} style={{ color: '#64748B' }}><X size={14} /></button>
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="text-[10px] font-semibold" style={{ color: '#64748B' }}>Metric</label>
                                     <select value={addForm.metric}
@@ -292,8 +292,8 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                     )}
 
                     {/* Targets Table */}
-                    <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-                        <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                    <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
+                        <table className="w-full text-left min-w-[500px]" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                     {['Metric', 'Kỳ', 'Chỉ Tiêu', 'ĐV', 'Sales Rep', ''].map(h => (
@@ -322,7 +322,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                                             </td>
                                             <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>{t.unit}</td>
                                             <td className="px-3 py-2.5 text-xs" style={{ color: '#0F172A' }}>
-                                                {t.salesRepName ?? '🏢 Toàn công ty'}
+                                                {t.salesRepName ?? 'Toàn công ty'}
                                             </td>
                                             <td className="px-3 py-2.5">
                                                 <button onClick={() => handleDelete(t.id)} className="p-1 transition-all"

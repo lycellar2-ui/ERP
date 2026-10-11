@@ -39,15 +39,6 @@ import { ReplenishmentTab } from './ReplenishmentTab'
 import { PosmInventoryTab } from './PosmInventoryTab'
 import { InspectionTab } from './InspectionTab'
 
-const COUNTRY_FLAGS: Record<string, string> = {
-    FR: '🇫🇷', IT: '🇮🇹', ES: '🇪🇸', PT: '🇵🇹', DE: '🇩🇪',
-    US: '🇺🇸', AU: '🇦🇺', NZ: '🇳🇿', AR: '🇦🇷', CL: '🇨🇱', ZA: '🇿🇦',
-    AT: '🇦🇹', GR: '🇬🇷', HU: '🇭🇺', GE: '🇬🇪', RO: '🇷🇴',
-    IL: '🇮🇱', LB: '🇱🇧', UY: 'UY', BR: '🇧🇷', MX: '🇲🇽',
-    CN: '🇨🇳', JP: '🇯🇵', GB: '🇬🇧', CH: '🇨🇭', HR: '🇭🇷',
-    SI: '🇸🇮', MD: '🇲🇩', BG: '🇧🇬', TR: '🇹🇷', MA: '🇲🇦',
-}
-
 const WINE_TYPE_COLOR: Record<string, string> = {
     RED: '#C74B50', WHITE: '#E2C275', ROSE: '#D4607A',
     SPARKLING: '#7AC4C4', FORTIFIED: '#B87333', DESSERT: '#D4963A',
@@ -205,7 +196,7 @@ function StockTable({ lots, sortConfig, onSort, canSeeCost = true }: {
                     </thead>
                     <tbody className="divide-y divide-slate-100 bg-white">
                         {lots.map(lot => {
-                            const flag = COUNTRY_FLAGS[lot.country] ?? '🌍'
+                            const countryTag = lot.country ? `[${lot.country}]` : ''
                             const wineColor = WINE_TYPE_COLOR[lot.wineType] ?? '#64748B'
                             const statusCfg = getLotStatusConfig(lot.status, locale)
                             const baseQty = lot.qtyOnHand > 0 ? lot.qtyOnHand : (lot.qtyReceived > 0 ? lot.qtyReceived : 1)
@@ -222,7 +213,7 @@ function StockTable({ lots, sortConfig, onSort, canSeeCost = true }: {
                                     </td>
                                     <td className="px-3 py-1.5">
                                         <div className="flex items-center gap-1.5">
-                                            <span className="shrink-0">{flag}</span>
+                                            {countryTag && <span className="shrink-0 text-[10px] font-mono font-semibold text-slate-500">{countryTag}</span>}
                                             <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: wineColor }} />
                                             <p className="font-bold text-slate-900 truncate max-w-[240px] text-xs">{lot.productName}</p>
                                         </div>
@@ -319,7 +310,7 @@ function StockTable({ lots, sortConfig, onSort, canSeeCost = true }: {
             {/* Mobile Card List View (< 768px) */}
             <div className="block md:hidden p-3 space-y-3">
                 {lots.map(lot => {
-                    const flag = COUNTRY_FLAGS[lot.country] ?? '🌍'
+                    const countryTag = lot.country ? `[${lot.country}]` : ''
                     const wineColor = WINE_TYPE_COLOR[lot.wineType] ?? '#64748B'
                     const statusCfg = getLotStatusConfig(lot.status, locale)
                     const bookQty = lot.qtyBook ?? lot.qtyReceived
@@ -339,7 +330,8 @@ function StockTable({ lots, sortConfig, onSort, canSeeCost = true }: {
                             <div>
                                 <h4 className="text-xs font-black text-slate-900 leading-tight">{lot.productName}</h4>
                                 <p className="text-[11px] mt-1 flex items-center gap-1.5 text-slate-500 font-medium">
-                                    {flag} <span className="w-2 h-2 rounded-full" style={{ background: wineColor }} />
+                                    {countryTag && <span className="font-mono text-slate-500 font-semibold">{countryTag}</span>}
+                                    <span className="w-2 h-2 rounded-full" style={{ background: wineColor }} />
                                     SKU: <strong className="text-slate-800 font-mono">{lot.skuCode}</strong> {lot.vintage ? `· Vintage: ${lot.vintage}` : '· NV'}
                                 </p>
                             </div>

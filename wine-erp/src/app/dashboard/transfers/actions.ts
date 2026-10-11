@@ -1096,7 +1096,7 @@ export async function autoFixTransferVintages(transferOrderId: string): Promise<
                 })
                 const oldText = line.vintage ? `VTG ${line.vintage}` : 'NV'
                 const newText = chosen.vintage ? `VTG ${chosen.vintage}` : 'NV'
-                details.push(`[${line.product.skuCode}] ${line.product.productName}: ${oldText} ➔ ${newText} (Kho có ${chosen.stock} chai)`)
+                details.push(`[${line.product.skuCode}] ${line.product.productName}: ${oldText} → ${newText} (Kho có ${chosen.stock} chai)`)
                 updatedCount++
             }
         }

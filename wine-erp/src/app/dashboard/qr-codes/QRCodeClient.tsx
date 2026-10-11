@@ -129,14 +129,14 @@ export function QRCodeClient({ initialData, stats }: {
                                     {qr.scanCount}
                                 </td>
                                 <td className="px-3 py-2.5">
-                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0" style={{
+                                    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0" style={{
                                         ...(qr.scanCount === 0
                                             ? { color: '#64748B', background: 'rgba(100,116,139,0.15)' }
                                             : qr.scanCount === 1
                                                 ? { color: '#15803D', background: 'rgba(21,128,61,0.15)' }
                                                 : { color: '#B45309', background: 'rgba(180,83,9,0.15)' }),
                                     }}>
-                                        {qr.scanCount === 0 ? 'Chưa quét' : qr.scanCount === 1 ? '✅ Chính hãng' : `⚠ ${qr.scanCount} lần`}
+                                        {qr.scanCount === 0 ? 'Chưa quét' : qr.scanCount === 1 ? <><ShieldCheck size={11} /> Chính hãng</> : <><ShieldAlert size={11} /> {qr.scanCount} lần</>}
                                     </span>
                                 </td>
                                 <td className="px-3 py-2.5">

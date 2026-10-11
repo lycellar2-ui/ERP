@@ -339,12 +339,12 @@ export async function POST() {
             .map(p => {
                 const salesInfo = p.hasSalesData
                     ? `Revenue: ${p.totalRevenue.toLocaleString()}đ | Qty sold: ${p.totalQtySold} | Orders: ${p.totalOrders} | Last 90d: ${p.revenue90d.toLocaleString()}đ (${p.qty90d} units)`
-                    : '🆕 CHƯA CÓ DỮ LIỆU BÁN HÀNG'
-                const stockInfo = `Stock: ${p.currentStock} units${p.currentStock === 0 ? ' ⚠️ HẾT HÀNG' : ''}`
+                    : 'CHƯA CÓ DỮ LIỆU BÁN HÀNG'
+                const stockInfo = `Stock: ${p.currentStock} units${p.currentStock === 0 ? ' [HẾT HÀNG]' : ''}`
                 const priceInfo = p.prices.length > 0 ? `Prices: ${p.prices.join(', ')}` : 'No prices set'
                 const awardInfo = p.awards.length > 0 ? `Awards: ${p.awards.join(', ')}` : ''
 
-                return `${p.name} | SKU: ${p.sku} | ${p.type} | Producer: ${p.producer} (${p.producerCountry}) | Region: ${p.appellation ?? 'N/A'} (${p.country}) | ABV: ${p.abv}% | ${p.volume}ml | Classification: ${p.classification ?? 'N/A'} | ${salesInfo} | ${stockInfo} | ${priceInfo} | Quotations: ${p.quotationCount} | ${p.isAllocation ? '🎯ALLOCATION' : ''} ${awardInfo} | Status: ${p.status}`
+                return `${p.name} | SKU: ${p.sku} | ${p.type} | Producer: ${p.producer} (${p.producerCountry}) | Region: ${p.appellation ?? 'N/A'} (${p.country}) | ABV: ${p.abv}% | ${p.volume}ml | Classification: ${p.classification ?? 'N/A'} | ${salesInfo} | ${stockInfo} | ${priceInfo} | Quotations: ${p.quotationCount} | ${p.isAllocation ? '[ALLOCATION]' : ''} ${awardInfo} | Status: ${p.status}`
             }).join('\n')
 
         const supplierList = enrichedSuppliers
@@ -385,27 +385,27 @@ ${regionList}
 
 Hãy viết BÁO CÁO PHÂN TÍCH DANH MỤC & NGHIÊN CỨU THỊ TRƯỜNG CHO CEO bao gồm:
 
-1. **📊 TỔNG QUAN DANH MỤC** — Portfolio Health Score (1-10), độ đa dạng (type/country/price range), cân đối portfolio
-2. **🏆 TOP PERFORMERS** — Sản phẩm bán chạy nhất, doanh thu cao nhất, tỷ suất lợi nhuận tốt nhất (ước tính từ giá mua vs giá bán)
-3. **🆕 SẢN PHẨM CHƯA CÓ DỮ LIỆU BÁN** — Phân tích từng sản phẩm chưa bán:
+1. **TỔNG QUAN DANH MỤC** — Portfolio Health Score (1-10), độ đa dạng (type/country/price range), cân đối portfolio
+2. **TOP PERFORMERS** — Sản phẩm bán chạy nhất, doanh thu cao nhất, tỷ suất lợi nhuận tốt nhất (ước tính từ giá mua vs giá bán)
+3. **SẢN PHẨM CHƯA CÓ DỮ LIỆU BÁN** — Phân tích từng sản phẩm chưa bán:
    - Đánh giá tiềm năng thị trường dựa trên loại rượu, vùng sản xuất, vintage
    - Gợi ý chiến lược GTM (go-to-market) cho từng nhóm
    - Xác định sản phẩm nên push mạnh vs sản phẩm nên cân nhắc loại bỏ
-4. **🌍 NGHIÊN CỨU THỊ TRƯỜNG RƯỢU VANG VIỆT NAM** — Dựa trên kiến thức của bạn:
+4. **NGHIÊN CỨU THỊ TRƯỜNG RƯỢU VANG VIỆT NAM** — Dựa trên kiến thức của bạn:
    - Xu hướng tiêu thụ rượu vang tại VN (loại rượu, phân khúc giá, kênh)
    - So sánh danh mục của LY's Cellars với xu hướng thị trường
    - Gaps & Opportunities: loại rượu/vùng nào LY's Cellars đang thiếu?
    - Cạnh tranh: phân tích positioning vs các nhà nhập khẩu lớn
-5. **🏢 PHÂN TÍCH NHÀ CUNG CẤP** — 
+5. **PHÂN TÍCH NHÀ CUNG CẤP** — 
    - Supplier concentration risk (quá phụ thuộc vào 1-2 NCC?)
    - Trade agreement optimization (EVFTA, AANZFTA...)
    - Lead time analysis, payment terms comparison
    - Supplier-product mapping: NCC nào cung cấp gì, đa dạng hóa
-6. **💰 PRICING & MARGIN INSIGHTS** —
+6. **PRICING & MARGIN INSIGHTS** —
    - Phân tích cấu trúc giá theo kênh (HORECA vs retail vs wholesale)
    - Sản phẩm under-priced / over-priced so với thị trường
    - Cơ hội tối ưu margin
-7. **📈 ĐỀ XUẤT CHIẾN LƯỢC** — Top 5 actions CEO nên thực hiện ngay:
+7. **ĐỀ XUẤT CHIẾN LƯỢC** — Top 5 actions CEO nên thực hiện ngay:
    - Portfolio optimization (thêm/bớt SKU)
    - Supplier diversification
    - Market expansion opps
@@ -417,7 +417,8 @@ Yêu cầu:
 - Cụ thể tên sản phẩm, tên NCC, tên vùng, số liệu thực
 - Kết hợp kiến thức chuyên môn về thị trường rượu vang quốc tế & Việt Nam
 - Với sản phẩm CHƯA CÓ DATA BÁN HÀNG: dùng kiến thức thị trường + đặc tính sản phẩm để đánh giá tiềm năng
-- Tone: chiến lược, data-driven nhưng kết hợp market intuition`
+- Tone: chiến lược, data-driven nhưng kết hợp market intuition
+- Tuyệt đối không dùng emoji/icon trong văn bản báo cáo`
 
         // ── Resolve prompt from DB or fallback ──
         const dbPrompt = await resolvePromptTemplate('catalog-analysis')

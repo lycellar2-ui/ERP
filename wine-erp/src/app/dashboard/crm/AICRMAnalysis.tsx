@@ -4,7 +4,7 @@ import { useState } from 'react'
 import {
     Sparkles, Loader2, RefreshCw, TrendingUp, Users, AlertTriangle,
     DollarSign, XCircle, ChevronDown, ChevronUp, ShieldAlert,
-    Crown, Gem, UserX, CreditCard, Save, CheckCircle
+    Crown, Gem, UserX, CreditCard, Save, CheckCircle, Clock
 } from 'lucide-react'
 import { useAiStatus } from '@/lib/useAiStatus'
 
@@ -69,7 +69,6 @@ export function AICRMAnalysis() {
 
     const fmtVND = (v: number) => v >= 1e9 ? `${(v / 1e9).toFixed(1)}T` : v >= 1e6 ? `${(v / 1e6).toFixed(0)}M` : `${v.toLocaleString()}`
 
-    const TIER_ICONS: Record<string, string> = { PLATINUM: '💎', GOLD: '🥇', SILVER: '🥈', BRONZE: '🥉' }
     const TIER_COLORS: Record<string, string> = { PLATINUM: '#0F172A', GOLD: '#B45309', SILVER: '#475569', BRONZE: '#87685A' }
 
     return (
@@ -102,7 +101,7 @@ export function AICRMAnalysis() {
                         ) : analysis ? (
                             <><RefreshCw size={13} /> Phân tích lại</>
                         ) : (
-                            <><Sparkles size={13} /> 🔍 Phân Tích CRM</>
+                            <><Sparkles size={13} /> Phân Tích CRM</>
                         )}
                     </button>
                     <button onClick={() => setCollapsed(!collapsed)} className="p-2 rounded-md transition-all" style={{ color: '#64748B' }}>
@@ -156,7 +155,7 @@ export function AICRMAnalysis() {
                                 <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Tiers:</span>
                                 {(['PLATINUM', 'GOLD', 'SILVER', 'BRONZE'] as const).map(tier => (
                                     <span key={tier} className="text-xs font-bold" style={{ color: TIER_COLORS[tier] }}>
-                                        {TIER_ICONS[tier]} {stats.tierDistribution[tier] || 0}
+                                        {tier.slice(0, 4)}: {stats.tierDistribution[tier] || 0}
                                     </span>
                                 ))}
                             </div>
@@ -187,7 +186,10 @@ export function AICRMAnalysis() {
                 {error && !loading && (
                     <div className="px-5 py-4">
                         <div className="px-4 py-3 rounded-md" style={{ background: 'rgba(185,28,28,0.06)', border: '1px solid rgba(185,28,28,0.2)' }}>
-                            <p className="text-xs" style={{ color: '#B91C1C' }}>❌ {error}</p>
+                            <p className="text-xs flex items-center gap-1.5" style={{ color: '#B91C1C' }}>
+                                <AlertTriangle size={13} className="shrink-0" />
+                                <span>{error}</span>
+                            </p>
                         </div>
                     </div>
                 )}
@@ -198,14 +200,20 @@ export function AICRMAnalysis() {
                         <div className="space-y-1.5 max-h-[600px] overflow-y-auto pr-2">
                             {analysis.split('\n').filter(Boolean).map((line, i) => {
                                 const isHeading = line.startsWith('#') || line.startsWith('**')
-                                const isHighlight = line.includes('🔥') || line.includes('⚠️') || line.includes('🎯') || line.includes('📊') || line.includes('💡') || line.includes('📈') || line.includes('🏆') || line.includes('💰') || line.includes('🍷')
-                                const isUrgent = line.includes('🔴') || line.includes('cảnh báo') || line.includes('rủi ro') || line.includes('churning') || line.includes('quá hạn')
-                                const isPositive = line.includes('🟢') || line.includes('tăng trưởng') || line.includes('tốt') || line.includes('mạnh')
+                                const isHighlight = line.includes('chiến lược') || line.includes('trọng tâm') || line.includes('đề xuất')
+                                const isUrgent = line.includes('cảnh báo') || line.includes('rủi ro') || line.includes('churning') || line.includes('quá hạn')
+                                const isPositive = line.includes('tăng trưởng') || line.includes('tốt') || line.includes('mạnh')
 
                                 let color = '#475569'
                                 if (isHeading || isHighlight) color = '#0F172A'
                                 if (isUrgent) color = '#B91C1C'
                                 if (isPositive) color = '#15803D'
+
+                                const cleanLine = line
+                                    .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1FA00}-\u{1FAFF}]/gu, '')
+                                    .replace(/^#+\s*/, '')
+                                    .replace(/\*\*/g, '')
+                                    .trim()
 
                                 return (
                                     <p key={i} className="text-[13px] leading-relaxed" style={{
@@ -215,13 +223,14 @@ export function AICRMAnalysis() {
                                         marginLeft: line.startsWith('- ') || line.startsWith('* ') ? '12px' : '0',
                                         paddingTop: isHeading ? '8px' : '0',
                                     }}>
-                                        {line.replace(/^#+\s*/, '').replace(/\*\*/g, '')}
+                                        {cleanLine}
                                     </p>
                                 )
                             })}
                         </div>
-                        <p className="text-[10px] mt-3 text-right" style={{ color: '#64748B' }}>
-                            🕐 Phân tích lúc {new Date().toLocaleString('vi-VN')} · Gemini 3.1 Pro · CRM Director AI
+                        <p className="text-[10px] mt-3 text-right flex items-center justify-end gap-1" style={{ color: '#64748B' }}>
+                            <Clock size={10} className="shrink-0" />
+                            <span>Phân tích lúc {new Date().toLocaleString('vi-VN')} · Gemini 3.1 Pro · CRM Director AI</span>
                         </p>
                         <button onClick={handleSaveReport} disabled={saved}
                             className="flex items-center gap-1 px-3 py-1.5 text-[10px] font-semibold rounded transition-all mt-1 ml-auto"
@@ -236,7 +245,7 @@ export function AICRMAnalysis() {
                     <div className="px-5 py-4 flex flex-col items-center gap-2">
                         <Users size={20} style={{ color: '#E2E8F0' }} />
                         <p className="text-xs text-center" style={{ color: '#64748B' }}>
-                            Nhấn <strong>&quot;🔍 Phân Tích CRM&quot;</strong> để nhận<br />
+                            Nhấn <strong>&quot;Phân Tích CRM&quot;</strong> để nhận<br />
                             báo cáo sức khỏe KH, churning, AR, chiến lược CEO
                         </p>
                     </div>

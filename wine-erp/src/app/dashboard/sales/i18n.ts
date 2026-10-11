@@ -565,9 +565,9 @@ export function getPriceBadgeLabelByLocale(resolved: any, defaultChannel: string
     const isEn = locale === 'en'
     switch (resolved?.source) {
         case 'PROMOTION_GIFT':
-            return isEn ? '🎁 Promo Gift (0 VND)' : '🎁 Quà Tặng CTKM (0 VNĐ)'
+            return isEn ? 'Promo Gift (0 VND)' : 'Quà Tặng CTKM (0 VNĐ)'
         case 'TASTING_FREE':
-            return isEn ? '🍷 Tasting Sample (0 VND)' : '🍷 Mẫu Thử Tasting (0 VNĐ)'
+            return isEn ? 'Tasting Sample (0 VND)' : 'Mẫu Thử Tasting (0 VNĐ)'
         case 'SPECIAL_PRICE':
             return isEn ? 'Special Campaign Price' : 'Giá Đặc Biệt (Campaign)'
         case 'FIXED_PRICE':

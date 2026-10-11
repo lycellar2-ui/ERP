@@ -89,7 +89,7 @@ export function AIPipelineAnalysis() {
                     ) : analysis ? (
                         <><RefreshCw size={13} /> Phân tích lại</>
                     ) : (
-                        <><Sparkles size={13} /> 🔍 Phân Tích Pipeline</>
+                        <><Sparkles size={13} /> Phân Tích Pipeline</>
                     )}
                 </button>
                 <button onClick={() => setCollapsed(!collapsed)} className="p-2 rounded-md transition-all" style={{ color: '#64748B' }}>
@@ -100,7 +100,7 @@ export function AIPipelineAnalysis() {
             {!collapsed && <>
                 {/* Stats Row */}
                 {stats && !loading && (
-                    <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 px-5 pt-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 px-5 pt-4">
                         <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
                             <div className="flex items-center justify-center gap-1 mb-0.5"><Target size={11} style={{ color: '#0891B2' }} /></div>
                             <p className="text-lg font-bold" style={{ color: '#0891B2' }}>{stats.activeDeals}</p>
@@ -139,7 +139,7 @@ export function AIPipelineAnalysis() {
                         <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin"
                             style={{ borderColor: '#E2E8F0', borderTopColor: '#B45309' }} />
                         <p className="text-xs animate-pulse" style={{ color: '#64748B' }}>
-                            AI đang phân tích {'{'}pipeline, win rate, deal velocity, coaching...{'}'}
+                            AI đang phân tích pipeline, win rate, deal velocity, coaching...
                         </p>
                     </div>
                 )}
@@ -147,8 +147,9 @@ export function AIPipelineAnalysis() {
                 {/* Error */}
                 {error && !loading && (
                     <div className="px-5 py-4">
-                        <div className="px-4 py-3 rounded-md" style={{ background: 'rgba(185,28,28,0.06)', border: '1px solid rgba(185,28,28,0.2)' }}>
-                            <p className="text-xs" style={{ color: '#B91C1C' }}>❌ {error}</p>
+                        <div className="px-4 py-3 rounded-md flex items-center gap-2" style={{ background: 'rgba(185,28,28,0.06)', border: '1px solid rgba(185,28,28,0.2)' }}>
+                            <AlertTriangle size={14} className="shrink-0" style={{ color: '#B91C1C' }} />
+                            <p className="text-xs" style={{ color: '#B91C1C' }}>{error}</p>
                         </div>
                     </div>
                 )}
@@ -159,9 +160,9 @@ export function AIPipelineAnalysis() {
                         <div className="space-y-1.5 max-h-[600px] overflow-y-auto pr-2">
                             {analysis.split('\n').filter(Boolean).map((line, i) => {
                                 const isHeading = line.startsWith('#') || line.startsWith('**')
-                                const isHighlight = line.includes('🔥') || line.includes('⚠️') || line.includes('🎯') || line.includes('📊') || line.includes('💡') || line.includes('📈')
-                                const isUrgent = line.includes('🔴') || line.includes('cảnh báo') || line.includes('rủi ro')
-                                const isPositive = line.includes('🟢') || line.includes('tốt') || line.includes('mạnh')
+                                const isHighlight = line.includes('**') || line.startsWith('###') || line.startsWith('##')
+                                const isUrgent = line.includes('cảnh báo') || line.includes('rủi ro') || line.includes('stale') || line.toLowerCase().includes('urgent')
+                                const isPositive = line.includes('tốt') || line.includes('mạnh') || line.includes('tiềm năng') || line.includes('thành công')
 
                                 let color = '#475569'
                                 if (isHeading || isHighlight) color = '#0F172A'
@@ -176,13 +177,13 @@ export function AIPipelineAnalysis() {
                                         marginLeft: line.startsWith('- ') || line.startsWith('* ') ? '12px' : '0',
                                         paddingTop: isHeading ? '8px' : '0',
                                     }}>
-                                        {line.replace(/^#+\s*/, '').replace(/\*\*/g, '')}
+                                        {line.replace(/^#+\s*/, '').replace(/\*\*/g, '').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '').trim()}
                                     </p>
                                 )
                             })}
                         </div>
                         <p className="text-[10px] mt-3 text-right" style={{ color: '#64748B' }}>
-                            🕐 Phân tích lúc {new Date().toLocaleString('vi-VN')} · Gemini 3.1 Pro · Sales Director AI
+                            Phân tích lúc {new Date().toLocaleString('vi-VN')} · Gemini 3.1 Pro · Sales Director AI
                         </p>
                         <button onClick={handleSaveReport} disabled={saved}
                             className="flex items-center gap-1 px-3 py-1.5 text-[10px] font-semibold rounded transition-all mt-1 ml-auto"
@@ -197,7 +198,7 @@ export function AIPipelineAnalysis() {
                     <div className="px-5 py-4 flex flex-col items-center gap-2">
                         <TrendingUp size={20} style={{ color: '#E2E8F0' }} />
                         <p className="text-xs text-center" style={{ color: '#64748B' }}>
-                            Nhấn <strong>&quot;🔍 Phân Tích Pipeline&quot;</strong> để nhận<br />
+                            Nhấn <strong>&quot;Phân Tích Pipeline&quot;</strong> để nhận<br />
                             đánh giá pipeline, coaching, dự báo doanh thu từ AI
                         </p>
                     </div>

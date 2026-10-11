@@ -8,12 +8,6 @@ import { WineTypeBadge } from '@/components/WineTypeBadge'
 import { Button, EmptyState, Pagination, Skeleton, Table, TableMessageRow, TableSkeleton, TBody, Td, Th, THead, Tr } from '@/components/ui'
 import { cn } from '@/lib/utils'
 
-const COUNTRY_FLAGS: Record<string, string> = {
-    FR: '🇫🇷', IT: '🇮🇹', ES: '🇪🇸', PT: '🇵🇹', DE: '🇩🇪',
-    US: '🇺🇸', AU: '🇦🇺', NZ: '🇳🇿', AR: '🇦🇷', CL: '🇨🇱', ZA: '🇿🇦',
-    GE: '🇬🇪', HU: '🇭🇺', GR: '🇬🇷', AT: '🇦🇹', RO: '🇷🇴', MX: '🇲🇽', JP: '🇯🇵',
-}
-
 const COL_COUNT = 7
 
 function stockClass(stock: number) {
@@ -36,7 +30,7 @@ interface RowProps {
 }
 
 function ProductTableRow({ row, onEdit, onDelete, onView, onPrefetchDetails, canEdit }: RowProps) {
-    const flag = COUNTRY_FLAGS[row.country] ?? '🌍'
+    const countryCode = row.country ? `[${row.country}]` : ''
     const [isVertical, setIsVertical] = useState(false)
     const imgRef = useRef<HTMLImageElement>(null)
 
@@ -116,7 +110,7 @@ function ProductTableRow({ row, onEdit, onDelete, onView, onPrefetchDetails, can
 
             <Td>
                 <p className="truncate max-w-[200px] text-lys-secondary" title={row.producerName}>{row.producerName}</p>
-                <p className="text-[11px] mt-0.5 text-lys-muted">{flag} {row.appellationName ?? row.country}</p>
+                <p className="text-[11px] mt-0.5 text-lys-muted">{countryCode && `${countryCode} `}{row.appellationName ?? row.country}</p>
             </Td>
 
             <Td align="center" className="type-number text-lys-secondary whitespace-nowrap">
@@ -157,7 +151,7 @@ function formatLabel(fmt: string) {
 }
 
 function ProductMobileCard({ row, onEdit, onDelete, onView, onPrefetchDetails, canEdit }: RowProps) {
-    const flag = COUNTRY_FLAGS[row.country] ?? '🌍'
+    const countryCode = row.country ? `[${row.country}]` : ''
     const pkgLabel = row.packagingType === 'OWC' ? 'Thùng gỗ' : 'Carton'
 
     return (
@@ -177,7 +171,7 @@ function ProductMobileCard({ row, onEdit, onDelete, onView, onPrefetchDetails, c
                     {row.abvPercent != null && <span>{row.abvPercent}°</span>}
                 </div>
                 <p className="text-[11px] mt-0.5 truncate text-lys-secondary">
-                    <span className="mr-1">{flag}</span>
+                    {countryCode && <span className="mr-1">{countryCode}</span>}
                     {row.producerName}
                     {row.appellationName ? ` • ${row.appellationName}` : ''}
                 </p>
@@ -235,17 +229,6 @@ interface ProductTableProps {
 }
 
 export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sortDir, onPageChange, onSort, onEdit, onDelete, onView, onPrefetchDetails, canEdit = false, onPrefetch }: ProductTableProps) {
-    const [isMobile, setIsMobile] = useState<boolean | null>(null)
-
-    useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth < 768)
-        handleResize()
-        window.addEventListener('resize', handleResize)
-        return () => window.removeEventListener('resize', handleResize)
-    }, [])
-
-    const showMobile = isMobile === null ? true : isMobile
-    const showDesktop = isMobile === null ? true : !isMobile
     const refetching = loading && rows.length > 0
     const sortFor = (key: ProductFilters['sortBy']) => (sortBy === key ? sortDir ?? 'asc' : false)
 
@@ -260,30 +243,29 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
 
     return (
         <div className="flex flex-col gap-3">
-            {showMobile && (
-                <div className={cn('md:hidden bg-lys-card border border-lys-border rounded-lg divide-y divide-lys-border', refetching && 'opacity-50 pointer-events-none')}>
-                    {rows.length === 0 && loading ? (
-                        Array.from({ length: 5 }).map((_, i) => (
-                            <div key={i} className="p-3 flex gap-3">
-                                <Skeleton className="w-10 h-16 shrink-0" />
-                                <div className="flex-1 space-y-2 py-1">
-                                    <Skeleton className="h-3.5 w-3/4" />
-                                    <Skeleton className="h-3 w-1/2" />
-                                    <Skeleton className="h-3 w-1/4" />
-                                </div>
+            {/* Mobile Card List */}
+            <div className={cn('block md:hidden bg-lys-card border border-lys-border rounded-lg divide-y divide-lys-border', refetching && 'opacity-50 pointer-events-none')}>
+                {rows.length === 0 && loading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className="p-3 flex gap-3">
+                            <Skeleton className="w-10 h-16 shrink-0" />
+                            <div className="flex-1 space-y-2 py-1">
+                                <Skeleton className="h-3.5 w-3/4" />
+                                <Skeleton className="h-3 w-1/2" />
+                                <Skeleton className="h-3 w-1/4" />
                             </div>
-                        ))
-                    ) : rows.length === 0 ? (
-                        <ProductsEmpty />
-                    ) : (
-                        rows.map(row => <ProductMobileCard key={row.id} {...rowProps(row)} />)
-                    )}
-                </div>
-            )}
+                        </div>
+                    ))
+                ) : rows.length === 0 ? (
+                    <ProductsEmpty />
+                ) : (
+                    rows.map(row => <ProductMobileCard key={row.id} {...rowProps(row)} />)
+                )}
+            </div>
 
-            {showDesktop && (
-                <div className="hidden md:block">
-                    <Table>
+            {/* Desktop Table */}
+            <div className="hidden md:block">
+                <Table>
                         <THead>
                             <tr>
                                 <Th className="w-[340px]" sort={sortFor('name')} onSort={() => onSort('name')}>Sản phẩm</Th>
@@ -306,7 +288,6 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
                         </TBody>
                     </Table>
                 </div>
-            )}
 
             <Pagination
                 page={page}

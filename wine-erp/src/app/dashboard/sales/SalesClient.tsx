@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, Calendar, Printer, FileX2, RotateCcw, AlertCircle, CloudUpload, ShieldCheck, ExternalLink, BarChart3, SlidersHorizontal } from 'lucide-react'
+import { Plus, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, Calendar, Printer, FileX2, RotateCcw, AlertCircle, CloudUpload, ShieldCheck, ExternalLink, BarChart3, SlidersHorizontal, Check } from 'lucide-react'
 import { Badge, Button, Card, Drawer, EmptyState, Field, FilterPanel, PageHeader, Pagination, SearchInput, Select, StatCard, StatGrid, StatusTabs, Table, TableMessageRow, TableSkeleton, TBody, Td, Th, THead, Toolbar, Tr, useConfirmDialog } from '@/components/ui'
 import { getStatusTone, type Tone } from '@/lib/ui/status'
 import { toast } from 'sonner'
@@ -886,7 +886,7 @@ function SODetailDrawer({
                                                             boxShadow: isCurrent ? '0 0 8px rgba(8,145,178,0.4)' : 'none',
                                                             boxSizing: 'border-box'
                                                         }}>
-                                                        {isDone ? '✓' : i + 1}
+                                                        {isDone ? <Check size={12} strokeWidth={3} /> : i + 1}
                                                     </div>
                                                     
                                                     {/* Nhãn bước */}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { FileText, Upload, Loader2, CheckCircle2, X, AlertCircle, Copy, ArrowRight } from 'lucide-react'
+import { FileText, Upload, Loader2, CheckCircle2, X, AlertCircle, Copy, ArrowRight, Ship } from 'lucide-react'
 import { ocrCustomsDeclaration, ocrLogisticsInvoice, type OCRDeclarationResult, type OCRLogisticsResult } from './actions'
 import { formatVND } from '@/lib/utils'
 
@@ -128,21 +128,25 @@ export function OCRUploadWidget() {
             {/* Mode Toggle */}
             <div className="flex gap-2 mb-4">
                 {([
-                    { key: 'customs' as OCRMode, label: '📄 Tờ Khai HQ', desc: 'Hải quan NK' },
-                    { key: 'logistics' as OCRMode, label: '🚢 Invoice Logistics', desc: 'Forwarder' },
-                ] as const).map(m => (
-                    <button key={m.key} onClick={() => { setMode(m.key); resetState() }}
-                        className="flex-1 p-3 rounded-lg text-left transition-all"
-                        style={{
-                            background: mode === m.key ? 'rgba(8,145,178,0.08)' : '#FFFFFF',
-                            border: `1px solid ${mode === m.key ? 'rgba(8, 145, 178, 0.25)' : '#E2E8F0'}`,
-                        }}>
-                        <span className="text-sm font-semibold block" style={{ color: mode === m.key ? '#0E7490' : '#475569' }}>
-                            {m.label}
-                        </span>
-                        <span className="text-[10px]" style={{ color: '#64748B' }}>{m.desc}</span>
-                    </button>
-                ))}
+                    { key: 'customs' as OCRMode, label: 'Tờ Khai HQ', icon: FileText, desc: 'Hải quan NK' },
+                    { key: 'logistics' as OCRMode, label: 'Invoice Logistics', icon: Ship, desc: 'Forwarder' },
+                ] as const).map(m => {
+                    const IconComp = m.icon
+                    return (
+                        <button key={m.key} onClick={() => { setMode(m.key); resetState() }}
+                            className="flex-1 p-3 rounded-lg text-left transition-all"
+                            style={{
+                                background: mode === m.key ? 'rgba(8,145,178,0.08)' : '#FFFFFF',
+                                border: `1px solid ${mode === m.key ? 'rgba(8, 145, 178, 0.25)' : '#E2E8F0'}`,
+                            }}>
+                            <span className="text-sm font-semibold flex items-center gap-1.5 mb-0.5" style={{ color: mode === m.key ? '#0E7490' : '#475569' }}>
+                                <IconComp size={14} />
+                                {m.label}
+                            </span>
+                            <span className="text-[10px]" style={{ color: '#64748B' }}>{m.desc}</span>
+                        </button>
+                    )
+                })}
             </div>
 
             {!hasResult ? (

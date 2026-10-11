@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Brain, AlertTriangle, TrendingUp, DollarSign, Loader2, Search, ShieldAlert } from 'lucide-react'
+import { Brain, AlertTriangle, TrendingUp, DollarSign, Loader2, Search, ShieldAlert, CheckCircle2, Package, FileText, TrendingDown, Minus } from 'lucide-react'
 import { forecastDemand, suggestPricing, detectAnomalies, AnomalyAlert } from './actions'
 import { formatVND } from '@/lib/utils'
 
@@ -19,7 +19,12 @@ export function AnomalyWidget() {
     }
 
     const severity = { high: '#B91C1C', medium: '#B45309', low: '#64748B' }
-    const typeIcon = { unusual_order: '📦', duplicate_invoice: '📋', negative_stock: '⚠️', expense_spike: '💰' }
+    const typeIcon: Record<string, any> = {
+        unusual_order: Package,
+        duplicate_invoice: FileText,
+        negative_stock: AlertTriangle,
+        expense_spike: DollarSign,
+    }
 
     return (
         <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
@@ -40,25 +45,31 @@ export function AnomalyWidget() {
                 </p>
             ) : alerts.length === 0 ? (
                 <div className="text-center py-6">
-                    <span className="text-3xl">✅</span>
-                    <p className="text-sm mt-2 font-semibold" style={{ color: '#15803D' }}>Không phát hiện bất thường</p>
+                    <CheckCircle2 size={32} className="mx-auto mb-2" style={{ color: '#15803D' }} />
+                    <p className="text-sm font-semibold" style={{ color: '#15803D' }}>Không phát hiện bất thường</p>
                 </div>
             ) : (
                 <div className="space-y-2">
-                    {alerts.map((a, i) => (
-                        <div key={i} className="flex items-start gap-3 p-3 rounded-md"
-                            style={{ background: '#FFFFFF', border: `1px solid ${severity[a.severity]}30` }}>
-                            <span className="text-lg">{typeIcon[a.type]}</span>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-xs font-bold" style={{ color: severity[a.severity] }}>{a.title}</p>
-                                <p className="text-xs mt-0.5 truncate" style={{ color: '#475569' }}>{a.description}</p>
+                    {alerts.map((a, i) => {
+                        const IconComp = typeIcon[a.type] || AlertTriangle
+                        return (
+                            <div key={i} className="flex items-start gap-3 p-3 rounded-md"
+                                style={{ background: '#FFFFFF', border: `1px solid ${severity[a.severity]}30` }}>
+                                <div className="w-7 h-7 rounded flex items-center justify-center shrink-0"
+                                    style={{ background: `${severity[a.severity]}15`, color: severity[a.severity] }}>
+                                    <IconComp size={14} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-bold" style={{ color: severity[a.severity] }}>{a.title}</p>
+                                    <p className="text-xs mt-0.5 truncate" style={{ color: '#475569' }}>{a.description}</p>
+                                </div>
+                                <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold uppercase whitespace-nowrap shrink-0"
+                                    style={{ color: severity[a.severity], background: `${severity[a.severity]}18` }}>
+                                    {a.severity}
+                                </span>
                             </div>
-                            <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold uppercase whitespace-nowrap shrink-0"
-                                style={{ color: severity[a.severity], background: `${severity[a.severity]}18` }}>
-                                {a.severity}
-                            </span>
-                        </div>
-                    ))}
+                        )
+                    })}
                 </div>
             )}
         </div>
@@ -79,7 +90,8 @@ export function DemandForecastWidget() {
     }
 
     const trendColor = { growing: '#15803D', declining: '#B91C1C', stable: '#B45309', no_data: '#64748B' }
-    const trendLabel = { growing: '📈 Tăng', declining: '📉 Giảm', stable: '📊 Ổn định', no_data: '⚠ Chưa có data' }
+    const trendLabel = { growing: 'Tăng', declining: 'Giảm', stable: 'Ổn định', no_data: 'Chưa có data' }
+    const trendIcon = { growing: TrendingUp, declining: TrendingDown, stable: Minus, no_data: AlertTriangle }
 
     return (
         <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
@@ -103,9 +115,15 @@ export function DemandForecastWidget() {
                     <div className="flex gap-3">
                         <div className="flex-1 p-3 rounded-md" style={{ background: '#FFFFFF' }}>
                             <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Xu hướng</p>
-                            <p className="text-sm font-bold" style={{ color: trendColor[result.trend as keyof typeof trendColor] }}>
-                                {trendLabel[result.trend as keyof typeof trendLabel]}
-                            </p>
+                            {(() => {
+                                const TrendIcon = trendIcon[result.trend as keyof typeof trendIcon] || Minus
+                                return (
+                                    <p className="text-sm font-bold flex items-center gap-1.5" style={{ color: trendColor[result.trend as keyof typeof trendColor] }}>
+                                        <TrendIcon size={14} />
+                                        {trendLabel[result.trend as keyof typeof trendLabel]}
+                                    </p>
+                                )
+                            })()}
                         </div>
                         <div className="flex-1 p-3 rounded-md" style={{ background: '#FFFFFF' }}>
                             <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>TB/tháng</p>
@@ -189,9 +207,9 @@ export function PricingWidget() {
                                     {formatVND(t.price)}
                                 </span>
                                 {result.recommendedTier === t.label && (
-                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0"
+                                    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0"
                                         style={{ color: '#15803D', background: 'rgba(21,128,61,0.15)' }}>
-                                        ✓ Đề xuất
+                                        <CheckCircle2 size={10} /> Đề xuất
                                     </span>
                                 )}
                             </div>

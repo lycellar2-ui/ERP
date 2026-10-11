@@ -189,10 +189,10 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
-            <div className="relative w-full max-w-3xl overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-xs">
+            <div className="relative w-full max-w-3xl overflow-hidden rounded-none sm:rounded-lg border border-slate-200 bg-white shadow-2xl flex flex-col h-full sm:h-auto max-h-full sm:max-h-[90vh]">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white/50 shrink-0">
+                <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 bg-white/50 shrink-0">
                     <div className="flex items-center gap-2.5">
                         <div className="p-2 rounded-lg bg-[#0E7490]/20 text-[#0891B2]">
                             {isEdit ? <Save className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
@@ -216,7 +216,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                 </div>
 
                 {/* Sub-tabs Navigation */}
-                <div className="flex items-center gap-1 px-6 pt-3 border-b border-slate-200 bg-white shrink-0 overflow-x-auto">
+                <div className="flex items-center gap-1 px-4 sm:px-6 pt-3 border-b border-slate-200 bg-white shrink-0 overflow-x-auto min-w-max">
                     <button
                         type="button"
                         onClick={() => setActiveTab('BASIC')}

@@ -2,10 +2,10 @@
 import type { AppLocale } from '@/lib/i18n'
 
 export const CATEGORY_LABELS: Record<string, string> = {
-    TASTING: '🍷 Tờ Trình Tasting (Thử Rượu / Hàng Mẫu)',
-    INTERNAL_TRAINING: '🎓 Tờ Trình Đào Tạo Nội Bộ (Internal Training)',
-    SPECIAL_EVENT: '🎪 Tờ Trình Tổ Chức Sự Kiện / Event',
-    PRICE_ADJUSTMENT: '🏷️ Tờ Trình Cơ Chế Giá & Giá Đặc Biệt',
+    TASTING: 'Tờ Trình Tasting (Thử Rượu / Hàng Mẫu)',
+    INTERNAL_TRAINING: 'Tờ Trình Đào Tạo Nội Bộ (Internal Training)',
+    SPECIAL_EVENT: 'Tờ Trình Tổ Chức Sự Kiện / Event',
+    PRICE_ADJUSTMENT: 'Tờ Trình Cơ Chế Giá & Giá Đặc Biệt',
     BUDGET_REQUEST: 'Xin Ngân Sách',
     CAPITAL_EXPENDITURE: 'Mua Sắm TSCĐ',
     NEW_SUPPLIER: 'NCC Mới',
@@ -21,10 +21,10 @@ export const CATEGORY_LABELS: Record<string, string> = {
 }
 
 export const CATEGORY_LABELS_EN: Record<string, string> = {
-    TASTING: '🍷 Wine Tasting & Sample Proposal',
-    INTERNAL_TRAINING: '🎓 Internal Training Proposal',
-    SPECIAL_EVENT: '🎪 Special Event Proposal',
-    PRICE_ADJUSTMENT: '🏷️ Special Pricing & Commercial Policy',
+    TASTING: 'Wine Tasting & Sample Proposal',
+    INTERNAL_TRAINING: 'Internal Training Proposal',
+    SPECIAL_EVENT: 'Special Event Proposal',
+    PRICE_ADJUSTMENT: 'Special Pricing & Commercial Policy',
     BUDGET_REQUEST: 'Budget Request',
     CAPITAL_EXPENDITURE: 'Capital Expenditure (CAPEX)',
     NEW_SUPPLIER: 'New Supplier',
@@ -74,7 +74,7 @@ export const STATUS_LABELS: Record<string, { label: string; color: string; bg: s
     RETURNED: { label: 'Trả lại', color: '#C45A2A', bg: 'rgba(196,90,42,0.15)' },
     APPROVED_L1: { label: 'TP Duyệt', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
     APPROVED_L2: { label: 'KT Duyệt', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
-    APPROVED: { label: 'CEO Duyệt ✓', color: '#5BA88A', bg: 'rgba(91,168,138,0.2)' },
+    APPROVED: { label: 'CEO Duyệt', color: '#5BA88A', bg: 'rgba(91,168,138,0.2)' },
     REJECTED: { label: 'Từ chối', color: '#8B1A2E', bg: 'rgba(139,26,46,0.15)' },
     IN_PROGRESS: { label: 'Đang thực hiện', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
     CLOSED: { label: 'Hoàn tất', color: '#64748B', bg: 'rgba(74,106,122,0.15)' },
@@ -88,7 +88,7 @@ export const STATUS_LABELS_EN: Record<string, { label: string; color: string; bg
     RETURNED: { label: 'Returned', color: '#C45A2A', bg: 'rgba(196,90,42,0.15)' },
     APPROVED_L1: { label: 'Manager Approved', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
     APPROVED_L2: { label: 'Accountant Approved', color: '#5BA88A', bg: 'rgba(91,168,138,0.15)' },
-    APPROVED: { label: 'CEO Approved ✓', color: '#5BA88A', bg: 'rgba(91,168,138,0.2)' },
+    APPROVED: { label: 'CEO Approved', color: '#5BA88A', bg: 'rgba(91,168,138,0.2)' },
     REJECTED: { label: 'Rejected', color: '#8B1A2E', bg: 'rgba(139,26,46,0.15)' },
     IN_PROGRESS: { label: 'In Progress', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
     CLOSED: { label: 'Completed', color: '#64748B', bg: 'rgba(74,106,122,0.15)' },

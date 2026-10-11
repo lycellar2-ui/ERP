@@ -95,24 +95,25 @@ ${dealList}
 
 Hãy viết BÁO CÁO PHÂN TÍCH PIPELINE CHO CEO bao gồm:
 
-1. **📊 TỔNG QUAN PIPELINE** — Health score (1-10), pipeline velocity analysis (dựa trên dữ liệu "d in stage" thực tế cho từng deal), conversion funnel
-2. **🔥 TOP 5 DEAL QUAN TRỌNG NHẤT** — Deal value cao hoặc probability cao, cần CEO chú ý
-3. **⏱️ PIPELINE VELOCITY** — Phân tích tốc độ di chuyển qua từng stage:
+1. **TỔNG QUAN PIPELINE** — Health score (1-10), pipeline velocity analysis (dựa trên dữ liệu "d in stage" thực tế cho từng deal), conversion funnel
+2. **TOP 5 DEAL QUAN TRỌNG NHẤT** — Deal value cao hoặc probability cao, cần CEO chú ý
+3. **PIPELINE VELOCITY** — Phân tích tốc độ di chuyển qua từng stage:
    - Stage nào có deal bị "kẹt" lâu nhất?
    - Deal nào ở stage hiện tại quá lâu (>14 ngày)?
    - So sánh tốc độ giữa các sales rep
-4. **⚠️ CẢNH BÁO & RỦI RO**:
+4. **CẢNH BÁO & RỦI RO**:
    - Deals bị stale (cần push hoặc disqualify)
    - Pipeline concentration risk
    - Deals sắp đến close date nhưng probability thấp
-5. **🎯 COACHING GỢI Ý** — Gợi ý cho từng sales rep dựa trên velocity và win rate
-6. **📈 DỰ BÁO DOANH THU** — Projected revenue (dựa trên weighted pipeline + velocity)
-7. **💡 HÀNH ĐỘNG NGAY** — Top 3 actions CEO nên yêu cầu team thực hiện
+5. **COACHING GỢI Ý** — Gợi ý cho từng sales rep dựa trên velocity và win rate
+6. **DỰ BÁO DOANH THU** — Projected revenue (dựa trên weighted pipeline + velocity)
+7. **HÀNH ĐỘNG NGAY** — Top 3 actions CEO nên yêu cầu team thực hiện
 
 Yêu cầu:
 - Viết bằng tiếng Việt, phong cách Sales Director briefing
 - Cụ thể tên deal, tên khách hàng, tên sales rep
-- Tone: quyết đoán, data-driven, actionable`
+- Tone: quyết đoán, data-driven, actionable
+- Tuyệt đối không dùng emoji/icon trong văn bản báo cáo`
 
         // ── Resolve prompt from DB or fallback ──
         const dbPrompt = await resolvePromptTemplate('pipeline-analysis')

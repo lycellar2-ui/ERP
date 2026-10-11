@@ -216,27 +216,27 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
 
     return (
         <header
-            className="sticky top-0 z-10 flex items-center justify-between px-4 h-[42px] bg-white/95 backdrop-blur-md border-b border-lys-border"
+            className="sticky top-0 z-10 flex items-center justify-between px-2.5 sm:px-4 h-[42px] bg-white/95 backdrop-blur-md border-b border-lys-border"
         >
             {/* Page title */}
-            <div className="flex items-center">
+            <div className="flex items-center min-w-0 mr-1.5 sm:mr-3">
                 {mobileMenuButton}
-                <div>
-                    <h1 className="text-[15px] font-semibold leading-none text-lys-primary">
+                <div className="min-w-0">
+                    <h1 className="text-[13px] sm:text-[15px] font-semibold leading-none text-lys-primary truncate max-w-[120px] xs:max-w-[180px] sm:max-w-none">
                         {title}
                     </h1>
                 </div>
             </div>
 
             {/* Right side */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 {/* Global Language Switcher */}
                 {pathname.startsWith('/dashboard') && (
                     <div className="flex items-center p-0.5 rounded-lg bg-white border border-slate-200 text-[11px] font-bold shadow-xs">
                         <button
                             type="button"
                             onClick={() => setLocale('vi')}
-                            className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
+                            className={`px-1.5 sm:px-2 py-0.5 rounded transition-all cursor-pointer ${
                                 locale === 'vi'
                                     ? 'bg-lys-teal-strong text-white shadow-xs'
                                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -248,7 +248,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                         <button
                             type="button"
                             onClick={() => setLocale('en')}
-                            className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
+                            className={`px-1.5 sm:px-2 py-0.5 rounded transition-all cursor-pointer ${
                                 locale === 'en'
                                     ? 'bg-lys-teal-strong text-white shadow-xs'
                                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -280,7 +280,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
 
                     {/* Popover Dropdown */}
                     {showNoti && (
-                        <div className="absolute right-0 mt-2 w-80 rounded-lg shadow-xl z-50 overflow-hidden bg-lys-card border border-lys-border animate-dropdown origin-top-right">
+                        <div className="absolute right-0 mt-2 w-[calc(100vw-24px)] max-w-xs sm:w-80 rounded-lg shadow-xl z-50 overflow-hidden bg-lys-card border border-lys-border animate-dropdown origin-top-right">
                             <div className="flex items-center justify-between px-4 py-3 border-b border-lys-border">
                                 <span className="text-xs font-semibold uppercase tracking-wider text-lys-secondary">Thông Báo</span>
                                 {unreadCount > 0 && (
@@ -507,7 +507,7 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
 
     return createPortal(
         <div className="fixed inset-0 z-[9999] flex justify-end" style={{ background: 'rgba(15, 23, 42, 0.45)' }}>
-            <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-250" 
+            <div className="w-full max-w-md h-full overflow-y-auto p-4 sm:p-6 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-250" 
                 style={{ background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}>
                 <div>
                     <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '1px solid #FFFFFF' }}>

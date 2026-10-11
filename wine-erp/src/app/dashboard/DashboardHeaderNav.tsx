@@ -55,7 +55,7 @@ export function DashboardHeaderNav({
             </div>
 
             {/* Tab Navigation */}
-            <div className="flex items-center gap-2 border-b border-slate-200 pb-3 overflow-x-auto">
+            <div className="flex items-center gap-2 border-b border-slate-200 pb-3 overflow-x-auto no-scrollbar whitespace-nowrap">
                 <Link
                     href={`/dashboard?tab=overview${queryString}`}
                     className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${

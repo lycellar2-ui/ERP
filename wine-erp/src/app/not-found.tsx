@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Wine } from 'lucide-react'
 
 export default function NotFound() {
     return (
@@ -18,7 +19,11 @@ export default function NotFound() {
                 border: '1px solid #E2E8F0',
                 borderRadius: '12px',
             }}>
-                <div style={{ fontSize: '64px', marginBottom: '16px', lineHeight: 1 }}>🍷</div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+                    <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(8, 145, 178, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0891B2' }}>
+                        <Wine size={32} />
+                    </div>
+                </div>
                 <h1 className="font-mono" style={{ color: '#0891B2', fontSize: '72px', fontWeight: 700, margin: '0 0 8px' }}>
                     404
                 </h1>

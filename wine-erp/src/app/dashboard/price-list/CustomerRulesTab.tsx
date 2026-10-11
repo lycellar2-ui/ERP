@@ -347,7 +347,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
         })
 
         if (res.success) {
-            alert(`✅ Đã sao chép thành công ${res.clonedCount} chính sách giá sang ${res.targetCount} cơ sở đích!`)
+            alert(`Đã sao chép thành công ${res.clonedCount} chính sách giá sang ${res.targetCount} cơ sở đích!`)
             setCloneModalOpen(false)
             await loadData()
         } else {
@@ -549,9 +549,9 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                 className="px-3 py-1.5 text-xs outline-none cursor-pointer bg-white border border-slate-300 focus:border-[#0891B2] text-slate-800 rounded-md transition shadow-xs"
                             >
                                 <option value="ALL">Tất cả Cơ Chế</option>
-                                <option value="HAS_SPECIAL">Có Giá Đặc Biệt (⚡)</option>
+                                <option value="HAS_SPECIAL">Có Giá Đặc Biệt</option>
                                 <option value="HAS_CUSTOM_DISCOUNT">Có Chiết Khấu Mặc Định (%)</option>
-                                <option value="PENDING">Có Deal Chờ Duyệt (⏳)</option>
+                                <option value="PENDING">Có Deal Chờ Duyệt</option>
                             </select>
                         </div>
 

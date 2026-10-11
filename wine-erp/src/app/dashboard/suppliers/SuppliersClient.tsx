@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import {
     Plus, Building2, Globe, Clock, X, Save, Loader2, AlertCircle, Award, Copy, Upload,
-    Download, Search, Edit2, Trash2, Eye,
+    Download, Search, Edit2, Trash2, Eye, Factory, CheckCircle2, User, CreditCard, Package, Flag,
 } from 'lucide-react'
 import {
     SupplierRow, SupplierInput, SupplierStats, SupplierFilters,
@@ -31,10 +31,10 @@ const SUPPLIER_TYPE: Record<string, { label: string; color: string; bg: string }
     OTHER_SERVICE: { label: 'Dịch vụ khác', color: '#4B5563', bg: 'rgba(75, 85, 99, 0.12)' },
 }
 
-const COUNTRY_FLAGS: Record<string, string> = {
-    FR: '🇫🇷', IT: '🇮🇹', ES: '🇪🇸', PT: '🇵🇹', DE: '🇩🇪',
-    US: '🇺🇸', AU: '🇦🇺', NZ: '🇳🇿', AR: '🇦🇷', CL: '🇨🇱', ZA: '🇿🇦',
-    VN: '🇻🇳', 'Việt Nam': '🇻🇳', Vietnam: '🇻🇳', SG: '🇸🇬', JP: '🇯🇵', CN: '🇨🇳', GB: '🇬🇧', UK: '🇬🇧',
+const COUNTRY_NAMES: Record<string, string> = {
+    FR: 'Pháp (France)', IT: 'Ý (Italy)', ES: 'Tây Ban Nha (Spain)', PT: 'Bồ Đào Nha (Portugal)', DE: 'Đức (Germany)',
+    US: 'Hoa Kỳ (USA)', AU: 'Úc (Australia)', NZ: 'New Zealand', AR: 'Argentina', CL: 'Chile', ZA: 'Nam Phi',
+    VN: 'Việt Nam', 'Việt Nam': 'Việt Nam', Vietnam: 'Việt Nam', SG: 'Singapore', JP: 'Nhật Bản', CN: 'Trung Quốc', GB: 'Vương quốc Anh', UK: 'Vương quốc Anh',
 }
 
 function TypeBadge({ type }: { type: string }) {
@@ -187,7 +187,7 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                         )}
 
                         <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>── Thông Tin Cơ Bản</p>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Mã NCC <span style={{ color: '#B91C1C' }}>*</span></label>
                                 <input className={inputCls} style={inputStyle} value={form.code ?? ''} disabled={isEdit}
@@ -197,7 +197,7 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Phân loại NCC</label>
                                 <select className={inputCls} style={inputStyle} value={form.type ?? 'LOGISTICS'} onChange={e => set('type', e.target.value)}>
-                                    <optgroup label="── Trong nước & Dịch vụ 🇻🇳 ──">
+                                    <optgroup label="── Trong nước & Dịch vụ ──">
                                         <option value="LOGISTICS">Kho bãi & Vận tải nội địa (Logistics)</option>
                                         <option value="PACKAGING">Bao bì & In ấn (Hộp quà, tem nhãn)</option>
                                         <option value="POSM">POSM & Vật phẩm (Kệ tủ, ly nếm, decor)</option>
@@ -205,7 +205,7 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                                         <option value="OFFICE_SERVICE">Văn phòng & Thiết bị & IT</option>
                                         <option value="OTHER_SERVICE">Dịch vụ phụ trợ khác</option>
                                     </optgroup>
-                                    <optgroup label="── Quốc tế & Nhập khẩu 🌍 ──">
+                                    <optgroup label="── Quốc tế & Nhập khẩu ──">
                                         <option value="WINERY">Nhà làm rượu (Winery)</option>
                                         <option value="NEGOCIANT">Nhà thương mại rượu (Négociant)</option>
                                         <option value="DISTRIBUTOR">Nhà phân phối (Distributor)</option>
@@ -220,30 +220,30 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                             <input className={inputCls} style={inputStyle} value={form.name ?? ''} onChange={e => set('name', e.target.value)} placeholder={form.country === 'VN' ? 'Công ty TNHH Vận Tải & Tiếp Vận Sài Gòn' : 'LVMH Wines & Spirits'} />
                             {errors.name && <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>{errors.name}</p>}
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Quốc gia <span style={{ color: '#B91C1C' }}>*</span></label>
                                 <select className={inputCls} style={inputStyle} value={form.country ?? 'VN'} onChange={e => handleCountryChange(e.target.value)}>
                                     <option value="">Chọn quốc gia...</option>
-                                    <optgroup label="── Trong nước 🇻🇳 ──">
-                                        <option value="VN">🇻🇳 Việt Nam</option>
+                                    <optgroup label="── Trong nước ──">
+                                        <option value="VN">Việt Nam</option>
                                     </optgroup>
-                                    <optgroup label="── Quốc tế (Nhập khẩu) 🌍 ──">
-                                        <option value="FR">🇫🇷 Pháp (France)</option>
-                                        <option value="IT">🇮🇹 Ý (Italy)</option>
-                                        <option value="ES">🇪🇸 Tây Ban Nha (Spain)</option>
-                                        <option value="CL">🇨🇱 Chile</option>
-                                        <option value="AU">🇦🇺 Úc (Australia)</option>
-                                        <option value="NZ">🇳🇿 New Zealand</option>
-                                        <option value="US">🇺🇸 Hoa Kỳ (USA)</option>
-                                        <option value="DE">🇩🇪 Đức (Germany)</option>
-                                        <option value="PT">🇵🇹 Bồ Đào Nha (Portugal)</option>
-                                        <option value="AR">🇦🇷 Argentina</option>
-                                        <option value="ZA">🇿🇦 Nam Phi (South Africa)</option>
-                                        <option value="SG">🇸🇬 Singapore</option>
-                                        <option value="JP">🇯🇵 Nhật Bản (Japan)</option>
-                                        <option value="CN">🇨🇳 Trung Quốc (China)</option>
-                                        <option value="GB">🇬🇧 Vương quốc Anh (UK)</option>
+                                    <optgroup label="── Quốc tế (Nhập khẩu) ──">
+                                        <option value="FR">Pháp (France)</option>
+                                        <option value="IT">Ý (Italy)</option>
+                                        <option value="ES">Tây Ban Nha (Spain)</option>
+                                        <option value="CL">Chile</option>
+                                        <option value="AU">Úc (Australia)</option>
+                                        <option value="NZ">New Zealand</option>
+                                        <option value="US">Hoa Kỳ (USA)</option>
+                                        <option value="DE">Đức (Germany)</option>
+                                        <option value="PT">Bồ Đào Nha (Portugal)</option>
+                                        <option value="AR">Argentina</option>
+                                        <option value="ZA">Nam Phi (South Africa)</option>
+                                        <option value="SG">Singapore</option>
+                                        <option value="JP">Nhật Bản (Japan)</option>
+                                        <option value="CN">Trung Quốc (China)</option>
+                                        <option value="GB">Vương quốc Anh (UK)</option>
                                     </optgroup>
                                 </select>
                                 {errors.country && <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>{errors.country}</p>}
@@ -255,7 +255,7 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                         </div>
 
                         <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Liên Hệ Chính</p>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Người liên hệ</label>
                                 <input className={inputCls} style={inputStyle} value={form.contactName ?? ''} onChange={e => set('contactName', e.target.value || null)} placeholder={form.country === 'VN' ? 'Nguyễn Văn A' : 'Jean-Pierre Dupont'} />
@@ -265,7 +265,7 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                                 <input className={inputCls} style={inputStyle} value={form.contactTitle ?? ''} onChange={e => set('contactTitle', e.target.value || null)} placeholder={form.country === 'VN' ? 'Trưởng phòng kinh doanh' : 'Export Manager'} />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Email</label>
                                 <input className={inputCls} style={inputStyle} value={form.contactEmail ?? ''} onChange={e => set('contactEmail', e.target.value || null)} placeholder="lienhe@doitac.vn" />
@@ -277,7 +277,7 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                         </div>
 
                         <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Điều Khoản Thương Mại & Thanh Toán</p>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Hiệp định thương mại</label>
                                 <select className={inputCls} style={inputStyle} value={form.tradeAgreement ?? ''} onChange={e => set('tradeAgreement', e.target.value || null)}>
@@ -293,7 +293,7 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                                 <input className={inputCls} style={inputStyle} value={form.coFormType ?? ''} onChange={e => set('coFormType', e.target.value || null)} placeholder={form.country === 'VN' ? 'Không' : 'EUR.1 / Form AANZ'} />
                             </div>
                         </div>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Thanh toán</label>
                                 <select className={inputCls} style={inputStyle} value={form.paymentTerm ?? 'NET30'} onChange={e => set('paymentTerm', e.target.value)}>
@@ -392,6 +392,98 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                 </div>
             </div>
         </>
+    )
+}
+
+function SupplierMobileCard({
+    row,
+    onViewDetail,
+    onEdit,
+    onDelete,
+}: {
+    row: SupplierRow
+    onViewDetail: () => void
+    onEdit: () => void
+    onDelete: () => void
+}) {
+    const isDomestic = row.country === 'VN' || row.country === 'Việt Nam' || row.country === 'Vietnam'
+    return (
+        <div 
+            onClick={onViewDetail}
+            className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs space-y-2.5 active:bg-slate-50 transition-colors cursor-pointer"
+        >
+            <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs font-mono font-bold text-cyan-700">{row.code}</span>
+                        <TypeBadge type={row.type} />
+                    </div>
+                    <h4 className="text-sm font-bold text-slate-900 mt-1 truncate">{row.name}</h4>
+                </div>
+                <StatusDot status={row.status} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 text-slate-600">
+                <div>
+                    <span className="text-[10px] text-slate-400 block uppercase font-medium">Quốc Gia</span>
+                    <span className="inline-flex items-center gap-1 font-semibold text-slate-800 mt-0.5">
+                        <Globe size={12} className="text-slate-400 shrink-0" />
+                        <span>{isDomestic ? 'Việt Nam' : (COUNTRY_NAMES[row.country] ?? row.country)}</span>
+                    </span>
+                </div>
+                <div>
+                    <span className="text-[10px] text-slate-400 block uppercase font-medium">Đơn PO</span>
+                    <span className="font-mono font-bold text-slate-800 mt-0.5 block">{row.poCount} đơn</span>
+                </div>
+                <div>
+                    <span className="text-[10px] text-slate-400 block uppercase font-medium">Lead Time / Tiền</span>
+                    <span className="font-medium text-slate-800 mt-0.5 block">{row.leadTimeDays} ngày · {row.defaultCurrency}</span>
+                </div>
+                <div>
+                    <span className="text-[10px] text-slate-400 block uppercase font-medium">Thanh toán</span>
+                    <span className="font-mono font-medium text-slate-800 mt-0.5 block">{row.paymentTerm ?? 'NET30'}</span>
+                </div>
+            </div>
+
+            {(row.contactName || row.contactEmail) && (
+                <div className="text-xs text-slate-600 bg-slate-50 p-2 rounded flex items-center justify-between">
+                    <span className="truncate flex items-center gap-1">
+                        <User size={12} className="text-slate-400 shrink-0" />
+                        {row.contactName || 'Người liên hệ'}
+                    </span>
+                    {row.contactEmail && (
+                        <a 
+                            href={`mailto:${row.contactEmail}`} 
+                            onClick={e => e.stopPropagation()} 
+                            className="text-cyan-700 font-semibold underline shrink-0 ml-2"
+                        >
+                            {row.contactEmail}
+                        </a>
+                    )}
+                </div>
+            )}
+
+            <div className="flex items-center justify-end gap-1 pt-1.5 border-t border-slate-100" onClick={e => e.stopPropagation()}>
+                <button
+                    onClick={onViewDetail}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded text-blue-700 hover:bg-blue-50 transition-colors"
+                >
+                    <Eye size={13} /> Chi tiết
+                </button>
+                <button
+                    onClick={onEdit}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded text-slate-700 hover:bg-slate-100 transition-colors"
+                >
+                    <Edit2 size={13} /> Sửa
+                </button>
+                <button
+                    onClick={onDelete}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded text-red-600 hover:bg-red-50 transition-colors"
+                >
+                    <Trash2 size={13} /> Xóa
+                </button>
+            </div>
+        </div>
     )
 }
 
@@ -508,15 +600,15 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                 title="Nhà Cung Cấp"
                 description={`Đối tác cung ứng Trong nước (Việt Nam) & Quốc tế (Nhập khẩu) — ${stats.total} đối tác`}
                 actions={
-                    <div className="flex items-center gap-2">
-                        <Button variant="secondary" size="sm" onClick={handleExport} disabled={exporting}>
-                            <Download size={14} /> {exporting ? 'Đang xuất...' : 'Export CSV'}
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
+                        <Button variant="secondary" size="sm" onClick={handleExport} disabled={exporting} className="text-xs px-2.5 py-1 sm:px-3 sm:py-1.5">
+                            <Download size={13} /> <span className="hidden xs:inline">{exporting ? 'Đang xuất...' : 'Export CSV'}</span><span className="xs:hidden">CSV</span>
                         </Button>
-                        <Button variant="secondary" size="sm" onClick={() => setImportOpen(true)}>
-                            <Upload size={14} /> Import Excel
+                        <Button variant="secondary" size="sm" onClick={() => setImportOpen(true)} className="text-xs px-2.5 py-1 sm:px-3 sm:py-1.5">
+                            <Upload size={13} /> <span className="hidden xs:inline">Import Excel</span><span className="xs:hidden">Import</span>
                         </Button>
-                        <Button variant="primary" size="sm" onClick={() => { setEditingId(null); setDrawerOpen(true) }}>
-                            <Plus size={14} /> Thêm NCC
+                        <Button variant="primary" size="sm" onClick={() => { setEditingId(null); setDrawerOpen(true) }} className="text-xs px-2.5 py-1 sm:px-3 sm:py-1.5">
+                            <Plus size={13} /> <span>Thêm NCC</span>
                         </Button>
                     </div>
                 }
@@ -605,7 +697,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                                         : 'text-slate-600 hover:text-slate-900'
                                 }`}
                             >
-                                <span>🇻🇳</span> Trong nước ({stats.domesticCount ?? 0})
+                                <Flag size={13} className="text-emerald-600 shrink-0" /> Trong nước ({stats.domesticCount ?? 0})
                             </button>
                             <button
                                 type="button"
@@ -620,7 +712,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                                         : 'text-slate-600 hover:text-slate-900'
                                 }`}
                             >
-                                <span>🌍</span> Quốc tế ({stats.internationalCount ?? 0})
+                                <Globe size={13} className="text-cyan-600 shrink-0" /> Quốc tế ({stats.internationalCount ?? 0})
                             </button>
                         </div>
                     </div>
@@ -635,7 +727,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                         <select value={typeFilter} onChange={e => { setTypeFilter(e.target.value); setPage(1); reload(undefined, e.target.value, undefined, 1) }}
                             className="px-3 py-2 rounded-md text-sm outline-none cursor-pointer border border-slate-200 bg-white text-slate-900 focus:border-cyan-600">
                             <option value="">Tất cả phân loại ({Object.keys(SUPPLIER_TYPE).length})</option>
-                            <optgroup label="── Trong nước & Dịch vụ 🇻🇳 ──">
+                            <optgroup label="── Trong nước & Dịch vụ ──">
                                 <option value="LOGISTICS">Kho bãi & Vận tải</option>
                                 <option value="PACKAGING">Bao bì & In ấn</option>
                                 <option value="POSM">POSM & Vật phẩm</option>
@@ -643,7 +735,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                                 <option value="OFFICE_SERVICE">Văn phòng & IT</option>
                                 <option value="OTHER_SERVICE">Dịch vụ khác</option>
                             </optgroup>
-                            <optgroup label="── Quốc tế & Nhập khẩu 🌍 ──">
+                            <optgroup label="── Quốc tế & Nhập khẩu ──">
                                 <option value="WINERY">Winery</option>
                                 <option value="NEGOCIANT">Négociant</option>
                                 <option value="DISTRIBUTOR">Distributor</option>
@@ -663,8 +755,8 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                     </div>
                 </div>
 
-                {/* Table */}
-                <div className="rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+                {/* Desktop Table View */}
+                <div className="hidden md:block rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                             <thead>
@@ -682,7 +774,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                                 )) : rows.length === 0 ? (
                                     <tr><td colSpan={9}>
                                         <div className="flex flex-col items-center py-16 gap-3">
-                                            <span className="text-3xl">🏭</span>
+                                            <Factory className="w-10 h-10 text-slate-300" />
                                             <p style={{ color: '#64748B' }} className="text-sm">Chưa có nhà cung cấp nào phù hợp bộ lọc</p>
                                         </div>
                                     </td></tr>
@@ -701,17 +793,23 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                                                     {row.taxId && <span className="inline-block text-[10px] px-1.5 py-0.2 rounded bg-slate-100 font-mono text-slate-600 whitespace-nowrap shrink-0">MST: {row.taxId}</span>}
                                                 </div>
                                                 {row.bankAccountInfo && (
-                                                    <p className="text-[11px] mt-1 text-slate-500 truncate max-w-xs font-mono" title={row.bankAccountInfo}>
-                                                        💳 {row.bankAccountInfo}
+                                                    <p className="text-[11px] mt-1 text-slate-500 truncate max-w-xs font-mono flex items-center gap-1" title={row.bankAccountInfo}>
+                                                        <CreditCard size={11} className="text-slate-400 shrink-0" />
+                                                        <span>{row.bankAccountInfo}</span>
                                                     </p>
                                                 )}
-                                                {row.contactName && <p className="text-[10px] mt-0.5" style={{ color: '#1D4ED8' }}>👤 {row.contactName}</p>}
+                                                {row.contactName && (
+                                                    <p className="text-[10px] mt-0.5 flex items-center gap-1" style={{ color: '#1D4ED8' }}>
+                                                        <User size={10} className="text-blue-600 shrink-0" />
+                                                        <span>{row.contactName}</span>
+                                                    </p>
+                                                )}
                                             </td>
                                             <td className="px-4 py-3"><TypeBadge type={row.type} /></td>
                                             <td className="px-4 py-3 text-sm" style={{ color: '#475569' }}>
                                                 <span className="inline-flex items-center gap-1.5 font-medium">
-                                                    <span>{COUNTRY_FLAGS[row.country] ?? '🌍'}</span>
-                                                    <span>{isDomestic ? 'Việt Nam' : row.country}</span>
+                                                    <Globe size={13} className="text-slate-400 shrink-0" />
+                                                    <span>{isDomestic ? 'Việt Nam' : (COUNTRY_NAMES[row.country] ?? row.country)}</span>
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3">
@@ -757,24 +855,51 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                             </tbody>
                         </table>
                     </div>
+                </div>
 
-                    {total > 0 && (
-                        <div className="flex items-center justify-between px-4 py-3" style={{ borderTop: '1px solid #E2E8F0', background: '#FFFFFF' }}>
-                            <p className="text-xs" style={{ color: '#64748B' }}>
-                                Hiển thị <span style={{ color: '#475569' }}>{(page - 1) * 25 + 1}–{Math.min(page * 25, total)}</span> trong <span style={{ color: '#475569' }}>{total}</span>
-                            </p>
-                            <div className="flex items-center gap-1">
-                                {Array.from({ length: Math.ceil(total / 25) }).map((_, i) => (
-                                    <button key={i} onClick={() => { setPage(i + 1); reload(undefined, undefined, undefined, i + 1) }}
-                                        className="min-w-[32px] h-8 px-2 rounded-lg text-xs font-medium"
-                                        style={{ background: page === i + 1 ? '#0E7490' : 'transparent', color: page === i + 1 ? '#F8FAFC' : '#475569' }}>
-                                        {i + 1}
-                                    </button>
-                                ))}
+                {/* Mobile Card View */}
+                <div className="block md:hidden space-y-2.5">
+                    {loading ? (
+                        Array.from({ length: 4 }).map((_, i) => (
+                            <div key={i} className="p-4 rounded-lg bg-white border border-slate-200 animate-pulse space-y-2">
+                                <div className="h-4 bg-slate-200 rounded w-2/3" />
+                                <div className="h-3 bg-slate-100 rounded w-1/2" />
                             </div>
+                        ))
+                    ) : rows.length === 0 ? (
+                        <div className="flex flex-col items-center py-12 gap-3 bg-white rounded-lg border border-slate-200">
+                            <Factory className="w-10 h-10 text-slate-300" />
+                            <p style={{ color: '#64748B' }} className="text-sm">Chưa có nhà cung cấp nào phù hợp bộ lọc</p>
                         </div>
+                    ) : (
+                        rows.map(row => (
+                            <SupplierMobileCard
+                                key={row.id}
+                                row={row}
+                                onViewDetail={() => { setDetailId(row.id); setDetailOpen(true) }}
+                                onEdit={() => { setEditingId(row.id); setDrawerOpen(true) }}
+                                onDelete={() => handleDelete(row.id, row.name)}
+                            />
+                        ))
                     )}
                 </div>
+
+                {total > 0 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 rounded-lg border border-slate-200 bg-white">
+                        <p className="text-xs" style={{ color: '#64748B' }}>
+                            Hiển thị <span style={{ color: '#475569' }}>{(page - 1) * 25 + 1}–{Math.min(page * 25, total)}</span> trong <span style={{ color: '#475569' }}>{total}</span>
+                        </p>
+                        <div className="flex items-center gap-1 flex-wrap justify-center">
+                            {Array.from({ length: Math.ceil(total / 25) }).map((_, i) => (
+                                <button key={i} onClick={() => { setPage(i + 1); reload(undefined, undefined, undefined, i + 1) }}
+                                    className="min-w-[32px] h-8 px-2 rounded-lg text-xs font-medium cursor-pointer"
+                                    style={{ background: page === i + 1 ? '#0E7490' : 'transparent', color: page === i + 1 ? '#F8FAFC' : '#475569' }}>
+                                    {i + 1}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </>)}
 
             {/* Tab: Scorecard */}
@@ -783,37 +908,39 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                     {scoreLoading ? (
                         <div className="flex items-center justify-center py-16 gap-2"><Loader2 size={16} className="animate-spin" style={{ color: '#0891B2' }} /><span className="text-sm" style={{ color: '#64748B' }}>Đang tính Scorecard...</span></div>
                     ) : scorecards && scorecards.length > 0 ? (
-                        <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                            <thead>
-                                <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                    {['NCC', 'Giao Đúng Hạn', 'Chất Lượng', 'Lead Time TB', 'Tổng PO', 'Xếp Hạng'].map(h => (
-                                        <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {scorecards.map(sc => {
-                                    const gc = GRADE_COLOR[sc.grade] ?? GRADE_COLOR.C
-                                    return (
-                                        <tr key={sc.supplierId} style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                            <td className="px-4 py-3"><p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{sc.supplierName}</p></td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-16 h-1.5 rounded-full" style={{ background: '#E2E8F0' }}>
-                                                        <div className="h-full rounded-full" style={{ background: sc.onTimeRate >= 90 ? '#15803D' : sc.onTimeRate >= 70 ? '#B45309' : '#B91C1C', width: `${Math.min(sc.onTimeRate, 100)}%` }} />
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                                <thead>
+                                    <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
+                                        {['NCC', 'Giao Đúng Hạn', 'Chất Lượng', 'Lead Time TB', 'Tổng PO', 'Xếp Hạng'].map(h => (
+                                            <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold whitespace-nowrap" style={{ color: '#64748B' }}>{h}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {scorecards.map(sc => {
+                                        const gc = GRADE_COLOR[sc.grade] ?? GRADE_COLOR.C
+                                        return (
+                                            <tr key={sc.supplierId} style={{ borderBottom: '1px solid #E2E8F0' }}>
+                                                <td className="px-4 py-3 whitespace-nowrap"><p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{sc.supplierName}</p></td>
+                                                <td className="px-4 py-3 whitespace-nowrap">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-16 h-1.5 rounded-full" style={{ background: '#E2E8F0' }}>
+                                                            <div className="h-full rounded-full" style={{ background: sc.onTimeRate >= 90 ? '#15803D' : sc.onTimeRate >= 70 ? '#B45309' : '#B91C1C', width: `${Math.min(sc.onTimeRate, 100)}%` }} />
+                                                        </div>
+                                                        <span className="text-xs font-bold" style={{ color: sc.onTimeRate >= 90 ? '#15803D' : sc.onTimeRate >= 70 ? '#B45309' : '#B91C1C' }}>{sc.onTimeRate.toFixed(0)}%</span>
                                                     </div>
-                                                    <span className="text-xs font-bold" style={{ color: sc.onTimeRate >= 90 ? '#15803D' : sc.onTimeRate >= 70 ? '#B45309' : '#B91C1C' }}>{sc.onTimeRate.toFixed(0)}%</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-3"><span className="text-xs font-bold" style={{ color: sc.qualityScore >= 90 ? '#15803D' : '#B45309' }}>{sc.qualityScore.toFixed(0)}/100</span></td>
-                                            <td className="px-4 py-3 text-xs" style={{ color: '#475569' }}>{sc.avgLeadTimeDays.toFixed(0)} ngày</td>
-                                            <td className="px-4 py-3 text-xs text-center" style={{ color: '#0891B2' }}>{sc.totalPOs}</td>
-                                            <td className="px-4 py-3"><span className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-bold" style={{ background: gc.bg, color: gc.color }}>{sc.grade}</span></td>
-                                        </tr>
-                                    )
-                                })}
-                            </tbody>
-                        </table>
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap"><span className="text-xs font-bold" style={{ color: sc.qualityScore >= 90 ? '#15803D' : '#B45309' }}>{sc.qualityScore.toFixed(0)}/100</span></td>
+                                                <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: '#475569' }}>{sc.avgLeadTimeDays.toFixed(0)} ngày</td>
+                                                <td className="px-4 py-3 text-xs text-center whitespace-nowrap" style={{ color: '#0891B2' }}>{sc.totalPOs}</td>
+                                                <td className="px-4 py-3 whitespace-nowrap"><span className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-bold" style={{ background: gc.bg, color: gc.color }}>{sc.grade}</span></td>
+                                            </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
                     ) : <div className="text-center py-16 text-sm" style={{ color: '#64748B' }}>Chưa có dữ liệu scorecard</div>}
                 </div>
             )}
@@ -828,25 +955,25 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                             <div key={i} className="p-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid rgba(180,83,9,0.3)' }}>
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="inline-block text-xs font-semibold uppercase px-2 py-0.5 rounded-full whitespace-nowrap shrink-0" style={{ color: '#B45309', background: 'rgba(180,83,9,0.12)' }}>
-                                        {dup.type === 'PRODUCT' ? '📦 Sản phẩm' : dup.type === 'CUSTOMER' ? '👤 Khách hàng' : '🏭 NCC'}
+                                        {dup.type === 'PRODUCT' ? 'Sản phẩm' : dup.type === 'CUSTOMER' ? 'Khách hàng' : 'Nhà cung cấp'}
                                     </span>
                                     <span className="text-xs font-bold" style={{ color: '#B45309' }}>{dup.similarity}% giống</span>
                                 </div>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="p-2 rounded" style={{ background: '#FFFFFF' }}>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                                    <div className="p-2 rounded bg-slate-50 border border-slate-100">
                                         <p className="text-xs" style={{ color: '#64748B' }}>Mục 1</p>
-                                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{dup.itemA.name}</p>
+                                        <p className="text-sm font-semibold truncate" style={{ color: '#0F172A' }}>{dup.itemA.name}</p>
                                     </div>
-                                    <div className="p-2 rounded" style={{ background: '#FFFFFF' }}>
+                                    <div className="p-2 rounded bg-slate-50 border border-slate-100">
                                         <p className="text-xs" style={{ color: '#64748B' }}>Mục 2</p>
-                                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{dup.itemB.name}</p>
+                                        <p className="text-sm font-semibold truncate" style={{ color: '#0F172A' }}>{dup.itemB.name}</p>
                                     </div>
                                 </div>
                             </div>
                         ))
                     ) : (
                         <div className="text-center py-16 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                            <span className="text-3xl">✅</span>
+                            <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
                             <p className="text-sm mt-3" style={{ color: '#15803D' }}>Không phát hiện dữ liệu trùng lặp</p>
                         </div>
                     )}

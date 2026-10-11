@@ -39,15 +39,17 @@ function KpiCard({ label, value, sub, trend, trendUp, accentColor = '#0E7490' }:
     trend?: string; trendUp?: boolean; accentColor?: string
 }) {
     return (
-        <div className="rounded-md p-5 relative overflow-hidden"
+        <div className="rounded-md p-3.5 sm:p-5 relative overflow-hidden flex flex-col justify-between"
             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: `3px solid ${accentColor}` }}>
-            <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#64748B' }}>{label}</p>
-            <p className="text-2xl font-bold mb-0.5 font-mono" style={{ color: '#0F172A' }}>{value}</p>
-            {sub && <p className="text-[11px]" style={{ color: '#64748B' }}>{sub}</p>}
+            <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 sm:mb-2 truncate" style={{ color: '#64748B' }}>{label}</p>
+                <p className="text-xl sm:text-2xl font-bold mb-0.5 font-mono truncate" style={{ color: '#0F172A' }}>{value}</p>
+                {sub && <p className="text-[10px] sm:text-[11px] truncate" style={{ color: '#64748B' }}>{sub}</p>}
+            </div>
             {trend && (
-                <div className="flex items-center gap-1 mt-1.5">
+                <div className="flex items-center gap-1 mt-1 sm:mt-1.5">
                     {trendUp ? <TrendingUp size={12} style={{ color: '#15803D' }} /> : <TrendingDown size={12} style={{ color: '#B91C1C' }} />}
-                    <span className="text-[11px] font-medium" style={{ color: trendUp ? '#15803D' : '#B91C1C' }}>{trend}</span>
+                    <span className="text-[10px] sm:text-[11px] font-medium truncate" style={{ color: trendUp ? '#15803D' : '#B91C1C' }}>{trend}</span>
                 </div>
             )}
         </div>
@@ -867,13 +869,13 @@ export function CeoOverviewContent({
                     <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#64748B' }}>
                         {t.quickAccess.title}
                     </p>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                         {dashConfig.quickLinks.map((link: any) => (
                             <Link key={link.href} href={link.href} className="flex items-center gap-2 p-2.5 rounded hover:border-[#0891B2] transition-all" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                <div className="w-7 h-7 rounded flex items-center justify-center" style={{ background: 'rgba(8,145,178,0.1)' }}>
+                                <div className="w-7 h-7 rounded flex items-center justify-center shrink-0" style={{ background: 'rgba(8,145,178,0.1)' }}>
                                     <LinkIcon size={12} style={{ color: '#0891B2' }} />
                                 </div>
-                                <span className="text-xs font-medium" style={{ color: '#0F172A' }}>{link.label}</span>
+                                <span className="text-xs font-medium truncate" style={{ color: '#0F172A' }}>{link.label}</span>
                             </Link>
                         ))}
                     </div>
@@ -914,7 +916,7 @@ export function CeoOverviewContent({
                         <Package size={13} style={{ color: '#1D4ED8' }} />
                         <span>{t.warehouseOverview.title}</span>
                     </p>
-                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
                         {[
                             { label: t.warehouseOverview.totalBottles, value: warehouseData.totalBottles.toLocaleString(isEn ? 'en-US' : 'vi-VN'), color: '#0891B2' },
                             { label: t.warehouseOverview.lowStockSKUs, value: warehouseData.lowStockSKUs, color: '#B45309' },

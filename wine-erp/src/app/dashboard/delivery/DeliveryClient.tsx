@@ -30,11 +30,11 @@ const NEXT_STATUS: Record<string, string> = {
 }
 
 const VEHICLE_LABEL: Record<string, string> = {
-    MOTORCYCLE: '🛵 Xe Máy',
-    VAN: '🚐 Xe Van',
-    TRUCK_1T: '🚚 Tải 1T',
-    TRUCK_2T: '🚚 Tải 2T',
-    REFRIGERATED: '❄️ Lạnh',
+    MOTORCYCLE: 'Xe Máy',
+    VAN: 'Xe Van',
+    TRUCK_1T: 'Tải 1T',
+    TRUCK_2T: 'Tải 2T',
+    REFRIGERATED: 'Xe Đông Lạnh',
 }
 
 const STOP_LABEL: Record<string, string> = {
@@ -385,6 +385,96 @@ function CreateRouteDrawer({ open, onClose, onCreated }: {
     )
 }
 
+function DeliveryMobileCard({
+    row,
+    onSelect,
+    onAdvance,
+    isUpdating
+}: {
+    row: DeliveryRouteRow
+    onSelect: (id: string) => void
+    onAdvance: (id: string, nextStatus: string) => void
+    isUpdating: boolean
+}) {
+    const pct = row.stopCount > 0 ? Math.round((row.deliveredCount / row.stopCount) * 100) : 0
+    const nextStatus = NEXT_STATUS[row.status]
+
+    return (
+        <div
+            onClick={() => onSelect(row.id)}
+            className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs space-y-2.5 cursor-pointer hover:border-[#0E7490] transition-colors"
+        >
+            <div className="flex items-start justify-between gap-2">
+                <div>
+                    <div className="flex items-center gap-2">
+                        <span className="font-semibold text-xs text-slate-900">{formatDate(row.routeDate)}</span>
+                        <span className="text-[11px] text-slate-400">•</span>
+                        <span className="text-xs text-slate-700 font-medium">{row.driverName}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-slate-500">
+                        <span>{VEHICLE_LABEL[row.vehicleType] ?? row.vehicleType}</span>
+                        <span>•</span>
+                        <span className="font-mono text-[10px] px-1 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                            {row.vehiclePlate}
+                        </span>
+                    </div>
+                </div>
+                <StatusBadge status={row.status} label={STATUS_LABEL[row.status] ?? row.status} toneOverrides={ROUTE_TONES} />
+            </div>
+
+            {/* Progress Bar & Stops */}
+            <div className="space-y-1 pt-1 border-t border-slate-100">
+                <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-600 font-medium">Tiến độ giao</span>
+                    <span className="font-semibold text-slate-900">{row.deliveredCount}/{row.stopCount} điểm ({pct}%)</span>
+                </div>
+                <div className="h-1.5 rounded-full overflow-hidden bg-slate-100">
+                    <div
+                        className={cn('h-full rounded-full transition-all duration-300', pct === 100 ? 'bg-emerald-600' : 'bg-amber-500')}
+                        style={{ width: `${pct}%` }}
+                    />
+                </div>
+            </div>
+
+            {/* Footer: COD & Action */}
+            <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
+                <div>
+                    {row.totalCod > 0 ? (
+                        <div className="flex items-center gap-1 text-[11px]">
+                            <span className="text-slate-500">COD:</span>
+                            <span className="font-bold text-amber-700">{formatVND(row.totalCod)}</span>
+                        </div>
+                    ) : (
+                        <span className="text-slate-400 text-[11px]">Không có COD</span>
+                    )}
+                </div>
+
+                <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                    {nextStatus && (
+                        <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => onAdvance(row.id, nextStatus)}
+                            loading={isUpdating}
+                            disabled={isUpdating}
+                        >
+                            {!isUpdating && <ChevronDown size={11} aria-hidden />}
+                            {STATUS_LABEL[nextStatus] ?? nextStatus}
+                        </Button>
+                    )}
+                    <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => onSelect(row.id)}
+                    >
+                        E-POD
+                    </Button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
 interface Props {
     initialRows: DeliveryRouteRow[]
     initialTotal: number
@@ -446,7 +536,7 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                     <Select
                         value={statusFilter}
                         onChange={e => { setStatusFilter(e.target.value); reload(e.target.value) }}
-                        className="w-auto min-w-[200px]"
+                        className="w-full sm:w-auto sm:min-w-[200px]"
                         aria-label="Lọc trạng thái"
                     >
                         <option value="">Tất cả trạng thái</option>
@@ -457,72 +547,98 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                 }
             />
 
-            <Table>
-                <THead>
-                    <tr>
-                        <Th>Ngày</Th>
-                        <Th>Tài Xế</Th>
-                        <Th>Phương Tiện</Th>
-                        <Th align="right">Điểm Dừng</Th>
-                        <Th>Tiến Độ</Th>
-                        <Th align="right">COD</Th>
-                        <Th>Trạng Thái</Th>
-                        <Th aria-label="Thao tác" />
-                    </tr>
-                </THead>
-                <TBody>
-                    {loading ? (
-                        <TableMessageRow colSpan={8}><TableSkeleton rows={5} cols={7} /></TableMessageRow>
-                    ) : rows.length === 0 ? (
-                        <TableMessageRow colSpan={8}>
-                            <EmptyState icon={Truck} title="Chưa có lộ trình giao hàng nào" />
-                        </TableMessageRow>
-                    ) : rows.map(row => {
-                        const pct = row.stopCount > 0 ? Math.round((row.deliveredCount / row.stopCount) * 100) : 0
-                        const nextStatus = NEXT_STATUS[row.status]
-                        const isUpdating = updatingId === row.id
-                        return (
-                            <Tr key={row.id} onClick={() => setEpodRouteId(row.id)}>
-                                <Td className="text-lys-primary">{formatDate(row.routeDate)}</Td>
-                                <Td className="text-lys-primary">{row.driverName}</Td>
-                                <Td className="text-xs text-lys-secondary">
-                                    {VEHICLE_LABEL[row.vehicleType] ?? row.vehicleType}<br />
-                                    <span className="type-number">{row.vehiclePlate}</span>
-                                </Td>
-                                <Td align="right" className="type-number font-semibold text-lys-primary">{row.stopCount} điểm</Td>
-                                <Td>
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-lys-subtle min-w-[60px]">
-                                            <div className={cn('h-full rounded-full', pct === 100 ? 'bg-tone-success-fg' : 'bg-tone-warning-fg')} style={{ width: `${pct}%` }} />
+            {/* Mobile Cards List View */}
+            <div className="block md:hidden space-y-3">
+                {loading ? (
+                    <div className="space-y-3">
+                        <Skeleton className="h-28" />
+                        <Skeleton className="h-28" />
+                        <Skeleton className="h-28" />
+                    </div>
+                ) : rows.length === 0 ? (
+                    <EmptyState icon={Truck} title="Chưa có lộ trình giao hàng nào" />
+                ) : (
+                    rows.map(row => (
+                        <DeliveryMobileCard
+                            key={row.id}
+                            row={row}
+                            onSelect={id => setEpodRouteId(id)}
+                            onAdvance={(id, nextStatus) => handleStatusAdvance(id, nextStatus)}
+                            isUpdating={updatingId === row.id}
+                        />
+                    ))
+                )}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block">
+                <Table>
+                    <THead>
+                        <tr>
+                            <Th>Ngày</Th>
+                            <Th>Tài Xế</Th>
+                            <Th>Phương Tiện</Th>
+                            <Th align="right">Điểm Dừng</Th>
+                            <Th>Tiến Độ</Th>
+                            <Th align="right">COD</Th>
+                            <Th>Trạng Thái</Th>
+                            <Th aria-label="Thao tác" />
+                        </tr>
+                    </THead>
+                    <TBody>
+                        {loading ? (
+                            <TableMessageRow colSpan={8}><TableSkeleton rows={5} cols={7} /></TableMessageRow>
+                        ) : rows.length === 0 ? (
+                            <TableMessageRow colSpan={8}>
+                                <EmptyState icon={Truck} title="Chưa có lộ trình giao hàng nào" />
+                            </TableMessageRow>
+                        ) : rows.map(row => {
+                            const pct = row.stopCount > 0 ? Math.round((row.deliveredCount / row.stopCount) * 100) : 0
+                            const nextStatus = NEXT_STATUS[row.status]
+                            const isUpdating = updatingId === row.id
+                            return (
+                                <Tr key={row.id} onClick={() => setEpodRouteId(row.id)}>
+                                    <Td className="text-lys-primary">{formatDate(row.routeDate)}</Td>
+                                    <Td className="text-lys-primary">{row.driverName}</Td>
+                                    <Td className="text-xs text-lys-secondary">
+                                        {VEHICLE_LABEL[row.vehicleType] ?? row.vehicleType}<br />
+                                        <span className="type-number">{row.vehiclePlate}</span>
+                                    </Td>
+                                    <Td align="right" className="type-number font-semibold text-lys-primary">{row.stopCount} điểm</Td>
+                                    <Td>
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-lys-subtle min-w-[60px]">
+                                                <div className={cn('h-full rounded-full', pct === 100 ? 'bg-tone-success-fg' : 'bg-tone-warning-fg')} style={{ width: `${pct}%` }} />
+                                            </div>
+                                            <span className="type-number text-xs font-semibold text-lys-secondary">{row.deliveredCount}/{row.stopCount}</span>
                                         </div>
-                                        <span className="type-number text-xs font-semibold text-lys-secondary">{row.deliveredCount}/{row.stopCount}</span>
-                                    </div>
-                                </Td>
-                                <Td align="right" className="type-number font-semibold text-lys-primary">
-                                    {row.totalCod > 0 ? formatVND(row.totalCod) : '—'}
-                                </Td>
-                                <Td>
-                                    <StatusBadge status={row.status} label={STATUS_LABEL[row.status] ?? row.status} toneOverrides={ROUTE_TONES} />
-                                </Td>
-                                <Td align="right">
-                                    {nextStatus && (
-                                        <Button
-                                            size="sm"
-                                            variant="secondary"
-                                            onClick={e => { e.stopPropagation(); handleStatusAdvance(row.id, nextStatus) }}
-                                            loading={isUpdating}
-                                            disabled={isUpdating}
-                                        >
-                                            {!isUpdating && <ChevronDown size={11} aria-hidden />}
-                                            {STATUS_LABEL[nextStatus] ?? nextStatus}
-                                        </Button>
-                                    )}
-                                </Td>
-                            </Tr>
-                        )
-                    })}
-                </TBody>
-            </Table>
+                                    </Td>
+                                    <Td align="right" className="type-number font-semibold text-lys-primary">
+                                        {row.totalCod > 0 ? formatVND(row.totalCod) : '—'}
+                                    </Td>
+                                    <Td>
+                                        <StatusBadge status={row.status} label={STATUS_LABEL[row.status] ?? row.status} toneOverrides={ROUTE_TONES} />
+                                    </Td>
+                                    <Td align="right">
+                                        {nextStatus && (
+                                            <Button
+                                                size="sm"
+                                                variant="secondary"
+                                                onClick={e => { e.stopPropagation(); handleStatusAdvance(row.id, nextStatus) }}
+                                                loading={isUpdating}
+                                                disabled={isUpdating}
+                                            >
+                                                {!isUpdating && <ChevronDown size={11} aria-hidden />}
+                                                {STATUS_LABEL[nextStatus] ?? nextStatus}
+                                            </Button>
+                                        )}
+                                    </Td>
+                                </Tr>
+                            )
+                        })}
+                    </TBody>
+                </Table>
+            </div>
 
             <CreateRouteDrawer
                 open={drawerOpen}
@@ -558,9 +674,9 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                 ) : (
                     <div className="flex flex-col gap-2">
                         {failedDeliveries.map(fd => (
-                            <div key={fd.stopId} className="flex items-center justify-between gap-3 p-3 rounded-md bg-white border border-tone-danger-border">
-                                <div className="flex items-center gap-3">
-                                    <AlertTriangle size={14} className="text-tone-danger-fg" aria-hidden />
+                            <div key={fd.stopId} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-md bg-white border border-tone-danger-border">
+                                <div className="flex items-start sm:items-center gap-2.5">
+                                    <AlertTriangle size={15} className="text-tone-danger-fg shrink-0 mt-0.5 sm:mt-0" aria-hidden />
                                     <div>
                                         <p className="text-sm font-semibold text-lys-primary">{fd.customerName}</p>
                                         <p className="type-caption">
@@ -568,11 +684,13 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                                         </p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <Badge tone="danger">{FAILURE_LABEL[fd.failureReason] ?? fd.failureReason}</Badge>
-                                    {fd.codAmount > 0 && (
-                                        <span className="type-number text-xs font-semibold text-tone-warning-fg">COD: {formatVND(fd.codAmount)}</span>
-                                    )}
+                                <div className="flex items-center flex-wrap gap-2 sm:gap-3 justify-between sm:justify-end w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                                    <div className="flex items-center gap-2">
+                                        <Badge tone="danger">{FAILURE_LABEL[fd.failureReason] ?? fd.failureReason}</Badge>
+                                        {fd.codAmount > 0 && (
+                                            <span className="type-number text-xs font-semibold text-tone-warning-fg">COD: {formatVND(fd.codAmount)}</span>
+                                        )}
+                                    </div>
                                     <Button size="sm" variant="secondary">
                                         <RotateCcw size={11} aria-hidden /> Giao Lại
                                     </Button>

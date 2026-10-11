@@ -6,7 +6,7 @@ import {
     Users, Search, Phone, Mail, Handshake, Wine,
     Package, AlertCircle, TrendingUp, ChevronRight, MessageSquarePlus,
     ShoppingCart, Clock, CheckCircle2, Loader2, Crown, Calendar, AlertTriangle,
-    ArrowUpDown, ArrowDown, ArrowUp, Gem, Target, PhoneCall
+    ArrowUpDown, ArrowDown, ArrowUp, Gem, Target, PhoneCall, Award, BarChart3, User
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { CustomerCRMRow, getCRMCustomers, logCustomerActivity, ActivityType, getCustomer360, getCustomerTransactions, recalcAllCustomerTiers } from './actions'
@@ -37,11 +37,11 @@ const ACTIVITY_ICONS: Record<ActivityType, React.FC<any>> = {
     OTHER: MessageSquarePlus,
 }
 
-const TIER_CFG: Record<string, { label: string; color: string; icon: string }> = {
-    PLATINUM: { label: 'Platinum', color: '#0F172A', icon: '💎' },
-    GOLD: { label: 'Gold', color: '#B45309', icon: '🥇' },
-    SILVER: { label: 'Silver', color: '#475569', icon: '🥈' },
-    BRONZE: { label: 'Bronze', color: '#87685A', icon: '🥉' },
+const TIER_CFG: Record<string, { label: string; color: string }> = {
+    PLATINUM: { label: 'Platinum', color: '#0F172A' },
+    GOLD: { label: 'Gold', color: '#B45309' },
+    SILVER: { label: 'Silver', color: '#475569' },
+    BRONZE: { label: 'Bronze', color: '#87685A' },
 }
 
 function getTierFromRevenue(revenue: number): string {
@@ -72,15 +72,17 @@ function CustomerCard({ row, onSelect, isSelected }: { row: CustomerCRMRow; onSe
                         <span className="inline-block text-xs px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0"
                             style={{ color: typeCfg.color, background: typeCfg.bg }}>{typeCfg.label}</span>
                         {tier !== 'BRONZE' && (
-                            <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0"
+                            <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0"
                                 style={{ color: tierCfg.color, background: `${tierCfg.color}15` }}>
-                                {tierCfg.icon} {tierCfg.label}
+                                <Award size={10} className="shrink-0" />
+                                <span>{tierCfg.label}</span>
                             </span>
                         )}
                         {row.openComplaints > 0 && (
-                            <span className="inline-block text-xs px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0"
+                            <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0"
                                 style={{ color: '#B91C1C', background: 'rgba(185,28,28,0.15)' }}>
-                                ⚠ {row.openComplaints} KN
+                                <AlertTriangle size={11} className="shrink-0" />
+                                <span>{row.openComplaints} KN</span>
                             </span>
                         )}
                     </div>
@@ -104,8 +106,9 @@ function CustomerCard({ row, onSelect, isSelected }: { row: CustomerCRMRow; onSe
             </div>
 
             {row.salesRepName && (
-                <p className="text-xs mt-2" style={{ color: '#64748B' }}>
-                    👤 {row.salesRepName} · {row.paymentTerm}
+                <p className="text-xs mt-2 flex items-center gap-1.5" style={{ color: '#64748B' }}>
+                    <User size={12} className="shrink-0" />
+                    <span>{row.salesRepName} · {row.paymentTerm}</span>
                 </p>
             )}
         </button>
@@ -273,7 +276,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                 }),
                                 {
                                     loading: 'Đang tính toán tier...',
-                                    success: (res: any) => `✅ Đã cập nhật ${res.updated} khách hàng`,
+                                    success: (res: any) => `Đã cập nhật ${res.updated} khách hàng`,
                                     error: 'Lỗi tính toán',
                                     finally: () => setTierRecalcing(false)
                                 }
@@ -450,8 +453,8 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                 const count = tierDist[tier] || 0
                                                 return (
                                                     <div key={tier} className="flex-1 text-center p-2 rounded" style={{ background: `${cfg.color}08` }}>
-                                                        <p className="text-xs">{cfg.icon}</p>
-                                                        <p className="text-sm font-bold" style={{ color: cfg.color }}>{count}</p>
+                                                        <Award size={14} className="mx-auto" style={{ color: cfg.color }} />
+                                                        <p className="text-sm font-bold mt-1" style={{ color: cfg.color }}>{count}</p>
                                                         <p className="text-xs" style={{ color: '#64748B' }}>{cfg.label}</p>
                                                     </div>
                                                 )
@@ -461,7 +464,10 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
 
                                     {/* Top 5 Customers */}
                                     <div>
-                                        <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>🏆 Top 5 Khách Hàng</p>
+                                        <p className="text-xs font-semibold uppercase tracking-wide mb-2 flex items-center gap-1.5" style={{ color: '#64748B' }}>
+                                            <Award size={13} className="text-amber-600 shrink-0" />
+                                            <span>Top 5 Khách Hàng</span>
+                                        </p>
                                         <div className="space-y-1">
                                             {topCustomers.map((c, i) => {
                                                 const tier = getTierFromRevenue(c.totalRevenue)
@@ -474,7 +480,9 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                             <span className="text-xs font-bold" style={{ color: i < 3 ? '#B45309' : '#64748B' }}>#{i + 1}</span>
                                                             <div className="text-left">
                                                                 <p className="text-xs font-semibold" style={{ color: '#0F172A' }}>{c.name}</p>
-                                                                <p className="text-[10px]" style={{ color: '#64748B' }}>{cfg.icon} {cfg.label} · {c.totalOrders} đơn</p>
+                                                                <p className="text-[10px] flex items-center gap-1" style={{ color: cfg.color }}>
+                                                                    <Award size={10} /> {cfg.label} · {c.totalOrders} đơn
+                                                                </p>
                                                             </div>
                                                         </div>
                                                         <span className="text-xs font-bold" style={{ color: '#0891B2' }}>
@@ -571,9 +579,10 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                         </div>
                                         {/* Transaction History Button */}
                                         {!txOpen && (
-                                            <button onClick={loadTxHistory} className="w-full py-2 text-xs font-semibold rounded transition-all"
+                                            <button onClick={loadTxHistory} className="w-full py-2 text-xs font-semibold rounded transition-all flex items-center justify-center gap-1.5"
                                                 style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
-                                                📊 Xem Toàn Bộ Lịch Sử Giao Dịch
+                                                <BarChart3 size={13} className="shrink-0" />
+                                                <span>Xem Toàn Bộ Lịch Sử Giao Dịch</span>
                                             </button>
                                         )}
 
@@ -598,8 +607,9 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                 {/* Top SKUs */}
                                                 {txHistory.topSkus.length > 0 && (
                                                     <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                                        <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#B45309' }}>
-                                                            🏆 Top SKU Hay Mua
+                                                        <p className="text-xs font-semibold uppercase tracking-wide mb-2 flex items-center gap-1.5" style={{ color: '#B45309' }}>
+                                                            <Award size={13} className="shrink-0" />
+                                                            <span>Top SKU Hay Mua</span>
                                                         </p>
                                                         <div className="space-y-1">
                                                             {txHistory.topSkus.slice(0, 5).map((sku, i) => (

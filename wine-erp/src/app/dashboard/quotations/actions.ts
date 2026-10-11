@@ -652,7 +652,7 @@ export async function exportQuotationExcel(quotationId: string): Promise<{ succe
             const group = groups[key]
             // Add a group header row in Excel
             rows.push({
-                stt: `📦 ${group.supplierName} (${group.country})`,
+                stt: `${group.supplierName} (${group.country})`,
                 skuCode: '',
                 productName: '',
                 wineType: '',

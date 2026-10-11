@@ -462,24 +462,24 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                             <Field label="Quốc gia">
                                 <Select value={form.countryCode ?? ''} onChange={e => set('countryCode', e.target.value || null)}>
                                     <option value="">Chọn quốc gia...</option>
-                                    <option value="FR">🇫🇷 Pháp</option>
-                                    <option value="IT">🇮🇹 Ý</option>
-                                    <option value="ES">🇪🇸 Tây Ban Nha</option>
-                                    <option value="PT">🇵🇹 Bồ Đào Nha</option>
-                                    <option value="DE">🇩🇪 Đức</option>
-                                    <option value="US">🇺🇸 Mỹ</option>
-                                    <option value="AU">🇦🇺 Úc</option>
-                                    <option value="NZ">🇳🇿 New Zealand</option>
-                                    <option value="AR">🇦🇷 Argentina</option>
-                                    <option value="CL">🇨🇱 Chile</option>
-                                    <option value="ZA">🇿🇦 Nam Phi</option>
-                                    <option value="GE">🇬🇪 Georgia</option>
-                                    <option value="HU">🇭🇺 Hungary</option>
-                                    <option value="GR">🇬🇷 Hy Lạp</option>
-                                    <option value="AT">🇦🇹 Áo</option>
-                                    <option value="RO">🇷🇴 Romania</option>
-                                    <option value="MX">🇲🇽 Mexico</option>
-                                    <option value="JP">🇯🇵 Nhật Bản</option>
+                                    <option value="FR">Pháp (France)</option>
+                                    <option value="IT">Ý (Italy)</option>
+                                    <option value="ES">Tây Ban Nha (Spain)</option>
+                                    <option value="PT">Bồ Đào Nha (Portugal)</option>
+                                    <option value="DE">Đức (Germany)</option>
+                                    <option value="US">Mỹ (USA)</option>
+                                    <option value="AU">Úc (Australia)</option>
+                                    <option value="NZ">New Zealand</option>
+                                    <option value="AR">Argentina</option>
+                                    <option value="CL">Chile</option>
+                                    <option value="ZA">Nam Phi (South Africa)</option>
+                                    <option value="GE">Georgia</option>
+                                    <option value="HU">Hungary</option>
+                                    <option value="GR">Hy Lạp</option>
+                                    <option value="AT">Áo (Austria)</option>
+                                    <option value="RO">Romania</option>
+                                    <option value="MX">Mexico</option>
+                                    <option value="JP">Nhật Bản (Japan)</option>
                                 </Select>
                             </Field>
                             <Field label="Nhà sản xuất" required error={errors.producerId}>
@@ -519,13 +519,13 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                         placeholder="Tên nhà sản xuất"
                                     />
                                     <Select value={newProducerCountry} onChange={e => setNewProducerCountry(e.target.value)}>
-                                        <option value="FR">🇫🇷 Pháp</option>
-                                        <option value="IT">🇮🇹 Ý</option>
-                                        <option value="ES">🇪🇸 TBN</option>
-                                        <option value="US">🇺🇸 Mỹ</option>
-                                        <option value="AU">🇦🇺 Úc</option>
-                                        <option value="CL">🇨🇱 Chile</option>
-                                        <option value="AR">🇦🇷 Argentina</option>
+                                        <option value="FR">Pháp</option>
+                                        <option value="IT">Ý</option>
+                                        <option value="ES">Tây Ban Nha</option>
+                                        <option value="US">Mỹ</option>
+                                        <option value="AU">Úc</option>
+                                        <option value="CL">Chile</option>
+                                        <option value="AR">Argentina</option>
                                     </Select>
                                 </div>
                                 <div className="flex justify-end gap-2">
@@ -559,7 +559,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                 <option value="">— Chọn vùng / appellation —</option>
                                 {appellations.map(a => (
                                     <option key={a.id} value={a.id}>
-                                        {COUNTRY_FLAGS_MINI[a.region?.country ?? ''] ?? ''} {a.name}{a.region?.name ? ` (${a.region.name})` : ''}
+                                        {a.name}{a.region?.name ? ` (${a.region.name})` : ''}
                                     </option>
                                 ))}
                             </Select>
@@ -930,10 +930,10 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                             <Field label="Huy chương">
                                                 <Select value={awardMedal} onChange={e => setAwardMedal(e.target.value)}>
                                                     <option value="">— Không —</option>
-                                                    <option value="DOUBLE_GOLD">🏆 Double Gold</option>
-                                                    <option value="GOLD">🥇 Gold</option>
-                                                    <option value="SILVER">🥈 Silver</option>
-                                                    <option value="BRONZE">🥉 Bronze</option>
+                                                    <option value="DOUBLE_GOLD">Double Gold</option>
+                                                    <option value="GOLD">Gold</option>
+                                                    <option value="SILVER">Silver</option>
+                                                    <option value="BRONZE">Bronze</option>
                                                 </Select>
                                             </Field>
                                             <Field label="Vintage">
@@ -988,9 +988,9 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                         {awards.map(aw => (
                                             <div key={aw.id} className="flex items-center gap-3 p-3 rounded-lg group"
                                                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                                <div className="w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0"
+                                                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
                                                     style={{ background: 'rgba(180,83,9,0.12)' }}>
-                                                    {aw.medalLabel?.charAt(0) ?? '🏅'}
+                                                    <Award size={14} className="text-amber-600" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2">
@@ -1057,10 +1057,4 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
             {confirmDialog}
         </>
     )
-}
-
-const COUNTRY_FLAGS_MINI: Record<string, string> = {
-    FR: '🇫🇷', IT: '🇮🇹', ES: '🇪🇸', PT: '🇵🇹', DE: '🇩🇪',
-    US: '🇺🇸', AU: '🇦🇺', NZ: '🇳🇿', AR: '🇦🇷', CL: '🇨🇱', ZA: '🇿🇦',
-    GE: '🇬🇪', HU: '🇭🇺', GR: '🇬🇷', AT: '🇦🇹', RO: '🇷🇴', MX: '🇲🇽', JP: '🇯🇵',
 }

@@ -229,10 +229,10 @@ export async function POST() {
             .sort((a, b) => b.totalRevenue - a.totalRevenue)
             .map(c => {
                 const flags: string[] = []
-                if (c.isChurning) flags.push('⚠️CHURNING')
-                if (c.openComplaints > 0) flags.push(`🔴${c.openComplaints} complaints`)
-                if (c.overdueAmount > 0) flags.push(`💰overdue: ${c.overdueAmount.toLocaleString()}đ`)
-                if (c.creditHold) flags.push('🚫CREDIT-HOLD')
+                if (c.isChurning) flags.push('[CHURNING]')
+                if (c.openComplaints > 0) flags.push(`[${c.openComplaints} complaints]`)
+                if (c.overdueAmount > 0) flags.push(`[overdue: ${c.overdueAmount.toLocaleString()}đ]`)
+                if (c.creditHold) flags.push('[CREDIT-HOLD]')
 
                 return `${c.name} (${c.code}) | ${c.type}/${c.channel ?? 'N/A'} | Tier: ${c.tier} | Revenue: ${c.totalRevenue.toLocaleString()}đ (tháng này: ${c.monthRevenue.toLocaleString()}đ, growth: ${c.revenueGrowth}%) | Orders: ${c.totalOrders} | Last order: ${c.daysSinceLastOrder !== null ? c.daysSinceLastOrder + 'd ago' : 'Never'} | AR: ${c.arOutstanding.toLocaleString()}đ | Sales Rep: ${c.salesRep} | Tags: [${c.tags.join(', ')}] | Activities (30d): ${c.recentActivities} | Opps: ${c.oppCount} ${flags.length > 0 ? '| ' + flags.join(' ') : ''}`
             }).join('\n')
@@ -266,23 +266,24 @@ ${oppList || 'Không có cơ hội nào'}
 
 Hãy viết BÁO CÁO CRM TOÀN DIỆN CHO CEO bao gồm:
 
-1. **📊 TỔNG QUAN SỨC KHỎE CRM** — CRM Health Score (1-10), tổng hợp tình trạng quan hệ khách hàng, xu hướng tăng trưởng
-2. **🏆 TOP KHÁCH HÀNG GIÁ TRỊ CAO** — Phân tích Top 5 khách hàng, đóng góp doanh thu, xu hướng mua hàng, rủi ro mất khách
-3. **⚠️ KHÁCH HÀNG RỦI RO & CHURNING** — Chi tiết khách có dấu hiệu churning, complaint chưa xử lý, credit hold, đề xuất hành động cứu vớt
-4. **💰 PHÂN TÍCH CÔNG NỢ** — Tổng AR, quá hạn, risk concentration, khách nào cần ưu tiên thu hồi
-5. **📈 XU HƯỚNG & CƠ HỘI** — Xu hướng doanh thu month-over-month, khách hàng tăng trưởng tốt, cơ hội up-sell/cross-sell dựa trên wine preference
-6. **🎯 GỢI Ý CHIẾN LƯỢC** — Top 5 hành động CEO nên thực hiện ngay:
+1. **TỔNG QUAN SỨC KHỎE CRM** — CRM Health Score (1-10), tổng hợp tình trạng quan hệ khách hàng, xu hướng tăng trưởng
+2. **TOP KHÁCH HÀNG GIÁ TRỊ CAO** — Phân tích Top 5 khách hàng, đóng góp doanh thu, xu hướng mua hàng, rủi ro mất khách
+3. **KHÁCH HÀNG RỦI RO & CHURNING** — Chi tiết khách có dấu hiệu churning, complaint chưa xử lý, credit hold, đề xuất hành động cứu vớt
+4. **PHÂN TÍCH CÔNG NỢ** — Tổng AR, quá hạn, risk concentration, khách nào cần ưu tiên thu hồi
+5. **XU HƯỚNG & CƠ HỘI** — Xu hướng doanh thu month-over-month, khách hàng tăng trưởng tốt, cơ hội up-sell/cross-sell dựa trên wine preference
+6. **GỢI Ý CHIẾN LƯỢC** — Top 5 hành động CEO nên thực hiện ngay:
    - Retention play cho khách churning
    - Upsell play cho khách top-tier
    - Collection play cho AR overdue
    - Engagement play cho khách ít tương tác
-7. **🍷 WINE PREFERENCE INSIGHTS** — Xu hướng preference phổ biến, cơ hội curate offering
+7. **WINE PREFERENCE INSIGHTS** — Xu hướng preference phổ biến, cơ hội curate offering
 
 Yêu cầu:
 - Viết bằng tiếng Việt, phong cách CRO briefing cho CEO
 - Cụ thể tên khách hàng, tên sales rep, số liệu thực
 - Tone: chiến lược, data-driven, actionable
-- Nêu bật rủi ro → đề xuất giải pháp ngay`
+- Nêu bật rủi ro → đề xuất giải pháp ngay
+- Tuyệt đối không dùng emoji/icon trong văn bản báo cáo`
 
         // ── Resolve prompt from DB or fallback ──
         const dbPrompt = await resolvePromptTemplate('crm-analysis')

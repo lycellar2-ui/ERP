@@ -1,19 +1,12 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { Search, Download, Upload, Calculator, RefreshCw, Trash2, ArrowUpRight, Plus, HelpCircle, Check, ChevronDown, LayoutList } from 'lucide-react'
+import { Search, Download, Upload, Calculator, RefreshCw, Trash2, ArrowUpRight, Plus, HelpCircle, Check, ChevronDown, LayoutList, Wine, Lightbulb, ClipboardList } from 'lucide-react'
 import { toast } from 'sonner'
 import { ExcelImportDialog } from '@/components/ExcelImportDialog'
 import { MarginProductRow, getMarginProducts, bulkImportMarginPrices } from './actions'
 import { WineTypeBadge } from '@/components/WineTypeBadge'
 import { useConfirmDialog } from '@/components/ui'
-
-// Flag emoji dictionary
-const COUNTRY_FLAGS: Record<string, string> = {
-    FR: '🇫🇷', IT: '🇮🇹', ES: '🇪🇸', PT: '🇵🇹', DE: '🇩🇪',
-    US: '🇺🇸', AU: '🇦🇺', NZ: '🇳🇿', AR: '🇦🇷', CL: '🇨🇱', ZA: '🇿🇦',
-    GE: '🇬🇪', HU: '🇭🇺', GR: '🇬🇷', AT: '🇦🇹', RO: '🇷🇴', MX: '🇲🇽', JP: '🇯🇵',
-}
 
 const COUNTRY_NAMES: Record<string, string> = {
     FR: 'Pháp', IT: 'Ý', ES: 'TBN', PT: 'BĐN', DE: 'Đức',
@@ -449,7 +442,9 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                             <div className="relative group leading-none flex items-center">
                                 <HelpCircle size={13} className="text-slate-600 hover:text-[#B45309] cursor-pointer transition-colors" />
                                 <div className="absolute left-0 sm:left-auto sm:right-0 top-5 hidden group-hover:block w-72 p-3 bg-slate-50/95 border border-slate-200 rounded-lg shadow-2xl text-[10px] text-slate-700 space-y-1.5 z-50 leading-relaxed backdrop-blur-md font-normal normal-case">
-                                    <p className="font-bold text-[#B45309]">💡 Hướng dẫn nhanh:</p>
+                                    <p className="font-bold text-[#B45309] flex items-center gap-1">
+                                        <Lightbulb size={12} /> Hướng dẫn nhanh:
+                                    </p>
                                     <p>• Chọn NCC để rút gọn danh sách tìm kiếm (không bắt buộc).</p>
                                     <p>• Nhập mã SKU hoặc Tên sản phẩm để mô phỏng.</p>
                                     <p>• Hệ thống lưu trữ độc lập Cost, Retail và Wholesale theo bảng Excel bạn đã tải lên.</p>
@@ -482,7 +477,6 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                     </div>
                                 ) : (
                                     autocompleteSuggestions.map(p => {
-                                        const flag = COUNTRY_FLAGS[p.country] ?? '🌍'
                                         return (
                                             <button
                                                 key={p.id}
@@ -498,7 +492,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                                     {p.primaryImageUrl ? (
                                                         <img src={p.primaryImageUrl} alt={p.productName} className="w-full h-full object-contain p-0.5" />
                                                     ) : (
-                                                        <span className="text-xs">🍷</span>
+                                                        <Wine size={14} className="text-slate-400" />
                                                     )}
                                                 </div>
                                                 <div className="min-w-0 flex-1 leading-tight">
@@ -513,7 +507,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                                     <div className="text-[10px] text-slate-400 font-sans mt-0.5 flex items-center gap-1.5">
                                                         <span className="text-slate-600 font-medium">{p.skuCode}</span>
                                                         <span>•</span>
-                                                        <span>{flag} {p.country}</span>
+                                                        <span className="font-semibold text-slate-700">{p.country}</span>
                                                         <span>•</span>
                                                         <WineTypeBadge type={p.wineType} />
                                                     </div>
@@ -565,7 +559,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                 {activeProduct.primaryImageUrl ? (
                                     <img src={activeProduct.primaryImageUrl} alt={activeProduct.productName} className="max-h-full max-w-full object-contain" />
                                 ) : (
-                                    <span className="text-3xl">🍷</span>
+                                    <Wine className="w-10 h-10 text-slate-300" />
                                 ) }
                             </div>
                             <div className="text-center leading-tight">
@@ -579,7 +573,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                     )}
                                 </div>
                                 <div className="flex items-center justify-center gap-1.5 mt-1.5">
-                                    <span className="text-xs">{COUNTRY_FLAGS[activeProduct.country] ?? '🌍'}</span>
+                                    <span className="text-xs text-slate-500 font-medium">{COUNTRY_NAMES[activeProduct.country] ?? activeProduct.country}</span>
                                     <WineTypeBadge type={activeProduct.wineType} />
 
                                 </div>
@@ -719,7 +713,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                     </div>
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-center p-8 py-10 border border-slate-200/20 rounded-lg bg-white/10">
-                        <span className="text-3xl mb-2 block">🍷</span>
+                        <Wine className="w-10 h-10 text-slate-300 mb-2" />
                         <h4 className="text-xs font-bold text-slate-400">Check margin</h4>
                         <p className="text-[10px] text-slate-500 max-w-sm mt-1">
                             Vui lòng chọn NCC và Sản phẩm phía trên để kiểm tra margin.
@@ -771,7 +765,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
             {/* Empty State warning */}
             {addedProducts.length === 0 ? (
                 <div className="bg-slate-50 border border-slate-200/40 rounded-lg p-12 text-center">
-                    <span className="text-3xl mb-2 block">📋</span>
+                    <ClipboardList className="w-10 h-10 text-slate-300 mx-auto mb-2" />
                     <p className="font-semibold text-slate-700 text-xs">Chưa có sản phẩm nào trong bảng check margin</p>
                     <p className="text-[10px] text-slate-500 max-w-sm mt-1">
                         Hãy chọn sản phẩm phía trên, nhập mức chiết khấu ưu đãi cho khách và click "+ Thêm vào bảng check margin".
@@ -996,7 +990,7 @@ function SimulatedTableRow({
     onDelete: (productId: string) => void
 }) {
     const p = row.product
-    const flag = COUNTRY_FLAGS[p.country] ?? '🌍'
+    const countryLabel = COUNTRY_NAMES[p.country] ?? p.country
 
     // Smart vertical image auto-rotation ref/effect
     const [isVertical, setIsVertical] = useState(false)
@@ -1041,7 +1035,7 @@ function SimulatedTableRow({
                                 }`}
                             />
                         ) : (
-                            <span className="text-[10px]" style={{ color: '#64748B' }}>🍷</span>
+                            <Wine className="w-4 h-4 text-slate-300" />
                         )}
                     </div>
                     <div className="min-w-0 leading-tight">
@@ -1058,7 +1052,7 @@ function SimulatedTableRow({
                         <p className="text-[10px] mt-0.5 text-slate-400 font-sans flex items-center gap-1 flex-wrap">
                             <span className="text-slate-600 font-bold">{p.skuCode}</span>
                             <span>•</span>
-                            <span>{flag}</span>
+                            <span>{countryLabel}</span>
                         </p>
                     </div>
                 </div>
@@ -1226,7 +1220,7 @@ function MobileSimulatedCard({
     onDelete: (productId: string) => void
 }) {
     const p = row.product
-    const flag = COUNTRY_FLAGS[p.country] ?? '🌍'
+    const countryLabel = COUNTRY_NAMES[p.country] ?? p.country
 
     // Smart vertical image auto-rotation ref/effect
     const [isVertical, setIsVertical] = useState(false)
@@ -1270,7 +1264,7 @@ function MobileSimulatedCard({
                             }`}
                         />
                     ) : (
-                        <span className="text-lg">🍷</span>
+                        <Wine className="w-6 h-6 text-slate-300" />
                     )}
                 </div>
                 <div className="min-w-0 flex-1 leading-tight pr-6">
@@ -1284,7 +1278,7 @@ function MobileSimulatedCard({
                     </div>
                     <p className="text-[11px] text-slate-600 font-sans font-bold mt-0.5">{p.skuCode}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-[10px]">{flag}</span>
+                        <span className="text-[10px] text-slate-500 font-medium">{countryLabel}</span>
                         <WineTypeBadge type={p.wineType} />
 
                     </div>

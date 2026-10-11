@@ -155,20 +155,20 @@ function generateReasoning(
 ): string {
     const parts: string[] = []
 
-    if (trend === 'growing') parts.push('📈 Nhu cầu đang tăng — có thể áp dụng giá cao hơn.')
-    else if (trend === 'declining') parts.push('📉 Nhu cầu đang giảm — xem xét khuyến mãi hoặc giảm giá.')
-    else if (trend === 'stable') parts.push('📊 Nhu cầu ổn định.')
-    else parts.push('⚠️ Chưa đủ dữ liệu bán hàng để phân tích.')
+    if (trend === 'growing') parts.push('Nhu cầu đang tăng — có thể áp dụng giá cao hơn.')
+    else if (trend === 'declining') parts.push('Nhu cầu đang giảm — xem xét khuyến mãi hoặc giảm giá.')
+    else if (trend === 'stable') parts.push('Nhu cầu ổn định.')
+    else parts.push('Chưa đủ dữ liệu bán hàng để phân tích.')
 
     if (avgDemand > 0) {
         const monthsOfStock = Math.round(stock / avgDemand)
-        if (monthsOfStock > 6) parts.push(`⚠️ Tồn kho ${monthsOfStock} tháng — nên giảm giá đẩy hàng.`)
-        else if (monthsOfStock < 2) parts.push(`🔥 Chỉ còn ${monthsOfStock} tháng tồn — có thể tăng giá.`)
+        if (monthsOfStock > 6) parts.push(`Tồn kho ${monthsOfStock} tháng — nên giảm giá đẩy hàng.`)
+        else if (monthsOfStock < 2) parts.push(`Chỉ còn ${monthsOfStock} tháng tồn — có thể tăng giá.`)
     }
 
     if (marketPrice > 0 && cost > 0) {
         const marketMargin = ((marketPrice - cost) / marketPrice) * 100
-        parts.push(`💰 Biên lợi nhuận thị trường: ${marketMargin.toFixed(1)}%.`)
+        parts.push(`Biên lợi nhuận thị trường: ${marketMargin.toFixed(1)}%.`)
     }
 
     return parts.join(' ')
@@ -519,8 +519,8 @@ export async function generateCEOSummary() {
     ])
 
     const alerts: string[] = []
-    if (overdueCount > 0) alerts.push(`⚠ ${overdueCount} hóa đơn quá hạn`)
-    if (pendingExp > 0) alerts.push(`📋 ${pendingExp} chi phí chờ duyệt`)
+    if (overdueCount > 0) alerts.push(`${overdueCount} hóa đơn quá hạn`)
+    if (pendingExp > 0) alerts.push(`${pendingExp} chi phí chờ duyệt`)
 
     return {
         period: `${now.getMonth() + 1}/${now.getFullYear()}`,

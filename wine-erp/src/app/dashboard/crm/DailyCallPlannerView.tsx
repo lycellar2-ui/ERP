@@ -6,7 +6,7 @@ import {
     Target, Calendar, Search, Filter, Plus, RefreshCw, X, Download,
     Sparkles, AlertCircle, Check, Smartphone, ArrowRight, Trash2,
     CalendarCheck, UserCheck, PhoneMissed, PhoneOff, MoreVertical,
-    MessageSquare, Copy, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Zap
+    MessageSquare, Copy, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Zap, Wine, FileText, User
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useConfirmDialog } from '@/components/ui'
@@ -50,7 +50,7 @@ const CALL_OUTCOMES_CFG = [
     {
         id: 'CONNECTED_CLOSED_DEAL',
         label: 'Chốt đơn hàng thành công!',
-        shortLabel: 'Chốt đơn 🎯',
+        shortLabel: 'Chốt đơn',
         color: '#15803D',
         bg: 'rgba(21,128,61, 0.15)',
         badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold',
@@ -644,7 +644,7 @@ export function DailyCallPlannerView({
                                 onChange={e => setSelectedRepId(e.target.value)}
                                 className="bg-slate-50 border border-slate-200 text-slate-800 text-xs font-medium rounded-md p-1.5 outline-none focus:border-teal-500 cursor-pointer"
                             >
-                                <option value="ALL">👤 Toàn bộ Telesale ({salesReps.length})</option>
+                                <option value="ALL">Toàn bộ Telesale ({salesReps.length})</option>
                                 {salesReps.map(rep => (
                                     <option key={rep.id} value={rep.id}>
                                         {rep.name}
@@ -756,7 +756,7 @@ export function DailyCallPlannerView({
                             Phân Bổ Kênh
                         </div>
                         <div className="text-xs font-mono font-bold text-slate-700 mt-1">
-                            🏢 {stats.corporatePlanned} Corp • 🍷 {stats.retailPlanned} Ret
+                            Corp: {stats.corporatePlanned} · Ret: {stats.retailPlanned}
                         </div>
                     </div>
                 </div>
@@ -818,31 +818,36 @@ export function DailyCallPlannerView({
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 {/* Channel badge */}
                                                 {plan.channel === 'CORPORATE' ? (
-                                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-md font-bold bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap shrink-0">
-                                                        🏢 Corporate
+                                                    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-bold bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap shrink-0">
+                                                        <Building2 size={11} className="shrink-0" />
+                                                        <span>Corporate</span>
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-md font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
-                                                        🍷 Retail
+                                                    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
+                                                        <Wine size={11} className="shrink-0" />
+                                                        <span>Retail</span>
                                                     </span>
                                                 )}
 
                                                 {/* Priority badge */}
                                                 {plan.priority === 'URGENT' && (
-                                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-md font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap shrink-0">
-                                                        ⚡ Khẩn cấp
+                                                    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap shrink-0">
+                                                        <Zap size={11} className="shrink-0" />
+                                                        <span>Khẩn cấp</span>
                                                     </span>
                                                 )}
                                                 {plan.priority === 'HIGH' && (
-                                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-md font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
-                                                        ⭐ Ưu tiên cao
+                                                    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
+                                                        <AlertCircle size={11} className="shrink-0" />
+                                                        <span>Ưu tiên cao</span>
                                                     </span>
                                                 )}
 
                                                 {/* Status badge */}
                                                 {isCompleted ? (
-                                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-md font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
-                                                        ✓ Đã hoàn thành
+                                                    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
+                                                        <CheckCircle2 size={11} className="shrink-0" />
+                                                        <span>Đã hoàn thành</span>
                                                     </span>
                                                 ) : (
                                                     <span className="inline-block text-[10px] px-2 py-0.5 rounded-md font-bold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap shrink-0">
@@ -869,8 +874,9 @@ export function DailyCallPlannerView({
                                                     </span>
                                                 )}
                                                 <div className="flex items-center gap-1">
-                                                    <span className="inline-block text-xs font-mono font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200/60 whitespace-nowrap shrink-0">
-                                                        📞 {plan.phone}
+                                                    <span className="inline-flex items-center gap-1 text-xs font-mono font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200/60 whitespace-nowrap shrink-0">
+                                                        <Phone size={11} className="shrink-0" />
+                                                        <span>{plan.phone}</span>
                                                     </span>
                                                     <button
                                                         type="button"
@@ -893,19 +899,24 @@ export function DailyCallPlannerView({
 
                                             {/* Purpose & Preparation Notes */}
                                             <div className="text-xs text-slate-600 space-y-0.5">
-                                                <p className="font-semibold text-slate-800">
-                                                    🎯 Mục đích: <span className="font-normal text-slate-600">{plan.callType}</span>
+                                                <p className="font-semibold text-slate-800 flex items-center gap-1.5">
+                                                    <Target size={12} className="text-teal-600 shrink-0" />
+                                                    <span>Mục đích: <span className="font-normal text-slate-600">{plan.callType}</span></span>
                                                 </p>
                                                 {plan.notes && (
-                                                    <p className="text-slate-500 italic bg-slate-50 p-2 rounded-md border border-slate-100 mt-1">
-                                                        📝 Lưu ý: {plan.notes}
+                                                    <p className="text-slate-500 italic bg-slate-50 p-2 rounded-md border border-slate-100 mt-1 flex items-start gap-1.5">
+                                                        <FileText size={12} className="text-slate-400 shrink-0 mt-0.5" />
+                                                        <span>Lưu ý: {plan.notes}</span>
                                                     </p>
                                                 )}
                                             </div>
 
                                             {/* Rep & Assigner info */}
                                             <div className="text-[11px] text-slate-400 flex items-center gap-2 pt-1 font-mono">
-                                                <span>👤 Phụ trách: <strong>{plan.salespersonName}</strong></span>
+                                                <span className="flex items-center gap-1">
+                                                    <User size={11} className="shrink-0" />
+                                                    <span>Phụ trách: <strong>{plan.salespersonName}</strong></span>
+                                                </span>
                                                 {plan.assignedByName && (
                                                     <span>• Giao bởi: <em>{plan.assignedByName}</em></span>
                                                 )}
@@ -1115,8 +1126,9 @@ export function DailyCallPlannerView({
                             {/* Follow-up date (if busy or interested) */}
                             {(reportOutcome.includes('CALLBACK') || reportOutcome.includes('BUSY') || reportOutcome.includes('INTERESTED')) && (
                                 <div className="p-3 rounded-md bg-amber-50/70 border border-amber-200/80 space-y-1.5 animate-in fade-in duration-150">
-                                    <label className="block font-bold text-amber-900">
-                                        📅 Lịch Hẹn Gọi Lại Tiếp Theo (Tự động lên kế hoạch ngày đó)
+                                    <label className="font-bold text-amber-900 flex items-center gap-1.5">
+                                        <Calendar size={12} className="shrink-0 text-amber-700" />
+                                        <span>Lịch Hẹn Gọi Lại Tiếp Theo (Tự động lên kế hoạch ngày đó)</span>
                                     </label>
                                     <input
                                         type="datetime-local"
@@ -1155,7 +1167,12 @@ export function DailyCallPlannerView({
                                     disabled={savingReport}
                                     className="px-5 py-2.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
                                 >
-                                    {savingReport ? 'Đang lưu...' : '✓ Lưu Báo Cáo Cuộc Gọi'}
+                                    {savingReport ? 'Đang lưu...' : (
+                                        <>
+                                            <Check size={14} className="shrink-0" />
+                                            <span>Lưu Báo Cáo Cuộc Gọi</span>
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </form>
@@ -1228,20 +1245,22 @@ export function DailyCallPlannerView({
                                         <button
                                             type="button"
                                             onClick={() => setNewChannel('CORPORATE')}
-                                            className={`py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
+                                            className={`py-1.5 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
                                                 newChannel === 'CORPORATE' ? 'bg-white text-blue-700 shadow-2xs' : 'text-slate-600'
                                             }`}
                                         >
-                                            🏢 Corporate
+                                            <Building2 size={13} className="shrink-0" />
+                                            <span>Corporate</span>
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setNewChannel('RETAIL')}
-                                            className={`py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
+                                            className={`py-1.5 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
                                                 newChannel === 'RETAIL' ? 'bg-white text-amber-700 shadow-2xs' : 'text-slate-600'
                                             }`}
                                         >
-                                            🍷 Retail
+                                            <Wine size={13} className="shrink-0" />
+                                            <span>Retail</span>
                                         </button>
                                     </div>
                                 </div>
@@ -1372,8 +1391,8 @@ export function DailyCallPlannerView({
                                         className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
                                     >
                                         <option value="NORMAL">Bình thường</option>
-                                        <option value="HIGH">Ưu tiên cao ⭐</option>
-                                        <option value="URGENT">Khẩn cấp ⚡</option>
+                                        <option value="HIGH">Ưu tiên cao</option>
+                                        <option value="URGENT">Khẩn cấp</option>
                                         <option value="LOW">Thấp</option>
                                     </select>
                                 </div>
@@ -1506,8 +1525,8 @@ export function DailyCallPlannerView({
                                         onChange={e => setBatchChannel(e.target.value as any)}
                                         className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none"
                                     >
-                                        <option value="CORPORATE">🏢 Corporate (Khách Doanh Nghiệp)</option>
-                                        <option value="RETAIL">🍷 Retail (Khách Lẻ VIP / Showroom)</option>
+                                        <option value="CORPORATE">Corporate (Khách Doanh Nghiệp)</option>
+                                        <option value="RETAIL">Retail (Khách Lẻ VIP / Showroom)</option>
                                     </select>
                                 </div>
                                 <div>
@@ -1535,8 +1554,9 @@ export function DailyCallPlannerView({
                                     placeholder="Ví dụ dán từ Excel:&#10;Nguyễn Văn An, Cty Bất Động Sản Á Châu, 0912345678&#10;Trần Thị Bình, Techcombank Chi nhánh Ba Đình, 0987654321&#10;Lê Hoàng Cường, Khách Lẻ VIP, 0905123456"
                                     className="w-full p-3 rounded-md bg-slate-50 border border-slate-200 text-slate-900 font-mono text-xs outline-none focus:border-teal-500"
                                 />
-                                <p className="text-[11px] text-slate-500 mt-1">
-                                    💡 Hệ thống sẽ tự động tách từng dòng và chia đều cho {batchTargetRepIds.length || 0} nhân viên đã chọn.
+                                <p className="text-[11px] text-slate-500 mt-1 flex items-center gap-1.5">
+                                    <Sparkles size={11} className="text-teal-600 shrink-0" />
+                                    <span>Hệ thống sẽ tự động tách từng dòng và chia đều cho {batchTargetRepIds.length || 0} nhân viên đã chọn.</span>
                                 </p>
                             </div>
 
@@ -1553,7 +1573,7 @@ export function DailyCallPlannerView({
                                     disabled={savingBatch}
                                     className="px-5 py-2.5 rounded-md bg-teal-600 hover:bg-teal-700 text-white font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
                                 >
-                                    {savingBatch ? 'Đang phân bổ...' : '🚀 Phân Bổ Danh Sách Cho Telesales'}
+                                    {savingBatch ? 'Đang phân bổ...' : 'Phân Bổ Danh Sách Cho Telesales'}
                                 </button>
                             </div>
                         </form>
@@ -1571,8 +1591,9 @@ export function DailyCallPlannerView({
                         <div className="font-bold text-xs truncate mt-0.5">
                             {nextLeadPrompt.prospectName} {nextLeadPrompt.prospectCompany ? `• ${nextLeadPrompt.prospectCompany}` : ''}
                         </div>
-                        <div className="text-[11px] text-slate-300 font-mono">
-                            📞 {nextLeadPrompt.phone}
+                        <div className="text-[11px] text-slate-300 font-mono flex items-center gap-1">
+                            <Phone size={10} className="shrink-0 text-teal-400" />
+                            <span>{nextLeadPrompt.phone}</span>
                         </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">

@@ -119,11 +119,11 @@ export function AIPurchaseSuggestion() {
                     <div className="space-y-1.5 max-h-[500px] overflow-y-auto pr-2">
                         {suggestion.split('\n').filter(Boolean).map((line, i) => {
                             const isHeading = line.startsWith('#') || line.startsWith('**')
-                            const isUrgent = line.includes('🔴') || line.includes('CẦN NHẬP NGAY')
-                            const isWarning = line.includes('🟡') || line.includes('NÊN NHẬP')
-                            const isOk = line.includes('🟢') || line.includes('ĐỦ TỒN')
-                            const isOverstock = line.includes('⚠') || line.includes('TỒN CAO')
-                            const isSummary = line.includes('📊') || line.includes('TỔNG HỢP')
+                            const isUrgent = line.toUpperCase().includes('CẦN NHẬP NGAY') || line.toUpperCase().includes('GẤP')
+                            const isWarning = line.toUpperCase().includes('NÊN NHẬP') || line.toUpperCase().includes('CẢNH BÁO')
+                            const isOk = line.toUpperCase().includes('ĐỦ TỒN') || line.toUpperCase().includes('AN TOÀN')
+                            const isOverstock = line.toUpperCase().includes('TỒN CAO') || line.toUpperCase().includes('DƯ THỪA')
+                            const isSummary = line.toUpperCase().includes('TỔNG HỢP') || line.toUpperCase().includes('KẾT LUẬN')
 
                             let color = '#475569'
                             if (isHeading || isSummary) color = '#0F172A'
@@ -131,6 +131,12 @@ export function AIPurchaseSuggestion() {
                             if (isWarning) color = '#B45309'
                             if (isOk) color = '#15803D'
                             if (isOverstock) color = '#1D4ED8'
+
+                            const cleanLine = line
+                                .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1FA00}-\u{1FAFF}]/gu, '')
+                                .replace(/^#+\s*/, '')
+                                .replace(/\*\*/g, '')
+                                .trim()
 
                             return (
                                 <p key={i} className="text-[13px] leading-relaxed" style={{
@@ -140,7 +146,7 @@ export function AIPurchaseSuggestion() {
                                     marginLeft: line.startsWith('- ') || line.startsWith('* ') ? '12px' : '0',
                                     paddingTop: isHeading ? '8px' : '0',
                                 }}>
-                                    {line.replace(/^#+\s*/, '').replace(/\*\*/g, '')}
+                                    {cleanLine}
                                 </p>
                             )
                         })}

@@ -32,6 +32,150 @@ interface Props {
     availableUsers: { id: string; name: string; email: string; roles: string; isLinkedOther: boolean }[]
 }
 
+function EmployeeMobileCard({
+    emp,
+    onOpenDetail,
+    onOpenEdit,
+    onDelete,
+    onQuickUpload
+}: {
+    emp: any
+    onOpenDetail: (emp: any) => void
+    onOpenEdit: (emp: any) => void
+    onDelete: (emp: any) => void
+    onQuickUpload: (emp: { id: string; name: string }) => void
+}) {
+    const statusStyle =
+        emp.status === 'ACTIVE'
+            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+            : emp.status === 'PROBATION'
+            ? 'bg-amber-100 text-amber-800 border-amber-300'
+            : emp.status === 'ON_LEAVE'
+            ? 'bg-blue-100 text-blue-800 border-blue-300'
+            : 'bg-rose-100 text-rose-800 border-rose-300'
+
+    const statusText =
+        emp.status === 'ACTIVE'
+            ? 'Chính thức'
+            : emp.status === 'PROBATION'
+            ? 'Thử việc'
+            : emp.status === 'ON_LEAVE'
+            ? 'Nghỉ phép'
+            : 'Đã nghỉ'
+
+    return (
+        <div className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs space-y-2.5">
+            <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-full bg-[#0E7490]/15 border border-[#0E7490]/30 flex items-center justify-center font-bold text-[#0891B2] shrink-0 text-sm">
+                        {emp.fullName.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                        <p
+                            onClick={() => onOpenDetail(emp)}
+                            className="font-bold text-slate-900 hover:text-[#0891B2] transition-colors cursor-pointer text-xs truncate"
+                        >
+                            {emp.fullName}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-[#0891B2] border border-slate-200">
+                                {emp.code}
+                            </span>
+                            <span className="text-[11px] text-slate-500 truncate">
+                                {emp.phone || emp.email || '—'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide border shrink-0 ${statusStyle}`}>
+                    {statusText}
+                </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-slate-100">
+                <div>
+                    <span className="text-slate-500 block text-[10px]">Vị trí & Phòng ban</span>
+                    <p className="font-semibold text-slate-800 truncate">{emp.position || '—'}</p>
+                    <p className="text-slate-500 text-[10px] truncate">{emp.dept?.name || 'Chưa phân phòng'}</p>
+                </div>
+                <div>
+                    <span className="text-slate-500 block text-[10px]">Hợp đồng</span>
+                    <p className="font-semibold text-slate-800 truncate">
+                        {emp.contractType === 'PROBATION' ? 'Thử việc' :
+                         emp.contractType === 'DEFINITE_1Y' ? 'HĐ 1 năm' :
+                         emp.contractType === 'DEFINITE_3Y' ? 'HĐ 3 năm' :
+                         emp.contractType === 'INDEFINITE' ? 'Vô thời hạn' :
+                         emp.contractType || '—'}
+                    </p>
+                    {emp.contractEndDate ? (
+                        <div className="flex items-center gap-1 mt-0.5">
+                            <span className="text-slate-500 text-[10px]">
+                                {new Date(emp.contractEndDate).toLocaleDateString('vi-VN')}
+                            </span>
+                            {emp.contractWarning === 'EXPIRING_SOON' && (
+                                <span className="inline-block px-1 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                    Còn {emp.contractDaysLeft}d
+                                </span>
+                            )}
+                            {emp.contractWarning === 'EXPIRED' && (
+                                <span className="inline-block px-1 py-0.2 rounded text-[9px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                                    Hết hạn
+                                </span>
+                            )}
+                        </div>
+                    ) : (
+                        <span className="text-slate-400 text-[10px]">Không thời hạn</span>
+                    )}
+                </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => onOpenDetail(emp)}
+                        className="flex items-center gap-1 px-2 py-1 rounded bg-slate-50 hover:bg-slate-100 text-[11px] font-medium text-slate-700 border border-slate-200 transition-colors cursor-pointer"
+                    >
+                        <FileText className="w-3 h-3 text-[#0891B2]" />
+                        <span>{emp.documentsCount} tài liệu</span>
+                    </button>
+                    <button
+                        onClick={() => onQuickUpload({ id: emp.id, name: emp.fullName })}
+                        className="p-1 rounded bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200 transition-colors cursor-pointer"
+                        title="Tải thêm giấy tờ"
+                    >
+                        <Upload className="w-3 h-3" />
+                    </button>
+                </div>
+                <div className="flex items-center gap-1">
+                    <button
+                        onClick={() => onOpenDetail(emp)}
+                        className="p-1.5 rounded-md text-slate-600 hover:text-[#0891B2] hover:bg-slate-100 transition-colors cursor-pointer"
+                        title="Xem chi tiết"
+                    >
+                        <Eye className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                        onClick={() => onOpenEdit(emp)}
+                        className="p-1.5 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                        title="Sửa"
+                    >
+                        <Edit className="w-3.5 h-3.5" />
+                    </button>
+                    {emp.status !== 'RESIGNED' && (
+                        <button
+                            onClick={() => onDelete(emp)}
+                            className="p-1.5 rounded-md text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer"
+                            title="Nghỉ việc"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                    )}
+                </div>
+            </div>
+        </div>
+    )
+}
+
 export function HrClient({ initialEmployees, initialStats, departments, availableUsers }: Props) {
     const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [employees, setEmployees] = useState(initialEmployees)
@@ -356,8 +500,30 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                 </form>
             </div>
 
-            {/* Employee Data Table */}
-            <div className="rounded-lg border border-slate-200 bg-white overflow-hidden shadow-md">
+            {/* Mobile Card List View */}
+            <div className="block md:hidden space-y-3">
+                {employees.length === 0 ? (
+                    <div className="p-8 text-center bg-white rounded-lg border border-slate-200 text-slate-600">
+                        <Users className="w-8 h-8 mx-auto mb-2 opacity-40 text-[#0891B2]" />
+                        <p className="font-semibold text-slate-700">Không tìm thấy nhân viên phù hợp</p>
+                        <p className="text-[11px] mt-1 text-slate-500">Thử thay đổi từ khóa hoặc thêm nhân viên mới</p>
+                    </div>
+                ) : (
+                    employees.map(emp => (
+                        <EmployeeMobileCard
+                            key={emp.id}
+                            emp={emp}
+                            onOpenDetail={handleOpenDetail}
+                            onOpenEdit={handleOpenEdit}
+                            onDelete={handleDelete}
+                            onQuickUpload={setQuickUploadEmp}
+                        />
+                    ))
+                )}
+            </div>
+
+            {/* Employee Data Table - Desktop */}
+            <div className="hidden md:block rounded-lg border border-slate-200 bg-white overflow-hidden shadow-md">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
                         <thead className="bg-white text-slate-600 uppercase text-[10px] tracking-wider border-b border-slate-200">

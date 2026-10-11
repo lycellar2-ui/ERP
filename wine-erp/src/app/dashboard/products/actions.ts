@@ -1049,10 +1049,10 @@ export async function setPrimaryMedia(
 // ═══════════════════════════════════════════════════
 
 const MEDAL_LABEL: Record<string, string> = {
-    GOLD: '🥇 Gold',
-    SILVER: '🥈 Silver',
-    BRONZE: '🥉 Bronze',
-    DOUBLE_GOLD: '🏆 Double Gold',
+    GOLD: 'Gold',
+    SILVER: 'Silver',
+    BRONZE: 'Bronze',
+    DOUBLE_GOLD: 'Double Gold',
 }
 
 export type ProductAwardRow = {

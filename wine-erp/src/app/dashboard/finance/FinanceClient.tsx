@@ -86,75 +86,216 @@ function AgingBars({ buckets }: { buckets: Record<string, number> }) {
     )
 }
 
+function ARMobileCard({ row, onPayment }: { row: ARRow; onPayment: (id: string) => void }) {
+    const st = AR_STATUS[row.status]
+    return (
+        <div className={`p-3.5 rounded-lg border bg-white shadow-xs space-y-2.5 ${row.isOverdue ? 'border-rose-300' : 'border-slate-200'}`}>
+            <div className="flex items-start justify-between gap-2">
+                <div>
+                    <div className="flex items-center gap-1.5">
+                        {row.isOverdue && <AlertCircle size={13} className="text-rose-600 shrink-0" />}
+                        <span className="font-mono font-bold text-xs text-[#0891B2]">{row.invoiceNo}</span>
+                        {row.soNo && <span className="text-[11px] text-slate-500">• SO: {row.soNo}</span>}
+                    </div>
+                    <p className="font-semibold text-xs text-slate-900 mt-0.5">{row.customerName}</p>
+                    <p className="text-[10px] text-slate-500">{row.customerCode}</p>
+                </div>
+                {st && (
+                    <span
+                        className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0"
+                        style={{ color: st.color, background: `${st.color}18` }}
+                    >
+                        {st.label}
+                    </span>
+                )}
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 text-xs pt-1 border-t border-slate-100">
+                <div>
+                    <span className="text-slate-400 block text-[10px]">Tổng HĐ</span>
+                    <span className="font-bold text-slate-900 text-xs">{formatVND(row.amount)}</span>
+                </div>
+                <div>
+                    <span className="text-slate-400 block text-[10px]">Đã thu</span>
+                    <span className="font-medium text-emerald-700 text-xs">{formatVND(row.paidAmount)}</span>
+                </div>
+                <div>
+                    <span className="text-slate-400 block text-[10px]">Còn lại</span>
+                    <span className={`font-bold text-xs ${row.outstanding > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
+                        {formatVND(row.outstanding)}
+                    </span>
+                </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
+                <div className="text-[11px]">
+                    <span className="text-slate-500">Hạn TT: </span>
+                    <span className={row.isOverdue ? 'font-bold text-rose-600' : 'text-slate-700'}>
+                        {formatDate(row.dueDate)}
+                        {row.isOverdue && row.daysOverdue > 0 && ` (+${row.daysOverdue}d)`}
+                    </span>
+                </div>
+                {row.outstanding > 0 && row.status !== 'CANCELLED' && (
+                    <button
+                        onClick={() => onPayment(row.id)}
+                        className="px-3 py-1 text-xs font-semibold rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 transition-colors cursor-pointer"
+                    >
+                        Ghi Thu
+                    </button>
+                )}
+            </div>
+        </div>
+    )
+}
+
 function ARTable({ rows, onPayment }: { rows: ARRow[]; onPayment: (id: string) => void }) {
     return (
-        <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-            <div style={{ maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
-                <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0, zIndex: 10 }}>
-                            {['Số HĐ', 'Khách Hàng', 'SO', 'Giá Trị', 'Đã Thu', 'Còn Lại', 'Hạn TT', 'Trạng Thái', ''].map(h => (
-                                <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {rows.length === 0 ? (
-                            <tr><td colSpan={9} className="text-center py-12 text-sm" style={{ color: '#64748B' }}>
-                                Không có hóa đơn nào
-                            </td></tr>
-                        ) : rows.map(row => (
-                            <tr key={row.id}
-                                style={{ borderBottom: '1px solid #E2E8F0', background: row.isOverdue ? 'rgba(185,28,28,0.04)' : 'transparent' }}
-                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(8,145,178,0.04)')}
-                                onMouseLeave={e => (e.currentTarget.style.background = row.isOverdue ? 'rgba(185,28,28,0.04)' : 'transparent')}
-                            >
-                                <td className="px-3 py-3">
-                                    <div className="flex items-center gap-1.5">
-                                        {row.isOverdue && <AlertCircle size={12} style={{ color: '#B91C1C' }} />}
-                                        <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{row.invoiceNo}</span>
-                                    </div>
-                                </td>
-                                <td className="px-3 py-3">
-                                    <p className="text-sm font-medium" style={{ color: '#0F172A' }}>{row.customerName}</p>
-                                    <p className="text-xs" style={{ color: '#64748B' }}>{row.customerCode}</p>
-                                </td>
-                                <td className="px-3 py-3 text-xs" style={{ color: '#475569' }}>{row.soNo ?? '–'}</td>
-                                <td className="px-3 py-3 text-sm font-bold" style={{ color: '#0F172A' }}>{formatVND(row.amount)}</td>
-                                <td className="px-3 py-3 text-sm" style={{ color: '#15803D' }}>{formatVND(row.paidAmount)}</td>
-                                <td className="px-3 py-3 text-sm font-bold" style={{ color: row.outstanding > 0 ? '#B45309' : '#15803D' }}>
-                                    {formatVND(row.outstanding)}
-                                </td>
-                                <td className="px-3 py-3 text-xs" style={{ color: row.isOverdue ? '#B91C1C' : '#475569' }}>
-                                    {formatDate(row.dueDate)}
-                                    {row.isOverdue && row.daysOverdue > 0 && (
-                                        <p className="font-bold" style={{ color: '#B91C1C' }}>+{row.daysOverdue}d</p>
-                                    )}
-                                </td>
-                                <td className="px-3 py-3">
-                                    {AR_STATUS[row.status] && (
-                                        <span className="inline-block text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap shrink-0"
-                                            style={{ color: AR_STATUS[row.status].color, background: `${AR_STATUS[row.status].color}18` }}>
-                                            {AR_STATUS[row.status].label}
-                                        </span>
-                                    )}
-                                </td>
-                                <td className="px-3 py-3">
-                                    {row.outstanding > 0 && row.status !== 'CANCELLED' && (
-                                        <button onClick={() => onPayment(row.id)}
-                                            className="px-2.5 py-1 text-xs font-semibold transition-all"
-                                            style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)', borderRadius: '4px' }}
-                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(21,128,61,0.25)')}
-                                            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(21,128,61,0.15)')}
-                                        >
-                                            Ghi Thu
-                                        </button>
-                                    )}
-                                </td>
+        <div>
+            {/* Mobile View */}
+            <div className="block md:hidden space-y-3">
+                {rows.length === 0 ? (
+                    <div className="text-center py-12 text-sm bg-white rounded-md border border-slate-200" style={{ color: '#64748B' }}>
+                        Không có hóa đơn nào
+                    </div>
+                ) : (
+                    rows.map(row => (
+                        <ARMobileCard key={row.id} row={row} onPayment={onPayment} />
+                    ))
+                )}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
+                <div style={{ maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
+                    <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                        <thead>
+                            <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0, zIndex: 10 }}>
+                                {['Số HĐ', 'Khách Hàng', 'SO', 'Giá Trị', 'Đã Thu', 'Còn Lại', 'Hạn TT', 'Trạng Thái', ''].map(h => (
+                                    <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
+                                ))}
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {rows.length === 0 ? (
+                                <tr><td colSpan={9} className="text-center py-12 text-sm" style={{ color: '#64748B' }}>
+                                    Không có hóa đơn nào
+                                </td></tr>
+                            ) : rows.map(row => (
+                                <tr key={row.id}
+                                    style={{ borderBottom: '1px solid #E2E8F0', background: row.isOverdue ? 'rgba(185,28,28,0.04)' : 'transparent' }}
+                                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(8,145,178,0.04)')}
+                                    onMouseLeave={e => (e.currentTarget.style.background = row.isOverdue ? 'rgba(185,28,28,0.04)' : 'transparent')}
+                                >
+                                    <td className="px-3 py-3">
+                                        <div className="flex items-center gap-1.5">
+                                            {row.isOverdue && <AlertCircle size={12} style={{ color: '#B91C1C' }} />}
+                                            <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{row.invoiceNo}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-3 py-3">
+                                        <p className="text-sm font-medium" style={{ color: '#0F172A' }}>{row.customerName}</p>
+                                        <p className="text-xs" style={{ color: '#64748B' }}>{row.customerCode}</p>
+                                    </td>
+                                    <td className="px-3 py-3 text-xs" style={{ color: '#475569' }}>{row.soNo ?? '–'}</td>
+                                    <td className="px-3 py-3 text-sm font-bold" style={{ color: '#0F172A' }}>{formatVND(row.amount)}</td>
+                                    <td className="px-3 py-3 text-sm" style={{ color: '#15803D' }}>{formatVND(row.paidAmount)}</td>
+                                    <td className="px-3 py-3 text-sm font-bold" style={{ color: row.outstanding > 0 ? '#B45309' : '#15803D' }}>
+                                        {formatVND(row.outstanding)}
+                                    </td>
+                                    <td className="px-3 py-3 text-xs" style={{ color: row.isOverdue ? '#B91C1C' : '#475569' }}>
+                                        {formatDate(row.dueDate)}
+                                        {row.isOverdue && row.daysOverdue > 0 && (
+                                            <p className="font-bold" style={{ color: '#B91C1C' }}>+{row.daysOverdue}d</p>
+                                        )}
+                                    </td>
+                                    <td className="px-3 py-3">
+                                        {AR_STATUS[row.status] && (
+                                            <span className="inline-block text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap shrink-0"
+                                                style={{ color: AR_STATUS[row.status].color, background: `${AR_STATUS[row.status].color}18` }}>
+                                                {AR_STATUS[row.status].label}
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td className="px-3 py-3">
+                                        {row.outstanding > 0 && row.status !== 'CANCELLED' && (
+                                            <button onClick={() => onPayment(row.id)}
+                                                className="px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer"
+                                                style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)', borderRadius: '4px' }}
+                                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(21,128,61,0.25)')}
+                                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(21,128,61,0.15)')}
+                                            >
+                                                Ghi Thu
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+function APMobileCard({ row, onPayment }: { row: APRow; onPayment: (id: string, outstanding: number) => void }) {
+    const isMultiCurrency = row.currency !== 'VND'
+    const fmtFx = (val: number) => `${row.currency === 'USD' ? '$' : row.currency === 'EUR' ? '€' : row.currency + ' '}${val.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
+
+    return (
+        <div className={`p-3.5 rounded-lg border bg-white shadow-xs space-y-2.5 ${row.isOverdue ? 'border-rose-300' : 'border-slate-200'}`}>
+            <div className="flex items-start justify-between gap-2">
+                <div>
+                    <div className="flex items-center gap-1.5">
+                        {row.isOverdue && <AlertCircle size={13} className="text-rose-600 shrink-0" />}
+                        <span className="font-mono font-bold text-xs text-[#0891B2]">{row.invoiceNo}</span>
+                        {row.poNo && <span className="text-[11px] text-slate-500">• PO: {row.poNo}</span>}
+                    </div>
+                    <p className="font-semibold text-xs text-slate-900 mt-0.5">{row.supplierName}</p>
+                    <p className="text-[10px] text-slate-500">{row.supplierCode}</p>
+                </div>
+                <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0 ${
+                    row.status === 'PAID' ? 'bg-emerald-100 text-emerald-800' :
+                    row.status === 'PARTIALLY_PAID' ? 'bg-blue-100 text-blue-800' :
+                    row.isOverdue ? 'bg-rose-100 text-rose-800' :
+                    'bg-amber-100 text-amber-800'
+                }`}>
+                    {row.status === 'PAID' ? 'Đã Trả' : row.status === 'PARTIALLY_PAID' ? 'Trả 1 Phần' : row.isOverdue ? 'Quá Hạn' : 'Chưa Trả'}
+                </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100">
+                <div>
+                    <span className="text-slate-400 block text-[10px]">Giá trị hóa đơn</span>
+                    <p className="font-bold text-slate-900 text-xs">{isMultiCurrency ? fmtFx(row.amount) : formatVND(row.amount)}</p>
+                    {isMultiCurrency && <p className="text-[10px] text-slate-500">≈ {formatVND(row.amountVND)}</p>}
+                </div>
+                <div>
+                    <span className="text-slate-400 block text-[10px]">Còn phải trả</span>
+                    <p className={`font-bold text-xs ${row.outstanding > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
+                        {isMultiCurrency ? fmtFx(row.outstanding) : formatVND(row.outstanding)}
+                    </p>
+                    {isMultiCurrency && row.outstanding > 0 && (
+                        <p className="text-[10px] text-slate-500">≈ {formatVND(row.outstandingVND)}</p>
+                    )}
+                </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
+                <div className="text-[11px]">
+                    <span className="text-slate-500">Hạn TT: </span>
+                    <span className={row.isOverdue ? 'font-bold text-rose-600' : 'text-slate-700'}>
+                        {formatDate(row.dueDate)}
+                    </span>
+                </div>
+                {row.outstanding > 0 && (
+                    <button
+                        onClick={() => onPayment(row.id, row.outstanding)}
+                        className="px-3 py-1 text-xs font-semibold rounded bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 transition-colors cursor-pointer"
+                    >
+                        Ghi Trả
+                    </button>
+                )}
             </div>
         </div>
     )
@@ -390,7 +531,28 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                         }]}
                         onClearAll={() => { setApSearch(''); setApStatus(''); setApPage(1); reloadAP('', '', 1) }}
                     />
-                    <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
+                    {/* Mobile AP Cards */}
+                    <div className="block md:hidden space-y-3">
+                        {apRows.length === 0 ? (
+                            <div className="text-center py-12 text-sm bg-white rounded-md border border-slate-200" style={{ color: '#64748B' }}>
+                                Không có hóa đơn phải trả nào
+                            </div>
+                        ) : (
+                            apRows.map(row => (
+                                <APMobileCard
+                                    key={row.id}
+                                    row={row}
+                                    onPayment={(id, outstanding) => {
+                                        setApPaymentModal(id)
+                                        setPayAmount(String(Math.round(outstanding)))
+                                    }}
+                                />
+                            ))
+                        )}
+                    </div>
+
+                    {/* Desktop AP Table */}
+                    <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                         <div style={{ maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
                             <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                                 <thead>
@@ -424,7 +586,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                                     </p>
                                                     {isMultiCurrency && (
                                                         <p className="text-xs" style={{ color: '#64748B' }}>
-                                                            ≈ {formatVND(row.amountVND)}
+                                                             ≈ {formatVND(row.amountVND)}
                                                         </p>
                                                     )}
                                                 </td>
@@ -442,7 +604,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                                     </p>
                                                     {isMultiCurrency && row.outstanding > 0 && (
                                                         <p className="text-xs" style={{ color: '#64748B' }}>
-                                                            ≈ {formatVND(row.outstandingVND)}
+                                                             ≈ {formatVND(row.outstandingVND)}
                                                         </p>
                                                     )}
                                                 </td>
@@ -459,7 +621,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                                 <td className="px-3 py-3">
                                                     {row.outstanding > 0 && (
                                                         <button onClick={() => { setApPaymentModal(row.id); setPayAmount(String(Math.round(row.outstanding))); }}
-                                                            className="px-2.5 py-1 text-xs font-semibold"
+                                                            className="px-2.5 py-1 text-xs font-semibold cursor-pointer"
                                                             style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)', borderRadius: '4px' }}
                                                             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(180,83,9,0.25)')}
                                                             onMouseLeave={e => (e.currentTarget.style.background = 'rgba(180,83,9,0.15)')}>

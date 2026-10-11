@@ -1084,7 +1084,7 @@ export function BankReconciliationTab() {
                                         <div>
                                             <p className="font-bold text-slate-800 font-mono">"{r.keyword}"</p>
                                             <p className="text-[11px] text-emerald-700 font-medium">
-                                                ➔ {r.customer?.name} ({r.customer?.code})
+                                                → {r.customer?.name} ({r.customer?.code})
                                             </p>
                                         </div>
                                         <button

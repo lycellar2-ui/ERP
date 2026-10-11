@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Printer, CheckCircle2, ArrowRightLeft, Clock, Building2, Calendar, FileText, Check, ShieldAlert, Truck, PackageCheck, AlertCircle, AlertTriangle, Loader2, MapPin, Layers, Boxes, ListChecks, RotateCw, Sparkles } from 'lucide-react'
+import { X, Printer, CheckCircle2, ArrowRightLeft, ArrowRight, Clock, Building2, Calendar, FileText, Check, ShieldAlert, Truck, PackageCheck, AlertCircle, AlertTriangle, Loader2, MapPin, Layers, Boxes, ListChecks, RotateCw, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     type TransferOrderDetail,
@@ -464,7 +464,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-200">
                                         <div className="flex items-center gap-2 font-semibold">
                                             <span className="text-rose-700 font-bold">{detail.fromWarehouse}</span>
-                                            <span className="text-slate-400 font-bold">➔</span>
+                                            <ArrowRight size={14} className="text-slate-400 shrink-0" />
                                             <span className="text-emerald-700 font-bold">{detail.toWarehouse}</span>
                                         </div>
                                         <div className="flex items-center gap-2 text-slate-500 font-mono text-[11px]">
@@ -499,11 +499,11 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 </div>
 
                                 {/* Navigation Tabs */}
-                                <div className="flex items-center gap-2 border-b border-slate-200 pt-1">
+                                <div className="flex items-center gap-2 border-b border-slate-200 pt-1 overflow-x-auto no-scrollbar whitespace-nowrap">
                                     <button
                                         type="button"
                                         onClick={() => setActiveTab('ITEMS')}
-                                        className={`px-4 py-2.5 text-xs font-extrabold border-b-2 flex items-center gap-2 transition cursor-pointer ${
+                                        className={`px-4 py-2.5 text-xs font-extrabold border-b-2 flex items-center gap-2 transition cursor-pointer whitespace-nowrap ${
                                             activeTab === 'ITEMS'
                                                 ? 'border-amber-500 text-amber-900 bg-amber-50/50 rounded-t-lg'
                                                 : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -753,7 +753,8 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                 onClick={() => setActiveTab('PICKING')}
                                                 className="font-bold text-sky-700 hover:text-sky-900 hover:underline flex items-center gap-1 cursor-pointer shrink-0"
                                             >
-                                                Xem vị trí nhặt hàng ➔
+                                                <span>Xem vị trí nhặt hàng</span>
+                                                <ArrowRight size={13} className="shrink-0" />
                                             </button>
                                         </div>
                                     </div>
@@ -1011,7 +1012,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
 
                         {/* Invoice Content Area */}
                         <div className="p-0 bg-white text-black font-sans w-full h-full overflow-y-auto print:overflow-visible">
-                            <div className="max-w-[850px] mx-auto p-8 sm:p-12 print:p-0 print:max-w-none">
+                            <div className="max-w-[850px] mx-auto p-4 sm:p-12 print:p-0 print:max-w-none">
 
                                 {printDocType === 'VOUCHER' ? (
                                     <>
@@ -1179,7 +1180,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                         </div>
 
                                         <div className="mb-3 text-[10px] p-2 bg-slate-100 border border-slate-300 rounded font-medium">
-                                            <strong>Hướng dẫn thủ kho:</strong> Nhặt hàng theo thứ tự Vị trí Kệ (FIFO). Đánh dấu [✓] khi đã nhặt xong từng vị trí.
+                                            <strong>Hướng dẫn thủ kho:</strong> Nhặt hàng theo thứ tự Vị trí Kệ (FIFO). Đánh dấu [x] khi đã nhặt xong từng vị trí.
                                         </div>
 
                                         {/* Picking Table */}

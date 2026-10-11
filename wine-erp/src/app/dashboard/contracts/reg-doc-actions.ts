@@ -376,16 +376,16 @@ export async function getComplianceWarnings(): Promise<ComplianceWarning[]> {
 
         if (daysRemaining !== null && daysRemaining <= 0) {
             severity = 'critical'
-            message = `⚠️ Đã hết hạn ${Math.abs(daysRemaining)} ngày — Cần gia hạn ngay`
+            message = `Đã hết hạn ${Math.abs(daysRemaining)} ngày — Cần gia hạn ngay`
         } else if (daysRemaining !== null && daysRemaining <= 30) {
             severity = 'critical'
-            message = `🔴 Còn ${daysRemaining} ngày — Gia hạn khẩn cấp`
+            message = `Còn ${daysRemaining} ngày — Gia hạn khẩn cấp`
         } else if (daysRemaining !== null && daysRemaining <= 60) {
             severity = 'warning'
-            message = `🟡 Còn ${daysRemaining} ngày — Chuẩn bị hồ sơ gia hạn`
+            message = `Còn ${daysRemaining} ngày — Chuẩn bị hồ sơ gia hạn`
         } else {
             severity = 'info'
-            message = `🟢 Còn ${daysRemaining} ngày`
+            message = `Còn ${daysRemaining} ngày`
         }
 
         return {

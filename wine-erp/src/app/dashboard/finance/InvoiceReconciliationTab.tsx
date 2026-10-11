@@ -495,7 +495,7 @@ export function InvoiceReconciliationTab() {
             />
 
             {/* View Mode Switcher */}
-            <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+            <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto no-scrollbar whitespace-nowrap">
                 <button
                     onClick={() => setActiveView('SO_VIEW')}
                     className="px-4 py-2 rounded-t-md text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
@@ -576,7 +576,7 @@ export function InvoiceReconciliationTab() {
             </div>
 
             {/* 5 KPI Summary Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 {/* 1. Coverage */}
                 <div
                     onClick={() => { setStatusFilter('ALL'); setPage(1) }}
@@ -832,7 +832,7 @@ export function InvoiceReconciliationTab() {
             {/* Reconciliation Data Table */}
             <div className="rounded-md overflow-hidden" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs" style={{ borderCollapse: 'collapse' }}>
+                    <table className="w-full min-w-[850px] text-left text-xs" style={{ borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', color: '#475569' }}>
                                 <th className="py-3 px-3.5 font-semibold">Mã Đơn (SO)</th>
@@ -879,10 +879,10 @@ export function InvoiceReconciliationTab() {
                                                     <span className="font-bold font-mono text-[#0891B2]">{r.soNo}</span>
                                                     {r.dateWarning?.isDifferentMonth && (
                                                         <span 
-                                                            className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-amber-100 text-amber-800 border border-amber-300 shrink-0 cursor-help" 
+                                                            className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded font-bold bg-amber-100 text-amber-800 border border-amber-300 shrink-0 cursor-help" 
                                                             title={r.dateWarning.message}
                                                         >
-                                                            ⚠️ Lệch kỳ thuế
+                                                            <AlertTriangle size={10} /> Lệch kỳ thuế
                                                         </span>
                                                     )}
                                                 </div>
@@ -1294,7 +1294,7 @@ export function InvoiceReconciliationTab() {
             {/* VNPT Table */}
             <div className="rounded-md overflow-hidden" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs" style={{ borderCollapse: 'collapse' }}>
+                    <table className="w-full min-w-[850px] text-left text-xs" style={{ borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', color: '#475569' }}>
                                 <th className="py-3 px-3.5 font-semibold">Số HĐ / Ký Hiệu</th>
@@ -1372,8 +1372,9 @@ export function InvoiceReconciliationTab() {
                                                     MST: {item.buyerTaxId || 'Khách lẻ'}
                                                 </div>
                                                 {item.note && (
-                                                    <div className="text-[10px] italic text-amber-700/80 truncate mt-0.5" title={item.note}>
-                                                        📝 {item.note}
+                                                    <div className="text-[10px] italic text-amber-700/80 truncate mt-0.5 flex items-center gap-1" title={item.note}>
+                                                        <FileText size={10} className="shrink-0 text-amber-600" />
+                                                        <span>{item.note}</span>
                                                     </div>
                                                 )}
                                             </td>
@@ -1524,9 +1525,9 @@ export function InvoiceReconciliationTab() {
                     </h4>
                     <button
                         onClick={() => setLinkModalOpen(false)}
-                        className="text-xs px-2 py-1 rounded text-slate-600 hover:text-white"
+                        className="text-xs p-1 rounded text-slate-500 hover:text-slate-700 hover:bg-slate-100"
                     >
-                        ✕
+                        <X size={14} />
                     </button>
                 </div>
 
@@ -1603,9 +1604,9 @@ export function InvoiceReconciliationTab() {
 
     {/* Modal Gán Hóa Đơn VNPT Vào Đơn Hàng ERP */}
     {vnptLinkModalOpen && selectedVnptItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-xs">
             <div
-                className="w-full max-w-2xl rounded-lg shadow-2xl p-6 space-y-4 border border-slate-200 animate-in fade-in zoom-in duration-150 max-h-[90vh] flex flex-col"
+                className="w-full max-w-2xl rounded-lg shadow-2xl p-4 sm:p-6 space-y-4 border border-slate-200 animate-in fade-in zoom-in duration-150 max-h-[90vh] flex flex-col"
                 style={{ background: '#FFFFFF' }}
             >
                 <div className="flex items-center justify-between border-b border-slate-200 pb-3 shrink-0">

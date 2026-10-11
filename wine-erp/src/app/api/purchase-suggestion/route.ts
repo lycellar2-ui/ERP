@@ -108,16 +108,17 @@ Sản phẩm tồn cao (> 24 tuần): ${analysis.filter(a => a.weeksOfSupply > 2
 
 Hãy viết báo cáo GỢI Ý NHẬP HÀNG bao gồm:
 
-1. **🔴 CẦN NHẬP NGAY** (tồn < 6 tuần, bán chạy) — Gợi ý số lượng nhập
-2. **🟡 NÊN NHẬP SỚM** (tồn 6-12 tuần) — Kế hoạch nhập trong 4-6 tuần tới
-3. **🟢 ĐỦ TỒN** (tồn > 12 tuần) — Không cần nhập
-4. **⚠️ TỒN CAO, CẦN GIẢI PHÓNG** (tồn > 24 tuần, bán chậm) — Gợi ý khuyến mãi
-5. **📊 TỔNG HỢP** — Ước tính tổng chi phí nhập hàng đề xuất
+1. **CẦN NHẬP NGAY** (tồn < 6 tuần, bán chạy) — Gợi ý số lượng nhập
+2. **NÊN NHẬP SỚM** (tồn 6-12 tuần) — Kế hoạch nhập trong 4-6 tuần tới
+3. **ĐỦ TỒN** (tồn > 12 tuần) — Không cần nhập
+4. **TỒN CAO, CẦN GIẢI PHÓNG** (tồn > 24 tuần, bán chậm) — Gợi ý khuyến mãi
+5. **TỔNG HỢP** — Ước tính tổng chi phí nhập hàng đề xuất
 
 Yêu cầu:
 - Viết bằng tiếng Việt, phong cách báo cáo cho CEO
 - Gợi ý số lượng cụ thể (tính dựa trên 3 tháng tồn kho an toàn)
-- Nếu unit cost = 0 thì bỏ qua chi phí ước tính cho sản phẩm đó`
+- Nếu unit cost = 0 thì bỏ qua chi phí ước tính cho sản phẩm đó
+- Tuyệt đối không dùng emoji/icon trong văn bản báo cáo`
 
         const result = await callGemini({
             prompt,

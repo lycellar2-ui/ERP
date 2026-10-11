@@ -242,6 +242,6 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-10-11 16:00 | Wine ERP v12.15 - Stamp Management & Electronic Logbook with Serial Tracking & Excel Export*
+*Last updated: 2026-10-11 18:00 | Wine ERP v12.16 - Full Responsive Standardization (Mobile/Desktop) & Zero-Emoji Luxury B2B Design Net*
 
 

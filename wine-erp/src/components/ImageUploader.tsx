@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react'
+import { Upload, X, Loader2, Image as ImageIcon, AlertCircle } from 'lucide-react'
 
 interface ImageUploaderProps {
     currentUrl?: string | null
@@ -118,8 +118,8 @@ export function ImageUploader({
             )}
 
             {error && (
-                <p className="text-xs mt-1.5 flex items-center gap-1" style={{ color: '#E8A0A0' }}>
-                    ⚠ {error}
+                <p className="text-xs mt-1.5 flex items-center gap-1" style={{ color: '#E11D48' }}>
+                    <AlertCircle size={13} /> {error}
                 </p>
             )}
 

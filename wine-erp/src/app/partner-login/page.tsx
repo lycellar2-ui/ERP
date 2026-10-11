@@ -17,9 +17,9 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
 }
 
 const PARTNER_TYPE: Record<string, string> = {
-    CUSTOMS_BROKER: '🏛️ Đại lý Hải Quan',
-    FORWARDER: '🚢 Forwarder',
-    SURVEYOR: '🔍 Giám Định',
+    CUSTOMS_BROKER: 'Đại lý Hải Quan',
+    FORWARDER: 'Forwarder',
+    SURVEYOR: 'Giám Định',
 }
 
 export default function PartnerLoginPage() {

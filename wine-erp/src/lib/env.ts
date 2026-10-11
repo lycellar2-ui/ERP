@@ -40,14 +40,14 @@ function validateEnv() {
 
     if (!serverResult.success) {
         const errors = serverResult.error.flatten().fieldErrors
-        console.error('❌ Server env validation failed:', errors)
+        console.error('[ENV ERROR] Server env validation failed:', errors)
         if (!isBuildTime && errors.DATABASE_URL) {
             throw new Error('[ENV] DATABASE_URL is required. App cannot start without it.')
         }
     }
     if (!clientResult.success) {
         const errors = clientResult.error.flatten().fieldErrors
-        console.error('❌ Client env validation failed:', errors)
+        console.error('[ENV ERROR] Client env validation failed:', errors)
         if (!isBuildTime) {
             throw new Error('[ENV] Supabase env vars are required. App cannot start without them.')
         }

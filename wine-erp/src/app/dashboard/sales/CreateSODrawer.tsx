@@ -1259,7 +1259,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             <div>
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <span className="text-xs font-black uppercase text-emerald-950 tracking-wide">
-                                                        🎁 {isEn ? 'Promotion Available' : 'Đạt Điều Kiện CTKM'} [{activePromoInfo.proposal.proposalNo}]
+                                                        {isEn ? 'Promotion Available' : 'Đạt Điều Kiện CTKM'} [{activePromoInfo.proposal.proposalNo}]
                                                     </span>
                                                     {activePromoInfo.isEligible && (
                                                         <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-2xs whitespace-nowrap shrink-0">
@@ -1268,7 +1268,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                     )}
                                                 </div>
                                                 <p className="text-xs text-emerald-900 mt-1 leading-relaxed">
-                                                    {isEn ? 'Buying' : 'Đã mua'} <strong className="text-emerald-950">{activePromoInfo.totalBought}</strong> {isEn ? 'bottles of' : 'chai'} <strong>[{activePromoInfo.buySku}] {activePromoInfo.buyProductName}</strong> ➔ {isEn ? 'Eligible for' : 'Được tặng'} <strong className="text-emerald-950">{activePromoInfo.eligibleGifts} {isEn ? 'free bottles of' : 'chai'} [{activePromoInfo.giftSku}] {activePromoInfo.giftProductName}</strong> (0 VNĐ).
+                                                    {isEn ? 'Buying' : 'Đã mua'} <strong className="text-emerald-950">{activePromoInfo.totalBought}</strong> {isEn ? 'bottles of' : 'chai'} <strong>[{activePromoInfo.buySku}] {activePromoInfo.buyProductName}</strong> → {isEn ? 'Eligible for' : 'Được tặng'} <strong className="text-emerald-950">{activePromoInfo.eligibleGifts} {isEn ? 'free bottles of' : 'chai'} [{activePromoInfo.giftSku}] {activePromoInfo.giftProductName}</strong> (0 VNĐ).
                                                     {activePromoInfo.maxPerOrder && activePromoInfo.maxPerOrder < 9999 && (
                                                         <span className="text-[11px] text-emerald-700 ml-1">({isEn ? `Max ${activePromoInfo.maxPerOrder} gifts/order` : `Đã áp trần tối đa ${activePromoInfo.maxPerOrder} chai/đơn`})</span>
                                                     )}
@@ -1632,7 +1632,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                         </div>
 
                                                         {lowStock && (
-                                                            <p className="text-xs text-rose-600 font-medium">⚠️ {t.stockExceeded} ({line.stock})</p>
+                                                            <p className="text-xs text-rose-600 font-medium flex items-center gap-1"><AlertCircle size={12} className="shrink-0" /> {t.stockExceeded} ({line.stock})</p>
                                                         )}
 
                                                         {/* Unit price, Discount, VAT */}

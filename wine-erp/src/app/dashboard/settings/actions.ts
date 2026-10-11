@@ -686,7 +686,7 @@ async function syncUserToAuth(userId: string, email: string, passwordPlain: stri
             email_confirm: true
         })
         if (!authError && authData?.user) {
-            console.log('✓ Created auth user via Supabase admin client.')
+            console.log('[AUTH] Created auth user via Supabase admin client.')
             return authData.user.id
         }
         console.log('Supabase admin client error, falling back to direct SQL:', authError?.message)
@@ -730,10 +730,10 @@ async function syncUserToAuth(userId: string, email: string, passwordPlain: stri
             )
         `, identityId, userId, userId, JSON.stringify(identityData))
 
-        console.log('✓ Synced auth user via direct SQL.')
+        console.log('[AUTH] Synced auth user via direct SQL.')
         return userId
     } catch (sqlErr: any) {
-        console.error('❌ Direct SQL sync failed:', sqlErr.message)
+        console.error('[AUTH ERROR] Direct SQL sync failed:', sqlErr.message)
         throw sqlErr
     }
 }
@@ -753,7 +753,7 @@ export async function adminResetPassword(userId: string, passwordPlain: string):
                 password: passwordPlain
             })
             if (!authError) {
-                console.log('✓ Reset password via Supabase admin client.')
+                console.log('[AUTH] Reset password via Supabase admin client.')
                 updatedInAuth = true
             } else {
                 console.log('Supabase admin client reset failed, falling back to SQL:', authError.message)
@@ -768,7 +768,7 @@ export async function adminResetPassword(userId: string, passwordPlain: string):
                 SET encrypted_password = crypt($1, gen_salt('bf')), updated_at = NOW()
                 WHERE id = $2::uuid
             `, passwordPlain, userId)
-            console.log('✓ Reset password via direct SQL.')
+            console.log('[AUTH] Reset password via direct SQL.')
         }
 
         const salt = crypto.randomBytes(16).toString('hex')

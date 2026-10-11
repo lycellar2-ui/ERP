@@ -257,7 +257,8 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                         </Button>
                                     </div>
 
-                                    <Table>
+                                    <div className="overflow-x-auto rounded-md border border-lys-border">
+                                        <Table>
                                         <THead>
                                             <tr>
                                                 <Th>SKU</Th>
@@ -293,6 +294,7 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                             ))}
                                         </TBody>
                                     </Table>
+                                    </div>
                                 </div>
                             ) : null}
                         </section>

@@ -24,8 +24,8 @@ const STAGES: { key: OppStage; label: string; tone: Tone; color: string; border:
     { key: 'QUALIFIED', label: 'Qualified', tone: 'warning', color: '#B45309', border: '#FDE68A', bg: 'bg-amber-50/50', probability: 30 },
     { key: 'PROPOSAL', label: 'Proposal', tone: 'info', color: '#0891B2', border: '#A5F3FC', bg: 'bg-cyan-50/50', probability: 50 },
     { key: 'NEGOTIATION', label: 'Negotiation', tone: 'warning', color: '#D97706', border: '#FED7AA', bg: 'bg-orange-50/50', probability: 70 },
-    { key: 'WON', label: 'Won ✓', tone: 'success', color: '#15803D', border: '#BBF7D0', bg: 'bg-emerald-50/50', probability: 100 },
-    { key: 'LOST', label: 'Lost ✗', tone: 'danger', color: '#B91C1C', border: '#FECACA', bg: 'bg-red-50/40', probability: 0 },
+    { key: 'WON', label: 'Won', tone: 'success', color: '#15803D', border: '#BBF7D0', bg: 'bg-emerald-50/50', probability: 100 },
+    { key: 'LOST', label: 'Lost', tone: 'danger', color: '#B91C1C', border: '#FECACA', bg: 'bg-red-50/40', probability: 0 },
 ]
 
 interface Props {

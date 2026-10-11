@@ -33,11 +33,11 @@ export async function sendTestNotification() {
     await requirePermission('SYS', 'ADMIN')
     const { notifyTelegram } = await import('@/lib/telegram')
 
-    const testMsg = `🧪 <b>Test Notification</b>
+    const testMsg = `<b>[TEST NOTIFICATION]</b>
 ━━━━━━━━━━━━━━━━━━
 
-✅ Kết nối Telegram Bot thành công!
-🕐 Thời gian: ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}
+Kết nối Telegram Bot thành công!
+Thời gian: ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}
 
 <i>Đây là tin nhắn test từ LY's Cellars ERP.</i>`
 

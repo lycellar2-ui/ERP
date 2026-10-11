@@ -31,72 +31,66 @@ function PageSkeleton() {
     )
 }
 
-function useIsMobile() {
-    const [isMobile, setIsMobile] = useState(false)
-    useEffect(() => {
-        const check = () => setIsMobile(window.innerWidth < 768)
-        check()
-        window.addEventListener('resize', check)
-        return () => window.removeEventListener('resize', check)
-    }, [])
-    return isMobile
-}
 
 export function DashboardShell({ children, currentUser }: { children: React.ReactNode; currentUser: SessionUser | null }) {
     const [collapsed, setCollapsed] = useState(false)
-    const isMobile = useIsMobile()
     const [mobileOpen, setMobileOpen] = useState(false)
 
-    // Auto-collapse on mobile
+    // Auto-collapse on smaller viewports on mount / resize if desired
     useEffect(() => {
-        if (isMobile) setCollapsed(true)
-    }, [isMobile])
+        const handleResize = () => {
+            if (window.innerWidth < 1024) {
+                setCollapsed(true)
+            }
+        }
+        handleResize()
+        window.addEventListener('resize', handleResize)
+        return () => window.removeEventListener('resize', handleResize)
+    }, [])
 
     return (
-        <div className="flex h-screen overflow-hidden" style={{ background: '#F8FAFC' }}>
+        <div className="flex h-screen overflow-hidden bg-lys-bg">
             <NavigationProgress />
 
-            {/* Mobile overlay */}
-            {isMobile && mobileOpen && (
-                <div
-                    className="fixed inset-0 z-40"
-                    style={{ background: 'rgba(15, 23, 42, 0.45)' }}
-                    onClick={() => setMobileOpen(false)}
-                />
-            )}
-
-            {/* Sidebar: on mobile, show as overlay; on desktop, inline */}
+            {/* Mobile backdrop overlay */}
             <div
-                className={isMobile ? 'fixed top-0 left-0 h-full z-50 transition-transform duration-200' : ''}
-                style={isMobile ? { transform: mobileOpen ? 'translateX(0)' : 'translateX(-100%)' } : {}}
+                className={`fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-xs transition-opacity duration-200 md:hidden ${
+                    mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+                }`}
+                onClick={() => setMobileOpen(false)}
+                aria-hidden={!mobileOpen}
+            />
+
+            {/* Sidebar: on mobile, drawer sliding in from left; on desktop, static inline */}
+            <div
+                className={`fixed inset-y-0 left-0 z-50 transition-transform duration-200 ease-out md:static md:z-auto md:translate-x-0 ${
+                    mobileOpen ? 'translate-x-0' : '-translate-x-full'
+                }`}
             >
                 <Sidebar
                     currentUser={currentUser}
-                    collapsed={isMobile ? false : collapsed}
-                    onToggle={() => {
-                        if (isMobile) setMobileOpen(false)
-                        else setCollapsed(!collapsed)
-                    }}
-                    onNavigate={isMobile ? () => setMobileOpen(false) : undefined}
+                    collapsed={collapsed}
+                    onToggle={() => setCollapsed(!collapsed)}
+                    onNavigate={() => setMobileOpen(false)}
                 />
             </div>
 
             <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
                 <Header
                     currentUser={currentUser}
-                    mobileMenuButton={isMobile ? (
+                    mobileMenuButton={
                         <button
                             type="button"
                             onClick={() => setMobileOpen(true)}
                             aria-label="Mở menu điều hướng"
-                            className="p-2 rounded-md mr-2 text-lys-teal-strong hover:bg-lys-subtle transition-colors cursor-pointer"
+                            className="p-1.5 rounded-md mr-1.5 text-lys-teal-strong hover:bg-lys-subtle transition-colors cursor-pointer md:hidden flex items-center justify-center shrink-0"
                         >
                             <Menu size={20} />
                         </button>
-                    ) : undefined}
+                    }
                 />
 
-                <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto p-3 md:p-4 outline-none">
+                <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto p-2.5 sm:p-3 md:p-4 outline-none">
                     <Suspense fallback={<PageSkeleton />}>{children}</Suspense>
                 </main>
             </div>

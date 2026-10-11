@@ -150,7 +150,7 @@ export function JournalEntryTab() {
                     <div className="flex items-start justify-between">
                         <div>
                             <h4 className="text-sm font-bold" style={{ color: '#B45309' }}>
-                                📤 Xuất Bút Toán cho PM Kế Toán
+                                Xuất Bút Toán cho PM Kế Toán
                             </h4>
                             <p className="text-xs mt-1" style={{ color: '#64748B' }}>
                                 Xuất file Excel/JSON để import vào MISA, Fast, Bravo hoặc PM kế toán khác
@@ -222,8 +222,8 @@ export function JournalEntryTab() {
                             {Math.abs(exportStats.totalDebit - exportStats.totalCredit) > 1 && (
                                 <div className="flex items-center gap-2 p-2 rounded text-xs"
                                     style={{ background: 'rgba(185,28,28,0.1)', border: '1px solid rgba(185,28,28,0.3)', color: '#B91C1C' }}>
-                                    <AlertTriangle size={14} />
-                                    ⚠️ Nợ ≠ Có — Chênh lệch {formatVND(Math.abs(exportStats.totalDebit - exportStats.totalCredit))}
+                                    <AlertTriangle size={14} className="shrink-0" />
+                                    <span>Nợ ≠ Có — Chênh lệch {formatVND(Math.abs(exportStats.totalDebit - exportStats.totalCredit))}</span>
                                 </div>
                             )}
 
@@ -921,8 +921,8 @@ export function BalanceSheetTab() {
                         }}>
                         {data.isBalanced ? <CircleCheck size={14} /> : <XCircle size={14} />}
                         {data.isBalanced
-                            ? `Cân đối ✔ — Tài Sản = Nợ + Vốn CSH (tại ${month}/${year})`
-                            : `⚠️ Bảng không cân đối! Tài sản: ${formatVND(data.totalAssets)} ≠ Nợ+Vốn: ${formatVND(data.totalLiabilities + data.totalEquity)}`
+                            ? `Cân đối — Tài Sản = Nợ + Vốn CSH (tại ${month}/${year})`
+                            : `Bảng không cân đối! Tài sản: ${formatVND(data.totalAssets)} ≠ Nợ+Vốn: ${formatVND(data.totalLiabilities + data.totalEquity)}`
                         }
                     </div>
 
@@ -1268,7 +1268,7 @@ export function CashFlowTab() {
                                 style={{ background: 'rgba(185,28,28,0.08)', border: '1px solid rgba(185,28,28,0.3)' }}>
                                 <AlertTriangle size={16} style={{ color: '#B91C1C' }} />
                                 <span className="text-sm font-semibold" style={{ color: '#B91C1C' }}>
-                                    ⚠ Tiền mặt ({formatVND(cashPos.totalCash)}) dưới ngưỡng an toàn ({formatVND(cashPos.safetyThreshold)})
+                                    Tiền mặt ({formatVND(cashPos.totalCash)}) dưới ngưỡng an toàn ({formatVND(cashPos.safetyThreshold)})
                                 </span>
                             </div>
                         )}
@@ -1321,14 +1321,14 @@ export function CashFlowTab() {
                                 style={{ background: 'rgba(185,28,28,0.08)', border: '1px solid rgba(185,28,28,0.3)' }}>
                                 <AlertTriangle size={16} style={{ color: '#B91C1C' }} />
                                 <span className="text-sm font-semibold" style={{ color: '#B91C1C' }}>
-                                    🚨 Dự báo THIẾU TIỀN trong {forecast.isRisk30 ? '30' : forecast.isRisk60 ? '60' : '90'} ngày tới!
+                                    Dự báo thiếu tiền trong {forecast.isRisk30 ? '30' : forecast.isRisk60 ? '60' : '90'} ngày tới!
                                 </span>
                             </div>
                         )}
 
                         {/* Forecast table */}
-                        <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-                            <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+                        <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
+                            <table className="w-full min-w-[550px]" style={{ borderCollapse: 'collapse' }}>
                                 <thead>
                                     <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                         {['Kho\u1EA3ng TG', 'AR Kỳ Vọng Thu', 'AP Phải Trả', 'Chi Phí ƯT', 'Dòng Tiền Ròng', 'Lũy Kế'].map(h => (
@@ -1370,7 +1370,7 @@ export function CashFlowTab() {
                         </div>
 
                         {/* Visual bars */}
-                        <div className="grid grid-cols-3 gap-3 mt-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
                             {[
                                 { label: '30 ngày', value: forecast.endingCash30, risk: forecast.isRisk30 },
                                 { label: '60 ngày', value: forecast.endingCash60, risk: forecast.isRisk60 },
@@ -1384,7 +1384,11 @@ export function CashFlowTab() {
                                     <p className="text-lg font-bold" style={{ color: p.risk ? '#B91C1C' : '#0F172A' }}>
                                         {formatVND(p.value)}
                                     </p>
-                                    {p.risk && <p className="text-xs mt-1 font-semibold" style={{ color: '#B91C1C' }}>⚠ Rủi ro thiếu tiền</p>}
+                                    {p.risk && (
+                                        <p className="text-xs mt-1 font-semibold flex items-center gap-1" style={{ color: '#B91C1C' }}>
+                                            <AlertTriangle size={11} className="shrink-0" /> Rủi ro thiếu tiền
+                                        </p>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -1408,21 +1412,21 @@ export function CashFlowTab() {
                                     Đã kiểm tra: <b>{creditStats.checked}</b> KH
                                 </span>
                                 {creditStats.held > 0 && (
-                                    <span className="inline-block text-xs px-3 py-1.5 rounded-md font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(185,28,28,0.1)', border: '1px solid rgba(185,28,28,0.3)', color: '#B91C1C' }}>
-                                        🔒 Mới HOLD: {creditStats.held}
+                                    <span className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(185,28,28,0.1)', border: '1px solid rgba(185,28,28,0.3)', color: '#B91C1C' }}>
+                                        <Lock size={11} /> Mới HOLD: {creditStats.held}
                                     </span>
                                 )}
                                 {creditStats.released > 0 && (
-                                    <span className="inline-block text-xs px-3 py-1.5 rounded-md font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(21,128,61,0.1)', border: '1px solid rgba(21,128,61,0.3)', color: '#15803D' }}>
-                                        🔓 Đã thả: {creditStats.released}
+                                    <span className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(21,128,61,0.1)', border: '1px solid rgba(21,128,61,0.3)', color: '#15803D' }}>
+                                        <CheckCircle2 size={11} /> Đã thả: {creditStats.released}
                                     </span>
                                 )}
                             </div>
                         )}
 
                         {creditResults && creditResults.length > 0 ? (
-                            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-                                <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+                            <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
+                                <table className="w-full min-w-[500px]" style={{ borderCollapse: 'collapse' }}>
                                     <thead>
                                         <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                             {['Khách Hàng', 'Credit Limit', 'AR Hiện Tại', 'Vượt', 'Trạng Thái'].map(h => (
@@ -1446,11 +1450,11 @@ export function CashFlowTab() {
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-2.5">
-                                                    <span className="inline-block text-xs px-2.5 py-1 rounded-full font-bold whitespace-nowrap shrink-0" style={{
+                                                    <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-bold whitespace-nowrap shrink-0" style={{
                                                         color: r.isOverLimit ? '#B91C1C' : '#15803D',
                                                         background: r.isOverLimit ? 'rgba(185,28,28,0.15)' : 'rgba(21,128,61,0.15)',
                                                     }}>
-                                                        {r.wasHeld ? '🔒 MỚI HOLD' : r.isOverLimit ? '🔒 HOLD' : '✅ OK'}
+                                                        {r.wasHeld ? <><Lock size={10} /> MỚI HOLD</> : r.isOverLimit ? <><Lock size={10} /> HOLD</> : <><CheckCircle2 size={10} /> OK</>}
                                                     </span>
                                                 </td>
                                             </tr>
@@ -1461,7 +1465,7 @@ export function CashFlowTab() {
                         ) : creditResults && creditResults.length === 0 ? (
                             <div className="text-center py-8 rounded-md" style={{ ...card, borderStyle: 'dashed' }}>
                                 <CircleCheck size={28} className="mx-auto mb-2" style={{ color: '#15803D' }} />
-                                <p className="text-sm font-semibold" style={{ color: '#15803D' }}>Tất cả khách hàng trong hạn mức ✓</p>
+                                <p className="text-sm font-semibold" style={{ color: '#15803D' }}>Tất cả khách hàng trong hạn mức</p>
                             </div>
                         ) : (
                             <div className="text-center py-8 rounded-md" style={{ ...card, borderStyle: 'dashed' }}>

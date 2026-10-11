@@ -774,7 +774,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, textAlign: 'center' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
                             <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#F0FDF4', color: '#15803D', border: '1.5px solid #15803D', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
-                                ✓
+                                <Check size={14} strokeWidth={2.5} />
                             </div>
                             <span style={{ fontSize: 11.5, fontWeight: 700, color: '#0F172A' }}>1. Khởi Tạo Báo Giá</span>
                             <span style={{ fontSize: 10, color: '#64748B' }}>Đã hoàn tất</span>
@@ -1000,7 +1000,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                     <span style={{ color: '#0F172A', fontWeight: 700, fontSize: 13.5 }}>
                                         {group.supplierName}
                                     </span>
-                                    <span style={{ color: '#C5A059', fontSize: 10 }}>✦</span>
+                                    <Sparkles size={12} className="text-amber-600 inline-block" />
                                     <span style={{ color: '#64748B', fontSize: 11.5, letterSpacing: '0.04em' }}>
                                         TERROIR: {group.country.toUpperCase()}
                                     </span>
@@ -1299,7 +1299,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                             transform: 'rotate(-8deg)',
                             marginBottom: 8
                         }}>
-                            LY&apos;S CELLARS<br/>★ DẤU PHÁP NHÂN ★<br/>APPROVED
+                            LY&apos;S CELLARS<br/>DẤU PHÁP NHÂN<br/>APPROVED
                         </div>
                         <strong className="font-brand" style={{ fontSize: 15, color: '#0F172A', borderTop: '1px dotted #CBD5E1', paddingTop: 6, minWidth: 180 }}>
                             BAN GIÁM ĐỐC &amp; DUYỆT BÁO GIÁ

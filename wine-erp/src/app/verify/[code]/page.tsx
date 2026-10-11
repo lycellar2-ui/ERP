@@ -1,5 +1,6 @@
 import { verifyQRCode } from '@/app/dashboard/qr-codes/actions'
 import { notFound } from 'next/navigation'
+import { ShieldCheck, AlertTriangle } from 'lucide-react'
 
 export default async function VerifyPage({ params }: { params: Promise<{ code: string }> }) {
     const { code } = await params
@@ -29,8 +30,16 @@ export default async function VerifyPage({ params }: { params: Promise<{ code: s
                     padding: '24px', textAlign: 'center',
                     borderBottom: '1px solid #E2E8F0',
                 }}>
-                    <div style={{ fontSize: '48px', marginBottom: '8px' }}>
-                        {data.isFirstScan ? '✅' : '⚠️'}
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+                        {data.isFirstScan ? (
+                            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(21,128,61,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#15803D' }}>
+                                <ShieldCheck size={32} />
+                            </div>
+                        ) : (
+                            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(180,83,9,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#B45309' }}>
+                                <AlertTriangle size={32} />
+                            </div>
+                        )}
                     </div>
                     <h1 className="font-brand" style={{ color: data.isFirstScan ? '#15803D' : '#B45309', fontSize: '18px', fontWeight: 700 }}>
                         {data.isFirstScan ? 'Sản Phẩm Chính Hãng' : 'Đã Được Quét Trước Đó'}

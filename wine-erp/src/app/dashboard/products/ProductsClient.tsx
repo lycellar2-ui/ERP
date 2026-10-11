@@ -12,12 +12,6 @@ const ProductDetailDrawer = dynamic(() => import('./ProductDetailDrawer').then(m
 import { ExcelImportDialog } from '@/components/ExcelImportDialog'
 import { toast } from 'sonner'
 
-const COUNTRY_FLAGS: Record<string, string> = {
-    FR: '🇫🇷', IT: '🇮🇹', ES: '🇪🇸', PT: '🇵🇹', DE: '🇩🇪',
-    US: '🇺🇸', AU: '🇦🇺', NZ: '🇳🇿', AR: '🇦🇷', CL: '🇨🇱', ZA: '🇿🇦',
-    GE: '🇬🇪', HU: '🇭🇺', GR: '🇬🇷', AT: '🇦🇹', RO: '🇷🇴', MX: '🇲🇽', JP: '🇯🇵',
-}
-
 const COUNTRY_NAMES: Record<string, string> = {
     FR: 'Pháp', IT: 'Ý', ES: 'TBN', PT: 'BĐN', DE: 'Đức',
     US: 'Mỹ', AU: 'Úc', NZ: 'NZ', AR: 'Argentina', CL: 'Chile', ZA: 'Nam Phi',
@@ -338,7 +332,7 @@ export function ProductsClient({
                             <option value="">Tất cả quốc gia</option>
                             {countries.map(c => (
                                 <option key={c.code} value={c.code}>
-                                    {COUNTRY_FLAGS[c.code] ?? '🌍'} {COUNTRY_NAMES[c.code] ?? c.code} ({c.count})
+                                    {COUNTRY_NAMES[c.code] ?? c.code} [{c.code}] ({c.count})
                                 </option>
                             ))}
                         </Select>

@@ -921,14 +921,14 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
             </StatGrid>
 
             {/* Tabs */}
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+            <div className="flex gap-1 p-1 rounded-lg overflow-x-auto no-scrollbar whitespace-nowrap" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 {tabs.map(t => {
                     const Icon = t.icon
                     const active = tab === t.key
                     return (
                         <button key={t.key}
                             onClick={() => { setTab(t.key); if (t.key === 'audit' && !auditLoaded) loadAudit(); if (t.key === 'approvals' && !approvalsLoaded) loadApprovals(); if (t.key === 'entities' && !entitiesLoaded) loadEntities() }}
-                            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all flex-1 justify-center cursor-pointer"
+                            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all flex-1 justify-center cursor-pointer whitespace-nowrap shrink-0"
                             style={{
                                 background: active ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
                                 color: active ? '#0891B2' : '#64748B',
@@ -952,14 +952,14 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                 value={search} onChange={e => setSearch(e.target.value)} />
                         </div>
                         <button onClick={() => setShowCreateUser(true)}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md"
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md shrink-0"
                             style={{ background: '#0891B2', color: '#FFFFFF' }}>
                             <Plus size={16} /> Thêm Người Dùng
                         </button>
                     </div>
 
-                    <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-                        <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                    <div className="rounded-md overflow-x-auto border border-slate-200">
+                        <table className="w-full text-left min-w-[700px]" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                     {['Họ Tên', 'Email', 'Vai Trò', 'Trạng Thái', 'Ngày Tạo', ''].map(h => (
@@ -1165,8 +1165,8 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
             {/* ── Audit Log Tab ────────────────────── */}
             {tab === 'audit' && (
                 <div className="space-y-4">
-                    <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-                        <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                    <div className="rounded-md overflow-x-auto border border-slate-200">
+                        <table className="w-full text-left min-w-[750px]" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                     {['Thời Gian', 'Người Dùng', 'Hành Động', 'Đối Tượng', 'ID', 'Chi Tiết'].map(h => (
@@ -1232,9 +1232,9 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                     <p className="text-xs py-2" style={{ color: '#64748B' }}>Không có chi tiết thay đổi theo trường cho bản ghi này.</p>
                                                 ) : (
                                                     <div className="space-y-1">
-                                                        <p className="text-xs font-semibold mb-2" style={{ color: '#B45309' }}>📋 Lịch Sử Thay Đổi Theo Trường</p>
+                                                        <p className="text-xs font-semibold mb-2" style={{ color: '#B45309' }}>Lịch Sử Thay Đổi Theo Trường</p>
                                                         {fieldChanges.slice(0, 20).map((fc: any, i: number) => (
-                                                            <div key={i} className="flex items-start gap-3 py-1" style={{ borderBottom: '1px solid #E2E8F0' }}>
+                                                             <div key={i} className="flex items-start gap-3 py-1" style={{ borderBottom: '1px solid #E2E8F0' }}>
                                                                 <span className="text-xs font-bold shrink-0" style={{ color: '#0891B2', minWidth: '100px' }}>{fc.field}</span>
                                                                 <span className="text-xs" style={{ color: '#B91C1C' }}>{String(fc.oldValue ?? '(trống)').slice(0, 40)}</span>
                                                                 <span className="text-xs" style={{ color: '#64748B' }}>→</span>
@@ -1323,9 +1323,9 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-2.5">
                                                 <div>
                                                     <p className="text-sm font-bold flex items-center gap-2 flex-wrap" style={{ color: '#0F172A' }}>
-                                                        🏢 {w.name}
-                                                        {w.isDefault && <span className="inline-block text-[10px] bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded font-mono font-bold whitespace-nowrap shrink-0">⭐ Kho Mặc Định</span>}
-                                                        {w.allowSales === false && <span className="inline-block text-[10px] bg-rose-100 text-rose-800 border border-rose-300 px-1.5 py-0.5 rounded font-mono font-bold whitespace-nowrap shrink-0">⛔ Chỉ Xuất Điều Chuyển</span>}
+                                                        {w.name}
+                                                        {w.isDefault && <span className="inline-block text-[10px] bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded font-mono font-bold whitespace-nowrap shrink-0">Kho Mặc Định</span>}
+                                                        {w.allowSales === false && <span className="inline-block text-[10px] bg-rose-100 text-rose-800 border border-rose-300 px-1.5 py-0.5 rounded font-mono font-bold whitespace-nowrap shrink-0">Chỉ Xuất Điều Chuyển</span>}
                                                     </p>
                                                     <p className="text-[11px] font-mono mt-0.5" style={{ color: '#64748B' }}>Mã: {w.code}{w.address ? ` · Địa chỉ: ${w.address}` : ''}</p>
                                                 </div>
@@ -1358,7 +1358,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                         onChange={e => handleUpdateWarehouseConfigState(w.id, { allowSales: e.target.checked })}
                                                         className="w-4 h-4 rounded text-teal-500 focus:ring-teal-400"
                                                     />
-                                                    <span>🛒 <strong>Cho phép Bán Hàng</strong> (SO/DO)</span>
+                                                    <span><strong>Cho phép Bán Hàng</strong> (SO/DO)</span>
                                                 </label>
 
                                                 <label className="flex items-center gap-2 cursor-pointer select-none p-2 rounded hover:bg-white transition-colors" style={{ color: '#0F172A' }}>
@@ -1368,7 +1368,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                         onChange={e => handleUpdateWarehouseConfigState(w.id, { allowTransfer: e.target.checked })}
                                                         className="w-4 h-4 rounded text-teal-500 focus:ring-teal-400"
                                                     />
-                                                    <span>🔄 <strong>Cho phép Điều Chuyển</strong></span>
+                                                    <span><strong>Cho phép Điều Chuyển</strong></span>
                                                 </label>
 
                                                 <label className="flex items-center gap-2 cursor-pointer select-none p-2 rounded hover:bg-white transition-colors" style={{ color: '#0F172A' }}>
@@ -1378,7 +1378,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                         onChange={e => handleUpdateWarehouseConfigState(w.id, { isDefault: e.target.checked })}
                                                         className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400"
                                                     />
-                                                    <span>⭐ <strong>Kho Mặc Định</strong></span>
+                                                    <span><strong>Kho Mặc Định</strong></span>
                                                 </label>
                                             </div>
                                         </div>
@@ -1417,13 +1417,6 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                 roles={roles}
                 currentUser={currentUser}
                 onUpdated={reload}
-            />
-            <EditEntityDrawer
-                open={!!editingEntity}
-                onClose={() => setEditingEntity(null)}
-                onSave={handleSaveEntity}
-                entity={editingEntity}
-                saving={savingEntity}
             />
         </div>
     )
@@ -1475,7 +1468,7 @@ function EditEntityDrawer({ open, onClose, onSave, entity, saving }: {
                             <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Địa Chỉ</label>
                             <input style={inputStyle} {...focusHandler} value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Số Điện Thoại</label>
                                 <input style={inputStyle} {...focusHandler} placeholder="e.g. 024.3933.8888" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />

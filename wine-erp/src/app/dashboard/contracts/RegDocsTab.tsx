@@ -327,7 +327,7 @@ function CreateRegDocDrawer({ open, onClose, onCreated, renewFrom }: {
                                             border: `1px solid ${form.keepHistory === v ? '#0E7490' : '#E2E8F0'}`,
                                             color: form.keepHistory === v ? '#0E7490' : '#64748B',
                                         }}>
-                                        {v ? '✅ Giữ lịch sử (RENEWED)' : '🗑️ Xóa bản cũ'}
+                                        {v ? 'Giữ lịch sử (RENEWED)' : 'Xóa bản cũ'}
                                     </button>
                                 ))}
                             </div>

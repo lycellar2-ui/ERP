@@ -43,6 +43,96 @@ const STATUS_CFG: Record<string, { label: string; tone: 'neutral' | 'warning' | 
     CANCELLED: { label: 'Đã Hủy', tone: 'danger' },
 }
 
+function TransferMobileCard({
+    r,
+    onSelect,
+    onApprove,
+    onCancel
+}: {
+    r: TransferOrderRow
+    onSelect: (id: string) => void
+    onApprove: (id: string, e: React.MouseEvent) => void
+    onCancel: (id: string, e: React.MouseEvent) => void
+}) {
+    const st = STATUS_CFG[r.status] ?? STATUS_CFG.DRAFT
+
+    return (
+        <div
+            onClick={() => onSelect(r.id)}
+            className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs space-y-2.5 cursor-pointer hover:border-[#0E7490] transition-colors"
+        >
+            <div className="flex items-start justify-between gap-2">
+                <div>
+                    <span className="font-mono font-bold text-xs text-[#0891B2]">{r.transferNo}</span>
+                    <p className="text-[11px] text-slate-500 mt-0.5">{formatDate(r.transferDate)}</p>
+                </div>
+                <Badge tone={st.tone}>{st.label}</Badge>
+            </div>
+
+            {/* Warehouse transfer route */}
+            <div className="p-2.5 rounded-md bg-slate-50 border border-slate-100 flex items-center justify-between text-xs gap-2">
+                <div className="min-w-0 flex-1">
+                    <span className="text-[10px] text-slate-400 block uppercase font-medium">Kho Xuất</span>
+                    <p className="font-semibold text-slate-800 truncate" title={r.fromWarehouse}>
+                        <span className="text-slate-500 mr-1">[{r.fromWarehouseCode}]</span>{r.fromWarehouse}
+                    </p>
+                </div>
+                <ArrowRightLeft size={14} className="text-slate-400 shrink-0" />
+                <div className="min-w-0 flex-1 text-right">
+                    <span className="text-[10px] text-slate-400 block uppercase font-medium">Kho Nhận</span>
+                    <p className="font-semibold text-slate-800 truncate" title={r.toWarehouse}>
+                        <span className="text-slate-500 mr-1">[{r.toWarehouseCode}]</span>{r.toWarehouse}
+                    </p>
+                </div>
+            </div>
+
+            {/* Quantity & Requester */}
+            <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+                <div className="text-slate-600 truncate mr-2">
+                    <span className="text-slate-400">Lập: </span>
+                    <span className="font-medium text-slate-800">{r.requesterName}</span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-slate-500 text-[11px]">{r.lineCount} mã</span>
+                    <span className="font-mono font-bold text-emerald-700">{r.totalQty.toLocaleString()} chai</span>
+                </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-slate-100" onClick={e => e.stopPropagation()}>
+                {r.status === 'PENDING_ACCOUNTING' && (
+                    <Button
+                        size="sm"
+                        variant="primary"
+                        onClick={e => onApprove(r.id, e)}
+                        title="Kế toán duyệt ngay phiếu chuyển kho này"
+                    >
+                        Duyệt
+                    </Button>
+                )}
+                <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => onSelect(r.id)}
+                >
+                    <Eye size={13} /> Xem
+                </Button>
+                {(r.status === 'DRAFT' || r.status === 'PENDING_ACCOUNTING') && (
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={e => onCancel(r.id, e)}
+                        title="Hủy phiếu này"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                        <Ban size={14} />
+                    </Button>
+                )}
+            </div>
+        </div>
+    )
+}
+
 export function TransfersClient({ initialRows, currentUserRoles = [] }: {
     initialRows: TransferOrderRow[]
     stats?: { total: number; inTransit: number; completed: number }
@@ -273,106 +363,134 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                 }
             />
 
-            {/* List Table */}
-            <Table>
-                <THead>
-                    <Tr>
-                        {renderSortHeader('transferNo', 'Mã Phiếu')}
-                        {renderSortHeader('fromWarehouse', 'Kho Xuất')}
-                        {renderSortHeader('toWarehouse', 'Kho Nhận')}
-                        {renderSortHeader('requesterName', 'Người Lập')}
-                        {renderSortHeader('transferDate', 'Ngày Chuyển')}
-                        {renderSortHeader('lineCount', 'Số Mặt Hàng', 'center')}
-                        {renderSortHeader('totalQty', 'Tổng Chai', 'center')}
-                        {renderSortHeader('status', 'Trạng Thái', 'center')}
-                        <th className="px-3 py-2.5 font-semibold uppercase text-[11px] text-right whitespace-nowrap text-lys-muted">Thao Tác</th>
-                    </Tr>
-                </THead>
-                <TBody>
-                    {sortedRows.length === 0 ? (
-                        <TableMessageRow colSpan={9}>
-                            <EmptyState
-                                icon={ArrowRightLeft}
-                                title="Không tìm thấy phiếu chuyển kho nào"
-                                description="Lập phiếu chuyển kho mới để điều phối và cân bằng lượng tồn kho giữa các chi nhánh."
-                                action={
-                                    <Button variant="secondary" size="sm" onClick={() => setCreateOpen(true)}>
-                                        <Plus size={14} /> Lập Phiếu Chuyển Kho
-                                    </Button>
-                                }
-                            />
-                        </TableMessageRow>
-                    ) : (
-                        sortedRows.map(r => {
-                            const st = STATUS_CFG[r.status] ?? STATUS_CFG.DRAFT
-                            return (
-                                <Tr
-                                    key={r.id}
-                                    onClick={() => setSelectedId(r.id)}
-                                    className="cursor-pointer"
-                                >
-                                    <Td className="font-mono font-bold text-lys-primary whitespace-nowrap">
-                                        {r.transferNo}
-                                    </Td>
-                                    <Td className="font-semibold text-lys-title whitespace-nowrap">
-                                        <span className="text-lys-muted mr-1">[{r.fromWarehouseCode}]</span> {r.fromWarehouse}
-                                    </Td>
-                                    <Td className="font-semibold text-lys-title whitespace-nowrap">
-                                        <span className="text-lys-muted mr-1">[{r.toWarehouseCode}]</span> {r.toWarehouse}
-                                    </Td>
-                                    <Td className="text-lys-title font-medium whitespace-nowrap">
-                                        {r.requesterName}
-                                    </Td>
-                                    <Td className="font-mono text-lys-muted whitespace-nowrap">
-                                        {formatDate(r.transferDate)}
-                                    </Td>
-                                    <Td align="center" className="font-mono font-bold text-lys-title whitespace-nowrap">
-                                        {r.lineCount} mã
-                                    </Td>
-                                    <Td align="center" className="font-mono font-bold text-emerald-700 whitespace-nowrap">
-                                        {r.totalQty.toLocaleString()} chai
-                                    </Td>
-                                    <Td align="center" className="whitespace-nowrap">
-                                        <Badge tone={st.tone}>{st.label}</Badge>
-                                    </Td>
-                                    <Td align="right" className="whitespace-nowrap">
-                                        <div className="flex items-center gap-1.5 justify-end" onClick={e => e.stopPropagation()}>
-                                            {r.status === 'PENDING_ACCOUNTING' && (
+            {/* Mobile Cards List View */}
+            <div className="block md:hidden space-y-3">
+                {sortedRows.length === 0 ? (
+                    <EmptyState
+                        icon={ArrowRightLeft}
+                        title="Không tìm thấy phiếu chuyển kho nào"
+                        description="Lập phiếu chuyển kho mới để điều phối và cân bằng lượng tồn kho giữa các chi nhánh."
+                        action={
+                            <Button variant="secondary" size="sm" onClick={() => setCreateOpen(true)}>
+                                <Plus size={14} /> Lập Phiếu Chuyển Kho
+                            </Button>
+                        }
+                    />
+                ) : (
+                    sortedRows.map(r => (
+                        <TransferMobileCard
+                            key={r.id}
+                            r={r}
+                            onSelect={id => setSelectedId(id)}
+                            onApprove={(id, e) => handleQuickApprove(id, e)}
+                            onCancel={(id, e) => handleCancel(id, e)}
+                        />
+                    ))
+                )}
+            </div>
+
+            {/* List Table - Desktop */}
+            <div className="hidden md:block">
+                <Table>
+                    <THead>
+                        <Tr>
+                            {renderSortHeader('transferNo', 'Mã Phiếu')}
+                            {renderSortHeader('fromWarehouse', 'Kho Xuất')}
+                            {renderSortHeader('toWarehouse', 'Kho Nhận')}
+                            {renderSortHeader('requesterName', 'Người Lập')}
+                            {renderSortHeader('transferDate', 'Ngày Chuyển')}
+                            {renderSortHeader('lineCount', 'Số Mặt Hàng', 'center')}
+                            {renderSortHeader('totalQty', 'Tổng Chai', 'center')}
+                            {renderSortHeader('status', 'Trạng Thái', 'center')}
+                            <th className="px-3 py-2.5 font-semibold uppercase text-[11px] text-right whitespace-nowrap text-lys-muted">Thao Tác</th>
+                        </Tr>
+                    </THead>
+                    <TBody>
+                        {sortedRows.length === 0 ? (
+                            <TableMessageRow colSpan={9}>
+                                <EmptyState
+                                    icon={ArrowRightLeft}
+                                    title="Không tìm thấy phiếu chuyển kho nào"
+                                    description="Lập phiếu chuyển kho mới để điều phối và cân bằng lượng tồn kho giữa các chi nhánh."
+                                    action={
+                                        <Button variant="secondary" size="sm" onClick={() => setCreateOpen(true)}>
+                                            <Plus size={14} /> Lập Phiếu Chuyển Kho
+                                        </Button>
+                                    }
+                                />
+                            </TableMessageRow>
+                        ) : (
+                            sortedRows.map(r => {
+                                const st = STATUS_CFG[r.status] ?? STATUS_CFG.DRAFT
+                                return (
+                                    <Tr
+                                        key={r.id}
+                                        onClick={() => setSelectedId(r.id)}
+                                        className="cursor-pointer"
+                                    >
+                                        <Td className="font-mono font-bold text-lys-primary whitespace-nowrap">
+                                            {r.transferNo}
+                                        </Td>
+                                        <Td className="font-semibold text-lys-title whitespace-nowrap">
+                                            <span className="text-lys-muted mr-1">[{r.fromWarehouseCode}]</span> {r.fromWarehouse}
+                                        </Td>
+                                        <Td className="font-semibold text-lys-title whitespace-nowrap">
+                                            <span className="text-lys-muted mr-1">[{r.toWarehouseCode}]</span> {r.toWarehouse}
+                                        </Td>
+                                        <Td className="text-lys-title font-medium whitespace-nowrap">
+                                            {r.requesterName}
+                                        </Td>
+                                        <Td className="font-mono text-lys-muted whitespace-nowrap">
+                                            {formatDate(r.transferDate)}
+                                        </Td>
+                                        <Td align="center" className="font-mono font-bold text-lys-title whitespace-nowrap">
+                                            {r.lineCount} mã
+                                        </Td>
+                                        <Td align="center" className="font-mono font-bold text-emerald-700 whitespace-nowrap">
+                                            {r.totalQty.toLocaleString()} chai
+                                        </Td>
+                                        <Td align="center" className="whitespace-nowrap">
+                                            <Badge tone={st.tone}>{st.label}</Badge>
+                                        </Td>
+                                        <Td align="right" className="whitespace-nowrap">
+                                            <div className="flex items-center gap-1.5 justify-end" onClick={e => e.stopPropagation()}>
+                                                {r.status === 'PENDING_ACCOUNTING' && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="primary"
+                                                        onClick={e => handleQuickApprove(r.id, e)}
+                                                        title="Kế toán duyệt ngay phiếu chuyển kho này"
+                                                    >
+                                                        Duyệt
+                                                    </Button>
+                                                )}
                                                 <Button
                                                     size="sm"
-                                                    variant="primary"
-                                                    onClick={e => handleQuickApprove(r.id, e)}
-                                                    title="Kế toán duyệt ngay phiếu chuyển kho này"
+                                                    variant="secondary"
+                                                    onClick={() => setSelectedId(r.id)}
                                                 >
-                                                    Duyệt
+                                                    <Eye size={13} /> Xem
                                                 </Button>
-                                            )}
-                                            <Button
-                                                size="sm"
-                                                variant="secondary"
-                                                onClick={() => setSelectedId(r.id)}
-                                            >
-                                                <Eye size={13} /> Xem
-                                            </Button>
-                                            {(r.status === 'DRAFT' || r.status === 'PENDING_ACCOUNTING') && (
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    onClick={e => handleCancel(r.id, e)}
-                                                    title="Hủy phiếu này"
-                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                >
-                                                    <Ban size={14} />
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </Td>
-                                </Tr>
-                            )
-                        })
-                    )}
-                </TBody>
-            </Table>
+                                                {(r.status === 'DRAFT' || r.status === 'PENDING_ACCOUNTING') && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={e => handleCancel(r.id, e)}
+                                                        title="Hủy phiếu này"
+                                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    >
+                                                        <Ban size={14} />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </Td>
+                                    </Tr>
+                                )
+                            })
+                        )}
+                    </TBody>
+                </Table>
+            </div>
 
             {/* Create Drawer */}
             <CreateTransferDrawer

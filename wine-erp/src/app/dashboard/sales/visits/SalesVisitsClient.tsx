@@ -298,10 +298,10 @@ function GpsPermissionGuideModal({
                                     <p className="font-semibold text-slate-900">
                                         {isEn ? 'Select "Website Settings"' : 'Chọn "Cài đặt trang web" (Website Settings)'}
                                     </p>
-                                    <p className="text-[11px] text-slate-500 mt-0.5">
+                                     <p className="text-[11px] text-slate-500 mt-0.5">
                                         {isEn
-                                            ? <>Find <strong>Location</strong> ➔ Select <strong>Allow</strong> (avoid &quot;Ask&quot; or &quot;Allow Once&quot; so Safari never prompts at each visit).</>
-                                            : <>Tìm mục <strong>Vị trí (Location)</strong> ➔ Chọn <strong>Cho phép (Allow)</strong> (tránh chọn &quot;Hỏi&quot; hoặc &quot;Cho phép một lần&quot; để Safari tự nhận toạ độ ở mọi điểm mà không hiện hỏi lại).</>}
+                                            ? <>Find <strong>Location</strong> → Select <strong>Allow</strong> (avoid &quot;Ask&quot; or &quot;Allow Once&quot; so Safari never prompts at each visit).</>
+                                            : <>Tìm mục <strong>Vị trí (Location)</strong> → Chọn <strong>Cho phép (Allow)</strong> (tránh chọn &quot;Hỏi&quot; hoặc &quot;Cho phép một lần&quot; để Safari tự nhận toạ độ ở mọi điểm mà không hiện hỏi lại).</>}
                                     </p>
                                 </div>
                             </div>
@@ -314,7 +314,7 @@ function GpsPermissionGuideModal({
                                         {isEn ? 'Enable iOS Device Location' : 'Bật dịch vụ định vị của máy'}
                                     </p>
                                     <p className="text-[11px] text-slate-500 mt-0.5">
-                                        {isEn ? 'Go to Settings ➔ Privacy & Security ➔ Location Services ➔ Turn ON.' : 'Vào Cài đặt máy ➔ Quyền riêng tư & Bảo mật ➔ Dịch vụ định vị ➔ Gạt BẬT.'}
+                                        {isEn ? 'Go to Settings → Privacy & Security → Location Services → Turn ON.' : 'Vào Cài đặt máy → Quyền riêng tư & Bảo mật → Dịch vụ định vị → Gạt BẬT.'}
                                     </p>
                                 </div>
                             </div>
@@ -340,7 +340,7 @@ function GpsPermissionGuideModal({
                                 </div>
                                 <div>
                                     <p className="font-semibold text-slate-900">
-                                        {isEn ? 'Select "Permissions" ➔ "Location"' : 'Chọn "Quyền" (Permissions) ➔ "Vị trí"'}
+                                        {isEn ? 'Select "Permissions" → "Location"' : 'Chọn "Quyền" (Permissions) → "Vị trí"'}
                                     </p>
                                     <p className="text-[11px] text-slate-500 mt-0.5">
                                         {isEn ? <>Turn <strong>Location</strong> switch to <strong>Allow</strong> (blue/green).</> : <>Bật công tắc <strong>Vị trí</strong> thành <strong>Cho phép</strong> (màu xanh).</>}

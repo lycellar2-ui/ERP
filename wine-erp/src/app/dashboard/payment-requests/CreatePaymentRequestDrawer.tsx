@@ -569,7 +569,7 @@ export function CreatePaymentRequestDrawer({
                                 />
                             </div>
 
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div>
                                     <label className="block font-medium text-slate-700 mb-1">Nhóm chi phí *</label>
                                     <select
@@ -616,7 +616,7 @@ export function CreatePaymentRequestDrawer({
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div>
                                     <label className="block font-medium text-slate-700 mb-1">Pháp nhân chi trả</label>
                                     <select
@@ -655,7 +655,7 @@ export function CreatePaymentRequestDrawer({
                             </div>
 
                             {/* Tiền tệ & Tỷ giá */}
-                            <div className="grid grid-cols-3 gap-3 pt-1 border-t border-slate-200/60">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-slate-200/60">
                                 <div>
                                     <label className="block font-medium text-slate-700 mb-1">Đồng tiền thanh toán</label>
                                     <select
@@ -851,7 +851,7 @@ export function CreatePaymentRequestDrawer({
                             )}
 
                             {/* Beneficiary Details inputs */}
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div>
                                     <label className="block font-medium text-slate-700 mb-1">Tên đơn vị / Người nhận *</label>
                                     <input
@@ -1047,9 +1047,9 @@ export function CreatePaymentRequestDrawer({
                                 {attachments.map((att, idx) => (
                                     <div
                                         key={idx}
-                                        className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-2.5 text-xs"
+                                        className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg border border-slate-200 bg-white p-2.5 text-xs gap-2"
                                     >
-                                        <div className="flex items-center gap-2 max-w-[65%]">
+                                        <div className="flex items-center gap-2 w-full sm:max-w-[60%]">
                                             <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
                                             <span className="truncate font-medium text-slate-800" title={att.fileName}>
                                                 {att.fileName}
@@ -1059,7 +1059,7 @@ export function CreatePaymentRequestDrawer({
                                             </span>
                                         </div>
 
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
                                             <select
                                                 value={att.docType}
                                                 onChange={e => updateAttachmentDocType(idx, e.target.value as any)}

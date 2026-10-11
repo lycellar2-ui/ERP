@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Loader2, Building2, Package, DollarSign, FileText, Ship, MessageSquare, Clock, TrendingUp, Award, Globe, Phone, Mail, MapPin, ExternalLink, Shield, AlertTriangle, Plus, Trash2 } from 'lucide-react'
+import { X, Loader2, Building2, Package, DollarSign, FileText, Ship, MessageSquare, Clock, TrendingUp, Award, Globe, Phone, Mail, MapPin, ExternalLink, Shield, AlertTriangle, Plus, Trash2, CreditCard, Users } from 'lucide-react'
 import {
     getSupplierDetail, getSupplierPOs, getSupplierAPInvoices, getSupplierContracts,
     getSupplierShipments, getSupplierProducts, getSupplierPricingHistory,
@@ -33,8 +33,16 @@ const GRADE_COLOR: Record<string, { color: string; bg: string }> = {
     F: { color: '#B91C1C', bg: 'rgba(185,28,28,0.15)' },
 }
 
-const ACTIVITY_ICONS: Record<string, string> = {
-    NOTE: '📝', CALL: '📞', EMAIL: '✉️', VISIT: '🤝', PO_CREATED: '📦', CONTRACT_SIGNED: '📜',
+function ActivityIcon({ type }: { type: string }) {
+    switch (type) {
+        case 'CALL': return <Phone size={14} className="text-blue-600" />
+        case 'EMAIL': return <Mail size={14} className="text-amber-600" />
+        case 'VISIT': return <Users size={14} className="text-emerald-600" />
+        case 'PO_CREATED': return <Package size={14} className="text-cyan-600" />
+        case 'CONTRACT_SIGNED': return <FileText size={14} className="text-purple-600" />
+        case 'NOTE':
+        default: return <FileText size={14} className="text-slate-500" />
+    }
 }
 
 type Tab = 'overview' | 'orders' | 'finance' | 'contracts' | 'shipments' | 'docs' | 'notes'
@@ -294,7 +302,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-0.5 px-4 pt-3 pb-0 flex-shrink-0 overflow-x-auto">
+                <div className="flex gap-0.5 px-4 pt-3 pb-0 flex-shrink-0 overflow-x-auto no-scrollbar">
                     {TABS.map(t => (
                         <button key={t.key} onClick={() => loadTab(t.key)}
                             className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-semibold rounded-t-lg transition-all whitespace-nowrap"
@@ -338,7 +346,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                     )}
 
                                     {/* Summary cards */}
-                                    <div className="grid grid-cols-4 gap-3">
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
                                         <MiniCard label="Đơn PO" value={detail.poSummary.total} accent="#0E7490" />
                                         <MiniCard label="Tổng PO" value={fmtCurrency(detail.poSummary.totalValue, detail.supplier.defaultCurrency)} accent="#15803D" />
                                         <MiniCard label="Nợ phải trả" value={fmtCurrency(detail.apSummary.unpaidAmount, detail.supplier.defaultCurrency)} accent={detail.apSummary.unpaidAmount > 0 ? '#B45309' : '#15803D'} />
@@ -346,11 +354,11 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                     </div>
 
                                     {/* Info */}
-                                    <div className="grid grid-cols-2 gap-5">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                         <div className="space-y-0">
                                             <p className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: '#0891B2' }}>── Thương Mại & Pháp Lý</p>
                                             <InfoRow label="Loại đối tác" value={detail.supplier.type} />
-                                            <InfoRow label="Quốc gia" value={detail.supplier.country === 'VN' || detail.supplier.country === 'Việt Nam' ? '🇻🇳 Việt Nam (Nội địa)' : detail.supplier.country} />
+                                            <InfoRow label="Quốc gia" value={detail.supplier.country === 'VN' || detail.supplier.country === 'Việt Nam' ? 'Việt Nam (Nội địa)' : detail.supplier.country} />
                                             <InfoRow 
                                                 label="Hiệp định" 
                                                 value={detail.supplier.country === 'VN' || detail.supplier.country === 'Việt Nam' ? 'Nội địa' : (detail.supplier.tradeAgreement ?? 'MFN')} 
@@ -537,13 +545,17 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                         <div className="grid grid-cols-2 gap-4">
                                             {detail.supplier.pickupInfo && (
                                                 <div className="p-3 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                                    <p className="text-[10px] uppercase tracking-wider font-bold mb-1" style={{ color: '#0891B2' }}>📍 Thông tin Pickup</p>
+                                                    <p className="text-[10px] uppercase tracking-wider font-bold mb-1 flex items-center gap-1.5" style={{ color: '#0891B2' }}>
+                                                        <MapPin size={12} className="shrink-0" /> Thông tin Pickup
+                                                    </p>
                                                     <p className="text-xs whitespace-pre-wrap" style={{ color: '#475569' }}>{detail.supplier.pickupInfo}</p>
                                                 </div>
                                             )}
                                             {detail.supplier.bankAccountInfo && (
                                                 <div className="p-3 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                                    <p className="text-[10px] uppercase tracking-wider font-bold mb-1" style={{ color: '#0891B2' }}>💳 Tài khoản ngân hàng</p>
+                                                    <p className="text-[10px] uppercase tracking-wider font-bold mb-1 flex items-center gap-1.5" style={{ color: '#0891B2' }}>
+                                                        <CreditCard size={12} className="shrink-0" /> Tài khoản ngân hàng
+                                                    </p>
                                                     <p className="text-xs whitespace-pre-wrap" style={{ color: '#475569' }}>{detail.supplier.bankAccountInfo}</p>
                                                 </div>
                                             )}
@@ -694,7 +706,10 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                 <div key={s.id} className="p-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                                     <div className="flex items-center justify-between mb-2">
                                                         <div>
-                                                            <span className="text-sm font-bold" style={{ color: '#0F172A' }}>🚢 {s.billOfLading}</span>
+                                                            <span className="text-sm font-bold flex items-center gap-1.5" style={{ color: '#0F172A' }}>
+                                                                <Ship size={14} className="text-cyan-700 shrink-0" />
+                                                                {s.billOfLading}
+                                                            </span>
                                                             <span className="text-xs ml-2" style={{ color: '#64748B' }}>PO: {s.poNo}</span>
                                                         </div>
                                                         <StatusBadge status={s.status} />
@@ -783,10 +798,10 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                             <select value={noteType} onChange={e => setNoteType(e.target.value)}
                                                 className="px-2 py-1.5 rounded-md text-xs outline-none"
                                                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
-                                                <option value="NOTE">📝 Ghi chú</option>
-                                                <option value="CALL">📞 Cuộc gọi</option>
-                                                <option value="EMAIL">✉️ Email</option>
-                                                <option value="VISIT">🤝 Ghé thăm</option>
+                                                <option value="NOTE">Ghi chú</option>
+                                                <option value="CALL">Cuộc gọi</option>
+                                                <option value="EMAIL">Email</option>
+                                                <option value="VISIT">Ghé thăm</option>
                                             </select>
                                         </div>
                                         <textarea value={newNote} onChange={e => setNewNote(e.target.value)}
@@ -808,9 +823,11 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                         activities.length === 0 ? <p className="text-xs text-center py-8" style={{ color: '#64748B' }}>Chưa có hoạt động</p> : (
                                             <div className="space-y-2">
                                                 {activities.map((a: any) => (
-                                                    <div key={a.id} className="flex gap-3 p-3 rounded-lg" style={{ background: '#FFFFFF' }}>
-                                                        <span className="text-lg">{ACTIVITY_ICONS[a.type] ?? '📝'}</span>
-                                                        <div className="flex-1">
+                                                    <div key={a.id} className="flex gap-3 p-3 rounded-lg border border-slate-100 items-start" style={{ background: '#FFFFFF' }}>
+                                                        <div className="p-1.5 rounded-md bg-slate-100 h-fit shrink-0">
+                                                            <ActivityIcon type={a.type} />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
                                                             <p className="text-xs" style={{ color: '#0F172A' }}>{a.description}</p>
                                                             <div className="flex gap-3 mt-1">
                                                                 <span className="text-[10px]" style={{ color: '#64748B' }}>{fmtDate(a.occurredAt)}</span>

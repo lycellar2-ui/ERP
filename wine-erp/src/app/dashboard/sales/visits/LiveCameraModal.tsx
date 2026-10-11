@@ -327,7 +327,7 @@ export function LiveCameraModal({
                                         </span>
                                     </span>
                                     <span className="inline-block shrink-0 text-[11px] underline font-bold ml-1 bg-amber-700/60 px-2 py-0.5 rounded-md whitespace-nowrap">
-                                        {locale === 'en' ? 'How to enable ➔' : 'Xem cách bật ➔'}
+                                        {locale === 'en' ? 'How to enable →' : 'Xem cách bật →'}
                                     </span>
                                 </button>
                             )}

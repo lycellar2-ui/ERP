@@ -70,8 +70,8 @@ export const REPORTS_I18N = {
             freqDaily: 'Hàng ngày',
             freqWeekly: 'Hàng tuần',
             freqMonthly: 'Hàng tháng',
-            active: '✓ Active',
-            paused: '⏸ Paused',
+            active: 'Active',
+            paused: 'Tạm dừng',
         },
 
         channels: {
@@ -178,8 +178,8 @@ export const REPORTS_I18N = {
             freqDaily: 'Daily',
             freqWeekly: 'Weekly',
             freqMonthly: 'Monthly',
-            active: '✓ Active',
-            paused: '⏸ Paused',
+            active: 'Active',
+            paused: 'Paused',
         },
 
         channels: {

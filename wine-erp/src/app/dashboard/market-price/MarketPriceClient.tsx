@@ -95,8 +95,8 @@ export function MarketPriceClient({ initialRows, stats }: {
             </div>
 
             {/* Table */}
-            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-                <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+            <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
+                <table className="w-full text-left min-w-[700px]" style={{ borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                             {['SKU', 'Sản Phẩm', 'Giá TT', 'Giá Vốn', 'Giá Bán', 'Margin Gap', 'Nguồn', 'Ngày', 'Alert'].map(h => (
@@ -157,7 +157,7 @@ export function MarketPriceClient({ initialRows, stats }: {
             {/* Create Drawer */}
             {drawerOpen && (
                 <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
-                    <div className="w-[420px] h-full overflow-y-auto bg-white border-l border-slate-200 shadow-2xl">
+                    <div className="w-full max-w-[420px] h-full overflow-y-auto bg-white border-l border-slate-200 shadow-2xl">
                         <div className="flex items-center justify-between p-5 border-b border-slate-200">
                             <h3 className="text-base font-bold text-slate-900">Thêm Giá Thị Trường</h3>
                             <button onClick={() => setDrawerOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors p-1"><X size={18} /></button>

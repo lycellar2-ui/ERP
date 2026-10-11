@@ -90,6 +90,204 @@ function parseBankInfo(raw: string | null) {
     }
 }
 
+function PaymentRequestMobileCard({
+    item,
+    onOpenDetail,
+    onPrint,
+    onDelete,
+}: {
+    item: PaymentRequestRow
+    onOpenDetail: (id: string) => void
+    onPrint: (id: string) => void
+    onDelete: (id: string, requestNo: string) => void
+}) {
+    const status = STATUS_CONFIG[item.status] || STATUS_CONFIG.DRAFT
+
+    return (
+        <div className="rounded-lg border border-slate-200 bg-white p-3.5 shadow-2xs space-y-2.5 transition hover:border-slate-300">
+            <div className="flex items-center justify-between gap-2">
+                <button
+                    onClick={() => onOpenDetail(item.id)}
+                    className="font-mono font-bold text-sm text-[#B91C1C] hover:underline"
+                >
+                    {item.requestNo}
+                </button>
+                <span
+                    className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold inline-block whitespace-nowrap shrink-0"
+                    style={{ backgroundColor: status.bg, color: status.color }}
+                >
+                    {status.label}
+                </span>
+            </div>
+
+            <div>
+                <p className="font-semibold text-slate-900 text-xs line-clamp-2" title={item.title}>
+                    {item.title}
+                </p>
+                <div className="flex flex-wrap items-center gap-1.5 mt-1 text-[11px] text-slate-500">
+                    <span className="font-medium text-slate-700">{item.beneficiaryName}</span>
+                    {item.beneficiaryBank && (
+                        <>
+                            <span>•</span>
+                            <span className="truncate max-w-[160px] text-slate-400">{item.beneficiaryBank}</span>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                <span className="rounded bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
+                    {CATEGORY_LABEL_MAP[item.category] || item.category}
+                </span>
+                <span className="text-slate-400">
+                    {item.itemCount} khoản • {item.attachmentCount} chứng từ
+                </span>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                <div>
+                    <span className="text-[10px] text-slate-400 block">Số tiền đề nghị</span>
+                    <span className="font-mono font-bold text-slate-900 text-sm">
+                        {formatVND(item.totalAmountVND)}
+                    </span>
+                </div>
+                <div className="text-right">
+                    <span className="text-[10px] text-slate-400 block">Hạn TT</span>
+                    <span className="text-xs text-slate-600 font-medium">
+                        {item.dueDate ? formatDate(item.dueDate) : '—'}
+                    </span>
+                </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
+                <div className="text-slate-500 truncate max-w-[45%]">
+                    {item.creatorName} {item.departmentName ? `• ${item.departmentName}` : ''}
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <button
+                        onClick={() => onOpenDetail(item.id)}
+                        className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1 text-slate-700 font-medium hover:bg-[#B91C1C] hover:text-white transition"
+                    >
+                        <Eye className="h-3 w-3" /> Chi tiết
+                    </button>
+                    <button
+                        onClick={() => onPrint(item.id)}
+                        className="rounded-md border border-slate-200 bg-white p-1 text-slate-600 hover:bg-slate-100 transition"
+                        title="In đề nghị"
+                    >
+                        <Printer className="h-3.5 w-3.5 text-[#B91C1C]" />
+                    </button>
+                    {['DRAFT', 'REJECTED'].includes(item.status) && (
+                        <button
+                            onClick={() => onDelete(item.id, item.requestNo)}
+                            className="rounded-md p-1 text-slate-400 hover:text-red-600 transition"
+                            title="Xóa phiếu"
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                    )}
+                </div>
+            </div>
+        </div>
+    )
+}
+
+function SupplierPaymentMobileCard({
+    supplier,
+    onCreatePayment,
+    onEditPayment,
+}: {
+    supplier: SupplierMasterRow
+    onCreatePayment: (id: string) => void
+    onEditPayment: (s: SupplierMasterRow) => void
+}) {
+    const typeBadge = SUPPLIER_TYPE_MAP[supplier.type] || SUPPLIER_TYPE_MAP.OTHER
+    const bankParsed = parseBankInfo(supplier.bankAccountInfo)
+
+    return (
+        <div className="rounded-lg border border-slate-200 bg-white p-3.5 shadow-2xs space-y-2.5 transition hover:border-slate-300">
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-xs text-slate-900">{supplier.code}</span>
+                    <span
+                        className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                        style={{ backgroundColor: typeBadge.bg, color: typeBadge.color }}
+                    >
+                        {typeBadge.label}
+                    </span>
+                </div>
+                {supplier.paymentTerm && (
+                    <span className="rounded bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800 border border-amber-200">
+                        {supplier.paymentTerm}
+                    </span>
+                )}
+            </div>
+
+            <div>
+                <p className="font-bold text-slate-900 text-xs" title={supplier.name}>
+                    {supplier.name}
+                </p>
+                {supplier.taxId && (
+                    <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                        MST: {supplier.taxId}
+                    </p>
+                )}
+            </div>
+
+            <div className="rounded bg-slate-50 p-2 text-[11px] text-slate-700 space-y-0.5">
+                {bankParsed ? (
+                    <>
+                        <div className="font-mono font-bold text-slate-900">
+                            STK: {bankParsed.stk || '—'}
+                        </div>
+                        <div className="text-[10px] text-slate-500 truncate">
+                            {bankParsed.bankName} {bankParsed.accountName ? `(${bankParsed.accountName})` : ''}
+                        </div>
+                    </>
+                ) : supplier.bankAccountInfo ? (
+                    <div className="font-mono text-[10px] text-slate-700 line-clamp-2">
+                        {supplier.bankAccountInfo}
+                    </div>
+                ) : (
+                    <span className="text-slate-400 italic">Chưa có thông tin tài khoản ngân hàng</span>
+                )}
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
+                <div className="flex items-center gap-1.5">
+                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-700 font-medium">
+                        {supplier.openPOCount} PO
+                    </span>
+                    <span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-700 font-medium">
+                        {supplier.unpaidInvoiceCount} HĐ
+                    </span>
+                </div>
+                <div className="text-right">
+                    <span className="text-[10px] text-slate-400 block">Đã thanh toán</span>
+                    <span className="font-mono font-bold text-xs text-[#B91C1C]">
+                        {supplier.totalPaidVND > 0 ? formatVND(supplier.totalPaidVND) : '0 ₫'}
+                    </span>
+                </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                    onClick={() => onEditPayment(supplier)}
+                    className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                >
+                    <Edit3 className="h-3 w-3" /> Sửa TK
+                </button>
+                <button
+                    onClick={() => onCreatePayment(supplier.id)}
+                    className="inline-flex items-center gap-1 rounded-md bg-[#B91C1C] px-3 py-1 text-xs font-bold text-white shadow-2xs hover:bg-[#721526]"
+                >
+                    <Plus className="h-3 w-3" /> Lập Đề Nghị
+                </button>
+            </div>
+        </div>
+    )
+}
+
 export function PaymentRequestsClient({
     initialRequests,
     initialTotal,
@@ -443,20 +641,20 @@ export function PaymentRequestsClient({
             {/* ═══ Page Header ═══ */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2.5">
-                        <CreditCard className="h-7 w-7 text-[#B91C1C]" />
-                        Đề Nghị Thanh Toán & Quản Lý Ngân Sách
+                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2.5">
+                        <CreditCard className="h-6 w-6 sm:h-7 sm:w-7 text-[#B91C1C] shrink-0" />
+                        <span className="truncate">Đề Nghị Thanh Toán & Quản Lý Ngân Sách</span>
                     </h1>
-                    <p className="text-sm text-slate-500 mt-1">
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1">
                         Hệ thống phê duyệt đa cấp theo hạn mức, quản lý master data Nhà cung cấp, lưu trữ chứng từ Cloudflare R2 và kiểm soát ngân sách chi phí
                     </p>
                 </div>
 
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2 flex-wrap">
                     <button
                         type="button"
                         onClick={() => setShowBlankPrint(true)}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-slate-900 transition"
+                        className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-slate-900 transition flex-1 sm:flex-initial"
                         title="In mẫu phôi tờ trình / đề nghị thanh toán trắng để ký tay"
                     >
                         <Printer className="h-4 w-4 text-[#B91C1C]" /> In Phôi Mẫu Trắng
@@ -466,7 +664,7 @@ export function PaymentRequestsClient({
                             setDrawerInitialSupplierId(undefined)
                             setShowCreateDrawer(true)
                         }}
-                        className="inline-flex items-center gap-2 rounded-lg bg-[#B91C1C] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#721526] transition"
+                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#B91C1C] px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#721526] transition flex-1 sm:flex-initial"
                     >
                         <Plus className="h-4 w-4" /> Lập Đề Nghị Mới
                     </button>
@@ -474,8 +672,8 @@ export function PaymentRequestsClient({
             </div>
 
             {/* ═══ Main Tab Navigation ═══ */}
-            <div className="border-b border-slate-200">
-                <nav className="-mb-px flex space-x-6">
+            <div className="border-b border-slate-200 overflow-x-auto no-scrollbar">
+                <nav className="-mb-px flex space-x-4 sm:space-x-6 min-w-max">
                     <button
                         onClick={() => setActiveTab('REQUESTS')}
                         className={`flex items-center gap-2 border-b-2 py-3 px-1 text-sm font-semibold transition ${
@@ -592,9 +790,9 @@ export function PaymentRequestsClient({
                     </div>
 
                     {/* Filter and Search Bar */}
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-md border border-slate-200 bg-white p-3 shadow-2xs">
-                        <div className="flex flex-1 items-center gap-2">
-                            <div className="relative flex-1 max-w-sm">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between rounded-md border border-slate-200 bg-white p-3 shadow-2xs">
+                        <div className="flex flex-col sm:flex-row flex-1 items-stretch sm:items-center gap-2">
+                            <div className="relative flex-1">
                                 <input
                                     type="text"
                                     placeholder="Tìm mã phiếu, người nhận, nội dung..."
@@ -609,7 +807,7 @@ export function PaymentRequestsClient({
                             <select
                                 value={statusFilter}
                                 onChange={e => handleFilterChange(e.target.value, undefined)}
-                                className="rounded-lg border border-slate-300 p-1.5 text-xs text-slate-700 focus:border-[#B91C1C] focus:outline-none"
+                                className="rounded-lg border border-slate-300 p-2 sm:p-1.5 text-xs text-slate-700 focus:border-[#B91C1C] focus:outline-none"
                             >
                                 <option value="ALL">Tất cả trạng thái</option>
                                 <option value="SUBMITTED">Chờ Trưởng phòng (Cấp 1)</option>
@@ -623,7 +821,7 @@ export function PaymentRequestsClient({
                             <select
                                 value={categoryFilter}
                                 onChange={e => handleFilterChange(undefined, e.target.value)}
-                                className="rounded-lg border border-slate-300 p-1.5 text-xs text-slate-700 focus:border-[#B91C1C] focus:outline-none"
+                                className="rounded-lg border border-slate-300 p-2 sm:p-1.5 text-xs text-slate-700 focus:border-[#B91C1C] focus:outline-none"
                             >
                                 <option value="ALL">Tất cả nhóm chi phí</option>
                                 <option value="VENDOR_PAYMENT">Tiền hàng Nhà cung cấp</option>
@@ -638,15 +836,15 @@ export function PaymentRequestsClient({
                         <button
                             onClick={refreshRequests}
                             disabled={isPending}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition"
+                            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition self-end sm:self-auto"
                         >
                             <RefreshCw className={`h-3.5 w-3.5 ${isPending ? 'animate-spin' : ''}`} />
                             Làm mới
                         </button>
                     </div>
 
-                    {/* Table of Requests */}
-                    <div className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-2xs">
+                    {/* Table of Requests (Desktop) */}
+                    <div className="hidden md:block overflow-hidden rounded-md border border-slate-200 bg-white shadow-2xs">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-xs">
                                 <thead className="border-b border-slate-200 bg-slate-50 font-semibold text-slate-600">
@@ -768,6 +966,33 @@ export function PaymentRequestsClient({
                             </table>
                         </div>
                     </div>
+
+                    {/* Mobile Card List for Requests */}
+                    <div className="block md:hidden space-y-3">
+                        {requests.length > 0 ? (
+                            requests.map(r => (
+                                <PaymentRequestMobileCard
+                                    key={r.id}
+                                    item={r}
+                                    onOpenDetail={openDetail}
+                                    onPrint={async (id) => {
+                                        setLoadingDetail(true)
+                                        try {
+                                            const d = await getPaymentRequestDetail(id)
+                                            if (d) setPrintDetail(d)
+                                        } finally {
+                                            setLoadingDetail(false)
+                                        }
+                                    }}
+                                    onDelete={handleDeleteRequest}
+                                />
+                            ))
+                        ) : (
+                            <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-xs text-slate-400">
+                                Không có đề nghị thanh toán nào phù hợp với bộ lọc
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
 
@@ -826,9 +1051,9 @@ export function PaymentRequestsClient({
                     </div>
 
                     {/* Filter and Action Bar */}
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-md border border-slate-200 bg-white p-3 shadow-2xs">
-                        <div className="flex flex-1 items-center gap-2">
-                            <div className="relative flex-1 max-w-md">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between rounded-md border border-slate-200 bg-white p-3 shadow-2xs">
+                        <div className="flex flex-col sm:flex-row flex-1 items-stretch sm:items-center gap-2">
+                            <div className="relative flex-1">
                                 <input
                                     type="text"
                                     placeholder="Tìm theo tên NCC, mã NCC, MST hoặc số tài khoản..."
@@ -842,7 +1067,7 @@ export function PaymentRequestsClient({
                             <select
                                 value={supplierTypeFilter}
                                 onChange={e => setSupplierTypeFilter(e.target.value)}
-                                className="rounded-lg border border-slate-300 p-1.5 text-xs text-slate-700 focus:border-[#B91C1C] focus:outline-none"
+                                className="rounded-lg border border-slate-300 p-2 sm:p-1.5 text-xs text-slate-700 focus:border-[#B91C1C] focus:outline-none"
                             >
                                 <option value="ALL">Tất cả phân loại NCC</option>
                                 <option value="DISTRIBUTOR">Nhà phân phối (Distributor)</option>
@@ -857,14 +1082,14 @@ export function PaymentRequestsClient({
                         <button
                             type="button"
                             onClick={() => setShowQuickAddSupplierModal(true)}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-[#B91C1C] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#721526] transition"
+                            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#B91C1C] px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#721526] transition self-start sm:self-auto"
                         >
                             <Plus className="h-4 w-4" /> Thêm Nhà Cung Cấp Mới
                         </button>
                     </div>
 
-                    {/* Master Data Table */}
-                    <div className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-2xs">
+                    {/* Master Data Table (Desktop) */}
+                    <div className="hidden md:block overflow-hidden rounded-md border border-slate-200 bg-white shadow-2xs">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-xs">
                                 <thead className="border-b border-slate-200 bg-slate-50 font-semibold text-slate-600">
@@ -1000,6 +1225,24 @@ export function PaymentRequestsClient({
                             </table>
                         </div>
                     </div>
+
+                    {/* Mobile Card List for Suppliers */}
+                    <div className="block md:hidden space-y-3">
+                        {filteredSuppliers.length > 0 ? (
+                            filteredSuppliers.map(s => (
+                                <SupplierPaymentMobileCard
+                                    key={s.id}
+                                    supplier={s}
+                                    onCreatePayment={handleCreatePaymentForSupplier}
+                                    onEditPayment={handleOpenEditSupplier}
+                                />
+                            ))
+                        ) : (
+                            <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-xs text-slate-400">
+                                Không tìm thấy Nhà Cung Cấp nào phù hợp
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
 
@@ -1009,7 +1252,7 @@ export function PaymentRequestsClient({
             {activeTab === 'CATEGORIES' && (
                 <div className="space-y-6">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-1.5">
                             <span className="text-xs font-semibold text-slate-500">Nhóm:</span>
                             {['ALL', 'COST_OF_SALES', 'OPERATING', 'MARKETING', 'ADMINISTRATIVE', 'CAPEX'].map(grp => (
                                 <button

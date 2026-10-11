@@ -199,10 +199,10 @@ function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose:
     }, [shipmentId])
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={onClose}>
-            <div className="p-6 rounded-lg w-[640px] max-h-[80vh] overflow-auto" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }} onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-5">
-                    <h3 className="font-semibold flex items-center gap-2" style={{ color: '#0F172A', fontSize: 18 }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={onClose}>
+            <div className="p-4 sm:p-6 rounded-lg w-full max-w-[640px] max-h-[85vh] overflow-y-auto" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }} onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold flex items-center gap-2" style={{ color: '#0F172A', fontSize: 16 }}>
                         <BarChart3 size={18} style={{ color: '#B45309' }} /> Phân Tích Giá Vốn Nhập Kho
                     </h3>
                     <button onClick={onClose} style={{ color: '#64748B' }}><X size={16} /></button>
@@ -262,26 +262,28 @@ function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose:
                         {/* Per product */}
                         <div>
                             <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: '#0891B2' }}>Giá Vốn Per SKU</p>
-                            <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                                <thead>
-                                    <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                        {['SKU', 'Tên', 'SL', 'CIF/chai', 'Landed/chai'].map(h => (
-                                            <th key={h} className="px-2 py-2 text-[10px] uppercase font-semibold" style={{ color: '#64748B' }}>{h}</th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {data.productBreakdown.map((p: any) => (
-                                        <tr key={p.skuCode} style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                            <td className="px-2 py-2 text-xs font-bold" style={{ color: '#0891B2' }}>{p.skuCode}</td>
-                                            <td className="px-2 py-2 text-xs truncate max-w-[140px]" style={{ color: '#0F172A' }}>{p.productName}</td>
-                                            <td className="px-2 py-2 text-xs text-center" style={{ color: '#475569' }}>{p.qty}</td>
-                                            <td className="px-2 py-2 text-xs text-right" style={{ color: '#475569' }}>{fmtNum(p.unitCIF)}</td>
-                                            <td className="px-2 py-2 text-xs text-right font-bold" style={{ color: '#B45309' }}>{fmtNum(p.estimatedLandedCost)} ₫</td>
+                            <div className="overflow-x-auto -mx-1">
+                                <table className="w-full text-left min-w-[500px]" style={{ borderCollapse: 'collapse' }}>
+                                    <thead>
+                                        <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                                            {['SKU', 'Tên', 'SL', 'CIF/chai', 'Landed/chai'].map(h => (
+                                                <th key={h} className="px-2 py-2 text-[10px] uppercase font-semibold" style={{ color: '#64748B' }}>{h}</th>
+                                            ))}
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {data.productBreakdown.map((p: any) => (
+                                            <tr key={p.skuCode} style={{ borderBottom: '1px solid #E2E8F0' }}>
+                                                <td className="px-2 py-2 text-xs font-bold" style={{ color: '#0891B2' }}>{p.skuCode}</td>
+                                                <td className="px-2 py-2 text-xs truncate max-w-[140px]" style={{ color: '#0F172A' }}>{p.productName}</td>
+                                                <td className="px-2 py-2 text-xs text-center" style={{ color: '#475569' }}>{p.qty}</td>
+                                                <td className="px-2 py-2 text-xs text-right" style={{ color: '#475569' }}>{fmtNum(p.unitCIF)}</td>
+                                                <td className="px-2 py-2 text-xs text-right font-bold" style={{ color: '#B45309' }}>{fmtNum(p.estimatedLandedCost)} ₫</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
                         {/* Average */}
@@ -302,6 +304,91 @@ function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose:
 interface Props {
     initialRows: ShipmentRow[]; initialTotal: number
     stats: { total: number; booked: number; onVessel: number; atPort: number; customsFiling: number; cleared: number; delivered: number }
+}
+
+function ShipmentMobileCard({
+    row,
+    onOpenDetail,
+    onOpenLandedCost
+}: {
+    row: ShipmentRow
+    onOpenDetail: (id: string) => void
+    onOpenLandedCost: (id: string) => void
+}) {
+    const st = STATUS_CFG[row.status] ?? { label: row.status, color: '#64748B' }
+
+    return (
+        <div
+            onClick={() => onOpenDetail(row.id)}
+            className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs space-y-2.5 cursor-pointer hover:border-[#0E7490] transition-colors"
+        >
+            <div className="flex items-start justify-between gap-2">
+                <div>
+                    <span className="font-mono font-bold text-xs text-[#0891B2]">{row.billOfLading}</span>
+                    <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-slate-500">
+                        <span>PO: {row.poNo}</span>
+                        <span>•</span>
+                        <span className="font-medium text-slate-800 truncate max-w-[150px]">{row.supplierName}</span>
+                    </div>
+                </div>
+                <span
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
+                    style={{ color: st.color, background: `${st.color}20` }}
+                >
+                    {st.label}
+                </span>
+            </div>
+
+            {/* Route & Vessel */}
+            <div className="p-2 rounded-md bg-slate-50 border border-slate-100 grid grid-cols-2 gap-2 text-xs">
+                <div>
+                    <span className="text-[10px] text-slate-400 block uppercase font-medium">Hành trình</span>
+                    <p className="font-medium text-slate-700 truncate text-[11px]">
+                        {row.portOfLoading ?? '—'} &rarr; {row.portOfDischarge ?? '—'}
+                    </p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">ETA: {fmtDate(row.eta)}</p>
+                </div>
+                <div>
+                    <span className="text-[10px] text-slate-400 block uppercase font-medium">Phương tiện</span>
+                    <p className="font-medium text-slate-700 truncate text-[11px]">{row.vesselName ?? 'Chưa rõ tàu'}</p>
+                    <p className="text-[10px] font-mono text-slate-500 mt-0.5">{row.containerNo ?? 'Chưa gán cont'}</p>
+                </div>
+            </div>
+
+            {/* Progress milestone */}
+            <div className="space-y-1 pt-1 border-t border-slate-100">
+                <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-600 font-medium">Tiến độ quy trình</span>
+                    <span className="font-bold text-emerald-700">{row.milestoneProgress}%</span>
+                </div>
+                <div className="h-1.5 rounded-full overflow-hidden bg-slate-100">
+                    <div
+                        className="h-full rounded-full bg-emerald-600 transition-all duration-300"
+                        style={{ width: `${row.milestoneProgress}%` }}
+                    />
+                </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-slate-100" onClick={e => e.stopPropagation()}>
+                <button
+                    onClick={() => onOpenLandedCost(row.id)}
+                    className="flex items-center gap-1 px-2 py-1 rounded bg-slate-50 hover:bg-slate-100 text-xs font-medium text-amber-800 border border-slate-200 transition-colors cursor-pointer"
+                    title="Phân tích giá vốn"
+                >
+                    <BarChart3 size={13} className="text-amber-600" />
+                    <span>Giá vốn</span>
+                </button>
+                <button
+                    onClick={() => onOpenDetail(row.id)}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#0891B2] hover:bg-[#0E7490] text-xs font-semibold text-white transition-colors cursor-pointer"
+                >
+                    <Eye size={13} />
+                    <span>Chi tiết</span>
+                </button>
+            </div>
+        </div>
+    )
 }
 
 export function ShipmentsClient({ initialRows, initialTotal, stats }: Props) {
@@ -362,22 +449,53 @@ export function ShipmentsClient({ initialRows, initialTotal, stats }: Props) {
             </div>
 
             {/* Filter */}
-            <div className="flex gap-3">
-                <div className="relative flex-1 max-w-sm">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <div className="relative flex-1 sm:max-w-sm">
                     <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input placeholder="Tìm B/L, tàu, NCC..." value={search}
                         onChange={e => { setSearch(e.target.value); refresh() }}
                         className="w-full pl-9 pr-4 py-2 rounded-md text-sm outline-none transition-colors border border-slate-200 bg-white text-slate-900 focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600" />
                 </div>
                 <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); refresh() }}
-                    className="px-3 py-2 rounded-md text-sm outline-none cursor-pointer border border-slate-200 bg-white text-slate-900 focus:border-cyan-600">
+                    className="w-full sm:w-auto px-3 py-2 rounded-md text-sm outline-none cursor-pointer border border-slate-200 bg-white text-slate-900 focus:border-cyan-600">
                     <option value="">Tất cả trạng thái</option>
                     {Object.entries(STATUS_CFG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                 </select>
             </div>
 
-            {/* Table */}
-            <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+            {/* Mobile Cards List View */}
+            <div className="block md:hidden space-y-3">
+                {loading ? (
+                    <div className="space-y-3">
+                        <div className="h-32 rounded-lg bg-white border border-slate-200 animate-pulse" />
+                        <div className="h-32 rounded-lg bg-white border border-slate-200 animate-pulse" />
+                        <div className="h-32 rounded-lg bg-white border border-slate-200 animate-pulse" />
+                    </div>
+                ) : rows.length === 0 ? (
+                    <div className="p-8 text-center bg-white rounded-lg border border-slate-200 text-slate-600 space-y-3">
+                        <Ship size={36} className="mx-auto text-slate-300" />
+                        <p className="font-semibold text-slate-700">Chưa có lô hàng nào</p>
+                        <button
+                            onClick={() => setCreateOpen(true)}
+                            className="inline-block text-xs px-3 py-1.5 rounded-lg font-semibold text-[#0891B2] border border-cyan-200 bg-cyan-50"
+                        >
+                            + Tạo lô hàng đầu tiên
+                        </button>
+                    </div>
+                ) : (
+                    rows.map(row => (
+                        <ShipmentMobileCard
+                            key={row.id}
+                            row={row}
+                            onOpenDetail={id => { setSelectedId(id); setDetailOpen(true) }}
+                            onOpenLandedCost={id => setLandedCostId(id)}
+                        />
+                    ))
+                )}
+            </div>
+
+            {/* Table - Desktop */}
+            <div className="hidden md:block rounded-lg overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>

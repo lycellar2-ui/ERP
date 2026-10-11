@@ -3076,7 +3076,7 @@ export async function getReplenishmentSuggestions(params: {
         const stockTt = stockMap.get(`${taTtWh.id}_${prodId}`) || 0
         const stockSr = stockMap.get(`${lysSrWh.id}_${prodId}`) || 0
 
-        // 1. Luồng 1: Nội bộ Thắng Ân (Thường Tín ➔ GVM Tầng 2)
+        // 1. Luồng 1: Nội bộ Thắng Ân (Thường Tín → GVM Tầng 2)
         if (stockGvm <= targetThreshold && stockTt >= sourceMinStock) {
             const needed = Math.max(12, Math.ceil((24 - stockGvm) / 6) * 6)
             const transferQty = Math.min(needed, Math.floor(stockTt / 6) * 6 || stockTt)
@@ -3101,13 +3101,13 @@ export async function getReplenishmentSuggestions(params: {
                     suggestedQty: transferQty,
                     suggestedCases: Math.round(transferQty / 6) || 1,
                     category: 'INTRA_TA',
-                    categoryLabel: 'Thường Tín ➔ GVM Tầng 2',
+                    categoryLabel: 'Thường Tín → GVM Tầng 2',
                     reason: `Kho GVM còn ${stockGvm}c (≤ ${targetThreshold}c), Kho Thường Tín có sẵn ${stockTt}c`
                 })
             }
         }
 
-        // 2. Luồng 2: Cấp hàng Showroom (Thắng Ân ➔ Showroom Lys)
+        // 2. Luồng 2: Cấp hàng Showroom (Thắng Ân → Showroom Lys)
         const showroomThreshold = Math.min(targetThreshold, 6)
         if (stockSr <= showroomThreshold && (stockGvm > 6 || stockTt > 6)) {
             const sourceWh = stockGvm >= stockTt ? taGvmWh : taTtWh
@@ -3134,7 +3134,7 @@ export async function getReplenishmentSuggestions(params: {
                     suggestedQty: transferQty,
                     suggestedCases: 1,
                     category: 'TO_SHOWROOM',
-                    categoryLabel: `${sourceWh.code?.includes('TT') ? 'Thường Tín' : 'GVM'} ➔ Showroom`,
+                    categoryLabel: `${sourceWh.code?.includes('TT') ? 'Thường Tín' : 'GVM'} → Showroom`,
                     reason: `Showroom còn ${stockSr}c (≤ ${showroomThreshold}c), ${sourceWh.name} có sẵn ${sourceStock}c`
                 })
             }

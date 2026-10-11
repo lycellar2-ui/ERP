@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Truck, Plus, X, Eye, CheckCircle2, Loader2, Save, PackageCheck, AlertCircle, Search, ArrowRight, Box, Printer, RotateCcw, Phone, MapPin, Trash2, ShieldAlert } from 'lucide-react'
+import { Truck, Plus, X, Eye, CheckCircle2, Loader2, Save, PackageCheck, AlertCircle, Search, ArrowRight, Box, Printer, RotateCcw, Phone, MapPin, Trash2, ShieldAlert, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     type DeliveryOrderRow,
@@ -1224,7 +1224,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                         color: mobileStep === s.step ? '#B45309' : 'inherit',
                                         border: mobileStep === s.step ? 'none' : '1px solid currentColor',
                                     }}>
-                                    {mobileStep > s.step ? '✓' : s.step}
+                                    {mobileStep > s.step ? <Check size={11} strokeWidth={3} /> : s.step}
                                 </span>
                                 {s.label}
                             </button>

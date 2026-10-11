@@ -2355,8 +2355,8 @@ export async function exportBalanceSheetExcel(year?: number, month?: number): Pr
     // Add balance check row
     rows.push({ code: '', item: '', amount: 0 })
     rows.push({
-        code: '✓',
-        item: bs.isBalanced ? 'CÂN ĐỐI ✓ (Tài sản = Nợ + Vốn CSH)' : '⚠ CHÊNH LỆCH — Kiểm tra lại dữ liệu!',
+        code: bs.isBalanced ? 'OK' : 'ALERT',
+        item: bs.isBalanced ? 'CÂN ĐỐI (Tài sản = Nợ + Vốn CSH)' : 'CHÊNH LỆCH — Kiểm tra lại dữ liệu!',
         amount: bs.totalAssets - bs.totalLiabilities - bs.totalEquity,
     })
 

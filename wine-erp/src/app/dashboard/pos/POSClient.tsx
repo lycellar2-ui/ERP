@@ -28,6 +28,7 @@ export default function POSClient() {
     const [barcodeInput, setBarcodeInput] = useState('')
     const [barcodeError, setBarcodeError] = useState('')
     const [vatLoading, setVatLoading] = useState(false)
+    const [mobileView, setMobileView] = useState<'CATALOG' | 'CART'>('CATALOG')
 
     const loadProducts = useCallback(async () => {
         const data = await getPOSProducts(search || undefined, activeCategory)
@@ -120,6 +121,7 @@ export default function POSClient() {
                 setShowReceipt(true)
                 setCart([])
                 setCashReceived('')
+                setMobileView('CATALOG')
                 loadProducts()
                 getPOSShiftSummary().then(setShiftSummary)
                 return result
@@ -134,9 +136,9 @@ export default function POSClient() {
     }
 
     return (
-        <div className="flex h-[calc(100vh-60px)] bg-lys-bg overflow-hidden -m-4 sm:-m-6">
+        <div className="flex h-[calc(100vh-60px)] bg-lys-bg overflow-hidden -m-4 sm:-m-6 relative">
             {/* LEFT: Product Catalog */}
-            <div className="flex-1 flex flex-col p-4 sm:p-5 overflow-hidden">
+            <div className={cn('flex-1 flex flex-col p-3 sm:p-5 overflow-hidden', mobileView === 'CART' ? 'hidden md:flex' : 'flex')}>
                 {/* Shift Stats Bar */}
                 {shiftSummary && (
                     <div className="flex items-center gap-3 mb-3 flex-wrap">
@@ -270,9 +272,20 @@ export default function POSClient() {
             </div>
 
             {/* RIGHT: Cart Panel */}
-            <div className="w-80 lg:w-96 bg-white border-l border-lys-border flex flex-col shadow-sm">
+            <div className={cn(
+                'bg-white border-l border-lys-border flex flex-col shadow-sm transition-all',
+                mobileView === 'CATALOG' ? 'hidden md:flex w-80 lg:w-96' : 'flex w-full md:w-80 lg:w-96 h-full fixed md:static inset-0 z-40'
+            )}>
                 <div className="p-4 border-b border-lys-border flex items-center justify-between">
                     <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setMobileView('CATALOG')}
+                            className="md:hidden p-1 mr-0.5 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                            aria-label="Quay lại danh mục"
+                        >
+                            <ArrowLeft size={16} />
+                        </button>
                         <ShoppingCart size={18} className="text-lys-teal-strong" aria-hidden />
                         <h2 className="text-sm font-bold text-lys-primary">
                             Giỏ hàng <span className="text-lys-muted font-normal">({cart.length})</span>
@@ -472,6 +485,25 @@ export default function POSClient() {
                         </div>
                     </div>
                 </Modal>
+            )}
+
+            {/* Mobile Floating Cart Action Bar */}
+            {cart.length > 0 && mobileView === 'CATALOG' && (
+                <div className="md:hidden fixed bottom-4 inset-x-4 z-30">
+                    <button
+                        type="button"
+                        onClick={() => setMobileView('CART')}
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-[#0891B2] hover:bg-[#0E7490] text-white shadow-lg shadow-cyan-950/20 cursor-pointer active:scale-[0.99] transition-all"
+                    >
+                        <div className="flex items-center gap-2.5">
+                            <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs">
+                                {cart.reduce((sum, item) => sum + item.qty, 0)}
+                            </div>
+                            <span className="text-xs font-bold">Xem Giỏ Hàng</span>
+                        </div>
+                        <span className="font-bold text-xs sm:text-sm">{formatVND(cartTotal)} &rarr;</span>
+                    </button>
+                </div>
             )}
         </div>
     )

@@ -162,7 +162,7 @@ export function MarkdownDocModal({
                 </div>
 
                 {/* Content Area */}
-                <div className="p-6 overflow-y-auto flex-1 bg-white dark:bg-slate-900">
+                <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-white dark:bg-slate-900">
                     {loading && (
                         <div className="py-16 flex flex-col items-center justify-center space-y-3 text-slate-500">
                             <RefreshCw className="w-8 h-8 animate-spin text-rose-600" />

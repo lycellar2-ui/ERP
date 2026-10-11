@@ -1087,7 +1087,7 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userId }: EditSODra
                                                     </div>
 
                                                     {lowStock && (
-                                                        <p className="text-xs text-rose-600 font-medium">⚠️ {t.stockExceeded} ({l.stock})</p>
+                                                        <p className="text-xs text-rose-600 font-medium flex items-center gap-1"><AlertCircle size={12} className="shrink-0" /> {t.stockExceeded} ({l.stock})</p>
                                                     )}
 
                                                     {/* Unit price, Discount, VAT */}

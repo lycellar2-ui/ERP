@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { AlertTriangle, RefreshCw } from 'lucide-react'
 
 export default function DashboardError({
     error,
@@ -28,7 +29,9 @@ export default function DashboardError({
                 border: '1px solid #E2E8F0',
                 borderRadius: '12px',
             }}>
-                <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔌</div>
+                <div className="w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center bg-rose-50 text-rose-600">
+                    <AlertTriangle size={24} />
+                </div>
                 <h2 style={{ color: '#0F172A', fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>
                     Không thể tải Dashboard
                 </h2>
@@ -57,9 +60,12 @@ export default function DashboardError({
                             cursor: 'pointer',
                             fontSize: '14px',
                             fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
                         }}
                     >
-                        🔄 Thử lại
+                        <RefreshCw size={14} /> Thử lại
                     </button>
                     <button
                         onClick={() => window.location.href = '/login'}

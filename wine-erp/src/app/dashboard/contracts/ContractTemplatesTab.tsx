@@ -200,7 +200,7 @@ export function ContractTemplatesTab({ onSelectTemplateToCreate }: Props) {
 
                 {/* Guide for custom docx templates */}
                 <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-1.5 leading-relaxed">
-                    <div className="font-semibold text-slate-800">💡 Hướng dẫn tạo & chỉnh sửa biểu mẫu Word riêng của công ty:</div>
+                    <div className="font-semibold text-slate-800 flex items-center gap-1.5"><Info size={14} className="text-cyan-700 shrink-0" /> Hướng dẫn tạo & chỉnh sửa biểu mẫu Word riêng của công ty:</div>
                     <ul className="list-disc pl-5 space-y-1 text-slate-500">
                         <li>Bạn tải file mẫu <code>.docx</code> ở trên về máy, mở bằng Microsoft Word.</li>
                         <li>Chèn các biến <code>{`{ten_ben_b}`}</code>, <code>{`{so_hop_dong}`}</code>, <code>{`{tong_tien}`}</code> vào vị trí mong muốn trong văn bản.</li>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Target, Plus, X, Save, ChevronRight, BarChart3 } from 'lucide-react'
+import { Target, Plus, X, Save, ChevronRight, BarChart3, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
 import {
     type AllocationCampaignRow, type AllocationQuotaRow,
     getAllocCampaigns, getAllocQuotas, getAllocStats,
@@ -96,7 +96,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
             {/* Main layout */}
             <div className="grid grid-cols-12 gap-5">
                 {/* Left: Campaign list */}
-                <div className="col-span-5 space-y-2">
+                <div className="col-span-12 lg:col-span-5 space-y-2">
                     <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#64748B' }}>Campaigns</p>
                     <div className="space-y-2 max-h-[500px] overflow-y-auto">
                         {campaigns.length === 0 ? (
@@ -105,7 +105,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
                             const st = STATUS_MAP[c.status] ?? STATUS_MAP.ACTIVE
                             const pct = c.totalQty > 0 ? (c.soldQty / c.totalQty) * 100 : 0
                             const barColor = pct >= 90 ? '#B91C1C' : pct >= 70 ? '#B45309' : '#0E7490'
-                            const statusLabel = pct >= 100 ? '🔴 Đã hết' : pct >= 90 ? '🟡 Gần hết' : pct >= 70 ? '⚠ Sắp hết' : '✅ Còn nhiều'
+                            const statusLabel = pct >= 100 ? 'Đã hết' : pct >= 90 ? 'Gần hết' : pct >= 70 ? 'Sắp hết' : 'Còn nhiều'
                             const statusColor = pct >= 90 ? '#B91C1C' : pct >= 70 ? '#B45309' : '#15803D'
                             return (
                                 <button key={c.id} onClick={() => handleSelectCampaign(c)}
@@ -139,7 +139,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
                 </div>
 
                 {/* Right: Quota matrix */}
-                <div className="col-span-7 space-y-4">
+                <div className="col-span-12 lg:col-span-7 space-y-4">
                     {!selected ? (
                         <div className="flex flex-col items-center justify-center py-20 rounded-md" style={{ border: '1px dashed #E2E8F0' }}>
                             <Target size={36} style={{ color: '#E2E8F0' }} />
@@ -181,8 +181,8 @@ export function AllocationClient({ initialCampaigns, stats }: {
                             </div>
 
                             {/* Quota Table */}
-                            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-                                <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                            <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
+                                <table className="w-full text-left min-w-[540px]" style={{ borderCollapse: 'collapse' }}>
                                     <thead>
                                         <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                             {['Đối tượng', 'Loại', 'Hạn mức', 'Đã bán', 'Còn lại', '% Sử dụng'].map(h => (
@@ -211,14 +211,14 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                                         {q.remaining}
                                                     </span>
                                                     {' '}
-                                                    <span className="inline-block text-xs px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0" style={{
+                                                    <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0" style={{
                                                         ...(q.remaining <= 0
                                                             ? { color: '#B91C1C', background: 'rgba(185,28,28,0.15)' }
                                                             : q.pctUsed > 70
                                                                 ? { color: '#B45309', background: 'rgba(180,83,9,0.15)' }
                                                                 : { color: '#15803D', background: 'rgba(21,128,61,0.15)' }),
                                                     }}>
-                                                        {q.remaining <= 0 ? '🔴 Hết' : q.pctUsed > 70 ? '⚠ Sắp hết' : '✅ Còn nhiều'}
+                                                        {q.remaining <= 0 ? <><XCircle size={10} /> Hết</> : q.pctUsed > 70 ? <><AlertTriangle size={10} /> Sắp hết</> : <><CheckCircle2 size={10} /> Còn nhiều</>}
                                                     </span>
                                                 </td>
                                                 <td className="px-3 py-2.5">

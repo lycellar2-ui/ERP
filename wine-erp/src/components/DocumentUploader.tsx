@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Upload, FileText, X, Loader2, Download, ExternalLink } from 'lucide-react'
+import { Upload, FileText, X, Loader2, Download, ExternalLink, FileSpreadsheet, Image as ImageIcon, Paperclip, AlertCircle } from 'lucide-react'
 import { useConfirmDialog } from './ui/Modal'
 
 interface DocumentItem {
@@ -80,12 +80,12 @@ export function DocumentUploader({
         if (!result.success) setError(result.error ?? 'Xóa thất bại')
     }
 
-    const getFileIcon = (name: string) => {
-        if (name.match(/\.pdf$/i)) return '📄'
-        if (name.match(/\.(doc|docx)$/i)) return '📝'
-        if (name.match(/\.(xls|xlsx)$/i)) return '📊'
-        if (name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) return '🖼️'
-        return '📎'
+    const renderFileIcon = (name: string) => {
+        if (name.match(/\.pdf$/i)) return <FileText size={18} className="text-rose-600" />
+        if (name.match(/\.(doc|docx)$/i)) return <FileText size={18} className="text-blue-600" />
+        if (name.match(/\.(xls|xlsx|csv)$/i)) return <FileSpreadsheet size={18} className="text-emerald-600" />
+        if (name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) return <ImageIcon size={18} className="text-cyan-600" />
+        return <Paperclip size={18} className="text-slate-500" />
     }
 
     return (
@@ -100,9 +100,9 @@ export function DocumentUploader({
                         <div key={doc.id ?? i}
                             className="flex items-center gap-3 p-3 rounded-lg"
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                            <span className="text-lg">{getFileIcon(doc.name)}</span>
+                            <span className="flex items-center justify-center w-8 h-8 rounded bg-slate-50 shrink-0">{renderFileIcon(doc.name)}</span>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm truncate" style={{ color: '#E0E8EF' }}>
+                                <p className="text-sm truncate font-medium" style={{ color: '#0F172A' }}>
                                     {doc.name}
                                 </p>
                                 {doc.size && (
@@ -113,18 +113,18 @@ export function DocumentUploader({
                             </div>
                             <div className="flex gap-1">
                                 <a href={doc.url} target="_blank" rel="noopener noreferrer"
-                                    className="p-1.5 rounded-md transition-colors hover:bg-white/5"
+                                    className="p-1.5 rounded-md transition-colors hover:bg-slate-100"
                                     style={{ color: '#0891B2' }} title="Mở file">
                                     <ExternalLink size={14} />
                                 </a>
                                 <a href={doc.url} download={doc.name}
-                                    className="p-1.5 rounded-md transition-colors hover:bg-white/5"
+                                    className="p-1.5 rounded-md transition-colors hover:bg-slate-100"
                                     style={{ color: '#0891B2' }} title="Tải về">
                                     <Download size={14} />
                                 </a>
                                 {onDelete && doc.id && (
                                     <button onClick={() => handleDelete(doc.id!)}
-                                        className="p-1.5 rounded-md transition-colors hover:bg-white/5"
+                                        className="p-1.5 rounded-md transition-colors hover:bg-slate-100"
                                         style={{ color: '#E8A0A0' }} title="Xóa">
                                         <X size={14} />
                                     </button>
@@ -153,8 +153,8 @@ export function DocumentUploader({
             </button>
 
             {error && (
-                <p className="text-xs flex items-center gap-1" style={{ color: '#E8A0A0' }}>
-                    ⚠ {error}
+                <p className="text-xs flex items-center gap-1" style={{ color: '#E11D48' }}>
+                    <AlertCircle size={13} /> {error}
                 </p>
             )}
 

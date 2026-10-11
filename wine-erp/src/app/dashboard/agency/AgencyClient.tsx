@@ -3,7 +3,8 @@
 import React, { useState, useCallback, useEffect } from 'react'
 import {
     Globe, Package, FileText, CheckCircle2, Clock, Users, Plus, X, Loader2,
-    AlertTriangle, ChevronRight, Ship, Eye, Check, XCircle, Send, UploadCloud, Link
+    AlertTriangle, ChevronRight, Ship, Eye, Check, XCircle, Send, UploadCloud, Link,
+    Anchor, Warehouse, Mail
 } from 'lucide-react'
 import {
     AgencyPartnerRow, AgencySubmissionRow, AgencyDashboardStats, AgencyDocumentRow,
@@ -34,11 +35,11 @@ const PARTNER_TYPE_MAP: Record<string, { label: string; color: string }> = {
 }
 
 const SHIPMENT_MILESTONES = [
-    { key: 'BOOKED', label: 'Đặt Chỗ', icon: '📦' },
-    { key: 'ON_VESSEL', label: 'Trên Tàu', icon: '⛴️' },
-    { key: 'ARRIVED_PORT', label: 'Đến Cảng', icon: '🏠' },
-    { key: 'CUSTOMS_CLEARED', label: 'Thông Quan', icon: '✅' },
-    { key: 'DELIVERED_TO_WAREHOUSE', label: 'Về Kho', icon: '🏭' },
+    { key: 'BOOKED', label: 'Đặt Chỗ', icon: Package },
+    { key: 'ON_VESSEL', label: 'Trên Tàu', icon: Ship },
+    { key: 'ARRIVED_PORT', label: 'Đến Cảng', icon: Anchor },
+    { key: 'CUSTOMS_CLEARED', label: 'Thông Quan', icon: CheckCircle2 },
+    { key: 'DELIVERED_TO_WAREHOUSE', label: 'Về Kho', icon: Warehouse },
 ] as const
 
 const TABS = [
@@ -48,6 +49,85 @@ const TABS = [
 ] as const
 
 type TabKey = typeof TABS[number]['key']
+
+function AgencySubmissionMobileCard({
+    sub,
+    onToggleExpand,
+    isExpanded,
+    onReview,
+    isReviewing,
+    reviewAction,
+}: {
+    sub: AgencySubmissionRow
+    onToggleExpand: (id: string) => void
+    isExpanded: boolean
+    onReview: (id: string, action: 'APPROVED' | 'REJECTED') => void
+    isReviewing: boolean
+    reviewAction: 'APPROVED' | 'REJECTED' | null
+}) {
+    const st = STATUS_MAP[sub.status] ?? STATUS_MAP.PENDING_REVIEW
+    const pt = PARTNER_TYPE_MAP[sub.partnerType] ?? { label: sub.partnerType, color: '#475569' }
+
+    return (
+        <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-xs space-y-3">
+            <div className="flex items-start justify-between gap-2">
+                <div>
+                    <h4 className="text-sm font-bold text-slate-900">{sub.partnerName}</h4>
+                    <span className="inline-block text-[11px] font-semibold px-2 py-0.5 rounded mt-1 whitespace-nowrap"
+                        style={{ color: pt.color, background: `${pt.color}18` }}>
+                        {pt.label}
+                    </span>
+                </div>
+                <span className="inline-block text-xs px-2.5 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0"
+                    style={{ color: st.color, background: st.bg }}>
+                    {st.label}
+                </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-xs border-t border-slate-100 pt-2 text-slate-600">
+                <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">B/L</span>
+                    <span className="font-mono font-bold text-lys-teal-strong">{sub.shipmentBol || '—'}</span>
+                </div>
+                <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Tờ Khai</span>
+                    <span className="font-mono">{sub.declarationNo || '—'}</span>
+                </div>
+                <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Chứng Từ</span>
+                    <span className={sub.documentCount > 0 ? 'text-tone-success-fg font-semibold' : 'text-slate-400'}>
+                        {sub.documentCount} file
+                    </span>
+                </div>
+                <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Ngày Gửi</span>
+                    <span>{formatDate(sub.submittedAt)}</span>
+                </div>
+            </div>
+
+            <div className="flex items-center justify-between border-t border-slate-100 pt-2 gap-2 flex-wrap">
+                <Button size="sm" variant="ghost" className="text-xs" onClick={() => onToggleExpand(sub.id)}>
+                    <Eye size={12} className="mr-1" /> {isExpanded ? 'Ẩn chi tiết' : 'Xem chi tiết'}
+                </Button>
+
+                {sub.status === 'PENDING_REVIEW' && (
+                    <div className="flex gap-1.5 ml-auto">
+                        <button onClick={() => onReview(sub.id, 'APPROVED')} disabled={isReviewing}
+                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded disabled:opacity-50"
+                            style={{ background: 'rgba(21,128,61,0.12)', color: '#15803D', border: '1px solid rgba(21,128,61,0.25)' }}>
+                            <Check size={11} /> Duyệt
+                        </button>
+                        <button onClick={() => onReview(sub.id, 'REJECTED')} disabled={isReviewing}
+                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded disabled:opacity-50"
+                            style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.2)' }}>
+                            <XCircle size={11} /> Từ chối
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    )
+}
 
 export function AgencyClient() {
     const [tab, setTab] = useState<TabKey>('submissions')
@@ -362,8 +442,8 @@ export function AgencyClient() {
                         </div>
                     )}
 
-                    {/* Submissions table */}
-                    <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
+                    {/* Submissions table (Desktop) */}
+                    <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                         <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
@@ -477,7 +557,7 @@ export function AgencyClient() {
                                                                                                     border: `2px solid ${isDone ? (isCurrent ? '#0E7490' : '#15803D') : '#E2E8F0'}`,
                                                                                                     boxShadow: isCurrent ? '0 0 12px rgba(8, 145, 178, 0.25)' : 'none',
                                                                                                 }}>
-                                                                                                {m.icon}
+                                                                                                <m.icon size={14} style={{ color: isDone ? (isCurrent ? '#0E7490' : '#15803D') : '#94A3B8' }} />
                                                                                             </div>
                                                                                             <span className="text-[10px] font-semibold text-center leading-tight"
                                                                                                 style={{ color: isDone ? (isCurrent ? '#0E7490' : '#15803D') : '#64748B' }}>
@@ -562,6 +642,32 @@ export function AgencyClient() {
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Submissions Mobile Card List */}
+                    <div className="block md:hidden space-y-3">
+                        {subsLoading ? (
+                            <div className="p-8 text-center bg-white rounded-lg border border-slate-200">
+                                <Loader2 size={20} className="animate-spin mx-auto" style={{ color: '#0891B2' }} />
+                            </div>
+                        ) : submissions.length === 0 ? (
+                            <div className="p-8 text-center bg-white rounded-lg border border-slate-200 text-slate-500">
+                                <Globe size={28} className="mx-auto mb-2 text-slate-300" />
+                                <p className="text-xs">Chưa có submission nào</p>
+                            </div>
+                        ) : (
+                            submissions.map(sub => (
+                                <AgencySubmissionMobileCard
+                                    key={sub.id}
+                                    sub={sub}
+                                    onToggleExpand={toggleExpand}
+                                    isExpanded={expandedSubId === sub.id}
+                                    onReview={handleReview}
+                                    isReviewing={reviewingId === sub.id}
+                                    reviewAction={reviewAction}
+                                />
+                            ))
+                        )}
+                    </div>
                 </div>
             )}
 
@@ -580,7 +686,7 @@ export function AgencyClient() {
                     </div>
 
                     <div className="p-5 rounded-md space-y-4" style={card}>
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div>
                                 <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Lô hàng</label>
                                 <select value={assignForm.shipmentId} onChange={e => setAssignForm(f => ({ ...f, shipmentId: e.target.value }))}
@@ -626,8 +732,8 @@ export function AgencyClient() {
                     </div>
 
                     {assignShipments.length > 0 && (
-                        <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-                            <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                        <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
+                            <table className="w-full text-left min-w-[500px]" style={{ borderCollapse: 'collapse' }}>
                                 <thead>
                                     <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                         {['B/L', 'Tàu', 'ETA', 'Trạng Thái'].map(h => (
@@ -751,7 +857,7 @@ export function AgencyClient() {
                                                 style={{ color: pt.color, background: `${pt.color}18` }}>{pt.label}</span>
                                         </div>
                                         <div className="space-y-1.5">
-                                            <p className="text-xs" style={{ color: '#475569' }}>✉ {p.email}</p>
+                                            <p className="text-xs flex items-center gap-1.5" style={{ color: '#475569' }}><Mail size={12} className="shrink-0" /> {p.email}</p>
                                             <div className="flex items-center gap-3">
                                                 <span className="text-xs" style={{ color: '#64748B' }}>
                                                     {p.submissionCount} hồ sơ

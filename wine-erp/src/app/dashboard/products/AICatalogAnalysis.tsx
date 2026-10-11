@@ -25,14 +25,14 @@ interface CatalogStats {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-    RED: '🔴 Red',
-    WHITE: '⚪ White',
-    ROSE: '🩷 Rosé',
-    SPARKLING: '✨ Sparkling',
-    DESSERT: '🍯 Dessert',
-    FORTIFIED: '🏰 Fortified',
-    NATURAL: '🌿 Natural',
-    ORANGE: '🟠 Orange',
+    RED: 'Red',
+    WHITE: 'White',
+    ROSE: 'Rosé',
+    SPARKLING: 'Sparkling',
+    DESSERT: 'Dessert',
+    FORTIFIED: 'Fortified',
+    NATURAL: 'Natural',
+    ORANGE: 'Orange',
 }
 
 export function AICatalogAnalysis() {
@@ -110,7 +110,7 @@ export function AICatalogAnalysis() {
                         ) : analysis ? (
                             <><RefreshCw size={13} /> Phân tích lại</>
                         ) : (
-                            <><Sparkles size={13} /> 🔍 Phân Tích Danh Mục</>
+                            <><Sparkles size={13} /> Phân Tích Danh Mục</>
                         )}
                     </button>
                     <button onClick={() => setCollapsed(!collapsed)} className="p-2 rounded-md transition-all" style={{ color: '#64748B' }}>
@@ -124,7 +124,7 @@ export function AICatalogAnalysis() {
                 {stats && !loading && (
                     <div className="px-5 pt-4 space-y-3">
                         {/* Row 1: Product KPIs */}
-                        <div className="grid grid-cols-3 lg:grid-cols-7 gap-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
                             <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><Package size={11} style={{ color: '#0891B2' }} /></div>
                                 <p className="text-lg font-bold" style={{ color: '#0891B2' }}>{stats.totalProducts}</p>
@@ -163,7 +163,7 @@ export function AICatalogAnalysis() {
                         </div>
 
                         {/* Row 2: Type + Country Distribution */}
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <div className="p-2.5 rounded" style={{ background: '#FFFFFF' }}>
                                 <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Wine Types:</span>
                                 <div className="flex flex-wrap gap-1.5">
@@ -196,7 +196,7 @@ export function AICatalogAnalysis() {
                         <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin"
                             style={{ borderColor: '#E2E8F0', borderTopColor: '#B45309' }} />
                         <p className="text-xs animate-pulse" style={{ color: '#64748B' }}>
-                            AI đang phân tích {'{'} danh mục, NCC, market trends, pricing, portfolio gaps... {'}'}
+                            AI đang phân tích danh mục, NCC, xu hướng thị trường, định giá và cơ cấu danh mục...
                         </p>
                     </div>
                 )}
@@ -204,8 +204,9 @@ export function AICatalogAnalysis() {
                 {/* Error */}
                 {error && !loading && (
                     <div className="px-5 py-4">
-                        <div className="px-4 py-3 rounded-md" style={{ background: 'rgba(185,28,28,0.06)', border: '1px solid rgba(185,28,28,0.2)' }}>
-                            <p className="text-xs" style={{ color: '#B91C1C' }}>❌ {error}</p>
+                        <div className="px-4 py-3 rounded-md flex items-center gap-2" style={{ background: 'rgba(185,28,28,0.06)', border: '1px solid rgba(185,28,28,0.2)' }}>
+                            <AlertTriangle size={14} className="shrink-0" style={{ color: '#B91C1C' }} />
+                            <p className="text-xs" style={{ color: '#B91C1C' }}>{error}</p>
                         </div>
                     </div>
                 )}
@@ -216,9 +217,9 @@ export function AICatalogAnalysis() {
                         <div className="space-y-1.5 max-h-[700px] overflow-y-auto pr-2">
                             {analysis.split('\n').filter(Boolean).map((line, i) => {
                                 const isHeading = line.startsWith('#') || line.startsWith('**')
-                                const isHighlight = /[🔥⚠️🎯📊💡📈🏆🆕🌍🏢💰🍷]/.test(line)
-                                const isUrgent = line.includes('🔴') || line.includes('cảnh báo') || line.includes('rủi ro') || line.includes('hết hàng') || line.includes('chưa bán')
-                                const isPositive = line.includes('🟢') || line.includes('tăng trưởng') || line.includes('bán chạy') || line.includes('tiềm năng')
+                                const isHighlight = line.includes('**') || line.startsWith('###') || line.startsWith('##')
+                                const isUrgent = line.includes('cảnh báo') || line.includes('rủi ro') || line.includes('hết hàng') || line.includes('chưa bán') || line.toLowerCase().includes('urgent')
+                                const isPositive = line.includes('tăng trưởng') || line.includes('bán chạy') || line.includes('tiềm năng')
                                 const isMarket = line.includes('thị trường') || line.includes('xu hướng') || line.includes('cạnh tranh')
 
                                 let color = '#475569'
@@ -235,13 +236,13 @@ export function AICatalogAnalysis() {
                                         marginLeft: line.startsWith('- ') || line.startsWith('* ') ? '12px' : '0',
                                         paddingTop: isHeading ? '8px' : '0',
                                     }}>
-                                        {line.replace(/^#+\s*/, '').replace(/\*\*/g, '')}
+                                        {line.replace(/^#+\s*/, '').replace(/\*\*/g, '').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '').trim()}
                                     </p>
                                 )
                             })}
                         </div>
                         <p className="text-[10px] mt-3 text-right" style={{ color: '#64748B' }}>
-                            🕐 Phân tích lúc {new Date().toLocaleString('vi-VN')} · Gemini 3.1 Pro · Wine Portfolio Director AI
+                            Phân tích lúc {new Date().toLocaleString('vi-VN')} · Gemini 3.1 Pro · Wine Portfolio Director AI
                         </p>
                         <button onClick={handleSaveReport} disabled={saved}
                             className="flex items-center gap-1 px-3 py-1.5 text-[10px] font-semibold rounded transition-all mt-1 ml-auto"
@@ -256,7 +257,7 @@ export function AICatalogAnalysis() {
                     <div className="px-5 py-4 flex flex-col items-center gap-2">
                         <Wine size={20} style={{ color: '#E2E8F0' }} />
                         <p className="text-xs text-center" style={{ color: '#64748B' }}>
-                            Nhấn <strong>&quot;🔍 Phân Tích Danh Mục&quot;</strong> để nhận<br />
+                            Nhấn <strong>&quot;Phân Tích Danh Mục&quot;</strong> để nhận<br />
                             phân tích portfolio, NCC, nghiên cứu thị trường rượu vang VN
                         </p>
                     </div>

@@ -43,6 +43,59 @@ export function ReturnsClient({ initialRows, stats }: {
         setRows(data)
     }
 
+function ReturnMobileCard({
+    r,
+    onApprove,
+}: {
+    r: any
+    onApprove: (id: string) => void
+}) {
+    return (
+        <div className="rounded-lg border border-lys-border bg-white p-4 shadow-sm space-y-3">
+            <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className="type-number font-semibold text-lys-teal-strong">{r.returnNo}</span>
+                        <StatusBadge status={r.status} label={STATUS_LABEL[r.status] ?? r.status} toneOverrides={STATUS_TONES} />
+                    </div>
+                    <div className="text-xs text-lys-muted mt-1">
+                        SO: <span className="type-number text-lys-secondary font-medium">{r.soNo}</span> • {formatDate(r.createdAt)}
+                    </div>
+                </div>
+                <div className="text-right shrink-0">
+                    <span className="type-number text-sm font-bold text-lys-primary block">
+                        {formatVND(r.totalAmount)}
+                    </span>
+                    {r.creditNoteNo && (
+                        <span className="text-[11px] type-number text-tone-success-fg">
+                            CN: {r.creditNoteNo}
+                        </span>
+                    )}
+                </div>
+            </div>
+
+            <div className="text-xs text-lys-primary font-medium border-t border-lys-border/50 pt-2">
+                <span className="text-lys-muted">Khách hàng: </span>
+                {r.customerName}
+            </div>
+
+            {r.reason && (
+                <div className="text-xs text-lys-secondary bg-lys-slate-50 rounded p-2 border border-lys-border/40">
+                    <span className="text-lys-muted">Lý do: </span>{r.reason}
+                </div>
+            )}
+
+            {(r.status === 'DRAFT' || r.status === 'PENDING_INSPECTION') && (
+                <div className="pt-1 flex justify-end">
+                    <Button size="sm" variant="secondary" className="w-full" onClick={() => onApprove(r.id)}>
+                        <CheckCircle2 size={13} aria-hidden /> Duyệt Đơn
+                    </Button>
+                </div>
+            )}
+        </div>
+    )
+}
+
     const openCreate = async () => {
         const opts = await getSOOptionsForReturn()
         setSoOptions(opts)
@@ -122,48 +175,68 @@ export function ReturnsClient({ initialRows, stats }: {
                 <StatCard icon={AlertCircle} tone="info" label="Tổng Credit" value={`${(stats.totalCredited / 1e6).toFixed(0)}M ₫`} />
             </StatGrid>
 
-            <Table>
-                <THead>
-                    <tr>
-                        <Th>Mã</Th>
-                        <Th>SO Gốc</Th>
-                        <Th>Khách Hàng</Th>
-                        <Th>Lý Do</Th>
-                        <Th>Trạng Thái</Th>
-                        <Th align="right">Giá Trị</Th>
-                        <Th>Credit Note</Th>
-                        <Th>Ngày</Th>
-                        <Th aria-label="Thao tác" />
-                    </tr>
-                </THead>
-                <TBody>
-                    {rows.length === 0 ? (
-                        <TableMessageRow colSpan={9}><EmptyState icon={RotateCcw} title="Chưa có đơn trả hàng" /></TableMessageRow>
-                    ) : rows.map((r: any) => (
-                        <Tr key={r.id}>
-                            <Td className="type-number font-semibold text-lys-teal-strong">{r.returnNo}</Td>
-                            <Td className="type-number text-lys-secondary">{r.soNo}</Td>
-                            <Td className="font-semibold text-lys-primary">{r.customerName}</Td>
-                            <Td className="text-lys-secondary">{r.reason}</Td>
-                            <Td>
-                                <StatusBadge status={r.status} label={STATUS_LABEL[r.status] ?? r.status} toneOverrides={STATUS_TONES} />
-                            </Td>
-                            <Td align="right" className="type-number font-semibold text-lys-primary">{formatVND(r.totalAmount)}</Td>
-                            <Td className={r.creditNoteNo ? 'type-number text-tone-success-fg' : 'text-lys-muted'}>
-                                {r.creditNoteNo ?? '—'}
-                            </Td>
-                            <Td className="text-lys-secondary">{formatDate(r.createdAt)}</Td>
-                            <Td align="right">
-                                {(r.status === 'DRAFT' || r.status === 'PENDING_INSPECTION') && (
-                                    <Button size="sm" variant="secondary" onClick={() => handleApprove(r.id)}>
-                                        <CheckCircle2 size={13} aria-hidden /> Duyệt
-                                    </Button>
-                                )}
-                            </Td>
-                        </Tr>
-                    ))}
-                </TBody>
-            </Table>
+            {/* Desktop Table View */}
+            <div className="hidden md:block">
+                <Table>
+                    <THead>
+                        <tr>
+                            <Th>Mã</Th>
+                            <Th>SO Gốc</Th>
+                            <Th>Khách Hàng</Th>
+                            <Th>Lý Do</Th>
+                            <Th>Trạng Thái</Th>
+                            <Th align="right">Giá Trị</Th>
+                            <Th>Credit Note</Th>
+                            <Th>Ngày</Th>
+                            <Th aria-label="Thao tác" />
+                        </tr>
+                    </THead>
+                    <TBody>
+                        {rows.length === 0 ? (
+                            <TableMessageRow colSpan={9}><EmptyState icon={RotateCcw} title="Chưa có đơn trả hàng" /></TableMessageRow>
+                        ) : rows.map((r: any) => (
+                            <Tr key={r.id}>
+                                <Td className="type-number font-semibold text-lys-teal-strong">{r.returnNo}</Td>
+                                <Td className="type-number text-lys-secondary">{r.soNo}</Td>
+                                <Td className="font-semibold text-lys-primary">{r.customerName}</Td>
+                                <Td className="text-lys-secondary">{r.reason}</Td>
+                                <Td>
+                                    <StatusBadge status={r.status} label={STATUS_LABEL[r.status] ?? r.status} toneOverrides={STATUS_TONES} />
+                                </Td>
+                                <Td align="right" className="type-number font-semibold text-lys-primary">{formatVND(r.totalAmount)}</Td>
+                                <Td className={r.creditNoteNo ? 'type-number text-tone-success-fg' : 'text-lys-muted'}>
+                                    {r.creditNoteNo ?? '—'}
+                                </Td>
+                                <Td className="text-lys-secondary">{formatDate(r.createdAt)}</Td>
+                                <Td align="right">
+                                    {(r.status === 'DRAFT' || r.status === 'PENDING_INSPECTION') && (
+                                        <Button size="sm" variant="secondary" onClick={() => handleApprove(r.id)}>
+                                            <CheckCircle2 size={13} aria-hidden /> Duyệt
+                                        </Button>
+                                    )}
+                                </Td>
+                            </Tr>
+                        ))}
+                    </TBody>
+                </Table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="block md:hidden space-y-3">
+                {rows.length === 0 ? (
+                    <div className="rounded-lg border border-lys-border bg-white p-6 text-center">
+                        <EmptyState icon={RotateCcw} title="Chưa có đơn trả hàng" />
+                    </div>
+                ) : (
+                    rows.map((r: any) => (
+                        <ReturnMobileCard
+                            key={r.id}
+                            r={r}
+                            onApprove={handleApprove}
+                        />
+                    ))
+                )}
+            </div>
 
             <Drawer
                 open={createOpen}
@@ -207,7 +280,7 @@ export function ReturnsClient({ initialRows, stats }: {
                                         </div>
                                         <span className="text-lys-muted">Đã mua: {Number(l.qtyOrdered)}</span>
                                     </div>
-                                    <div className="grid grid-cols-3 gap-2">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                         <Field label="SL Trả">
                                             {id => (
                                                 <Input id={id} type="number" min={0} max={Number(l.qtyOrdered)}

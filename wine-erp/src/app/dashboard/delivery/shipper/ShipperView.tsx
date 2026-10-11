@@ -12,10 +12,10 @@ import {
 import { SignaturePad } from '@/components/SignaturePad'
 import { formatVND } from '@/lib/utils'
 
-const STOP_STATUS: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-    PENDING: { label: 'Chờ Giao', color: '#B45309', bg: 'rgba(180,83,9,0.15)', icon: '⏳' },
-    DELIVERED: { label: 'Đã Giao', color: '#15803D', bg: 'rgba(21,128,61,0.15)', icon: '✅' },
-    FAILED: { label: 'Thất Bại', color: '#B91C1C', bg: 'rgba(185,28,28,0.15)', icon: '❌' },
+const STOP_STATUS: Record<string, { label: string; color: string; bg: string }> = {
+    PENDING: { label: 'Chờ Giao', color: '#B45309', bg: 'rgba(180,83,9,0.15)' },
+    DELIVERED: { label: 'Đã Giao', color: '#15803D', bg: 'rgba(21,128,61,0.15)' },
+    FAILED: { label: 'Thất Bại', color: '#B91C1C', bg: 'rgba(185,28,28,0.15)' },
 }
 
 // ── Mobile Shipper View ──────────────────────────
@@ -290,7 +290,7 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
                                     <div className="flex items-center gap-2 p-2 rounded-lg" style={{ background: 'rgba(21,128,61,0.06)' }}>
                                         <CheckCircle2 size={12} style={{ color: '#15803D' }} />
                                         <span className="text-[11px]" style={{ color: '#15803D' }}>
-                                            ✅ {stop.podSignedAt && new Date(stop.podSignedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                            {stop.podSignedAt && new Date(stop.podSignedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                             {stop.notes && ` — ${stop.notes}`}
                                         </span>
                                     </div>
@@ -399,12 +399,12 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
         const rowHeight = fontSize * 1.5
         let textY = canvas.height - bannerHeight + (bannerHeight - rowHeight * (lat ? 2 : 1)) / 2 + fontSize
         
-        const row1 = `⏰ ${timeStr} | 👤 KH: ${customerName}`
+        const row1 = `${timeStr} | KH: ${customerName}`
         ctx.fillText(row1, 20, textY)
 
         if (lat !== null && lon !== null) {
             ctx.font = `${fontSize * 0.85}px sans-serif`
-            const row2 = `📍 Định vị: ${lat.toFixed(5)}, ${lon.toFixed(5)}`
+            const row2 = `Định vị: ${lat.toFixed(5)}, ${lon.toFixed(5)}`
             ctx.fillText(row2, 20, textY + rowHeight)
         }
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, Loader2, RefreshCw } from 'lucide-react'
+import { Sparkles, Loader2, RefreshCw, AlertTriangle } from 'lucide-react'
 
 export function AICeoSummary() {
     const [summary, setSummary] = useState<string | null>(null)
@@ -55,7 +55,7 @@ export function AICeoSummary() {
                     ) : summary ? (
                         <><RefreshCw size={13} /> Tạo lại</>
                     ) : (
-                        <><Sparkles size={13} /> ✨ Tạo Báo Cáo AI</>
+                        <><Sparkles size={13} /> Tạo Báo Cáo AI</>
                     )}
                 </button>
             </div>
@@ -75,8 +75,9 @@ export function AICeoSummary() {
 
             {error && !loading && (
                 <div className="px-5 py-4">
-                    <div className="px-4 py-3 rounded-md" style={{ background: 'rgba(185,28,28,0.06)', border: '1px solid rgba(185,28,28,0.2)' }}>
-                        <p className="text-xs" style={{ color: '#B91C1C' }}>❌ {error}</p>
+                    <div className="px-4 py-3 rounded-md flex items-center gap-2" style={{ background: 'rgba(185,28,28,0.06)', border: '1px solid rgba(185,28,28,0.2)' }}>
+                        <AlertTriangle size={14} className="shrink-0" style={{ color: '#B91C1C' }} />
+                        <p className="text-xs" style={{ color: '#B91C1C' }}>{error}</p>
                     </div>
                 </div>
             )}
@@ -84,27 +85,33 @@ export function AICeoSummary() {
             {summary && !loading && (
                 <div className="px-5 py-4">
                     <div className="prose prose-sm max-w-none space-y-2">
-                        {summary.split('\n').filter(Boolean).map((line, i) => (
-                            <p key={i} className="text-[13px] leading-relaxed" style={{
-                                color: line.startsWith('##') || line.startsWith('**')
-                                    ? '#0F172A'
-                                    : line.startsWith('- 🔴') || line.startsWith('- ⚠')
-                                        ? '#B91C1C'
-                                        : line.startsWith('- 🟢') || line.startsWith('- ✅')
-                                            ? '#15803D'
-                                            : line.startsWith('- 🟡')
-                                                ? '#B45309'
-                                                : '#475569',
-                                fontWeight: line.startsWith('##') || line.startsWith('**') ? 700 : 400,
-                                fontSize: line.startsWith('##') ? '14px' : '13px',
-                                marginLeft: line.startsWith('- ') ? '8px' : '0',
-                            }}>
-                                {line.replace(/^#+\s*/, '').replace(/\*\*/g, '')}
-                            </p>
-                        ))}
+                        {summary.split('\n').filter(Boolean).map((line, i) => {
+                            const isHeader = line.startsWith('##') || line.startsWith('**')
+                            const isUrgent = line.includes('cảnh báo') || line.includes('rủi ro') || line.includes('quá hạn') || line.includes('âm')
+                            const isPositive = line.includes('tăng trưởng') || line.includes('hoàn thành') || line.includes('tốt')
+                            const isWarning = line.includes('chú ý') || line.includes('lưu ý')
+                            const cleanLine = line.replace(/^#+\s*/, '').replace(/\*\*/g, '').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '').trim()
+
+                            let color = '#475569'
+                            if (isHeader) color = '#0F172A'
+                            else if (isUrgent) color = '#B91C1C'
+                            else if (isPositive) color = '#15803D'
+                            else if (isWarning) color = '#B45309'
+
+                            return (
+                                <p key={i} className="text-[13px] leading-relaxed" style={{
+                                    color,
+                                    fontWeight: isHeader ? 700 : 400,
+                                    fontSize: isHeader ? '14px' : '13px',
+                                    marginLeft: line.startsWith('- ') ? '8px' : '0',
+                                }}>
+                                    {cleanLine}
+                                </p>
+                            )
+                        })}
                     </div>
                     <p className="text-[10px] mt-3 text-right" style={{ color: '#64748B' }}>
-                        🕐 Tạo lúc {new Date().toLocaleString('vi-VN')} · Gemini 3.1 Pro
+                        Tạo lúc {new Date().toLocaleString('vi-VN')} · Gemini 3.1 Pro
                     </p>
                 </div>
             )}
@@ -113,7 +120,7 @@ export function AICeoSummary() {
                 <div className="px-5 py-6 flex flex-col items-center gap-2">
                     <Sparkles size={20} style={{ color: '#E2E8F0' }} />
                     <p className="text-xs text-center" style={{ color: '#64748B' }}>
-                        Nhấn <strong>&quot;✨ Tạo Báo Cáo AI&quot;</strong> để nhận bản tóm tắt<br />
+                        Nhấn <strong>&quot;Tạo Báo Cáo AI&quot;</strong> để nhận bản tóm tắt<br />
                         doanh thu, rủi ro và đề xuất hành động từ AI
                     </p>
                 </div>

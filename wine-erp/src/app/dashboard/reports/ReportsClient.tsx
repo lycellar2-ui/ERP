@@ -135,7 +135,7 @@ export function ReportsClient({
             />
 
             {/* Tabs */}
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+            <div className="flex gap-1 p-1 rounded-lg overflow-x-auto no-scrollbar whitespace-nowrap" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 {tabs.map((tabItem) => {
                     const Icon = tabItem.icon
                     const isActive = tab === tabItem.key
@@ -143,7 +143,7 @@ export function ReportsClient({
                         <button
                             key={tabItem.key}
                             onClick={() => (tabItem.key === 'schedule' ? loadSchedules() : setTab(tabItem.key))}
-                            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all flex-1 justify-center cursor-pointer"
+                            className="flex items-center gap-2 px-3 sm:px-4 py-2 text-xs font-semibold rounded-md transition-all flex-1 justify-center cursor-pointer whitespace-nowrap"
                             style={{
                                 background: isActive ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
                                 color: isActive ? '#0891B2' : '#64748B',
@@ -644,83 +644,85 @@ export function ReportsClient({
                     </div>
 
                     <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#FFFFFF' }}>
-                        <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                            <thead>
-                                <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-                                    {[t.export.thCode, t.export.thName, t.export.thModule, t.export.thAction].map((h) => (
-                                        <th
-                                            key={h}
-                                            className="px-4 py-3 text-xs uppercase tracking-wider font-semibold"
-                                            style={{ color: '#64748B' }}
-                                        >
-                                            {h}
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {REPORT_CATALOG.map((r) => {
-                                    const isDownloading = downloading === r.key
-                                    const justDownloaded = lastDownloaded === r.key
-                                    const moduleColor = MODULE_COLORS[r.module] ?? '#475569'
-                                    const reportName = t.reports[r.key] ?? r.name
-                                    return (
-                                        <tr
-                                            key={r.key}
-                                            style={{ borderBottom: '1px solid #E2E8F0' }}
-                                            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(8, 145, 178, 0.03)')}
-                                            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                                        >
-                                            <td className="px-4 py-3">
-                                                <span
-                                                    className="text-xs font-bold px-2 py-0.5 rounded font-mono"
-                                                    style={{ color: '#0891B2', background: 'rgba(8, 145, 178, 0.08)' }}
-                                                >
-                                                    {r.code}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-sm font-medium" style={{ color: '#0F172A' }}>
-                                                {reportName}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <span
-                                                    className="text-xs font-semibold px-2 py-0.5 rounded"
-                                                    style={{ color: moduleColor, background: `${moduleColor}18` }}
-                                                >
-                                                    {r.module}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <button
-                                                    onClick={() => handleExport(r.key)}
-                                                    disabled={isDownloading}
-                                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded transition-all disabled:opacity-50 cursor-pointer"
-                                                    style={{
-                                                        background: justDownloaded ? 'rgba(21,128,61,0.15)' : 'rgba(8, 145, 178, 0.08)',
-                                                        color: justDownloaded ? '#15803D' : '#0891B2',
-                                                        border: `1px solid ${justDownloaded ? 'rgba(21,128,61,0.3)' : 'rgba(8, 145, 178, 0.2)'}`,
-                                                    }}
-                                                >
-                                                    {isDownloading ? (
-                                                        <>
-                                                            <Loader2 size={12} className="animate-spin" /> {t.export.exportingBtn}
-                                                        </>
-                                                    ) : justDownloaded ? (
-                                                        <>
-                                                            <CheckCircle2 size={12} /> {t.export.downloadedBtn}
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Download size={12} /> {t.export.exportBtn}
-                                                        </>
-                                                    )}
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    )
-                                })}
-                            </tbody>
-                        </table>
+                        <div className="overflow-x-auto">
+                            <table className="w-full min-w-[550px] text-left" style={{ borderCollapse: 'collapse' }}>
+                                <thead>
+                                    <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+                                        {[t.export.thCode, t.export.thName, t.export.thModule, t.export.thAction].map((h) => (
+                                            <th
+                                                key={h}
+                                                className="px-4 py-3 text-xs uppercase tracking-wider font-semibold"
+                                                style={{ color: '#64748B' }}
+                                            >
+                                                {h}
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {REPORT_CATALOG.map((r) => {
+                                        const isDownloading = downloading === r.key
+                                        const justDownloaded = lastDownloaded === r.key
+                                        const moduleColor = MODULE_COLORS[r.module] ?? '#475569'
+                                        const reportName = t.reports[r.key] ?? r.name
+                                        return (
+                                            <tr
+                                                key={r.key}
+                                                style={{ borderBottom: '1px solid #E2E8F0' }}
+                                                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(8, 145, 178, 0.03)')}
+                                                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                                            >
+                                                <td className="px-4 py-3">
+                                                    <span
+                                                        className="text-xs font-bold px-2 py-0.5 rounded font-mono"
+                                                        style={{ color: '#0891B2', background: 'rgba(8, 145, 178, 0.08)' }}
+                                                    >
+                                                        {r.code}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3 text-sm font-medium" style={{ color: '#0F172A' }}>
+                                                    {reportName}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <span
+                                                        className="text-xs font-semibold px-2 py-0.5 rounded"
+                                                        style={{ color: moduleColor, background: `${moduleColor}18` }}
+                                                    >
+                                                        {r.module}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <button
+                                                        onClick={() => handleExport(r.key)}
+                                                        disabled={isDownloading}
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded transition-all disabled:opacity-50 cursor-pointer"
+                                                        style={{
+                                                            background: justDownloaded ? 'rgba(21,128,61,0.15)' : 'rgba(8, 145, 178, 0.08)',
+                                                            color: justDownloaded ? '#15803D' : '#0891B2',
+                                                            border: `1px solid ${justDownloaded ? 'rgba(21,128,61,0.3)' : 'rgba(8, 145, 178, 0.2)'}`,
+                                                        }}
+                                                    >
+                                                        {isDownloading ? (
+                                                            <>
+                                                                <Loader2 size={12} className="animate-spin" /> {t.export.exportingBtn}
+                                                            </>
+                                                        ) : justDownloaded ? (
+                                                            <>
+                                                                <CheckCircle2 size={12} /> {t.export.downloadedBtn}
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Download size={12} /> {t.export.exportBtn}
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             )}
@@ -747,7 +749,8 @@ export function ReportsClient({
                         </div>
                     ) : schedules && schedules.length > 0 ? (
                         <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#FFFFFF' }}>
-                            <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                            <div className="overflow-x-auto">
+                                <table className="w-full min-w-[650px] text-left" style={{ borderCollapse: 'collapse' }}>
                                 <thead>
                                     <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
                                         {[
@@ -828,6 +831,7 @@ export function ReportsClient({
                                     })}
                                 </tbody>
                             </table>
+                            </div>
                         </div>
                     ) : (
                         <div className="text-center py-16 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>

@@ -261,8 +261,8 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                         </div>
                     </div>
 
-                    <div className="rounded-lg overflow-hidden shadow-xs" style={{ border: '1px solid #E2E8F0' }}>
-                        <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                    <div className="rounded-lg overflow-x-auto shadow-xs" style={{ border: '1px solid #E2E8F0' }}>
+                        <table className="w-full text-left min-w-[700px]" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                     {['Mã Kho', 'Tên Kho Ký Gửi', 'Khách Hàng (HORECA/Đại Lý)', 'Số SKU', 'Tồn Kho (Chai)', 'Giá Trị Tồn', 'Thao Tác'].map(h => (
@@ -355,8 +355,8 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                         </button>
                     </div>
 
-                    <div className="rounded-lg overflow-hidden shadow-xs" style={{ border: '1px solid #E2E8F0' }}>
-                        <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                    <div className="rounded-lg overflow-x-auto shadow-xs" style={{ border: '1px solid #E2E8F0' }}>
+                        <table className="w-full text-left min-w-[800px]" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                     {['Số Lệnh', 'Loại Lệnh', 'Kho Xuất', 'Kho Nhận Ký Gửi', 'Khách Hàng', 'Tổng Chai', 'Ngày Xuất', 'Trạng Thái', 'In Phiếu'].map(h => (
@@ -511,7 +511,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
 
             {/* TAB 5: HỢP ĐỒNG KÝ GỬI (AGREEMENTS) */}
             {mainTab === 'agreements' && (
-                <div className="rounded-lg overflow-hidden shadow-xs" style={{ border: '1px solid #E2E8F0' }}>
+                <div className="rounded-lg overflow-x-auto shadow-xs" style={{ border: '1px solid #E2E8F0' }}>
                     <div className="p-3.5 bg-white border-b flex justify-between items-center" style={{ borderColor: '#E2E8F0' }}>
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-700">Danh sách hợp đồng thỏa thuận ký gửi</span>
                         <button
@@ -522,7 +522,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                             <Plus size={14} /> Thêm Hợp Đồng Ký Gửi
                         </button>
                     </div>
-                    <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                    <table className="w-full text-left min-w-[700px]" style={{ borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                 {['Mã HĐ', 'Khách Hàng', 'Trạng Thái', 'Tần Suất BC', 'SKU Gửi', 'Tổng Chai', 'Thời Hạn', ''].map(h => (
@@ -599,8 +599,8 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                         </div>
                     )}
 
-                    <div className="rounded-lg overflow-hidden shadow-xs" style={{ border: '1px solid #E2E8F0' }}>
-                        <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                    <div className="rounded-lg overflow-x-auto shadow-xs" style={{ border: '1px solid #E2E8F0' }}>
+                        <table className="w-full text-left min-w-[650px]" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                     {['Điểm Ký Gửi', 'SKU', 'Sản Phẩm', 'Gửi', 'Đã Bán', 'Còn Lại', '% Bán'].map(h => (
@@ -805,9 +805,9 @@ function CreateConsignmentWarehouseModal({ open, onClose, onSuccess }: {
                         />
                     </div>
 
-                    <div className="p-3 rounded-lg bg-white border border-slate-200 text-[11px] text-slate-400 space-y-1">
-                        <div>✓ Hệ thống sẽ tự động cấu hình thuộc tính <b>type = CONSIGNMENT</b>.</div>
-                        <div>✓ Tự động sinh Location mặc định <b>CSG-DEFAULT</b> để tiếp nhận các đợt chuyển kho.</div>
+                    <div className="p-3 rounded-lg bg-white border border-slate-200 text-[11px] text-slate-500 space-y-1">
+                        <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-cyan-700 shrink-0" /><span>Hệ thống sẽ tự động cấu hình thuộc tính <b>type = CONSIGNMENT</b>.</span></div>
+                        <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-cyan-700 shrink-0" /><span>Tự động sinh Location mặc định <b>CSG-DEFAULT</b> để tiếp nhận các đợt chuyển kho.</span></div>
                     </div>
 
                     <div className="flex justify-end gap-2 pt-2">
@@ -1369,7 +1369,7 @@ function CreateDrawer({ open, onClose, onCreated }: {
     if (!open) return null
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/50">
-            <div className="w-[480px] h-full overflow-y-auto bg-slate-50 border-l border-slate-200">
+            <div className="w-full max-w-[480px] h-full overflow-y-auto bg-slate-50 border-l border-slate-200">
                 <div className="flex items-center justify-between p-5 border-b border-slate-200">
                     <h3 className="text-lg font-bold text-slate-900">Tạo Hợp Đồng Ký Gửi</h3>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-700 cursor-pointer"><X size={18} /></button>
@@ -1451,7 +1451,7 @@ function DetailDrawer({ agreement, onClose, onRefresh }: {
     if (!agreement) return null
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/50">
-            <div className="w-[540px] h-full overflow-y-auto bg-slate-50 border-l border-slate-200 flex flex-col">
+            <div className="w-full max-w-[540px] h-full overflow-y-auto bg-slate-50 border-l border-slate-200 flex flex-col">
                 <div className="flex items-center justify-between p-5 border-b border-slate-200">
                     <div>
                         <h3 className="text-base font-bold text-slate-900">{agreement.customerName}</h3>
@@ -1461,9 +1461,9 @@ function DetailDrawer({ agreement, onClose, onRefresh }: {
                 </div>
 
                 <div className="p-5 flex-1 overflow-y-auto space-y-4 text-xs">
-                    <div className="rounded-lg overflow-hidden border border-slate-200">
+                    <div className="rounded-lg overflow-x-auto border border-slate-200">
                         <div className="p-3 bg-white font-bold text-slate-900">Chi Tiết Tồn Hàng Theo Hợp Đồng</div>
-                        <table className="w-full text-left">
+                        <table className="w-full text-left min-w-[420px]">
                             <thead>
                                 <tr className="bg-white text-slate-400 text-[11px] border-b border-slate-200">
                                     <th className="p-2">SKU</th>

@@ -6,10 +6,10 @@ import { toast } from 'sonner'
 import { getComplaintTickets, resolveComplaintTicket, type ComplaintRow } from './actions'
 
 const SEVERITY_CFG: Record<string, { label: string; color: string; bg: string }> = {
-    CRITICAL: { label: '🔴 Critical', color: '#B91C1C', bg: 'rgba(185,28,28,0.12)' },
-    HIGH: { label: '🟠 High', color: '#C07434', bg: 'rgba(192,116,52,0.12)' },
-    MEDIUM: { label: '🟡 Medium', color: '#B45309', bg: 'rgba(180,83,9,0.12)' },
-    LOW: { label: '🟢 Low', color: '#15803D', bg: 'rgba(21,128,61,0.12)' },
+    CRITICAL: { label: 'Critical', color: '#B91C1C', bg: 'rgba(185,28,28,0.12)' },
+    HIGH: { label: 'High', color: '#C07434', bg: 'rgba(192,116,52,0.12)' },
+    MEDIUM: { label: 'Medium', color: '#B45309', bg: 'rgba(180,83,9,0.12)' },
+    LOW: { label: 'Low', color: '#15803D', bg: 'rgba(21,128,61,0.12)' },
 }
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
@@ -168,8 +168,10 @@ export function ComplaintTicketsPanel() {
                                             {stCfg.label}
                                         </span>
                                         {t.isOverSLA && (
-                                            <span className="inline-block text-xs px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0"
-                                                style={{ color: '#B91C1C', background: 'rgba(185,28,28,0.12)' }}>⏰ SLA</span>
+                                            <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0"
+                                                style={{ color: '#B91C1C', background: 'rgba(185,28,28,0.12)' }}>
+                                                <Clock size={11} /> SLA
+                                            </span>
                                         )}
                                         <ChevronDown size={14} style={{
                                             color: '#64748B',
@@ -205,7 +207,10 @@ export function ComplaintTicketsPanel() {
                                         </div>
                                         {t.resolution && (
                                             <div className="p-3 rounded" style={{ background: 'rgba(21,128,61,0.08)', border: '1px solid rgba(21,128,61,0.2)' }}>
-                                                <p className="text-xs font-semibold mb-1" style={{ color: '#15803D' }}>✅ Giải quyết</p>
+                                                <p className="text-xs font-semibold mb-1 flex items-center gap-1.5" style={{ color: '#15803D' }}>
+                                                    <CheckCircle2 size={13} className="shrink-0" />
+                                                    <span>Giải quyết</span>
+                                                </p>
                                                 <p className="text-sm" style={{ color: '#0F172A' }}>{t.resolution}</p>
                                             </div>
                                         )}

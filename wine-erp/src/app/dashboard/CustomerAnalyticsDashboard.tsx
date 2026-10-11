@@ -15,7 +15,7 @@ import {
     CheckCircle2, Truck, AlertCircle, Clock, X, ArrowUpRight,
     Store, Building2, User, RefreshCw, BarChart2, ShieldAlert,
     Tag, Award, Phone, MapPin, AlertTriangle, Sparkles, Filter,
-    Check, ArrowRight, Percent, Info
+    Check, ArrowRight, Percent, Info, ShoppingCart, CreditCard
 } from 'lucide-react'
 import { formatVND } from '@/lib/utils'
 import Link from 'next/link'
@@ -412,18 +412,29 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                                         {isEn ? 'Order Rhythm & Frequency' : 'Theo Dõi Nhịp Đặt Hàng'}
                                     </span>
-                                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
                                         historyData.health.status === 'AT_RISK'
                                             ? 'bg-rose-100 text-rose-800 border border-rose-300'
                                             : historyData.health.status === 'WARNING'
                                             ? 'bg-amber-100 text-amber-800 border border-amber-300'
                                             : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
                                     }`}>
-                                        {historyData.health.status === 'AT_RISK'
-                                            ? (isEn ? '⚠️ Overdue Cycle' : '⚠️ Quá chu kỳ')
-                                            : historyData.health.status === 'WARNING'
-                                            ? (isEn ? '⚡ Delay Warning' : '⚡ Đang chậm đơn')
-                                            : (isEn ? '✓ Regular Rhythm' : '✓ Đặt đều đặn')}
+                                        {historyData.health.status === 'AT_RISK' ? (
+                                            <>
+                                                <AlertTriangle size={11} className="text-rose-700" />
+                                                <span>{isEn ? 'Overdue Cycle' : 'Quá chu kỳ'}</span>
+                                            </>
+                                        ) : historyData.health.status === 'WARNING' ? (
+                                            <>
+                                                <AlertCircle size={11} className="text-amber-700" />
+                                                <span>{isEn ? 'Delay Warning' : 'Đang chậm đơn'}</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCircle2 size={11} className="text-emerald-700" />
+                                                <span>{isEn ? 'Regular Rhythm' : 'Đặt đều đặn'}</span>
+                                            </>
+                                        )}
                                     </span>
                                 </div>
 
@@ -505,8 +516,9 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                         {/* Approved Price Proposals (Tờ trình giá đã duyệt) */}
                         {historyData.pricing.proposals.length > 0 && (
                             <div className="mt-4 p-3 rounded-md bg-amber-50/40 border border-amber-200">
-                                <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider block mb-2">
-                                    📜 {isEn ? `Approved Price Proposals (${historyData.pricing.proposals.length}):` : `Tờ trình duyệt giá riêng (${historyData.pricing.proposals.length}):`}
+                                <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                    <FileText size={13} className="text-amber-700" />
+                                    <span>{isEn ? `Approved Price Proposals (${historyData.pricing.proposals.length}):` : `Tờ trình duyệt giá riêng (${historyData.pricing.proposals.length}):`}</span>
                                 </span>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                     {historyData.pricing.proposals.map(p => (
@@ -743,25 +755,29 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                     <div className="flex items-center gap-1.5">
                                         <span className="text-[11px] font-semibold text-slate-500">{isEn ? 'Filter by:' : 'Lọc theo:'}</span>
                                         {[
-                                            { key: 'ALL', label: isEn ? 'All orders' : 'Tất cả đơn' },
-                                            { key: 'COMMERCIAL', label: isEn ? '🛒 Sales orders' : '🛒 Đơn bán hàng' },
-                                            { key: 'TASTING', label: isEn ? '🍷 Tasting / Samples' : '🍷 Hàng mẫu / Tasting' },
-                                            { key: 'UNPAID', label: isEn ? '💳 Outstanding debt' : '💳 Đơn còn nợ' },
-                                            { key: 'DELIVERED', label: isEn ? '📦 Delivered' : '📦 Đã giao hàng' },
-                                        ].map(f => (
-                                            <button
-                                                key={f.key}
-                                                type="button"
-                                                onClick={() => setOrderFilter(f.key as any)}
-                                                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                                                    orderFilter === f.key
-                                                        ? 'bg-cyan-700 text-white font-bold'
-                                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                                }`}
-                                            >
-                                                {f.label}
-                                            </button>
-                                        ))}
+                                            { key: 'ALL', label: isEn ? 'All orders' : 'Tất cả đơn', icon: null },
+                                            { key: 'COMMERCIAL', label: isEn ? 'Sales orders' : 'Đơn bán hàng', icon: ShoppingCart },
+                                            { key: 'TASTING', label: isEn ? 'Tasting / Samples' : 'Hàng mẫu / Tasting', icon: Wine },
+                                            { key: 'UNPAID', label: isEn ? 'Outstanding debt' : 'Đơn còn nợ', icon: CreditCard },
+                                            { key: 'DELIVERED', label: isEn ? 'Delivered' : 'Đã giao hàng', icon: Package },
+                                        ].map(f => {
+                                            const FilterIcon = f.icon
+                                            return (
+                                                <button
+                                                    key={f.key}
+                                                    type="button"
+                                                    onClick={() => setOrderFilter(f.key as any)}
+                                                    className={`px-2.5 py-1 rounded text-xs font-medium transition-colors inline-flex items-center gap-1.5 ${
+                                                        orderFilter === f.key
+                                                            ? 'bg-cyan-700 text-white font-bold'
+                                                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                                    }`}
+                                                >
+                                                    {FilterIcon && <FilterIcon size={12} />}
+                                                    <span>{f.label}</span>
+                                                </button>
+                                            )
+                                        })}
                                     </div>
                                     <span className="text-[11px] text-slate-500">
                                         {isEn ? `Showing ${filteredOrders.length} / ${historyData.orders.length} orders` : `Hiển thị ${filteredOrders.length} / ${historyData.orders.length} đơn`}
@@ -775,7 +791,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                 ) : (
                                     <div className="border border-slate-200 rounded-md overflow-hidden">
                                         <div className="overflow-x-auto">
-                                            <table className="w-full text-xs text-left">
+                                            <table className="w-full min-w-[900px] text-xs text-left">
                                                 <thead className="bg-slate-50 text-slate-600 text-[10px] uppercase font-semibold tracking-wider border-b border-slate-200">
                                                     <tr>
                                                         <th className="py-2.5 px-3">{isEn ? 'SO No.' : 'Mã SO'}</th>
@@ -811,8 +827,9 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                     </td>
                                                                     <td className="py-2.5 px-3 whitespace-nowrap">
                                                                         {isTasting ? (
-                                                                            <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
-                                                                                🍷 {order.orderType === 'TASTING' ? 'Tasting' : 'Sample'}
+                                                                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
+                                                                                <Wine size={11} className="text-amber-700" />
+                                                                                <span>{order.orderType === 'TASTING' ? 'Tasting' : 'Sample'}</span>
                                                                             </span>
                                                                         ) : (
                                                                             <span className="inline-block text-[10px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-700 whitespace-nowrap shrink-0">
@@ -944,8 +961,9 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {/* Loại Vang */}
                                     <div className="p-3.5 rounded-md bg-slate-50 border border-slate-200">
-                                        <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-2">
-                                            🍷 {isEn ? 'Breakdown by wine type:' : 'Cơ cấu theo loại vang:'}
+                                        <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                            <Wine size={13} className="text-cyan-700" />
+                                            <span>{isEn ? 'Breakdown by wine type:' : 'Cơ cấu theo loại vang:'}</span>
                                         </span>
                                         <div className="space-y-2">
                                             {historyData.preferences.wineTypes.map(wt => (
@@ -966,8 +984,9 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
 
                                     {/* Phân khúc giá */}
                                     <div className="p-3.5 rounded-md bg-slate-50 border border-slate-200">
-                                        <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-2">
-                                            🏷️ {isEn ? 'Breakdown by price bracket:' : 'Cơ cấu theo tầm giá:'}
+                                        <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                            <Tag size={13} className="text-amber-700" />
+                                            <span>{isEn ? 'Breakdown by price bracket:' : 'Cơ cấu theo tầm giá:'}</span>
                                         </span>
                                         <div className="space-y-2">
                                             {historyData.preferences.priceBrackets.map(pb => (

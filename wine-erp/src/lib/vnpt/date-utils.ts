@@ -24,7 +24,7 @@ export function checkInvoiceDateDiscrepancy(orderDate: Date | string): InvoiceDa
             orderDateFormatted,
             invoiceDateFormatted,
             level: 'DANGER',
-            message: `⚠️ CẢNH BÁO LỆCH KỲ THUẾ: Đơn hàng lập ngày ${orderDateFormatted} (Tháng ${dOrder.getMonth() + 1}/${dOrder.getFullYear()}), nhưng ngày xuất hóa đơn là hôm nay ${invoiceDateFormatted} (Tháng ${dToday.getMonth() + 1}/${dToday.getFullYear()}). Việc xuất hóa đơn khác tháng phát sinh có thể vi phạm quy định thời điểm lập hóa đơn theo Nghị định 123/2020/NĐ-CP.`,
+            message: `CẢNH BÁO LỆCH KỲ THUẾ: Đơn hàng lập ngày ${orderDateFormatted} (Tháng ${dOrder.getMonth() + 1}/${dOrder.getFullYear()}), nhưng ngày xuất hóa đơn là hôm nay ${invoiceDateFormatted} (Tháng ${dToday.getMonth() + 1}/${dToday.getFullYear()}). Việc xuất hóa đơn khác tháng phát sinh có thể vi phạm quy định thời điểm lập hóa đơn theo Nghị định 123/2020/NĐ-CP.`,
         }
     }
 
@@ -36,7 +36,7 @@ export function checkInvoiceDateDiscrepancy(orderDate: Date | string): InvoiceDa
             orderDateFormatted,
             invoiceDateFormatted,
             level: 'WARNING',
-            message: `⚠️ LƯU Ý NGÀY LẬP HÓA ĐƠN: Đơn hàng được lập ngày ${orderDateFormatted} (cách đây ${diffDays} ngày). Hóa đơn điện tử sẽ được lập với ngày hôm nay: ${invoiceDateFormatted}.`,
+            message: `LƯU Ý NGÀY LẬP HÓA ĐƠN: Đơn hàng được lập ngày ${orderDateFormatted} (cách đây ${diffDays} ngày). Hóa đơn điện tử sẽ được lập với ngày hôm nay: ${invoiceDateFormatted}.`,
         }
     }
 

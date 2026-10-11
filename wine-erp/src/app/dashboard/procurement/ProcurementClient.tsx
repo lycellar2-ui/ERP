@@ -30,16 +30,6 @@ import { getProducts } from '@/app/dashboard/products/actions'
 import { useConfirmDialog } from '@/components/ui'
 import Link from 'next/link'
 
-// ── Country Flag Mapping ───────────────────────────
-const COUNTRY_FLAGS: Record<string, string> = {
-    FR: '🇫🇷', IT: '🇮🇹', ES: '🇪🇸', PT: '🇵🇹', DE: '🇩🇪',
-    US: '🇺🇸', AU: '🇦🇺', NZ: '🇳🇿', AR: '🇦🇷', CL: '🇨🇱', ZA: '🇿🇦',
-    AT: '🇦🇹', GR: '🇬🇷', HU: '🇭🇺', GE: '🇬🇪', RO: '🇷🇴',
-    IL: '🇮🇱', LB: '🇱🇧', UY: '🇺🇾', BR: '🇧🇷', MX: '🇲🇽',
-    CN: '🇨🇳', JP: '🇯🇵', GB: '🇬🇧', CH: '🇨🇭', HR: '🇭🇷',
-    VN: '🇻🇳',
-}
-
 // ── Incoterms Config ───────────────────────────────
 const INCOTERMS_CFG: Record<string, { label: string; bg: string; color: string; border: string }> = {
     EXW: { label: 'EXW', bg: 'rgba(180,83,9,0.15)', color: '#B45309', border: 'rgba(180,83,9,0.3)' },
@@ -853,7 +843,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                 <option value="">— Chọn Nhà Cung Cấp —</option>
                                 {suppliers.map(s => (
                                     <option key={s.id} value={s.id}>
-                                        {COUNTRY_FLAGS[s.country] || '🌐'} {s.name} ({s.defaultCurrency})
+                                        [{s.country}] {s.name} ({s.defaultCurrency})
                                     </option>
                                 ))}
                             </select>
@@ -1025,7 +1015,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                                                 <span className="font-semibold text-slate-900 truncate">{p.productName}</span>
                                                             </div>
                                                             {p.country && (
-                                                                <span className="text-[11px] shrink-0">{COUNTRY_FLAGS[p.country] || '🌐'}</span>
+                                                                <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 shrink-0">[{p.country}]</span>
                                                             )}
                                                         </div>
                                                     ))
@@ -1502,7 +1492,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                         <option value="">-- Chọn Nhà Cung Cấp --</option>
                                         {suppliers.map(s => (
                                             <option key={s.id} value={s.id}>
-                                                {COUNTRY_FLAGS[s.country] || '🌐'} {s.name} ({s.defaultCurrency || 'USD'})
+                                                [{s.country}] {s.name} ({s.defaultCurrency || 'USD'})
                                             </option>
                                         ))}
                                     </select>
@@ -1696,7 +1686,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                                         <span className="font-semibold text-slate-900 truncate">{p.productName}</span>
                                                                     </div>
                                                                     {p.country && (
-                                                                        <span className="text-[11px] shrink-0">{COUNTRY_FLAGS[p.country] || '🌐'}</span>
+                                                                        <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 shrink-0">[{p.country}]</span>
                                                                     )}
                                                                 </div>
                                                             ))
@@ -2517,7 +2507,6 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 </tr>
                             ) : sortedRows.map(row => {
                                 const incoCfg = INCOTERMS_CFG[row.incoterms || 'EXW'] || INCOTERMS_CFG.EXW
-                                const flag = COUNTRY_FLAGS[row.supplierCountry || 'FR'] || '🌐'
                                 const isSelected = selectedId === row.id
                                 const isReadyForGR = ['APPROVED', 'IN_TRANSIT', 'PARTIALLY_RECEIVED'].includes(row.status)
 
@@ -2570,7 +2559,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                         {/* Col 2: Supplier & Legal Entity */}
                                         <td className="px-4 py-3">
                                             <p className="text-xs font-extrabold text-slate-900 truncate max-w-[230px]" title={row.supplierName}>
-                                                <span className="mr-1">{flag}</span>
+                                                <span className="font-mono text-[10px] text-slate-500 font-bold mr-1.5 px-1 py-0.5 rounded bg-slate-100">[{row.supplierCountry || 'FR'}]</span>
                                                 {row.supplierName}
                                             </p>
                                             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
@@ -2703,7 +2692,6 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                     </div>
                 ) : rows.map(row => {
                     const incoCfg = INCOTERMS_CFG[row.incoterms || 'EXW'] || INCOTERMS_CFG.EXW
-                    const flag = COUNTRY_FLAGS[row.supplierCountry || 'FR'] || '🌐'
 
                     return (
                         <div key={row.id} onClick={() => showDetail(row.id)}
@@ -2725,7 +2713,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
                             <div className="text-xs">
                                 <p className="font-extrabold text-slate-900">
-                                    <span className="mr-1">{flag}</span>{row.supplierName}
+                                    <span className="font-mono text-[10px] text-slate-500 font-bold mr-1.5 px-1 py-0.5 rounded bg-slate-100">[{row.supplierCountry || 'FR'}]</span>{row.supplierName}
                                 </p>
                                 {row.latestShipment && (
                                     <p className="text-[11px] text-[#1D4ED8] font-mono mt-0.5 flex items-center gap-1">

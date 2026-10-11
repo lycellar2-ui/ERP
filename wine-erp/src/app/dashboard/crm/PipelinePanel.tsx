@@ -20,8 +20,8 @@ const STAGES: { key: OppStage; label: string; color: string; bg: string; probabi
     { key: 'QUALIFIED', label: 'Qualified', color: '#B45309', bg: 'rgba(180,83,9,0.08)', probability: 30 },
     { key: 'PROPOSAL', label: 'Proposal', color: '#0891B2', bg: 'rgba(8,145,178,0.08)', probability: 50 },
     { key: 'NEGOTIATION', label: 'Negotiation', color: '#D97706', bg: 'rgba(217,119,6,0.08)', probability: 70 },
-    { key: 'WON', label: 'Won ✓', color: '#15803D', bg: 'rgba(21,128,61,0.1)', probability: 100 },
-    { key: 'LOST', label: 'Lost ✗', color: '#B91C1C', bg: 'rgba(185,28,28,0.08)', probability: 0 },
+    { key: 'WON', label: 'Won', color: '#15803D', bg: 'rgba(21,128,61,0.1)', probability: 100 },
+    { key: 'LOST', label: 'Lost', color: '#B91C1C', bg: 'rgba(185,28,28,0.08)', probability: 0 },
 ]
 
 export function PipelinePanel() {

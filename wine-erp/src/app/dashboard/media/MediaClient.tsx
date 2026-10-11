@@ -14,15 +14,15 @@ import {
     uploadMediaToProduct, saveMediaUrl, getProductsForUpload
 } from './actions'
 
-const MEDIA_TYPE_LABELS: Record<string, { label: string; emoji: string }> = {
-    PRODUCT_MAIN: { label: 'Ảnh chính', emoji: '🍷' },
-    LABEL_FRONT: { label: 'Nhãn trước', emoji: '🏷️' },
-    LABEL_BACK: { label: 'Nhãn sau', emoji: '🔖' },
-    LIFESTYLE: { label: 'Lifestyle', emoji: '📸' },
-    BOTTLE_GROUP: { label: 'Nhóm chai', emoji: '🍾' },
-    CASE_OWC: { label: 'Hộp gỗ', emoji: '📦' },
-    AWARD_CERTIFICATE: { label: 'Chứng nhận', emoji: '🏆' },
-    PRODUCER_WINERY: { label: 'Nhà máy', emoji: '🏰' },
+const MEDIA_TYPE_LABELS: Record<string, { label: string }> = {
+    PRODUCT_MAIN: { label: 'Ảnh chính' },
+    LABEL_FRONT: { label: 'Nhãn trước' },
+    LABEL_BACK: { label: 'Nhãn sau' },
+    LIFESTYLE: { label: 'Lifestyle' },
+    BOTTLE_GROUP: { label: 'Nhóm chai' },
+    CASE_OWC: { label: 'Hộp gỗ' },
+    AWARD_CERTIFICATE: { label: 'Chứng nhận' },
+    PRODUCER_WINERY: { label: 'Nhà máy' },
 }
 
 import { PageHeader, StatGrid, StatCard, Button, useConfirmDialog } from '@/components/ui'
@@ -157,7 +157,7 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                     <option value="">Tất cả loại</option>
                     {Object.entries(MEDIA_TYPE_LABELS).map(([k, v]) => (
-                        <option key={k} value={k}>{v.emoji} {v.label}</option>
+                        <option key={k} value={k}>{v.label}</option>
                     ))}
                 </select>
 
@@ -213,9 +213,9 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
                             )}
 
                             {/* Type badge */}
-                            <div className="inline-block absolute top-2 right-2 px-1.5 py-0.5 rounded text-xs font-semibold whitespace-nowrap shrink-0"
-                                style={{ background: 'rgba(15, 23, 42, 0.45)', color: '#475569' }}>
-                                {MEDIA_TYPE_LABELS[item.mediaType]?.emoji ?? '📸'}
+                            <div className="inline-block absolute top-2 right-2 px-1.5 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap shrink-0"
+                                style={{ background: 'rgba(15, 23, 42, 0.75)', color: '#FFFFFF' }}>
+                                {MEDIA_TYPE_LABELS[item.mediaType]?.label ?? item.mediaType}
                             </div>
 
                             {/* Select checkbox */}
@@ -300,9 +300,13 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
                                 <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>
                                     {lightbox.product.productName}
                                 </p>
-                                <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>
-                                    {lightbox.product.skuCode} · {MEDIA_TYPE_LABELS[lightbox.mediaType]?.label ?? lightbox.mediaType}
-                                    {lightbox.isPrimary && ' · ⭐ Ảnh chính'}
+                                <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: '#64748B' }}>
+                                    <span>{lightbox.product.skuCode} · {MEDIA_TYPE_LABELS[lightbox.mediaType]?.label ?? lightbox.mediaType}</span>
+                                    {lightbox.isPrimary && (
+                                        <span className="inline-flex items-center gap-1 font-medium" style={{ color: '#C07434' }}>
+                                            · <Star size={12} fill="#C07434" /> Ảnh chính
+                                        </span>
+                                    )}
                                 </p>
                             </div>
                             <div className="flex gap-2">
@@ -421,7 +425,7 @@ function UploadModal({ onClose }: { onClose: () => void }) {
                             className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                             {Object.entries(MEDIA_TYPE_LABELS).map(([k, v]) => (
-                                <option key={k} value={k}>{v.emoji} {v.label}</option>
+                                <option key={k} value={k}>{v.label}</option>
                             ))}
                         </select>
                     </div>

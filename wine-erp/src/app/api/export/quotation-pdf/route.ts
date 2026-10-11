@@ -224,7 +224,7 @@ function renderHtml(qt: any, style: string, origin?: string): string {
                 <div class="group-title-inner">
                     <span class="group-badge">MAISON</span>
                     <span class="group-name">${group.supplierName}</span>
-                    <span class="group-sep">✦</span>
+                    <span class="group-sep">•</span>
                     <span class="group-origin">TERROIR: ${group.country.toUpperCase()}</span>
                 </div>
             </td>
@@ -462,7 +462,7 @@ function renderHtml(qt: any, style: string, origin?: string): string {
             gap: 6px;
         }
         .doc-type-eyebrow::before {
-            content: '❖';
+            content: '•';
             font-size: 8px;
         }
         .doc-main-title {
@@ -1012,7 +1012,7 @@ function renderHtml(qt: any, style: string, origin?: string): string {
                 <div class="party-primary-name">${qt.contactPerson || qt.customer.name}</div>
                 ${qt.companyName ? `<div class="party-detail" style="font-weight:600; color:${t.textStrong};">${qt.companyName}</div>` : ''}
                 <div class="party-detail">
-                    Mã khách hàng: <strong>${qt.customer.code}</strong> &nbsp;✦&nbsp; Phân khúc: <strong>${qt.channel}</strong>
+                    Mã khách hàng: <strong>${qt.customer.code}</strong> &nbsp;•&nbsp; Phân khúc: <strong>${qt.channel}</strong>
                 </div>
             </div>
             <div class="party-col">
@@ -1080,7 +1080,7 @@ function renderHtml(qt: any, style: string, origin?: string): string {
         <!-- BANKING & LOGISTICS SECTION -->
         <div class="terms-grid">
             <div>
-                <div class="terms-card-title">✦ Thông Tin Thanh Toán (Banking Protocol)</div>
+                <div class="terms-card-title">Thông Tin Thanh Toán (Banking Protocol)</div>
                 <div class="terms-card-body">
                     Tên thụ hưởng: <strong>CÔNG TY TNHH LY'S CELLARS</strong><br/>
                     Số tài khoản: <strong class="font-mono" style="color: ${t.goldAccent}; font-size:12px;">1023456789</strong><br/>
@@ -1089,7 +1089,7 @@ function renderHtml(qt: any, style: string, origin?: string): string {
                 </div>
             </div>
             <div>
-                <div class="terms-card-title">✦ Điều Khoản Lưu Kho & Vận Chuyển</div>
+                <div class="terms-card-title">Điều Khoản Lưu Kho & Vận Chuyển</div>
                 <div class="terms-card-body">
                     ${qt.deliveryTerms || 'Giao hàng tận nơi bằng phương tiện chuyên dụng kiểm soát nhiệt độ 16-18°C. Miễn phí vận chuyển nội thành TP.HCM cho các đơn hàng rượu vang Grand Cru.'}
                 </div>
@@ -1141,7 +1141,7 @@ function renderHtml(qt: any, style: string, origin?: string): string {
                 <div class="sign-sub">Authorized Executive Signatory</div>
                 <div class="sign-space">
                     <div class="sign-stamp-seal">
-                        LY'S CELLARS<br/>★ DẤU PHÁP NHÂN ★<br/>APPROVED
+                        LY'S CELLARS<br/>DẤU PHÁP NHÂN<br/>APPROVED
                     </div>
                 </div>
                 <div class="sign-name">BAN GIÁM ĐỐC &amp; DUYỆT BÁO GIÁ</div>

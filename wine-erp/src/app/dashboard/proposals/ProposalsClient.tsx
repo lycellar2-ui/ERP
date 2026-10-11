@@ -5,7 +5,7 @@ import {
     FileText, Plus, X, Search, Send, CheckCircle2, XCircle, RotateCcw,
     Clock, AlertCircle, Loader2, MessageSquare, Paperclip, ChevronDown,
     Filter, Eye, ArrowRight, ClipboardCheck, Printer, Trash2, Check,
-    Gift, Sparkles, ShoppingBag, Calendar,
+    Gift, Sparkles, ShoppingBag, Calendar, Languages, Building2, Wine, Globe, Package,
 } from 'lucide-react'
 import {
     createProposal, submitProposal, processProposalApproval, addProposalComment,
@@ -115,27 +115,27 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
         const isEn = locale === 'en'
         switch (cat) {
             case 'TASTING':
-                return { label: isEn ? '🍷 Tasting (Sample)' : '🍷 Tasting (Thử Rượu)', bg: 'rgba(180,83,9,0.15)', color: '#B45309', border: 'rgba(180,83,9,0.3)' }
+                return { label: isEn ? 'Tasting (Sample)' : 'Tasting (Thử Rượu)', bg: 'rgba(180,83,9,0.15)', color: '#B45309', border: 'rgba(180,83,9,0.3)' }
             case 'INTERNAL_TRAINING':
-                return { label: isEn ? '🎓 Internal Training' : '🎓 Đào Tạo Nội Bộ', bg: 'rgba(21,128,61,0.15)', color: '#15803D', border: 'rgba(21,128,61,0.3)' }
+                return { label: isEn ? 'Internal Training' : 'Đào Tạo Nội Bộ', bg: 'rgba(21,128,61,0.15)', color: '#15803D', border: 'rgba(21,128,61,0.3)' }
             case 'SPECIAL_EVENT':
-                return { label: isEn ? '🎪 Special Event' : '🎪 Sự Kiện / Event', bg: 'rgba(180,140,210,0.15)', color: '#B48CD2', border: 'rgba(180,140,210,0.3)' }
+                return { label: isEn ? 'Special Event' : 'Sự Kiện / Event', bg: 'rgba(180,140,210,0.15)', color: '#B48CD2', border: 'rgba(180,140,210,0.3)' }
             case 'PRICE_ADJUSTMENT':
-                return { label: isEn ? '🏷️ Special Pricing' : '🏷️ Cơ Chế Giá & Giá Đặc Biệt', bg: 'rgba(29,78,216,0.15)', color: '#1D4ED8', border: 'rgba(29,78,216,0.3)' }
+                return { label: isEn ? 'Special Pricing' : 'Cơ Chế Giá & Giá Đặc Biệt', bg: 'rgba(29,78,216,0.15)', color: '#1D4ED8', border: 'rgba(29,78,216,0.3)' }
             case 'BUDGET_REQUEST':
-                return { label: isEn ? '💰 Budget Request' : '💰 Xin Ngân Sách', bg: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: 'rgba(8, 145, 178, 0.25)' }
+                return { label: isEn ? 'Budget Request' : 'Xin Ngân Sách', bg: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: 'rgba(8, 145, 178, 0.25)' }
             case 'CAPITAL_EXPENDITURE':
-                return { label: isEn ? '🏢 CAPEX' : '🏢 Mua Sắm TSCĐ', bg: 'rgba(180,140,210,0.15)', color: '#B48CD2', border: 'rgba(180,140,210,0.3)' }
+                return { label: isEn ? 'CAPEX' : 'Mua Sắm TSCĐ', bg: 'rgba(180,140,210,0.15)', color: '#B48CD2', border: 'rgba(180,140,210,0.3)' }
             case 'NEW_SUPPLIER':
-                return { label: isEn ? '🤝 New Supplier' : '🤝 NCC Mới', bg: 'rgba(21,128,61,0.15)', color: '#15803D', border: 'rgba(21,128,61,0.3)' }
+                return { label: isEn ? 'New Supplier' : 'NCC Mới', bg: 'rgba(21,128,61,0.15)', color: '#15803D', border: 'rgba(21,128,61,0.3)' }
             case 'NEW_PRODUCT':
-                return { label: isEn ? '📦 New Product' : '📦 Sản Phẩm Mới', bg: 'rgba(21,128,61,0.15)', color: '#15803D', border: 'rgba(21,128,61,0.3)' }
+                return { label: isEn ? 'New Product' : 'Sản Phẩm Mới', bg: 'rgba(21,128,61,0.15)', color: '#15803D', border: 'rgba(21,128,61,0.3)' }
             case 'POLICY_CHANGE':
-                return { label: isEn ? '📋 Policy Change' : '📋 Đổi Quy Trình', bg: 'rgba(224,140,80,0.15)', color: '#E08C50', border: 'rgba(224,140,80,0.3)' }
+                return { label: isEn ? 'Policy Change' : 'Đổi Quy Trình', bg: 'rgba(224,140,80,0.15)', color: '#E08C50', border: 'rgba(224,140,80,0.3)' }
             case 'PAYMENT_SCHEDULE':
-                return { label: isEn ? '📅 Payment Schedule' : '📅 Lịch Thanh Toán', bg: 'rgba(29,78,216,0.15)', color: '#1D4ED8', border: 'rgba(29,78,216,0.3)' }
+                return { label: isEn ? 'Payment Schedule' : 'Lịch Thanh Toán', bg: 'rgba(29,78,216,0.15)', color: '#1D4ED8', border: 'rgba(29,78,216,0.3)' }
             case 'PROMOTION_CAMPAIGN':
-                return { label: isEn ? '🎁 Promotion' : '🎁 Khuyến Mãi', bg: 'rgba(180,83,9,0.15)', color: '#B45309', border: 'rgba(180,83,9,0.3)' }
+                return { label: isEn ? 'Promotion' : 'Khuyến Mãi', bg: 'rgba(180,83,9,0.15)', color: '#B45309', border: 'rgba(180,83,9,0.3)' }
             default:
                 return { label: getCategoryLabel(cat, locale), bg: 'rgba(100,116,139,0.15)', color: '#475569', border: 'rgba(100,116,139,0.3)' }
         }
@@ -670,7 +670,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center;">1</td>
                                 <td style="border: 1px solid #000; padding: 5px;">${lang === 'VI' ? 'Người lập tờ trình' : lang === 'EN' ? 'Proposal Submitter' : 'Người lập tờ trình / Submitter'}</td>
                                 <td style="border: 1px solid #000; padding: 5px; font-weight: bold;">${detail.creator?.name || '—'}</td>
-                                <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; color: #1b5e20;">${lang === 'VI' ? '✓ Đã lập & trình' : lang === 'EN' ? '✓ Submitted' : '✓ Đã lập & trình / Submitted'}</td>
+                                <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; color: #1b5e20;">${lang === 'VI' ? 'Đã lập & trình' : lang === 'EN' ? 'Submitted' : 'Đã lập & trình / Submitted'}</td>
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center;">${creatorSignedAt}</td>
                                 <td style="border: 1px solid #000; padding: 5px; font-style: italic;">${lang === 'VI' ? 'Khởi tạo tờ trình' : lang === 'EN' ? 'Initial submission' : 'Khởi tạo tờ trình / Initial submission'}</td>
                             </tr>
@@ -679,7 +679,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 <td style="border: 1px solid #000; padding: 5px;">${lang === 'VI' ? 'Quản lý Kinh doanh' : lang === 'EN' ? 'Sales Manager (CBO)' : 'Quản lý Kinh doanh / Sales Manager'}</td>
                                 <td style="border: 1px solid #000; padding: 5px; font-weight: bold;">${l1Log?.approver?.name || 'Jeremie Courivault'}</td>
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; color: ${l1Log ? (l1Log.action === 'APPROVE' ? '#1b5e20' : '#b71c1c') : '#777'};">
-                                    ${l1Log ? (l1Log.action === 'APPROVE' ? (lang === 'VI' ? '✓ Đã duyệt' : lang === 'EN' ? '✓ Approved' : '✓ Đã duyệt / Approved') : (lang === 'VI' ? '✗ Từ chối' : lang === 'EN' ? '✗ Rejected' : '✗ Từ chối / Rejected')) : (lang === 'VI' ? '⏳ Chưa duyệt' : lang === 'EN' ? '⏳ Pending' : '⏳ Chưa duyệt / Pending')}
+                                    ${l1Log ? (l1Log.action === 'APPROVE' ? (lang === 'VI' ? 'Đã duyệt' : lang === 'EN' ? 'Approved' : 'Đã duyệt / Approved') : (lang === 'VI' ? 'Từ chối' : lang === 'EN' ? 'Rejected' : 'Từ chối / Rejected')) : (lang === 'VI' ? 'Chưa duyệt' : lang === 'EN' ? 'Pending' : 'Chưa duyệt / Pending')}
                                 </td>
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center;">${l1SignedAt || '—'}</td>
                                 <td style="border: 1px solid #000; padding: 5px; font-style: italic;">${l1Log?.comment || '—'}</td>
@@ -688,7 +688,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center;">3</td>
                                 <td style="border: 1px solid #000; padding: 5px;">${lang === 'VI' ? 'Vận hành' : lang === 'EN' ? 'Operations' : 'Vận hành / Operations'}</td>
                                 <td style="border: 1px solid #000; padding: 5px; font-weight: bold;">Trần Hữu Chiến</td>
-                                <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; color: #1b5e20;">${lang === 'VI' ? '✓ Đã xác nhận' : lang === 'EN' ? '✓ Confirmed' : '✓ Đã xác nhận / Confirmed'}</td>
+                                <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; color: #1b5e20;">${lang === 'VI' ? 'Đã xác nhận' : lang === 'EN' ? 'Confirmed' : 'Đã xác nhận / Confirmed'}</td>
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center;">${creatorSignedAt}</td>
                                 <td style="border: 1px solid #000; padding: 5px; font-style: italic;">${lang === 'VI' ? 'Xác nhận vận hành' : lang === 'EN' ? 'Operation verification' : 'Xác nhận vận hành / Operation verification'}</td>
                             </tr>
@@ -697,7 +697,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 <td style="border: 1px solid #000; padding: 5px;">${lang === 'VI' ? 'Ban Lãnh đạo' : lang === 'EN' ? 'Board of Directors' : 'Ban Lãnh đạo / Board of Directors'}</td>
                                 <td style="border: 1px solid #000; padding: 5px; font-weight: bold;">${l3Log?.approver?.name || '—'}</td>
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; color: ${l3Log ? (l3Log.action === 'APPROVE' ? '#1b5e20' : '#b71c1c') : '#777'};">
-                                    ${l3Log ? (l3Log.action === 'APPROVE' ? (lang === 'VI' ? '✓ Đã phê duyệt' : lang === 'EN' ? '✓ Approved' : '✓ Đã phê duyệt / Approved') : (lang === 'VI' ? '✗ Từ chối' : lang === 'EN' ? '✗ Rejected' : '✗ Từ chối / Rejected')) : (lang === 'VI' ? '⏳ Chưa phê duyệt' : lang === 'EN' ? '⏳ Pending' : '⏳ Chưa phê duyệt / Pending')}
+                                    ${l3Log ? (l3Log.action === 'APPROVE' ? (lang === 'VI' ? 'Đã phê duyệt' : lang === 'EN' ? 'Approved' : 'Đã phê duyệt / Approved') : (lang === 'VI' ? 'Từ chối' : lang === 'EN' ? 'Rejected' : 'Từ chối / Rejected')) : (lang === 'VI' ? 'Chưa phê duyệt' : lang === 'EN' ? 'Pending' : 'Chưa phê duyệt / Pending')}
                                 </td>
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center;">${l3SignedAt || '—'}</td>
                                 <td style="border: 1px solid #000; padding: 5px; font-style: italic;">${l3Log?.comment || '—'}</td>
@@ -932,7 +932,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 <td style="border: 1px solid #000; padding: 6px; text-align: center;">1</td>
                                 <td style="border: 1px solid #000; padding: 6px;">${lang === 'VI' ? 'Người lập tờ trình' : lang === 'EN' ? 'Proposal Submitter' : 'Người lập tờ trình / Submitter'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; font-weight: bold;">${detail.creator?.name || '—'}</td>
-                                <td style="border: 1px solid #000; padding: 6px; text-align: center; font-weight: bold; color: #1b5e20;">${lang === 'VI' ? '✓ Đã lập & trình' : lang === 'EN' ? '✓ Submitted' : '✓ Đã lập & trình / Submitted'}</td>
+                                <td style="border: 1px solid #000; padding: 6px; text-align: center; font-weight: bold; color: #1b5e20;">${lang === 'VI' ? 'Đã lập & trình' : lang === 'EN' ? 'Submitted' : 'Đã lập & trình / Submitted'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; text-align: center;">${creatorSignedAt}</td>
                                 <td style="border: 1px solid #000; padding: 6px; font-style: italic;">${lang === 'VI' ? 'Khởi tạo tờ trình' : lang === 'EN' ? 'Initial submission' : 'Khởi tạo tờ trình / Initial submission'}</td>
                             </tr>
@@ -941,7 +941,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 <td style="border: 1px solid #000; padding: 6px;">${lang === 'VI' ? 'Cấp 1: Trưởng Bộ Phận' : lang === 'EN' ? 'Level 1: Dept Head' : 'Cấp 1: Trưởng Bộ Phận / Level 1: Dept Head'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; font-weight: bold;">${l1Log?.approver?.name || '—'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; text-align: center; font-weight: bold; color: ${l1Log ? (l1Log.action === 'APPROVE' ? '#1b5e20' : '#b71c1c') : '#777'};">
-                                    ${l1Log ? (l1Log.action === 'APPROVE' ? (lang === 'VI' ? '✓ Đã duyệt' : lang === 'EN' ? '✓ Approved' : '✓ Đã duyệt / Approved') : (lang === 'VI' ? '✗ Từ chối' : lang === 'EN' ? '✗ Rejected' : '✗ Từ chối / Rejected')) : (lang === 'VI' ? '⏳ Chưa duyệt' : lang === 'EN' ? '⏳ Pending' : '⏳ Chưa duyệt / Pending')}
+                                    ${l1Log ? (l1Log.action === 'APPROVE' ? (lang === 'VI' ? 'Đã duyệt' : lang === 'EN' ? 'Approved' : 'Đã duyệt / Approved') : (lang === 'VI' ? 'Từ chối' : lang === 'EN' ? 'Rejected' : 'Từ chối / Rejected')) : (lang === 'VI' ? 'Chưa duyệt' : lang === 'EN' ? 'Pending' : 'Chưa duyệt / Pending')}
                                 </td>
                                 <td style="border: 1px solid #000; padding: 6px; text-align: center;">${l1SignedAt || '—'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; font-style: italic;">${l1Log?.comment || '—'}</td>
@@ -951,7 +951,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 <td style="border: 1px solid #000; padding: 6px;">${lang === 'VI' ? 'Cấp 2: Kế Toán Trưởng' : lang === 'EN' ? 'Level 2: Chief Accountant' : 'Cấp 2: Kế Toán Trưởng / Level 2: Chief Accountant'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; font-weight: bold;">${l2Log?.approver?.name || '—'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; text-align: center; font-weight: bold; color: ${l2Log ? (l2Log.action === 'APPROVE' ? '#1b5e20' : '#b71c1c') : '#777'};">
-                                    ${l2Log ? (l2Log.action === 'APPROVE' ? (lang === 'VI' ? '✓ Đã duyệt' : lang === 'EN' ? '✓ Approved' : '✓ Đã duyệt / Approved') : (lang === 'VI' ? '✗ Từ chối' : lang === 'EN' ? '✗ Rejected' : '✗ Từ chối / Rejected')) : (lang === 'VI' ? '⏳ Chưa duyệt' : lang === 'EN' ? '⏳ Pending' : '⏳ Chưa duyệt / Pending')}
+                                    ${l2Log ? (l2Log.action === 'APPROVE' ? (lang === 'VI' ? 'Đã duyệt' : lang === 'EN' ? 'Approved' : 'Đã duyệt / Approved') : (lang === 'VI' ? 'Từ chối' : lang === 'EN' ? 'Rejected' : 'Từ chối / Rejected')) : (lang === 'VI' ? 'Chưa duyệt' : lang === 'EN' ? 'Pending' : 'Chưa duyệt / Pending')}
                                 </td>
                                 <td style="border: 1px solid #000; padding: 6px; text-align: center;">${l2SignedAt || '—'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; font-style: italic;">${l2Log?.comment || '—'}</td>
@@ -961,7 +961,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                 <td style="border: 1px solid #000; padding: 6px;">${lang === 'VI' ? 'Cấp 3: Tổng Giám Đốc (CEO)' : lang === 'EN' ? 'Level 3: CEO' : 'Cấp 3: Tổng Giám Đốc / Level 3: CEO'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; font-weight: bold;">${l3Log?.approver?.name || '—'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; text-align: center; font-weight: bold; color: ${l3Log ? (l3Log.action === 'APPROVE' ? '#1b5e20' : '#b71c1c') : '#777'};">
-                                    ${l3Log ? (l3Log.action === 'APPROVE' ? (lang === 'VI' ? '✓ Đã duyệt' : lang === 'EN' ? '✓ Approved' : '✓ Đã duyệt / Approved') : (lang === 'VI' ? '✗ Từ chối' : lang === 'EN' ? '✗ Rejected' : '✗ Từ chối / Rejected')) : (lang === 'VI' ? '⏳ Chưa duyệt' : lang === 'EN' ? '⏳ Pending' : '⏳ Chưa duyệt / Pending')}
+                                    ${l3Log ? (l3Log.action === 'APPROVE' ? (lang === 'VI' ? 'Đã duyệt' : lang === 'EN' ? 'Approved' : 'Đã duyệt / Approved') : (lang === 'VI' ? 'Từ chối' : lang === 'EN' ? 'Rejected' : 'Từ chối / Rejected')) : (lang === 'VI' ? 'Chưa duyệt' : lang === 'EN' ? 'Pending' : 'Chưa duyệt / Pending')}
                                 </td>
                                 <td style="border: 1px solid #000; padding: 6px; text-align: center;">${l3SignedAt || '—'}</td>
                                 <td style="border: 1px solid #000; padding: 6px; font-style: italic;">${l3Log?.comment || '—'}</td>
@@ -1063,17 +1063,17 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                         }}
                     >
                         <option value="ALL">{t.filters.allCategories}</option>
-                        <option value="INTERNAL_TRAINING">{locale === 'en' ? '🎓 Internal Training' : '🎓 Tờ Trình Đào Tạo Nội Bộ'}</option>
-                        <option value="TASTING">{locale === 'en' ? '🍷 Wine Tasting & Sample' : '🍷 Tờ Trình Tasting (Thử Rượu)'}</option>
-                        <option value="SPECIAL_EVENT">{locale === 'en' ? '🎪 Special Event' : '🎪 Sự Kiện / Event'}</option>
-                        <option value="PRICE_ADJUSTMENT">{locale === 'en' ? '🏷️ Special Pricing Mechanism' : '🏷️ Tờ Trình Cơ Chế Giá & Giá Đặc Biệt'}</option>
-                        <option value="BUDGET_REQUEST">{locale === 'en' ? '💰 Budget Request' : '💰 Xin Ngân Sách'}</option>
-                        <option value="CAPITAL_EXPENDITURE">{locale === 'en' ? '🏢 CAPEX' : '🏢 Mua Sắm TSCĐ'}</option>
-                        <option value="NEW_SUPPLIER">{locale === 'en' ? '🤝 New Supplier' : '🤝 Nhà Cung Cấp Mới'}</option>
-                        <option value="NEW_PRODUCT">{locale === 'en' ? '📦 New Product' : '📦 Sản Phẩm Mới'}</option>
-                        <option value="POLICY_CHANGE">{locale === 'en' ? '📋 Policy Change' : '📋 Thay Đổi Quy Trình'}</option>
-                        <option value="PAYMENT_SCHEDULE">{locale === 'en' ? '📅 Payment Schedule' : '📅 Lịch Thanh Toán'}</option>
-                        <option value="PROMOTION_CAMPAIGN">{locale === 'en' ? '🎁 Promotion' : '🎁 Chương Trình KM'}</option>
+                        <option value="INTERNAL_TRAINING">{locale === 'en' ? 'Internal Training' : 'Tờ Trình Đào Tạo Nội Bộ'}</option>
+                        <option value="TASTING">{locale === 'en' ? 'Wine Tasting & Sample' : 'Tờ Trình Tasting (Thử Rượu)'}</option>
+                        <option value="SPECIAL_EVENT">{locale === 'en' ? 'Special Event' : 'Sự Kiện / Event'}</option>
+                        <option value="PRICE_ADJUSTMENT">{locale === 'en' ? 'Special Pricing Mechanism' : 'Tờ Trình Cơ Chế Giá & Giá Đặc Biệt'}</option>
+                        <option value="BUDGET_REQUEST">{locale === 'en' ? 'Budget Request' : 'Xin Ngân Sách'}</option>
+                        <option value="CAPITAL_EXPENDITURE">{locale === 'en' ? 'CAPEX' : 'Mua Sắm TSCĐ'}</option>
+                        <option value="NEW_SUPPLIER">{locale === 'en' ? 'New Supplier' : 'Nhà Cung Cấp Mới'}</option>
+                        <option value="NEW_PRODUCT">{locale === 'en' ? 'New Product' : 'Sản Phẩm Mới'}</option>
+                        <option value="POLICY_CHANGE">{locale === 'en' ? 'Policy Change' : 'Thay Đổi Quy Trình'}</option>
+                        <option value="PAYMENT_SCHEDULE">{locale === 'en' ? 'Payment Schedule' : 'Lịch Thanh Toán'}</option>
+                        <option value="PROMOTION_CAMPAIGN">{locale === 'en' ? 'Promotion' : 'Chương Trình KM'}</option>
                         <option value="OTHER">{locale === 'en' ? 'Other' : 'Khác'}</option>
                     </select>
                 </div>
@@ -1091,10 +1091,10 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                         }}
                     >
                         <option value="ALL">{t.filters.allPriorities}</option>
-                        <option value="URGENT">🔥 {locale === 'en' ? 'Urgent' : 'Khẩn cấp (Urgent)'}</option>
-                        <option value="HIGH">⚡ {locale === 'en' ? 'High' : 'Cao (High)'}</option>
-                        <option value="NORMAL">🔹 {locale === 'en' ? 'Normal' : 'Bình thường (Normal)'}</option>
-                        <option value="LOW">◽ {locale === 'en' ? 'Low' : 'Thấp (Low)'}</option>
+                        <option value="URGENT">{locale === 'en' ? 'Urgent' : 'Khẩn cấp (Urgent)'}</option>
+                        <option value="HIGH">{locale === 'en' ? 'High' : 'Cao (High)'}</option>
+                        <option value="NORMAL">{locale === 'en' ? 'Normal' : 'Bình thường (Normal)'}</option>
+                        <option value="LOW">{locale === 'en' ? 'Low' : 'Thấp (Low)'}</option>
                     </select>
                 </div>
 
@@ -1875,10 +1875,10 @@ function BatchProductPickerModal({
 }
 
 const PROMO_CHANNELS = [
-    { id: 'WHOLESALE_DISTRIBUTOR', labelVi: '🏢 Khách Bán Buôn / Đại Lý', labelEn: 'Wholesale / Distributor' },
-    { id: 'CORPORATE', labelVi: '🏛️ Khách Doanh Nghiệp (B2B)', labelEn: 'Corporate B2B' },
-    { id: 'RETAIL', labelVi: '🛍️ Khách Bán Lẻ / Cá Nhân', labelEn: 'Retail / Individual' },
-    { id: 'HORECA', labelVi: '🍷 Khách HORECA (Nhà hàng, KS)', labelEn: 'HORECA' },
+    { id: 'WHOLESALE_DISTRIBUTOR', labelVi: 'Khách Bán Buôn / Đại Lý', labelEn: 'Wholesale / Distributor' },
+    { id: 'CORPORATE', labelVi: 'Khách Doanh Nghiệp (B2B)', labelEn: 'Corporate B2B' },
+    { id: 'RETAIL', labelVi: 'Khách Bán Lẻ / Cá Nhân', labelEn: 'Retail / Individual' },
+    { id: 'HORECA', labelVi: 'Khách HORECA (Nhà hàng, KS)', labelEn: 'HORECA' },
 ]
 
 // ─── Create Drawer ───────────────────────────────
@@ -2167,7 +2167,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                 <div>
                                     <h4 className="text-sm font-black uppercase text-amber-950 flex items-center gap-2 tracking-wide">
                                         <Gift size={18} className="text-amber-600" />
-                                        {locale === 'en' ? '🎁 PROMOTION MECHANISM (BUY X GET Y & QUOTA)' : '🎁 CẤU HÌNH CHƯƠNG TRÌNH KHUYẾN MÃI (CTKM 1 MÃ & TẶNG HÀNG)'}
+                                        {locale === 'en' ? 'PROMOTION MECHANISM (BUY X GET Y & QUOTA)' : 'CẤU HÌNH CHƯƠNG TRÌNH KHUYẾN MÃI (CTKM 1 MÃ & TẶNG HÀNG)'}
                                     </h4>
                                     <p className="text-xs text-amber-800 mt-0.5">
                                         {locale === 'en' 
@@ -2232,7 +2232,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                 <div className={`w-4 h-4 rounded flex items-center justify-center border text-[10px] ${
                                                     isSelected ? 'bg-amber-600 border-amber-600 text-white' : 'border-slate-300'
                                                 }`}>
-                                                    {isSelected && '✓'}
+                                                    {isSelected && <Check size={10} strokeWidth={3} />}
                                                 </div>
                                             </button>
                                         )
@@ -2452,7 +2452,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                         <div className={`space-y-4 p-4 rounded-md border ${form.category === 'INTERNAL_TRAINING' ? 'border-emerald-200/90 bg-emerald-50/30' : 'border-amber-200/90 bg-amber-50/30'} shadow-xs`}>
                             <div>
                                 <label className={`text-xs font-bold uppercase mb-1.5 block tracking-wider ${form.category === 'INTERNAL_TRAINING' ? 'text-emerald-900' : 'text-amber-900'}`}>
-                                    {form.category === 'INTERNAL_TRAINING' ? '🏢 Đơn Vị / Khách Hàng / Đối Tác Phối Hợp (Tùy Chọn)' : '👤 Khách Hàng Áp Dụng Tasting (Tùy Chọn)'}
+                                    {form.category === 'INTERNAL_TRAINING' ? 'Đơn Vị / Khách Hàng / Đối Tác Phối Hợp (Tùy Chọn)' : 'Khách Hàng Áp Dụng Tasting (Tùy Chọn)'}
                                 </label>
                                 <SearchableCustomerCombobox
                                     customers={usableCustomers}
@@ -2471,7 +2471,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between flex-wrap gap-2">
                                     <label className={`text-xs font-bold uppercase tracking-wider ${form.category === 'INTERNAL_TRAINING' ? 'text-emerald-900' : 'text-amber-900'}`}>
-                                        {form.category === 'INTERNAL_TRAINING' ? '🎓 Rượu Vang Dùng Thử Nếm Trong Đào Tạo (Tùy Chọn)' : '🍷 Mã Sản Phẩm & Số Lượng Thử Vang (Tasting) *'}
+                                        {form.category === 'INTERNAL_TRAINING' ? 'Rượu Vang Dùng Thử Nếm Trong Đào Tạo (Tùy Chọn)' : 'Mã Sản Phẩm & Số Lượng Thử Vang (Tasting) *'}
                                     </label>
                                     <div className="flex items-center gap-2">
                                         <button 
@@ -2598,7 +2598,8 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                 <div className="p-3 rounded-lg border border-slate-200 bg-white space-y-2">
                                     <div className="flex items-center justify-between">
                                         <label className="text-xs font-bold text-[#0891B2] flex items-center gap-1.5">
-                                            🏢 Áp dụng đồng thời cho các cơ sở khác ({additionalBranches.length} cơ sở đã chọn)
+                                            <Building2 size={13} className="shrink-0" />
+                                            Áp dụng đồng thời cho các cơ sở khác ({additionalBranches.length} cơ sở đã chọn)
                                         </label>
                                     </div>
 
@@ -2647,8 +2648,9 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                             {/* Effective Validity Period (Start & End Date) */}
                             <div className="grid grid-cols-2 gap-3 p-3 rounded-lg border border-slate-200 bg-white">
                                 <div>
-                                    <label className="text-xs font-bold uppercase mb-1 block text-[#0891B2]">
-                                        📅 Ngày bắt đầu hiệu lực
+                                    <label className="text-xs font-bold uppercase mb-1 flex items-center gap-1 text-[#0891B2]">
+                                        <Calendar size={12} className="shrink-0" />
+                                        Ngày bắt đầu hiệu lực
                                     </label>
                                     <input 
                                         type="date"
@@ -2658,8 +2660,9 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-bold uppercase mb-1 block text-[#B45309]">
-                                        📅 Ngày kết thúc hiệu lực
+                                    <label className="text-xs font-bold uppercase mb-1 flex items-center gap-1 text-[#B45309]">
+                                        <Calendar size={12} className="shrink-0" />
+                                        Ngày kết thúc hiệu lực
                                     </label>
                                     <input 
                                         type="date"
@@ -3037,7 +3040,8 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                     }}
                                                     className="w-full text-left px-3 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-50 flex items-center gap-2 cursor-pointer"
                                                 >
-                                                    <span className="text-sm">🌐</span> {locale === 'en' ? 'Print Bilingual (Default)' : 'In Song Ngữ (Mặc định)'}
+                                                    <Languages size={14} className="text-amber-700 shrink-0" />
+                                                    <span>{locale === 'en' ? 'Print Bilingual (Default)' : 'In Song Ngữ (Mặc định)'}</span>
                                                 </button>
                                                 <button 
                                                     type="button"
@@ -3047,7 +3051,8 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                     }}
                                                     className="w-full text-left px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
                                                 >
-                                                    <span className="text-sm">🇻🇳</span> {locale === 'en' ? 'Print Vietnamese' : 'In Tiếng Việt'}
+                                                    <FileText size={14} className="text-emerald-700 shrink-0" />
+                                                    <span>{locale === 'en' ? 'Print Vietnamese' : 'In Tiếng Việt'}</span>
                                                 </button>
                                                 <button 
                                                     type="button"
@@ -3057,7 +3062,8 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                     }}
                                                     className="w-full text-left px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
                                                 >
-                                                    <span className="text-sm">🇬🇧</span> {locale === 'en' ? 'Print English' : 'Print in English'}
+                                                    <Globe size={14} className="text-cyan-700 shrink-0" />
+                                                    <span>{locale === 'en' ? 'Print English' : 'Print in English'}</span>
                                                 </button>
                                             </div>
                                         </>
@@ -3134,7 +3140,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                         border: `2px solid ${isDone ? '#15803D' : isRejected ? '#B91C1C' : isCurrent ? '#B45309' : '#E2E8F0'}`,
                                                         color: isDone ? '#15803D' : isRejected ? '#B91C1C' : isCurrent ? '#B45309' : '#64748B',
                                                     }}>
-                                                        {isDone ? '✓' : isRejected ? '✗' : level}
+                                                        {isDone ? <Check size={14} strokeWidth={2.5} /> : isRejected ? <X size={14} strokeWidth={2.5} /> : level}
                                                 </div>
                                                 <span className="text-xs font-medium" style={{ color: isCurrent ? '#B45309' : '#64748B' }}>
                                                     {levelLabel}
@@ -3176,7 +3182,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                 {detail.branchCustomers && detail.branchCustomers.length > 0 && (
                                     <div className="p-2.5 rounded text-xs" style={{ background: 'rgba(8, 145, 178, 0.06)', border: '1px solid rgba(8, 145, 178, 0.2)' }}>
                                         <p className="font-semibold text-cyan-900 mb-1 flex items-center gap-1.5">
-                                            <span>🏢</span>
+                                            <Building2 size={13} className="text-cyan-800 shrink-0" />
                                             {locale === 'en' 
                                                 ? `Also applied to ${detail.branchCustomers.length} additional branches / subsidiaries:` 
                                                 : `Áp dụng đồng thời cho ${detail.branchCustomers.length} cơ sở / công ty con khác:`}
@@ -3192,10 +3198,13 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                 )}
                                 <div className="p-2.5 rounded text-xs" style={{ background: '#FFFFFF' }}>
                                     <p style={{ color: '#64748B' }}>{locale === 'en' ? 'Validity Period (Start & End Date)' : 'Thời hạn hiệu lực (Ngày bắt đầu & Kết thúc)'}</p>
-                                    <p className="font-bold mt-0.5" style={{ color: '#0891B2' }}>
-                                        📅 {detail.startDate ? new Date(detail.startDate).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN') : (locale === 'en' ? 'From approval date' : 'Từ ngày phê duyệt')} 
-                                        {' ➔ '} 
-                                        {detail.endDate ? new Date(detail.endDate).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN') : (locale === 'en' ? 'Until further notice (Indefinite)' : 'Khi có thông báo mới (không thời hạn)')}
+                                    <p className="font-bold mt-0.5 flex items-center gap-1.5" style={{ color: '#0891B2' }}>
+                                        <Calendar size={13} className="shrink-0" />
+                                        <span>
+                                            {detail.startDate ? new Date(detail.startDate).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN') : (locale === 'en' ? 'From approval date' : 'Từ ngày phê duyệt')} 
+                                            {' → '} 
+                                            {detail.endDate ? new Date(detail.endDate).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN') : (locale === 'en' ? 'Until further notice (Indefinite)' : 'Khi có thông báo mới (không thời hạn)')}
+                                        </span>
                                     </p>
                                 </div>
                                 
@@ -3250,7 +3259,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                 <Gift size={16} />
                                             </div>
                                             <span className="text-xs font-black uppercase text-amber-950 tracking-wide">
-                                                {locale === 'en' ? '🎁 PROMOTION CAMPAIGN MECHANISM' : '🎁 CƠ CHẾ CHƯƠNG TRÌNH KHUYẾN MÃI (CTKM)'}
+                                                {locale === 'en' ? 'PROMOTION CAMPAIGN MECHANISM' : 'CƠ CHẾ CHƯƠNG TRÌNH KHUYẾN MÃI (CTKM)'}
                                             </span>
                                         </div>
                                         {['APPROVED', 'IN_PROGRESS', 'CLOSED'].includes(detail.status) && (
@@ -3289,7 +3298,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                             <span className="font-bold text-amber-950 flex items-center gap-1.5">
                                                 <Calendar size={13} className="text-amber-600" />
                                                 {detail.startDate ? new Date(detail.startDate).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN') : '—'}
-                                                {' ➔ '}
+                                                {' → '}
                                                 {detail.endDate ? new Date(detail.endDate).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN') : '—'}
                                             </span>
                                         </div>
@@ -3303,8 +3312,8 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                             </span>
                                             <p className="font-bold text-slate-900">
                                                 {locale === 'en' 
-                                                    ? `Buy ${parsedPromo.buyQty} bottles ➔ Get ${parsedPromo.giftQty} bottles free (0 VND)`
-                                                    : `Mua ${parsedPromo.buyQty} chai ➔ Tặng ${parsedPromo.giftQty} chai 0 VNĐ`}
+                                                    ? `Buy ${parsedPromo.buyQty} bottles → Get ${parsedPromo.giftQty} bottles free (0 VND)`
+                                                    : `Mua ${parsedPromo.buyQty} chai → Tặng ${parsedPromo.giftQty} chai 0 VNĐ`}
                                             </p>
                                         </div>
 
@@ -3331,8 +3340,8 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                     <div className="flex items-center justify-between">
                                         <p className="text-xs font-extrabold uppercase flex items-center gap-1.5 tracking-wide" style={{ color: detail.category === 'INTERNAL_TRAINING' ? '#065F46' : '#92400E' }}>
                                             {detail.category === 'INTERNAL_TRAINING'
-                                                ? (locale === 'en' ? '🎓 INTERNAL TRAINING & SAMPLES' : '🎓 TỜ TRÌNH ĐÀO TẠO NỘI BỘ & HÀNG MẪU')
-                                                : (locale === 'en' ? '🍷 TASTING & SAMPLE PROPOSAL' : '🍷 TỜ TRÌNH TASTING & THỬ VANG')}
+                                                ? (locale === 'en' ? 'INTERNAL TRAINING & SAMPLES' : 'TỜ TRÌNH ĐÀO TẠO NỘI BỘ & HÀNG MẪU')
+                                                : (locale === 'en' ? 'TASTING & SAMPLE PROPOSAL' : 'TỜ TRÌNH TASTING & THỬ VANG')}
                                         </p>
                                         {['APPROVED', 'IN_PROGRESS', 'CLOSED'].includes(detail.status) && (
                                             <a
@@ -3340,8 +3349,8 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                 className={`px-3.5 py-1.5 text-xs font-bold rounded-lg ${detail.category === 'INTERNAL_TRAINING' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-amber-600 hover:bg-amber-700'} text-white flex items-center gap-1.5 shadow-sm transition-all active:scale-95`}
                                             >
                                                 {detail.category === 'INTERNAL_TRAINING'
-                                                    ? (locale === 'en' ? '🍷 + Create Training Sample Order' : '🍷 + Lên Đơn Xuất Mẫu Training')
-                                                    : (locale === 'en' ? '🍷 + Create Tasting Order' : '🍷 + Lên Đơn Tasting Ngay')}
+                                                    ? (locale === 'en' ? '+ Create Training Sample Order' : '+ Lên Đơn Xuất Mẫu Training')
+                                                    : (locale === 'en' ? '+ Create Tasting Order' : '+ Lên Đơn Tasting Ngay')}
                                             </a>
                                         )}
                                     </div>
@@ -3358,7 +3367,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                 <div className="p-4 rounded-md space-y-2.5 bg-white border border-slate-200">
                                     <div className="flex items-center justify-between">
                                         <p className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                                            <span>🍷</span>
+                                            <Wine size={14} className="text-amber-700 shrink-0" />
                                             <span>{locale === 'en' ? `Training & Tasting Wine Samples (${detail.priceItems.length} SKUs)` : `Danh Sách Rượu Xuất Mẫu Thử Nếm (${detail.priceItems.length} sản phẩm)`}</span>
                                         </p>
                                         <span className="inline-block text-xs font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 whitespace-nowrap shrink-0">
@@ -3404,7 +3413,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                             {(detail as any).salesOrders && (detail as any).salesOrders.length > 0 && (
                                 <div className="p-4 rounded-md space-y-2.5 bg-white border border-slate-200">
                                     <p className="text-xs font-bold uppercase text-[#0891B2] flex items-center justify-between">
-                                        <span>📦 {locale === 'en' ? `Orders Created Under This Proposal (${(detail as any).salesOrders.length})` : `Các Đơn Hàng Đã Lên Theo Tờ Trình Này (${(detail as any).salesOrders.length})`}</span>
+                                        <span className="flex items-center gap-1.5"><Package size={14} className="shrink-0" /> {locale === 'en' ? `Orders Created Under This Proposal (${(detail as any).salesOrders.length})` : `Các Đơn Hàng Đã Lên Theo Tờ Trình Này (${(detail as any).salesOrders.length})`}</span>
                                     </p>
                                     <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
                                         {(detail as any).salesOrders.map((so: any) => (
@@ -3412,7 +3421,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-mono font-bold text-[#0891B2]">{so.soNo}</span>
                                                     {so.orderType === 'TASTING' && (
-                                                        <span className="inline-block px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-amber-950 text-amber-700 border border-amber-500/40 whitespace-nowrap shrink-0">🍷 Tasting</span>
+                                                        <span className="inline-block px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-amber-950 text-amber-700 border border-amber-500/40 whitespace-nowrap shrink-0">Tasting</span>
                                                     )}
                                                     <span className="text-[10px] text-gray-400">{new Date(so.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')}</span>
                                                 </div>
@@ -3455,7 +3464,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                         {/* Approval Audit Trail Table */}
                         <div className="p-4 rounded-md border border-slate-200 bg-white space-y-3">
                             <p className="text-xs font-bold uppercase tracking-wider text-[#0891B2] flex items-center justify-between">
-                                <span>📋 {locale === 'en' ? 'Digital Audit Trail' : 'Tiến Trình Duyệt Hệ Thống (Digital Audit Trail)'}</span>
+                                <span className="flex items-center gap-1.5"><ClipboardCheck size={14} className="shrink-0" /> {locale === 'en' ? 'Digital Audit Trail' : 'Tiến Trình Duyệt Hệ Thống (Digital Audit Trail)'}</span>
                                 <span className="inline-block text-[10px] font-mono text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200 whitespace-nowrap shrink-0">
                                     {locale === 'en' ? '3 Approval Levels' : '3 Cấp Phê Duyệt'}
                                 </span>
@@ -3483,7 +3492,8 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                             <td className="p-2.5 font-bold text-slate-900 whitespace-nowrap">{detail.creator?.name || '—'}</td>
                                             <td className="p-2.5 text-center whitespace-nowrap">
                                                 <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 border border-emerald-500/30 whitespace-nowrap">
-                                                    ✓ {locale === 'en' ? 'Created & Submitted' : 'Đã lập & trình'}
+                                                    <CheckCircle2 size={11} className="shrink-0" />
+                                                    <span>{locale === 'en' ? 'Created & Submitted' : 'Đã lập & trình'}</span>
                                                 </span>
                                             </td>
                                             <td className="p-2.5 text-center text-gray-400 font-mono text-[11px] whitespace-nowrap">
@@ -3510,16 +3520,19 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                         {log ? (
                                                             log.action === 'APPROVE' ? (
                                                                 <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 border border-emerald-500/30 whitespace-nowrap">
-                                                                    ✓ {locale === 'en' ? 'Approved' : 'Đã duyệt'}
+                                                                    <CheckCircle2 size={11} className="shrink-0" />
+                                                                    <span>{locale === 'en' ? 'Approved' : 'Đã duyệt'}</span>
                                                                 </span>
                                                             ) : (
                                                                 <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-700 border border-rose-500/30 whitespace-nowrap">
-                                                                    ✗ {locale === 'en' ? 'Rejected' : 'Từ chối'}
+                                                                    <XCircle size={11} className="shrink-0" />
+                                                                    <span>{locale === 'en' ? 'Rejected' : 'Từ chối'}</span>
                                                                 </span>
                                                             )
                                                         ) : (
-                                                            <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-700/40 text-gray-400 border border-gray-600/30 whitespace-nowrap">
-                                                                ⏳ {locale === 'en' ? 'Pending' : 'Chưa duyệt'}
+                                                            <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
+                                                                <Clock size={11} className="shrink-0 text-slate-400" />
+                                                                <span>{locale === 'en' ? 'Pending' : 'Chưa duyệt'}</span>
                                                             </span>
                                                         )}
                                                     </td>

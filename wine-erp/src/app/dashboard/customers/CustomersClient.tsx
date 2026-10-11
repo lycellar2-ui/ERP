@@ -136,7 +136,7 @@ function CustomerMobileCard({
                 )}
                 {row.brandGroup && (
                     <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold mt-1 text-slate-700 bg-slate-50 border border-slate-200 whitespace-nowrap shrink-0">
-                        ✨ Chuỗi: {row.brandGroup}
+                        Chuỗi: {row.brandGroup}
                     </span>
                 )}
             </div>
@@ -378,7 +378,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
             }
             set('vatCompanyName', res.data.vatCompanyName)
             set('vatAddress', res.data.vatAddress)
-            toast.success(`✅ Lấy thành công: ${res.data.vatCompanyName}`)
+            toast.success(`Lấy thành công: ${res.data.vatCompanyName}`)
         } catch (err: any) {
             toast.error('Lỗi tra cứu Cục Thuế: ' + err.message)
         } finally {
@@ -1180,7 +1180,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             if (parent?.taxId && form.taxId === parent.taxId) {
                                                 return (
                                                     <div className="mt-1 inline-flex items-center gap-1.5 text-[11px] text-teal-800 bg-teal-50 px-2 py-1 rounded border border-teal-200 whitespace-nowrap shrink-0">
-                                                        <span>✅ Đang dùng chung MST với Công ty Cha (<strong className="font-mono">{parent.code}</strong> — {parent.name})</span>
+                                                        <span>Đang dùng chung MST với Công ty Cha (<strong className="font-mono">{parent.code}</strong> — {parent.name})</span>
                                                     </div>
                                                 )
                                             }
@@ -1589,7 +1589,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
             success: (res) => {
                 if (!res.success) throw new Error(res.error)
                 queryClient.invalidateQueries({ queryKey: ['customers'] })
-                return `✅ Đã đồng bộ: ${res.updatedInfo?.vatCompanyName}`
+                return `Đã đồng bộ: ${res.updatedInfo?.vatCompanyName}`
             },
             error: (err) => `Lỗi tra cứu: ${err.message}`
         })
@@ -1677,9 +1677,9 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                             className="md:w-36"
                         >
                             <option value="">Tất cả phân cấp</option>
-                            <option value="PARENT_ONLY">🏢 Công ty Mẹ</option>
-                            <option value="CHILD_ONLY">🍴 Điểm bán con</option>
-                            <option value="INDEPENDENT">👤 KH độc lập</option>
+                            <option value="PARENT_ONLY">Công ty Mẹ</option>
+                            <option value="CHILD_ONLY">Điểm bán con</option>
+                            <option value="INDEPENDENT">KH độc lập</option>
                         </Select>
                         <Select
                             aria-label="Lọc theo Khách hàng Cha"

@@ -901,8 +901,8 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 </div>
 
                                 {/* Table of recent sessions */}
-                                <div className="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-2xs">
-                                    <table className="w-full text-left border-collapse text-xs">
+                                <div className="border border-slate-200 rounded-lg overflow-x-auto bg-white shadow-2xs">
+                                    <table className="w-full text-left border-collapse text-xs min-w-[650px]">
                                         <thead>
                                             <tr className="bg-slate-50 text-slate-500 font-extrabold uppercase text-[10px] tracking-wider border-b border-slate-200">
                                                 <th className="p-2.5 pl-3">SỐ PHIẾU / TIÊU ĐỀ</th>

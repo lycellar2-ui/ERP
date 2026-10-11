@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Calendar, Plus, Trash2, CheckCircle2, X, AlertCircle, Loader2, ArrowLeft, ArrowRight, Save, Download, Printer, User } from 'lucide-react'
+import { Calendar, Plus, Trash2, CheckCircle2, X, AlertCircle, Loader2, ArrowLeft, ArrowRight, Save, Download, Printer, User, Target, FileText, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import { useConfirmDialog } from '@/components/ui'
 import { getWeeklyPlan, createOrUpdateWeeklyPlan, updateVisitStatus, getSalesRepCustomers, getSalesRepsList, getCurrentUserProfile } from './actions'
@@ -565,13 +565,15 @@ export function WeeklyVisitPlannerPanel() {
                                                 </div>
                                             </div>
 
-                                            <div className="text-xs p-2 rounded" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569' }}>
-                                                🎯 <strong>Mục đích:</strong> {v.purpose}
+                                            <div className="text-xs p-2 rounded flex items-center gap-1.5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569' }}>
+                                                <Target size={12} className="text-cyan-700 shrink-0" />
+                                                <span><strong>Mục đích:</strong> {v.purpose}</span>
                                             </div>
 
                                             {v.resultNotes && (
-                                                <div className="text-xs p-2.5 rounded border border-[#15803D]/20" style={{ background: 'rgba(21,128,61,0.03)', color: '#0891B2' }}>
-                                                    📝 <strong>Ghi chú kết quả:</strong> {v.resultNotes}
+                                                <div className="text-xs p-2.5 rounded border border-[#15803D]/20 flex items-center gap-1.5" style={{ background: 'rgba(21,128,61,0.03)', color: '#0891B2' }}>
+                                                    <FileText size={12} className="text-emerald-700 shrink-0" />
+                                                    <span><strong>Ghi chú kết quả:</strong> {v.resultNotes}</span>
                                                 </div>
                                             )}
                                         </div>
@@ -636,8 +638,14 @@ export function WeeklyVisitPlannerPanel() {
                                     {completedVisits.map(v => (
                                         <div key={v.id} className="p-2.5 rounded border border-slate-200" style={{ background: '#FFFFFF' }}>
                                             <p className="text-xs font-bold text-slate-900">{v.customer?.name}</p>
-                                            <p className="text-[10px]" style={{ color: '#475569' }}>⏱ {new Date(v.visitDate).toLocaleDateString('vi-VN')}</p>
-                                            <p className="text-[10px] mt-1 text-slate-600 truncate">📝 {v.resultNotes || 'Đã viếng thăm'}</p>
+                                            <p className="text-[10px] flex items-center gap-1" style={{ color: '#475569' }}>
+                                                <Clock size={10} className="shrink-0" />
+                                                <span>{new Date(v.visitDate).toLocaleDateString('vi-VN')}</span>
+                                            </p>
+                                            <p className="text-[10px] mt-1 text-slate-600 truncate flex items-center gap-1">
+                                                <FileText size={10} className="shrink-0 text-slate-400" />
+                                                <span>{v.resultNotes || 'Đã viếng thăm'}</span>
+                                            </p>
                                         </div>
                                     ))}
                                 </div>

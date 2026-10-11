@@ -5,7 +5,7 @@ import {
     Phone, PhoneCall, PhoneForwarded, PhoneMissed, PhoneOff, CheckCircle2,
     Clock, Users, Building2, UserPlus, Target, Award, TrendingUp, Calendar,
     Search, Filter, Plus, RefreshCw, X, FileText, ChevronRight, ArrowUpRight,
-    Sparkles, ShieldCheck, AlertCircle, Briefcase, Zap, Check, CalendarCheck
+    Sparkles, ShieldCheck, AlertCircle, Briefcase, Zap, Check, CalendarCheck, Wine, MessageSquare
 } from 'lucide-react'
 import { DailyCallPlannerView } from './DailyCallPlannerView'
 import { toast } from 'sonner'
@@ -22,13 +22,13 @@ interface TelesalesProspectingPanelProps {
 }
 
 const CALL_TYPES = [
-    { id: 'CORPORATE_GIFT', label: '🎁 Quà Tết & Sự Kiện Doanh Nghiệp', channel: 'CORPORATE' },
-    { id: 'COLD_PROSPECTING', label: '🤝 Chào hàng danh mục vang B2B', channel: 'CORPORATE' },
-    { id: 'CONTRACT_NEGOTIATION', label: '📝 Đàm phán hợp đồng / Chiết khấu', channel: 'CORPORATE' },
-    { id: 'RETAIL_CARE', label: '💎 Chăm sóc khách VIP / Nhà sưu tập', channel: 'RETAIL' },
-    { id: 'TASTING_INVITE', label: '🍷 Mời thử rượu Tasting / Event', channel: 'ALL' },
-    { id: 'QUOTE_FOLLOWUP', label: '📄 Theo dõi phản hồi báo giá', channel: 'ALL' },
-    { id: 'REORDER_AR', label: '📦 Chốt đơn tái đặt / Công nợ', channel: 'ALL' },
+    { id: 'CORPORATE_GIFT', label: 'Quà Tết & Sự Kiện Doanh Nghiệp', channel: 'CORPORATE' },
+    { id: 'COLD_PROSPECTING', label: 'Chào hàng danh mục vang B2B', channel: 'CORPORATE' },
+    { id: 'CONTRACT_NEGOTIATION', label: 'Đàm phán hợp đồng / Chiết khấu', channel: 'CORPORATE' },
+    { id: 'RETAIL_CARE', label: 'Chăm sóc khách VIP / Nhà sưu tập', channel: 'RETAIL' },
+    { id: 'TASTING_INVITE', label: 'Mời thử rượu Tasting / Event', channel: 'ALL' },
+    { id: 'QUOTE_FOLLOWUP', label: 'Theo dõi phản hồi báo giá', channel: 'ALL' },
+    { id: 'REORDER_AR', label: 'Chốt đơn tái đặt / Công nợ', channel: 'ALL' },
 ]
 
 const CALL_OUTCOMES = [
@@ -53,7 +53,7 @@ const CALL_OUTCOMES = [
     {
         id: 'CONNECTED_CLOSED_DEAL',
         label: 'Chốt đơn hàng thành công!',
-        shortLabel: 'Chốt đơn 🎯',
+        shortLabel: 'Chốt đơn',
         color: '#15803D',
         bg: 'rgba(21,128,61, 0.15)',
         badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold',
@@ -371,30 +371,30 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
             </div>
 
             {/* View Sub-Tab Switcher */}
-            <div className="flex items-center gap-1.5 p-1 rounded-lg bg-slate-100 border border-slate-200 w-fit">
+            <div className="flex items-center gap-1.5 p-1 rounded-lg bg-slate-100 border border-slate-200 max-w-full overflow-x-auto no-scrollbar whitespace-nowrap">
                 <button
                     type="button"
                     onClick={() => setActiveSubTab('planner')}
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold transition cursor-pointer ${
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold transition cursor-pointer shrink-0 ${
                         activeSubTab === 'planner'
                             ? 'bg-white text-teal-700 shadow-xs border border-slate-200/60'
                             : 'text-slate-600 hover:text-slate-900'
                     }`}
                 >
                     <CalendarCheck size={14} className={activeSubTab === 'planner' ? 'text-teal-600' : 'text-slate-400'} />
-                    <span>📋 Kế Hoạch Cuộc Gọi Trong Ngày (To-Call List)</span>
+                    <span>Kế Hoạch Cuộc Gọi Trong Ngày (To-Call List)</span>
                 </button>
                 <button
                     type="button"
                     onClick={() => setActiveSubTab('metrics')}
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold transition cursor-pointer ${
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold transition cursor-pointer shrink-0 ${
                         activeSubTab === 'metrics'
                             ? 'bg-white text-teal-700 shadow-xs border border-slate-200/60'
                             : 'text-slate-600 hover:text-slate-900'
                     }`}
                 >
                     <TrendingUp size={14} className={activeSubTab === 'metrics' ? 'text-teal-600' : 'text-slate-400'} />
-                    <span>📊 Tổng Quan & Chỉ Tiêu Đội Ngũ</span>
+                    <span>Tổng Quan & Chỉ Tiêu Đội Ngũ</span>
                 </button>
             </div>
 
@@ -480,7 +480,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                 {data?.stats.totalCallsToday || 0}
                             </span>
                             <span className="text-[11px] text-slate-500 font-mono">
-                                (🏢 {data?.stats.corporateCallsToday || 0} • 🍷 {data?.stats.retailCallsToday || 0})
+                                (Corp: {data?.stats.corporateCallsToday || 0} · Ret: {data?.stats.retailCallsToday || 0})
                             </span>
                         </div>
                     </div>
@@ -728,12 +728,14 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                                 </span>
 
                                                 {log.channel === 'CORPORATE' ? (
-                                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-md font-bold bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap shrink-0">
-                                                        🏢 Corporate
+                                                    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-bold bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap shrink-0">
+                                                        <Building2 size={11} className="shrink-0" />
+                                                        <span>Corporate</span>
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-md font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
-                                                        🍷 Retail
+                                                    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
+                                                        <Wine size={11} className="shrink-0" />
+                                                        <span>Retail</span>
                                                     </span>
                                                 )}
 
@@ -765,8 +767,9 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                             </div>
 
                                             {log.notes && (
-                                                <div className="text-xs text-slate-700 bg-slate-50 p-2 rounded-md border border-slate-200/80">
-                                                    💬 {log.notes}
+                                                <div className="text-xs text-slate-700 bg-slate-50 p-2 rounded-md border border-slate-200/80 flex items-start gap-1.5">
+                                                    <MessageSquare size={12} className="shrink-0 text-slate-400 mt-0.5" />
+                                                    <span>{log.notes}</span>
                                                 </div>
                                             )}
 
@@ -1037,8 +1040,9 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                             {/* Lịch hẹn gọi lại nếu bận */}
                             {outcome === 'CONNECTED_BUSY_CALLBACK' || outcome === 'CONNECTED_MEETING_SET' ? (
                                 <div className="p-3 rounded-md bg-amber-50/60 border border-amber-200 space-y-1">
-                                    <label className="block font-bold text-amber-900 text-[11px]">
-                                        📅 Đặt Lịch Hẹn / Gọi Lại
+                                    <label className="font-bold text-amber-900 text-[11px] flex items-center gap-1.5">
+                                        <Calendar size={12} className="shrink-0 text-amber-700" />
+                                        <span>Đặt Lịch Hẹn / Gọi Lại</span>
                                     </label>
                                     <input
                                         type="datetime-local"

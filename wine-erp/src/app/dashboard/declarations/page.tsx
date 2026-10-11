@@ -1,7 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { FileText, Download, Plus, X, Clock, CheckCircle2, Send, Filter, ChevronRight, UploadCloud, Save, Loader2 } from 'lucide-react'
+import {
+    FileText, Download, Plus, X, Clock, CheckCircle2, Send, Filter,
+    ChevronRight, UploadCloud, Save, Loader2, Receipt, FolderArchive,
+    ArrowDownRight, ArrowUpRight, Coins
+} from 'lucide-react'
 import {
     getDeclarations, getDeclarationStats, createDeclaration,
     getDeclarationData, updateDeclarationStatus,
@@ -14,12 +18,12 @@ import { formatDate } from '@/lib/utils'
 import { PageHeader, StatGrid, StatCard, Button } from '@/components/ui'
 import { toast } from 'sonner'
 
-const TYPE_MAP: Record<string, { label: string; color: string; icon: string }> = {
-    IMPORT_CUSTOMS: { label: 'Tờ Khai NK', color: '#0891B2', icon: '📋' },
-    SCT_MONTHLY: { label: 'TTĐB Tháng', color: '#B45309', icon: '🧾' },
-    SCT_QUARTERLY: { label: 'TTĐB Quý', color: '#B45309', icon: '🧾' },
-    VAT_MONTHLY: { label: 'VAT Tháng', color: '#1D4ED8', icon: '📁' },
-    VAT_QUARTERLY: { label: 'VAT Quý', color: '#1D4ED8', icon: '📁' },
+const TYPE_MAP: Record<string, { label: string; color: string }> = {
+    IMPORT_CUSTOMS: { label: 'Tờ Khai NK', color: '#0891B2' },
+    SCT_MONTHLY: { label: 'TTĐB Tháng', color: '#B45309' },
+    SCT_QUARTERLY: { label: 'TTĐB Quý', color: '#B45309' },
+    VAT_MONTHLY: { label: 'VAT Tháng', color: '#1D4ED8' },
+    VAT_QUARTERLY: { label: 'VAT Quý', color: '#1D4ED8' },
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
@@ -144,34 +148,39 @@ export default function DeclarationsPage() {
             </StatGrid>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[
-                    { title: 'Tờ Khai NK Tháng Này', desc: 'Tổng hợp thuế NK + TTĐB từ các lô nhập', icon: '📋', color: '#0891B2', type: 'IMPORT_CUSTOMS' },
-                    { title: 'Báo Cáo Thuế GTGT', desc: 'VAT đầu vào/đầu ra theo kỳ khai', icon: '🧾', color: '#B45309', type: 'VAT_MONTHLY' },
-                    { title: 'Báo Cáo TTĐB Quý', desc: 'Thuế TTĐB theo quý cho cơ quan thuế', icon: '📁', color: '#1D4ED8', type: 'SCT_QUARTERLY' },
-                ].map(item => (
-                    <div key={item.title} className="p-5 rounded-md cursor-pointer transition-all"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
-                        onClick={() => handleCreate(item.type, now.getFullYear(), now.getMonth() + 1)}
-                        onMouseEnter={e => (e.currentTarget.style.borderColor = item.color)}
-                        onMouseLeave={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
-                        <p className="text-3xl mb-3">{item.icon}</p>
-                        <h3 className="font-semibold mb-1" style={{ color: '#0F172A' }}>{item.title}</h3>
-                        <p className="text-xs" style={{ color: '#64748B' }}>{item.desc}</p>
-                        <button className="inline-block mt-4 text-xs font-semibold px-3 py-1.5 rounded-md transition-all whitespace-nowrap shrink-0"
-                            style={{ background: `${item.color}20`, color: item.color, border: `1px solid ${item.color}40` }}>
-                            Tạo Nhanh →
-                        </button>
-                    </div>
-                ))}
+                    { title: 'Tờ Khai NK Tháng Này', desc: 'Tổng hợp thuế NK + TTĐB từ các lô nhập', Icon: FileText, color: '#0891B2', type: 'IMPORT_CUSTOMS' },
+                    { title: 'Báo Cáo Thuế GTGT', desc: 'VAT đầu vào/đầu ra theo kỳ khai', Icon: Receipt, color: '#B45309', type: 'VAT_MONTHLY' },
+                    { title: 'Báo Cáo TTĐB Quý', desc: 'Thuế TTĐB theo quý cho cơ quan thuế', Icon: FolderArchive, color: '#1D4ED8', type: 'SCT_QUARTERLY' },
+                ].map(item => {
+                    const ActionIcon = item.Icon
+                    return (
+                        <div key={item.title} className="p-5 rounded-md cursor-pointer transition-all"
+                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
+                            onClick={() => handleCreate(item.type, now.getFullYear(), now.getMonth() + 1)}
+                            onMouseEnter={e => (e.currentTarget.style.borderColor = item.color)}
+                            onMouseLeave={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
+                            <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style={{ background: `${item.color}15`, color: item.color }}>
+                                <ActionIcon size={20} />
+                            </div>
+                            <h3 className="font-semibold mb-1" style={{ color: '#0F172A' }}>{item.title}</h3>
+                            <p className="text-xs" style={{ color: '#64748B' }}>{item.desc}</p>
+                            <button className="inline-block mt-4 text-xs font-semibold px-3 py-1.5 rounded-md transition-all whitespace-nowrap shrink-0"
+                                style={{ background: `${item.color}20`, color: item.color, border: `1px solid ${item.color}40` }}>
+                                Tạo Nhanh
+                            </button>
+                        </div>
+                    )
+                })}
             </div>
 
             {/* Filter */}
-            <div className="flex items-center gap-2">
-                <Filter size={14} style={{ color: '#64748B' }} />
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+                <Filter size={14} style={{ color: '#64748B' }} className="shrink-0" />
                 {[{ k: '', l: 'Tất cả' }, { k: 'IMPORT_CUSTOMS', l: 'NK' }, { k: 'SCT_MONTHLY', l: 'TTĐB' }, { k: 'VAT_MONTHLY', l: 'VAT' }].map(f => (
                     <button key={f.k} onClick={() => setFilterType(f.k)}
-                        className="text-xs px-3 py-1 rounded font-semibold transition-all"
+                        className="text-xs px-3 py-1 rounded font-semibold transition-all whitespace-nowrap shrink-0"
                         style={{
                             background: filterType === f.k ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
                             color: filterType === f.k ? '#0E7490' : '#64748B',
@@ -183,8 +192,8 @@ export default function DeclarationsPage() {
             </div>
 
             {/* Table */}
-            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-                <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+            <div className="rounded-md overflow-x-auto border border-slate-200">
+                <table className="w-full text-left min-w-[600px]" style={{ borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                             {['Loại', 'Kỳ', 'Trạng Thái', 'Ngày Tạo', 'Ngày Nộp', ''].map(h => (
@@ -201,7 +210,7 @@ export default function DeclarationsPage() {
                                 Chưa có tờ khai nào — Sử dụng Quick Actions phía trên
                             </td></tr>
                         ) : rows.map(row => {
-                            const tp = TYPE_MAP[row.type] ?? { label: row.type, color: '#475569', icon: '📄' }
+                            const tp = TYPE_MAP[row.type] ?? { label: row.type, color: '#475569' }
                             const st = STATUS_MAP[row.status] ?? STATUS_MAP.DRAFT
                             return (
                                 <tr key={row.id} className="cursor-pointer" style={{ borderBottom: '1px solid #E2E8F0' }}
@@ -209,7 +218,7 @@ export default function DeclarationsPage() {
                                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(8,145,178,0.04)')}
                                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                                     <td className="px-3 py-2.5">
-                                        <span className="text-xs font-bold" style={{ color: tp.color }}>{tp.icon} {tp.label}</span>
+                                        <span className="text-xs font-bold" style={{ color: tp.color }}>{tp.label}</span>
                                     </td>
                                     <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#0F172A' }}>
                                         {row.periodMonth ? `T${row.periodMonth}/${row.periodYear}` : row.periodYear}
@@ -238,7 +247,7 @@ export default function DeclarationsPage() {
             {/* Detail Drawer */}
             {detailRow && (
                 <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
-                    <div className="w-[600px] h-full overflow-y-auto" style={{ background: '#F8FAFC' }}>
+                    <div className="w-full max-w-[600px] h-full overflow-y-auto" style={{ background: '#F8FAFC' }}>
                         <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #E2E8F0' }}>
                             <div>
                                 <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
@@ -258,7 +267,7 @@ export default function DeclarationsPage() {
                                     <button onClick={() => handleStatusChange(detailRow.id, 'APPROVED')}
                                         className="flex-1 py-2 text-xs font-bold rounded"
                                         style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D' }}>
-                                        ✓ Duyệt Tờ Khai
+                                        Duyệt Tờ Khai
                                     </button>
                                 </div>
                             )}
@@ -266,14 +275,14 @@ export default function DeclarationsPage() {
                                 <button onClick={() => handleStatusChange(detailRow.id, 'SUBMITTED')}
                                     className="w-full py-2 text-xs font-bold rounded"
                                     style={{ background: '#0891B2', color: '#FFFFFF' }}>
-                                    📤 Đánh Dấu Đã Nộp
+                                    Đánh Dấu Đã Nộp
                                 </button>
                             )}
 
                             {/* Detail Data */}
                             {detailData?.type === 'VAT' && (
                                 <div className="space-y-3">
-                                    <div className="grid grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         <div className="p-3 rounded" style={{ background: '#FFFFFF' }}>
                                             <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Số HĐ</p>
                                             <p className="text-sm font-bold" style={{ color: '#0F172A' }}>{detailData.invoiceCount}</p>
@@ -318,13 +327,13 @@ export default function DeclarationsPage() {
                                             {/* Header */}
                                             <div className="p-3 rounded-lg" style={{ background: 'linear-gradient(135deg, rgba(180,83,9,0.08) 0%, rgba(8,145,178,0.05) 100%)', border: '1px solid rgba(180,83,9,0.2)' }}>
                                                 <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#B45309' }}>
-                                                    📊 Bảng Kê Thuế TTĐB — Kỳ {sctReport.period.month ? `T${sctReport.period.month}/${sctReport.period.year}` : sctReport.period.year}
+                                                    Bảng Kê Thuế TTĐB — Kỳ {sctReport.period.month ? `T${sctReport.period.month}/${sctReport.period.year}` : sctReport.period.year}
                                                 </p>
 
                                                 {/* 3-column summary: Input | Output | Net */}
-                                                <div className="grid grid-cols-3 gap-3">
+                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                                     <div className="p-3 rounded-lg" style={{ background: '#FFFFFF' }}>
-                                                        <p className="text-[10px] uppercase tracking-wide mb-1 font-bold" style={{ color: '#1D4ED8' }}>⬇ Đầu Vào (Nhập)</p>
+                                                        <p className="text-[10px] uppercase tracking-wide mb-1 font-bold" style={{ color: '#1D4ED8' }}>Đầu Vào (Nhập)</p>
                                                         <p className="text-xs" style={{ color: '#475569' }}>SL: <b>{sctReport.inputSummary.totalQty.toLocaleString('vi-VN')}</b></p>
                                                         <p className="text-xs" style={{ color: '#475569' }}>GT: <b>{sctReport.inputSummary.totalValue.toLocaleString('vi-VN')} ₫</b></p>
                                                         <p className="text-sm font-bold mt-1" style={{ color: '#1D4ED8' }}>
@@ -332,7 +341,7 @@ export default function DeclarationsPage() {
                                                         </p>
                                                     </div>
                                                     <div className="p-3 rounded-lg" style={{ background: '#FFFFFF' }}>
-                                                        <p className="text-[10px] uppercase tracking-wide mb-1 font-bold" style={{ color: '#B45309' }}>⬆ Đầu Ra (Bán)</p>
+                                                        <p className="text-[10px] uppercase tracking-wide mb-1 font-bold" style={{ color: '#B45309' }}>Đầu Ra (Bán)</p>
                                                         <p className="text-xs" style={{ color: '#475569' }}>SL: <b>{sctReport.outputSummary.totalQty.toLocaleString('vi-VN')}</b></p>
                                                         <p className="text-xs" style={{ color: '#475569' }}>DT: <b>{sctReport.outputSummary.totalRevenue.toLocaleString('vi-VN')} ₫</b></p>
                                                         <p className="text-sm font-bold mt-1" style={{ color: '#B45309' }}>
@@ -340,7 +349,7 @@ export default function DeclarationsPage() {
                                                         </p>
                                                     </div>
                                                     <div className="p-3 rounded-lg" style={{ background: sctReport.netSCTPayable > 0 ? 'rgba(185,28,28,0.08)' : 'rgba(21,128,61,0.08)', border: `1px solid ${sctReport.netSCTPayable > 0 ? 'rgba(185,28,28,0.3)' : 'rgba(21,128,61,0.3)'}` }}>
-                                                        <p className="text-[10px] uppercase tracking-wide mb-1 font-bold" style={{ color: sctReport.netSCTPayable > 0 ? '#C04E65' : '#15803D' }}>💰 Thuế Phải Nộp</p>
+                                                        <p className="text-[10px] uppercase tracking-wide mb-1 font-bold" style={{ color: sctReport.netSCTPayable > 0 ? '#C04E65' : '#15803D' }}>Thuế Phải Nộp</p>
                                                         <p className="text-lg font-bold mt-2 font-mono" style={{ color: sctReport.netSCTPayable > 0 ? '#C04E65' : '#15803D' }}>
                                                             {sctReport.netSCTPayable.toLocaleString('vi-VN')} ₫
                                                         </p>
@@ -354,8 +363,8 @@ export default function DeclarationsPage() {
                                                 <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#475569' }}>
                                                     Chi Tiết Theo Sản Phẩm ({sctReport.lines.length})
                                                 </p>
-                                                <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-                                                    <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                                                <div className="rounded-md overflow-x-auto border border-slate-200">
+                                                    <table className="w-full text-left min-w-[550px]" style={{ borderCollapse: 'collapse' }}>
                                                         <thead>
                                                             <tr style={{ background: '#FFFFFF' }}>
                                                                 {['SKU', 'Sản Phẩm', 'ABV', 'TTĐB%', 'Nhập (SL)', 'TTĐB Nhập', 'Bán (SL)', 'TTĐB Bán', 'Nộp'].map(h => (
@@ -483,7 +492,7 @@ export default function DeclarationsPage() {
             {/* Create Drawer */}
             {createOpen && (
                 <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
-                    <div className="w-[420px] h-full overflow-y-auto" style={{ background: '#F8FAFC' }}>
+                    <div className="w-full max-w-[420px] h-full overflow-y-auto" style={{ background: '#F8FAFC' }}>
                         <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #E2E8F0' }}>
                             <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
                                 Tạo Tờ Khai Mới
@@ -498,8 +507,10 @@ export default function DeclarationsPage() {
                                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
                                     onMouseEnter={e => (e.currentTarget.style.borderColor = info.color)}
                                     onMouseLeave={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
-                                    <span className="text-lg mr-2">{info.icon}</span>
-                                    <span className="text-sm font-bold" style={{ color: info.color }}>{info.label}</span>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <FileText size={16} style={{ color: info.color }} />
+                                        <span className="text-sm font-bold" style={{ color: info.color }}>{info.label}</span>
+                                    </div>
                                     <p className="text-xs mt-1" style={{ color: '#64748B' }}>
                                         Kỳ: T{now.getMonth() + 1}/{now.getFullYear()}
                                     </p>

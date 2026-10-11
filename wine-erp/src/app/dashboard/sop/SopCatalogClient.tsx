@@ -299,10 +299,10 @@ export function SopCatalogClient({ initialSops, initialForms }: SopCatalogClient
             </div>
 
             {/* View Mode Switcher (SOPs vs Forms) */}
-            <div className="flex border-b border-slate-200 dark:border-slate-800 gap-8">
+            <div className="flex border-b border-slate-200 dark:border-slate-800 gap-4 sm:gap-8 overflow-x-auto no-scrollbar whitespace-nowrap">
                 <button
                     onClick={() => setActiveView('sops')}
-                    className={`pb-3 text-sm font-bold border-b-2 flex items-center gap-2 transition ${activeView === 'sops'
+                    className={`pb-3 text-sm font-bold border-b-2 flex items-center gap-2 transition whitespace-nowrap shrink-0 ${activeView === 'sops'
                         ? 'border-rose-700 text-rose-700 dark:border-rose-400 dark:text-rose-400'
                         : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
                         }`}
@@ -313,7 +313,7 @@ export function SopCatalogClient({ initialSops, initialForms }: SopCatalogClient
 
                 <button
                     onClick={() => setActiveView('forms')}
-                    className={`pb-3 text-sm font-bold border-b-2 flex items-center gap-2 transition ${activeView === 'forms'
+                    className={`pb-3 text-sm font-bold border-b-2 flex items-center gap-2 transition whitespace-nowrap shrink-0 ${activeView === 'forms'
                         ? 'border-rose-700 text-rose-700 dark:border-rose-400 dark:text-rose-400'
                         : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
                         }`}

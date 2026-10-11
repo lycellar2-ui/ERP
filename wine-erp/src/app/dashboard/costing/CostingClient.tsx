@@ -98,8 +98,8 @@ export function CostingClient({ products }: Props) {
                                 onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
                             />
 
-                            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-                                <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                            <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
+                                <table className="w-full text-left min-w-[550px]" style={{ borderCollapse: 'collapse' }}>
                                     <thead>
                                         <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                             {['SKU', 'Sản Phẩm', 'Giá Vốn/Chai', 'Giá Bán', 'Margin', 'Tồn'].map(h => (
@@ -204,7 +204,7 @@ export function CostingClient({ products }: Props) {
                                             style={{ background: 'rgba(185,28,28,0.1)', border: '1px solid rgba(185,28,28,0.3)' }}>
                                             <AlertCircle size={14} style={{ color: '#B91C1C' }} />
                                             <p className="text-xs" style={{ color: '#B91C1C' }}>
-                                                ⚠️ Giá bán hiện tại <strong>{formatVND(selected.listPrice!)}</strong> thấp hơn giá vốn!
+                                                Giá bán hiện tại <strong>{formatVND(selected.listPrice!)}</strong> thấp hơn giá vốn!
                                             </p>
                                         </div>
                                     )}
@@ -280,7 +280,7 @@ function SensitivityPanel({ products }: { products: CostingProduct[] }) {
         <div className="space-y-5">
             {/* Preset Scenarios Grid */}
             <div>
-                <h4 className="text-sm font-semibold mb-3" style={{ color: '#0F172A' }}>⚡ Kịch Bản Có Sẵn</h4>
+                <h4 className="text-sm font-semibold mb-3" style={{ color: '#0F172A' }}>Kịch Bản Có Sẵn</h4>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                     {presets.map((s, i) => (
                         <button key={i} onClick={() => runAnalysis(s)}
@@ -301,8 +301,8 @@ function SensitivityPanel({ products }: { products: CostingProduct[] }) {
 
             {/* Custom Input */}
             <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                <h4 className="text-sm font-semibold mb-3" style={{ color: '#B45309' }}>🔧 Kịch Bản Tùy Chỉnh</h4>
-                <div className="grid grid-cols-3 gap-3">
+                <h4 className="text-sm font-semibold mb-3" style={{ color: '#B45309' }}>Kịch Bản Tùy Chỉnh</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                         <label className="text-xs font-semibold uppercase tracking-wide block mb-1" style={{ color: '#64748B' }}>Tỷ giá Δ (%)</label>
                         <input type="number" value={custom.exchangeRateChange}
@@ -337,8 +337,8 @@ function SensitivityPanel({ products }: { products: CostingProduct[] }) {
 
             {/* Results Table */}
             {results.length > 0 && (
-                <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-                    <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
+                    <table className="w-full text-left min-w-[700px]" style={{ borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                 {['SKU', 'Giá vốn hiện tại', 'Giá vốn mới', 'Δ Chi phí', 'Margin hiện tại', 'Margin mới', 'Δ Margin'].map(h => (

@@ -552,7 +552,7 @@ export async function sendHrExpiryNotificationAlerts() {
         targetUserIds.push(user.id)
     }
 
-    const title = `⚠️ Cảnh báo nhân sự: Có ${expiringEmployees.length} nhân viên sắp hết hạn HĐ/KSK`
+    const title = `Cảnh báo nhân sự: Có ${expiringEmployees.length} nhân viên sắp hết hạn HĐ/KSK`
     const content = expiringEmployees
         .slice(0, 3)
         .map(e => {

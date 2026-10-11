@@ -1,5 +1,7 @@
 'use client'
 
+import { AlertTriangle } from 'lucide-react'
+
 export default function GlobalError({
     error,
     reset,
@@ -26,7 +28,11 @@ export default function GlobalError({
                     border: '1px solid #E2E8F0',
                     borderRadius: '12px',
                 }}>
-                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+                        <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(180,83,9,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#B45309' }}>
+                            <AlertTriangle size={32} />
+                        </div>
+                    </div>
                     <h2 style={{ color: '#0F172A', fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>
                         Hệ thống gặp sự cố
                     </h2>

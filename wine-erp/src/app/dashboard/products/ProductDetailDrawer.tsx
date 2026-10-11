@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { 
     X, Wine, Award, Star, Loader2, Calendar, 
     Layers, Clipboard, CheckCircle2, AlertCircle,
-    Boxes, Tag, DollarSign, Edit
+    Boxes, Tag, DollarSign, Edit, FileText, ExternalLink
 } from 'lucide-react'
 import { getProductViewDetails, type ProductViewDetails, type ProductRow } from './actions'
 import { formatVND } from '@/lib/utils'
@@ -19,12 +19,6 @@ interface ProductDetailDrawerProps {
     onClose: () => void
     canEdit: boolean
     onEditTrigger: (id: string) => void
-}
-
-const COUNTRY_FLAGS: Record<string, string> = {
-    FR: '🇫🇷', IT: '🇮🇹', ES: '🇪🇸', PT: '🇵🇹', DE: '🇩🇪',
-    US: '🇺🇸', AU: '🇦🇺', NZ: '🇳🇿', AR: '🇦🇷', CL: '🇨🇱', ZA: '🇿🇦',
-    GE: '🇬🇪', HU: '🇭🇺', GR: '🇬🇷', AT: '🇦🇹', RO: '🇷🇴', MX: '🇲🇽', JP: '🇯🇵',
 }
 
 const COUNTRY_NAMES: Record<string, string> = {
@@ -105,7 +99,6 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
         )
     }
 
-    const flag = activeProduct.country ? COUNTRY_FLAGS[activeProduct.country] ?? '🌍' : '🌍'
     const countryName = activeProduct.country ? COUNTRY_NAMES[activeProduct.country] ?? activeProduct.country : ''
     const totalStockQty = 'totalStock' in activeProduct 
         ? (activeProduct as any).totalStock 
@@ -198,7 +191,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                             <div className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border flex items-center justify-between ${
                                                 totalVarQty < 0 ? 'text-rose-700 bg-rose-950/40 border-rose-800/60' : 'text-amber-700 bg-amber-950/40 border-amber-800/60'
                                             }`}>
-                                                <span>⚠️ Lệch Sổ sách & On-hand:</span>
+                                                <span className="flex items-center gap-1.5"><AlertCircle size={12} className="shrink-0" /> Lệch Sổ sách & On-hand:</span>
                                                 <span className="font-mono">{totalVarQty > 0 ? `+${totalVarQty}` : totalVarQty} chai</span>
                                             </div>
                                         )}
@@ -214,7 +207,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                         </h4>
                         <div className="grid grid-cols-2 gap-x-4 gap-y-3 p-4 rounded-lg text-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             {[
-                                { label: 'Xuất xứ', value: `${flag} ${countryName}` },
+                                { label: 'Xuất xứ', value: countryName || '—' },
                                 { label: 'Vùng trồng (Appellation)', value: activeProduct.appellationName ?? '—' },
                                 { label: 'Độ cồn (ABV)', value: activeProduct.abvPercent ? `${activeProduct.abvPercent}°` : '—' },
                                 { 
@@ -266,10 +259,12 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                         href={(activeProduct as any).selfDeclarationUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors"
+                                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors"
                                         style={{ background: 'rgba(8, 145, 178, 0.08)', border: '1px solid rgba(8, 145, 178, 0.25)', color: '#0891B2' }}
                                     >
-                                        📄 Xem bản Tự Công Bố ↗
+                                        <FileText size={13} className="text-cyan-600 shrink-0" />
+                                        <span>Xem bản Tự Công Bố</span>
+                                        <ExternalLink size={11} className="shrink-0" />
                                     </a>
                                 )}
                                 {(activeProduct as any)?.tastingNoteUrl && (
@@ -277,10 +272,12 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                         href={(activeProduct as any).tastingNoteUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors"
-                                        style={{ background: 'rgba(29,78,216,0.12)', border: '1px solid rgba(29,78,216,0.3)', color: '#7AC4C4' }}
+                                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors"
+                                        style={{ background: 'rgba(29,78,216,0.12)', border: '1px solid rgba(29,78,216,0.3)', color: '#0E7490' }}
                                     >
-                                        🍷 Xem Tasting Note ↗
+                                        <Wine size={13} className="text-cyan-700 shrink-0" />
+                                        <span>Xem Tasting Note</span>
+                                        <ExternalLink size={11} className="shrink-0" />
                                     </a>
                                 )}
                             </div>

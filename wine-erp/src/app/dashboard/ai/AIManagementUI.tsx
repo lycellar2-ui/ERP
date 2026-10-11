@@ -9,11 +9,11 @@ import {
 import { useConfirmDialog } from '@/components/ui'
 
 const MODULE_OPTIONS = [
-    { key: 'pipeline', label: 'Pipeline Analysis', icon: '📊', desc: 'Sales pipeline & velocity' },
-    { key: 'crm', label: 'CRM Analysis', icon: '👥', desc: 'Customer health & churning' },
-    { key: 'catalog', label: 'Catalog Intelligence', icon: '🍷', desc: 'Product & supplier research' },
-    { key: 'ceo', label: 'CEO Briefing', icon: '📈', desc: 'Monthly executive summary' },
-    { key: 'product-desc', label: 'Product Description', icon: '💬', desc: 'Auto product descriptions' },
+    { key: 'pipeline', label: 'Pipeline Analysis', desc: 'Sales pipeline & velocity' },
+    { key: 'crm', label: 'CRM Analysis', desc: 'Customer health & churning' },
+    { key: 'catalog', label: 'Catalog Intelligence', desc: 'Product & supplier research' },
+    { key: 'ceo', label: 'CEO Briefing', desc: 'Monthly executive summary' },
+    { key: 'product-desc', label: 'Product Description', desc: 'Auto product descriptions' },
 ]
 
 const MODULE_ICONS: Record<string, any> = {
@@ -107,8 +107,16 @@ export function AiTogglePanel({ initialConfig }: { initialConfig: AiConfig }) {
                                 border: `1px solid ${active ? 'rgba(21,128,61,0.2)' : '#1E3545'}`,
                                 opacity: config.aiEnabled ? 1 : 0.4,
                             }}>
-                            <div className="flex items-center justify-between mb-1">
-                                <span className="text-lg">{mod.icon}</span>
+                            <div className="flex items-center justify-between mb-1.5">
+                                {(() => {
+                                    const IconComp = MODULE_ICONS[mod.key] || Sparkles
+                                    return (
+                                        <div className="w-6 h-6 rounded flex items-center justify-center"
+                                            style={{ background: active ? 'rgba(21,128,61,0.15)' : 'rgba(100,116,139,0.1)', color: active ? '#15803D' : '#64748B' }}>
+                                            <IconComp size={13} />
+                                        </div>
+                                    )
+                                })()}
                                 <div className="w-3 h-3 rounded-full" style={{
                                     background: active ? '#15803D' : '#E2E8F0',
                                     boxShadow: active ? '0 0 6px rgba(21,128,61,0.5)' : 'none',

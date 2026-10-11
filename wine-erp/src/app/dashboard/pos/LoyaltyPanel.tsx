@@ -1,18 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { Star, Loader2, Search, ArrowUpRight, ArrowDownLeft, ArrowLeft } from 'lucide-react'
+import { Star, Loader2, Search, ArrowUpRight, ArrowDownLeft, ArrowLeft, Award, Crown, Shield } from 'lucide-react'
 import { getLoyaltyInfo, type LoyaltyInfo } from './actions'
 import { formatVND } from '@/lib/utils'
 import { Button, Card, Badge, PageHeader } from '@/components/ui'
 import Link from 'next/link'
 import type { Tone } from '@/lib/ui/status'
 
-const TIER_CFG: Record<string, { label: string; tone: Tone; icon: string }> = {
-    PLATINUM: { label: 'Platinum', tone: 'neutral', icon: '💎' },
-    GOLD: { label: 'Gold', tone: 'warning', icon: '👑' },
-    SILVER: { label: 'Silver', tone: 'info', icon: '🥈' },
-    BRONZE: { label: 'Bronze', tone: 'brand', icon: '🥉' },
+const TIER_CFG: Record<string, { label: string; tone: Tone; icon: any }> = {
+    PLATINUM: { label: 'Platinum', tone: 'neutral', icon: Crown },
+    GOLD: { label: 'Gold', tone: 'warning', icon: Award },
+    SILVER: { label: 'Silver', tone: 'info', icon: Shield },
+    BRONZE: { label: 'Bronze', tone: 'brand', icon: Star },
 }
 
 export function LoyaltyPanel() {
@@ -73,9 +73,14 @@ export function LoyaltyPanel() {
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <p className="text-base font-bold text-lys-primary">{info.customerName}</p>
-                                <Badge tone={tierCfg.tone} className="mt-1">
-                                    {tierCfg.icon} {tierCfg.label}
-                                </Badge>
+                                {(() => {
+                                    const TierIcon = tierCfg.icon
+                                    return (
+                                        <Badge tone={tierCfg.tone} className="mt-1 inline-flex items-center gap-1">
+                                            <TierIcon size={12} /> {tierCfg.label}
+                                        </Badge>
+                                    )
+                                })()}
                             </div>
                             <div className="text-right">
                                 <p className="type-number text-2xl font-black text-lys-teal-strong">

@@ -359,7 +359,7 @@ export default function StampsClient({ purchases, summary, linkingOptions, initi
         total > 0 ? Math.round((used / total) * 100) : 0
 
     return (
-        <div style={{ padding: '24px 32px', maxWidth: '1440px', margin: '0 auto' }}>
+        <div className="p-3 sm:p-6 md:p-8 max-w-[1440px] mx-auto">
             {/* Header */}
             <PageHeader
                 title="Quản Lý & Phân Bổ Tem Rượu"
@@ -388,13 +388,7 @@ export default function StampsClient({ purchases, summary, linkingOptions, initi
             />
 
             {/* Navigation Tabs */}
-            <div style={{
-                display: 'flex',
-                gap: '8px',
-                borderBottom: '1px solid #E2E8F0',
-                marginBottom: '24px',
-                paddingBottom: '2px',
-            }}>
+            <div className="flex gap-2 border-b border-lys-border mb-6 pb-0.5 overflow-x-auto no-scrollbar whitespace-nowrap">
                 <button
                     onClick={() => setActiveTab('batches')}
                     style={{
@@ -409,6 +403,7 @@ export default function StampsClient({ purchases, summary, linkingOptions, initi
                         fontWeight: activeTab === 'batches' ? 600 : 500,
                         fontSize: '13px',
                         cursor: 'pointer',
+                        whiteSpace: 'nowrap',
                     }}
                 >
                     <Package size={15} />
@@ -431,6 +426,7 @@ export default function StampsClient({ purchases, summary, linkingOptions, initi
                         fontWeight: activeTab === 'logbook' ? 600 : 500,
                         fontSize: '13px',
                         cursor: 'pointer',
+                        whiteSpace: 'nowrap',
                     }}
                 >
                     <BookOpen size={15} />
@@ -450,6 +446,7 @@ export default function StampsClient({ purchases, summary, linkingOptions, initi
                         fontWeight: activeTab === 'destructions' ? 600 : 500,
                         fontSize: '13px',
                         cursor: 'pointer',
+                        whiteSpace: 'nowrap',
                     }}
                 >
                     <Trash2 size={15} />
@@ -461,7 +458,7 @@ export default function StampsClient({ purchases, summary, linkingOptions, initi
             {activeTab === 'batches' && (
                 <div>
                     {/* Summary KPI Cards */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '24px' }}>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 mb-6">
                         {[
                             { label: 'Tem Dưới 20° ABV (Vang thông dụng)', data: summary.under20, color: '#0891B2' },
                             { label: 'Tem Từ 20° ABV Trở Lên (Mạnh / Fortified)', data: summary.over20, color: '#D97706' },
@@ -548,7 +545,7 @@ export default function StampsClient({ purchases, summary, linkingOptions, initi
                                     Đóng
                                 </button>
                             </div>
-                            <form onSubmit={handleAddPurchase} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                            <form onSubmit={handleAddPurchase} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <div>
                                     <label style={labelStyle}>Ngày Mua Chứng Từ *</label>
                                     <input
@@ -611,7 +608,7 @@ export default function StampsClient({ purchases, summary, linkingOptions, initi
                                         style={inputStyle}
                                     />
                                 </div>
-                                <div style={{ gridColumn: 'span 3', display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '8px' }}>
+                                <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex gap-2 justify-end mt-2">
                                     <Button type="button" variant="secondary" size="sm" onClick={() => setShowAddForm(false)}>
                                         Hủy
                                     </Button>
@@ -640,8 +637,8 @@ export default function StampsClient({ purchases, summary, linkingOptions, initi
                                 <p>Chưa có dữ liệu lô tem nào. Nhấn &quot;Nhập Lô Tem Mới&quot; để thêm.</p>
                             </div>
                         ) : (
-                            <div style={{ overflowX: 'auto' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                            <div className="overflow-x-auto rounded-md border border-lys-border">
+                                <table className="w-full text-xs sm:text-sm min-w-[750px]" style={{ borderCollapse: 'collapse' }}>
                                     <thead>
                                         <tr style={{ borderBottom: '1px solid #CBD5E1' }}>
                                             <th style={thStyle}>Ngày Mua</th>
@@ -885,8 +882,8 @@ export default function StampsClient({ purchases, summary, linkingOptions, initi
                                 <p>Chưa có giao dịch ghi sổ nào phù hợp với bộ lọc.</p>
                             </div>
                         ) : (
-                            <div style={{ overflowX: 'auto' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                            <div className="overflow-x-auto rounded-md border border-lys-border">
+                                <table className="w-full text-xs min-w-[980px]" style={{ borderCollapse: 'collapse' }}>
                                     <thead>
                                         <tr style={{ borderBottom: '1px solid #CBD5E1' }}>
                                             <th style={thStyle}>STT</th>
@@ -993,32 +990,34 @@ export default function StampsClient({ purchases, summary, linkingOptions, initi
                             <p>Chưa có biên bản hủy tem nào phát sinh.</p>
                         </div>
                     ) : (
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                            <thead>
-                                <tr style={{ borderBottom: '1px solid #CBD5E1' }}>
-                                    <th style={thStyle}>Ngày Hủy</th>
-                                    <th style={thStyle}>Lô Tem</th>
-                                    <th style={{ ...thStyle, textAlign: 'right' }}>Số Lượng Hủy</th>
-                                    <th style={thStyle}>Lý Do Hủy Tem</th>
-                                    <th style={thStyle}>Người Chứng Kiến</th>
-                                    <th style={thStyle}>Ghi Chú Chi Tiết</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {destructions.map(d => (
-                                    <tr key={d.id} style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                        <td style={tdStyle}>{new Date(d.destructionDate).toLocaleDateString('vi-VN')}</td>
-                                        <td style={{ ...tdStyle, fontWeight: 600, color: '#0F172A' }}>{d.purchaseSymbol}</td>
-                                        <td style={{ ...tdStyle, textAlign: 'right', color: '#B91C1C', fontWeight: 600 }}>
-                                            {d.qtyDestroyed.toLocaleString('vi-VN')}
-                                        </td>
-                                        <td style={{ ...tdStyle, color: '#334155' }}>{d.reason}</td>
-                                        <td style={tdStyle}>{d.witnessName}</td>
-                                        <td style={{ ...tdStyle, color: '#64748B', maxWidth: '300px' }}>{d.notes || '—'}</td>
+                        <div className="overflow-x-auto rounded-md border border-lys-border">
+                            <table className="w-full text-xs sm:text-sm min-w-[650px]" style={{ borderCollapse: 'collapse' }}>
+                                <thead>
+                                    <tr style={{ borderBottom: '1px solid #CBD5E1' }}>
+                                        <th style={thStyle}>Ngày Hủy</th>
+                                        <th style={thStyle}>Lô Tem</th>
+                                        <th style={{ ...thStyle, textAlign: 'right' }}>Số Lượng Hủy</th>
+                                        <th style={thStyle}>Lý Do Hủy Tem</th>
+                                        <th style={thStyle}>Người Chứng Kiến</th>
+                                        <th style={thStyle}>Ghi Chú Chi Tiết</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {destructions.map(d => (
+                                        <tr key={d.id} style={{ borderBottom: '1px solid #E2E8F0' }}>
+                                            <td style={tdStyle}>{new Date(d.destructionDate).toLocaleDateString('vi-VN')}</td>
+                                            <td style={{ ...tdStyle, fontWeight: 600, color: '#0F172A' }}>{d.purchaseSymbol}</td>
+                                            <td style={{ ...tdStyle, textAlign: 'right', color: '#B91C1C', fontWeight: 600 }}>
+                                                {d.qtyDestroyed.toLocaleString('vi-VN')}
+                                            </td>
+                                            <td style={{ ...tdStyle, color: '#334155' }}>{d.reason}</td>
+                                            <td style={tdStyle}>{d.witnessName}</td>
+                                            <td style={{ ...tdStyle, color: '#64748B', maxWidth: '300px' }}>{d.notes || '—'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
                 </div>
             )}
@@ -1101,7 +1100,7 @@ export default function StampsClient({ purchases, summary, linkingOptions, initi
                             )}
 
                             {/* Dải số seri nhập tay theo yêu cầu */}
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label style={labelStyle}>Seri Bắt Đầu Bóc Dán</label>
                                     <input
@@ -1123,7 +1122,7 @@ export default function StampsClient({ purchases, summary, linkingOptions, initi
                             </div>
 
                             {/* Số lượng dán & hỏng */}
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label style={labelStyle}>Số Lượng Tem Đã Dán *</label>
                                     <input
@@ -1195,7 +1194,7 @@ export default function StampsClient({ purchases, summary, linkingOptions, initi
                         </div>
 
                         <form onSubmit={handleDestruction} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label style={labelStyle}>Số Lượng Tem Hủy *</label>
                                     <input

@@ -139,7 +139,7 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
                     </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Row label="Số Hợp Đồng *">
                         <input
                             className={inputCls}
@@ -171,7 +171,7 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
                                         : 'bg-white border-lys-border text-lys-muted hover:border-lys-primary/40'
                                 }`}
                             >
-                                {t === 'supplier' ? '🏭 Nhà Cung Cấp' : '🏨 Khách Hàng'}
+                                {t === 'supplier' ? 'Nhà Cung Cấp' : 'Khách Hàng'}
                             </button>
                         ))}
                     </div>
@@ -205,7 +205,7 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
                     </Row>
                 )}
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Row label="Giá Trị *">
                         <input
                             type="number"
@@ -228,7 +228,7 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
                     </Row>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Row label="Ngày Bắt Đầu">
                         <input
                             type="date"
@@ -302,6 +302,70 @@ function CreateContractDrawer({ open, onClose, onCreated }: {
                 </Row>
             </div>
         </Drawer>
+    )
+}
+
+function ContractMobileCard({
+    row,
+    isExpanded,
+    onToggleExpand,
+}: {
+    row: ContractRow
+    isExpanded: boolean
+    onToggleExpand: () => void
+}) {
+    const cfg = STATUS_CFG[row.status] ?? { label: row.status, tone: 'neutral' as const }
+
+    return (
+        <div className="rounded-lg border border-lys-border bg-white p-3.5 shadow-2xs space-y-2.5 transition hover:border-lys-primary/40">
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 min-w-0">
+                    {row.isExpiringSoon && <AlertCircle size={14} className="text-amber-600 shrink-0" />}
+                    <span className="font-semibold text-xs text-lys-primary font-mono truncate">{row.contractNo}</span>
+                </div>
+                <Badge tone={cfg.tone}>{cfg.label}</Badge>
+            </div>
+
+            <div>
+                <div className="flex items-center gap-2 mb-1">
+                    <span className="inline-block text-[11px] px-2 py-0.5 rounded font-medium bg-lys-primary/10 text-lys-primary whitespace-nowrap shrink-0">
+                        {TYPE_LABEL[row.type] ?? row.type}
+                    </span>
+                    <span className="text-[10px] text-lys-muted font-medium">
+                        {row.counterpartyType === 'supplier' ? 'Nhà cung cấp' : 'Khách hàng'}
+                    </span>
+                </div>
+                <p className="text-xs font-semibold text-lys-title line-clamp-1">{row.counterpartyName}</p>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-lys-border/70 text-xs">
+                <div>
+                    <span className="text-[10px] uppercase font-semibold text-lys-muted block">Giá Trị Hợp Đồng</span>
+                    <span className="font-bold text-lys-title">
+                        {row.currency === 'VND' ? formatVND(row.value) : `$${row.value.toLocaleString()} ${row.currency}`}
+                    </span>
+                </div>
+                <div className="text-right">
+                    <span className="text-[10px] uppercase font-semibold text-lys-muted block">Hạn Hợp Đồng</span>
+                    <span className={`text-xs ${row.isExpiringSoon ? 'text-amber-700 font-semibold' : 'text-lys-muted'}`}>
+                        {formatDate(row.endDate)}
+                    </span>
+                </div>
+            </div>
+
+            <div className="pt-2 border-t border-lys-border/70 flex items-center justify-between">
+                <span className="text-[11px] text-lys-muted">
+                    Hiệu lực: {formatDate(row.startDate)}
+                </span>
+                <Button
+                    variant={isExpanded ? 'primary' : 'secondary'}
+                    size="sm"
+                    onClick={onToggleExpand}
+                >
+                    {isExpanded ? 'Đóng' : 'Xem Chi Tiết'}
+                </Button>
+            </div>
+        </div>
     )
 }
 
@@ -438,7 +502,7 @@ export function ContractsClient({ initialRows, initialTotal: _initialTotal, stat
                     </div>
                 }
                 right={
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                         <Button
                             variant="secondary"
                             size="sm"
@@ -456,8 +520,9 @@ export function ContractsClient({ initialRows, initialTotal: _initialTotal, stat
                 }
             />
 
-            {/* Table */}
-            <Table>
+            {/* Desktop Table */}
+            <div className="hidden md:block">
+                <Table>
                 <THead>
                     <Tr>
                         <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-lys-muted">Số Hợp Đồng</th>
@@ -510,7 +575,7 @@ export function ContractsClient({ initialRows, initialTotal: _initialTotal, stat
                                     <Td>
                                         <p className="text-xs font-semibold text-lys-title">{row.counterpartyName}</p>
                                         <p className="text-[10px] text-lys-muted">
-                                            {row.counterpartyType === 'supplier' ? '🏭 NCC' : '🏨 KH'}
+                                            {row.counterpartyType === 'supplier' ? 'NCC' : 'Khách Hàng'}
                                         </p>
                                     </Td>
                                     <Td align="right" className="font-semibold text-lys-title">
@@ -702,6 +767,158 @@ export function ContractsClient({ initialRows, initialTotal: _initialTotal, stat
                     })}
                 </TBody>
             </Table>
+            </div>
+
+            {/* Mobile Cards List */}
+            <div className="block md:hidden space-y-3">
+                {loading ? (
+                    <div className="py-12 flex items-center justify-center text-xs text-lys-muted gap-2 rounded-lg border border-lys-border bg-white">
+                        <Loader2 size={16} className="animate-spin text-lys-primary" /> Đang tải hợp đồng...
+                    </div>
+                ) : rows.length === 0 ? (
+                    <div className="rounded-lg border border-lys-border bg-white p-6 text-center">
+                        <EmptyState
+                            title="Chưa có hợp đồng nào"
+                            description="Tạo hợp đồng mới để bắt đầu theo dõi hiệu lực và đối soát ngân sách."
+                            action={
+                                <Button variant="secondary" size="sm" onClick={() => setDrawerOpen(true)}>
+                                    <Plus size={14} />
+                                    Tạo Hợp Đồng Mới
+                                </Button>
+                            }
+                        />
+                    </div>
+                ) : (
+                    rows.map(row => {
+                        const isExpanded = selectedId === row.id
+                        return (
+                            <div key={row.id} className="space-y-2">
+                                <ContractMobileCard
+                                    row={row}
+                                    isExpanded={isExpanded}
+                                    onToggleExpand={() => showUtilization(row.id)}
+                                />
+                                {isExpanded && (
+                                    <div className="rounded-lg border border-lys-border bg-white p-4 shadow-2xs space-y-4">
+                                        {utilLoading ? (
+                                            <div className="flex items-center justify-center gap-2 text-xs text-lys-muted py-6">
+                                                <Loader2 size={16} className="animate-spin text-lys-primary" /> Đang tải chi tiết hợp đồng...
+                                            </div>
+                                        ) : utilization ? (
+                                            <div className="space-y-4">
+                                                <div className="border-b border-lys-border pb-2.5">
+                                                    <h4 className="text-xs font-bold uppercase tracking-wider text-lys-primary">
+                                                        Mức Độ Sử Dụng & Đối Soát
+                                                    </h4>
+                                                    <div className="flex flex-wrap gap-3 text-xs text-lys-muted font-medium mt-1">
+                                                        <span>PO: <strong className="text-lys-title">{utilization.poCount}</strong> ({formatVND(utilization.poTotal)})</span>
+                                                        <span>SO: <strong className="text-lys-title">{utilization.soCount}</strong> ({formatVND(utilization.soTotal)})</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Utilization Stats */}
+                                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                                    {[
+                                                        { l: 'Giá Trị HĐ', v: formatVND(utilization.contractValue) },
+                                                        { l: 'Đã Sử Dụng', v: formatVND(utilization.utilizedValue) },
+                                                        { l: 'Còn Lại', v: formatVND(utilization.remaining) },
+                                                        { l: '% Sử Dụng', v: `${utilization.utilizationPct.toFixed(1)}%` },
+                                                    ].map(x => (
+                                                        <div key={x.l} className="bg-lys-bg/50 p-2 rounded-md border border-lys-border">
+                                                            <p className="text-[10px] uppercase font-semibold text-lys-muted">{x.l}</p>
+                                                            <p className="text-xs font-bold text-lys-title mt-0.5">{x.v}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                {/* Progress bar */}
+                                                <div>
+                                                    <div className="h-2 w-full bg-lys-border rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full rounded-full transition-all"
+                                                            style={{
+                                                                width: `${Math.min(utilization.utilizationPct, 100)}%`,
+                                                                background: utilization.utilizationPct > 90 ? '#B91C1C' : utilization.utilizationPct > 60 ? '#D97706' : '#0891B2',
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Documents */}
+                                                <div className="pt-2 border-t border-lys-border">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <p className="text-[11px] font-bold uppercase tracking-wider text-lys-muted">
+                                                            Tài liệu ({utilization.documents?.length || 0})
+                                                        </p>
+                                                        <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold cursor-pointer bg-lys-primary/10 text-lys-primary border border-lys-primary/30">
+                                                            {uploadingDoc ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
+                                                            <span>{uploadingDoc ? 'Đang tải...' : 'Upload'}</span>
+                                                            <input
+                                                                type="file"
+                                                                className="hidden"
+                                                                accept=".pdf,.doc,.docx,.jpg,.png"
+                                                                onChange={(e) => handleUpload(row.id, e)}
+                                                                disabled={uploadingDoc}
+                                                            />
+                                                        </label>
+                                                    </div>
+                                                    {utilization.documents?.length > 0 && (
+                                                        <div className="space-y-1.5">
+                                                            {utilization.documents.map((doc: any) => (
+                                                                <a
+                                                                    key={doc.id}
+                                                                    href={doc.fileUrl}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                    className="flex items-center gap-2 p-2 rounded-md bg-lys-bg/40 border border-lys-border text-xs"
+                                                                >
+                                                                    <FileText size={14} className="text-lys-primary shrink-0" />
+                                                                    <span className="truncate flex-1 font-medium">{doc.name}</span>
+                                                                </a>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Signature Section */}
+                                                <div className="pt-2 border-t border-lys-border">
+                                                    <p className="text-[11px] font-bold uppercase tracking-wider text-lys-muted mb-2">
+                                                        Ký Duyệt Hợp Đồng Điện Tử
+                                                    </p>
+                                                    {utilization.signatureUrl ? (
+                                                        <div className="p-3 bg-lys-bg/30 rounded-md border border-lys-border text-center space-y-1.5">
+                                                            <img src={utilization.signatureUrl} alt="Chữ ký" className="max-h-20 mx-auto object-contain" />
+                                                            <p className="text-[10px] text-lys-muted">Đã ký duyệt</p>
+                                                        </div>
+                                                    ) : row.status === 'DRAFT' ? (
+                                                        <div className="space-y-2">
+                                                            <SignaturePad onEnd={setCurrentSignatureUrl} />
+                                                            <div className="flex justify-end">
+                                                                <Button
+                                                                    variant="primary"
+                                                                    size="sm"
+                                                                    onClick={() => handleSign(row.id)}
+                                                                    disabled={!currentSignatureUrl || savingSignature}
+                                                                    loading={savingSignature}
+                                                                >
+                                                                    <Save size={13} />
+                                                                    Lưu Chữ Ký & Hiệu Lực Hoá Hợp Đồng
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-xs italic text-lys-muted">Chỉ hợp đồng ở trạng thái nháp mới cần ký duyệt.</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ) : null}
+                                    </div>
+                                )}
+                            </div>
+                        )
+                    })
+                )}
+            </div>
 
             <CreateContractDrawer
                 open={drawerOpen}

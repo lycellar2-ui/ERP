@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Key, Plus, Trash2, ToggleLeft, ToggleRight, Loader2, Zap, FileText, Activity } from 'lucide-react'
+import { Key, Plus, Trash2, ToggleLeft, ToggleRight, Loader2, Zap, FileText, Activity, Lock, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
 import { type ApiKeyRow, type PromptTemplateRow, saveApiKey, toggleApiKey, deleteApiKey, testApiKey, createPromptTemplate, deletePromptTemplate } from './vault-actions'
 import { useConfirmDialog } from '@/components/ui'
 
@@ -104,19 +104,20 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                             style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                     </div>
                     {saveError && (
-                        <div className="text-xs p-2 rounded" style={{
+                        <div className="text-xs p-2 rounded flex items-center gap-1.5" style={{
                             background: 'rgba(185,28,28,0.1)', color: '#B91C1C',
                             border: '1px solid rgba(185,28,28,0.3)',
                         }}>
-                            ❌ {saveError}
+                            <AlertTriangle size={13} className="shrink-0" />
+                            {saveError}
                         </div>
                     )}
                     <div className="flex gap-2 justify-end">
                         <button onClick={() => setShowAdd(false)} className="text-xs px-4 py-2" style={{ color: '#64748B' }}>Hủy</button>
                         <button onClick={handleSave} disabled={!form.apiKey || loading === 'save'}
-                            className="text-xs px-4 py-2 rounded font-semibold"
+                            className="flex items-center gap-1.5 text-xs px-4 py-2 rounded font-semibold"
                             style={{ background: '#0891B2', color: '#FFFFFF' }}>
-                            {loading === 'save' ? <Loader2 size={12} className="animate-spin" /> : '🔒 Mã hóa & Lưu'}
+                            {loading === 'save' ? <Loader2 size={12} className="animate-spin" /> : <><Lock size={12} /> Mã hóa & Lưu</>}
                         </button>
                     </div>
                 </div>
@@ -184,12 +185,12 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                                 {/* Test Result */}
                                 {testResult && testResult.id === k.id && (
                                     <div className="px-4 pb-2">
-                                        <p className="inline-block text-xs px-3 py-2 rounded whitespace-nowrap shrink-0" style={{
+                                        <p className="inline-flex items-center gap-1.5 text-xs px-3 py-2 rounded whitespace-nowrap shrink-0" style={{
                                             background: testResult.ok ? 'rgba(21,128,61,0.1)' : 'rgba(185,28,28,0.1)',
                                             color: testResult.ok ? '#15803D' : '#B91C1C',
                                             border: `1px solid ${testResult.ok ? 'rgba(21,128,61,0.3)' : 'rgba(185,28,28,0.3)'}`,
                                         }}>
-                                            {testResult.ok ? '✅ API Key hoạt động!' : `❌ ${testResult.msg}`}
+                                            {testResult.ok ? <><CheckCircle2 size={13} /> API Key hoạt động!</> : <><XCircle size={13} /> {testResult.msg}</>}
                                         </p>
                                     </div>
                                 )}

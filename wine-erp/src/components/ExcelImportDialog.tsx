@@ -169,7 +169,7 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
                             </div>
                             <div>
                                 <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>
-                                    📥 Tải File Template
+                                    Tải File Template
                                 </p>
                                 <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>
                                     {templateColumns.filter(c => c.required).length} cột bắt buộc · {templateColumns.length} cột tổng · Tối đa 500 dòng

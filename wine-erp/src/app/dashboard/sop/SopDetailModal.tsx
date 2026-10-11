@@ -21,7 +21,8 @@ import {
     Download,
     Upload,
     FileSpreadsheet,
-    Eye
+    Eye,
+    User
 } from 'lucide-react'
 import { type SopItem, type SopAttachedForm } from '@/data/sops'
 import { SopEditModal } from './SopEditModal'
@@ -178,7 +179,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                 </div>
 
                 {/* Subheader info badges */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-6 py-3 bg-amber-50/50 dark:bg-amber-950/20 border-b border-amber-200/40 dark:border-amber-900/30 text-xs">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-4 sm:px-6 py-3 bg-amber-50/50 dark:bg-amber-950/20 border-b border-amber-200/40 dark:border-amber-900/30 text-xs">
                     <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                         <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                         <span>SLA: <strong>{sop.estimatedDuration}</strong></span>
@@ -198,7 +199,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                 </div>
 
                 {/* Tab Navigation */}
-                <div className="flex border-b border-slate-200 dark:border-slate-800 px-6 gap-6 bg-white dark:bg-slate-900 overflow-x-auto text-sm font-medium">
+                <div className="flex border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 gap-4 sm:gap-6 bg-white dark:bg-slate-900 overflow-x-auto no-scrollbar whitespace-nowrap text-sm font-medium">
                     <button
                         onClick={() => setActiveTab('flow')}
                         className={`py-3.5 border-b-2 flex items-center gap-2 whitespace-nowrap transition ${activeTab === 'flow'
@@ -252,7 +253,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                 </div>
 
                 {/* Content Body */}
-                <div className="p-6 overflow-y-auto space-y-6 flex-1 text-slate-800 dark:text-slate-200 text-sm leading-relaxed">
+                <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 text-slate-800 dark:text-slate-200 text-sm leading-relaxed">
                     {/* Summary & Scope */}
                     <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
                         <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
@@ -285,8 +286,9 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
                                                     Bước {step.stepNumber}: {step.title}
                                                 </h3>
-                                                <span className="text-xs px-2.5 py-1 rounded-md bg-rose-50 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300 font-medium border border-rose-200 dark:border-rose-900">
-                                                    👤 {step.role}
+                                                <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-rose-50 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300 font-medium border border-rose-200 dark:border-rose-900">
+                                                    <User className="w-3 h-3 text-rose-700 dark:text-rose-300" />
+                                                    {step.role}
                                                 </span>
                                             </div>
 

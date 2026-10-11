@@ -1007,7 +1007,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                                                 products.map((p: any) => <option key={p.id} value={p.id}>{p.skuCode} — {p.productName}</option>)
                                                             )}
                                                         </select>
-                                                        <button onClick={() => removeLine(i)} className="p-1.5 text-xs" style={{ color: '#B91C1C' }}>✕</button>
+                                                        <button onClick={() => removeLine(i)} className="p-1.5 text-xs hover:opacity-80" style={{ color: '#B91C1C' }}><X size={13} /></button>
                                                     </div>
                                                 ) : (
                                                     <div className="flex gap-3">
@@ -1022,7 +1022,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-start justify-between gap-1">
                                                                 <h5 className="text-xs font-bold truncate" style={{ color: '#0F172A' }} title={prod?.productName}>{prod?.productName}</h5>
-                                                                <button onClick={() => removeLine(i)} className="p-0.5 text-xs flex-shrink-0" style={{ color: '#B91C1C' }}>✕</button>
+                                                                <button onClick={() => removeLine(i)} className="p-0.5 text-xs flex-shrink-0 hover:opacity-80" style={{ color: '#B91C1C' }}><X size={13} /></button>
                                                             </div>
                                                             <div className="flex items-center gap-2 mt-1">
                                                                 <span className="text-[10px] font-mono" style={{ color: '#475569' }}>{prod?.skuCode}</span>

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import {
     X, Ship, Anchor, MapPin, Calendar, Clock, Shield, FileCheck, DollarSign,
     ChevronRight, CheckCircle2, Circle, Plus, Trash2, Loader2, Globe, Package,
-    AlertTriangle, Truck, ClipboardCheck,
+    AlertTriangle, Truck, ClipboardCheck, Check,
 } from 'lucide-react'
 import {
     getShipmentDetail, completeMilestone, uncompleteMilestone, addCustomMilestone,
@@ -76,8 +76,9 @@ function MilestoneTimeline({ milestones, onComplete, onUncomplete, onAddCustom }
                                 {m.label}
                             </p>
                             {done && m.completedAt && (
-                                <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>
-                                    ✓ {fmtDate(m.completedAt)} {m.notes && `— ${m.notes}`}
+                                <p className="text-[10px] mt-0.5 flex items-center gap-1" style={{ color: '#64748B' }}>
+                                    <Check size={11} className="text-emerald-600 shrink-0" />
+                                    <span>{fmtDate(m.completedAt)} {m.notes && `— ${m.notes}`}</span>
                                 </p>
                             )}
                         </div>
@@ -501,7 +502,10 @@ function DocChecklistSection({ shipmentId }: { shipmentId: string }) {
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm" style={{ color: item.checked ? '#0F172A' : '#64748B' }}>{label}</p>
                                     {isActive && item.name && (
-                                        <p className="text-[10px] mt-0.5" style={{ color: '#15803D' }}>✓ {item.name} {item.docNo && `— ${item.docNo}`}</p>
+                                        <p className="text-[10px] mt-0.5 flex items-center gap-1" style={{ color: '#15803D' }}>
+                                            <Check size={11} className="shrink-0" />
+                                            <span>{item.name} {item.docNo && `— ${item.docNo}`}</span>
+                                        </p>
                                     )}
                                 </div>
                                 {isDraft && !isEditing && (
