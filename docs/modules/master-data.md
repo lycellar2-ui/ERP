@@ -101,9 +101,13 @@ Rượu vang cao cấp cần hình ảnh chuyên nghiệp cho Sales đem chào K
 - Ghi nhận kèm Vintage áp dụng (Điểm 95pt cho Vintage 2018, không phải tất cả Vintages)
 - Hiển thị Badge điểm số trên Catalog/báo giá để thuyết phục KH
 
-**Lưu Trữ:**
-- File lưu trên Cloud Storage (Cloudflare R2 / AWS S3)
-- DB chỉ lưu metadata + URL (không lưu file binary trong DB)
+**Lưu Trữ & Phân Phối (Cloudflare R2 Storage):**
+- **Toàn bộ hình ảnh sản phẩm (Product Media) và tài liệu Tasting Note / Tự Công Bố** được lưu trữ trực tiếp trên Cloudflare R2 bucket (`wine-erp-documents`).
+- **Tốc độ cao & Egress miễn phí**: Cloudflare R2 không tính phí băng thông truyền tải ra ngoài (0 egress fee), tích hợp CDN toàn cầu.
+- **Quản lý linh hoạt từ Drawer sản phẩm**: Cho phép tải lên từng file trực tiếp (PDF, DOCX, Ảnh) lên R2, xem trước tức thì, tải về hoặc xóa bỏ.
+- **Đường dẫn vĩnh viễn**: Phân giải qua route `/api/r2-file/[...path]` tự động sinh presigned URL 1 giờ hoặc chuyển hướng trực tiếp qua Custom Domain CDN (`R2_PUBLIC_DOMAIN`).
+- **Bulk Import tự động**: Đã chạy công cụ import hàng loạt (`scripts/bulk_import_tasting_notes_r2.ts`) đồng bộ 215 tài liệu PDF Tasting Note và bóc tách tự động Wine Profile (aromas, palate, grapes, food pairings) vào database.
+- DB PostgreSQL chỉ lưu URL và đường dẫn định danh `storagePath`, đảm bảo cơ sở dữ liệu luôn nhẹ và tối ưu kết nối.
 
 ---
 

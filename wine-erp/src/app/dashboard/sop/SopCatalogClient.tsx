@@ -13,23 +13,26 @@ import {
     CreditCard,
     Users,
     Clock,
-    GitBranch,
-    CheckCircle2,
-    ExternalLink,
-    ArrowRight,
-    Sparkles,
-    FileCheck,
     FileSpreadsheet,
     Download,
     Upload,
     Plus,
     FileText,
+    Eye,
+    ExternalLink,
     Calendar,
-    FolderKanban,
-    Eye
+    Globe,
+    Check,
+    Tag,
+    FolderKanban
 } from 'lucide-react'
 import { SOP_CATEGORIES, type SopCategory, type SopItem } from '@/data/sops'
 import { type SopFormFile } from '@/data/forms-data'
+import {
+    type ProcessMarkdownDoc,
+    PROCESS_GROUPS_META,
+    getMarkdownDocsAction
+} from './actions'
 import { SopDetailModal } from './SopDetailModal'
 import { SopEditModal } from './SopEditModal'
 import { SopFormUploadModal } from './SopFormUploadModal'
@@ -47,31 +50,70 @@ const CATEGORY_ICONS: Record<string, React.FC<{ className?: string }>> = {
 interface SopCatalogClientProps {
     initialSops: SopItem[]
     initialForms: SopFormFile[]
+    initialMarkdownDocs?: ProcessMarkdownDoc[]
 }
 
-export function SopCatalogClient({ initialSops, initialForms }: SopCatalogClientProps) {
+export function SopCatalogClient({
+    initialSops,
+    initialForms,
+    initialMarkdownDocs = []
+}: SopCatalogClientProps) {
     const searchParams = useSearchParams()
-    
+
     // Core data state
     const [sops, setSops] = useState<SopItem[]>(initialSops)
     const [forms, setForms] = useState<SopFormFile[]>(initialForms)
+    const [markdownDocs, setMarkdownDocs] = useState<ProcessMarkdownDoc[]>(initialMarkdownDocs)
 
-    // View mode: 'sops' or 'forms'
-    const [activeView, setActiveView] = useState<'sops' | 'forms'>('sops')
+    // View mode: 'sops' (Core Workflows), 'docs' (Markdown Handbooks & Processes), 'forms' (Office Templates)
+    const [activeView, setActiveView] = useState<'sops' | 'docs' | 'forms'>('docs')
 
-    // Filter states
+    // Filter states for SOPs
     const [selectedCategory, setSelectedCategory] = useState<SopCategory>('all')
-    const [searchQuery, setSearchQuery] = useState('')
-    
+    const [sopSearchQuery, setSopSearchQuery] = useState('')
+
+    // Filter states for Markdown Docs
+    const [selectedDocGroup, setSelectedDocGroup] = useState<string>('all')
+    const [docSearchQuery, setDocSearchQuery] = useState('')
+    const [docLangFilter, setDocLangFilter] = useState<'all' | 'vi' | 'en'>('all')
+
+    // Filter states for Forms
+    const [formSearchQuery, setFormSearchQuery] = useState('')
+    const [selectedFormCategory, setSelectedFormCategory] = useState<string>('all')
+
     // Modal states
     const [selectedSop, setSelectedSop] = useState<SopItem | null>(null)
     const [isCreatingSop, setIsCreatingSop] = useState(false)
     const [showUploadModal, setShowUploadModal] = useState(false)
     const [targetUploadFile, setTargetUploadFile] = useState<string | null>(null)
-    const [previewDoc, setPreviewDoc] = useState<{ title: string; url: string; fileName: string } | null>(null)
+    const [previewDoc, setPreviewDoc] = useState<{
+        title: string
+        url: string
+        fileName: string
+        relativeFilePath?: string
+        version?: string
+        lastUpdated?: string
+        groupLabel?: string
+    } | null>(null)
 
-    // Deep link support via ?code=SOP-XXX
+    // Fallback load of markdown docs if not SSR-loaded
     useEffect(() => {
+        if (markdownDocs.length === 0) {
+            getMarkdownDocsAction().then(docs => {
+                if (docs && docs.length > 0) {
+                    setMarkdownDocs(docs)
+                }
+            })
+        }
+    }, [markdownDocs.length])
+
+    // Deep link support via ?code=SOP-XXX or ?view=docs
+    useEffect(() => {
+        const viewParam = searchParams.get('view')
+        if (viewParam === 'docs' || viewParam === 'sops' || viewParam === 'forms') {
+            setActiveView(viewParam)
+        }
+
         const codeParam = searchParams.get('code')
         if (codeParam) {
             const found = sops.find(
@@ -79,16 +121,16 @@ export function SopCatalogClient({ initialSops, initialForms }: SopCatalogClient
             )
             if (found) {
                 setSelectedSop(found)
+                setActiveView('sops')
             }
         }
     }, [searchParams, sops])
 
-    // Filter SOPs
+    // Filtered SOPs
     const filteredSops = useMemo(() => {
         return sops.filter(item => {
             const matchCategory = selectedCategory === 'all' || item.category === selectedCategory
-
-            const query = searchQuery.trim().toLowerCase()
+            const query = sopSearchQuery.trim().toLowerCase()
             if (!query) return matchCategory
 
             const matchQuery =
@@ -104,20 +146,39 @@ export function SopCatalogClient({ initialSops, initialForms }: SopCatalogClient
 
             return matchCategory && matchQuery
         })
-    }, [sops, selectedCategory, searchQuery])
+    }, [sops, selectedCategory, sopSearchQuery])
 
-    // Filter Forms
+    // Filtered Markdown Docs (114+ files across 12 business functions)
+    const filteredMarkdownDocs = useMemo(() => {
+        return markdownDocs.filter(doc => {
+            const matchGroup = selectedDocGroup === 'all' || doc.group === selectedDocGroup
+
+            const matchLang =
+                docLangFilter === 'all' ||
+                (docLangFilter === 'en' && doc.isEnglish) ||
+                (docLangFilter === 'vi' && !doc.isEnglish)
+
+            const query = docSearchQuery.trim().toLowerCase()
+            if (!query) return matchGroup && matchLang
+
+            const matchQuery =
+                doc.title.toLowerCase().includes(query) ||
+                doc.fileName.toLowerCase().includes(query) ||
+                doc.groupLabel.toLowerCase().includes(query) ||
+                doc.tags.some(t => t.toLowerCase().includes(query))
+
+            return matchGroup && matchLang && matchQuery
+        })
+    }, [markdownDocs, selectedDocGroup, docLangFilter, docSearchQuery])
+
+    // Filtered Forms (43 Excel/Word documents)
     const filteredForms = useMemo(() => {
         return forms.filter(form => {
             const matchCat =
-                selectedCategory === 'all' ||
-                form.category === selectedCategory ||
-                (selectedCategory === 'sales' && form.category === 'sales') ||
-                (selectedCategory === 'finance' && form.category === 'finance') ||
-                (selectedCategory === 'warehouse' && form.category === 'warehouse') ||
-                (selectedCategory === 'procurement' && form.category === 'procurement')
+                selectedFormCategory === 'all' ||
+                form.category === selectedFormCategory
 
-            const query = searchQuery.trim().toLowerCase()
+            const query = formSearchQuery.trim().toLowerCase()
             if (!query) return matchCat
 
             const matchQuery =
@@ -127,9 +188,9 @@ export function SopCatalogClient({ initialSops, initialForms }: SopCatalogClient
 
             return matchCat && matchQuery
         })
-    }, [forms, selectedCategory, searchQuery])
+    }, [forms, selectedFormCategory, formSearchQuery])
 
-    // Stats
+    // Metrics calculation
     const totalSteps = useMemo(() => {
         return sops.reduce((sum, item) => sum + item.flowSteps.length, 0)
     }, [sops])
@@ -174,8 +235,8 @@ export function SopCatalogClient({ initialSops, initialForms }: SopCatalogClient
         category: 'sales',
         department: 'Phòng Ban',
         departmentEn: 'Department',
-        summary: 'Tóm tắt nội dung quy trình mới...',
-        purpose: 'Mục đích quy trình...',
+        summary: 'Tóm tắt nội dung quy trình nghiệp vụ...',
+        purpose: 'Mục đích ban hành...',
         scope: 'Phạm vi áp dụng...',
         estimatedDuration: '30 phút',
         effectiveDate: new Date().toISOString().split('T')[0],
@@ -191,7 +252,7 @@ export function SopCatalogClient({ initialSops, initialForms }: SopCatalogClient
                 stepNumber: 1,
                 title: 'Bước Khởi Đầu',
                 role: 'Chuyên viên phụ trách',
-                action: 'Mô tả hành động cần thực hiện...'
+                action: 'Mô tả chi tiết hành động cần thực hiện...'
             }
         ],
         checklist: [
@@ -201,330 +262,566 @@ export function SopCatalogClient({ initialSops, initialForms }: SopCatalogClient
         faqs: []
     }
 
+    // Get unique groups from actual docs
+    const availableDocGroups = useMemo(() => {
+        const set = new Set(markdownDocs.map(d => d.group))
+        const list = Array.from(set).map(groupKey => {
+            const meta = PROCESS_GROUPS_META[groupKey] || { label: groupKey, code: 'DOC', order: 99 }
+            const count = markdownDocs.filter(d => d.group === groupKey).length
+            return {
+                key: groupKey,
+                label: meta.label,
+                code: meta.code,
+                order: meta.order,
+                count
+            }
+        })
+        list.sort((a, b) => a.order - b.order)
+        return list
+    }, [markdownDocs])
+
     return (
         <div className="space-y-6 max-w-screen-2xl">
-            {/* Header Banner */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-rose-950 to-slate-900 border border-rose-900/40 p-6 md:p-8 text-white shadow-xl">
-                <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div className="max-w-2xl space-y-2">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                            <Sparkles className="w-3.5 h-3.5" />
-                            <span>Wine ERP — Trung Tâm Quy Trình Chuẩn (SOP Knowledge Hub)</span>
-                        </div>
-                        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
-                            Quy Trình Vận Hành & Thư Viện Biểu Mẫu
-                        </h1>
-                        <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-                            Cẩm nang vận hành chính thức của công ty: Sơ đồ luồng, phân định trách nhiệm RACI, lưu ý rủi ro,
-                            và 43 file mẫu Excel / Word chuẩn tải về 1-click. Hỗ trợ Admin cập nhật quy trình và thay thế form mẫu trực tiếp trên Web.
-                        </p>
+            {/* Header: Clean Luxury B2B ERP Header (No gradients, no AI buzzwords) */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+                <div>
+                    <div className="text-[11px] uppercase tracking-wider font-bold text-slate-500 mb-1">
+                        Hệ Thống Quản Trị Doanh Nghiệp • Wine ERP
                     </div>
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+                        Quy Trình Vận Hành Tiêu Chuẩn (SOP)
+                    </h1>
+                    <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
+                        Hệ thống hóa {markdownDocs.length > 0 ? markdownDocs.length : '114'} tài liệu quy trình nghiệp vụ nội bộ, ma trận phân quyền RACI, sổ tay vận hành và thư viện biểu mẫu chứng từ.
+                    </p>
+                </div>
 
-                    {/* Admin Action Buttons */}
-                    <div className="flex flex-wrap items-center gap-3">
-                        <button
-                            onClick={() => {
-                                setTargetUploadFile(null)
-                                setShowUploadModal(true)
-                            }}
-                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 backdrop-blur-sm transition shadow-sm"
-                        >
-                            <Upload className="w-4 h-4 text-rose-300" />
-                            <span>Upload Form Mới</span>
-                        </button>
-                        <button
-                            onClick={() => setIsCreatingSop(true)}
-                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs transition shadow-lg shadow-rose-950/50"
-                        >
-                            <Plus className="w-4 h-4" />
-                            <span>Thêm Quy Trình Mới</span>
-                        </button>
-                    </div>
+                {/* Header Action Buttons */}
+                <div className="flex items-center gap-2 self-start md:self-auto">
+                    <button
+                        onClick={() => {
+                            setTargetUploadFile(null)
+                            setShowUploadModal(true)
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-sm transition"
+                    >
+                        <Upload className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Tải Biểu Mẫu Lên</span>
+                    </button>
+                    <button
+                        onClick={() => setIsCreatingSop(true)}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white text-xs font-semibold shadow-sm transition"
+                    >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Thêm Quy Trình Mới</span>
+                    </button>
                 </div>
             </div>
 
-            {/* Quick Stats Overview */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Metrics Ribbon: Replaces the 4 giant pastel cards with a compact, high-density status bar */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div
+                    onClick={() => setActiveView('docs')}
+                    className={`p-3.5 rounded-lg border cursor-pointer transition ${
+                        activeView === 'docs'
+                            ? 'border-slate-900 bg-slate-900/5 dark:border-slate-100 dark:bg-slate-100/5'
+                            : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'
+                    }`}
+                >
+                    <div className="text-[11px] text-slate-500 flex items-center justify-between font-medium">
+                        <span>Sổ Tay & Quy Trình (.md)</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold">
+                            12 Phân hệ
+                        </span>
+                    </div>
+                    <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
+                        {markdownDocs.length} Tài liệu
+                    </div>
+                </div>
+
                 <div
                     onClick={() => setActiveView('sops')}
-                    className={`p-4 rounded-xl border cursor-pointer transition shadow-sm flex items-center gap-4 ${activeView === 'sops'
-                        ? 'border-rose-500 bg-rose-50/20 dark:bg-rose-950/20'
-                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
-                        }`}
+                    className={`p-3.5 rounded-lg border cursor-pointer transition ${
+                        activeView === 'sops'
+                            ? 'border-slate-900 bg-slate-900/5 dark:border-slate-100 dark:bg-slate-100/5'
+                            : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'
+                    }`}
                 >
-                    <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400">
-                        <BookOpen className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Quy Trình Chuẩn</div>
-                        <div className="text-2xl font-black text-slate-900 dark:text-white">{sops.length} SOPs</div>
+                    <div className="text-[11px] text-slate-500 font-medium">Quy Trình Trọng Yếu (SOPs)</div>
+                    <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
+                        {sops.length} Luồng cốt lõi
                     </div>
                 </div>
 
                 <div
                     onClick={() => setActiveView('forms')}
-                    className={`p-4 rounded-xl border cursor-pointer transition shadow-sm flex items-center gap-4 ${activeView === 'forms'
-                        ? 'border-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/20'
-                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
-                        }`}
+                    className={`p-3.5 rounded-lg border cursor-pointer transition ${
+                        activeView === 'forms'
+                            ? 'border-slate-900 bg-slate-900/5 dark:border-slate-100 dark:bg-slate-100/5'
+                            : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'
+                    }`}
                 >
-                    <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400">
-                        <FileSpreadsheet className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Biểu Mẫu Chuẩn</div>
-                        <div className="text-2xl font-black text-slate-900 dark:text-white">{forms.length} Mẫu</div>
+                    <div className="text-[11px] text-slate-500 font-medium">Biểu Mẫu & Chứng Từ</div>
+                    <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
+                        {forms.length} Mẫu Excel / Word
                     </div>
                 </div>
 
-                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400">
-                        <GitBranch className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Bước Thao Tác</div>
-                        <div className="text-2xl font-black text-slate-900 dark:text-white">{totalSteps} Bước</div>
-                    </div>
-                </div>
-
-                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400">
-                        <FileCheck className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Tiêu Chí Kiểm Soát</div>
-                        <div className="text-2xl font-black text-slate-900 dark:text-white">{totalChecklists} Checklists</div>
+                <div className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                    <div className="text-[11px] text-slate-500 font-medium">Tiêu Chuẩn Kiểm Soát</div>
+                    <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
+                        {totalChecklists} Tiêu chí RACI
                     </div>
                 </div>
             </div>
 
-            {/* View Mode Switcher (SOPs vs Forms) */}
-            <div className="flex border-b border-slate-200 dark:border-slate-800 gap-4 sm:gap-8 overflow-x-auto no-scrollbar whitespace-nowrap">
+            {/* 3 Main View Tabs */}
+            <div className="flex border-b border-slate-200 dark:border-slate-800 gap-4 sm:gap-6 overflow-x-auto no-scrollbar whitespace-nowrap text-sm font-semibold">
+                <button
+                    onClick={() => setActiveView('docs')}
+                    className={`pb-3 border-b-2 flex items-center gap-2 whitespace-nowrap transition ${
+                        activeView === 'docs'
+                            ? 'border-slate-900 text-slate-900 dark:border-slate-100 dark:text-white font-bold'
+                            : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+                    }`}
+                >
+                    <FileText className="w-4 h-4 text-slate-500" />
+                    <span>Sổ Tay & Tài Liệu Quy Trình (.md) ({markdownDocs.length})</span>
+                </button>
+
                 <button
                     onClick={() => setActiveView('sops')}
-                    className={`pb-3 text-sm font-bold border-b-2 flex items-center gap-2 transition whitespace-nowrap shrink-0 ${activeView === 'sops'
-                        ? 'border-rose-700 text-rose-700 dark:border-rose-400 dark:text-rose-400'
-                        : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                        }`}
+                    className={`pb-3 border-b-2 flex items-center gap-2 whitespace-nowrap transition ${
+                        activeView === 'sops'
+                            ? 'border-slate-900 text-slate-900 dark:border-slate-100 dark:text-white font-bold'
+                            : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+                    }`}
                 >
-                    <BookOpen className="w-4 h-4" />
-                    <span>Danh Mục Quy Trình ({sops.length} SOPs)</span>
+                    <BookOpen className="w-4 h-4 text-slate-500" />
+                    <span>Quy Trình Trọng Yếu ({sops.length} SOPs)</span>
                 </button>
 
                 <button
                     onClick={() => setActiveView('forms')}
-                    className={`pb-3 text-sm font-bold border-b-2 flex items-center gap-2 transition whitespace-nowrap shrink-0 ${activeView === 'forms'
-                        ? 'border-rose-700 text-rose-700 dark:border-rose-400 dark:text-rose-400'
-                        : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                        }`}
+                    className={`pb-3 border-b-2 flex items-center gap-2 whitespace-nowrap transition ${
+                        activeView === 'forms'
+                            ? 'border-slate-900 text-slate-900 dark:border-slate-100 dark:text-white font-bold'
+                            : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+                    }`}
                 >
-                    <FileSpreadsheet className="w-4 h-4" />
-                    <span>Thư Viện Biểu Mẫu & Tải Về ({forms.length} Mẫu Chuẩn)</span>
+                    <FileSpreadsheet className="w-4 h-4 text-slate-500" />
+                    <span>Thư Viện Biểu Mẫu Chứng Từ ({forms.length} Mẫu)</span>
                 </button>
             </div>
 
-            {/* Filter and Search Bar */}
-            <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-                    <div className="relative flex-1 max-w-lg">
-                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder={activeView === 'sops'
-                                ? "Tìm quy trình, từ khóa, vai trò (Sales, Kho, Kế toán, Tem rượu)..."
-                                : "Tìm kiếm biểu mẫu (Form 8.8-A, Form 6.1-B, Báo giá, Hợp đồng)..."
-                            }
-                            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 text-slate-800 dark:text-slate-100 placeholder-slate-400 shadow-sm"
-                        />
-                        {searchQuery && (
-                            <button
-                                onClick={() => setSearchQuery('')}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                            >
-                                Xóa
-                            </button>
-                        )}
-                    </div>
-
-                    <div className="text-xs text-slate-500 dark:text-slate-400 self-center">
-                        Hiển thị <strong>{activeView === 'sops' ? filteredSops.length : filteredForms.length}</strong> mục
-                    </div>
-                </div>
-
-                {/* Category Pills */}
-                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                    {SOP_CATEGORIES.map(cat => {
-                        const Icon = CATEGORY_ICONS[cat.iconName] || Layers
-                        const isSelected = selectedCategory === cat.id
-                        return (
-                            <button
-                                key={cat.id}
-                                onClick={() => setSelectedCategory(cat.id)}
-                                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition shadow-sm ${isSelected
-                                    ? 'bg-rose-700 text-white shadow-rose-900/20'
-                                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
-                                    }`}
-                            >
-                                <Icon className="w-3.5 h-3.5" />
-                                <span>{cat.label}</span>
-                            </button>
-                        )
-                    })}
-                </div>
-            </div>
-
-            {/* VIEW 1: SOPs GRID */}
-            {activeView === 'sops' && (
-                filteredSops.length === 0 ? (
-                    <div className="p-12 text-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3">
-                        <BookOpen className="w-10 h-10 text-slate-400 mx-auto" />
-                        <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">
-                            Không tìm thấy quy trình phù hợp
-                        </h3>
-                        <button
-                            onClick={() => { setSelectedCategory('all'); setSearchQuery(''); }}
-                            className="px-4 py-2 rounded-lg bg-rose-700 text-white text-xs font-semibold hover:bg-rose-800 transition"
-                        >
-                            Xem tất cả quy trình
-                        </button>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredSops.map((sop) => {
-                            const primaryActionLink = sop.flowSteps.find(s => s.erpLink)?.erpLink
-                            const formsCount = (sop.forms || []).length
-
-                            return (
-                                <div
-                                    key={sop.id}
-                                    className="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm hover:shadow-md hover:border-rose-300 dark:hover:border-rose-900/60 transition-all flex flex-col justify-between"
+            {/* ========================================================================= */}
+            {/* VIEW 1: SỔ TAY & TÀI LIỆU QUY TRÌNH (.MD) — 114+ FILES ACROSS 12 GROUPS  */}
+            {/* ========================================================================= */}
+            {activeView === 'docs' && (
+                <div className="space-y-4">
+                    {/* Filter & Search Bar for Markdown Documents */}
+                    <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                        <div className="relative flex-1 max-w-md">
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input
+                                type="text"
+                                value={docSearchQuery}
+                                onChange={(e) => setDocSearchQuery(e.target.value)}
+                                placeholder="Tìm tài liệu .md (nhập kho, dán tem, hợp đồng, tasting, cogs)..."
+                                className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400"
+                            />
+                            {docSearchQuery && (
+                                <button
+                                    onClick={() => setDocSearchQuery('')}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 hover:text-slate-600"
                                 >
-                                    <div className="space-y-4">
+                                    Xóa
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Language Switcher */}
+                        <div className="flex items-center gap-1 p-0.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 self-start sm:self-auto text-xs">
+                            <button
+                                onClick={() => setDocLangFilter('all')}
+                                className={`px-2.5 py-1 rounded-md font-medium transition ${
+                                    docLangFilter === 'all'
+                                        ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
+                                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                                }`}
+                            >
+                                Tất cả ({markdownDocs.length})
+                            </button>
+                            <button
+                                onClick={() => setDocLangFilter('vi')}
+                                className={`px-2.5 py-1 rounded-md font-medium transition ${
+                                    docLangFilter === 'vi'
+                                        ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
+                                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                                }`}
+                            >
+                                Tiếng Việt ({markdownDocs.filter(d => !d.isEnglish).length})
+                            </button>
+                            <button
+                                onClick={() => setDocLangFilter('en')}
+                                className={`px-2.5 py-1 rounded-md font-medium transition ${
+                                    docLangFilter === 'en'
+                                        ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
+                                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                                }`}
+                            >
+                                English ({markdownDocs.filter(d => d.isEnglish).length})
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Group Filter Pills */}
+                    <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+                        <button
+                            onClick={() => setSelectedDocGroup('all')}
+                            className={`px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transition border ${
+                                selectedDocGroup === 'all'
+                                    ? 'bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100'
+                                    : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                            }`}
+                        >
+                            Tất cả phân hệ ({markdownDocs.length})
+                        </button>
+                        {availableDocGroups.map(grp => (
+                            <button
+                                key={grp.key}
+                                onClick={() => setSelectedDocGroup(grp.key)}
+                                className={`px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transition border ${
+                                    selectedDocGroup === grp.key
+                                        ? 'bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100'
+                                        : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                                }`}
+                            >
+                                <span>{grp.label}</span>
+                                <span className="ml-1.5 opacity-70 text-[10px]">({grp.count})</span>
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Markdown Docs List Grid */}
+                    {filteredMarkdownDocs.length === 0 ? (
+                        <div className="p-12 text-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
+                            <FileText className="w-8 h-8 text-slate-400 mx-auto" />
+                            <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                                Không tìm thấy tài liệu phù hợp
+                            </div>
+                            <button
+                                onClick={() => { setSelectedDocGroup('all'); setDocSearchQuery(''); setDocLangFilter('all'); }}
+                                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-50"
+                            >
+                                Đặt lại bộ lọc
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {filteredMarkdownDocs.map((doc) => (
+                                <div
+                                    key={doc.id}
+                                    className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between space-y-3 hover:border-slate-300 dark:hover:border-slate-700 transition"
+                                >
+                                    <div className="space-y-2">
                                         <div className="flex items-center justify-between gap-2">
-                                            <span className="px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-900">
-                                                {sop.code}
+                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                                {doc.groupLabel}
                                             </span>
-                                            <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                                                <Clock className="w-3 h-3 text-amber-600" />
-                                                {sop.estimatedDuration}
+                                            <span className="text-[11px] text-slate-400">
+                                                {doc.sizeStr}
                                             </span>
                                         </div>
 
-                                        <div>
-                                            <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                                                {sop.department}
-                                            </div>
-                                            <h3
-                                                onClick={() => setSelectedSop(sop)}
-                                                className="text-base font-bold text-slate-900 dark:text-white group-hover:text-rose-700 dark:group-hover:text-rose-400 cursor-pointer transition line-clamp-2"
-                                            >
-                                                {sop.title}
-                                            </h3>
+                                        <h3
+                                            onClick={() => setPreviewDoc({
+                                                title: doc.title,
+                                                url: doc.url,
+                                                fileName: doc.fileName,
+                                                relativeFilePath: doc.relativeFilePath,
+                                                version: doc.version,
+                                                lastUpdated: doc.lastUpdated,
+                                                groupLabel: doc.groupLabel
+                                            })}
+                                            className="font-bold text-slate-900 dark:text-white text-sm hover:underline cursor-pointer line-clamp-2 leading-snug"
+                                        >
+                                            {doc.title}
+                                        </h3>
+
+                                        <div className="text-[11px] font-mono text-slate-400 truncate">
+                                            {doc.fileName}
                                         </div>
 
-                                        <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
-                                            {sop.summary}
-                                        </p>
-
-                                        {/* Stepper mini-preview & forms count */}
-                                        <div className="pt-2 space-y-2">
-                                            <div className="text-[11px] uppercase tracking-wider font-bold text-slate-400 flex items-center justify-between">
-                                                <span>{sop.flowSteps.length} bước chuẩn</span>
-                                                {formsCount > 0 ? (
-                                                    <span className="text-blue-600 dark:text-blue-400 font-semibold flex items-center gap-1">
-                                                        <FileSpreadsheet className="w-3 h-3" />
-                                                        {formsCount} biểu mẫu
+                                        {doc.tags && doc.tags.length > 0 && (
+                                            <div className="flex flex-wrap gap-1 pt-1">
+                                                {doc.tags.slice(0, 3).map((tag, idx) => (
+                                                    <span
+                                                        key={idx}
+                                                        className="px-1.5 py-0.5 rounded text-[10px] bg-slate-50 dark:bg-slate-800/80 text-slate-500 border border-slate-200/60 dark:border-slate-700/60"
+                                                    >
+                                                        #{tag}
                                                     </span>
-                                                ) : (
-                                                    <span className="text-rose-600 font-semibold">{sop.checklist.length} tiêu chuẩn</span>
+                                                ))}
+                                                {doc.tags.length > 3 && (
+                                                    <span className="text-[10px] text-slate-400 self-center">
+                                                        +{doc.tags.length - 3}
+                                                    </span>
                                                 )}
                                             </div>
-                                            <div className="flex items-center gap-1.5 overflow-hidden">
-                                                {sop.flowSteps.map((s) => (
-                                                    <div
-                                                        key={s.stepNumber}
-                                                        title={`Bước ${s.stepNumber}: ${s.title} (${s.role})`}
-                                                        className="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 group-hover:bg-rose-500/80 transition"
-                                                    />
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Footer */}
-                                    <div className="pt-5 mt-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
-                                        <button
-                                            onClick={() => setSelectedSop(sop)}
-                                            className="inline-flex items-center gap-1 text-xs font-bold text-rose-700 dark:text-rose-400 hover:text-rose-800 transition"
-                                        >
-                                            <span>Xem Sơ Đồ & Biểu Mẫu</span>
-                                            <ArrowRight className="w-3.5 h-3.5" />
-                                        </button>
-
-                                        {primaryActionLink && (
-                                            <Link
-                                                href={primaryActionLink.path}
-                                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                                                title={primaryActionLink.label}
-                                            >
-                                                <ExternalLink className="w-4 h-4" />
-                                            </Link>
                                         )}
                                     </div>
+
+                                    {/* Action Buttons */}
+                                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                                        <button
+                                            onClick={() => setPreviewDoc({
+                                                title: doc.title,
+                                                url: doc.url,
+                                                fileName: doc.fileName,
+                                                relativeFilePath: doc.relativeFilePath,
+                                                version: doc.version,
+                                                lastUpdated: doc.lastUpdated,
+                                                groupLabel: doc.groupLabel
+                                            })}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white text-xs font-semibold shadow-xs transition"
+                                        >
+                                            <Eye className="w-3.5 h-3.5" />
+                                            <span>Đọc Văn Bản</span>
+                                        </button>
+
+                                        <a
+                                            href={doc.url}
+                                            download={doc.fileName}
+                                            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition"
+                                            title="Tải tệp .md về máy"
+                                        >
+                                            <Download className="w-3.5 h-3.5" />
+                                        </a>
+                                    </div>
                                 </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* ========================================================================= */}
+            {/* VIEW 2: QUY TRÌNH TRỌNG YẾU (SOPS GRID) — CORE OPERATIONAL FLOWS          */}
+            {/* ========================================================================= */}
+            {activeView === 'sops' && (
+                <div className="space-y-4">
+                    {/* Search & Category Filter */}
+                    <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                        <div className="relative flex-1 max-w-md">
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input
+                                type="text"
+                                value={sopSearchQuery}
+                                onChange={(e) => setSopSearchQuery(e.target.value)}
+                                placeholder="Tìm kiếm quy trình, vai trò, nghiệp vụ..."
+                                className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400"
+                            />
+                            {sopSearchQuery && (
+                                <button
+                                    onClick={() => setSopSearchQuery('')}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 hover:text-slate-600"
+                                >
+                                    Xóa
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="text-xs text-slate-500">
+                            Hiển thị <strong>{filteredSops.length}</strong> quy trình
+                        </div>
+                    </div>
+
+                    {/* Category Filter Pills */}
+                    <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+                        {SOP_CATEGORIES.map(cat => {
+                            const isSelected = selectedCategory === cat.id
+                            return (
+                                <button
+                                    key={cat.id}
+                                    onClick={() => setSelectedCategory(cat.id)}
+                                    className={`px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transition border ${
+                                        isSelected
+                                            ? 'bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100'
+                                            : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                                    }`}
+                                >
+                                    {cat.label}
+                                </button>
                             )
                         })}
                     </div>
-                )
+
+                    {/* SOP Cards Grid */}
+                    {filteredSops.length === 0 ? (
+                        <div className="p-12 text-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
+                            <BookOpen className="w-8 h-8 text-slate-400 mx-auto" />
+                            <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                                Không tìm thấy quy trình phù hợp
+                            </div>
+                            <button
+                                onClick={() => { setSelectedCategory('all'); setSopSearchQuery(''); }}
+                                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-50"
+                            >
+                                Xem tất cả quy trình
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {filteredSops.map((sop) => {
+                                const primaryActionLink = sop.flowSteps.find(s => s.erpLink)?.erpLink
+                                const formsCount = (sop.forms || []).length
+                                const attachedMdFile = (sop.forms || []).find(f => f.fileName.toLowerCase().endsWith('.md'))
+
+                                return (
+                                    <div
+                                        key={sop.id}
+                                        className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 flex flex-col justify-between space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition"
+                                    >
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+                                                    {sop.code}
+                                                </span>
+                                                <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                                                    <Clock className="w-3 h-3 text-slate-400" />
+                                                    {sop.estimatedDuration}
+                                                </span>
+                                            </div>
+
+                                            <div>
+                                                <div className="text-[11px] font-medium text-slate-400 mb-1">
+                                                    {sop.department}
+                                                </div>
+                                                <h3
+                                                    onClick={() => setSelectedSop(sop)}
+                                                    className="text-sm font-bold text-slate-900 dark:text-white hover:underline cursor-pointer leading-snug line-clamp-2"
+                                                >
+                                                    {sop.title}
+                                                </h3>
+                                            </div>
+
+                                            <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
+                                                {sop.summary}
+                                            </p>
+
+                                            {/* Attached Markdown Badge if present */}
+                                            {attachedMdFile && (
+                                                <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
+                                                    <span className="text-[11px] text-slate-600 dark:text-slate-300 font-medium truncate flex items-center gap-1.5">
+                                                        <FileText className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                                                        <span className="truncate">Sổ tay: {attachedMdFile.title}</span>
+                                                    </span>
+                                                    <button
+                                                        onClick={() => setPreviewDoc({
+                                                            title: attachedMdFile.title,
+                                                            url: attachedMdFile.downloadUrl,
+                                                            fileName: attachedMdFile.fileName
+                                                        })}
+                                                        className="text-[11px] font-semibold text-slate-900 dark:text-slate-100 hover:underline shrink-0 ml-2"
+                                                    >
+                                                        Đọc .md
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            <div className="pt-1 flex items-center justify-between text-[11px] text-slate-400 font-medium">
+                                                <span>{sop.flowSteps.length} bước thực hiện</span>
+                                                <span>{formsCount > 0 ? `${formsCount} biểu mẫu` : `${sop.checklist.length} tiêu chuẩn`}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Card Footer Actions */}
+                                        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                                            <button
+                                                onClick={() => setSelectedSop(sop)}
+                                                className="inline-flex items-center gap-1 text-xs font-semibold text-slate-900 dark:text-slate-100 hover:underline"
+                                            >
+                                                <span>Chi Tiết Quy Trình</span>
+                                            </button>
+
+                                            {primaryActionLink && (
+                                                <Link
+                                                    href={primaryActionLink.path}
+                                                    className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300 transition"
+                                                    title={primaryActionLink.label}
+                                                >
+                                                    <span>Mở Màn Hình</span>
+                                                    <ExternalLink className="w-3 h-3" />
+                                                </Link>
+                                            )}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
+                </div>
             )}
 
-            {/* VIEW 2: FORMS LIBRARY */}
+            {/* ========================================================================= */}
+            {/* VIEW 3: THƯ VIỆN BIỂU MẪU HÀNH CHÍNH (EXCEL / WORD FORMS)                 */}
+            {/* ========================================================================= */}
             {activeView === 'forms' && (
                 <div className="space-y-4">
-                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs">
-                        <div className="space-y-0.5">
-                            <h3 className="font-bold text-slate-900 dark:text-white">
-                                Thư Viện Biểu Mẫu Chính Thức ({filteredForms.length} tài liệu)
-                            </h3>
-                            <p className="text-slate-500">
-                                Toàn bộ các file mẫu Excel, Word chuẩn đang được lưu trữ tại hệ thống. Nhấp nút tải về để sử dụng hoặc thay thế khi có bản cập nhật mới.
-                            </p>
+                    <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                        <div className="relative flex-1 max-w-md">
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input
+                                type="text"
+                                value={formSearchQuery}
+                                onChange={(e) => setFormSearchQuery(e.target.value)}
+                                placeholder="Tìm biểu mẫu (Form 8.8-A, Form 6.1-B, Landed Cost)..."
+                                className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400"
+                            />
+                            {formSearchQuery && (
+                                <button
+                                    onClick={() => setFormSearchQuery('')}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 hover:text-slate-600"
+                                >
+                                    Xóa
+                                </button>
+                            )}
                         </div>
+
                         <button
                             onClick={() => {
                                 setTargetUploadFile(null)
                                 setShowUploadModal(true)
                             }}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-rose-700 hover:bg-rose-800 text-white font-bold transition shadow-sm whitespace-nowrap"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 text-xs font-semibold transition shadow-xs self-start sm:self-auto"
                         >
-                            <Upload className="w-4 h-4" />
-                            <span>Tải Lên Biểu Mẫu Mới</span>
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>Tải Biểu Mẫu Mới Lên</span>
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {filteredForms.map((form) => (
                             <div
                                 key={form.id}
-                                className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm flex flex-col justify-between space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition"
+                                className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between space-y-3 hover:border-slate-300 dark:hover:border-slate-700 transition"
                             >
-                                <div className="space-y-2">
+                                <div className="space-y-1.5">
                                     <div className="flex items-center justify-between gap-2">
-                                        <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-900">
+                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                                             {form.code}
                                         </span>
-                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                        <span className="text-[10px] font-mono text-slate-400">
                                             {form.fileType} • {form.fileSize}
                                         </span>
                                     </div>
 
-                                    <h4 className="font-bold text-slate-900 dark:text-white text-sm line-clamp-2">
+                                    <h4 className="font-bold text-slate-900 dark:text-white text-xs line-clamp-2 leading-snug">
                                         {form.title}
                                     </h4>
 
-                                    <p className="text-[11px] text-slate-400 truncate">
+                                    <p className="text-[11px] font-mono text-slate-400 truncate">
                                         {form.fileName}
                                     </p>
                                 </div>
@@ -538,16 +835,16 @@ export function SopCatalogClient({ initialSops, initialForms }: SopCatalogClient
                                                     url: form.downloadUrl,
                                                     fileName: form.fileName
                                                 })}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs shadow-sm transition"
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 text-xs font-semibold shadow-xs transition"
                                             >
                                                 <Eye className="w-3.5 h-3.5" />
-                                                <span>Xem Trực Tiếp</span>
+                                                <span>Xem Văn Bản</span>
                                             </button>
                                             <a
                                                 href={form.downloadUrl}
                                                 download={form.fileName}
-                                                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition"
-                                                title="Tải tệp .md về máy"
+                                                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition"
+                                                title="Tải về .md"
                                             >
                                                 <Download className="w-3.5 h-3.5" />
                                             </a>
@@ -556,10 +853,10 @@ export function SopCatalogClient({ initialSops, initialForms }: SopCatalogClient
                                         <a
                                             href={form.downloadUrl}
                                             download={form.fileName}
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs shadow-sm transition"
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 text-xs font-semibold shadow-xs transition"
                                         >
                                             <Download className="w-3.5 h-3.5" />
-                                            <span>Tải Về</span>
+                                            <span>Tải Mẫu Về</span>
                                         </a>
                                     )}
 
@@ -568,11 +865,10 @@ export function SopCatalogClient({ initialSops, initialForms }: SopCatalogClient
                                             setTargetUploadFile(form.fileName)
                                             setShowUploadModal(true)
                                         }}
-                                        className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                                        title="Tải lên tệp mới để ghi đè biểu mẫu này"
+                                        className="text-[11px] text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 transition"
+                                        title="Thay thế file mẫu này"
                                     >
-                                        <Upload className="w-3.5 h-3.5" />
-                                        <span>Thay file</span>
+                                        Thay file
                                     </button>
                                 </div>
                             </div>
@@ -581,7 +877,7 @@ export function SopCatalogClient({ initialSops, initialForms }: SopCatalogClient
                 </div>
             )}
 
-            {/* Modal Detail Viewer */}
+            {/* Modal Detail Viewer for SOPs */}
             <SopDetailModal
                 sop={selectedSop}
                 onClose={() => setSelectedSop(null)}
@@ -617,6 +913,10 @@ export function SopCatalogClient({ initialSops, initialForms }: SopCatalogClient
                     title={previewDoc.title}
                     docUrl={previewDoc.url}
                     fileName={previewDoc.fileName}
+                    relativeFilePath={previewDoc.relativeFilePath}
+                    version={previewDoc.version}
+                    lastUpdated={previewDoc.lastUpdated}
+                    groupLabel={previewDoc.groupLabel}
                 />
             )}
         </div>

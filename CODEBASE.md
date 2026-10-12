@@ -20,7 +20,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 
 ## 3. PHÂN BỔ MODULES (APP ROUTER)
 - **System/Admin**: `wine-erp/src/app/dashboard/settings` (User/Role/Permission CRUD + **Approval Workflow Engine**), `wine-erp/src/app/login`
-- **Master Data**: `wine-erp/src/app/dashboard/products` (**Media Upload Gallery**), `wine-erp/src/app/dashboard/customers` (**Address CRUD**, soft-delete), `wine-erp/src/app/dashboard/suppliers` (soft-delete)
+- **Master Data**: `wine-erp/src/app/dashboard/products` (**Cloudflare R2 Media & Tasting Notes**, **Direct File Uploader & Viewer**, **Wine Profile Sync**), `wine-erp/src/app/dashboard/customers` (**Address CRUD**, soft-delete), `wine-erp/src/app/dashboard/suppliers` (soft-delete)
 - **Warehouse**: `wine-erp/src/app/dashboard/warehouse` (FIFO, Quarantine, Write-off, Stock Adjust, Enhanced Stats, **CSV Export**, **Detail Drawers**, **Warehouse Inspection & Daily Checklist**) — Split: `actions.ts` (core), `actions-gr.ts` (GR), `actions-do.ts` (DO), `actions-inspection.ts` (Daily & Periodic Inspection)
 - **Sales & Allocation**: `wine-erp/src/app/dashboard/sales` (**Order Discount**, **Credit Hold Auto**, **Quick Filter Tabs**, **Sortable Columns**, **Date Range**, **Timeline**, **Clone SO**, **CSV Export**, **Role-based Margin Visibility**), `wine-erp/src/app/dashboard/quotations` (**Professional PDF Export**, **Send Drawer Email/Zalo**, **View Tracking**), `wine-erp/src/app/dashboard/price-list`, `wine-erp/src/app/dashboard/allocation`, `wine-erp/src/app/dashboard/returns` (Credit Note + WMS Quarantine)
 - **CRM**: `wine-erp/src/app/dashboard/crm` (**TastingEventsPanel**, **ComplaintTicketsPanel**, **WinePreferencePanel**), `wine-erp/src/app/dashboard/pipeline`
@@ -47,7 +47,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 | **Notification** | `wine-erp/src/lib/notifications.ts` | 5 email templates via Resend (**lazy init** — không crash khi missing API key) + Telegram |
 | **Excel Export** | `wine-erp/src/lib/excel.ts` | Generic engine + 4 pre-built templates (AR Aging, Stock, Sales, Costing) |
 | **File Upload** | `wine-erp/src/lib/storage.ts` | Supabase Storage: uploadFile, deleteFile, listFiles |
-| **Cloudflare R2 Storage** | `wine-erp/src/lib/storage-r2.ts` | S3-compatible adapter for payment request scans & vouchers (10GB free, 0 egress) + presigned URLs |
+| **Cloudflare R2 Storage** | `wine-erp/src/lib/storage-r2.ts` | S3-compatible adapter for Product Media, Tasting Notes, Docs & Payment vouchers (0 egress, CDN) + API file resolver |
 | **Tax Engine** | `tax/actions.ts` | CIF → NK → TTĐB → VAT auto-calc by HS Code + Country |
 | **SignaturePad** | `wine-erp/src/components/SignaturePad.tsx` | Canvas-based e-signature capture component |
 | **AI Service** | `wine-erp/src/lib/ai-service.ts` | Gemini 3.1 Pro API: `callGemini()` + `resolvePromptTemplate(slug)` → DB-driven prompts with `{{data}}` placeholder, fallback to hardcoded |

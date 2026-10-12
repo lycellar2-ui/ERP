@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
 import { getCurrentUser, requirePermission, hasPermission } from '@/lib/session'
 import { logAudit, logAuditWithDiff } from '@/lib/audit'
+import { uploadProductAsset, deleteProductAsset } from '@/lib/storage-r2'
 
 // ─── Types ────────────────────────────────────────
 export type ProductRow = {
@@ -901,13 +902,13 @@ export async function uploadProductMedia(
         await requirePermission('MDM', 'WRITE')
         const file = formData.get('file') as File
         if (!file || file.size === 0) return { success: false, error: 'Không có file' }
-        if (file.size > 10 * 1024 * 1024) return { success: false, error: 'File quá lớn (max 10MB)' }
+        if (file.size > 15 * 1024 * 1024) return { success: false, error: 'File quá lớn (max 15MB)' }
         if (!file.type.startsWith('image/')) return { success: false, error: 'Chỉ chấp nhận file ảnh' }
 
-        // Upload to ImgBB
-        const result = await uploadFileToImgBB(file)
+        // Upload to Cloudflare R2
+        const result = await uploadProductAsset(formData, 'images')
         if (!result.success || !result.url) {
-            return { success: false, error: result.error ?? 'Upload ImgBB thất bại' }
+            return { success: false, error: result.error ?? 'Upload Cloudflare R2 thất bại' }
         }
 
         // Check if this is the first media → auto-set as primary
@@ -917,8 +918,8 @@ export async function uploadProductMedia(
             data: {
                 productId,
                 url: result.url,
-                thumbnailUrl: result.thumbUrl ?? null,
-                mediumUrl: result.mediumUrl ?? null,
+                thumbnailUrl: result.url,
+                mediumUrl: result.url,
                 mediaType: mediaType as any,
                 isPrimary: existingCount === 0,
             },
@@ -943,7 +944,7 @@ export async function uploadProductMedia(
     }
 }
 
-/** Save media URL that was uploaded directly from client to ImgBB (bypasses Vercel payload limit) */
+/** Save media URL that was uploaded directly from client (bypasses Vercel payload limit) */
 export async function saveProductMediaUrl(
     productId: string,
     urls: { url: string; thumbUrl?: string; mediumUrl?: string },
@@ -959,8 +960,8 @@ export async function saveProductMediaUrl(
             data: {
                 productId,
                 url: urls.url,
-                thumbnailUrl: urls.thumbUrl ?? null,
-                mediumUrl: urls.mediumUrl ?? null,
+                thumbnailUrl: urls.thumbUrl ?? urls.url,
+                mediumUrl: urls.mediumUrl ?? urls.url,
                 mediaType: mediaType as any,
                 isPrimary: existingCount === 0,
             },
@@ -992,9 +993,13 @@ export async function deleteProductMedia(
         await requirePermission('MDM', 'WRITE')
         const media = await prisma.productMedia.findUnique({
             where: { id: mediaId },
-            select: { productId: true, isPrimary: true },
+            select: { productId: true, isPrimary: true, url: true },
         })
         if (!media) return { success: false, error: 'Media not found' }
+
+        if (media.url) {
+            await deleteProductAsset(media.url)
+        }
 
         await prisma.productMedia.delete({ where: { id: mediaId } })
 
@@ -1017,6 +1022,68 @@ export async function deleteProductMedia(
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }
+    }
+}
+
+/**
+ * Upload Tasting Note document (PDF, DOCX, image) directly to Cloudflare R2 and update Product
+ */
+export async function uploadProductTastingNote(
+    productId: string,
+    formData: FormData
+): Promise<{ success: boolean; url?: string; error?: string }> {
+    try {
+        await requirePermission('MDM', 'WRITE')
+        const file = formData.get('file') as File
+        if (!file || file.size === 0) return { success: false, error: 'Không tìm thấy file tải lên' }
+
+        const uploadRes = await uploadProductAsset(formData, 'tasting-notes')
+        if (!uploadRes.success || !uploadRes.url) {
+            return { success: false, error: uploadRes.error || 'Upload Tasting Note lên Cloudflare R2 thất bại' }
+        }
+
+        await prisma.product.update({
+            where: { id: productId },
+            data: { tastingNoteUrl: uploadRes.url }
+        })
+
+        revalidateCache('products')
+        revalidatePath('/dashboard/products')
+        return { success: true, url: uploadRes.url }
+    } catch (err: any) {
+        console.error('[uploadProductTastingNote] Error:', err)
+        return { success: false, error: err.message || 'Lỗi khi upload Tasting Note' }
+    }
+}
+
+/**
+ * Remove Tasting Note document URL from Product and delete from R2
+ */
+export async function deleteProductTastingNote(
+    productId: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        await requirePermission('MDM', 'WRITE')
+        const product = await prisma.product.findUnique({
+            where: { id: productId },
+            select: { tastingNoteUrl: true }
+        })
+
+        if (product?.tastingNoteUrl) {
+            await deleteProductAsset(product.tastingNoteUrl)
+        }
+
+        await prisma.product.update({
+            where: { id: productId },
+            data: { tastingNoteUrl: null }
+        })
+
+        revalidateCache('products')
+        revalidatePath('/dashboard/products')
+        return { success: true }
+    } catch (err: any) {
+        console.error('[deleteProductTastingNote] Error:', err)
+        return { success: false, error: err.message || 'Lỗi khi xoá Tasting Note' }
     }
 }
 
@@ -1219,8 +1286,10 @@ export async function uploadProductImage(
         if (file.size > 10 * 1024 * 1024) return { success: false, error: 'File quá lớn (max 10MB)' }
         if (!file.type.startsWith('image/')) return { success: false, error: 'Chỉ chấp nhận file ảnh' }
 
-        const result = await uploadFileToImgBB(file)
-        if (!result.success) return { success: false, error: result.error }
+        const fd = new FormData()
+        fd.append('file', file)
+        const result = await uploadProductAsset(fd, 'images')
+        if (!result.success || !result.url) return { success: false, error: result.error ?? 'Upload Cloudflare R2 thất bại' }
 
         // Check if product already has a primary image
         const existing = await prisma.productMedia.findFirst({

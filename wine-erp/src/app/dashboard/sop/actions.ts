@@ -8,6 +8,39 @@ import { OFFICIAL_FORMS, type SopFormFile } from '@/data/forms-data'
 
 const STORE_PATH = path.join(process.cwd(), 'src', 'data', 'sops-store.json')
 const FORMS_DIR = path.join(process.cwd(), 'public', 'forms')
+const DOCS_PROCESSES_DIR = path.join(process.cwd(), 'public', 'docs', 'processes')
+
+export interface ProcessMarkdownDoc {
+    id: string
+    title: string
+    fileName: string
+    relativeFilePath: string
+    url: string
+    group: string
+    groupLabel: string
+    groupCode: string
+    version: string
+    lastUpdated: string
+    tags: string[]
+    sizeStr: string
+    isEnglish: boolean
+}
+
+export const PROCESS_GROUPS_META: Record<string, { label: string; code: string; order: number }> = {
+    '01_chien_luoc': { label: 'Chiến Lược & Danh Mục', code: 'STR', order: 1 },
+    '02_nha_cung_cap': { label: 'Nhà Cung Cấp & Hợp Đồng', code: 'SUP', order: 2 },
+    '03_mua_hang': { label: 'Mua Hàng & Đặt Hàng Quốc Tế', code: 'PUR', order: 3 },
+    '04_nhap_khau_logistics': { label: 'Nhập Khẩu & Hải Quan Logistics', code: 'IMP', order: 4 },
+    '05_kho_van': { label: 'Kho Vận, Dán Tem & Bảo Quản', code: 'WMS', order: 5 },
+    '06_ban_hang': { label: 'Bán Hàng & Kênh Phân Phối', code: 'SLS', order: 6 },
+    '07_phap_ly': { label: 'Pháp Lý, Giấy Phép & Công Bố', code: 'LEG', order: 7 },
+    '08_tai_chinh': { label: 'Tài Chính, Kế Toán & Giá Vốn', code: 'FIN', order: 8 },
+    '09_marketing': { label: 'Marketing & Phát Triển Thương Hiệu', code: 'MKT', order: 9 },
+    '10_nhan_su': { label: 'Nhân Sự & Đào Tạo', code: 'HR', order: 10 },
+    '11_cntt': { label: 'Hệ Thống ERP & CNTT', code: 'IT', order: 11 },
+    '12_van_hanh': { label: 'Tiêu Chuẩn Vận Hành & SLA', code: 'OPS', order: 12 },
+    'general': { label: 'Văn Bản Quy Trình Khác', code: 'GEN', order: 13 }
+}
 
 /**
  * Lấy danh sách toàn bộ quy trình SOP từ store
@@ -28,7 +61,6 @@ export async function getSopsAction(): Promise<SopItem[]> {
 
 /**
  * Lưu hoặc cập nhật một quy trình SOP
- * Hỗ trợ Admin chỉnh sửa nội dung, thêm bước, sửa SLA ngay trên web
  */
 export async function saveSopAction(sopData: SopItem): Promise<{ success: boolean; data?: SopItem; error?: string }> {
     try {
@@ -90,6 +122,131 @@ export async function deleteSopAction(sopId: string): Promise<{ success: boolean
 }
 
 /**
+ * Lấy danh sách toàn bộ 114+ tài liệu quy trình Markdown (.md)
+ */
+export async function getMarkdownDocsAction(): Promise<ProcessMarkdownDoc[]> {
+    try {
+        if (!fs.existsSync(DOCS_PROCESSES_DIR)) {
+            return []
+        }
+
+        const results: ProcessMarkdownDoc[] = []
+
+        function parseDoc(filePath: string): ProcessMarkdownDoc {
+            const content = fs.readFileSync(filePath, 'utf8')
+            const rel = path.relative(DOCS_PROCESSES_DIR, filePath).replace(/\\/g, '/')
+            const parts = rel.split('/')
+            const groupKey = parts.length > 1 ? parts[0] : 'general'
+            const groupMeta = PROCESS_GROUPS_META[groupKey] || { label: groupKey, code: 'DOC', order: 99 }
+
+            let title = path.basename(filePath, '.md').replace(/_/g, ' ')
+            let version = '1.0'
+            let lastUpdated = ''
+            let tags: string[] = []
+
+            const fmMatch = content.match(/^---\s*[\r\n]+([\s\S]*?)[\r\n]+---/)
+            if (fmMatch) {
+                const rawFm = fmMatch[1]
+                for (const line of rawFm.split(/\r?\n/)) {
+                    const idx = line.indexOf(':')
+                    if (idx > -1) {
+                        const k = line.substring(0, idx).trim()
+                        const v = line.substring(idx + 1).trim().replace(/^["']|["']$/g, '')
+                        if (k === 'title') title = v
+                        if (k === 'version') version = v
+                        if (k === 'last_updated') lastUpdated = v
+                        if (k === 'tags') {
+                            tags = v.replace(/[\[\]]/g, '').split(',').map(s => s.trim()).filter(Boolean)
+                        }
+                    }
+                }
+            } else {
+                // If no frontmatter, extract first # H1 heading if present
+                const h1Match = content.match(/^#\s+([^\r\n]+)/m)
+                if (h1Match) {
+                    title = h1Match[1].trim()
+                }
+            }
+
+            const stat = fs.statSync(filePath)
+            const sizeKB = Math.round(stat.size / 1024)
+            const sizeStr = sizeKB > 1024 ? `${(sizeKB / 1024).toFixed(1)} MB` : `${sizeKB || 1} KB`
+
+            return {
+                id: rel.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+                title,
+                fileName: path.basename(filePath),
+                relativeFilePath: rel,
+                url: `/docs/processes/${rel}`,
+                group: groupKey,
+                groupLabel: groupMeta.label,
+                groupCode: groupMeta.code,
+                version,
+                lastUpdated: lastUpdated || stat.mtime.toISOString().split('T')[0],
+                tags,
+                sizeStr,
+                isEnglish: filePath.endsWith('_en.md')
+            }
+        }
+
+        function walkDir(dir: string) {
+            const entries = fs.readdirSync(dir)
+            for (const entry of entries) {
+                const fullPath = path.join(dir, entry)
+                const stat = fs.statSync(fullPath)
+                if (stat.isDirectory()) {
+                    walkDir(fullPath)
+                } else if (entry.endsWith('.md')) {
+                    results.push(parseDoc(fullPath))
+                }
+            }
+        }
+
+        walkDir(DOCS_PROCESSES_DIR)
+
+        // Sort by group order then filename
+        results.sort((a, b) => {
+            const orderA = PROCESS_GROUPS_META[a.group]?.order ?? 99
+            const orderB = PROCESS_GROUPS_META[b.group]?.order ?? 99
+            if (orderA !== orderB) return orderA - orderB
+            return a.fileName.localeCompare(b.fileName)
+        })
+
+        return results
+    } catch (err) {
+        console.error('Error getting markdown docs:', err)
+        return []
+    }
+}
+
+/**
+ * Đọc nội dung chi tiết của một file markdown quy trình
+ */
+export async function getMarkdownContentAction(relativeFilePath: string): Promise<{ success: boolean; content?: string; error?: string }> {
+    try {
+        // Sanitize path to prevent directory traversal
+        const safeRel = relativeFilePath.replace(/\.\./g, '').replace(/^[\\\/]+/, '')
+        const fullPath = path.join(DOCS_PROCESSES_DIR, safeRel)
+
+        if (!fs.existsSync(fullPath)) {
+            // Also check public/forms for legacy paths
+            const altPath = path.join(FORMS_DIR, path.basename(safeRel))
+            if (fs.existsSync(altPath)) {
+                const text = fs.readFileSync(altPath, 'utf8')
+                return { success: true, content: text }
+            }
+            return { success: false, error: 'Tài liệu không tồn tại' }
+        }
+
+        const text = fs.readFileSync(fullPath, 'utf8')
+        return { success: true, content: text }
+    } catch (err: any) {
+        console.error('Error reading markdown content:', err)
+        return { success: false, error: err?.message || 'Lỗi khi đọc tài liệu' }
+    }
+}
+
+/**
  * Lấy danh sách toàn bộ biểu mẫu chuẩn (Forms Library)
  */
 export async function getOfficialFormsAction(): Promise<SopFormFile[]> {
@@ -125,7 +282,7 @@ export async function getOfficialFormsAction(): Promise<SopFormFile[]> {
                 code: formCode,
                 fileName: file,
                 downloadUrl: `/forms/${encodeURIComponent(file)}`,
-                title: existing?.title || file.replace(/\.(xlsx|docx|pdf)$/i, '').replace(/_/g, ' '),
+                title: existing?.title || file.replace(/\.(xlsx|docx|pdf|md)$/i, '').replace(/_/g, ' '),
                 fileType: ext,
                 fileSize: sizeStr,
                 category: existing?.category || 'sales',
@@ -141,8 +298,7 @@ export async function getOfficialFormsAction(): Promise<SopFormFile[]> {
 }
 
 /**
- * Tải lên hoặc thay thế một file biểu mẫu (.xlsx, .docx, .pdf)
- * File sẽ được ghi đè trực tiếp vào public/forms/ để nhân viên có thể tải về ngay lập tức
+ * Tải lên hoặc thay thế một file biểu mẫu (.xlsx, .docx, .pdf, .md)
  */
 export async function uploadFormAction(formData: FormData): Promise<{ success: boolean; data?: SopFormFile; error?: string }> {
     try {
@@ -172,7 +328,7 @@ export async function uploadFormAction(formData: FormData): Promise<{ success: b
             code: 'Biểu mẫu mới',
             fileName: targetFileName,
             downloadUrl: `/forms/${encodeURIComponent(targetFileName)}`,
-            title: targetFileName.replace(/\.(xlsx|docx|pdf)$/i, '').replace(/_/g, ' '),
+            title: targetFileName.replace(/\.(xlsx|docx|pdf|md)$/i, '').replace(/_/g, ' '),
             fileType: path.extname(targetFileName).replace('.', '').toUpperCase(),
             fileSize: sizeStr,
             category: 'sales',

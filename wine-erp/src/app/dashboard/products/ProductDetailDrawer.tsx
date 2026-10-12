@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { 
     X, Wine, Award, Star, Loader2, Calendar, 
     Layers, Clipboard, CheckCircle2, AlertCircle,
-    Boxes, Tag, DollarSign, Edit, FileText, ExternalLink
+    Boxes, Tag, DollarSign, Edit, FileText, ExternalLink, Download
 } from 'lucide-react'
 import { getProductViewDetails, type ProductViewDetails, type ProductRow } from './actions'
 import { formatVND } from '@/lib/utils'
@@ -268,17 +268,27 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                     </a>
                                 )}
                                 {(activeProduct as any)?.tastingNoteUrl && (
-                                    <a
-                                        href={(activeProduct as any).tastingNoteUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors"
-                                        style={{ background: 'rgba(29,78,216,0.12)', border: '1px solid rgba(29,78,216,0.3)', color: '#0E7490' }}
-                                    >
-                                        <Wine size={13} className="text-cyan-700 shrink-0" />
-                                        <span>Xem Tasting Note</span>
-                                        <ExternalLink size={11} className="shrink-0" />
-                                    </a>
+                                    <div className="inline-flex items-center rounded-lg border border-cyan-700/30 bg-cyan-50/60 overflow-hidden text-xs">
+                                        <a
+                                            href={(activeProduct as any).tastingNoteUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-1.5 px-3 py-2 font-semibold text-cyan-900 hover:bg-cyan-100/70 transition-colors"
+                                            title="Mở xem Tasting Note"
+                                        >
+                                            <Wine size={13} className="text-cyan-700 shrink-0" />
+                                            <span>Xem Tasting Note</span>
+                                            <ExternalLink size={11} className="shrink-0 text-cyan-600" />
+                                        </a>
+                                        <a
+                                            href={`${(activeProduct as any).tastingNoteUrl}${((activeProduct as any).tastingNoteUrl.includes('?') ? '&' : '?')}download=true`}
+                                            download
+                                            className="px-2.5 py-2 border-l border-cyan-700/20 text-cyan-800 hover:bg-cyan-100/70 transition-colors flex items-center justify-center"
+                                            title="Tải về máy"
+                                        >
+                                            <Download size={12} />
+                                        </a>
+                                    </div>
                                 )}
                             </div>
                         </div>

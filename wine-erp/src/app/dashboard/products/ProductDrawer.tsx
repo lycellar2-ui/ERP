@@ -1,15 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Save, Loader2, AlertCircle, Wine, UploadCloud, Trash2, Star, Image as ImageIcon, Award, Plus } from 'lucide-react'
+import { X, Save, Loader2, AlertCircle, Wine, UploadCloud, Trash2, Star, Image as ImageIcon, Award, Plus, FileText, ExternalLink, Paperclip, CheckCircle2 } from 'lucide-react'
 import { Button, Drawer, useConfirmDialog } from '@/components/ui'
 import { compressImage } from '@/lib/compress-image'
-import { uploadToImgBBDirect } from '@/lib/imgbb-client'
+import { uploadProductAsset } from '@/lib/storage-r2'
 import { toast } from 'sonner'
 import {
     ProductInput, createProduct, updateProduct, getProducers, getAppellations, getSuppliers,
     getProductMedia, uploadProductMedia, deleteProductMedia, setPrimaryMedia,
-    saveProductMediaUrl,
+    saveProductMediaUrl, uploadProductTastingNote, deleteProductTastingNote,
     getProductAwards, addProductAward, deleteProductAward,
     getProductById, createProducerInline, getProductEditDetails,
     type ProductMediaRow, type ProductAwardRow, type ProductRow,
@@ -296,6 +296,74 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
 
     const set = (key: keyof ProductFormState, val: any) =>
         setForm(f => ({ ...f, [key]: val }))
+
+    const [uploadingTastingNote, setUploadingTastingNote] = useState(false)
+    const [uploadingSelfDecl, setUploadingSelfDecl] = useState(false)
+
+    const handleUploadTastingNote = async (file: File) => {
+        if (!file) return
+        setUploadingTastingNote(true)
+        try {
+            const fd = new FormData()
+            fd.append('file', file)
+            if (editingId) {
+                const res = await uploadProductTastingNote(editingId, fd)
+                if (res.success && res.url) {
+                    set('tastingNoteUrl', res.url)
+                    toast.success('Đã tải lên Tasting Note lên Cloudflare R2!')
+                } else {
+                    toast.error(res.error || 'Lỗi khi tải lên Tasting Note')
+                }
+            } else {
+                const res = await uploadProductAsset(fd, 'tasting-notes')
+                if (res.success && res.url) {
+                    set('tastingNoteUrl', res.url)
+                    toast.success('Đã tải lên Tasting Note lên Cloudflare R2!')
+                } else {
+                    toast.error(res.error || 'Lỗi khi tải lên Tasting Note')
+                }
+            }
+        } catch (err: any) {
+            toast.error(`Lỗi: ${err.message}`)
+        } finally {
+            setUploadingTastingNote(false)
+        }
+    }
+
+    const handleDeleteTastingNote = async () => {
+        if (!form.tastingNoteUrl) return
+        if (editingId) {
+            const res = await deleteProductTastingNote(editingId)
+            if (res.success) {
+                set('tastingNoteUrl', null)
+                toast.success('Đã xóa Tasting Note')
+            } else {
+                toast.error(res.error || 'Lỗi khi xóa Tasting Note')
+            }
+        } else {
+            set('tastingNoteUrl', null)
+        }
+    }
+
+    const handleUploadSelfDecl = async (file: File) => {
+        if (!file) return
+        setUploadingSelfDecl(true)
+        try {
+            const fd = new FormData()
+            fd.append('file', file)
+            const res = await uploadProductAsset(fd, 'documents')
+            if (res.success && res.url) {
+                set('selfDeclarationUrl', res.url)
+                toast.success('Đã tải lên Bản Tự Công Bố lên Cloudflare R2!')
+            } else {
+                toast.error(res.error || 'Lỗi tải file')
+            }
+        } catch (err: any) {
+            toast.error(`Lỗi: ${err.message}`)
+        } finally {
+            setUploadingSelfDecl(false)
+        }
+    }
 
     const validate = (): boolean => {
         const e: Record<string, string> = {}
@@ -616,28 +684,194 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                         </div>
                     </div>
 
-                    {/* Section: Tài liệu & Link công bố */}
+                    {/* Section: Tài liệu & Tasting Note (Cloudflare R2) */}
                     <div className="space-y-4">
-                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
-                            ── Tài Liệu & Đường Link
-                        </p>
-                        <div className="space-y-4">
-                            <Field label="Đường link Tự Công Bố">
-                                <Input
-                                    type="url"
-                                    value={form.selfDeclarationUrl ?? ''}
-                                    onChange={e => set('selfDeclarationUrl', e.target.value || null)}
-                                    placeholder="https://drive.google.com/... hoặc link công bố"
-                                />
-                            </Field>
-                            <Field label="Đường link Tasting Note">
-                                <Input
-                                    type="url"
-                                    value={form.tastingNoteUrl ?? ''}
-                                    onChange={e => set('tastingNoteUrl', e.target.value || null)}
-                                    placeholder="https://drive.google.com/... hoặc link tasting note"
-                                />
-                            </Field>
+                        <div className="flex items-center justify-between">
+                            <p className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#0891B2' }}>
+                                <FileText size={13} /> Tài Liệu & Tasting Note (Cloudflare R2)
+                            </p>
+                            <span className="text-[10px] text-slate-500 font-medium">Lưu trữ bảo mật R2</span>
+                        </div>
+
+                        {/* Tasting Note */}
+                        <div className="p-3.5 rounded-lg border border-slate-200 bg-white space-y-3">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-semibold uppercase tracking-wide text-slate-700 flex items-center gap-1.5">
+                                    <Wine size={13} className="text-cyan-700" /> Tasting Note (Ghi chú nếm thử)
+                                </span>
+                                {form.tastingNoteUrl && (
+                                    <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
+                                        <CheckCircle2 size={11} /> Đã có tài liệu
+                                    </span>
+                                )}
+                            </div>
+
+                            {form.tastingNoteUrl ? (
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 p-3 rounded-md bg-slate-50 border border-slate-200/80">
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                        <div className="w-8 h-8 rounded bg-cyan-100 flex items-center justify-center shrink-0 text-cyan-800">
+                                            <FileText size={16} />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-xs font-medium text-slate-900 truncate max-w-[280px]">
+                                                {form.tastingNoteUrl.split('/').pop() || 'Tasting Note'}
+                                            </p>
+                                            <p className="text-[10px] text-slate-500 truncate max-w-[280px]">
+                                                {form.tastingNoteUrl}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                                        <a
+                                            href={form.tastingNoteUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="px-2.5 py-1.5 rounded text-xs font-medium bg-cyan-50 text-cyan-800 hover:bg-cyan-100 border border-cyan-300 flex items-center gap-1 transition-colors"
+                                        >
+                                            <ExternalLink size={12} /> Xem file
+                                        </a>
+                                        <button
+                                            type="button"
+                                            onClick={handleDeleteTastingNote}
+                                            className="px-2.5 py-1.5 rounded text-xs font-medium text-rose-700 hover:bg-rose-50 border border-rose-200 transition-colors"
+                                            title="Xóa tài liệu Tasting Note"
+                                        >
+                                            <Trash2 size={12} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <label className="flex flex-col items-center justify-center gap-1.5 px-4 py-4 rounded-lg border-2 border-dashed border-slate-200 hover:border-cyan-600 cursor-pointer bg-slate-50/50 hover:bg-cyan-50/20 transition-all text-center">
+                                    {uploadingTastingNote ? (
+                                        <div className="flex items-center gap-2 text-xs text-cyan-700">
+                                            <Loader2 size={16} className="animate-spin" /> Đang tải lên Cloudflare R2...
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <UploadCloud size={20} className="text-cyan-700" />
+                                            <span className="text-xs font-medium text-slate-700">Tải lên file Tasting Note (PDF, DOCX, Ảnh)</span>
+                                            <span className="text-[10px] text-slate-500">Kéo thả hoặc click để chọn file từ máy tính (Tối đa 35MB)</span>
+                                        </>
+                                    )}
+                                    <input
+                                        type="file"
+                                        className="hidden"
+                                        accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/*"
+                                        disabled={uploadingTastingNote}
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0]
+                                            if (file) handleUploadTastingNote(file)
+                                            e.target.value = ''
+                                        }}
+                                    />
+                                </label>
+                            )}
+
+                            <div className="pt-1">
+                                <details className="text-[11px] text-slate-500">
+                                    <summary className="cursor-pointer hover:text-cyan-800 select-none">Nhập đường link trực tiếp (URL)</summary>
+                                    <div className="pt-2">
+                                        <Input
+                                            type="url"
+                                            value={form.tastingNoteUrl ?? ''}
+                                            onChange={e => set('tastingNoteUrl', e.target.value || null)}
+                                            placeholder="https://... hoặc link file tasting note"
+                                            className="text-xs py-1.5"
+                                        />
+                                    </div>
+                                </details>
+                            </div>
+                        </div>
+
+                        {/* Self-declaration */}
+                        <div className="p-3.5 rounded-lg border border-slate-200 bg-white space-y-3">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-semibold uppercase tracking-wide text-slate-700 flex items-center gap-1.5">
+                                    <Paperclip size={13} className="text-cyan-700" /> Bản Tự Công Bố Sản Phẩm
+                                </span>
+                                {form.selfDeclarationUrl && (
+                                    <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
+                                        <CheckCircle2 size={11} /> Đã có tài liệu
+                                    </span>
+                                )}
+                            </div>
+
+                            {form.selfDeclarationUrl ? (
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 p-3 rounded-md bg-slate-50 border border-slate-200/80">
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                        <div className="w-8 h-8 rounded bg-cyan-100 flex items-center justify-center shrink-0 text-cyan-800">
+                                            <FileText size={16} />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-xs font-medium text-slate-900 truncate max-w-[280px]">
+                                                {form.selfDeclarationUrl.split('/').pop() || 'Tự Công Bố'}
+                                            </p>
+                                            <p className="text-[10px] text-slate-500 truncate max-w-[280px]">
+                                                {form.selfDeclarationUrl}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                                        <a
+                                            href={form.selfDeclarationUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="px-2.5 py-1.5 rounded text-xs font-medium bg-cyan-50 text-cyan-800 hover:bg-cyan-100 border border-cyan-300 flex items-center gap-1 transition-colors"
+                                        >
+                                            <ExternalLink size={12} /> Xem file
+                                        </a>
+                                        <button
+                                            type="button"
+                                            onClick={() => set('selfDeclarationUrl', null)}
+                                            className="px-2.5 py-1.5 rounded text-xs font-medium text-rose-700 hover:bg-rose-50 border border-rose-200 transition-colors"
+                                            title="Xóa bản tự công bố"
+                                        >
+                                            <Trash2 size={12} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <label className="flex flex-col items-center justify-center gap-1 px-4 py-3 rounded-lg border-2 border-dashed border-slate-200 hover:border-cyan-600 cursor-pointer bg-slate-50/50 hover:bg-cyan-50/20 transition-all text-center">
+                                    {uploadingSelfDecl ? (
+                                        <div className="flex items-center gap-2 text-xs text-cyan-700">
+                                            <Loader2 size={16} className="animate-spin" /> Đang tải lên Cloudflare R2...
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <UploadCloud size={16} className="text-cyan-700" />
+                                            <span className="text-xs font-medium text-slate-700">Tải lên Bản Tự Công Bố (PDF/Ảnh)</span>
+                                        </>
+                                    )}
+                                    <input
+                                        type="file"
+                                        className="hidden"
+                                        accept="application/pdf,image/*"
+                                        disabled={uploadingSelfDecl}
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0]
+                                            if (file) handleUploadSelfDecl(file)
+                                            e.target.value = ''
+                                        }}
+                                    />
+                                </label>
+                            )}
+
+                            <div className="pt-1">
+                                <details className="text-[11px] text-slate-500">
+                                    <summary className="cursor-pointer hover:text-cyan-800 select-none">Nhập đường link trực tiếp (URL)</summary>
+                                    <div className="pt-2">
+                                        <Input
+                                            type="url"
+                                            value={form.selfDeclarationUrl ?? ''}
+                                            onChange={e => set('selfDeclarationUrl', e.target.value || null)}
+                                            placeholder="https://... hoặc link tự công bố"
+                                            className="text-xs py-1.5"
+                                        />
+                                    </div>
+                                </details>
+                            </div>
                         </div>
                     </div>
 
@@ -770,36 +1004,15 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                                     if (savedPct > 5) toast.info(`Ảnh đã nén: ${(file.size / 1024 / 1024).toFixed(1)}MB → ${(compressed.size / 1024 / 1024).toFixed(1)}MB (-${savedPct}%)`)
                                                 }
 
-                                                // Direct upload: Browser → ImgBB (bypass Vercel)
-                                                const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY
-                                                if (apiKey) {
-                                                    const imgResult = await uploadToImgBBDirect(compressed, apiKey, compressed.name.replace(/\.[^.]+$/, ''))
-                                                    if (!imgResult.success || !imgResult.url) {
-                                                        toast.error(`Lỗi upload ImgBB: ${imgResult.error}`)
-                                                        return
-                                                    }
-                                                    const res = await saveProductMediaUrl(editingId, {
-                                                        url: imgResult.url,
-                                                        thumbUrl: imgResult.thumbUrl,
-                                                        mediumUrl: imgResult.mediumUrl,
-                                                    })
-                                                    if (res.success && res.media) {
-                                                        setMediaList(prev => [res.media!, ...prev])
-                                                        toast.success('Upload ảnh thành công!')
-                                                    } else {
-                                                        toast.error(`Lỗi lưu ảnh: ${res.error}`)
-                                                    }
+                                                // Direct upload to Cloudflare R2
+                                                const fd = new FormData()
+                                                fd.append('file', compressed)
+                                                const res = await uploadProductMedia(editingId, fd)
+                                                if (res.success && res.media) {
+                                                    setMediaList(prev => [res.media!, ...prev])
+                                                    toast.success('Upload ảnh lên Cloudflare R2 thành công!')
                                                 } else {
-                                                    // Fallback: upload through server action
-                                                    const fd = new FormData()
-                                                    fd.append('file', compressed)
-                                                    const res = await uploadProductMedia(editingId, fd)
-                                                    if (res.success && res.media) {
-                                                        setMediaList(prev => [res.media!, ...prev])
-                                                        toast.success('Upload ảnh thành công!')
-                                                    } else {
-                                                        toast.error(`Lỗi upload: ${res.error}`)
-                                                    }
+                                                    toast.error(`Lỗi upload ảnh: ${res.error}`)
                                                 }
                                             } catch (err: any) {
                                                 toast.error(`Lỗi upload: ${err.message ?? err}`)

@@ -296,3 +296,169 @@ export async function deletePaymentDoc(storagePath: string): Promise<boolean> {
         return false
     }
 }
+
+export type UploadProductAssetResult = {
+    success: boolean
+    url?: string
+    thumbUrl?: string
+    mediumUrl?: string
+    storagePath?: string
+    fileName?: string
+    fileSize?: number
+    mimeType?: string
+    error?: string
+}
+
+/**
+ * Returns permanent URL for a product asset.
+ * If R2_PUBLIC_DOMAIN is configured (e.g., https://pub-xxx.r2.dev or custom cdn), returns the direct CDN URL.
+ * Otherwise returns the internal API route /api/r2-file/... which securely redirects to presigned GET.
+ */
+export function getProductAssetUrl(storagePath: string): string {
+    if (!storagePath) return ''
+    if (storagePath.startsWith('http://') || storagePath.startsWith('https://')) {
+        return storagePath
+    }
+    const cleanPath = storagePath.replace(/^\/+/, '')
+    const config = getR2Config()
+    if (config.publicDomain) {
+        const domain = config.publicDomain.replace(/\/+$/, '')
+        return `${domain}/${cleanPath}`
+    }
+    return `/api/r2-file/${cleanPath}`
+}
+
+/**
+ * Upload a product asset (image, tasting-note, self-declaration doc) directly to Cloudflare R2
+ */
+export async function uploadProductAsset(
+    formData: FormData,
+    folder: 'images' | 'tasting-notes' | 'documents' = 'tasting-notes',
+    customFileName?: string
+): Promise<UploadProductAssetResult> {
+    try {
+        const file = formData.get('file') as File
+        if (!file) {
+            return { success: false, error: 'Không tìm thấy file tải lên' }
+        }
+
+        const maxBytes = folder === 'images' ? 15 * 1024 * 1024 : 35 * 1024 * 1024
+        if (file.size > maxBytes) {
+            return { success: false, error: `Dung lượng file vượt quá giới hạn ${(maxBytes / (1024 * 1024)).toFixed(0)}MB` }
+        }
+
+        const timestamp = Date.now()
+        const originalName = customFileName || file.name
+        const safeName = originalName
+            .replace(/[^a-zA-Z0-9.-]/g, '_')
+            .replace(/_+/g, '_')
+            .slice(0, 80)
+
+        const storagePath = `products/${folder}/${timestamp}_${safeName}`
+        const buffer = Buffer.from(await file.arrayBuffer())
+        const contentType = file.type || 'application/octet-stream'
+
+        const r2 = getR2Client()
+        if (r2) {
+            await r2.client.send(
+                new PutObjectCommand({
+                    Bucket: r2.bucketName,
+                    Key: storagePath,
+                    Body: buffer,
+                    ContentType: contentType,
+                })
+            )
+
+            const url = getProductAssetUrl(storagePath)
+
+            return {
+                success: true,
+                url,
+                storagePath,
+                fileName: originalName,
+                fileSize: file.size,
+                mimeType: contentType,
+            }
+        }
+
+        // Fallback: Supabase Storage
+        const supabaseRes = await uploadSupabaseFile(formData, `products/${folder}`)
+        if (!supabaseRes.success || !supabaseRes.url) {
+            return { success: false, error: supabaseRes.error || 'Lỗi tải file lên máy chủ lưu trữ' }
+        }
+
+        return {
+            success: true,
+            url: supabaseRes.url,
+            storagePath: supabaseRes.path,
+            fileName: originalName,
+            fileSize: file.size,
+            mimeType: contentType,
+        }
+    } catch (err: any) {
+        console.error('[Storage R2] uploadProductAsset error:', err)
+        return { success: false, error: err.message || 'Lỗi không xác định khi upload tài liệu' }
+    }
+}
+
+/**
+ * Upload a raw Buffer to Cloudflare R2 directly (useful for background scripts & bulk imports)
+ */
+export async function uploadBufferToR2(
+    buffer: Buffer,
+    storagePath: string,
+    contentType: string = 'application/octet-stream'
+): Promise<{ success: boolean; url?: string; storagePath?: string; error?: string }> {
+    try {
+        const r2 = getR2Client()
+        if (!r2) {
+            return { success: false, error: 'Không thể kết nối máy chủ Cloudflare R2' }
+        }
+
+        await r2.client.send(
+            new PutObjectCommand({
+                Bucket: r2.bucketName,
+                Key: storagePath,
+                Body: buffer,
+                ContentType: contentType,
+            })
+        )
+
+        const url = getProductAssetUrl(storagePath)
+        return { success: true, url, storagePath }
+    } catch (err: any) {
+        console.error('[Storage R2] uploadBufferToR2 error:', err)
+        return { success: false, error: err.message || 'Lỗi khi upload buffer lên R2' }
+    }
+}
+
+/**
+ * Delete a product asset from Cloudflare R2
+ */
+export async function deleteProductAsset(storagePath: string): Promise<boolean> {
+    try {
+        if (!storagePath) return true
+        let cleanKey = storagePath
+        if (storagePath.startsWith('/api/r2-file/')) {
+            cleanKey = storagePath.replace('/api/r2-file/', '')
+        }
+
+        const r2 = getR2Client()
+        if (r2) {
+            await r2.client.send(
+                new DeleteObjectCommand({
+                    Bucket: r2.bucketName,
+                    Key: cleanKey,
+                })
+            )
+            return true
+        }
+
+        const res = await deleteSupabaseFile(cleanKey)
+        return res.success
+    } catch (err) {
+        console.error('[Storage R2] deleteProductAsset error:', err)
+        return false
+    }
+}
+
