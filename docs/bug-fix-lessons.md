@@ -89,6 +89,7 @@
 80. [BUG-133: Lỗ Hổng Kiểm Soát Truy Cập RBAC Bổ Sung](#bug-133-lỗ-hổng-kiểm-soát-truy-cập-rbac-broken-access-control-đa-tầng)
 81. [BUG-134: Lỗi Giao Diện Tab & Trải Nghiệm Mobile Viewport Màn Hình Quản Lý Tem Rượu (/dashboard/stamps)](#bug-134-lỗi-giao-diện-tab--trải-nghiệm-mobile-viewport-màn-hình-quản-lý-tem-rượu-dashboardstamps--thanh-cuộn-ngang-thừa-vỡ-gạch-chân-tab--bổ-sung-phân-tem-tự-động-theo-đơn-po-nhận-về)
 82. [BUG-135: Lỗi Tải Báo Cáo Tồn Kho & Nhịp Độ Bán Hàng Trên Vercel Production — dbPool.end() BeforeExit Freeze & Unhandled Server Action Exception](#bug-135-lỗi-tải-báo-cáo-tồn-kho--nhịp-độ-bán-hàng-trên-vercel-production--dbpoolend-beforeexit-freeze--unhandled-server-action-exception)
+83. [BUG-136: Build Fail Trên Vercel — Non-Async Function & Object/Type Exports Trong File 'use server' (Turbopack Server Actions)](#bug-136-build-fail-trên-vercel--non-async-function--objecttype-exports-trong-file-use-server-turbopack-server-actions)
 
 ---
 
@@ -3926,6 +3927,46 @@ Người dùng truy cập màn hình Báo cáo Tồn kho & Nhịp độ bán hà
 
 ### Bài học
 > ⚠️ **RULE 135: (1) Trong Next.js 16 / Turbopack, file có chỉ thị `'use server'` TUYỆT ĐỐI CHỈ export các `async function`; KHÔNG export object, array hoặc hằng số tĩnh (vi phạm sẽ phát sinh lỗi ngầm `A "use server" file can only export async functions, found object` khiến toàn bộ action bị sập); (2) Trong môi trường Serverless, TUYỆT ĐỐI KHÔNG lắng nghe sự kiện `beforeExit` để gọi `dbPool.end()`, vì `beforeExit` kích hoạt sau mỗi lần event loop rỗng, làm phá hủy pool trước khi warm start request tiếp theo đến; (3) Với các báo cáo dữ liệu lớn, luôn ưu tiên pre-load ngay tại Server Component (`page.tsx`) kết hợp với API Route GET (`/api/...`) thay vì gọi Server Action trong client `useEffect` để tránh lỗi mismatch hash bản build.**
+
+---
+
+## BUG-136: Build Fail Trên Vercel — Non-Async Function & Object/Type Exports Trong File 'use server' (Turbopack Server Actions)
+
+### Bối cảnh
+Khi triển khai ứng dụng lên môi trường Vercel Production sau khi tích hợp Cloudflare R2 cho Tasting Notes & Media Sản phẩm, quá trình build bằng Turbopack (`next build`) bị thất bại ngay tại giai đoạn "Creating an optimized production build":
+```
+Error: Turbopack build failed with 1 errors:
+./wine-erp/src/lib/storage-r2.ts:317:17
+Ecmascript file had an error
+  315 |  * Otherwise returns the internal API route /api/r2-file/... which securely redirects to presigned GET.
+  316 |  */
+> 317 | export function getProductAssetUrl(storagePath: string): string {
+      |                 ^^^^^^^^^^^^^^^^^^
+Server Actions must be async functions.
+```
+Đồng thời tại phân hệ SOP (`src/app/dashboard/sop/actions.ts`), xuất hiện cảnh báo/lỗi biên dịch do file `'use server'` xuất các hằng số cấu hình đối tượng (`export const PROCESS_GROUPS_META`) và re-export types (`export type { ProcessMarkdownDoc }`).
+
+### Nguyên nhân gốc rễ
+1. **Quy tắc bắt buộc Server Actions của Next.js 16 (Turbopack):**
+   - File `src/lib/storage-r2.ts` có chỉ thị `'use server'` ở dòng 1 nhằm cho phép các hàm như `uploadProductAsset`, `uploadBufferToR2`, `deleteProductAsset` hoạt động như Server Actions an toàn khi upload file.
+   - Tuy nhiên, hàm helper `getProductAssetUrl` được khai báo dưới dạng function đồng bộ (`export function getProductAssetUrl(storagePath: string): string`). Turbopack quét toàn bộ các named export trong file có `'use server'` và cưỡng chế kiểm tra: nếu không có từ khóa `async`, trình biên dịch sẽ chặn đứng tiến trình build với lỗi `Server Actions must be async functions`.
+2. **Xuất hằng số (Object) và Type trong file Server Actions ([sop/actions.ts](file:///d:/Lyruou/wine-erp/src/app/dashboard/sop/actions.ts)):**
+   - File `sop/actions.ts` khai báo `'use server'` nhưng lại `export const PROCESS_GROUPS_META` và `export type { ProcessMarkdownDoc }`.
+   - Turbopack chỉ cho phép export `async function` từ boundary `'use server'`. Bất kỳ export object hay kiểu dữ liệu nào cũng vi phạm ranh giới RPC của React Server Actions.
+
+### Giải pháp
+1. **Chuyển `getProductAssetUrl` Thành Helper Nội Bộ ([storage-r2.ts](file:///d:/Lyruou/wine-erp/src/lib/storage-r2.ts)):**
+   - Bỏ từ khóa `export` khỏi `function getProductAssetUrl(storagePath: string): string`. Hàm này chỉ phục vụ tính toán URL nội bộ bên trong `storage-r2.ts` để gán vào kết quả trả về của các Server Actions async (`uploadProductAsset`, `uploadBufferToR2`).
+   - Các Server Component bên ngoài nếu cần truy cập file trực tiếp sử dụng đường dẫn Route Handler vĩnh viễn `/api/r2-file/[...path]`.
+2. **Tách Biệt Constants & Types Khỏi Server Actions ([sop/constants.ts](file:///d:/Lyruou/wine-erp/src/app/dashboard/sop/constants.ts)):**
+   - Tạo file độc lập `wine-erp/src/app/dashboard/sop/constants.ts` (không chứa `'use server'`), chuyển toàn bộ `PROCESS_GROUPS_META` và interface `ProcessMarkdownDoc` sang file này.
+   - Cập nhật [actions.ts](file:///d:/Lyruou/wine-erp/src/app/dashboard/sop/actions.ts) và [SopCatalogClient.tsx](file:///d:/Lyruou/wine-erp/src/app/dashboard/sop/SopCatalogClient.tsx) import trực tiếp từ `constants.ts`.
+3. **Kiểm Tra Xác Minh Toàn Diện:**
+   - Chạy lệnh build cục bộ `npm run build` trên Turbopack: Toàn bộ 71/71 static pages biên dịch thành công 100%, không còn bất kỳ lỗi nào liên quan đến Server Actions.
+
+### Bài học
+> ⚠️ **RULE 136: Trong kiến trúc Next.js App Router (Turbopack / Next.js 16+), BẤT KỲ file nào có chỉ thị `'use server'` ở đầu file (hoặc được import bởi Server Actions) TUYỆT ĐỐI CHỈ được export `async function`. KHÔNG ĐƯỢC export function đồng bộ (`sync function`), KHÔNG export hằng số (`const/object/array`), và KHÔNG export kiểu dữ liệu (`export type`). Mọi constants, helpers dùng chung hoặc types BẮT BUỘC phải được tách sang file riêng biệt (ví dụ: `constants.ts`, `types.ts`, `helpers.ts`) KHÔNG có chỉ thị `'use server'`.**
+
 
 
 

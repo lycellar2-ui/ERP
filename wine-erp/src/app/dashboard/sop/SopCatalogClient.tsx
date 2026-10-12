@@ -28,11 +28,8 @@ import {
 } from 'lucide-react'
 import { SOP_CATEGORIES, type SopCategory, type SopItem } from '@/data/sops'
 import { type SopFormFile } from '@/data/forms-data'
-import {
-    type ProcessMarkdownDoc,
-    PROCESS_GROUPS_META,
-    getMarkdownDocsAction
-} from './actions'
+import { getMarkdownDocsAction } from './actions'
+import { PROCESS_GROUPS_META, type ProcessMarkdownDoc } from './constants'
 import { SopDetailModal } from './SopDetailModal'
 import { SopEditModal } from './SopEditModal'
 import { SopFormUploadModal } from './SopFormUploadModal'

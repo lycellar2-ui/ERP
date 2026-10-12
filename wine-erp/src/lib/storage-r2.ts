@@ -310,11 +310,11 @@ export type UploadProductAssetResult = {
 }
 
 /**
- * Returns permanent URL for a product asset.
+ * Internal helper: Returns permanent URL for a product asset.
  * If R2_PUBLIC_DOMAIN is configured (e.g., https://pub-xxx.r2.dev or custom cdn), returns the direct CDN URL.
  * Otherwise returns the internal API route /api/r2-file/... which securely redirects to presigned GET.
  */
-export function getProductAssetUrl(storagePath: string): string {
+function getProductAssetUrl(storagePath: string): string {
     if (!storagePath) return ''
     if (storagePath.startsWith('http://') || storagePath.startsWith('https://')) {
         return storagePath
