@@ -140,7 +140,7 @@ export default function StampsClient({
     const [isPending, startTransition] = useTransition()
 
     // Navigation Tabs
-    const [activeTab, setActiveTab] = useState<'batches' | 'po_allocations' | 'logbook' | 'destructions'>('batches')
+    const [activeTab, setActiveTab] = useState<'po_allocations' | 'logbook' | 'batches' | 'destructions'>('po_allocations')
 
     // Modals
     const [showAddForm, setShowAddForm] = useState(false)
@@ -832,10 +832,10 @@ export default function StampsClient({
             {/* Navigation Tabs */}
             <div className="flex items-center gap-1 sm:gap-2 border-b border-lys-border mb-4 sm:mb-6 overflow-x-auto no-scrollbar py-0.5">
                 {[
-                    { id: 'batches', label: `Lô Phôi Tem (${purchases.length})`, icon: Package },
                     { id: 'po_allocations', label: `Phân & Dán Tem PO (${poAllocations.length})`, icon: Stamp },
-                    { id: 'logbook', label: 'Sổ Tem (Logbook)', icon: BookOpen },
-                    { id: 'destructions', label: `Biên Bản Hủy (${destructions.length})`, icon: Trash2 },
+                    { id: 'logbook', label: 'Sổ Tem Điện Tử', icon: BookOpen },
+                    { id: 'batches', label: `Lô Phôi Tem (${purchases.length})`, icon: Package },
+                    { id: 'destructions', label: `Hủy & Hao Hụt (${destructions.length})`, icon: Trash2 },
                 ].map(tab => {
                     const Icon = tab.icon
                     const active = activeTab === tab.id
