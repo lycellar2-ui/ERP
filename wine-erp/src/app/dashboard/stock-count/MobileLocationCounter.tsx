@@ -11,6 +11,7 @@ import { AddUnlistedModal } from './AddUnlistedModal'
 import { recordMobileCountLine, completeZoneCount, startStockCount } from './actions'
 import { formatCasesAndBottles } from '@/lib/utils'
 import { useConfirmDialog } from '@/components/ui'
+import { toast } from 'sonner'
 
 export type LineItem = {
     id: string
@@ -312,7 +313,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
             }
         } else {
             playFeedbackSound('alert')
-            alert(res.error || 'Không thể lưu dòng kiểm kê')
+            toast.error(res.error || 'Không thể lưu dòng kiểm kê')
         }
     }
 
@@ -327,7 +328,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
             setShowZoneReportModal(true)
         } else {
             playFeedbackSound('alert')
-            alert(res.error || 'Không thể tạo báo cáo đối soát khu vực')
+            toast.error(res.error || 'Không thể tạo báo cáo đối soát khu vực')
         }
     }
 
@@ -370,7 +371,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                             onClick={() => {
                                 if (isBlindLocked) {
                                     playFeedbackSound('alert')
-                                    alert('Chế độ kiểm kê giấu tồn sổ: Tồn sổ sách và chênh lệch được bảo mật theo quy định kiểm toán, không hiển thị trên thiết bị đếm hiện trường.')
+                                    toast.info('Chế độ kiểm kê giấu tồn sổ: Tồn sổ sách và chênh lệch được bảo mật theo quy định kiểm toán, không hiển thị trên thiết bị đếm hiện trường.')
                                     return
                                 }
                                 setIsBlind(!isBlind)
@@ -414,7 +415,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                     {onOpenTableModal && (
                         <button
                             onClick={onOpenTableModal}
-                            className="flex-1 min-h-[40px] bg-[#0891B2] hover:bg-[#0E7490] text-white font-bold rounded-md text-xs flex items-center justify-center gap-1 shadow-2xs cursor-pointer active:scale-95 transition"
+                            className="flex-1 min-h-[40px] bg-[#0E7490] hover:bg-[#0E7490] text-white font-bold rounded-md text-xs flex items-center justify-center gap-1 shadow-2xs cursor-pointer active:scale-95 transition"
                         >
                             Bảng kiểm kê dạng lưới
                         </button>
@@ -458,7 +459,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
 
             {/* ─── TOAST NOTIFICATION ─── */}
             {showSuccessToast && (
-                <div className="fixed top-24 left-1/2 -translate-x-1/2 bg-[#0891B2] text-white font-bold text-xs px-4 py-2.5 rounded-full shadow-xl z-50 flex items-center gap-2 border border-cyan-300/40">
+                <div className="fixed top-24 left-1/2 -translate-x-1/2 bg-[#0E7490] text-white font-bold text-xs px-4 py-2.5 rounded-full shadow-xl z-50 flex items-center gap-2 border border-cyan-300/40">
                     <span>{toastMessage}</span>
                 </div>
             )}
@@ -615,7 +616,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     setSearchTerm('')
                                     setActiveIdx(0)
                                 }}
-                                className="min-h-[48px] px-5 bg-[#0891B2] hover:bg-[#0E7490] text-white font-bold text-xs rounded-md shadow-xs cursor-pointer active:scale-95 transition"
+                                className="min-h-[48px] px-5 bg-[#0E7490] hover:bg-[#0E7490] text-white font-bold text-xs rounded-md shadow-xs cursor-pointer active:scale-95 transition"
                             >
                                 Hiển thị lại toàn bộ {lines.length} sản phẩm
                             </button>
@@ -1246,7 +1247,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                             )}
                             <button
                                 onClick={() => setShowZoneReportModal(false)}
-                                className="flex-1 min-h-[44px] bg-[#0E7490] hover:bg-[#0891B2] text-white font-bold text-xs rounded-md shadow-xs cursor-pointer active:scale-95 transition"
+                                className="flex-1 min-h-[44px] bg-[#0E7490] hover:bg-[#0E7490] text-white font-bold text-xs rounded-md shadow-xs cursor-pointer active:scale-95 transition"
                             >
                                 Tiếp tục kiểm kê
                             </button>

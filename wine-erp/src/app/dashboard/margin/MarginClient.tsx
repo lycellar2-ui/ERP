@@ -748,7 +748,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                         </button>
                         <button
                             onClick={handleExportCsv}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 shadow-lg shadow-emerald-950/20 bg-[#0891B2] text-white hover:bg-[#0891B2]"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 shadow-lg shadow-emerald-950/20 bg-[#0E7490] text-white hover:bg-[#0E7490]"
                         >
                             <Download size={13} /> Xuất Báo Giá (CSV)
                         </button>

@@ -354,7 +354,7 @@ export function LiveCameraModal({
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="px-5 py-3 text-xs font-bold rounded-md bg-[#0891B2] text-white flex items-center gap-2 shadow-lg"
+                                className="px-5 py-3 text-xs font-bold rounded-md bg-[#0E7490] text-white flex items-center gap-2 shadow-lg"
                             >
                                 <Camera size={16} /> {locale === 'en' ? 'Open device camera' : 'Mở camera thiết bị'}
                             </button>
@@ -409,7 +409,7 @@ export function LiveCameraModal({
                                 <button
                                     type="button"
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="flex-1 py-3 text-xs font-bold rounded-md flex items-center justify-center gap-2 bg-[#0891B2] text-white"
+                                    className="flex-1 py-3 text-xs font-bold rounded-md flex items-center justify-center gap-2 bg-[#0E7490] text-white"
                                 >
                                     <Camera size={16} /> {locale === 'en' ? 'Open Camera Now' : 'Mở Camera Chụp Ngay'}
                                 </button>
@@ -427,7 +427,7 @@ export function LiveCameraModal({
                             <button
                                 type="button"
                                 onClick={handleConfirm}
-                                className="flex-1 py-3 text-xs font-bold rounded-md flex items-center justify-center gap-2 bg-[#0891B2] text-white"
+                                className="flex-1 py-3 text-xs font-bold rounded-md flex items-center justify-center gap-2 bg-[#0E7490] text-white"
                             >
                                 <CheckCircle2 size={16} /> {locale === 'en' ? 'Confirm Photo' : 'Xác Nhận Ảnh Này'}
                             </button>

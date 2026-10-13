@@ -306,7 +306,10 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
     const handlePrint = useCallback((lang: 'BILINGUAL' | 'VI' | 'EN' = 'BILINGUAL') => {
         if (!detail) return
         const printWindow = window.open('', '_blank')
-        if (!printWindow) return alert('Hãy cấp quyền mở popup trên trình duyệt của bạn')
+        if (!printWindow) {
+            toast.warning('Hãy cấp quyền mở popup trên trình duyệt của bạn')
+            return
+        }
 
         const isTasting = detail.category === 'TASTING' || detail.category === 'SPECIAL_EVENT' || detail.category === 'INTERNAL_TRAINING'
         const isTraining = detail.category === 'INTERNAL_TRAINING'
@@ -1005,7 +1008,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 </div>
                 <button
                     onClick={() => setShowCreate(true)}
-                    className="flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-md transition-all w-full sm:w-auto cursor-pointer shadow-xs bg-[#0891B2] hover:bg-[#0E7490] text-white"
+                    className="flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-md transition-all w-full sm:w-auto cursor-pointer shadow-xs bg-[#0E7490] hover:bg-[#0E7490] text-white"
                 >
                     <Plus size={16} /> {t.header.createBtn}
                 </button>
@@ -1382,8 +1385,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); handleApproval(p.id, 'APPROVE') }}
                                                                 disabled={actionLoading === p.id}
-                                                                className="px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap hover:scale-105"
-                                                                style={{ background: '#15803D', color: '#0F172A' }}>
+                                                                className="px-2.5 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap text-white bg-tone-success-fg hover:opacity-90 cursor-pointer">
                                                                 {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} className="inline mr-1" />}
                                                                 {t.actions.approve}
                                                             </button>
@@ -1393,8 +1395,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                                     const reason = prompt(locale === 'en' ? 'Reason for rejection:' : 'Lý do từ chối:')
                                                                     if (reason) handleApproval(p.id, 'REJECT', reason)
                                                                 }}
-                                                                className="px-2 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap hover:bg-rose-900/30"
-                                                                style={{ background: 'rgba(185,28,28,0.15)', color: '#FF6B6B', border: '1px solid rgba(185,28,28,0.4)' }}>
+                                                                className="px-2 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap bg-tone-danger-bg text-tone-danger-fg border border-tone-danger-border hover:bg-red-100 cursor-pointer">
                                                                 <XCircle size={12} className="inline mr-1" />{t.actions.reject}
                                                             </button>
                                                         </>
@@ -1958,7 +1959,8 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
     const handleAutoFillPromoContent = () => {
         if (!selectedBuyProduct) {
-            return alert(locale === 'en' ? 'Please select a product first' : 'Vui lòng chọn sản phẩm áp dụng khuyến mãi trước')
+            toast.warning(locale === 'en' ? 'Please select a product first' : 'Vui lòng chọn sản phẩm áp dụng khuyến mãi trước')
+            return
         }
         const giftProdName = selectedGiftProduct?.productName || selectedBuyProduct.productName
         const giftProdSku = selectedGiftProduct?.skuCode || selectedBuyProduct.skuCode
@@ -2023,17 +2025,20 @@ function CreateDrawer({ onClose, userId, onCreated }: {
     }, [usableCustomers, selectedCustForProposal])
 
     const handleSave = async () => {
-        if (!form.title || !form.content) return alert(locale === 'en' ? 'Please enter title and content' : 'Vui lòng nhập tiêu đề và nội dung')
+        if (!form.title || !form.content) { toast.warning(locale === 'en' ? 'Please enter title and content' : 'Vui lòng nhập tiêu đề và nội dung'); return }
         if (form.category === 'PRICE_ADJUSTMENT') {
-            if (!form.customerId) return alert(locale === 'en' ? 'Please select applicable customer' : 'Vui lòng chọn khách hàng áp dụng')
+            if (!form.customerId) { toast.warning(locale === 'en' ? 'Please select applicable customer' : 'Vui lòng chọn khách hàng áp dụng'); return }
             if ((form.scope === 'ENTIRE_PORTFOLIO' || form.scope === 'MIXED') && !form.discountPct) {
-                return alert(locale === 'en' ? 'Please enter portfolio discount percentage' : 'Vui lòng nhập % chiết khấu toàn danh mục')
+                toast.warning(locale === 'en' ? 'Please enter portfolio discount percentage' : 'Vui lòng nhập % chiết khấu toàn danh mục')
+                return
             }
             if ((form.scope === 'SPECIFIC_PRODUCTS' || form.scope === 'MIXED') && priceLines.length === 0) {
-                return alert(locale === 'en' ? 'Please add proposed pricing products' : 'Vui lòng thêm sản phẩm đề xuất giá')
+                toast.warning(locale === 'en' ? 'Please add proposed pricing products' : 'Vui lòng thêm sản phẩm đề xuất giá')
+                return
             }
             if (priceLines.some(line => !line.productId)) {
-                return alert(locale === 'en' ? 'Please select products for all lines' : 'Vui lòng chọn đầy đủ sản phẩm cho các dòng đề xuất')
+                toast.warning(locale === 'en' ? 'Please select products for all lines' : 'Vui lòng chọn đầy đủ sản phẩm cho các dòng đề xuất')
+                return
             }
         }
         const isTastingCategory = form.category === 'TASTING' || form.category === 'SPECIAL_EVENT'
@@ -2042,34 +2047,42 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
         if (isPromotionCategory) {
             if (!promoConfig.buyProductId) {
-                return alert(locale === 'en' ? 'Please select the main product for promotion' : 'Vui lòng chọn mã sản phẩm áp dụng khuyến mãi')
+                toast.warning(locale === 'en' ? 'Please select the main product for promotion' : 'Vui lòng chọn mã sản phẩm áp dụng khuyến mãi')
+                return
             }
             const activeGiftId = promoConfig.giftType === 'SAME_PRODUCT' ? promoConfig.buyProductId : promoConfig.giftProductId
             if (!activeGiftId) {
-                return alert(locale === 'en' ? 'Please select gift product' : 'Vui lòng chọn sản phẩm quà tặng')
+                toast.warning(locale === 'en' ? 'Please select gift product' : 'Vui lòng chọn sản phẩm quà tặng')
+                return
             }
             if (promoConfig.targetChannels.length === 0) {
-                return alert(locale === 'en' ? 'Please select at least one customer channel' : 'Vui lòng chọn ít nhất một kênh khách hàng áp dụng')
+                toast.warning(locale === 'en' ? 'Please select at least one customer channel' : 'Vui lòng chọn ít nhất một kênh khách hàng áp dụng')
+                return
             }
             if (!form.startDate || !form.endDate) {
-                return alert(locale === 'en' ? 'Please select campaign start and end date' : 'Vui lòng chọn thời gian bắt đầu và kết thúc khuyến mãi')
+                toast.warning(locale === 'en' ? 'Please select campaign start and end date' : 'Vui lòng chọn thời gian bắt đầu và kết thúc khuyến mãi')
+                return
             }
             if (new Date(form.startDate) > new Date(form.endDate)) {
-                return alert(locale === 'en' ? 'End date must be after start date' : 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu')
+                toast.warning(locale === 'en' ? 'End date must be after start date' : 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu')
+                return
             }
         }
 
         if (isTastingCategory) {
             if (priceLines.length === 0) {
-                return alert(locale === 'en' ? 'Please select at least 1 tasting product' : 'Vui lòng chọn ít nhất 1 mã sản phẩm nếm thử (Tasting)')
+                toast.warning(locale === 'en' ? 'Please select at least 1 tasting product' : 'Vui lòng chọn ít nhất 1 mã sản phẩm nếm thử (Tasting)')
+                return
             }
             if (priceLines.some(line => !line.productId)) {
-                return alert(locale === 'en' ? 'Please select products for all tasting lines' : 'Vui lòng chọn đầy đủ mã sản phẩm cho các dòng tasting')
+                toast.warning(locale === 'en' ? 'Please select products for all tasting lines' : 'Vui lòng chọn đầy đủ mã sản phẩm cho các dòng tasting')
+                return
             }
         }
         if (isTrainingCategory && priceLines.length > 0) {
             if (priceLines.some(line => !line.productId)) {
-                return alert(locale === 'en' ? 'Please select products for all training sample lines' : 'Vui lòng chọn đầy đủ sản phẩm cho các dòng rượu mẫu đào tạo')
+                toast.warning(locale === 'en' ? 'Please select products for all training sample lines' : 'Vui lòng chọn đầy đủ sản phẩm cho các dòng rượu mẫu đào tạo')
+                return
             }
         }
         setSaving(true)
@@ -2133,7 +2146,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
             createdBy: userId,
         })
         if (result.success) onCreated()
-        else alert(result.error)
+        else toast.error(result.error)
         setSaving(false)
     }
 
@@ -2631,7 +2644,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                                 )
                                                             }}
                                                             className={`px-2 py-1 rounded text-[11px] font-medium flex items-center gap-1 transition ${
-                                                                isSelected ? 'bg-[#0891B2] text-white font-bold' : 'bg-white text-slate-900 border border-slate-200 hover:border-[#0E7490]'
+                                                                isSelected ? 'bg-[#0E7490] text-white font-bold' : 'bg-white text-slate-900 border border-slate-200 hover:border-[#0E7490]'
                                                             }`}
                                                         >
                                                             {isSelected ? <Check size={11} /> : <Plus size={11} />}

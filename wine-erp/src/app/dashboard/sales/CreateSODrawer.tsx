@@ -1353,14 +1353,15 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             <table className="w-full text-xs text-left border-collapse" style={{ minWidth: '600px' }}>
                                                 <thead>
                                                     <tr className="bg-white text-slate-500 border-b border-slate-200 font-semibold">
-                                                        <th className="px-3 py-2.5" style={{ minWidth: '300px' }}>{t.thProduct}</th>
+                                                        <th className="px-3 py-2.5" style={{ minWidth: '280px' }}>{t.thProduct}</th>
                                                         {hasCustomerCodes && (
                                                             <th className="px-3 py-2.5 w-24 text-center text-amber-500 font-bold">{t.thCustomerCode}</th>
                                                         )}
                                                         <th className="px-3 py-2.5 w-20 text-center">{t.thStock} {entities.find(e => e.id === legalEntityId)?.code ? `[${entities.find(e => e.id === legalEntityId)?.code}]` : ''}</th>
                                                         <th className="px-3 py-2.5 w-20 text-center">{t.thQty}</th>
                                                         <th className="px-3 py-2.5 w-28 text-right">{t.thUnitPrice}</th>
-                                                        <th className="px-3 py-2.5 w-20 text-center">{t.thDiscount}</th>
+                                                        <th className="px-3 py-2.5 w-16 text-center">{t.thDiscount}</th>
+                                                        <th className="px-3 py-2.5 w-18 text-center">VAT</th>
                                                         <th className="px-3 py-2.5 w-28 text-right">{t.thTotal}</th>
                                                         <th className="px-3 py-2.5 w-10 text-center"></th>
                                                     </tr>
@@ -1494,6 +1495,18 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                         className="w-12 px-1 py-1 text-xs text-center rounded outline-none"
                                                                         style={{ ...inputStyle }}
                                                                     />
+                                                                </td>
+                                                                <td className="px-3 py-2 text-center">
+                                                                    <select
+                                                                        value={line.vatRate ?? 10}
+                                                                        onChange={e => updateLine(i, 'vatRate', Number(e.target.value))}
+                                                                        className="w-16 px-1 py-1 text-xs text-center rounded outline-none"
+                                                                        style={{ ...inputStyle }}
+                                                                    >
+                                                                        <option value={10}>10%</option>
+                                                                        <option value={8}>8%</option>
+                                                                        <option value={0}>0%</option>
+                                                                    </select>
                                                                 </td>
                                                                 <td className="px-3 py-2 text-right font-mono font-bold text-[#0891B2]">
                                                                     {formatCurrency(lineTotal)}

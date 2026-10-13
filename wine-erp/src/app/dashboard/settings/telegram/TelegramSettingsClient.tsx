@@ -85,7 +85,7 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
             {/* Status Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {/* Connection Status */}
-                <div className={`p-4 rounded-xl border bg-white shadow-2xs ${status.configured ? 'border-emerald-500/20' : 'border-rose-500/20'}`}>
+                <div className={`p-4 rounded-lg border bg-white shadow-2xs ${status.configured ? 'border-emerald-500/20' : 'border-rose-500/20'}`}>
                     <div className="flex items-center gap-2 mb-2">
                         <div className={`w-2.5 h-2.5 rounded-full ${status.configured ? 'bg-emerald-600 shadow-[0_0_8px_rgba(21,128,61,0.5)]' : 'bg-rose-600 shadow-[0_0_8px_rgba(185,28,28,0.5)]'}`} />
                         <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">BOT TOKEN</span>
@@ -106,7 +106,7 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
                 </div>
 
                 {/* Webhook Status */}
-                <div className={`p-4 rounded-xl border bg-white shadow-2xs ${status.webhookActive ? 'border-emerald-500/20' : 'border-amber-500/20'}`}>
+                <div className={`p-4 rounded-lg border bg-white shadow-2xs ${status.webhookActive ? 'border-emerald-500/20' : 'border-amber-500/20'}`}>
                     <div className="flex items-center gap-2 mb-2">
                         <div className={`w-2.5 h-2.5 rounded-full ${status.webhookActive ? 'bg-emerald-600 shadow-[0_0_8px_rgba(21,128,61,0.5)]' : 'bg-amber-600 shadow-[0_0_8px_rgba(180,83,9,0.5)]'}`} />
                         <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">WEBHOOK</span>
@@ -132,7 +132,7 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
                 </div>
 
                 {/* CEO Chat */}
-                <div className={`p-4 rounded-xl border bg-white shadow-2xs ${status.ceoChatId ? 'border-emerald-500/20' : 'border-rose-500/20'}`}>
+                <div className={`p-4 rounded-lg border bg-white shadow-2xs ${status.ceoChatId ? 'border-emerald-500/20' : 'border-rose-500/20'}`}>
                     <div className="flex items-center gap-2 mb-2">
                         <div className={`w-2.5 h-2.5 rounded-full ${status.ceoChatId ? 'bg-emerald-600 shadow-[0_0_8px_rgba(21,128,61,0.5)]' : 'bg-rose-600 shadow-[0_0_8px_rgba(185,28,28,0.5)]'}`} />
                         <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">CEO CHAT ID</span>
@@ -155,14 +155,14 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
 
             {/* Error Alert */}
             {status.lastError && (
-                <div className="p-3.5 sm:p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+                <div className="p-3.5 sm:p-4 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
                     <AlertTriangle size={16} className="text-rose-600 shrink-0" />
                     <span><strong>Lỗi gần nhất:</strong> {status.lastError}</span>
                 </div>
             )}
 
             {/* Commands Section */}
-            <div className="p-4 sm:p-6 rounded-xl border border-slate-200 bg-white shadow-2xs">
+            <div className="p-4 sm:p-6 rounded-lg border border-slate-200 bg-white shadow-2xs">
                 <h2 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-4">
                     <Terminal size={17} className="text-[#0891B2]" />
                     <span>Các lệnh Bot</span>
@@ -186,7 +186,7 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
             </div>
 
             {/* Notification Events Section */}
-            <div className="p-4 sm:p-6 rounded-xl border border-slate-200 bg-white shadow-2xs">
+            <div className="p-4 sm:p-6 rounded-lg border border-slate-200 bg-white shadow-2xs">
                 <h2 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-4">
                     <Bell size={17} className="text-[#0891B2]" />
                     <span>Thông báo tự động (Push)</span>
@@ -210,7 +210,7 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
             </div>
 
             {/* Actions */}
-            <div className="p-4 sm:p-6 rounded-xl border border-slate-200 bg-white shadow-2xs space-y-3">
+            <div className="p-4 sm:p-6 rounded-lg border border-slate-200 bg-white shadow-2xs space-y-3">
                 <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
                     <Send size={17} className="text-[#0891B2]" />
                     <span>Hành động</span>
@@ -255,7 +255,7 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
             </div>
 
             {/* Setup Guide */}
-            <div className="p-4 sm:p-6 rounded-xl border border-slate-200 bg-white shadow-2xs">
+            <div className="p-4 sm:p-6 rounded-lg border border-slate-200 bg-white shadow-2xs">
                 <h2 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-3">
                     <BookOpen size={17} className="text-[#0891B2]" />
                     <span>Hướng dẫn cài đặt</span>

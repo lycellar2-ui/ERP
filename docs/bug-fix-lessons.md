@@ -90,6 +90,7 @@
 81. [BUG-134: Lỗi Giao Diện Tab & Trải Nghiệm Mobile Viewport Màn Hình Quản Lý Tem Rượu (/dashboard/stamps)](#bug-134-lỗi-giao-diện-tab--trải-nghiệm-mobile-viewport-màn-hình-quản-lý-tem-rượu-dashboardstamps--thanh-cuộn-ngang-thừa-vỡ-gạch-chân-tab--bổ-sung-phân-tem-tự-động-theo-đơn-po-nhận-về)
 82. [BUG-135: Lỗi Tải Báo Cáo Tồn Kho & Nhịp Độ Bán Hàng Trên Vercel Production — dbPool.end() BeforeExit Freeze & Unhandled Server Action Exception](#bug-135-lỗi-tải-báo-cáo-tồn-kho--nhịp-độ-bán-hàng-trên-vercel-production--dbpoolend-beforeexit-freeze--unhandled-server-action-exception)
 83. [BUG-136: Build Fail Trên Vercel — Non-Async Function & Object/Type Exports Trong File 'use server' (Turbopack Server Actions)](#bug-136-build-fail-trên-vercel--non-async-function--objecttype-exports-trong-file-use-server-turbopack-server-actions)
+84. [BUG-137: Audit Toàn Diện UI/UX Toàn Hệ Thống — Skeleton Trắng-Trên-Trắng, Thiếu Header Title, Native Alert/Confirm, Class Dark Mode & Độ Tương Phản WCAG AA](#bug-137-audit-toàn-diện-uiux-toàn-hệ-thống--skeleton-trắng-trên-trắng-thiếu-header-title-native-alertconfirm-class-dark-mode--độ-tương-phản-wcag-aa)
 
 ---
 
@@ -3966,6 +3967,50 @@ Server Actions must be async functions.
 
 ### Bài học
 > ⚠️ **RULE 136: Trong kiến trúc Next.js App Router (Turbopack / Next.js 16+), BẤT KỲ file nào có chỉ thị `'use server'` ở đầu file (hoặc được import bởi Server Actions) TUYỆT ĐỐI CHỈ được export `async function`. KHÔNG ĐƯỢC export function đồng bộ (`sync function`), KHÔNG export hằng số (`const/object/array`), và KHÔNG export kiểu dữ liệu (`export type`). Mọi constants, helpers dùng chung hoặc types BẮT BUỘC phải được tách sang file riêng biệt (ví dụ: `constants.ts`, `types.ts`, `helpers.ts`) KHÔNG có chỉ thị `'use server'`.**
+
+---
+
+## BUG-137: Audit Toàn Diện UI/UX Toàn Hệ Thống — Skeleton Trắng-Trên-Trắng, Thiếu Header Title, Native Alert/Confirm, Class Dark Mode & Độ Tương Phản WCAG AA
+
+**Ngày:** 2026-10-14
+**Severity:** 🟠 Medium — Trải nghiệm người dùng (UI/UX), tính đồng nhất Design System & Accessibility
+
+### Triệu chứng
+Qua đợt kiểm tra chuyên sâu toàn bộ 38 routes và tất cả components trong `wine-erp/src`, phát hiện 7 nhóm lỗi UI/UX hệ thống:
+1. **Skeleton Loading vô hình (Trắng-trên-Trắng):** Khi chuyển trang giữa 34+ phân hệ dùng chung `(subpage-loading).tsx`, `DashboardShell.tsx` (`PageSkeleton`), `ModuleLoading.tsx`, `dashboard/loading.tsx`, `reconciliation/loading.tsx`, `shipments/loading.tsx`, và `sop/loading.tsx`, các thanh skeleton có `background: '#FFFFFF'` nằm trên thẻ card cũng có `background: '#FFFFFF'`, khiến người dùng chỉ thấy khung trắng rỗng thay vì hiệu ứng shimmer loading. Ngoài ra, `dashboard/loading.tsx` dùng `Math.random()` trong render gây nguy cơ hydration mismatch, và 3 route mới (`hr`, `margin`, `sales/visits`) thiếu file `loading.tsx`.
+2. **Header hiển thị sai tiêu đề phân hệ:** Khi truy cập `/dashboard/hr`, `/dashboard/sop`, `/dashboard/pipeline`, hoặc `/dashboard/settings/telegram`, thanh `Header.tsx` hiển thị cứng tiêu đề `"Tổng quan Hệ thống"` thay vì tên phân hệ tương ứng.
+3. **Còn sót hộp thoại `window.confirm()` & `window.alert()` mặc định của trình duyệt:**
+   - 3 vị trí gọi `confirm()` thô sơ trong `BankReconciliationTab.tsx` và `PaymentRequestsClient.tsx` (1 vị trí gọi `useConfirmDialog` nhưng quên render `{dialog}` trong JSX).
+   - 46 vị trí gọi `alert()` đồng bộ làm chặn luồng giao diện tại 9 file (`ExcelImportDialog`, `ChannelMappingTab`, `CustomerRulesTab`, `ProposalsClient`, `CustomersClient`, `MobileLocationCounter`, `StockCountTableModal`, `StockCountClient`, `QuotationPublicView`).
+4. **Rò rỉ 243 class `dark:*` và 87 class bo góc quá đà (`rounded-xl`/`2xl`/`3xl`):** Phân hệ SOP (`SopCatalogClient`, `SopEditModal`, `SopPortalView`, `MarkdownViewer`) được viết sau đợt codemod Light Mode nên chứa 243 class `dark:*` và `rounded-xl/2xl`.
+5. **Độ tương phản nút bấm chính chưa đạt chuẩn WCAG AA & lỗi màu chữ nút Duyệt:**
+   - Nút chính dùng `bg-[#0891B2] text-white` chỉ đạt tỷ lệ tương phản `3.7:1` (thấp hơn ngưỡng chuẩn WCAG AA `4.5:1` cho chữ thường).
+   - Trong `ProposalsClient.tsx`, nút "Duyệt" có nền xanh đậm `#15803D` nhưng lại gán chữ màu tối `#0F172A` khiến chữ khó đọc.
+6. **Còn sót màu tím (`text-purple-600`) và mã màu Dark Mode cũ (`#87CBB9`):** Vi phạm quy tắc Purple Ban trong `SupplierDetailDrawer.tsx` và còn sót mã màu mint tối `#87CBB9` trong dữ liệu biểu đồ (`dashboard/actions.ts`, `crm/actions.ts`).
+7. **Ký tự Unicode `✕` làm nút đóng Modal:** Trong `StampsClient.tsx`, 3 nút đóng modal dùng ký tự văn bản `✕` thay vì icon SVG `<X />` của `lucide-react` và thiếu `aria-label`.
+
+### Nguyên nhân gốc rễ
+- **Codemod tự động đổi màu mù ngữ cảnh:** Script codemod chuyển từ Dark sang Light trước đây đã thay thế hàng loạt cả màu nền card (`#1B2E3D` → `#FFFFFF`) lẫn màu thanh skeleton bên trong (`#142433` → `#FFFFFF`), biến các thanh skeleton thành trắng trên nền trắng.
+- **Thiếu đồng bộ checklist khi thêm module mới:** Các module mới (`hr`, `sop`, `margin`, `sales/visits`) được bổ sung nhưng quên đăng ký route title trong `getHeaderTitle()` của `Header.tsx` và quên tạo `loading.tsx`.
+- **Thói quen dùng `alert()` nhanh khi xử lý lỗi form/upload:** Một số modal/drawer sử dụng `alert()` thay vì hệ thống thông báo `toast` (`sonner`) đã có sẵn ở `RootLayout`.
+
+### Cách fix
+1. **Phục hồi toàn bộ Skeleton Loading & chống Hydration Mismatch:**
+   - Đổi màu các khối/thanh skeleton bên trong card trắng sang bảng màu xám sáng chuẩn Light Mode (`#E2E8F0` cho tiêu đề/khối chính, `#F1F5F9` cho dòng phụ/ô dữ liệu) trên tất cả 7 file skeleton trung tâm.
+   - Thay `Math.random()` trong `dashboard/loading.tsx` bằng mảng chiều cao xác định `[45, 70, 55, 85, ...]`.
+   - Tạo đầy đủ `loading.tsx` cho `/dashboard/hr`, `/dashboard/margin`, và `/dashboard/sales/visits`.
+2. **Cập nhật `getHeaderTitle()` (`Header.tsx`):** Bổ sung ánh xạ chính xác cho `/dashboard/sop` (`"Quy Trình Doanh Nghiệp (SOP)"`), `/dashboard/hr` (`"Nhân Sự & Hồ Sơ (HR)"`), `/dashboard/pipeline` (`"Pipeline Doanh Số"`), và `/dashboard/settings/telegram` (`"Cấu Hình Telegram Bot"`).
+3. **Chuẩn hóa 100% Dialog & Toast:**
+   - Thay thế 3 lệnh `confirm()` trong `BankReconciliationTab.tsx` và `PaymentRequestsClient.tsx` bằng `useConfirmDialog()` và gắn `{dialog}` vào cây JSX.
+   - Thay thế toàn bộ 46 lệnh `alert()` trên 9 file bằng `toast.error()`, `toast.warning()`, `toast.success()`, `toast.info()` từ `sonner`.
+4. **Chuẩn hóa Design System & WCAG AA trên 37 files:**
+   - Xóa toàn bộ 243 class `dark:*` và chuyển toàn bộ 87 vị trí `rounded-xl/2xl/3xl` sang `rounded-lg` (8px).
+   - Nâng cấp màu nền nút chính với chữ trắng từ `bg-[#0891B2]` lên `bg-[#0E7490]` (tương phản `5.36:1` — đạt chuẩn WCAG AA) và sửa màu chữ nút Duyệt trong `ProposalsClient.tsx` thành `#FFFFFF`.
+   - Đổi `text-purple-600` sang `text-[#0891B2]` trong `SupplierDetailDrawer.tsx`, đổi `#87CBB9` sang `#0891B2` trong `actions.ts`, và thay ký tự `✕` bằng `<X size={18} />` kèm `aria-label="Đóng"` trong `StampsClient.tsx`.
+
+### Bài học
+> ⚠️ **RULE 137: (1) Mọi route trong `/dashboard/*` khi tạo mới BẮT BUỘC phải có file `loading.tsx` (dùng màu skeleton `#E2E8F0` / `#F1F5F9` trên nền card `#FFFFFF`, tuyệt đối không dùng `#FFFFFF` trên `#FFFFFF` hoặc `Math.random()` trong SSR render) VÀ phải đăng ký tiêu đề trong `getHeaderTitle()` tại `Header.tsx`; (2) TUYỆT ĐỐI CẤM sử dụng `window.alert()` và `window.confirm()` — luôn dùng `toast` (`sonner`) cho thông báo và `useConfirmDialog()` (nhớ render `{dialog}` trong JSX) cho xác nhận thao tác; (3) Mọi nút bấm chữ trắng (`text-white`) trên nền Cyan phải dùng `#0E7490` (`--lys-teal-strong`) thay vì `#0891B2` để đảm bảo tỷ lệ tương phản chuẩn WCAG AA ($\ge 4.5:1$).**
+
 
 
 

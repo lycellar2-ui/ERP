@@ -9,6 +9,7 @@ import {
     Thermometer, UtensilsCrossed, Package, Search, Truck
 } from 'lucide-react'
 import { acceptQuotationPublic, rejectQuotationPublic } from './actions'
+import { toast } from 'sonner'
 
 type WineProfileData = {
     grapes: string | null
@@ -436,7 +437,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
         const res = await acceptQuotationPublic(token)
         setAccepting(false)
         if (res.success) setDone('accepted')
-        else alert(res.error || 'Có lỗi xảy ra trong quá trình xác nhận')
+        else toast.error(res.error || 'Có lỗi xảy ra trong quá trình xác nhận')
     }
 
     async function handleReject() {
@@ -447,7 +448,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
         if (res.success) {
             setDone('rejected')
         } else {
-            alert(res.error || 'Có lỗi xảy ra khi gửi phản hồi')
+            toast.error(res.error || 'Có lỗi xảy ra khi gửi phản hồi')
         }
     }
 

@@ -793,7 +793,7 @@ export function StockVelocityReport({ isEn = false, initialData }: Props) {
             {/* 3. SYNC / UPLOAD EXCEL MODAL */}
             {uploadModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-                    <div className="w-full max-w-lg rounded-xl bg-white border border-slate-300 p-6 shadow-2xl space-y-4">
+                    <div className="w-full max-w-lg rounded-lg bg-white border border-slate-300 p-6 shadow-2xl space-y-4">
                         <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                             <div className="flex items-center gap-2">
                                 <FileSpreadsheet className="w-5 h-5 text-[#107C41]" />

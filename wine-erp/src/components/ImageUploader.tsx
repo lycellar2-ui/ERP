@@ -64,7 +64,7 @@ export function ImageUploader({
                 style={{ color: '#64748B' }}>{label}</label>
 
             {preview ? (
-                <div className="relative group rounded-xl overflow-hidden"
+                <div className="relative group rounded-lg overflow-hidden"
                     style={{ width: size, height: size, background: '#FFFFFF' }}>
                     <img src={preview} alt={label}
                         className="w-full h-full object-contain p-2 transition-transform group-hover:scale-105" />
@@ -98,7 +98,7 @@ export function ImageUploader({
             ) : (
                 <button onClick={() => inputRef.current?.click()}
                     disabled={uploading}
-                    className="flex flex-col items-center justify-center gap-3 rounded-xl
+                    className="flex flex-col items-center justify-center gap-3 rounded-lg
                         transition-all hover:border-solid cursor-pointer"
                     style={{
                         width: size, height: size,

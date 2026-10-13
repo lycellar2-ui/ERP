@@ -280,12 +280,12 @@ export function SopCatalogClient({
     return (
         <div className="space-y-6 max-w-screen-2xl">
             {/* Header: Clean Luxury B2B ERP Header (No gradients, no AI buzzwords) */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
                 <div>
                     <div className="text-[11px] uppercase tracking-wider font-bold text-slate-500 mb-1">
                         Hệ Thống Quản Trị Doanh Nghiệp • Wine ERP
                     </div>
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
                         Quy Trình Vận Hành Tiêu Chuẩn (SOP)
                     </h1>
                     <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
@@ -300,14 +300,14 @@ export function SopCatalogClient({
                             setTargetUploadFile(null)
                             setShowUploadModal(true)
                         }}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-sm transition"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-sm transition"
                     >
                         <Upload className="w-3.5 h-3.5 text-slate-500" />
                         <span>Tải Biểu Mẫu Lên</span>
                     </button>
                     <button
                         onClick={() => setIsCreatingSop(true)}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white text-xs font-semibold shadow-sm transition"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-sm transition"
                     >
                         <Plus className="w-3.5 h-3.5" />
                         <span>Thêm Quy Trình Mới</span>
@@ -321,17 +321,17 @@ export function SopCatalogClient({
                     onClick={() => setActiveView('docs')}
                     className={`p-3.5 rounded-lg border cursor-pointer transition ${
                         activeView === 'docs'
-                            ? 'border-slate-900 bg-slate-900/5 dark:border-slate-100 dark:bg-slate-100/5'
-                            : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'
+                            ? 'border-slate-900 bg-slate-900/5'
+                            : 'border-slate-200 bg-white hover:border-slate-300'
                     }`}
                 >
                     <div className="text-[11px] text-slate-500 flex items-center justify-between font-medium">
                         <span>Sổ Tay & Quy Trình (.md)</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-bold">
                             12 Phân hệ
                         </span>
                     </div>
-                    <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
+                    <div className="text-xl font-bold text-slate-900 mt-1">
                         {markdownDocs.length} Tài liệu
                     </div>
                 </div>
@@ -340,12 +340,12 @@ export function SopCatalogClient({
                     onClick={() => setActiveView('sops')}
                     className={`p-3.5 rounded-lg border cursor-pointer transition ${
                         activeView === 'sops'
-                            ? 'border-slate-900 bg-slate-900/5 dark:border-slate-100 dark:bg-slate-100/5'
-                            : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'
+                            ? 'border-slate-900 bg-slate-900/5'
+                            : 'border-slate-200 bg-white hover:border-slate-300'
                     }`}
                 >
                     <div className="text-[11px] text-slate-500 font-medium">Quy Trình Trọng Yếu (SOPs)</div>
-                    <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
+                    <div className="text-xl font-bold text-slate-900 mt-1">
                         {sops.length} Luồng cốt lõi
                     </div>
                 </div>
@@ -354,32 +354,32 @@ export function SopCatalogClient({
                     onClick={() => setActiveView('forms')}
                     className={`p-3.5 rounded-lg border cursor-pointer transition ${
                         activeView === 'forms'
-                            ? 'border-slate-900 bg-slate-900/5 dark:border-slate-100 dark:bg-slate-100/5'
-                            : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'
+                            ? 'border-slate-900 bg-slate-900/5'
+                            : 'border-slate-200 bg-white hover:border-slate-300'
                     }`}
                 >
                     <div className="text-[11px] text-slate-500 font-medium">Biểu Mẫu & Chứng Từ</div>
-                    <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
+                    <div className="text-xl font-bold text-slate-900 mt-1">
                         {forms.length} Mẫu Excel / Word
                     </div>
                 </div>
 
-                <div className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                <div className="p-3.5 rounded-lg border border-slate-200 bg-white">
                     <div className="text-[11px] text-slate-500 font-medium">Tiêu Chuẩn Kiểm Soát</div>
-                    <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
+                    <div className="text-xl font-bold text-slate-900 mt-1">
                         {totalChecklists} Tiêu chí RACI
                     </div>
                 </div>
             </div>
 
             {/* 3 Main View Tabs */}
-            <div className="flex border-b border-slate-200 dark:border-slate-800 gap-4 sm:gap-6 overflow-x-auto no-scrollbar whitespace-nowrap text-sm font-semibold">
+            <div className="flex border-b border-slate-200 gap-4 sm:gap-6 overflow-x-auto no-scrollbar whitespace-nowrap text-sm font-semibold">
                 <button
                     onClick={() => setActiveView('docs')}
                     className={`pb-3 border-b-2 flex items-center gap-2 whitespace-nowrap transition ${
                         activeView === 'docs'
-                            ? 'border-slate-900 text-slate-900 dark:border-slate-100 dark:text-white font-bold'
-                            : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+                            ? 'border-slate-900 text-slate-900 font-bold'
+                            : 'border-transparent text-slate-500 hover:text-slate-800'
                     }`}
                 >
                     <FileText className="w-4 h-4 text-slate-500" />
@@ -390,8 +390,8 @@ export function SopCatalogClient({
                     onClick={() => setActiveView('sops')}
                     className={`pb-3 border-b-2 flex items-center gap-2 whitespace-nowrap transition ${
                         activeView === 'sops'
-                            ? 'border-slate-900 text-slate-900 dark:border-slate-100 dark:text-white font-bold'
-                            : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+                            ? 'border-slate-900 text-slate-900 font-bold'
+                            : 'border-transparent text-slate-500 hover:text-slate-800'
                     }`}
                 >
                     <BookOpen className="w-4 h-4 text-slate-500" />
@@ -402,8 +402,8 @@ export function SopCatalogClient({
                     onClick={() => setActiveView('forms')}
                     className={`pb-3 border-b-2 flex items-center gap-2 whitespace-nowrap transition ${
                         activeView === 'forms'
-                            ? 'border-slate-900 text-slate-900 dark:border-slate-100 dark:text-white font-bold'
-                            : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+                            ? 'border-slate-900 text-slate-900 font-bold'
+                            : 'border-transparent text-slate-500 hover:text-slate-800'
                     }`}
                 >
                     <FileSpreadsheet className="w-4 h-4 text-slate-500" />
@@ -425,7 +425,7 @@ export function SopCatalogClient({
                                 value={docSearchQuery}
                                 onChange={(e) => setDocSearchQuery(e.target.value)}
                                 placeholder="Tìm tài liệu .md (nhập kho, dán tem, hợp đồng, tasting, cogs)..."
-                                className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400"
+                                className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
                             />
                             {docSearchQuery && (
                                 <button
@@ -438,13 +438,13 @@ export function SopCatalogClient({
                         </div>
 
                         {/* Language Switcher */}
-                        <div className="flex items-center gap-1 p-0.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 self-start sm:self-auto text-xs">
+                        <div className="flex items-center gap-1 p-0.5 rounded-lg border border-slate-200 bg-slate-50 self-start sm:self-auto text-xs">
                             <button
                                 onClick={() => setDocLangFilter('all')}
                                 className={`px-2.5 py-1 rounded-md font-medium transition ${
                                     docLangFilter === 'all'
-                                        ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
-                                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                                        ? 'bg-white text-slate-900 shadow-xs'
+                                        : 'text-slate-500 hover:text-slate-900'
                                 }`}
                             >
                                 Tất cả ({markdownDocs.length})
@@ -453,8 +453,8 @@ export function SopCatalogClient({
                                 onClick={() => setDocLangFilter('vi')}
                                 className={`px-2.5 py-1 rounded-md font-medium transition ${
                                     docLangFilter === 'vi'
-                                        ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
-                                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                                        ? 'bg-white text-slate-900 shadow-xs'
+                                        : 'text-slate-500 hover:text-slate-900'
                                 }`}
                             >
                                 Tiếng Việt ({markdownDocs.filter(d => !d.isEnglish).length})
@@ -463,8 +463,8 @@ export function SopCatalogClient({
                                 onClick={() => setDocLangFilter('en')}
                                 className={`px-2.5 py-1 rounded-md font-medium transition ${
                                     docLangFilter === 'en'
-                                        ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
-                                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                                        ? 'bg-white text-slate-900 shadow-xs'
+                                        : 'text-slate-500 hover:text-slate-900'
                                 }`}
                             >
                                 English ({markdownDocs.filter(d => d.isEnglish).length})
@@ -478,8 +478,8 @@ export function SopCatalogClient({
                             onClick={() => setSelectedDocGroup('all')}
                             className={`px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transition border ${
                                 selectedDocGroup === 'all'
-                                    ? 'bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100'
-                                    : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                                    ? 'bg-slate-900 text-white border-slate-900'
+                                    : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                             }`}
                         >
                             Tất cả phân hệ ({markdownDocs.length})
@@ -490,8 +490,8 @@ export function SopCatalogClient({
                                 onClick={() => setSelectedDocGroup(grp.key)}
                                 className={`px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transition border ${
                                     selectedDocGroup === grp.key
-                                        ? 'bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100'
-                                        : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                                        ? 'bg-slate-900 text-white border-slate-900'
+                                        : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                                 }`}
                             >
                                 <span>{grp.label}</span>
@@ -502,9 +502,9 @@ export function SopCatalogClient({
 
                     {/* Markdown Docs List Grid */}
                     {filteredMarkdownDocs.length === 0 ? (
-                        <div className="p-12 text-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
+                        <div className="p-12 text-center rounded-lg border border-slate-200 bg-white space-y-2">
                             <FileText className="w-8 h-8 text-slate-400 mx-auto" />
-                            <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                            <div className="text-sm font-semibold text-slate-800">
                                 Không tìm thấy tài liệu phù hợp
                             </div>
                             <button
@@ -519,11 +519,11 @@ export function SopCatalogClient({
                             {filteredMarkdownDocs.map((doc) => (
                                 <div
                                     key={doc.id}
-                                    className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between space-y-3 hover:border-slate-300 dark:hover:border-slate-700 transition"
+                                    className="p-4 rounded-lg border border-slate-200 bg-white flex flex-col justify-between space-y-3 hover:border-slate-300 transition"
                                 >
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between gap-2">
-                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
                                                 {doc.groupLabel}
                                             </span>
                                             <span className="text-[11px] text-slate-400">
@@ -541,7 +541,7 @@ export function SopCatalogClient({
                                                 lastUpdated: doc.lastUpdated,
                                                 groupLabel: doc.groupLabel
                                             })}
-                                            className="font-bold text-slate-900 dark:text-white text-sm hover:underline cursor-pointer line-clamp-2 leading-snug"
+                                            className="font-bold text-slate-900 text-sm hover:underline cursor-pointer line-clamp-2 leading-snug"
                                         >
                                             {doc.title}
                                         </h3>
@@ -555,7 +555,7 @@ export function SopCatalogClient({
                                                 {doc.tags.slice(0, 3).map((tag, idx) => (
                                                     <span
                                                         key={idx}
-                                                        className="px-1.5 py-0.5 rounded text-[10px] bg-slate-50 dark:bg-slate-800/80 text-slate-500 border border-slate-200/60 dark:border-slate-700/60"
+                                                        className="px-1.5 py-0.5 rounded text-[10px] bg-slate-50 text-slate-500 border border-slate-200/60"
                                                     >
                                                         #{tag}
                                                     </span>
@@ -570,7 +570,7 @@ export function SopCatalogClient({
                                     </div>
 
                                     {/* Action Buttons */}
-                                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                                         <button
                                             onClick={() => setPreviewDoc({
                                                 title: doc.title,
@@ -581,7 +581,7 @@ export function SopCatalogClient({
                                                 lastUpdated: doc.lastUpdated,
                                                 groupLabel: doc.groupLabel
                                             })}
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white text-xs font-semibold shadow-xs transition"
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition"
                                         >
                                             <Eye className="w-3.5 h-3.5" />
                                             <span>Đọc Văn Bản</span>
@@ -590,7 +590,7 @@ export function SopCatalogClient({
                                         <a
                                             href={doc.url}
                                             download={doc.fileName}
-                                            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition"
+                                            className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition"
                                             title="Tải tệp .md về máy"
                                         >
                                             <Download className="w-3.5 h-3.5" />
@@ -617,7 +617,7 @@ export function SopCatalogClient({
                                 value={sopSearchQuery}
                                 onChange={(e) => setSopSearchQuery(e.target.value)}
                                 placeholder="Tìm kiếm quy trình, vai trò, nghiệp vụ..."
-                                className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400"
+                                className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
                             />
                             {sopSearchQuery && (
                                 <button
@@ -644,8 +644,8 @@ export function SopCatalogClient({
                                     onClick={() => setSelectedCategory(cat.id)}
                                     className={`px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transition border ${
                                         isSelected
-                                            ? 'bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100'
-                                            : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                                            ? 'bg-slate-900 text-white border-slate-900'
+                                            : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                                     }`}
                                 >
                                     {cat.label}
@@ -656,9 +656,9 @@ export function SopCatalogClient({
 
                     {/* SOP Cards Grid */}
                     {filteredSops.length === 0 ? (
-                        <div className="p-12 text-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
+                        <div className="p-12 text-center rounded-lg border border-slate-200 bg-white space-y-2">
                             <BookOpen className="w-8 h-8 text-slate-400 mx-auto" />
-                            <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                            <div className="text-sm font-semibold text-slate-800">
                                 Không tìm thấy quy trình phù hợp
                             </div>
                             <button
@@ -678,11 +678,11 @@ export function SopCatalogClient({
                                 return (
                                     <div
                                         key={sop.id}
-                                        className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 flex flex-col justify-between space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition"
+                                        className="rounded-lg border border-slate-200 bg-white p-5 flex flex-col justify-between space-y-4 hover:border-slate-300 transition"
                                     >
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-between gap-2">
-                                                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+                                                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-800 border border-slate-200">
                                                     {sop.code}
                                                 </span>
                                                 <span className="text-[11px] text-slate-500 flex items-center gap-1">
@@ -697,20 +697,20 @@ export function SopCatalogClient({
                                                 </div>
                                                 <h3
                                                     onClick={() => setSelectedSop(sop)}
-                                                    className="text-sm font-bold text-slate-900 dark:text-white hover:underline cursor-pointer leading-snug line-clamp-2"
+                                                    className="text-sm font-bold text-slate-900 hover:underline cursor-pointer leading-snug line-clamp-2"
                                                 >
                                                     {sop.title}
                                                 </h3>
                                             </div>
 
-                                            <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
+                                            <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
                                                 {sop.summary}
                                             </p>
 
                                             {/* Attached Markdown Badge if present */}
                                             {attachedMdFile && (
-                                                <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
-                                                    <span className="text-[11px] text-slate-600 dark:text-slate-300 font-medium truncate flex items-center gap-1.5">
+                                                <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+                                                    <span className="text-[11px] text-slate-600 font-medium truncate flex items-center gap-1.5">
                                                         <FileText className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                                                         <span className="truncate">Sổ tay: {attachedMdFile.title}</span>
                                                     </span>
@@ -720,7 +720,7 @@ export function SopCatalogClient({
                                                             url: attachedMdFile.downloadUrl,
                                                             fileName: attachedMdFile.fileName
                                                         })}
-                                                        className="text-[11px] font-semibold text-slate-900 dark:text-slate-100 hover:underline shrink-0 ml-2"
+                                                        className="text-[11px] font-semibold text-slate-900 hover:underline shrink-0 ml-2"
                                                     >
                                                         Đọc .md
                                                     </button>
@@ -734,10 +734,10 @@ export function SopCatalogClient({
                                         </div>
 
                                         {/* Card Footer Actions */}
-                                        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                                        <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                                             <button
                                                 onClick={() => setSelectedSop(sop)}
-                                                className="inline-flex items-center gap-1 text-xs font-semibold text-slate-900 dark:text-slate-100 hover:underline"
+                                                className="inline-flex items-center gap-1 text-xs font-semibold text-slate-900 hover:underline"
                                             >
                                                 <span>Chi Tiết Quy Trình</span>
                                             </button>
@@ -745,7 +745,7 @@ export function SopCatalogClient({
                                             {primaryActionLink && (
                                                 <Link
                                                     href={primaryActionLink.path}
-                                                    className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300 transition"
+                                                    className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition"
                                                     title={primaryActionLink.label}
                                                 >
                                                     <span>Mở Màn Hình</span>
@@ -774,7 +774,7 @@ export function SopCatalogClient({
                                 value={formSearchQuery}
                                 onChange={(e) => setFormSearchQuery(e.target.value)}
                                 placeholder="Tìm biểu mẫu (Form 8.8-A, Form 6.1-B, Landed Cost)..."
-                                className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-400"
+                                className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
                             />
                             {formSearchQuery && (
                                 <button
@@ -791,7 +791,7 @@ export function SopCatalogClient({
                                 setTargetUploadFile(null)
                                 setShowUploadModal(true)
                             }}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 text-xs font-semibold transition shadow-xs self-start sm:self-auto"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition shadow-xs self-start sm:self-auto"
                         >
                             <Upload className="w-3.5 h-3.5" />
                             <span>Tải Biểu Mẫu Mới Lên</span>
@@ -802,11 +802,11 @@ export function SopCatalogClient({
                         {filteredForms.map((form) => (
                             <div
                                 key={form.id}
-                                className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between space-y-3 hover:border-slate-300 dark:hover:border-slate-700 transition"
+                                className="p-4 rounded-lg border border-slate-200 bg-white flex flex-col justify-between space-y-3 hover:border-slate-300 transition"
                             >
                                 <div className="space-y-1.5">
                                     <div className="flex items-center justify-between gap-2">
-                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
                                             {form.code}
                                         </span>
                                         <span className="text-[10px] font-mono text-slate-400">
@@ -814,7 +814,7 @@ export function SopCatalogClient({
                                         </span>
                                     </div>
 
-                                    <h4 className="font-bold text-slate-900 dark:text-white text-xs line-clamp-2 leading-snug">
+                                    <h4 className="font-bold text-slate-900 text-xs line-clamp-2 leading-snug">
                                         {form.title}
                                     </h4>
 
@@ -823,7 +823,7 @@ export function SopCatalogClient({
                                     </p>
                                 </div>
 
-                                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                                     {form.fileType === 'MD' || form.fileName.toLowerCase().endsWith('.md') ? (
                                         <div className="flex items-center gap-1.5">
                                             <button
@@ -832,7 +832,7 @@ export function SopCatalogClient({
                                                     url: form.downloadUrl,
                                                     fileName: form.fileName
                                                 })}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 text-xs font-semibold shadow-xs transition"
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition"
                                             >
                                                 <Eye className="w-3.5 h-3.5" />
                                                 <span>Xem Văn Bản</span>
@@ -840,7 +840,7 @@ export function SopCatalogClient({
                                             <a
                                                 href={form.downloadUrl}
                                                 download={form.fileName}
-                                                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition"
+                                                className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition"
                                                 title="Tải về .md"
                                             >
                                                 <Download className="w-3.5 h-3.5" />
@@ -850,7 +850,7 @@ export function SopCatalogClient({
                                         <a
                                             href={form.downloadUrl}
                                             download={form.fileName}
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 text-xs font-semibold shadow-xs transition"
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition"
                                         >
                                             <Download className="w-3.5 h-3.5" />
                                             <span>Tải Mẫu Về</span>
@@ -862,7 +862,7 @@ export function SopCatalogClient({
                                             setTargetUploadFile(form.fileName)
                                             setShowUploadModal(true)
                                         }}
-                                        className="text-[11px] text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 transition"
+                                        className="text-[11px] text-slate-500 hover:text-slate-900 transition"
                                         title="Thay thế file mẫu này"
                                     >
                                         Thay file

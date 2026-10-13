@@ -7,6 +7,7 @@ import {
     UserCheck, Users, Activity, ChevronDown, ChevronUp, Clock, AlertTriangle, ShieldCheck, Zap, Printer
 } from 'lucide-react'
 import { recordCountLine, completeZoneCount, getStockCountDetail, startStockCount } from './actions'
+import { toast } from 'sonner'
 import { AddUnlistedModal } from './AddUnlistedModal'
 
 type Props = {
@@ -73,7 +74,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
             await loadDetail()
             if (onRefreshSession) onRefreshSession()
         } else {
-            alert(res.error || 'Lỗi khi bắt đầu kiểm kê')
+            toast.error(res.error || 'Lỗi khi bắt đầu kiểm kê')
             setIsLoading(false)
         }
     }
@@ -163,7 +164,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
     // Handle Finish Zone
     const handleFinishZone = async () => {
         if (selectedZone === 'ALL') {
-            alert('Vui lòng chọn 1 vị trí/khu vực cụ thể trong dropdown để chốt kiểm kê khu vực đó')
+            toast.warning('Vui lòng chọn 1 vị trí/khu vực cụ thể trong dropdown để chốt kiểm kê khu vực đó')
             return
         }
         setIsCompletingZone(true)
@@ -173,7 +174,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
             setZoneReport(res.summary)
             setShowZoneReportModal(true)
         } else {
-            alert(res.error || 'Không thể tạo báo cáo chốt khu vực')
+            toast.error(res.error || 'Không thể tạo báo cáo chốt khu vực')
         }
     }
 
@@ -183,7 +184,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                 {/* MODAL HEADER FOR LEAD COMMAND CENTER */}
                 <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-[#0891B2] text-white flex items-center justify-center font-black shrink-0 shadow-2xs">
+                        <div className="w-10 h-10 rounded-lg bg-[#0E7490] text-white flex items-center justify-center font-black shrink-0 shadow-2xs">
                             <Activity className="w-5 h-5" />
                         </div>
                         <div>
@@ -272,7 +273,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
 
                         <button
                             onClick={() => setShowAddUnlistedModal(true)}
-                            className="px-3.5 py-2 bg-[#0E7490] hover:bg-[#0891B2] active:scale-95 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
+                            className="px-3.5 py-2 bg-[#0E7490] hover:bg-[#0E7490] active:scale-95 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
                         >
                             <Plus className="w-4 h-4" /> Chèn mã bổ sung
                         </button>
@@ -594,7 +595,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
 
                     <button
                         onClick={onClose}
-                        className="px-5 py-2 bg-[#0891B2] hover:bg-[#0E7490] active:scale-95 text-white font-black text-xs rounded-lg shadow-xs cursor-pointer transition-all"
+                        className="px-5 py-2 bg-[#0E7490] hover:bg-[#0E7490] active:scale-95 text-white font-black text-xs rounded-lg shadow-xs cursor-pointer transition-all"
                     >
                         Hoàn Tất & Đóng Bảng
                     </button>
@@ -670,7 +671,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                         <div className="pt-3 border-t border-slate-200 flex justify-end">
                             <button
                                 onClick={() => setShowZoneReportModal(false)}
-                                className="px-5 py-2 bg-[#0891B2] text-white font-extrabold text-xs rounded-lg shadow-xs"
+                                className="px-5 py-2 bg-[#0E7490] text-white font-extrabold text-xs rounded-lg shadow-xs"
                             >
                                 Đã Hiểu & Đóng
                             </button>

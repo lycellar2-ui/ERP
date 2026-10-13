@@ -47,7 +47,7 @@ export function ContractTemplatesTab({ onSelectTemplateToCreate }: Props) {
     return (
         <div className="space-y-6">
             {/* Header Banner */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-xl border border-lys-border bg-gradient-to-r from-amber-50/60 via-white to-slate-50">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-lg border border-lys-border bg-gradient-to-r from-amber-50/60 via-white to-slate-50">
                 <div className="space-y-1">
                     <div className="flex items-center gap-2">
                         <span className="p-1.5 rounded-lg bg-lys-primary/10 text-lys-primary">
@@ -81,7 +81,7 @@ export function ContractTemplatesTab({ onSelectTemplateToCreate }: Props) {
                     return (
                         <div
                             key={tpl.code}
-                            className={`rounded-xl border transition-all flex flex-col justify-between ${
+                            className={`rounded-lg border transition-all flex flex-col justify-between ${
                                 isSelected
                                     ? 'border-lys-primary bg-amber-50/20 ring-1 ring-lys-primary shadow-sm'
                                     : 'border-lys-border bg-white hover:border-slate-300 hover:shadow-sm'
@@ -143,7 +143,7 @@ export function ContractTemplatesTab({ onSelectTemplateToCreate }: Props) {
             </div>
 
             {/* Placeholders Reference Section */}
-            <div className="rounded-xl border border-lys-border bg-white p-5 space-y-4">
+            <div className="rounded-lg border border-lys-border bg-white p-5 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-lys-border pb-3">
                     <div>
                         <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">

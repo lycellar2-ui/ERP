@@ -22,6 +22,7 @@ import {
     createBankAccount
 } from './actions-bank-reconciliation'
 import { formatVND, formatDate } from '@/lib/utils'
+import { useConfirmDialog } from '@/components/ui'
 
 interface BankAccountItem {
     id: string
@@ -103,6 +104,7 @@ export function BankReconciliationTab() {
     const [pagination, setPagination] = useState({ total: 0, totalPages: 1 })
     const [loading, setLoading] = useState(false)
     const [isPending, startTransition] = useTransition()
+    const { confirm, dialog } = useConfirmDialog()
 
     // Modals
     const [showUploadModal, setShowUploadModal] = useState(false)
@@ -253,7 +255,13 @@ export function BankReconciliationTab() {
 
     // Rollback / Unmatch
     const handleRevert = async (txn: BankTransactionItem) => {
-        if (!confirm('Bạn có chắc muốn HỦY KHỚP giao dịch này? Phiếu thu ARPayment sẽ bị xóa và công nợ hóa đơn sẽ được phục hồi.')) {
+        const ok = await confirm({
+            title: 'Hủy khớp giao dịch sao kê',
+            message: 'Bạn có chắc muốn HỦY KHỚP giao dịch này? Phiếu thu ARPayment sẽ bị xóa và công nợ hóa đơn sẽ được phục hồi.',
+            confirmLabel: 'Hủy khớp',
+            variant: 'danger',
+        })
+        if (!ok) {
             return
         }
 
@@ -766,7 +774,7 @@ export function BankReconciliationTab() {
             {/* MODAL: UPLOAD BANK STATEMENT */}
             {showUploadModal && (
                 <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-lg w-full p-6 space-y-4">
+                    <div className="bg-white rounded-lg shadow-xl border border-slate-200 max-w-lg w-full p-6 space-y-4">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                             <div className="flex items-center gap-2 text-emerald-800">
                                 <FileSpreadsheet size={20} />
@@ -1060,7 +1068,7 @@ export function BankReconciliationTab() {
             {/* MODAL: RULES MANAGEMENT */}
             {showRulesModal && (
                 <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-lg w-full p-6 space-y-4">
+                    <div className="bg-white rounded-lg shadow-xl border border-slate-200 max-w-lg w-full p-6 space-y-4">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                             <div className="flex items-center gap-2 text-slate-800">
                                 <BookOpen size={20} className="text-emerald-700" />
@@ -1111,6 +1119,7 @@ export function BankReconciliationTab() {
                     </div>
                 </div>
             )}
+            {dialog}
         </div>
     )
 }

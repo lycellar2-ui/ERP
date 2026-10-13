@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react'
 import { X, Upload, Download, FileSpreadsheet, CheckCircle2, AlertTriangle, Loader2, FileX2 } from 'lucide-react'
+import { toast } from 'sonner'
 import * as XLSX from 'xlsx'
 
 type ImportResult = { success: number; errors: { row: number; message: string }[]; total: number }
@@ -69,11 +70,11 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
     // Parse file
     const processFile = useCallback(async (file: File) => {
         if (!file.name.match(/\.(xlsx|xls)$/i)) {
-            alert('Chỉ chấp nhận file Excel (.xlsx, .xls)')
+            toast.error('Chỉ chấp nhận file Excel (.xlsx, .xls)')
             return
         }
         if (file.size > 5 * 1024 * 1024) {
-            alert('File quá lớn (tối đa 5MB)')
+            toast.error('File quá lớn (tối đa 5MB)')
             return
         }
 
@@ -125,7 +126,7 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
 
             {/* Modal */}
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <div className="w-full max-w-xl rounded-2xl overflow-hidden shadow-2xl"
+                <div className="w-full max-w-xl rounded-lg overflow-hidden shadow-2xl"
                     style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}
                     onClick={e => e.stopPropagation()}>
 
@@ -159,7 +160,7 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
 
                         {/* Step 1: Download template */}
                         <button onClick={downloadTemplate}
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all group"
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all group"
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
                             onMouseEnter={e => (e.currentTarget.style.borderColor = '#1D4ED8')}
                             onMouseLeave={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
@@ -180,7 +181,7 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
                         {/* Step 2: Upload zone */}
                         {step === 'upload' && (
                             <div
-                                className="relative rounded-xl transition-all cursor-pointer"
+                                className="relative rounded-lg transition-all cursor-pointer"
                                 style={{
                                     background: dragOver ? 'rgba(29,78,216,0.08)' : '#FFFFFF',
                                     border: `2px dashed ${dragOver ? '#1D4ED8' : '#E2E8F0'}`,

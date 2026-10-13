@@ -62,15 +62,15 @@ export function SopFormUploadModal({ targetFileName, onClose, onUploaded }: SopF
 
     return (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/80 backdrop-blur-sm flex justify-center p-4 animate-in fade-in">
-            <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col my-auto overflow-hidden">
+            <div className="bg-white w-full max-w-lg rounded-lg shadow-2xl border border-slate-200 flex flex-col my-auto overflow-hidden">
                 {/* Header */}
-                <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900">
+                <div className="p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50">
                     <div className="flex items-center gap-2">
-                        <div className="p-2 rounded-lg bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-400">
+                        <div className="p-2 rounded-lg bg-rose-100 text-rose-700">
                             <Upload className="w-5 h-5" />
                         </div>
                         <div>
-                            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                            <h3 className="text-base font-bold text-slate-900">
                                 {targetFileName ? 'Thay Thế Biểu Mẫu' : 'Tải Lên Biểu Mẫu Mới'}
                             </h3>
                             <p className="text-xs text-slate-500">
@@ -102,7 +102,7 @@ export function SopFormUploadModal({ targetFileName, onClose, onUploaded }: SopF
                     {/* File Picker Drag & Drop */}
                     <div
                         onClick={() => fileInputRef.current?.click()}
-                        className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 text-center cursor-pointer hover:border-rose-500 dark:hover:border-rose-500 transition space-y-2 bg-slate-50/50 dark:bg-slate-800/30"
+                        className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center cursor-pointer hover:border-rose-500 transition space-y-2 bg-slate-50/50"
                     >
                         <input
                             ref={fileInputRef}
@@ -114,7 +114,7 @@ export function SopFormUploadModal({ targetFileName, onClose, onUploaded }: SopF
                         {selectedFile ? (
                             <div className="space-y-1">
                                 <FileSpreadsheet className="w-10 h-10 text-emerald-600 mx-auto" />
-                                <div className="font-bold text-slate-900 dark:text-white text-sm">
+                                <div className="font-bold text-slate-900 text-sm">
                                     {selectedFile.name}
                                 </div>
                                 <div className="text-slate-500">
@@ -124,7 +124,7 @@ export function SopFormUploadModal({ targetFileName, onClose, onUploaded }: SopF
                         ) : (
                             <div className="space-y-1">
                                 <Upload className="w-8 h-8 text-slate-400 mx-auto" />
-                                <div className="font-semibold text-slate-700 dark:text-slate-200">
+                                <div className="font-semibold text-slate-700">
                                     Nhấp để chọn tệp từ máy tính
                                 </div>
                                 <div className="text-slate-400 text-[11px]">
@@ -136,7 +136,7 @@ export function SopFormUploadModal({ targetFileName, onClose, onUploaded }: SopF
 
                     {/* Target file name */}
                     <div className="space-y-1">
-                        <label className="font-semibold text-slate-700 dark:text-slate-300">
+                        <label className="font-semibold text-slate-700">
                             Tên Lưu Trữ Trên Hệ Thống (File Name)
                         </label>
                         <input
@@ -144,7 +144,7 @@ export function SopFormUploadModal({ targetFileName, onClose, onUploaded }: SopF
                             value={customName}
                             onChange={(e) => setCustomName(e.target.value)}
                             placeholder="Ví dụ: Form_8.8-A_Yeu_cau_Tao_ma_KH.xlsx"
-                            className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                            className="w-full p-2.5 rounded-lg border border-slate-300 bg-white text-slate-900"
                         />
                         <p className="text-[11px] text-slate-400">
                             Tệp này sẽ được lưu vào thư mục tải về của hệ thống. Nhân viên bấm tải sẽ nhận tệp này.
@@ -153,11 +153,11 @@ export function SopFormUploadModal({ targetFileName, onClose, onUploaded }: SopF
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 px-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex justify-between items-center text-xs">
+                <div className="p-4 px-6 border-t border-slate-200 bg-slate-50 flex justify-between items-center text-xs">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium"
+                        className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium"
                     >
                         Hủy
                     </button>

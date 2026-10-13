@@ -116,20 +116,20 @@ export function MarkdownDocModal({
     return (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex justify-center p-3 sm:p-6 animate-in fade-in duration-150">
             <div
-                className="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col my-auto max-h-[92vh] overflow-hidden"
+                className="bg-white w-full max-w-4xl rounded-lg shadow-2xl border border-slate-200 flex flex-col my-auto max-h-[92vh] overflow-hidden"
                 role="dialog"
                 aria-modal="true"
             >
                 {/* Header */}
-                <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/90 flex items-center justify-between gap-4">
+                <div className="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between gap-4">
                     <div className="flex items-start gap-3 overflow-hidden">
-                        <div className="p-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex-shrink-0 mt-0.5">
+                        <div className="p-2 rounded-lg bg-slate-200 text-slate-700 flex-shrink-0 mt-0.5">
                             <FileText className="w-4 h-4" />
                         </div>
                         <div className="overflow-hidden">
                             <div className="flex flex-wrap items-center gap-2 mb-1">
                                 {groupLabel && (
-                                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300/60 dark:border-slate-700">
+                                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-200/80 text-slate-700 border border-slate-300/60">
                                         {groupLabel}
                                     </span>
                                 )}
@@ -145,7 +145,7 @@ export function MarkdownDocModal({
                                     </span>
                                 )}
                             </div>
-                            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate">
+                            <h2 className="text-base sm:text-lg font-bold text-slate-900 truncate">
                                 {title}
                             </h2>
                             {fileName && (
@@ -162,7 +162,7 @@ export function MarkdownDocModal({
                             onClick={handleCopy}
                             disabled={loading || !content}
                             title="Sao chép nội dung văn bản"
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium transition disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 text-xs font-medium transition disabled:opacity-50"
                         >
                             {copied ? (
                                 <>
@@ -181,7 +181,7 @@ export function MarkdownDocModal({
                             onClick={handlePrint}
                             disabled={loading || !content}
                             title="In tài liệu này"
-                            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition disabled:opacity-50"
+                            className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 transition disabled:opacity-50"
                         >
                             <Printer className="w-4 h-4 text-slate-500" />
                         </button>
@@ -191,7 +191,7 @@ export function MarkdownDocModal({
                                 href={docUrl}
                                 download={fileName || 'tai_lieu.md'}
                                 title="Tải về tệp .md gốc"
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white text-xs font-semibold shadow-sm transition"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-sm transition"
                             >
                                 <Download className="w-3.5 h-3.5" />
                                 <span className="hidden sm:inline">Tải về</span>
@@ -200,7 +200,7 @@ export function MarkdownDocModal({
 
                         <button
                             onClick={onClose}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition ml-1"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition ml-1"
                         >
                             <X className="w-5 h-5" />
                         </button>
@@ -208,7 +208,7 @@ export function MarkdownDocModal({
                 </div>
 
                 {/* Content Area */}
-                <div className="p-5 sm:p-8 overflow-y-auto flex-1 bg-white dark:bg-slate-900">
+                <div className="p-5 sm:p-8 overflow-y-auto flex-1 bg-white">
                     {loading && (
                         <div className="py-16 flex flex-col items-center justify-center space-y-3 text-slate-500">
                             <RefreshCw className="w-6 h-6 animate-spin text-slate-400" />
@@ -217,9 +217,9 @@ export function MarkdownDocModal({
                     )}
 
                     {error && (
-                        <div className="p-6 text-center rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3">
+                        <div className="p-6 text-center rounded-lg bg-slate-50 border border-slate-200 space-y-3">
                             <AlertCircle className="w-6 h-6 text-rose-600 mx-auto" />
-                            <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                            <div className="text-sm font-semibold text-slate-800">
                                 {error}
                             </div>
                         </div>

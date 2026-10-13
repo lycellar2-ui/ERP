@@ -199,12 +199,13 @@ export function CustomerRulesTab({ currentUser }: Props) {
         })
         if (res.success) {
             setPolicyModalCustomer(null)
+            toast.success('Đã cập nhật chính sách giá mặc định')
             await loadData()
             if (drawerCustomer?.id === policyModalCustomer.id) {
                 await refreshDrawer()
             }
         } else {
-            alert('Lỗi cập nhật: ' + res.error)
+            toast.error('Lỗi cập nhật: ' + res.error)
         }
         setPolicySaving(false)
     }
@@ -223,7 +224,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
     // Create Rule Action
     const handleCreateRule = async () => {
         if (!formCustomer || !formProduct || !formValue) {
-            alert('Vui lòng điền đầy đủ Khách hàng, Sản phẩm và Giá trị')
+            toast.warning('Vui lòng điền đầy đủ Khách hàng, Sản phẩm và Giá trị')
             return
         }
         setSaving(true)
@@ -245,12 +246,13 @@ export function CustomerRulesTab({ currentUser }: Props) {
             setFormNotes('')
             setFormProductSearch('')
             setFormCustomerSearch('')
+            toast.success('Đã tạo chính sách giá thành công')
             await loadData()
             if (drawerCustomer?.id === formCustomer) {
                 await refreshDrawer()
             }
         } else {
-            alert('Lỗi: ' + res.error)
+            toast.error('Lỗi: ' + res.error)
         }
         setSaving(false)
     }
@@ -261,10 +263,11 @@ export function CustomerRulesTab({ currentUser }: Props) {
         setLoading(true)
         const res = await approveCustomerPriceRule(id, comment)
         if (res.success) {
+            toast.success('Đã phê duyệt chính sách giá')
             await loadData()
             if (drawerCustomer) await refreshDrawer()
         } else {
-            alert('Lỗi: ' + res.error)
+            toast.error('Lỗi: ' + res.error)
         }
         setLoading(false)
     }
@@ -272,16 +275,17 @@ export function CustomerRulesTab({ currentUser }: Props) {
     const handleReject = async (id: string) => {
         const comment = prompt('Nhập lý do từ chối (bắt buộc):')
         if (!comment) {
-            if (comment !== null) alert('Lý do từ chối là bắt buộc')
+            if (comment !== null) toast.warning('Lý do từ chối là bắt buộc')
             return
         }
         setLoading(true)
         const res = await rejectCustomerPriceRule(id, comment)
         if (res.success) {
+            toast.success('Đã từ chối chính sách giá')
             await loadData()
             if (drawerCustomer) await refreshDrawer()
         } else {
-            alert('Lỗi: ' + res.error)
+            toast.error('Lỗi: ' + res.error)
         }
         setLoading(false)
     }
@@ -326,15 +330,15 @@ export function CustomerRulesTab({ currentUser }: Props) {
 
     const handleExecuteClone = async () => {
         if (!cloneSourceCustomer) {
-            alert('Vui lòng chọn khách hàng nguồn')
+            toast.warning('Vui lòng chọn khách hàng nguồn')
             return
         }
         if (cloneTargetCustomers.length === 0) {
-            alert('Vui lòng chọn ít nhất 1 cơ sở đích cần áp dụng cơ chế giá')
+            toast.warning('Vui lòng chọn ít nhất 1 cơ sở đích cần áp dụng cơ chế giá')
             return
         }
         if (cloneSelectedRuleIds.length === 0) {
-            alert('Vui lòng chọn ít nhất 1 chính sách giá cần sao chép')
+            toast.warning('Vui lòng chọn ít nhất 1 chính sách giá cần sao chép')
             return
         }
 
@@ -347,11 +351,11 @@ export function CustomerRulesTab({ currentUser }: Props) {
         })
 
         if (res.success) {
-            alert(`Đã sao chép thành công ${res.clonedCount} chính sách giá sang ${res.targetCount} cơ sở đích!`)
+            toast.success(`Đã sao chép thành công ${res.clonedCount} chính sách giá sang ${res.targetCount} cơ sở đích!`)
             setCloneModalOpen(false)
             await loadData()
         } else {
-            alert('Lỗi: ' + res.error)
+            toast.error('Lỗi: ' + res.error)
         }
         setCloning(false)
     }
@@ -408,7 +412,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                         onClick={() => setViewMode('CUSTOMERS')}
                         className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition-all ${
                             viewMode === 'CUSTOMERS'
-                                ? 'bg-[#0891B2] text-white shadow-xs font-bold'
+                                ? 'bg-[#0E7490] text-white shadow-xs font-bold'
                                 : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                         }`}
                     >
@@ -420,7 +424,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                         onClick={() => setViewMode('RULES')}
                         className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition-all ${
                             viewMode === 'RULES'
-                                ? 'bg-[#0891B2] text-white shadow-xs font-bold'
+                                ? 'bg-[#0E7490] text-white shadow-xs font-bold'
                                 : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                         }`}
                     >
@@ -971,7 +975,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                 <button
                                     type="button"
                                     onClick={() => handleOpenCreateWithCustomer(drawerCustomer.id)}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded bg-[#0891B2] text-white shadow-xs hover:opacity-90 transition"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded bg-[#0E7490] text-white shadow-xs hover:opacity-90 transition"
                                 >
                                     <Plus size={14} /> Thêm Chai Mới
                                 </button>
@@ -996,7 +1000,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                         <button
                                             type="button"
                                             onClick={() => handleOpenCreateWithCustomer(drawerCustomer.id)}
-                                            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded bg-[#0891B2] text-white"
+                                            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded bg-[#0E7490] text-white"
                                         >
                                             <Plus size={14} /> Thiết Lập Giá Đặc Biệt Cho Chai Cụ Thể
                                         </button>
@@ -1217,7 +1221,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                 type="button"
                                 disabled={policySaving}
                                 onClick={handleSavePolicy}
-                                className="flex items-center gap-2 px-5 py-2 text-xs font-bold rounded bg-[#0891B2] text-white shadow-md hover:opacity-90 transition disabled:opacity-50"
+                                className="flex items-center gap-2 px-5 py-2 text-xs font-bold rounded bg-[#0E7490] text-white shadow-md hover:opacity-90 transition disabled:opacity-50"
                             >
                                 {policySaving ? (
                                     <>
@@ -1360,7 +1364,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                 type="button"
                                 disabled={saving}
                                 onClick={handleCreateRule}
-                                className="flex items-center gap-2 px-5 py-2 text-xs font-bold rounded bg-[#0891B2] text-white shadow-md hover:opacity-90 disabled:opacity-50"
+                                className="flex items-center gap-2 px-5 py-2 text-xs font-bold rounded bg-[#0E7490] text-white shadow-md hover:opacity-90 disabled:opacity-50"
                             >
                                 {saving ? <Loader2 size={14} className="animate-spin" /> : 'Lưu & Trình Duyệt'}
                             </button>
@@ -1473,7 +1477,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                 type="button"
                                 disabled={cloning || cloneTargetCustomers.length === 0}
                                 onClick={handleExecuteClone}
-                                className="flex items-center gap-2 px-5 py-2 text-xs font-bold rounded bg-[#0891B2] text-white shadow-md hover:opacity-90 disabled:opacity-50"
+                                className="flex items-center gap-2 px-5 py-2 text-xs font-bold rounded bg-[#0E7490] text-white shadow-md hover:opacity-90 disabled:opacity-50"
                             >
                                 {cloning ? <Loader2 size={14} className="animate-spin" /> : `Sao Chép Sang ${cloneTargetCustomers.length} Cơ Sở`}
                             </button>

@@ -1084,6 +1084,8 @@ export interface SOUpdateInput {
     orderDate?: string | Date
     customerId: string
     channel: SalesChannel
+    orderType?: SOType
+    proposalId?: string
     paymentTerm: string
     orderDiscount?: number
     notes?: string
@@ -1190,6 +1192,8 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
                     ...(input.orderDate ? { createdAt: parseDateWithCurrentTime(input.orderDate) } : {}),
                     customerId: input.customerId,
                     channel: input.channel,
+                    ...(input.orderType ? { orderType: input.orderType } : {}),
+                    ...(input.proposalId !== undefined ? { proposalId: input.proposalId || null } : {}),
                     paymentTerm: input.paymentTerm,
                     orderDiscount: input.orderDiscount ?? 0,
                     totalAmount: Math.round(netAmountTotal),

@@ -685,7 +685,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
         <div className="space-y-4">
             {/* Offline Sync Banner if any drafts exist */}
             {offlineDrafts.length > 0 && (
-                <div className="flex items-center justify-between p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 shadow-xs">
+                <div className="flex items-center justify-between p-3.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 shadow-xs">
                     <div className="flex items-center gap-2.5">
                         <WifiOff className="w-5 h-5 text-amber-600 shrink-0" />
                         <div>
@@ -706,7 +706,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
             )}
 
             {/* Top Bar: Warehouse Selector & Primary Actions */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-4 bg-white border border-slate-200 rounded-xl shadow-2xs">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-4 bg-white border border-slate-200 rounded-lg shadow-2xs">
                 <div className="flex flex-wrap items-center gap-3">
                     <div className="flex items-center gap-2">
                         <div className="w-9 h-9 rounded-lg bg-cyan-50 border border-cyan-200 flex items-center justify-center text-cyan-700 shrink-0">
@@ -809,7 +809,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
 
             {/* KPI Summary Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-                <div className="p-3 bg-white border border-slate-200 rounded-xl shadow-2xs">
+                <div className="p-3 bg-white border border-slate-200 rounded-lg shadow-2xs">
                     <div className="flex items-center justify-between text-slate-500 mb-1">
                         <span className="text-[11px] font-medium">Tỷ lệ đạt chuẩn</span>
                         <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -818,7 +818,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
                     <div className="text-[10px] text-slate-500 mt-0.5">{kpis.passedCount}/{kpis.totalInspections} lượt</div>
                 </div>
 
-                <div className="p-3 bg-white border border-slate-200 rounded-xl shadow-2xs">
+                <div className="p-3 bg-white border border-slate-200 rounded-lg shadow-2xs">
                     <div className="flex items-center justify-between text-slate-500 mb-1">
                         <span className="text-[11px] font-medium">Tổng lượt tháng</span>
                         <Calendar className="w-4 h-4 text-cyan-600" />
@@ -827,7 +827,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
                     <div className="text-[10px] text-slate-500 mt-0.5">Kho {selectedWarehouse?.code}</div>
                 </div>
 
-                <div className="p-3 bg-white border border-slate-200 rounded-xl shadow-2xs">
+                <div className="p-3 bg-white border border-slate-200 rounded-lg shadow-2xs">
                     <div className="flex items-center justify-between text-slate-500 mb-1">
                         <span className="text-[11px] font-medium">Đã phân công</span>
                         <UserCheck className="w-4 h-4 text-sky-600" />
@@ -836,7 +836,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
                     <div className="text-[10px] text-slate-500 mt-0.5">Chờ nhân viên đo</div>
                 </div>
 
-                <div className="p-3 bg-white border border-slate-200 rounded-xl shadow-2xs">
+                <div className="p-3 bg-white border border-slate-200 rounded-lg shadow-2xs">
                     <div className="flex items-center justify-between text-slate-500 mb-1">
                         <span className="text-[11px] font-medium">Quá hạn ca</span>
                         <Clock className={`w-4 h-4 ${kpis.overdueCount > 0 ? 'text-rose-600 animate-pulse' : 'text-slate-400'}`} />
@@ -845,7 +845,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
                     <div className="text-[10px] text-slate-500 mt-0.5">Cần nhắc nhở</div>
                 </div>
 
-                <div className="p-3 bg-white border border-slate-200 rounded-xl shadow-2xs">
+                <div className="p-3 bg-white border border-slate-200 rounded-lg shadow-2xs">
                     <div className="flex items-center justify-between text-slate-500 mb-1">
                         <span className="text-[11px] font-medium">Cảnh báo / Sự cố</span>
                         <AlertTriangle className={`w-4 h-4 ${kpis.incidentCount > 0 ? 'text-amber-500' : 'text-slate-400'}`} />
@@ -854,7 +854,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
                     <div className="text-[10px] text-slate-500 mt-0.5">Vượt ngưỡng an toàn</div>
                 </div>
 
-                <div className="p-3 bg-white border border-slate-200 rounded-xl shadow-2xs">
+                <div className="p-3 bg-white border border-slate-200 rounded-lg shadow-2xs">
                     <div className="flex items-center justify-between text-slate-500 mb-1">
                         <span className="text-[11px] font-medium">Chờ duyệt sự cố</span>
                         <ShieldAlert className={`w-4 h-4 ${kpis.pendingApprovalCount > 0 ? 'text-rose-600' : 'text-slate-400'}`} />
@@ -1495,7 +1495,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
                     ) : (
                         <div className="space-y-3">
                             {incidentInspections.map(item => (
-                                <div key={item.id} className="p-4 bg-slate-50 border border-rose-200/80 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3">
+                                <div key={item.id} className="p-4 bg-slate-50 border border-rose-200/80 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-3">
                                     <div className="space-y-1">
                                         <div className="flex items-center gap-2">
                                             <span className="font-mono text-xs font-bold text-slate-900">{item.inspectionNo}</span>
@@ -1598,7 +1598,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
             {/* MODAL 1: Quick Daily Inspection Form */}
             {openDailyModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4 backdrop-blur-xs">
-                    <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+                    <div className="bg-white border border-slate-200 rounded-lg w-full max-w-lg max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
                         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 bg-slate-50">
                             <div>
                                 <h3 className="text-sm font-bold text-slate-900">Ghi Số Đo Nhiệt Ẩm 12h (Form 5.3-A)</h3>
@@ -1736,7 +1736,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
                                 {dailyForm.photos.length === 0 ? (
                                     <div
                                         onClick={() => handleOpenCamera('THERMOMETER', 'Nhiệt ẩm kế', 'daily')}
-                                        className="p-4 border-2 border-dashed border-slate-200 hover:border-cyan-400 rounded-xl text-center cursor-pointer bg-slate-50/50 transition"
+                                        className="p-4 border-2 border-dashed border-slate-200 hover:border-cyan-400 rounded-lg text-center cursor-pointer bg-slate-50/50 transition"
                                     >
                                         <Camera className="w-6 h-6 text-slate-400 mx-auto mb-1" />
                                         <p className="text-xs font-medium text-slate-600">Bấm để chụp ảnh đồng hồ nhiệt ẩm kế</p>
@@ -1824,7 +1824,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
             {/* MODAL 2: Periodic Audit Checklist Form (T2 & T5) */}
             {openPeriodicModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4 backdrop-blur-xs">
-                    <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+                    <div className="bg-white border border-slate-200 rounded-lg w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
                         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 bg-slate-50">
                             <div>
                                 <h3 className="text-sm font-bold text-slate-900">Phiếu Kiểm Tra Định Kỳ (Thứ 2 & Thứ 5)</h3>
@@ -1867,7 +1867,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
                                     const catItems = periodicForm.items.filter(i => i.category === cat)
 
                                     return (
-                                        <div key={cat} className="border border-slate-200 rounded-xl overflow-hidden">
+                                        <div key={cat} className="border border-slate-200 rounded-lg overflow-hidden">
                                             <div className="bg-slate-100/80 px-3 py-2 font-bold text-slate-800 text-[11px]">
                                                 {catLabel}
                                             </div>
@@ -1928,7 +1928,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
                             </div>
 
                             {/* Section IV: Camera Photos */}
-                            <div className="border border-slate-200 rounded-xl p-3 bg-slate-50/50">
+                            <div className="border border-slate-200 rounded-lg p-3 bg-slate-50/50">
                                 <div className="flex items-center justify-between mb-2">
                                     <div>
                                         <h4 className="font-bold text-slate-800 text-[11px]">IV. Quy trình hình ảnh TimeMark</h4>
@@ -2041,7 +2041,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
             {/* MODAL 3: Detail Modal */}
             {openDetailModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-4 backdrop-blur-xs">
-                    <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+                    <div className="bg-white border border-slate-200 rounded-lg w-full max-w-xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
                         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 bg-slate-50">
                             <div>
                                 <h3 className="text-sm font-bold text-slate-900">Chi Tiết Phiếu Kiểm Tra Kho</h3>
@@ -2061,7 +2061,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
                                 <div className="py-12 text-center text-slate-400">Đang tải chi tiết...</div>
                             ) : selectedDetail ? (
                                 <>
-                                    <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl">
+                                    <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-lg">
                                         <div>
                                             <span className="text-slate-500">Kho:</span>{' '}
                                             <span className="font-semibold text-slate-800">{selectedDetail.warehouse?.name}</span>
@@ -2098,7 +2098,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
 
                                     {/* Temperatures */}
                                     {selectedDetail.type === 'DAILY_TEMP_HUMIDITY' && (
-                                        <div className="grid grid-cols-4 gap-2 text-center p-3 border border-slate-200 rounded-xl">
+                                        <div className="grid grid-cols-4 gap-2 text-center p-3 border border-slate-200 rounded-lg">
                                             <div>
                                                 <div className="text-[10px] text-slate-500">VT #1 (Cửa)</div>
                                                 <div className="font-mono font-bold text-slate-900 mt-0.5">{selectedDetail.temp1 ? `${selectedDetail.temp1}°C` : '-'}</div>
@@ -2120,7 +2120,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
 
                                     {/* Items List */}
                                     {selectedDetail.items && selectedDetail.items.length > 0 && (
-                                        <div className="border border-slate-200 rounded-xl overflow-hidden">
+                                        <div className="border border-slate-200 rounded-lg overflow-hidden">
                                             <div className="bg-slate-100 px-3 py-1.5 font-bold text-slate-700">Chi tiết các hạng mục kiểm tra</div>
                                             <div className="divide-y divide-slate-100 max-h-48 overflow-y-auto">
                                                 {selectedDetail.items.map((it: any) => (
@@ -2161,7 +2161,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
 
                                     {/* Incident Notes */}
                                     {selectedDetail.incidentNotes && (
-                                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                                             <span className="font-semibold text-amber-900 block mb-0.5">Sự cố ghi nhận:</span>
                                             <p className="text-amber-800 whitespace-pre-line">{selectedDetail.incidentNotes}</p>
                                         </div>
@@ -2176,7 +2176,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
             {/* MODAL 4: Manager Approval Modal */}
             {openApproveModal && approveInspection && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-4 backdrop-blur-xs">
-                    <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+                    <div className="bg-white border border-slate-200 rounded-lg w-full max-w-lg shadow-2xl overflow-hidden">
                         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 bg-rose-50">
                             <div>
                                 <h3 className="text-sm font-bold text-rose-900">Phê Duyệt Phương Án Khắc Phục Sự Cố</h3>
@@ -2192,7 +2192,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
                         </div>
 
                         <div className="p-5 space-y-4 text-xs">
-                            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+                            <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-1">
                                 <span className="font-semibold text-slate-700">Mô tả sự cố:</span>
                                 <p className="text-slate-800 whitespace-pre-line">{approveInspection.incidentNotes || 'Không có mô tả'}</p>
                             </div>
@@ -2248,7 +2248,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
             {/* MODAL 6: Assign / Reassign Warehouse Inspection */}
             {openAssignModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4 backdrop-blur-xs">
-                    <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
+                    <div className="bg-white border border-slate-200 rounded-lg w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
                         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 bg-sky-50">
                             <div className="flex items-center gap-2">
                                 <UserPlus className="w-5 h-5 text-sky-700" />
@@ -2444,7 +2444,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
                         <img
                             src={viewPhotoUrl}
                             alt="Ảnh kiểm tra kho phóng to"
-                            className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl"
+                            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
                         />
                         <button
                             type="button"

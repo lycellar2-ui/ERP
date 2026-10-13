@@ -624,7 +624,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                         </div>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); handleDrillDown(item) }}
-                                            className="px-2.5 py-1 bg-[#0891B2] text-white hover:bg-[#06748E] font-bold text-[11px] rounded-lg shrink-0 shadow-xs transition-colors cursor-pointer flex items-center gap-1"
+                                            className="px-2.5 py-1 bg-[#0E7490] text-white hover:bg-[#06748E] font-bold text-[11px] rounded-lg shrink-0 shadow-xs transition-colors cursor-pointer flex items-center gap-1"
                                         >
                                             <span>Sổ Chi Tiết</span>
                                             <ChevronRight size={12} />

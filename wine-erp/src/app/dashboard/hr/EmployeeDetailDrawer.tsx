@@ -482,7 +482,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                     </div>
                                     <button
                                         onClick={() => setIsUploadOpen(true)}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0891B2] text-white font-bold text-xs hover:bg-[#68B9A5] transition-all cursor-pointer"
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0E7490] text-white font-bold text-xs hover:bg-[#68B9A5] transition-all cursor-pointer"
                                     >
                                         <Plus className="w-4 h-4" />
                                         Tải Lên Giấy Tờ

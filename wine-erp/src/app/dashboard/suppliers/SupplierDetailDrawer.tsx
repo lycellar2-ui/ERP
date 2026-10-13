@@ -39,7 +39,7 @@ function ActivityIcon({ type }: { type: string }) {
         case 'EMAIL': return <Mail size={14} className="text-amber-600" />
         case 'VISIT': return <Users size={14} className="text-emerald-600" />
         case 'PO_CREATED': return <Package size={14} className="text-cyan-600" />
-        case 'CONTRACT_SIGNED': return <FileText size={14} className="text-purple-600" />
+        case 'CONTRACT_SIGNED': return <FileText size={14} className="text-lys-teal-strong" />
         case 'NOTE':
         default: return <FileText size={14} className="text-slate-500" />
     }

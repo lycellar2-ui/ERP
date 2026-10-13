@@ -18,6 +18,7 @@ import MobileLocationCounter from './MobileLocationCounter'
 import PrintableAuditReport from './PrintableAuditReport'
 import { BarcodeLookupModal } from './BarcodeLookupModal'
 import { StockCountTableModal } from './StockCountTableModal'
+import { toast } from 'sonner'
 
 type SessionRow = {
     id: string
@@ -80,7 +81,10 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
         setIsLoading(true)
         const detail = await getStockCountDetail(sessionId)
         setIsLoading(false)
-        if (!detail) return alert('Không thể lấy chi tiết phiên kiểm kê')
+        if (!detail) {
+            toast.error('Không thể lấy chi tiết phiên kiểm kê')
+            return
+        }
 
         setAssignSessionDetail(detail)
         const initialMap: Record<string, string> = {}
@@ -301,9 +305,10 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
         if (res.success) {
             setShowAssignModal(false)
+            toast.success('Đã lưu phân công vị trí')
             fetchData()
         } else {
-            alert(res.error || 'Không thể lưu phân công vị trí')
+            toast.error(res.error || 'Không thể lưu phân công vị trí')
         }
     }
 
@@ -336,7 +341,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                 handleOpenDetail(sessionId)
             }
         } else {
-            alert(res.error || 'Lỗi khi bắt đầu đếm')
+            toast.error(res.error || 'Lỗi khi bắt đầu đếm')
         }
     }
 
@@ -405,7 +410,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
     const handleCreateBatchSession = async () => {
         if (!selectedDailySkus || selectedDailySkus.length === 0) {
-            alert('Vui lòng chọn ít nhất 1 mã SKU để kiểm kê')
+            toast.warning('Vui lòng chọn ít nhất 1 mã SKU để kiểm kê')
             return
         }
         setIsCreatingBatch(true)
@@ -425,7 +430,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
             loadCycleProgress()
             if (res.sessionId) handleOpenMobileView(res.sessionId)
         } else {
-            alert(res.error || 'Khởi tạo đợt kiểm thất bại')
+            toast.error(res.error || 'Khởi tạo đợt kiểm thất bại')
         }
     }
 
@@ -519,7 +524,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                             type="button"
                             onClick={() => {
                                 if (!cycleProgress || cycleProgress.uncountedProducts.length === 0) {
-                                    alert('Tất cả các mã trong kho đã được kiểm kê trong chu kỳ này!')
+                                    toast.info('Tất cả các mã trong kho đã được kiểm kê trong chu kỳ này!')
                                     return
                                 }
                                 const topN = cycleProgress.uncountedProducts.slice(0, cycleProgress.dailySuggestedCount).map(p => p.skuCode)
@@ -716,7 +721,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 type="button"
                                 onClick={() => {
                                     if (!cycleProgress || cycleProgress.uncountedProducts.length === 0) {
-                                        alert('Tất cả các mã trong kho đã được kiểm kê trong chu kỳ này!')
+                                        toast.info('Tất cả các mã trong kho đã được kiểm kê trong chu kỳ này!')
                                         return
                                     }
                                     const topN = cycleProgress.uncountedProducts.slice(0, cycleProgress.dailySuggestedCount).map(p => p.skuCode)
@@ -974,7 +979,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => handleOpenPrintView(s.id)}
-                                                                        className="px-2.5 py-1.5 bg-[#0891B2] hover:bg-[#0E7490] text-white rounded font-bold text-[11px] shadow-2xs flex items-center gap-1 cursor-pointer transition active:scale-95"
+                                                                        className="px-2.5 py-1.5 bg-[#0E7490] hover:bg-[#0E7490] text-white rounded font-bold text-[11px] shadow-2xs flex items-center gap-1 cursor-pointer transition active:scale-95"
                                                                         title="Xem biên bản đối soát và chênh lệch kiểm kê"
                                                                     >
                                                                         <FileText size={12} />
@@ -1028,7 +1033,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 }`}
                             >
                                 <span>{tab.label}</span>
-                                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${isActive ? 'bg-[#0891B2] text-white' : 'bg-slate-200 text-slate-700'}`}>
+                                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${isActive ? 'bg-[#0E7490] text-white' : 'bg-slate-200 text-slate-700'}`}>
                                     {tab.count}
                                 </span>
                             </button>
@@ -1244,7 +1249,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                             <div className="grid grid-cols-2 gap-1.5 pt-1">
                                 <button
                                     onClick={() => setTableModalSessionId(row.id)}
-                                    className="py-2.5 bg-[#0891B2] hover:bg-[#0E7490] active:scale-95 text-white font-bold rounded-lg text-[11px] flex items-center justify-center gap-1 shadow-2xs cursor-pointer transition-all duration-150"
+                                    className="py-2.5 bg-[#0E7490] hover:bg-[#0E7490] active:scale-95 text-white font-bold rounded-lg text-[11px] flex items-center justify-center gap-1 shadow-2xs cursor-pointer transition-all duration-150"
                                 >
                                     <FileText className="w-3.5 h-3.5" /> Bảng kiểm kê
                                 </button>
@@ -1563,7 +1568,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                     }}
                                                     className={`px-3 py-1.5 rounded-md font-bold text-xs transition cursor-pointer flex items-center gap-1.5 ${
                                                         randomCountMode === 'RANDOM_SAMPLE'
-                                                            ? 'bg-[#0891B2] text-white shadow-2xs'
+                                                            ? 'bg-[#0E7490] text-white shadow-2xs'
                                                             : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
                                                     }`}
                                                 >
@@ -1574,7 +1579,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                     onClick={() => setRandomCountMode('MANUAL_SKUS')}
                                                     className={`px-3 py-1.5 rounded-md font-bold text-xs transition cursor-pointer flex items-center gap-1.5 ${
                                                         randomCountMode === 'MANUAL_SKUS'
-                                                            ? 'bg-[#0891B2] text-white shadow-2xs'
+                                                            ? 'bg-[#0E7490] text-white shadow-2xs'
                                                             : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
                                                     }`}
                                                 >
@@ -1888,7 +1893,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                             <button
                                                 type="submit"
                                                 disabled={isSubmitting || (countCategory === 'CYCLE' && selectedDailySkus.length === 0)}
-                                                className="px-5 py-2 bg-[#0891B2] hover:bg-[#0E7490] active:scale-95 text-white font-extrabold rounded-lg shadow-xs text-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5 transition-all"
+                                                className="px-5 py-2 bg-[#0E7490] hover:bg-[#0E7490] active:scale-95 text-white font-extrabold rounded-lg shadow-xs text-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5 transition-all"
                                             >
                                                 <Zap size={14} />
                                                 {isSubmitting
@@ -1995,7 +2000,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 type="button"
                                 onClick={handleSaveZoneAssignments}
                                 disabled={isSavingAssignments}
-                                className="px-5 py-2 bg-[#0891B2] hover:bg-[#0E7490] active:scale-95 text-white font-extrabold rounded-lg shadow-xs transition-all cursor-pointer"
+                                className="px-5 py-2 bg-[#0E7490] hover:bg-[#0E7490] active:scale-95 text-white font-extrabold rounded-lg shadow-xs transition-all cursor-pointer"
                             >
                                 {isSavingAssignments ? 'Đang lưu...' : 'Lưu Phân Công Vị Trí'}
                             </button>

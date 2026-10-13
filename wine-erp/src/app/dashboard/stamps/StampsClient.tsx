@@ -7,7 +7,7 @@ import {
     ShieldAlert, BookOpen, Download, Search, Filter, RefreshCw,
     Ship, Warehouse, FileSpreadsheet, ArrowRight, Info,
     Layers, ChevronDown, ChevronUp, Check, Hash, Calendar,
-    Printer, FileText, Store, CheckCircle2, Eye, CheckSquare, Square
+    Printer, FileText, Store, CheckCircle2, Eye, CheckSquare, Square, X
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -1944,10 +1944,12 @@ export default function StampsClient({
                                 </p>
                             </div>
                             <button
+                                type="button"
+                                aria-label="Đóng"
                                 onClick={() => setShowPOAllocModal(false)}
-                                className="border-none bg-transparent text-slate-400 hover:text-slate-600 text-lg cursor-pointer p-1"
+                                className="border-none bg-transparent text-slate-400 hover:text-slate-600 cursor-pointer p-1"
                             >
-                                ✕
+                                <X size={18} />
                             </button>
                         </div>
 
@@ -2231,7 +2233,7 @@ export default function StampsClient({
                     onClick={() => setStickingGuideAlloc(null)}
                 >
                     <div
-                        className="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-y-auto print:max-h-none print:shadow-none print:border-none print:m-0"
+                        className="bg-white rounded-lg border border-slate-200 shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-y-auto print:max-h-none print:shadow-none print:border-none print:m-0"
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Header */}
@@ -2295,10 +2297,11 @@ export default function StampsClient({
                                 </Button>
                                 <button
                                     type="button"
+                                    aria-label="Đóng"
                                     onClick={() => setStickingGuideAlloc(null)}
-                                    className="text-slate-400 hover:text-slate-700 text-lg p-1.5 rounded hover:bg-slate-100 transition-colors cursor-pointer print:hidden"
+                                    className="text-slate-400 hover:text-slate-700 p-1.5 rounded hover:bg-slate-100 transition-colors cursor-pointer print:hidden"
                                 >
-                                    ✕
+                                    <X size={18} />
                                 </button>
                             </div>
                         </div>
@@ -2370,7 +2373,7 @@ export default function StampsClient({
                                         <div
                                             key={itemKey}
                                             className={cn(
-                                                'border rounded-xl p-4 transition-all shadow-xs',
+                                                'border rounded-lg p-4 transition-all shadow-xs',
                                                 isDone
                                                     ? 'bg-emerald-50/40 border-emerald-300'
                                                     : 'bg-white border-slate-200 hover:border-slate-300'

@@ -264,7 +264,7 @@ export function ReplenishmentTab() {
                                 onClick={() => setCategory(tab.key as ReplenishmentCategory)}
                                 className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
                                     category === tab.key
-                                        ? 'bg-[#0891B2] text-white shadow-sm'
+                                        ? 'bg-[#0E7490] text-white shadow-sm'
                                         : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                                 }`}
                             >

@@ -117,18 +117,18 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
 
     return (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/80 backdrop-blur-sm flex justify-center p-2 sm:p-4 md:p-6 animate-in fade-in">
-            <div className="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col my-auto max-h-[92vh] overflow-hidden">
+            <div className="bg-white w-full max-w-4xl rounded-lg shadow-2xl border border-slate-200 flex flex-col my-auto max-h-[92vh] overflow-hidden">
                 {/* Header */}
-                <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex justify-between items-center">
+                <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
                     <div>
-                        <span className="text-xs font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider">
+                        <span className="text-xs font-bold text-rose-700 uppercase tracking-wider">
                             Chế độ Chỉnh Sửa Quản Trị
                         </span>
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                        <h2 className="text-xl font-bold text-slate-900">
                             Chỉnh Sửa: {sop.code} — {sop.title}
                         </h2>
                     </div>
-                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -145,88 +145,88 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                     {/* Basic Meta */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
-                            <label className="font-semibold text-slate-700 dark:text-slate-300">Tên Quy Trình</label>
+                            <label className="font-semibold text-slate-700">Tên Quy Trình</label>
                             <input
                                 type="text"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
+                                className="w-full p-2.5 rounded-lg border border-slate-300 bg-white text-slate-900 text-xs"
                             />
                         </div>
 
                         <div className="space-y-1">
-                            <label className="font-semibold text-slate-700 dark:text-slate-300">Phòng Ban Phụ Trách</label>
+                            <label className="font-semibold text-slate-700">Phòng Ban Phụ Trách</label>
                             <input
                                 type="text"
                                 value={department}
                                 onChange={(e) => setDepartment(e.target.value)}
-                                className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
+                                className="w-full p-2.5 rounded-lg border border-slate-300 bg-white text-slate-900 text-xs"
                             />
                         </div>
 
                         <div className="space-y-1">
-                            <label className="font-semibold text-slate-700 dark:text-slate-300">Thời Lượng Thực Hiện / SLA</label>
+                            <label className="font-semibold text-slate-700">Thời Lượng Thực Hiện / SLA</label>
                             <input
                                 type="text"
                                 value={estimatedDuration}
                                 onChange={(e) => setEstimatedDuration(e.target.value)}
-                                className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
+                                className="w-full p-2.5 rounded-lg border border-slate-300 bg-white text-slate-900 text-xs"
                             />
                         </div>
 
                         <div className="space-y-1">
-                            <label className="font-semibold text-slate-700 dark:text-slate-300">Số Hiệu Phiên Bản</label>
+                            <label className="font-semibold text-slate-700">Số Hiệu Phiên Bản</label>
                             <input
                                 type="text"
                                 value={version}
                                 onChange={(e) => setVersion(e.target.value)}
-                                className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
+                                className="w-full p-2.5 rounded-lg border border-slate-300 bg-white text-slate-900 text-xs"
                             />
                         </div>
                     </div>
 
                     <div className="space-y-1">
-                        <label className="font-semibold text-slate-700 dark:text-slate-300">Tóm Tắt Quy Trình</label>
+                        <label className="font-semibold text-slate-700">Tóm Tắt Quy Trình</label>
                         <textarea
                             rows={3}
                             value={summary}
                             onChange={(e) => setSummary(e.target.value)}
-                            className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
+                            className="w-full p-2.5 rounded-lg border border-slate-300 bg-white text-slate-900 text-xs"
                         />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
-                            <label className="font-semibold text-slate-700 dark:text-slate-300">Mục Tiêu</label>
+                            <label className="font-semibold text-slate-700">Mục Tiêu</label>
                             <input
                                 type="text"
                                 value={purpose}
                                 onChange={(e) => setPurpose(e.target.value)}
-                                className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
+                                className="w-full p-2.5 rounded-lg border border-slate-300 bg-white text-slate-900 text-xs"
                             />
                         </div>
 
                         <div className="space-y-1">
-                            <label className="font-semibold text-slate-700 dark:text-slate-300">Phạm Vi Áp Dụng</label>
+                            <label className="font-semibold text-slate-700">Phạm Vi Áp Dụng</label>
                             <input
                                 type="text"
                                 value={scope}
                                 onChange={(e) => setScope(e.target.value)}
-                                className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
+                                className="w-full p-2.5 rounded-lg border border-slate-300 bg-white text-slate-900 text-xs"
                             />
                         </div>
                     </div>
 
                     {/* Steps Management */}
-                    <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+                    <div className="space-y-3 pt-4 border-t border-slate-200">
                         <div className="flex justify-between items-center">
-                            <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                            <h3 className="font-bold text-sm text-slate-900">
                                 Các Bước Thực Hiện Chuẩn ({steps.length} bước)
                             </h3>
                             <button
                                 type="button"
                                 onClick={addStep}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold"
                             >
                                 <Plus className="w-3.5 h-3.5" />
                                 <span>Thêm Bước</span>
@@ -235,7 +235,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
 
                         <div className="space-y-4">
                             {steps.map((st, i) => (
-                                <div key={i} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 space-y-3">
+                                <div key={i} className="p-4 rounded-lg border border-slate-200 bg-slate-50/60 space-y-3">
                                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                                         <div className="flex items-center gap-2 w-full sm:flex-1">
                                             <span className="w-6 h-6 rounded-full bg-rose-700 text-white font-bold flex items-center justify-center text-xs flex-shrink-0">
@@ -246,7 +246,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                                                 value={st.title}
                                                 onChange={(e) => updateStep(i, 'title', e.target.value)}
                                                 placeholder="Tên bước..."
-                                                className="flex-1 p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold text-xs"
+                                                className="flex-1 p-2 rounded-lg border border-slate-300 bg-white text-slate-900 font-bold text-xs"
                                             />
                                         </div>
                                         <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -255,7 +255,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                                                 value={st.role}
                                                 onChange={(e) => updateStep(i, 'role', e.target.value)}
                                                 placeholder="Vai trò thực hiện..."
-                                                className="flex-1 sm:w-48 p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs"
+                                                className="flex-1 sm:w-48 p-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs"
                                             />
                                             <button
                                                 type="button"
@@ -273,7 +273,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                                         value={st.action}
                                         onChange={(e) => updateStep(i, 'action', e.target.value)}
                                         placeholder="Mô tả chi tiết hành động..."
-                                        className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-xs"
+                                        className="w-full p-2.5 rounded-lg border border-slate-300 bg-white text-slate-800 text-xs"
                                     />
                                 </div>
                             ))}
@@ -281,15 +281,15 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                     </div>
 
                     {/* Checklist Management */}
-                    <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+                    <div className="space-y-3 pt-4 border-t border-slate-200">
                         <div className="flex justify-between items-center">
-                            <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                            <h3 className="font-bold text-sm text-slate-900">
                                 Tiêu Chí Kiểm Soát Chất Lượng ({checklist.length} tiêu chí)
                             </h3>
                             <button
                                 type="button"
                                 onClick={addChecklistItem}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold"
                             >
                                 <Plus className="w-3.5 h-3.5" />
                                 <span>Thêm Tiêu Chí</span>
@@ -298,19 +298,19 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
 
                         <div className="space-y-2">
                             {checklist.map((item, idx) => (
-                                <div key={item.id || idx} className="flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                                <div key={item.id || idx} className="flex items-center gap-2 p-2 rounded-lg border border-slate-200 bg-white">
                                     <input
                                         type="text"
                                         value={item.text}
                                         onChange={(e) => updateChecklistItem(idx, e.target.value)}
-                                        className="flex-1 p-1.5 rounded border border-slate-300 dark:border-slate-700 bg-transparent text-xs"
+                                        className="flex-1 p-1.5 rounded border border-slate-300 bg-transparent text-xs"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => toggleCritical(idx)}
                                         className={`px-2 py-1 rounded text-[10px] font-bold border transition ${item.critical
-                                            ? 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950 dark:text-rose-300'
-                                            : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400'
+                                            ? 'bg-rose-100 text-rose-800 border-rose-300'
+                                            : 'bg-slate-100 text-slate-600 border-slate-200'
                                             }`}
                                     >
                                         {item.critical ? 'Bắt buộc' : 'Khuyến nghị'}
@@ -329,11 +329,11 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                 </div>
 
                 {/* Footer Actions */}
-                <div className="p-4 px-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex justify-between items-center text-xs">
+                <div className="p-4 px-6 border-t border-slate-200 bg-slate-50 flex justify-between items-center text-xs">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium"
+                        className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium"
                     >
                         Hủy Bỏ
                     </button>

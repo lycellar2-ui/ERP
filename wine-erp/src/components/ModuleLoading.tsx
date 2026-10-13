@@ -5,9 +5,9 @@
 
 const S = {
     bg: '#FFFFFF',
-    dim: '#FFFFFF',
+    dim: '#E2E8F0',
     border: '#E2E8F0',
-    dark: '#F8FAFC',
+     Subtle: '#F8FAFC',
 }
 
 function SkeletonBar({ w, h = 'h-3' }: { w: string; h?: string }) {

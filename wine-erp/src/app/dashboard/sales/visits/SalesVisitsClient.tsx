@@ -148,7 +148,7 @@ function SearchableCustomerCombobox({
                                 <button
                                     type="button"
                                     onClick={() => { setOpen(false); onOpenQuickCreate(); }}
-                                    className="px-3 py-2 text-xs font-semibold rounded-lg bg-[#0891B2] text-white hover:bg-[#72bca9] flex items-center gap-1 shrink-0 cursor-pointer"
+                                    className="px-3 py-2 text-xs font-semibold rounded-lg bg-[#0E7490] text-white hover:bg-[#155E75] flex items-center gap-1 shrink-0 cursor-pointer"
                                     title={locale === 'en' ? 'Create new client' : 'Tạo khách mới'}
                                 >
                                     <Plus size={13} /> {locale === 'en' ? 'New Client' : 'Khách mới'}

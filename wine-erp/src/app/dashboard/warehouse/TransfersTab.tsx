@@ -244,7 +244,7 @@ export function TransfersTab() {
                         <button
                             key={t.key}
                             onClick={() => setStatusTab(t.key)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${statusTab === t.key ? 'bg-[#0891B2] text-white font-extrabold shadow-2xs border border-[#0891B2]' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${statusTab === t.key ? 'bg-[#0E7490] text-white font-extrabold shadow-2xs border border-[#0891B2]' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
                         >
                             <span>{t.label}</span>
                             <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${t.badgeColor || (statusTab === t.key ? 'bg-slate-50/15 text-slate-900' : 'bg-slate-100 text-slate-700')}`}>

@@ -475,7 +475,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                         <button
                             type="submit"
                             disabled={isPending}
-                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#0891B2] text-white font-bold text-xs hover:bg-[#68B9A5] transition-colors cursor-pointer"
+                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#0E7490] text-white font-bold text-xs hover:bg-[#68B9A5] transition-colors cursor-pointer"
                         >
                             <Filter className="w-3.5 h-3.5" />
                             <span>Lọc Dữ Liệu</span>

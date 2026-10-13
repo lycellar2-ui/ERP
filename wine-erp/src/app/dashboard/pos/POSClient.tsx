@@ -493,7 +493,7 @@ export default function POSClient() {
                     <button
                         type="button"
                         onClick={() => setMobileView('CART')}
-                        className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-[#0891B2] hover:bg-[#0E7490] text-white shadow-lg shadow-cyan-950/20 cursor-pointer active:scale-[0.99] transition-all"
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-[#0E7490] hover:bg-[#0E7490] text-white shadow-lg shadow-cyan-950/20 cursor-pointer active:scale-[0.99] transition-all"
                     >
                         <div className="flex items-center gap-2.5">
                             <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs">

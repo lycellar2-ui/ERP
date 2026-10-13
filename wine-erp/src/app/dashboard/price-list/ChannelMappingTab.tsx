@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Settings, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { getChannelPriceMapping, saveChannelPriceMapping } from './customer-rules-actions'
 
 interface Props {
@@ -58,7 +59,7 @@ export function ChannelMappingTab({ currentUser }: Props) {
             setSavedSuccess(true)
             setTimeout(() => setSavedSuccess(false), 3000)
         } else {
-            alert('Lỗi: ' + res.error)
+            toast.error('Lỗi: ' + res.error)
         }
         setSaving(false)
     }

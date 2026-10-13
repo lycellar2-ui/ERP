@@ -439,7 +439,10 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
     const handlePrintCustomer = () => {
         if (!form) return
         const printWindow = window.open('', '_blank')
-        if (!printWindow) return alert('Hãy cấp quyền mở popup trên trình duyệt của bạn')
+        if (!printWindow) {
+            toast.warning('Hãy cấp quyền mở popup trên trình duyệt của bạn')
+            return
+        }
 
         const customerTypeLabels: Record<string, string> = {
             HORECA: 'HORECA (Nhà hàng / Khách sạn)',

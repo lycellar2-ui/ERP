@@ -20,6 +20,7 @@ import {
 import { PaymentRequestDetailModal } from './PaymentRequestDetailModal'
 import { CreatePaymentRequestDrawer } from './CreatePaymentRequestDrawer'
 import { PrintablePaymentRequest } from './PrintablePaymentRequest'
+import { useConfirmDialog } from '@/components/ui'
 
 interface PaymentRequestsClientProps {
     initialRequests: PaymentRequestRow[]
@@ -301,6 +302,7 @@ export function PaymentRequestsClient({
 }: PaymentRequestsClientProps) {
     const [activeTab, setActiveTab] = useState<'REQUESTS' | 'CATEGORIES' | 'BUDGETS' | 'SUPPLIERS'>('REQUESTS')
     const [isPending, startTransition] = useTransition()
+    const { confirm, dialog } = useConfirmDialog()
 
     // ── Requests state ──
     const [requests, setRequests] = useState<PaymentRequestRow[]>(initialRequests)
@@ -445,7 +447,13 @@ export function PaymentRequestsClient({
     }
 
     async function handleDeleteRequest(id: string, requestNo: string) {
-        if (!confirm(`Bạn có chắc chắn muốn xóa phiếu ${requestNo}?`)) return
+        const ok = await confirm({
+            title: 'Xóa phiếu đề nghị thanh toán',
+            message: `Bạn có chắc chắn muốn xóa phiếu ${requestNo}?`,
+            confirmLabel: 'Xóa phiếu',
+            variant: 'danger',
+        })
+        if (!ok) return
         try {
             const res = await deletePaymentRequest(id)
             if (res.success) {
@@ -486,7 +494,13 @@ export function PaymentRequestsClient({
     }
 
     async function handleDeleteCategory(id: string, name: string) {
-        if (!confirm(`Bạn có chắc muốn xóa hoặc ẩn hạng mục "${name}"?`)) return
+        const ok = await confirm({
+            title: 'Xóa / Ẩn hạng mục chi phí',
+            message: `Bạn có chắc muốn xóa hoặc ẩn hạng mục "${name}"?`,
+            confirmLabel: 'Xác nhận',
+            variant: 'danger',
+        })
+        if (!ok) return
         try {
             const res = await deleteExpenseCategory(id)
             if (res.success) {
@@ -1996,6 +2010,7 @@ export function PaymentRequestsClient({
                     onClose={() => setPrintDetail(null)}
                 />
             )}
+            {dialog}
         </div>
     )
 }

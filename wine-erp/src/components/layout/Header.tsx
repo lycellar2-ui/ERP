@@ -156,6 +156,9 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
 
         const routes = [
             { path: '/dashboard/proposals', title: locale === 'en' ? 'Proposals & Submissions' : 'Tờ Trình — Đề Xuất' },
+            { path: '/dashboard/sop', title: locale === 'en' ? 'SOP & Guidelines' : 'Quy Trình Chuẩn (SOP)' },
+            { path: '/dashboard/hr', title: locale === 'en' ? 'HR & Documents' : 'Nhân Sự & Giấy Tờ' },
+            { path: '/dashboard/pipeline', title: locale === 'en' ? 'Sales Pipeline' : 'Pipeline Bán Hàng' },
             { path: '/dashboard/products', title: locale === 'en' ? 'Product Catalog' : 'Sản Phẩm' },
             { path: '/dashboard/suppliers', title: locale === 'en' ? 'Suppliers' : 'Nhà Cung Cấp' },
             { path: '/dashboard/customers', title: locale === 'en' ? 'Customers' : 'Khách Hàng' },
@@ -190,6 +193,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
             { path: '/dashboard/audit-log', title: locale === 'en' ? 'Audit Log' : 'Nhật Ký Hệ Thống' },
             { path: '/dashboard/ai', title: 'AI & Prompt' },
             { path: '/dashboard/settings/approval-matrix', title: locale === 'en' ? 'Approval Matrix' : 'Ma Trận Phân Quyền' },
+            { path: '/dashboard/settings/telegram', title: locale === 'en' ? 'Telegram Bot Settings' : 'Cấu Hình Telegram Bot' },
             { path: '/dashboard/settings', title: locale === 'en' ? 'Settings & RBAC' : 'Cài Đặt & RBAC' },
             { path: '/dashboard', title: locale === 'en' ? 'Executive Dashboard (CEO)' : 'Dashboard CEO' },
         ]

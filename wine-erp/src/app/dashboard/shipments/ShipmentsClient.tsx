@@ -381,7 +381,7 @@ function ShipmentMobileCard({
                 </button>
                 <button
                     onClick={() => onOpenDetail(row.id)}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#0891B2] hover:bg-[#0E7490] text-xs font-semibold text-white transition-colors cursor-pointer"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#0E7490] hover:bg-[#0E7490] text-xs font-semibold text-white transition-colors cursor-pointer"
                 >
                     <Eye size={13} />
                     <span>Chi tiết</span>

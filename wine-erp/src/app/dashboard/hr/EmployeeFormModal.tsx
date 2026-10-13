@@ -720,7 +720,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="flex items-center gap-2 px-6 py-2 text-xs font-bold rounded-lg bg-[#0891B2] text-white hover:bg-[#68B9A5] transition-all disabled:opacity-50 cursor-pointer"
+                                className="flex items-center gap-2 px-6 py-2 text-xs font-bold rounded-lg bg-[#0E7490] text-white hover:bg-[#68B9A5] transition-all disabled:opacity-50 cursor-pointer"
                             >
                                 {isSubmitting ? (
                                     <>

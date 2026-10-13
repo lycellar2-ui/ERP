@@ -982,7 +982,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 <div className="flex p-0.5 rounded-lg bg-slate-100 border border-slate-200">
                                     <button
                                         onClick={() => setPrintDocType('VOUCHER')}
-                                        className={`px-3 py-1.5 text-xs font-bold rounded cursor-pointer transition-colors ${printDocType === 'VOUCHER' ? 'bg-[#0891B2] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded cursor-pointer transition-colors ${printDocType === 'VOUCHER' ? 'bg-[#0E7490] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                                     >
                                         Phiếu Chuyển Kho A4
                                     </button>

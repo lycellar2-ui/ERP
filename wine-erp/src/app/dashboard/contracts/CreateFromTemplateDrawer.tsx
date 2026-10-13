@@ -442,7 +442,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                                     <div
                                         key={tpl.code}
                                         onClick={() => handleSelectTemplate(tpl)}
-                                        className={`cursor-pointer rounded-xl border p-5 transition-all relative flex flex-col justify-between ${
+                                        className={`cursor-pointer rounded-lg border p-5 transition-all relative flex flex-col justify-between ${
                                             isSelected
                                                 ? 'border-lys-primary bg-amber-50/40 ring-2 ring-lys-primary/20 shadow-md'
                                                 : 'border-lys-border bg-white hover:border-slate-400 hover:shadow-sm'
@@ -497,7 +497,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                         </div>
 
                         {/* SECTION A: ĐỐI TÁC (BÊN B) */}
-                        <div className="p-4 rounded-xl border border-lys-border bg-white space-y-4">
+                        <div className="p-4 rounded-lg border border-lys-border bg-white space-y-4">
                             <div className="flex items-center justify-between border-b border-lys-border pb-2.5">
                                 <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
                                     <Building2 className="w-4 h-4 text-lys-primary" />
@@ -603,7 +603,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                         </div>
 
                         {/* SECTION B: THÔNG TIN HỢP ĐỒNG & THỜI HẠN */}
-                        <div className="p-4 rounded-xl border border-lys-border bg-white space-y-4">
+                        <div className="p-4 rounded-lg border border-lys-border bg-white space-y-4">
                             <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 border-b border-lys-border pb-2.5">
                                 <Calendar className="w-4 h-4 text-lys-primary" />
                                 Số Hợp Đồng & Thời Hạn Hiệu Lực
@@ -665,7 +665,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
 
                         {/* SECTION C: ĐIỀU KHOẢN ĐẶC THÙ THEO LOẠI MẪU */}
                         {selectedTemplate.code === 'HD_NGUYEN_TAC' && (
-                            <div className="p-4 rounded-xl border border-lys-border bg-white space-y-4">
+                            <div className="p-4 rounded-lg border border-lys-border bg-white space-y-4">
                                 <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 border-b border-lys-border pb-2.5">
                                     <DollarSign className="w-4 h-4 text-lys-primary" />
                                     Điều Khoản Hạn Mức Tín Dụng & Công Nợ
@@ -688,7 +688,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                         )}
 
                         {selectedTemplate.code === 'HD_KY_GUI' && (
-                            <div className="p-4 rounded-xl border border-lys-border bg-white space-y-4">
+                            <div className="p-4 rounded-lg border border-lys-border bg-white space-y-4">
                                 <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 border-b border-lys-border pb-2.5">
                                     <ShieldCheck className="w-4 h-4 text-lys-primary" />
                                     Điều Khoản Ký Gửi & Hoa Hồng
@@ -721,7 +721,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                         )}
 
                         {selectedTemplate.code === 'HD_MOT_LAN' && (
-                            <div className="p-4 rounded-xl border border-lys-border bg-white space-y-4">
+                            <div className="p-4 rounded-lg border border-lys-border bg-white space-y-4">
                                 <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 border-b border-lys-border pb-2.5">
                                     <DollarSign className="w-4 h-4 text-lys-primary" />
                                     Điều Khoản Đặt Cọc & Giao Hàng
@@ -751,7 +751,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
 
                         {/* SECTION D: BẢNG SẢN PHẨM RƯỢU CHI TIẾT (Với Ký gửi & Một lần) */}
                         {selectedTemplate.code !== 'HD_NGUYEN_TAC' && (
-                            <div className="p-4 rounded-xl border border-lys-border bg-white space-y-4">
+                            <div className="p-4 rounded-lg border border-lys-border bg-white space-y-4">
                                 <div className="flex items-center justify-between border-b border-lys-border pb-2.5">
                                     <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
                                         <Package className="w-4 h-4 text-lys-primary" />
@@ -880,7 +880,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                 ───────────────────────────────────────────────────────────── */}
                 {step === 3 && (
                     <div className="space-y-6">
-                        <div className="p-5 rounded-xl border border-emerald-200 bg-emerald-50/60 flex items-start gap-4">
+                        <div className="p-5 rounded-lg border border-emerald-200 bg-emerald-50/60 flex items-start gap-4">
                             <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
                                 <Sparkles className="w-5 h-5" />
                             </div>
@@ -893,7 +893,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                         </div>
 
                         {/* Summary Card */}
-                        <div className="p-5 rounded-xl border border-lys-border bg-white space-y-4">
+                        <div className="p-5 rounded-lg border border-lys-border bg-white space-y-4">
                             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tóm Tắt Hợp Đồng</h4>
 
                             <div className="grid grid-cols-2 gap-4 text-xs">

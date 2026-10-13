@@ -1312,10 +1312,10 @@ export async function getRevenueByChannel(options?: DashboardFilterOptions) {
         }
 
         const CHANNEL_COLORS: Record<string, string> = {
-            HORECA: '#87CBB9',
-            WHOLESALE: '#4A8FAB',
-            VIP_RETAIL: '#D4A853',
-            POS: '#5BA88A',
+            HORECA: '#0891B2',
+            WHOLESALE: '#0E7490',
+            VIP_RETAIL: '#B45309',
+            POS: '#15803D',
             CONSIGNMENT: '#475569',
             OTHER: '#64748B',
         }

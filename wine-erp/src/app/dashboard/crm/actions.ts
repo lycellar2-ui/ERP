@@ -441,7 +441,7 @@ export async function addCustomerTag(input: {
             data: {
                 customerId: input.customerId,
                 tag: input.tag,
-                color: input.color ?? preset?.color ?? '#87CBB9',
+                color: input.color ?? preset?.color ?? '#0891B2',
             },
         })
         revalidateCache('crm')

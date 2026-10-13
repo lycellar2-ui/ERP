@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 136 Rules rút ra từ 100 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 137 Rules rút ra từ 101 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -242,6 +242,7 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-10-12 11:00 | Wine ERP v12.21 - Turbopack Server Action Export Fix & Cloudflare R2 Assets Integration*
+*Last updated: 2026-10-14 01:05 | Wine ERP v12.22 - Full App UI/UX Audit, WCAG AA Contrast, Skeleton Restoration & Zero Native Dialogs*
+
 
 

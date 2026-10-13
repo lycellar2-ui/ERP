@@ -263,7 +263,7 @@ export function LiveCameraInspectionModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-2 sm:p-4 backdrop-blur-sm">
-            <div className="relative flex flex-col w-full max-w-xl max-h-[95vh] bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+            <div className="relative flex flex-col w-full max-w-xl max-h-[95vh] bg-slate-900 border border-slate-800 rounded-lg overflow-hidden shadow-2xl">
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-800 text-white">
                     <div>
@@ -338,7 +338,7 @@ export function LiveCameraInspectionModal({
 
                     {/* Viewfinder crosshairs when live */}
                     {!capturedImage && !cameraError && !starting && (
-                        <div className="absolute inset-6 pointer-events-none border border-white/20 rounded-xl flex flex-col justify-between p-3">
+                        <div className="absolute inset-6 pointer-events-none border border-white/20 rounded-lg flex flex-col justify-between p-3">
                             <div className="flex justify-between items-start">
                                 <span className="text-[11px] font-mono text-cyan-300 bg-slate-950/70 px-2 py-0.5 rounded border border-cyan-500/30">
                                     {categoryLabel}
@@ -381,7 +381,7 @@ export function LiveCameraInspectionModal({
                                 type="button"
                                 onClick={takeSnapshot}
                                 disabled={starting || !!cameraError}
-                                className="flex-1 flex items-center justify-center gap-2 py-3 px-6 bg-cyan-600 hover:bg-cyan-500 active:scale-98 disabled:opacity-50 text-white font-medium text-sm rounded-xl transition shadow-lg shadow-cyan-950/50"
+                                className="flex-1 flex items-center justify-center gap-2 py-3 px-6 bg-cyan-600 hover:bg-cyan-500 active:scale-98 disabled:opacity-50 text-white font-medium text-sm rounded-lg transition shadow-lg shadow-cyan-950/50"
                             >
                                 <Camera className="w-5 h-5" />
                                 <span>Chụp ảnh kiểm tra kho</span>
@@ -402,7 +402,7 @@ export function LiveCameraInspectionModal({
                             <button
                                 type="button"
                                 onClick={handleRetake}
-                                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-xl transition border border-slate-700"
+                                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg transition border border-slate-700"
                             >
                                 <RefreshCw className="w-4 h-4" />
                                 <span>Chụp lại</span>
@@ -411,7 +411,7 @@ export function LiveCameraInspectionModal({
                             <button
                                 type="button"
                                 onClick={handleConfirm}
-                                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl transition shadow-lg shadow-emerald-950/40"
+                                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition shadow-lg shadow-emerald-950/40"
                             >
                                 <CheckCircle2 className="w-4 h-4" />
                                 <span>Xác nhận ảnh này</span>

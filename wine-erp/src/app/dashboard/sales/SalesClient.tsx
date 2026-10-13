@@ -3163,7 +3163,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                     userRoles={userRoles}
                 />
             )}
-            {editId && <EditSODrawer open={!!editId} soId={editId} onClose={() => setEditId(null)} onSaved={() => { setEditId(null); reload() }} userId={userId} />}
+            {editId && <EditSODrawer open={!!editId} soId={editId} onClose={() => setEditId(null)} onSaved={() => { setEditId(null); reload() }} userId={userId} userRoles={userRoles} />}
             {approvalModalId && (
                 <ApproveSOModal
                     soId={approvalModalId}

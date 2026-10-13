@@ -161,7 +161,7 @@ export function DashboardFilterBar({
                             onClick={() => setLocale('vi')}
                             className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
                                 locale === 'vi'
-                                    ? 'bg-[#0891B2] text-white font-black shadow-xs'
+                                    ? 'bg-[#0E7490] text-white font-black shadow-xs'
                                     : 'text-slate-600 hover:text-slate-900'
                             }`}
                             title="Tiếng Việt"
@@ -173,7 +173,7 @@ export function DashboardFilterBar({
                             onClick={() => setLocale('en')}
                             className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
                                 locale === 'en'
-                                    ? 'bg-[#0891B2] text-white font-black shadow-xs'
+                                    ? 'bg-[#0E7490] text-white font-black shadow-xs'
                                     : 'text-slate-600 hover:text-slate-900'
                             }`}
                             title="English"
@@ -216,7 +216,7 @@ export function DashboardFilterBar({
                     />
                     <button
                         type="submit"
-                        className="px-3 py-1 rounded bg-[#0891B2] hover:bg-[#0891B2]/90 text-white font-semibold text-xs transition-all cursor-pointer"
+                        className="px-3 py-1 rounded bg-[#0E7490] hover:bg-[#155E75] text-white font-semibold text-xs transition-all cursor-pointer"
                     >
                         {t.apply}
                     </button>
