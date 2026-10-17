@@ -25,6 +25,19 @@ function getR2Client() {
     return { client, bucketName, publicDomain }
 }
 
+function inferMimeType(filename: string): string {
+    const ext = filename.split('.').pop()?.toLowerCase()
+    switch (ext) {
+        case 'pdf': return 'application/pdf'
+        case 'png': return 'image/png'
+        case 'jpg':
+        case 'jpeg': return 'image/jpeg'
+        case 'webp': return 'image/webp'
+        case 'gif': return 'image/gif'
+        default: return 'application/octet-stream'
+    }
+}
+
 export async function GET(
     request: NextRequest,
     context: { params: Promise<{ path: string[] }> }
@@ -44,27 +57,47 @@ export async function GET(
 
         const isDownload = request.nextUrl.searchParams.get('download') === 'true'
         const customFileName = path[path.length - 1]
+        const disposition = isDownload
+            ? `attachment; filename="${encodeURIComponent(customFileName)}"`
+            : `inline; filename="${encodeURIComponent(customFileName)}"`
 
-        if (r2.publicDomain && !isDownload) {
-            const domain = r2.publicDomain.replace(/\/+$/, '')
-            return NextResponse.redirect(`${domain}/${storagePath}`, 302)
+        try {
+            const obj = await r2.client.send(
+                new GetObjectCommand({
+                    Bucket: r2.bucketName,
+                    Key: storagePath,
+                })
+            )
+
+            if (obj.Body) {
+                const bytes = await obj.Body.transformToByteArray()
+                const contentType = obj.ContentType || inferMimeType(customFileName)
+
+                return new NextResponse(Buffer.from(bytes), {
+                    status: 200,
+                    headers: {
+                        'Content-Type': contentType,
+                        'Content-Length': String(bytes.byteLength),
+                        'Content-Disposition': disposition,
+                        'Cache-Control': 'public, max-age=3600',
+                        'X-Frame-Options': 'SAMEORIGIN',
+                    },
+                })
+            }
+        } catch (s3Err) {
+            console.warn('[API r2-file] Direct stream fallback to presigned URL:', s3Err)
         }
 
         const commandInput: any = {
             Bucket: r2.bucketName,
             Key: storagePath,
-        }
-
-        if (isDownload) {
-            commandInput.ResponseContentDisposition = `attachment; filename="${encodeURIComponent(customFileName)}"`
-        } else {
-            commandInput.ResponseContentDisposition = `inline; filename="${encodeURIComponent(customFileName)}"`
+            ResponseContentDisposition: disposition,
         }
 
         const presignedUrl = await getSignedUrl(
             r2.client,
             new GetObjectCommand(commandInput),
-            { expiresIn: 3600 } // 1 hour valid link
+            { expiresIn: 3600 }
         )
 
         return NextResponse.redirect(presignedUrl, 302)

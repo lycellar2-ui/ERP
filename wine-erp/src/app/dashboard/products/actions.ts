@@ -1150,7 +1150,7 @@ export async function getProductAwards(productId: string): Promise<ProductAwardR
 
 export async function getProductEditDetails(id: string) {
     await requirePermission('MDM', 'READ')
-    return cached(`products:details:edit:${id}`, async () => {
+    return cached(`products:details:edit:v2:${id}`, async () => {
         const [p, media, awards] = await Promise.all([
             prisma.product.findUnique({
                 where: { id },
@@ -1208,6 +1208,8 @@ export async function getProductEditDetails(id: string) {
                 } : null,
                 status: p.status,
                 vatRate: p.vatRate ? Number(p.vatRate) : 10,
+                selfDeclarationUrl: p.selfDeclarationUrl ?? null,
+                tastingNoteUrl: p.tastingNoteUrl ?? null,
             },
             media: media.map(m => ({
                 id: m.id,
@@ -1385,6 +1387,9 @@ export type ProductViewDetails = {
     barcodeEan: string | null
     wineType: string
     classification: string | null
+    vatRate?: number
+    selfDeclarationUrl: string | null
+    tastingNoteUrl: string | null
     profile: {
         originDetail: string | null
         certification: string | null
@@ -1410,11 +1415,15 @@ export type ProductViewDetails = {
 
 export async function getProductViewDetails(id: string): Promise<ProductViewDetails | null> {
     await requirePermission('MDM', 'READ')
-    const cacheKey = `products:details:${id}`
+    const cacheKey = `products:details:v2:${id}`
     return cached(cacheKey, async () => {
-        const [p, mediaRes, awardsRes, stockRes, warehouses, unfulfilledSoLines] = await Promise.all([
+        const [p, productDoc, mediaRes, awardsRes, stockRes, warehouses, unfulfilledSoLines] = await Promise.all([
             prisma.productDetailView.findUnique({
                 where: { id },
+            }),
+            prisma.product.findUnique({
+                where: { id },
+                select: { selfDeclarationUrl: true, tastingNoteUrl: true, vatRate: true },
             }),
             prisma.productMedia.findMany({
                 where: { productId: id },
@@ -1532,6 +1541,9 @@ export async function getProductViewDetails(id: string): Promise<ProductViewDeta
             barcodeEan: p.barcodeEan,
             wineType: p.wineType,
             classification: p.classification,
+            vatRate: productDoc?.vatRate ? Number(productDoc.vatRate) : 10,
+            selfDeclarationUrl: productDoc?.selfDeclarationUrl ?? null,
+            tastingNoteUrl: productDoc?.tastingNoteUrl ?? null,
             status: p.status,
             isAllocationEligible: p.isAllocationEligible,
             producerName: p.producerName,

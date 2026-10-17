@@ -4087,3 +4087,36 @@ Qua đợt kiểm tra chuyên sâu toàn bộ 38 routes và tất cả component
 
 ### Bài học
 > ⚠️ **RULE 139: (1) Trong mô hình phân cấp Khách hàng Cha–Con (`COMPANY` -> `RESTAURANT`), tuyệt đối không duy trì các bản ghi con giả lập dạng `*-CHUNG` (`(Chung)`) không phát sinh giao dịch làm sai lệch `childrenCount`; (2) Bộ lọc `search` khách hàng BẮT BUỘC phải bao gồm cả `parent.code` và `parent.name`, đồng thời thao tác bấm quick-filter `X KH con` phải xóa từ khóa `search` cũ để số lượng hiển thị trên bảng luôn khớp 100% với số lượng trên badge.**
+
+---
+
+## BUG-140: Mục Tài Liệu Tasting Note Bị Ẩn Sau Khi Tải Chi Tiết Sản Phẩm & Lỗi Chặn `X-Frame-Options: DENY` Khi Xem Trực Tiếp PDF
+
+**Ngày:** 2026-10-17
+**Severity:** 🔴 High — Trải nghiệm xem hồ sơ sản phẩm (`ProductDetailDrawer.tsx`, `ProductDrawer.tsx`, `products/actions.ts`, `api/r2-file/[...path]/route.ts`, `next.config.ts`)
+
+### Triệu chứng
+1. Trên màn hình Danh mục Sản phẩm (`/dashboard/products`), khi mở Drawer xem chi tiết sản phẩm (`ProductDetailDrawer.tsx`) hoặc Drawer chỉnh sửa sản phẩm (`ProductDrawer.tsx`), mục **"Tài Liệu & Đường Link" (`Xem Tasting Note`)** chỉ thoáng hiện (hoặc bị ẩn hoàn toàn), khiến người dùng không nhìn thấy nút xem Tasting Note dù trong DB đã có `tastingNoteUrl`.
+2. Khi mở modal xem trực tiếp PDF qua `<iframe src="/api/r2-file/..." />`, trình duyệt từ chối hiển thị nội dung trong khung (`Refused to display in a frame because it set 'X-Frame-Options' to 'deny'`) hoặc modal bị giới hạn kích thước trong phạm vi `Drawer`.
+
+### Nguyên nhân gốc rễ
+1. **Thiếu `tastingNoteUrl` / `selfDeclarationUrl` trong `getProductViewDetails` & `getProductEditDetails` (`products/actions.ts`)**:
+   - Khi mở `ProductDetailDrawer`, biến `activeProduct = data || initialData` ban đầu dùng `initialData` (từ `v_product_rows` có `tastingNoteUrl`), nhưng ngay khi `getProductViewDetails(productId)` tải xong (`data`), `activeProduct` chuyển sang dùng `data` (truy vấn từ `v_product_details` vốn không có cột `tastingNoteUrl` và `selfDeclarationUrl`). Do đó `(activeProduct as any)?.tastingNoteUrl` trở thành `undefined` và toàn bộ khối **"Tài Liệu & Đường Link"** bị ẩn đi!
+   - Tương tự, `getProductEditDetails(id)` trong `products/actions.ts` cũng bỏ sót `tastingNoteUrl` và `selfDeclarationUrl` trong object `product` trả về, khiến `ProductDrawer.tsx` ghi đè `form.tastingNoteUrl = null`.
+2. **Header bảo mật `X-Frame-Options: DENY` toàn cục (`next.config.ts`) & Portal Stacking (`Drawer.tsx`)**:
+   - `next.config.ts` cấu hình `X-Frame-Options: DENY` cho mọi route `/(.*)` bao gồm cả `/api/r2-file/...`, làm trình duyệt chặn `<iframe src="/api/r2-file/..." />`.
+   - `Drawer.tsx` sử dụng class `animate-drawer-in` (chứa CSS `transform`), tạo containing block mới làm modal `fixed inset-0` nếu render bên trong `Drawer` bị bó hẹp trong chiều rộng Drawer (`640px`).
+
+### Cách fix
+1. **Bổ sung `tastingNoteUrl` & `selfDeclarationUrl` vào `getProductViewDetails` và `getProductEditDetails` (`products/actions.ts`)**:
+   - Truy vấn bổ sung `selfDeclarationUrl`, `tastingNoteUrl`, `vatRate` từ bảng `products` trong `getProductViewDetails` và trả về đầy đủ trong `ProductViewDetails` (kèm nâng version cache key `products:details:v2:${id}` và `products:details:edit:v2:${id}`).
+   - Tại `ProductDetailDrawer.tsx`, tính toán `effectiveTastingNoteUrl = data?.tastingNoteUrl ?? initialData?.tastingNoteUrl ?? null` và `effectiveSelfDeclarationUrl` để luôn bảo toàn link tài liệu trước và sau khi `data` tải xong.
+   - Tại `ProductDrawer.tsx`, khởi tạo `tastingNoteUrl` / `selfDeclarationUrl` ngay từ `initialData` và giữ fallback an toàn khi `getProductEditDetails` trả về.
+2. **Mở quyền nhúng `SAMEORIGIN` cho `/api/r2-file/:path*` & Stream trực tiếp PDF (`next.config.ts`, `api/r2-file/[...path]/route.ts`)**:
+   - Tách cấu hình `headers()` trong `next.config.ts`: giữ `X-Frame-Options: DENY` cho `/((?!api/r2-file).*)` và cấp `X-Frame-Options: SAMEORIGIN` cho `/api/r2-file/:path*`.
+   - Tại `/api/r2-file/[...path]/route.ts`, đọc trực tiếp luồng byte từ Cloudflare R2 (`GetObjectCommand`) và trả về `NextResponse` cùng nguồn (`200 OK`, `Content-Type: application/pdf`, `Content-Disposition: inline`, `X-Frame-Options: SAMEORIGIN`) thay vì redirect chéo tên miền sang `*.r2.cloudflarestorage.com`.
+   - Render modal `previewDoc` qua `createPortal(..., document.body)` ở cả `ProductDetailDrawer.tsx` và `ProductDrawer.tsx` để phủ toàn màn hình độc lập với `Drawer`.
+
+### Bài học
+> ⚠️ **RULE 140: (1) Mọi component Drawer dùng mô hình kết hợp dữ liệu tức thì và dữ liệu chi tiết (`const active = detailData || initialRowData`) BẮT BUỘC phải trả về đầy đủ các trường tài liệu (`tastingNoteUrl`, `selfDeclarationUrl`) trong cả hàm lấy chi tiết (`getProductViewDetails`, `getProductEditDetails`) VÀ dùng toán tử fallback `detailData?.field ?? initialRowData?.field` để không bị mất dữ liệu khi `detailData` tải xong; (2) Các API route phục vụ xem trước tài liệu trong `<iframe>` (`/api/r2-file/...`) BẮT BUỘC phải được cấu hình `X-Frame-Options: SAMEORIGIN` trong `next.config.ts` và trả về `Content-Disposition: inline` cùng nguồn; (3) Mọi modal toàn màn hình (`fixed inset-0`) mở từ bên trong `Drawer` có animation `transform` BẮT BUỘC phải dùng `createPortal(..., document.body)`.**
+

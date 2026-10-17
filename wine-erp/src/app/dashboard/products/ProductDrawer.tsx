@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Save, Loader2, AlertCircle, Wine, UploadCloud, Trash2, Star, Image as ImageIcon, Award, Plus, FileText, ExternalLink, Paperclip, CheckCircle2, Eye, Download } from 'lucide-react'
 import { Button, Drawer, useConfirmDialog } from '@/components/ui'
 import { compressImage } from '@/lib/compress-image'
@@ -202,7 +203,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                 name: initialData.productName,
                 abv: initialData.abvPercent,
                 wineType: initialData.wineType,
-                volumeMl: 750, // default, will be overridden by details query
+                volumeMl: initialData.volumeMl ?? 750,
                 format: initialData.format,
                 packagingType: initialData.packagingType,
                 bottlesPerCase: initialData.unitsPerCase,
@@ -210,9 +211,11 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                 producerId: null,
                 supplierId: null,
                 regionId: null,
-                classification: null,
+                classification: initialData.classification ?? null,
                 status: initialData.status,
                 vatRate: (initialData as any).vatRate ?? 10,
+                selfDeclarationUrl: initialData.selfDeclarationUrl ?? null,
+                tastingNoteUrl: initialData.tastingNoteUrl ?? null,
             })
         } else if (!editingId) {
             // New product mode
@@ -286,8 +289,8 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                 grapes: data.profile?.grapes ?? null,
                 status: data.status,
                 vatRate: data.vatRate ? Number(data.vatRate) : 10,
-                selfDeclarationUrl: (data as any).selfDeclarationUrl ?? null,
-                tastingNoteUrl: (data as any).tastingNoteUrl ?? null,
+                selfDeclarationUrl: (data as any).selfDeclarationUrl ?? f.selfDeclarationUrl ?? initialData?.selfDeclarationUrl ?? null,
+                tastingNoteUrl: (data as any).tastingNoteUrl ?? f.tastingNoteUrl ?? initialData?.tastingNoteUrl ?? null,
             }))
             setLoading(false)
         }).catch(() => {
@@ -406,7 +409,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
         <>
             <Drawer
             open={open}
-            onClose={onClose}
+            onClose={() => { if (previewDoc) setPreviewDoc(null); else onClose() }}
             size="md"
             className="bg-lys-bg"
             title={isEdit ? 'Chỉnh Sửa Sản Phẩm' : 'Thêm Sản Phẩm Mới'}
@@ -1272,7 +1275,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
 
                 </div>
             </Drawer>
-            {previewDoc && (
+            {previewDoc && typeof document !== 'undefined' && createPortal(
                 <div
                     className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/70 backdrop-blur-xs p-3 sm:p-6"
                     onClick={() => setPreviewDoc(null)}
@@ -1332,7 +1335,8 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                             )}
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body,
             )}
             {confirmDialog}
         </>

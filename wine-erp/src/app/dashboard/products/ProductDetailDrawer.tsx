@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { 
     X, Wine, Award, Star, Loader2, Calendar, 
     Layers, Clipboard, CheckCircle2, AlertCircle,
@@ -111,11 +112,13 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
     const effectiveWholesalePrice = data?.wholesalePrice ?? activeProduct.wholesalePrice ?? null
     const effectiveIsAllocation = data?.isAllocationEligible ?? activeProduct.isAllocationEligible ?? false
     const effectiveProfile = data?.profile ?? activeProduct.profile ?? null
+    const effectiveSelfDeclarationUrl = data?.selfDeclarationUrl ?? initialData?.selfDeclarationUrl ?? (activeProduct as any)?.selfDeclarationUrl ?? null
+    const effectiveTastingNoteUrl = data?.tastingNoteUrl ?? initialData?.tastingNoteUrl ?? (activeProduct as any)?.tastingNoteUrl ?? null
 
     return (
         <Drawer
             open
-            onClose={onClose}
+            onClose={() => { if (previewDoc) setPreviewDoc(null); else onClose() }}
             size="md"
             className="bg-lys-bg"
             title="Chi Tiết Sản Phẩm"
@@ -249,18 +252,18 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                         </div>
                     </div>
 
-                    {((activeProduct as any)?.selfDeclarationUrl || (activeProduct as any)?.tastingNoteUrl) && (
+                    {(effectiveSelfDeclarationUrl || effectiveTastingNoteUrl) && (
                         <div className="space-y-3">
                             <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#0891B2' }}>
                                 <Clipboard size={13} /> Tài Liệu & Đường Link
                             </h4>
                             <div className="flex flex-wrap gap-3">
-                                {(activeProduct as any)?.selfDeclarationUrl && (
+                                {effectiveSelfDeclarationUrl && (
                                     <div className="inline-flex items-center rounded-lg border border-cyan-700/30 bg-cyan-50/60 overflow-hidden text-xs">
                                         <button
                                             type="button"
                                             onClick={() => setPreviewDoc({
-                                                url: (activeProduct as any).selfDeclarationUrl,
+                                                url: effectiveSelfDeclarationUrl,
                                                 title: `Bản Tự Công Bố — ${activeProduct.productName}`,
                                             })}
                                             className="inline-flex items-center gap-1.5 px-3 py-2 font-semibold text-cyan-900 hover:bg-cyan-100/70 transition-colors cursor-pointer"
@@ -271,7 +274,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                             <Eye size={12} className="shrink-0 text-cyan-700" />
                                         </button>
                                         <a
-                                            href={`${(activeProduct as any).selfDeclarationUrl}${((activeProduct as any).selfDeclarationUrl.includes('?') ? '&' : '?')}download=true`}
+                                            href={`${effectiveSelfDeclarationUrl}${effectiveSelfDeclarationUrl.includes('?') ? '&' : '?'}download=true`}
                                             download
                                             className="px-2.5 py-2 border-l border-cyan-700/20 text-cyan-800 hover:bg-cyan-100/70 transition-colors flex items-center justify-center"
                                             title="Tải về máy"
@@ -280,12 +283,12 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                         </a>
                                     </div>
                                 )}
-                                {(activeProduct as any)?.tastingNoteUrl && (
+                                {effectiveTastingNoteUrl && (
                                     <div className="inline-flex items-center rounded-lg border border-cyan-700/30 bg-cyan-50/60 overflow-hidden text-xs">
                                         <button
                                             type="button"
                                             onClick={() => setPreviewDoc({
-                                                url: (activeProduct as any).tastingNoteUrl,
+                                                url: effectiveTastingNoteUrl,
                                                 title: `Tasting Note — ${activeProduct.productName}`,
                                             })}
                                             className="inline-flex items-center gap-1.5 px-3 py-2 font-semibold text-cyan-900 hover:bg-cyan-100/70 transition-colors cursor-pointer"
@@ -296,7 +299,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                             <Eye size={12} className="shrink-0 text-cyan-700" />
                                         </button>
                                         <a
-                                            href={`${(activeProduct as any).tastingNoteUrl}${((activeProduct as any).tastingNoteUrl.includes('?') ? '&' : '?')}download=true`}
+                                            href={`${effectiveTastingNoteUrl}${effectiveTastingNoteUrl.includes('?') ? '&' : '?'}download=true`}
                                             download
                                             className="px-2.5 py-2 border-l border-cyan-700/20 text-cyan-800 hover:bg-cyan-100/70 transition-colors flex items-center justify-center"
                                             title="Tải về máy"
@@ -523,7 +526,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                     </div>
                 </div>
 
-                {previewDoc && (
+                {previewDoc && typeof document !== 'undefined' && createPortal(
                     <div
                         className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/70 backdrop-blur-xs p-3 sm:p-6"
                         onClick={() => setPreviewDoc(null)}
@@ -583,7 +586,8 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                 )}
                             </div>
                         </div>
-                    </div>
+                    </div>,
+                    document.body,
                 )}
         </Drawer>
     )
