@@ -57,6 +57,8 @@ export async function GET(
 
         if (isDownload) {
             commandInput.ResponseContentDisposition = `attachment; filename="${encodeURIComponent(customFileName)}"`
+        } else {
+            commandInput.ResponseContentDisposition = `inline; filename="${encodeURIComponent(customFileName)}"`
         }
 
         const presignedUrl = await getSignedUrl(

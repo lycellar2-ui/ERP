@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Save, Loader2, AlertCircle, Wine, UploadCloud, Trash2, Star, Image as ImageIcon, Award, Plus, FileText, ExternalLink, Paperclip, CheckCircle2 } from 'lucide-react'
+import { X, Save, Loader2, AlertCircle, Wine, UploadCloud, Trash2, Star, Image as ImageIcon, Award, Plus, FileText, ExternalLink, Paperclip, CheckCircle2, Eye, Download } from 'lucide-react'
 import { Button, Drawer, useConfirmDialog } from '@/components/ui'
 import { compressImage } from '@/lib/compress-image'
 import { uploadProductAsset } from '@/lib/storage-r2'
@@ -175,6 +175,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
     const [newProducerName, setNewProducerName] = useState('')
     const [newProducerCountry, setNewProducerCountry] = useState('FR')
     const [creatingProducer, setCreatingProducer] = useState(false)
+    const [previewDoc, setPreviewDoc] = useState<{ url: string; title: string } | null>(null)
 
     const [form, setForm] = useState<ProductFormState>({
         status: 'ACTIVE',
@@ -723,14 +724,16 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                     </div>
 
                                     <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                                        <a
-                                            href={form.tastingNoteUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="px-2.5 py-1.5 rounded text-xs font-medium bg-cyan-50 text-cyan-800 hover:bg-cyan-100 border border-cyan-300 flex items-center gap-1 transition-colors"
+                                        <button
+                                            type="button"
+                                            onClick={() => setPreviewDoc({
+                                                url: form.tastingNoteUrl!,
+                                                title: `Tasting Note — ${form.name || form.sku || 'Sản phẩm'}`,
+                                            })}
+                                            className="px-2.5 py-1.5 rounded text-xs font-medium bg-cyan-50 text-cyan-800 hover:bg-cyan-100 border border-cyan-300 flex items-center gap-1 transition-colors cursor-pointer"
                                         >
-                                            <ExternalLink size={12} /> Xem file
-                                        </a>
+                                            <Eye size={12} /> Xem trực tiếp
+                                        </button>
                                         <button
                                             type="button"
                                             onClick={handleDeleteTastingNote}
@@ -814,14 +817,16 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                     </div>
 
                                     <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                                        <a
-                                            href={form.selfDeclarationUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="px-2.5 py-1.5 rounded text-xs font-medium bg-cyan-50 text-cyan-800 hover:bg-cyan-100 border border-cyan-300 flex items-center gap-1 transition-colors"
+                                        <button
+                                            type="button"
+                                            onClick={() => setPreviewDoc({
+                                                url: form.selfDeclarationUrl!,
+                                                title: `Bản Tự Công Bố — ${form.name || form.sku || 'Sản phẩm'}`,
+                                            })}
+                                            className="px-2.5 py-1.5 rounded text-xs font-medium bg-cyan-50 text-cyan-800 hover:bg-cyan-100 border border-cyan-300 flex items-center gap-1 transition-colors cursor-pointer"
                                         >
-                                            <ExternalLink size={12} /> Xem file
-                                        </a>
+                                            <Eye size={12} /> Xem trực tiếp
+                                        </button>
                                         <button
                                             type="button"
                                             onClick={() => set('selfDeclarationUrl', null)}
@@ -1267,6 +1272,68 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
 
                 </div>
             </Drawer>
+            {previewDoc && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/70 backdrop-blur-xs p-3 sm:p-6"
+                    onClick={() => setPreviewDoc(null)}
+                >
+                    <div
+                        className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-5xl h-[88vh] flex flex-col overflow-hidden"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50">
+                            <div className="flex items-center gap-2 min-w-0">
+                                <FileText size={16} className="text-cyan-700 shrink-0" />
+                                <h3 className="text-sm font-bold text-slate-900 truncate">{previewDoc.title}</h3>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <a
+                                    href={previewDoc.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 transition-colors"
+                                    title="Mở trong tab trình duyệt mới"
+                                >
+                                    <ExternalLink size={12} />
+                                    <span className="hidden sm:inline">Mở tab mới</span>
+                                </a>
+                                <a
+                                    href={`${previewDoc.url}${previewDoc.url.includes('?') ? '&' : '?'}download=true`}
+                                    download
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-cyan-700 hover:bg-cyan-800 transition-colors"
+                                    title="Tải file về máy"
+                                >
+                                    <Download size={12} />
+                                    <span className="hidden sm:inline">Tải về</span>
+                                </a>
+                                <button
+                                    type="button"
+                                    onClick={() => setPreviewDoc(null)}
+                                    className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-200/60 transition-colors cursor-pointer"
+                                    aria-label="Đóng xem trước"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex-1 bg-slate-100 relative overflow-hidden flex items-center justify-center">
+                            {/\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(previewDoc.url) ? (
+                                <img
+                                    src={previewDoc.url}
+                                    alt={previewDoc.title}
+                                    className="max-w-full max-h-full object-contain p-4"
+                                />
+                            ) : (
+                                <iframe
+                                    src={previewDoc.url}
+                                    title={previewDoc.title}
+                                    className="w-full h-full border-0 bg-white"
+                                />
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
             {confirmDialog}
         </>
     )
