@@ -4011,6 +4011,45 @@ Qua đợt kiểm tra chuyên sâu toàn bộ 38 routes và tất cả component
 ### Bài học
 > ⚠️ **RULE 137: (1) Mọi route trong `/dashboard/*` khi tạo mới BẮT BUỘC phải có file `loading.tsx` (dùng màu skeleton `#E2E8F0` / `#F1F5F9` trên nền card `#FFFFFF`, tuyệt đối không dùng `#FFFFFF` trên `#FFFFFF` hoặc `Math.random()` trong SSR render) VÀ phải đăng ký tiêu đề trong `getHeaderTitle()` tại `Header.tsx`; (2) TUYỆT ĐỐI CẤM sử dụng `window.alert()` và `window.confirm()` — luôn dùng `toast` (`sonner`) cho thông báo và `useConfirmDialog()` (nhớ render `{dialog}` trong JSX) cho xác nhận thao tác; (3) Mọi nút bấm chữ trắng (`text-white`) trên nền Cyan phải dùng `#0E7490` (`--lys-teal-strong`) thay vì `#0891B2` để đảm bảo tỷ lệ tương phản chuẩn WCAG AA ($\ge 4.5:1$).**
 
+---
+
+## BUG-138: Kiểm Kê Kho Di Động (Mobile Stock Count) — Lệch Index Khi Đổi Tab, Modulo Nhảy Số Khi Gõ Chai Lẻ, Rò Rỉ Blind Count & Chèn Mã Bổ Sung Chưa Refresh
+
+**Ngày:** 2026-10-14
+**Severity:** 🔴 High — Nghiệp vụ Kiểm kê kho & trải nghiệm đếm trên điện thoại (`MobileLocationCounter`)
+
+### Triệu chứng
+1. **Nhảy sai sản phẩm khi chạm từ Danh sách (`LIST`) sang Đếm từng mã (`FOCUS`):** Khi đang chọn bộ lọc `Chưa đếm` hoặc `Lệch` ở tab `Danh sách` rồi bấm vào 1 dòng bất kỳ, màn hình `Đếm từng mã` mở ra sản phẩm khác do dùng chung mảng `filteredLines` và `idx` bị tính lại khi đóng bộ lọc.
+2. **Gõ số nhiều chữ số ở ô `Chai lẻ` bị tự nhảy sang `Số thùng` giữa chừng:** Ô `Chai lẻ` tính ngược `Math.floor(val / upc)` và `val % upc` ngay trên `onChange`, khiến nhân viên định gõ `12` chai lẻ (thùng 6 chai) vừa gõ phím `1` rồi `2` đã bị đẩy thành `2 thùng + 0 chai lẻ`.
+3. **Rò rỉ thông tin tồn sổ sách trong chế độ Kiểm kê mù (`isBlind = true`):**
+   - Thẻ kệ ở màn hình `Sơ đồ kệ` vẫn hiện badge `Có lệch`.
+   - Tab `Danh sách` vẫn cho lọc theo `Khớp` và `Lệch`.
+   - Khung nhập Nguyên nhân & Ghi chú (`notes`) chỉ mở khi `variance !== 0` (vừa tiết lộ mã bị lệch, vừa chặn nhân viên ghi chú/chụp ảnh ở chế độ mù).
+   - Bấm `Chốt & Tổng kết kệ` khi đang chọn `Tất cả vị trí (ALL)` trả về `0 mã` do query `where: { locationCode: 'ALL' }`, và modal tổng kết lộ nguyên danh sách khớp/lệch ngay cả khi `isBlind = true`.
+4. **Thêm mã bổ sung (`AddUnlistedModal`) không hiện ngay trên điện thoại:** `onRefreshed` tại `StockCountClient.tsx` chỉ tải lại danh sách phiên bên ngoài mà không cập nhật `mobileViewDetail`, khiến mã vừa chèn không xuất hiện cho đến khi đóng mở lại phiên.
+5. **Mất dữ liệu nháp khi bấm chuyển mã nhanh:** Nếu nhân viên bấm `+/-` hoặc gõ số nhưng quên bấm `Lưu` mà bấm ngay `Mã sau` / `Chưa đếm` / đổi tab, số vừa nhập bị mất.
+
+### Nguyên nhân gốc rễ
+- Dùng chung 1 biến `filteredLines` cho cả điều hướng tuần tự (`FOCUS`) và danh sách lọc trạng thái (`LIST`).
+- Tính `cases` và `loose` trực tiếp bằng phép chia lấy dư (`% upc`) từ `currentTotalQty` trên mỗi ký tự `onChange`.
+- Chưa tách bạch điều kiện hiển thị `isBlind` tại các badge phụ trợ (Zone card, List filter tabs, Zone report modal, Notes panel).
+- `StockCountClient.tsx` truyền `onRefreshed={reloadSessions}` vào `MobileLocationCounter` mà thiếu bước `getStockCountDetail(mobileViewDetail.id)` để làm mới state chi tiết đang mở.
+
+### Cách fix
+1. **Tách biệt `focusLines` và `listLines` + định vị theo `line.id` (`openLineInFocus`):** Giữ `focusLines` cố định theo kệ/tìm kiếm/phân công và điều hướng chính xác tới `lineId` khi chọn từ `LIST` hoặc `ZoneReportModal`.
+2. **Tách state độc lập `casesInput` và `looseInput`:** Cho phép nhân viên gõ tự do số thùng hoặc số chai lẻ nhiều chữ số mà không bị modulo nhảy ô giữa chừng; cộng dồn chính xác `cases * upc + loose` thời gian thực.
+3. **Khóa chặt Kiểm kê mù (`isBlind`) & hỗ trợ `completeZoneCount('ALL')`:**
+   - Ẩn hoàn toàn badge `Có lệch` trên thẻ kệ và ẩn thống kê `Khớp/Lệch` trên `ZoneReportModal` khi `isBlind = true`.
+   - Đổi tab lọc `Khớp / Lệch` thành `Đã đếm` khi `isBlind = true`.
+   - Cho phép bấm nút `Ghi chú / Lý do` để chọn nguyên nhân, ghi chú và chụp ảnh bằng chứng bất kỳ lúc nào mà không lộ `variance`.
+   - Cập nhật `completeZoneCount` trong `stock-count/actions.ts` xử lý `zoneName === 'ALL'` (tổng kết toàn bộ kho).
+4. **Đồng bộ tức thì `AddUnlistedModal` & Auto-save khi điều hướng:**
+   - Cập nhật `onRefreshed` trong `StockCountClient.tsx` gọi `getStockCountDetail` để cập nhật `mobileViewDetail` ngay lập tức và nhảy thẳng tới dòng vừa thêm.
+   - Tự động ánh xạ `locationId` theo `warehouseId`, tự chuyển phiên `DRAFT` sang `IN_PROGRESS` khi thêm mã bổ sung, và khóa chỉ đọc (`isLockedStatus`) khi phiên đã `APPROVED`/`CANCELLED`.
+   - Bổ sung `autoSaveDirtyLine` tự động lưu ngầm dòng đã chỉnh sửa (`dirtyLineIdsRef`) khi chuyển mã hoặc đổi tab, kèm bộ lọc `Của tôi` (`currentUserId`) và thu gọn Header mobile còn 2 hàng.
+
+### Bài học
+> ⚠️ **RULE 138: (1) Trong giao diện kiểm đếm di động có quy đổi đơn vị kép (Thùng + Chai lẻ), BẮT BUỘC giữ state hiển thị riêng cho từng ô nhập (`casesInput`, `looseInput`) khi người dùng đang gõ phím — tuyệt đối không chạy phép chia lấy dư (`% unitsPerCase`) ngay trong `onChange` làm nhảy số giữa chừng; (2) Khi phiên kiểm kê bật chế độ Kiểm kê mù (`isBlind = true`), phải ẩn triệt để mọi chỉ báo gián tiếp có thể suy luận ra `qtySystem` (bao gồm badge `Có lệch` trên kệ, bộ lọc `Khớp/Lệch`, điều kiện mở ô ghi chú `variance !== 0`, và bảng tổng kết chênh lệch khu vực).**
 
 
 
@@ -4022,3 +4061,29 @@ Qua đợt kiểm tra chuyên sâu toàn bộ 38 routes và tất cả component
 
 
 
+
+
+---
+
+## BUG-139: Số Lượng Khách Hàng Con (`childrenCount`) Bị Thừa Do Bản Ghi Phụ `*-CHUNG` & Xung Đột Giữa Ô Tìm Kiếm Với Bộ Lọc Khách Hàng Cha
+
+**Ngày:** 2026-10-17
+**Severity:** 🟡 High — Toàn vẹn dữ liệu phân cấp Khách hàng Cha–Con & trải nghiệm lọc (`CustomersClient.tsx`, `customers/actions.ts`)
+
+### Triệu chứng
+1. Trên màn hình Quản lý Khách hàng (`/dashboard/customers`), khi gõ tìm kiếm mã Công ty Mẹ `HR10064` (`CÔNG TY TNHH THƯƠNG MẠI MINH ĐĂNG CONNECT`) đồng thời chọn lọc theo Khách hàng Cha `[HR10064]`, thẻ huy hiệu trên dòng Công ty Mẹ hiển thị **`5 KH con`**, nhưng danh sách trên bảng chỉ hiển thị **4 khách hàng con** (`HR10064-01`, `HR10064-02`, `HR10064-03`, `HR10064-04`).
+2. Các công ty mẹ khác như `HR10091`, `HR10104`, `HR-AMTHUC` cũng bị cộng thêm 1 khách hàng con ảo có mã hậu tố `-CHUNG` (`HR-MINH-CHUNG`, `HR-FOODS-CHUNG`, `HR-FBINTERN-CHUNG`, `HR-AMTHUC-CHUNG`) với 0 đơn hàng.
+
+### Nguyên nhân gốc rễ
+1. **Dữ liệu lịch sử (`*-CHUNG`)**: Trong quá trình chuẩn hóa phân cấp Cha–Con trước đây, một số bản ghi đại diện chung mang mã `HR-*-CHUNG` (tên chứa `(Chung)`, 0 đơn hàng) chưa được soft-delete, làm `childrenCount` của Công ty Mẹ bị cộng dồn thêm 1.
+2. **Logic tìm kiếm & lọc nhanh (`getCustomers` & `CustomersClient.tsx`)**:
+   - Trong `getCustomers`, điều kiện `search` chỉ tìm trên `code`/`name` của bản ghi hiện tại mà không tìm trên `parent.code` / `parent.name`. Khi người dùng gõ `HR10064` vào ô tìm kiếm, các khách hàng con có mã không bắt đầu bằng `HR10064` bị ẩn khỏi kết quả bảng trong khi badge `childrenCount` của Công ty Mẹ vẫn đếm tổng số con.
+   - Khi người dùng bấm trực tiếp vào badge `X KH con` hoặc `Thuộc KH Cha`, `search` và `hierarchyFilter` cũ không được xóa tự động, gây giao thoa điều kiện lọc.
+
+### Cách fix
+1. **Làm sạch dữ liệu (`Customer`)**: Soft-delete (`deletedAt = now()`, `status = 'INACTIVE'`) toàn bộ các bản ghi con dư thừa `*-CHUNG` không phát sinh đơn hàng (`HR-MINH-CHUNG`, `HR-FOODS-CHUNG`, `HR-FBINTERN-CHUNG`, `HR-AMTHUC-CHUNG`). `HR10064` hiện hiển thị chính xác **4 KH con**.
+2. **Nâng cấp truy vấn `getCustomers` (`customers/actions.ts`)**: Bổ sung điều kiện khớp `parent.code` và `parent.name` vào bộ lọc `search`, đảm bảo khi gõ mã Công ty Mẹ vào ô tìm kiếm sẽ trả về đầy đủ cả Công ty Mẹ lẫn toàn bộ chi nhánh/nhà hàng con trực thuộc (kể cả khi mã con khác tiền tố).
+3. **Đồng bộ Quick-Filter (`CustomersClient.tsx`)**: Khi bấm vào badge `X KH con` hoặc `Thuộc KH Cha`, tự động reset `search` và `hierarchyFilter` để hiển thị trọn vẹn danh sách khách hàng con của Công ty Mẹ đó.
+
+### Bài học
+> ⚠️ **RULE 139: (1) Trong mô hình phân cấp Khách hàng Cha–Con (`COMPANY` -> `RESTAURANT`), tuyệt đối không duy trì các bản ghi con giả lập dạng `*-CHUNG` (`(Chung)`) không phát sinh giao dịch làm sai lệch `childrenCount`; (2) Bộ lọc `search` khách hàng BẮT BUỘC phải bao gồm cả `parent.code` và `parent.name`, đồng thời thao tác bấm quick-filter `X KH con` phải xóa từ khóa `search` cũ để số lượng hiển thị trên bảng luôn khớp 100% với số lượng trên badge.**

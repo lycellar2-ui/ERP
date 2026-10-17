@@ -1782,8 +1782,11 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                             onDelete={() => handleDelete(row.id, row.name)}
                             onSyncTax={() => handleSyncTax(row.id)}
                             onSelectParent={(parentId) => {
+                                if (debounceRef.current) clearTimeout(debounceRef.current)
+                                setSearch('')
+                                setHierarchyFilter('')
                                 setParentFilter(parentId)
-                                applyFilter({ parentId })
+                                applyFilter({ parentId, search: undefined, hierarchyRole: undefined })
                             }}
                         />
                     ))
@@ -1838,8 +1841,11 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                                         type="button"
                                                         onClick={(e) => {
                                                             e.stopPropagation()
+                                                            if (debounceRef.current) clearTimeout(debounceRef.current)
+                                                            setSearch('')
+                                                            setHierarchyFilter('')
                                                             setParentFilter(row.id)
-                                                            applyFilter({ parentId: row.id })
+                                                            applyFilter({ parentId: row.id, search: undefined, hierarchyRole: undefined })
                                                         }}
                                                         className={cn(
                                                             "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold transition-colors cursor-pointer",
@@ -1868,8 +1874,11 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                                     onClick={(e) => {
                                                         e.stopPropagation()
                                                         if (row.parentId) {
+                                                            if (debounceRef.current) clearTimeout(debounceRef.current)
+                                                            setSearch('')
+                                                            setHierarchyFilter('')
                                                             setParentFilter(row.parentId)
-                                                            applyFilter({ parentId: row.parentId })
+                                                            applyFilter({ parentId: row.parentId, search: undefined, hierarchyRole: undefined })
                                                         }
                                                     }}
                                                     title="Bấm để lọc toàn bộ cơ sở thuộc KH Cha này"

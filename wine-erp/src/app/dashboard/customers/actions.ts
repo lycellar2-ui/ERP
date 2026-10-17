@@ -89,6 +89,15 @@ export async function getCustomers(params?: CustomerFilters): Promise<{ rows: Cu
                     { taxId: { contains: search, mode: 'insensitive' } },
                     { shortName: { contains: search, mode: 'insensitive' } },
                     {
+                        parent: {
+                            deletedAt: null,
+                            OR: [
+                                { code: { contains: search, mode: 'insensitive' } },
+                                { name: { contains: search, mode: 'insensitive' } },
+                            ]
+                        }
+                    },
+                    {
                         contacts: {
                             some: {
                                 OR: [
