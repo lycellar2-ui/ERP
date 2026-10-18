@@ -246,7 +246,11 @@ Khi click vào 1 NCC, mở drawer 720px bên phải với **7 tabs** lazy-loaded
   * Quan hệ phân cấp cây điểm bán sử dụng **"Khách hàng Cha"** (`Thuộc KH Cha: [Mã]`, `Khách hàng Cha (Đơn vị quản lý)`).
 - ✅ **Giao diện Điện thoại Chuyên Biệt (Mobile Card View)**: Tự động chuyển đổi dạng Thẻ thông tin khách hàng trên màn hình nhỏ (< 768px), hiển thị trực quan Mã KH, MST, Sales Rep, Hạn mức, Trạng thái và nút Sửa/Xóa chạm ngón tay tiện lợi mà không cần cuộn ngang 11 cột.
 - ✅ **Phân Trang Đáp Ứng (Responsive Pagination)**: Chế độ rút gọn điều hướng "Trước / Sau" kèm chỉ số trang `Trang X / Y` trên điện thoại; chế độ đầy đủ đánh số trang trên máy tính.
-- ✅ **Công Thái Học Biểu Mẫu (Customer Drawer Ergonomics)**: Lưới 1 cột trên điện thoại, 2-3 cột trên máy tính; Touch target tối thiểu 44px; bảo vệ dữ liệu chưa lưu (Dirty State Guard) khi chạm viền hoặc nút Hủy.
+- ✅ **Công Thái Học Biểu Mẫu & Chế Độ Tạo Công Ty Mẹ Tinh Gọn (Customer Drawer Ergonomics & Streamlined Parent Mode)**:
+  * **Thanh chọn phân cấp 2 tab ngay đầu form (`HORECA`)**: Cho phép chọn ngay giữa `Điểm bán / Nhà hàng (Con)` và `Công ty Mẹ (KH Cha)` trước khi nhập liệu, tự động chuyển đổi mã KH (mã gốc `HR10107` cho Công ty Mẹ hoặc mã nhánh `HR10107-01` cho Điểm bán) và ẩn hiện các khối trường tương ứng.
+  * **Chế độ Tạo Công Ty Mẹ (`entityType === 'COMPANY'`) tinh gọn**: Hợp nhất thông tin pháp nhân và thông tin thuế VAT vào một luồng duy nhất (Tra cứu MST Cục Thuế tự động điền cả Tên pháp nhân `name`/`vatCompanyName` và Địa chỉ đăng ký thuế `vatAddress`/`address`; đồng bộ Email hóa đơn `vatEmail`/`email`). Tự động ẩn hoàn toàn các trường vận hành điểm bán không cần thiết (Combobox chọn KH Cha, 4 ô Địa chỉ giao hàng/Phường/Quận/Tỉnh lặp lại, khối Thu Mua & Kênh Nhận Order, khối Giao Hàng & Lưu Ý).
+  * **Tách biệt Cơ Chế Giá & Chiết Khấu**: Ẩn khối nhập tay nhóm giá/chiết khấu khi tạo mới KH (vì chính sách giá quản lý qua Tờ Trình Giá `/dashboard/proposals` và Bảng Giá `/dashboard/price-list`); chỉ hiển thị thanh tóm tắt chỉ đọc (Read-only) kèm liên kết điều hướng khi mở xem/sửa KH hiện hữu.
+  * Lưới 1 cột trên điện thoại, 2-3 cột trên máy tính; Touch target tối thiểu 44px; bảo vệ dữ liệu chưa lưu (Dirty State Guard) khi chạm viền hoặc nút Hủy.
 - ✅ **Sort**: Theo Tên, Hạn Mức, Đơn Hàng (asc/desc)
 - ✅ **Export CSV**: Xuất toàn bộ danh sách KH ra CSV (UTF-8 BOM)
 - ✅ **Import Excel**: Upload Excel hàng loạt, validate per row

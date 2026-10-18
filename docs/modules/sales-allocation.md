@@ -679,5 +679,13 @@ Triển khai hoàn tất Phase 2 theo kế hoạch chuẩn hóa song ngữ toàn
 | **Drawer Tạo Đơn Bán Hàng & Tasting** | `src/app/dashboard/sales/CreateSODrawer.tsx` | Bản địa hóa toàn bộ quy trình lên đơn: phân tách đơn Thương Mại vs Tasting, liên kết Tờ trình tasting, tìm kiếm khách hàng autocomplete, địa chỉ giao hàng, banner hạn mức tín dụng & cảnh báo công nợ AR, bảng dòng sản phẩm, bóc tách VAT đa thuế suất, và popup xem trước phiếu in (Print Preview Modal). |
 | **Drawer Chỉnh Sửa Đơn Nháp (Edit SO)** | `src/app/dashboard/sales/EditSODrawer.tsx` | Chuyển ngữ toàn diện màn hình sửa đơn: trạng thái DRAFT, lựa chọn khách hàng, kênh bán, hạn thanh toán, pháp nhân xuất tuyến, badge nguồn giá (Campaign, Fixed Price, Channel Base), bảng tổng hợp tài chính và thông báo toast. |
 
-*Last updated: 2026-10-04 23:40 | Wine ERP v11.3*
+#### Session 18 — Tinh Gọn Giao Diện Quản Lý Bảng Giá (`/dashboard/price-list`) (18/10/2026)
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **Gộp gọn 2 Tab chính & Đưa Ánh Xạ Kênh vào Modal** | `PriceListClient.tsx`, `ChannelMappingTab.tsx` | Rút gọn thanh điều hướng chính về 2 tab phẳng: `Bảng Giá Niêm Yết (Theo Kênh)` và `Giá & Chiết Khấu Theo Khách Hàng`. Đưa `Cấu Hình Ánh Xạ Kênh Giá` vào nút `Cấu Hình Kênh Giá` (Modal) trên thanh công cụ. |
+| **Tìm Kiếm Nhanh & Sửa Giá Trực Tiếp Trên Dòng (Inline Price Edit)** | `PriceListClient.tsx` | Loại bỏ 4 thẻ đếm số lượng bảng giá dư thừa ở đầu trang; tự động mở bảng giá đầu tiên khi vào trang; bổ sung ô tìm kiếm SKU/Tên rượu ngay trong bảng chi tiết giá và cho phép bấm trực tiếp vào đơn giá để sửa nhanh trên dòng (`Enter` để lưu). |
+| **Thanh Lọc Tích Hợp KPI & All-in-One Customer Pricing Drawer** | `CustomerRulesTab.tsx` | Loại bỏ tab con lồng trong tab cha và hợp nhất 4 thẻ KPI vào các nút lọc nhanh (`Tất cả khách hàng`, `Có giá riêng theo chai`, `Chiết khấu mặc định`, `Chờ duyệt`). Làm sạch các nút chồng chéo trên từng dòng khách hàng (`Đổi`, `Xem Giá Riêng`, `+ Deal`), gom toàn bộ thao tác đổi cơ chế mặc định toàn kho và thêm/sao chép giá riêng theo chai vào chung một Drawer cấu hình duy nhất. |
+
+*Last updated: 2026-10-18 16:45 | Wine ERP v11.4*
 

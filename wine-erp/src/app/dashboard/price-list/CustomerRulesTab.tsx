@@ -3,27 +3,22 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import {
-    Plus, Search, Trash2, Loader2, X, Check, Ban, Calendar, Settings,
-    ShieldAlert, AlertCircle, HelpCircle, FileText, Copy, Building2,
-    CheckSquare, Square, Sparkles, Share2, ArrowRight, Eye, SlidersHorizontal,
-    Percent, Zap, ChevronRight, CheckCircle2, Clock, ArrowUpRight, RefreshCw
+    Plus, Search, Trash2, Loader2, X, Check, Ban,
+    FileText, Copy, Building2, SlidersHorizontal,
+    Zap, ChevronRight, Clock, RefreshCw
 } from 'lucide-react'
 import {
     getCustomerPriceRules,
     createCustomerPriceRule,
-    updateCustomerPriceRule,
     approveCustomerPriceRule,
     rejectCustomerPriceRule,
     deleteCustomerPriceRule,
-    getChannelPriceMapping,
-    saveChannelPriceMapping,
     getCustomersForRules,
     cloneCustomerPriceRules,
     getCustomerPricingMasterOverview,
     updateCustomerDefaultPricing,
     getCustomerSpecialPriceDetail,
     PriceRuleRow,
-    CustomerPricingMasterRow,
     CustomerPricingMasterResult,
 } from './customer-rules-actions'
 import { getProductsForPriceList } from './actions'
@@ -71,8 +66,6 @@ interface Props {
 }
 
 export function CustomerRulesTab({ currentUser }: Props) {
-    // ─── Modes & Master Overview ─────────────────────
-    const [viewMode, setViewMode] = useState<'CUSTOMERS' | 'RULES'>('CUSTOMERS')
     const [masterOverview, setMasterOverview] = useState<CustomerPricingMasterResult | null>(null)
     const [rules, setRules] = useState<PriceRuleRow[]>([])
     const [customers, setCustomers] = useState<CustomerOption[]>([])
@@ -86,33 +79,26 @@ export function CustomerRulesTab({ currentUser }: Props) {
     const [filterChannel, setFilterChannel] = useState('ALL')
     const [filterMasterType, setFilterMasterType] = useState<'ALL' | 'HAS_SPECIAL' | 'HAS_CUSTOM_DISCOUNT' | 'PENDING'>('ALL')
 
-    // Rule Audit Filters
-    const [filterCustomer, setFilterCustomer] = useState('ALL')
-    const [filterStatus, setFilterStatus] = useState('ALL')
-    const [filterType, setFilterType] = useState('ALL')
-
-    // Drawer state (Chi tiết giá đặc biệt của 1 khách hàng)
+    // Unified Customer Drawer state
     const [drawerCustomer, setDrawerCustomer] = useState<{ id: string; name: string; code: string } | null>(null)
     const [drawerDetails, setDrawerDetails] = useState<Awaited<ReturnType<typeof getCustomerSpecialPriceDetail>> | null>(null)
     const [drawerLoading, setDrawerLoading] = useState(false)
+    const [drawerRuleSearch, setDrawerRuleSearch] = useState('')
 
-    // Quick Change Default Policy Modal
-    const [policyModalCustomer, setPolicyModalCustomer] = useState<CustomerPricingMasterRow | null>(null)
+    // Inline Default Policy state inside Customer Drawer
     const [policyBasePriceType, setPolicyBasePriceType] = useState<string>('BY_CHANNEL')
     const [policyDiscountPct, setPolicyDiscountPct] = useState<number>(0)
     const [policySaving, setPolicySaving] = useState(false)
 
-    // Form state for creating single rule
-    const [createOpen, setCreateOpen] = useState(false)
-    const [formCustomer, setFormCustomer] = useState('')
+    // Inline Add Special Rule state inside Customer Drawer
+    const [addRuleOpen, setAddRuleOpen] = useState(false)
     const [formProduct, setFormProduct] = useState('')
-    const [formType, setFormType] = useState<'FIXED_DISCOUNT' | 'FIXED_PRICE' | 'SPECIAL_PRICE'>('FIXED_DISCOUNT')
+    const [formType, setFormType] = useState<'SPECIAL_PRICE' | 'FIXED_DISCOUNT'>('SPECIAL_PRICE')
     const [formValue, setFormValue] = useState('')
     const [formStart, setFormStart] = useState(new Date().toISOString().slice(0, 10))
     const [formEnd, setFormEnd] = useState('')
     const [formNotes, setFormNotes] = useState('')
     const [formProductSearch, setFormProductSearch] = useState('')
-    const [formCustomerSearch, setFormCustomerSearch] = useState('')
 
     // Clone Modal state
     const [cloneModalOpen, setCloneModalOpen] = useState(false)
@@ -155,13 +141,19 @@ export function CustomerRulesTab({ currentUser }: Props) {
         loadData()
     }, [loadData])
 
-    // Open Customer Inspection Drawer
+    // Open Customer Inspection & Configuration Drawer
     const handleOpenDrawer = async (cust: { id: string; name: string; code: string }) => {
         setDrawerCustomer(cust)
+        setDrawerRuleSearch('')
+        setAddRuleOpen(false)
         setDrawerLoading(true)
         try {
             const details = await getCustomerSpecialPriceDetail(cust.id)
             setDrawerDetails(details)
+            if (details?.customer) {
+                setPolicyBasePriceType(details.customer.basePriceType || 'BY_CHANNEL')
+                setPolicyDiscountPct(details.customer.defaultDiscountPct || 0)
+            }
         } catch (err) {
             console.error('Failed to load customer detail', err)
         } finally {
@@ -175,6 +167,10 @@ export function CustomerRulesTab({ currentUser }: Props) {
         try {
             const details = await getCustomerSpecialPriceDetail(drawerCustomer.id)
             setDrawerDetails(details)
+            if (details?.customer) {
+                setPolicyBasePriceType(details.customer.basePriceType || 'BY_CHANNEL')
+                setPolicyDiscountPct(details.customer.defaultDiscountPct || 0)
+            }
         } catch (err) {
             console.error('Failed to refresh drawer', err)
         } finally {
@@ -182,54 +178,32 @@ export function CustomerRulesTab({ currentUser }: Props) {
         }
     }
 
-    // Open Policy Modal
-    const handleOpenPolicyModal = (cust: CustomerPricingMasterRow) => {
-        setPolicyModalCustomer(cust)
-        setPolicyBasePriceType(cust.basePriceType || 'BY_CHANNEL')
-        setPolicyDiscountPct(cust.defaultDiscountPct || 0)
-    }
-
-    // Save Policy Modal
-    const handleSavePolicy = async () => {
-        if (!policyModalCustomer) return
+    // Save Inline Policy inside Drawer
+    const handleSaveInlinePolicy = async () => {
+        if (!drawerCustomer) return
         setPolicySaving(true)
-        const res = await updateCustomerDefaultPricing(policyModalCustomer.id, {
+        const res = await updateCustomerDefaultPricing(drawerCustomer.id, {
             basePriceType: policyBasePriceType,
             defaultDiscountPct: Number(policyDiscountPct),
         })
         if (res.success) {
-            setPolicyModalCustomer(null)
-            toast.success('Đã cập nhật chính sách giá mặc định')
-            await loadData()
-            if (drawerCustomer?.id === policyModalCustomer.id) {
-                await refreshDrawer()
-            }
+            toast.success('Đã lưu cơ chế giá mặc định')
+            await Promise.all([loadData(), refreshDrawer()])
         } else {
             toast.error('Lỗi cập nhật: ' + res.error)
         }
         setPolicySaving(false)
     }
 
-    // Open Add Single Rule Modal with preselected customer
-    const handleOpenCreateWithCustomer = (custId: string) => {
-        setFormCustomer(custId)
-        setFormProduct('')
-        setFormValue('')
-        setFormEnd('')
-        setFormNotes('')
-        setFormType('SPECIAL_PRICE')
-        setCreateOpen(true)
-    }
-
-    // Create Rule Action
+    // Create Rule Action inside Drawer
     const handleCreateRule = async () => {
-        if (!formCustomer || !formProduct || !formValue) {
-            toast.warning('Vui lòng điền đầy đủ Khách hàng, Sản phẩm và Giá trị')
+        if (!drawerCustomer || !formProduct || !formValue) {
+            toast.warning('Vui lòng chọn sản phẩm và nhập giá/chiết khấu')
             return
         }
         setSaving(true)
         const res = await createCustomerPriceRule({
-            customerId: formCustomer,
+            customerId: drawerCustomer.id,
             productId: formProduct,
             ruleType: formType,
             value: Number(formValue),
@@ -238,19 +212,14 @@ export function CustomerRulesTab({ currentUser }: Props) {
             notes: formNotes,
         })
         if (res.success) {
-            setCreateOpen(false)
-            setFormCustomer('')
+            setAddRuleOpen(false)
             setFormProduct('')
             setFormValue('')
             setFormEnd('')
             setFormNotes('')
             setFormProductSearch('')
-            setFormCustomerSearch('')
-            toast.success('Đã tạo chính sách giá thành công')
-            await loadData()
-            if (drawerCustomer?.id === formCustomer) {
-                await refreshDrawer()
-            }
+            toast.success('Đã thêm giá riêng cho sản phẩm')
+            await Promise.all([loadData(), refreshDrawer()])
         } else {
             toast.error('Lỗi: ' + res.error)
         }
@@ -317,7 +286,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
 
     // Clone Modal helpers
     const openCloneModal = (sourceCustId?: string) => {
-        const initialSourceId = sourceCustId || (filterCustomer !== 'ALL' ? filterCustomer : customers[0]?.id || '')
+        const initialSourceId = sourceCustId || drawerCustomer?.id || customers[0]?.id || ''
         setCloneSourceCustomer(initialSourceId)
         setCloneTargetCustomers([])
         setCloneSearchTarget('')
@@ -338,7 +307,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
             return
         }
         if (cloneSelectedRuleIds.length === 0) {
-            toast.warning('Vui lòng chọn ít nhất 1 chính sách giá cần sao chép')
+            toast.warning('Khách hàng nguồn chưa có sản phẩm giá riêng (Đã duyệt) nào để sao chép')
             return
         }
 
@@ -360,556 +329,373 @@ export function CustomerRulesTab({ currentUser }: Props) {
         setCloning(false)
     }
 
-    // Filter rules for Audit View
-    const filteredRules = useMemo(() => {
-        return rules.filter(r => {
-            const matchesStatus = filterStatus === 'ALL' || r.status === filterStatus
-            const matchesType = filterType === 'ALL' || r.ruleType === filterType
-            const matchesCustomer = filterCustomer === 'ALL' || r.customerId === filterCustomer
-            const matchesSearch = !searchQuery ||
-                r.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                r.customerCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                r.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                r.skuCode.toLowerCase().includes(searchQuery.toLowerCase())
-            return matchesStatus && matchesType && matchesCustomer && matchesSearch
-        })
-    }, [rules, filterStatus, filterType, filterCustomer, searchQuery])
+    // Pending rules for quick approval banner
+    const pendingRules = useMemo(() => {
+        return rules.filter(r => r.status === 'PENDING_APPROVAL')
+    }, [rules])
+
+    // Filtered rules inside Customer Drawer
+    const filteredDrawerRules = useMemo(() => {
+        if (!drawerDetails?.rules) return []
+        const q = drawerRuleSearch.trim().toLowerCase()
+        if (!q) return drawerDetails.rules
+        return drawerDetails.rules.filter(r =>
+            r.skuCode.toLowerCase().includes(q) ||
+            r.productName.toLowerCase().includes(q)
+        )
+    }, [drawerDetails?.rules, drawerRuleSearch])
+
+    const isPolicyDirty = Boolean(
+        drawerDetails?.customer && (
+            policyBasePriceType !== (drawerDetails.customer.basePriceType || 'BY_CHANNEL') ||
+            Number(policyDiscountPct) !== Number(drawerDetails.customer.defaultDiscountPct || 0)
+        )
+    )
 
     // Format Base Price Type Display
     const formatBaseType = (basePriceType: string, defaultDiscountPct: number) => {
         let label = 'Theo Kênh Chuẩn'
-        if (basePriceType === 'WHOLESALE') label = 'Bảng Giá Buôn (Wholesale)'
-        else if (basePriceType === 'RETAIL') label = 'Bảng Giá Lẻ (Retail)'
+        if (basePriceType === 'WHOLESALE') label = 'Bảng Giá Buôn'
+        else if (basePriceType === 'RETAIL') label = 'Bảng Giá Lẻ'
         else if (basePriceType === 'HORECA') label = 'Bảng Giá HORECA'
 
         if (defaultDiscountPct > 0) {
             return (
-                <div className="flex flex-col">
-                    <span className="font-semibold text-emerald-700 flex items-center gap-1.5">
-                        {label} <span className="inline-block px-1.5 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-bold whitespace-nowrap shrink-0">-{defaultDiscountPct}%</span>
+                <div className="inline-flex items-center gap-1.5">
+                    <span className="font-semibold text-slate-800">{label}</span>
+                    <span className="inline-block px-1.5 py-0.5 rounded text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-bold whitespace-nowrap">
+                        -{defaultDiscountPct}%
                     </span>
-                    <span className="text-[10px] text-slate-500">Tự động áp dụng cho mọi sản phẩm</span>
                 </div>
             )
         }
 
-        return (
-            <div className="flex flex-col">
-                <span className="font-medium text-slate-800">{label}</span>
-                <span className="text-[10px] text-slate-500">Nguyên giá niêm yết</span>
-            </div>
-        )
+        return <span className="text-slate-600">{label}</span>
     }
 
+    const kpis = masterOverview?.kpis
+
     return (
-        <div className="w-full space-y-4">
-            {/* Top Switcher & Action Header */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 rounded-lg bg-white border border-slate-200 shadow-xs">
-                {/* Dual-View Switcher */}
-                <div className="flex items-center gap-1.5 p-1 rounded-lg bg-slate-100 border border-slate-200">
-                    <button
-                        type="button"
-                        onClick={() => setViewMode('CUSTOMERS')}
-                        className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition-all ${
-                            viewMode === 'CUSTOMERS'
-                                ? 'bg-[#0E7490] text-white shadow-xs font-bold'
-                                : 'text-slate-600 hover:text-slate-900 hover:bg-white'
-                        }`}
-                    >
-                        <Building2 size={15} />
-                        Theo Khách Hàng (Tổng Quan Cơ Chế & Giá)
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setViewMode('RULES')}
-                        className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition-all ${
-                            viewMode === 'RULES'
-                                ? 'bg-[#0E7490] text-white shadow-xs font-bold'
-                                : 'text-slate-600 hover:text-slate-900 hover:bg-white'
-                        }`}
-                    >
-                        <Sparkles size={15} />
-                        Toàn Bộ Quy Tắc (Audit & Duyệt Deal)
-                    </button>
+        <div className="w-full space-y-3">
+            {/* Unified Filter & Action Bar */}
+            <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-xs space-y-3">
+                {/* Top Row: Quick Filter Pills (with embedded KPI counts) + Secondary Actions */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        <button
+                            type="button"
+                            onClick={() => setFilterMasterType('ALL')}
+                            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all border ${
+                                filterMasterType === 'ALL'
+                                    ? 'bg-[#0891B2] text-white border-[#0891B2] shadow-xs'
+                                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                            }`}
+                        >
+                            Tất cả khách hàng ({kpis?.totalCustomers ?? customers.length})
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setFilterMasterType('HAS_SPECIAL')}
+                            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all border ${
+                                filterMasterType === 'HAS_SPECIAL'
+                                    ? 'bg-[#0891B2] text-white border-[#0891B2] shadow-xs'
+                                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                            }`}
+                        >
+                            Có giá riêng theo chai ({kpis?.hasSpecialPriceCount ?? 0})
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setFilterMasterType('HAS_CUSTOM_DISCOUNT')}
+                            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all border ${
+                                filterMasterType === 'HAS_CUSTOM_DISCOUNT'
+                                    ? 'bg-[#0891B2] text-white border-[#0891B2] shadow-xs'
+                                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                            }`}
+                        >
+                            Chiết khấu mặc định ({kpis?.customPolicyCount ?? 0})
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setFilterMasterType('PENDING')}
+                            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all border flex items-center gap-1.5 ${
+                                filterMasterType === 'PENDING'
+                                    ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                                    : (kpis?.pendingRulesCount ?? 0) > 0
+                                    ? 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
+                                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                            }`}
+                        >
+                            <Clock size={13} />
+                            Chờ duyệt ({kpis?.pendingRulesCount ?? 0})
+                        </button>
+                    </div>
+
+                    {canCreate && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <button
+                                type="button"
+                                onClick={() => openCloneModal()}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 transition shadow-xs"
+                            >
+                                <Copy size={13} className="text-slate-500" /> Sao Chép Sang Chi Nhánh
+                            </button>
+                            <Link
+                                href="/dashboard/proposals?category=PRICE_ADJUSTMENT&action=create"
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-[#0891B2] hover:bg-[#0E7490] text-white transition shadow-xs"
+                            >
+                                <FileText size={13} /> Lập Tờ Trình Giá
+                            </Link>
+                        </div>
+                    )}
                 </div>
 
-                {/* Primary Action Buttons */}
-                <div className="flex items-center gap-2 flex-wrap">
-                    {canCreate && (
-                        <button
-                            type="button"
-                            onClick={() => openCloneModal()}
-                            className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition shadow-xs hover:opacity-90"
-                            style={{ background: 'rgba(217,119,6,0.12)', border: '1px solid rgba(217,119,6,0.3)', color: '#B45309' }}
+                {/* Bottom Row: Search & Channel Filter */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2.5 border-t border-slate-100">
+                    <div className="flex items-center gap-2 flex-1 max-w-xl">
+                        <div className="relative flex-1">
+                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                placeholder="Tìm mã hoặc tên khách hàng..."
+                                className="w-full pl-9 pr-3 py-1.5 text-xs outline-none bg-white border border-slate-300 focus:border-[#0891B2] text-slate-900 placeholder:text-slate-400 rounded-md transition"
+                            />
+                        </div>
+
+                        <select
+                            value={filterChannel}
+                            onChange={e => setFilterChannel(e.target.value)}
+                            className="px-3 py-1.5 text-xs outline-none cursor-pointer bg-white border border-slate-300 focus:border-[#0891B2] text-slate-800 rounded-md transition shrink-0"
                         >
-                            <Copy size={14} /> Áp Dụng Cho Cơ Sở Khác
-                        </button>
-                    )}
-                    {canCreate && (
-                        <Link
-                            href="/dashboard/proposals?category=PRICE_ADJUSTMENT&action=create"
-                            className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition shadow-xs hover:opacity-90"
-                            style={{ background: 'rgba(8, 145, 178, 0.08)', border: '1px solid #0E7490', color: '#0891B2' }}
-                        >
-                            <FileText size={14} /> + Đề Xuất Giá (Tờ Trình)
-                        </Link>
-                    )}
-                    {canCreate && (
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setFormCustomer(customers[0]?.id || '')
-                                setCreateOpen(true)
-                            }}
-                            className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md transition shadow-xs hover:opacity-90"
-                            style={{ background: '#0891B2', color: '#FFFFFF' }}
-                        >
-                            <Plus size={15} /> + Thêm Giá Đặc Biệt
-                        </button>
-                    )}
+                            <option value="ALL">Tất cả Kênh</option>
+                            <option value="HORECA">HORECA</option>
+                            <option value="WHOLESALE_DISTRIBUTOR">Đại Lý</option>
+                            <option value="VIP_RETAIL">VIP Retail</option>
+                            <option value="DIRECT_INDIVIDUAL">Trực Tiếp</option>
+                        </select>
+                    </div>
+
+                    <div className="text-xs text-slate-500">
+                        Hiển thị <strong className="text-slate-800">{masterOverview?.customers.length ?? 0}</strong> khách hàng
+                    </div>
                 </div>
             </div>
 
-            {/* 4 Metric KPI Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs">
-                    <div className="flex items-center justify-between text-slate-600 text-xs">
-                        <span>Tổng Khách Hàng</span>
-                        <Building2 size={16} className="text-[#0891B2]" />
+            {/* Quick Pending Approval Table when "Chờ duyệt" filter is selected */}
+            {filterMasterType === 'PENDING' && pendingRules.length > 0 && (
+                <div className="rounded-lg border border-amber-300 bg-amber-50/40 overflow-hidden shadow-xs">
+                    <div className="px-4 py-2.5 bg-amber-100/70 border-b border-amber-200 flex items-center justify-between">
+                        <span className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                            <Clock size={14} /> Danh Sách Deal Giá Riêng Đang Chờ Phê Duyệt ({pendingRules.length})
+                        </span>
+                        <span className="text-[11px] text-amber-800">
+                            Duyệt nhanh trực tiếp hoặc bấm vào khách hàng bên dưới để xem toàn bộ danh mục
+                        </span>
                     </div>
-                    <div className="text-2xl font-bold text-slate-900 mt-1.5">
-                        {masterOverview?.kpis.totalCustomers ?? customers.length}
-                    </div>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Tác nghiệp toàn hệ thống</p>
-                </div>
-
-                <div className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs">
-                    <div className="flex items-center justify-between text-slate-600 text-xs">
-                        <span>Cơ Chế Chiết Khấu Riêng</span>
-                        <Percent size={16} className="text-[#B45309]" />
-                    </div>
-                    <div className="text-2xl font-bold text-[#B45309] mt-1.5">
-                        {masterOverview?.kpis.customPolicyCount ?? 0}
-                    </div>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Wholesale -X% / Retail -Y% tự động</p>
-                </div>
-
-                <div className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs">
-                    <div className="flex items-center justify-between text-slate-600 text-xs">
-                        <span>Khách Có Giá Đặc Biệt</span>
-                        <Zap size={16} className="text-[#0891B2]" />
-                    </div>
-                    <div className="text-2xl font-bold text-[#0891B2] mt-1.5">
-                        {masterOverview?.kpis.hasSpecialPriceCount ?? 0}
-                    </div>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Có thỏa thuận giá riêng theo chai</p>
-                </div>
-
-                <div className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs">
-                    <div className="flex items-center justify-between text-slate-600 text-xs">
-                        <span>Đề Xuất Chờ Duyệt</span>
-                        <AlertCircle size={16} className="text-[#D97706]" />
-                    </div>
-                    <div className="text-2xl font-bold text-[#D97706] mt-1.5">
-                        {masterOverview?.kpis.pendingRulesCount ?? 0}
-                    </div>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Chờ Ban Giám Đốc / QL duyệt</p>
-                </div>
-            </div>
-
-            {/* ══════════════════════════════════════════════════════════════════════ */}
-            {/* VIEW MODE 1: CUSTOMER-CENTRIC MASTER OVERVIEW (TRUNG TÂM QUẢN LÝ CHUNG) */}
-            {/* ══════════════════════════════════════════════════════════════════════ */}
-            {viewMode === 'CUSTOMERS' && (
-                <div className="space-y-3">
-                    {/* Filter Bar */}
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-3 p-3 rounded-lg bg-white border border-slate-200 shadow-xs">
-                        <div className="flex items-center gap-2.5 w-full md:w-auto flex-wrap">
-                            <div className="relative flex-1 md:w-72">
-                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                                <input
-                                    value={searchQuery}
-                                    onChange={e => setSearchQuery(e.target.value)}
-                                    placeholder="Tìm tên, mã khách hàng..."
-                                    className="w-full pl-9 pr-3 py-1.5 text-xs outline-none bg-white border border-slate-300 focus:border-[#0891B2] text-slate-900 placeholder:text-slate-400 rounded-md transition shadow-xs"
-                                />
-                            </div>
-
-                            <select
-                                value={filterChannel}
-                                onChange={e => setFilterChannel(e.target.value)}
-                                className="px-3 py-1.5 text-xs outline-none cursor-pointer bg-white border border-slate-300 focus:border-[#0891B2] text-slate-800 rounded-md transition shadow-xs"
-                            >
-                                <option value="ALL">Tất cả Kênh</option>
-                                <option value="HORECA">Kênh HORECA</option>
-                                <option value="WHOLESALE_DISTRIBUTOR">Đại Lý Phân Phối</option>
-                                <option value="VIP_RETAIL">Khách VIP Retail</option>
-                                <option value="DIRECT_INDIVIDUAL">Khách Trực Tiếp</option>
-                            </select>
-
-                            <select
-                                value={filterMasterType}
-                                onChange={e => setFilterMasterType(e.target.value as any)}
-                                className="px-3 py-1.5 text-xs outline-none cursor-pointer bg-white border border-slate-300 focus:border-[#0891B2] text-slate-800 rounded-md transition shadow-xs"
-                            >
-                                <option value="ALL">Tất cả Cơ Chế</option>
-                                <option value="HAS_SPECIAL">Có Giá Đặc Biệt</option>
-                                <option value="HAS_CUSTOM_DISCOUNT">Có Chiết Khấu Mặc Định (%)</option>
-                                <option value="PENDING">Có Deal Chờ Duyệt</option>
-                            </select>
-                        </div>
-
-                        <div className="text-xs text-slate-600">
-                            Hiển thị <strong className="text-slate-900">{masterOverview?.customers.length ?? 0}</strong> khách hàng
-                        </div>
-                    </div>
-
-                    {/* Master Customers Table */}
-                    <div className="rounded-lg overflow-hidden border border-slate-200 bg-white shadow-xs">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-xs text-left border-collapse">
-                                <thead>
-                                    <tr className="bg-slate-50 text-slate-700 border-b border-slate-200">
-                                        <th className="p-3.5 font-semibold">Khách Hàng & Kênh</th>
-                                        <th className="p-3.5 font-semibold">Cơ Chế Giá Mặc Định (Toàn Kho)</th>
-                                        <th className="p-3.5 font-semibold">Tình Trạng Giá Đặc Biệt (Theo Chai)</th>
-                                        <th className="p-3.5 text-right font-semibold">Hành Động</th>
+                    <div className="overflow-x-auto bg-white">
+                        <table className="w-full text-xs text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                                    <th className="p-3 font-semibold">Khách Hàng</th>
+                                    <th className="p-3 font-semibold">Sản Phẩm</th>
+                                    <th className="p-3 font-semibold text-right">Giá Đề Xuất</th>
+                                    <th className="p-3 font-semibold">Người Đề Xuất</th>
+                                    <th className="p-3 font-semibold text-right">Phê Duyệt</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-200">
+                                {pendingRules.map(rule => (
+                                    <tr key={rule.id} className="hover:bg-slate-50">
+                                        <td className="p-3">
+                                            <span className="font-mono text-[#0891B2] font-semibold mr-1.5">[{rule.customerCode}]</span>
+                                            <span className="font-semibold text-slate-900">{rule.customerName}</span>
+                                        </td>
+                                        <td className="p-3">
+                                            <span className="font-medium text-slate-900">{rule.productName}</span>
+                                            <span className="font-mono text-[11px] text-slate-500 ml-1.5">({rule.skuCode})</span>
+                                        </td>
+                                        <td className="p-3 text-right font-mono font-bold text-emerald-700">
+                                            {rule.ruleType === 'FIXED_DISCOUNT' ? `-${rule.value}%` : formatVND(rule.value)}
+                                        </td>
+                                        <td className="p-3 text-slate-600">
+                                            {rule.requesterName} · {new Date(rule.startDate).toLocaleDateString('vi-VN')}
+                                        </td>
+                                        <td className="p-3 text-right">
+                                            {canApprove ? (
+                                                <div className="inline-flex items-center gap-1.5">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleApprove(rule.id)}
+                                                        className="px-2.5 py-1 rounded text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition inline-flex items-center gap-1"
+                                                    >
+                                                        <Check size={12} /> Duyệt
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleReject(rule.id)}
+                                                        className="px-2.5 py-1 rounded text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition inline-flex items-center gap-1"
+                                                    >
+                                                        <Ban size={12} /> Từ chối
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <span className="text-[11px] text-amber-700 font-medium">Chờ Quản lý duyệt</span>
+                                            )}
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-200">
-                                    {loading && !masterOverview ? (
-                                        <tr>
-                                            <td colSpan={4} className="text-center py-14">
-                                                <Loader2 className="animate-spin mx-auto text-[#0891B2]" size={28} />
-                                                <p className="mt-2 text-xs text-slate-600">Đang tải ma trận giá khách hàng...</p>
-                                            </td>
-                                        </tr>
-                                    ) : masterOverview?.customers.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={4} className="text-center py-12 text-slate-600">
-                                                Không tìm thấy khách hàng nào phù hợp bộ lọc.
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        masterOverview?.customers.map(c => {
-                                            const chBadge = CHANNEL_BADGES[c.channel ?? ''] ?? { label: c.channel ?? 'Chưa gắn', color: '#475569', bg: 'rgba(100,116,139,0.12)' }
-                                            const hasSpecial = c.specialRuleCount > 0
-                                            const hasPending = c.pendingRuleCount > 0
-
-                                            return (
-                                                <tr key={c.id} className="hover:bg-slate-50/80 transition-colors">
-                                                    {/* Khách hàng */}
-                                                    <td className="p-3.5">
-                                                        <div className="flex items-start gap-2.5">
-                                                            <div className="w-8 h-8 rounded-lg bg-[#E6F4F1] border border-[#0E7490] flex items-center justify-center text-[#0D4F43] shrink-0 font-bold text-xs shadow-xs">
-                                                                {c.name.charAt(0)}
-                                                            </div>
-                                                            <div>
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="font-mono font-semibold text-[#0891B2]">[{c.code}]</span>
-                                                                    <span className="font-semibold text-slate-900 hover:text-[#0891B2] cursor-pointer" onClick={() => handleOpenDrawer(c)}>
-                                                                        {c.name}
-                                                                    </span>
-                                                                </div>
-                                                                <div className="flex items-center gap-2 mt-1">
-                                                                    <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0" style={{ color: chBadge.color, background: chBadge.bg }}>
-                                                                        {chBadge.label}
-                                                                    </span>
-                                                                    {c.brandGroup && (
-                                                                        <span className="inline-block text-[10px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-medium whitespace-nowrap shrink-0">
-                                                                            {c.brandGroup}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-
-                                                    {/* Cơ Chế Mặc Định */}
-                                                    <td className="p-3.5">
-                                                        <div className="flex items-center justify-between gap-3">
-                                                            {formatBaseType(c.basePriceType, c.defaultDiscountPct)}
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleOpenPolicyModal(c)}
-                                                                className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-slate-800 hover:text-teal-900 bg-slate-100 hover:bg-white rounded-md border border-slate-300 hover:border-slate-400 shadow-xs transition"
-                                                                title="Cấu hình cơ chế giá mặc định"
-                                                            >
-                                                                <Settings size={13} className="text-slate-600" />
-                                                                Đổi
-                                                            </button>
-                                                        </div>
-                                                    </td>
-
-                                                    {/* Giá đặc biệt riêng */}
-                                                    <td className="p-3.5">
-                                                        <div className="space-y-1.5">
-                                                            <div className="flex items-center gap-2 flex-wrap">
-                                                                {hasSpecial ? (
-                                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200 whitespace-nowrap shrink-0">
-                                                                        <Zap size={12} /> Có {c.specialRuleCount} chai giá riêng
-                                                                    </span>
-                                                                ) : (
-                                                                    <span className="text-slate-500 text-xs">— Theo giá chuẩn</span>
-                                                                )}
-
-                                                                {hasPending && (
-                                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
-                                                                        <Clock size={11} /> {c.pendingRuleCount} chờ duyệt
-                                                                    </span>
-                                                                )}
-                                                            </div>
-
-                                                            {/* Preview sample deals */}
-                                                            {c.activeRulesSummary && c.activeRulesSummary.length > 0 && (
-                                                                <div className="flex items-center gap-1.5 flex-wrap">
-                                                                    {c.activeRulesSummary.slice(0, 2).map((r, idx) => (
-                                                                        <span key={idx} className="inline-block text-[10px] bg-slate-50 text-slate-700 px-2 py-0.5 rounded border border-slate-200 whitespace-nowrap shrink-0">
-                                                                            {r.productName}: {r.ruleType === 'FIXED_DISCOUNT' ? `-${r.value}%` : formatVND(r.value)}
-                                                                        </span>
-                                                                    ))}
-                                                                    {c.activeRulesSummary.length > 2 && (
-                                                                        <span className="text-[10px] text-slate-500">
-                                                                            +{c.activeRulesSummary.length - 2} chai nữa
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </td>
-
-                                                    {/* Hành động */}
-                                                    <td className="p-3.5 text-right">
-                                                        <div className="flex items-center justify-end gap-1.5">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleOpenDrawer(c)}
-                                                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-md bg-[#0E7490] hover:bg-[#A3E5D4] text-slate-900 shadow-xs hover:shadow transition"
-                                                            >
-                                                                <Eye size={13} /> Xem Giá Riêng
-                                                            </button>
-
-                                                            {canCreate && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleOpenCreateWithCustomer(c.id)}
-                                                                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-md bg-white hover:bg-slate-100 text-slate-800 hover:text-slate-950 border border-slate-300 hover:border-slate-400 shadow-xs transition"
-                                                                    title="Thêm giá đặc biệt cho khách hàng này"
-                                                                >
-                                                                    + Deal
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            )
-                                        })
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ══════════════════════════════════════════════════════════════════════ */}
-            {/* VIEW MODE 2: RULE-CENTRIC AUDIT VIEW (TOÀN BỘ QUY TẮC TOÀN HỆ THỐNG)  */}
-            {/* ══════════════════════════════════════════════════════════════════════ */}
-            {viewMode === 'RULES' && (
-                <div className="space-y-3">
-                    {/* Filters Header */}
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-3 p-3 rounded-lg bg-white border border-slate-200 shadow-xs">
-                        <div className="flex items-center gap-2.5 w-full md:w-auto flex-wrap">
-                            <div className="relative flex-1 md:w-64">
-                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                                <input
-                                    value={searchQuery}
-                                    onChange={e => setSearchQuery(e.target.value)}
-                                    placeholder="Tìm khách hàng hoặc sản phẩm..."
-                                    className="w-full pl-9 pr-3 py-1.5 text-xs outline-none bg-white border border-slate-300 focus:border-[#0891B2] text-slate-900 placeholder:text-slate-400 rounded-md transition shadow-xs"
-                                />
-                            </div>
-
-                            <select
-                                value={filterCustomer}
-                                onChange={e => setFilterCustomer(e.target.value)}
-                                className="px-3 py-1.5 text-xs outline-none cursor-pointer max-w-[180px] truncate bg-white border border-slate-300 focus:border-[#0891B2] text-slate-800 rounded-md transition shadow-xs"
-                            >
-                                <option value="ALL">Tất cả Khách Hàng ({customers.length})</option>
-                                {customers.map(c => (
-                                    <option key={c.id} value={c.id}>[{c.code}] {c.name}</option>
                                 ))}
-                            </select>
-
-                            <select
-                                value={filterStatus}
-                                onChange={e => setFilterStatus(e.target.value)}
-                                className="px-3 py-1.5 text-xs outline-none cursor-pointer bg-white border border-slate-300 focus:border-[#0891B2] text-slate-800 rounded-md transition shadow-xs"
-                            >
-                                <option value="ALL">Tất cả Trạng Thái</option>
-                                <option value="DRAFT">Nháp</option>
-                                <option value="PENDING_APPROVAL">Chờ Duyệt</option>
-                                <option value="APPROVED">Đã Duyệt</option>
-                                <option value="REJECTED">Từ Chối</option>
-                            </select>
-
-                            <select
-                                value={filterType}
-                                onChange={e => setFilterType(e.target.value)}
-                                className="px-3 py-1.5 text-xs outline-none cursor-pointer bg-white border border-slate-300 focus:border-[#0891B2] text-slate-800 rounded-md transition shadow-xs"
-                            >
-                                <option value="ALL">Tất cả Loại Giá</option>
-                                <option value="FIXED_DISCOUNT">Chiết Khấu %</option>
-                                <option value="FIXED_PRICE">Giá Cố Định</option>
-                                <option value="SPECIAL_PRICE">Giá Đặc Biệt</option>
-                            </select>
-                        </div>
-
-                        <div className="text-xs text-slate-600">
-                            Tìm thấy <strong className="text-slate-900">{filteredRules.length}</strong> quy tắc
-                        </div>
-                    </div>
-
-                    {/* Table of rules */}
-                    <div className="rounded-lg overflow-hidden border border-slate-200 bg-white shadow-xs">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-xs text-left border-collapse">
-                                <thead>
-                                    <tr className="bg-slate-50 text-slate-700 border-b border-slate-200">
-                                        <th className="p-3 font-semibold">Khách Hàng</th>
-                                        <th className="p-3 font-semibold">Sản Phẩm Vang</th>
-                                        <th className="p-3 font-semibold">Loại Giá</th>
-                                        <th className="p-3 font-semibold">Giá Trị Áp Dụng</th>
-                                        <th className="p-3 font-semibold">Thời Hạn</th>
-                                        <th className="p-3 text-center font-semibold">Trạng Thái</th>
-                                        <th className="p-3 font-semibold">Đề Xuất / Duyệt</th>
-                                        <th className="p-3 text-right font-semibold">Hành Động</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-200">
-                                    {loading && rules.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={8} className="text-center py-12">
-                                                <Loader2 className="animate-spin mx-auto text-[#0891B2]" size={24} />
-                                                <p className="mt-2 text-slate-500">Đang tải dữ liệu...</p>
-                                            </td>
-                                        </tr>
-                                    ) : filteredRules.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={8} className="text-center py-12 text-slate-600">
-                                                Không tìm thấy chính sách giá nào khớp bộ lọc.
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        filteredRules.map(rule => {
-                                            const typeCfg = RULE_TYPE_CFG[rule.ruleType] ?? { label: rule.ruleType, color: '#0F172A', bg: 'rgba(100,116,139,0.1)' }
-                                            const statusCfg = STATUS_CFG[rule.status] ?? { label: rule.status, color: '#0F172A', bg: 'rgba(100,116,139,0.1)' }
-                                            return (
-                                                <tr key={rule.id} className="hover:bg-slate-50/80 transition">
-                                                    <td className="p-3">
-                                                        <div className="font-semibold text-slate-900">{rule.customerName}</div>
-                                                        <div className="font-mono text-[11px] text-slate-500">{rule.customerCode}</div>
-                                                    </td>
-                                                    <td className="p-3">
-                                                        <div className="font-medium text-slate-900">{rule.productName}</div>
-                                                        <div className="font-mono text-[11px] text-slate-500">{rule.skuCode}</div>
-                                                    </td>
-                                                    <td className="p-3">
-                                                        <span className="inline-block px-2 py-0.5 rounded text-[11px] font-semibold whitespace-nowrap shrink-0" style={{ color: typeCfg.color, background: typeCfg.bg }}>
-                                                            {typeCfg.label}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-3 font-semibold text-emerald-600">
-                                                        {rule.ruleType === 'FIXED_DISCOUNT' ? `${rule.value}%` : formatVND(rule.value)}
-                                                    </td>
-                                                    <td className="p-3 text-slate-600 text-[11px]">
-                                                        {new Date(rule.startDate).toLocaleDateString('vi-VN')}
-                                                        {rule.endDate ? ` → ${new Date(rule.endDate).toLocaleDateString('vi-VN')}` : ' (Vô thời hạn)'}
-                                                    </td>
-                                                    <td className="p-3 text-center">
-                                                        <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap shrink-0" style={{ color: statusCfg.color, background: statusCfg.bg }}>
-                                                            {statusCfg.label}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-3 text-[11px] text-slate-600">
-                                                        <div>Đề xuất: {rule.requesterName}</div>
-                                                        {rule.approverName && <div className="text-emerald-700 font-medium">Duyệt: {rule.approverName}</div>}
-                                                    </td>
-                                                    <td className="p-3 text-right">
-                                                        <div className="flex items-center justify-end gap-1.5">
-                                                            {rule.status === 'PENDING_APPROVAL' && canApprove && (
-                                                                <>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => handleApprove(rule.id)}
-                                                                        className="p-1 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition"
-                                                                        title="Phê duyệt quy tắc này"
-                                                                    >
-                                                                        <Check size={14} />
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => handleReject(rule.id)}
-                                                                        className="p-1 rounded bg-rose-50 text-rose-600 hover:bg-rose-100 transition"
-                                                                        title="Từ chối quy tắc này"
-                                                                    >
-                                                                        <Ban size={14} />
-                                                                    </button>
-                                                                </>
-                                                            )}
-                                                            {canCreate && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleDelete(rule.id)}
-                                                                    className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
-                                                                    title="Xóa quy tắc này"
-                                                                >
-                                                                    <Trash2 size={14} />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            )
-                                        })
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             )}
 
+            {/* Streamlined Master Customers Table */}
+            <div className="rounded-lg overflow-hidden border border-slate-200 bg-white shadow-xs">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-left border-collapse">
+                        <thead>
+                            <tr className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                                <th className="p-3.5 font-semibold">Khách Hàng</th>
+                                <th className="p-3.5 font-semibold w-36">Kênh</th>
+                                <th className="p-3.5 font-semibold">Cơ Chế Mặc Định (Toàn Kho)</th>
+                                <th className="p-3.5 font-semibold">Giá Riêng Theo Chai</th>
+                                <th className="p-3.5 text-right font-semibold w-40">Chi Tiết</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200">
+                            {loading && !masterOverview ? (
+                                <tr>
+                                    <td colSpan={5} className="text-center py-14">
+                                        <Loader2 className="animate-spin mx-auto text-[#0891B2]" size={26} />
+                                        <p className="mt-2 text-xs text-slate-600">Đang tải danh sách giá khách hàng...</p>
+                                    </td>
+                                </tr>
+                            ) : masterOverview?.customers.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="text-center py-12 text-slate-500">
+                                        Không tìm thấy khách hàng nào phù hợp bộ lọc.
+                                    </td>
+                                </tr>
+                            ) : (
+                                masterOverview?.customers.map(c => {
+                                    const chBadge = CHANNEL_BADGES[c.channel ?? ''] ?? { label: c.channel ?? 'Chưa gắn', color: '#475569', bg: 'rgba(100,116,139,0.12)' }
+                                    const hasSpecial = c.specialRuleCount > 0
+                                    const hasPending = c.pendingRuleCount > 0
+
+                                    return (
+                                        <tr
+                                            key={c.id}
+                                            onClick={() => handleOpenDrawer(c)}
+                                            className="hover:bg-slate-50/90 transition-colors cursor-pointer group"
+                                        >
+                                            {/* Khách hàng */}
+                                            <td className="p-3.5">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="font-mono font-semibold text-[#0891B2]">{c.code}</span>
+                                                    <span className="font-semibold text-slate-900 group-hover:text-[#0891B2] transition-colors">
+                                                        {c.name}
+                                                    </span>
+                                                    {c.brandGroup && (
+                                                        <span className="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                                                            {c.brandGroup}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+
+                                            {/* Kênh */}
+                                            <td className="p-3.5">
+                                                <span
+                                                    className="inline-block text-[11px] font-semibold px-2.5 py-0.5 rounded-full whitespace-nowrap"
+                                                    style={{ color: chBadge.color, background: chBadge.bg }}
+                                                >
+                                                    {chBadge.label}
+                                                </span>
+                                            </td>
+
+                                            {/* Cơ Chế Mặc Định */}
+                                            <td className="p-3.5">
+                                                {formatBaseType(c.basePriceType, c.defaultDiscountPct)}
+                                            </td>
+
+                                            {/* Giá đặc biệt riêng */}
+                                            <td className="p-3.5">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    {hasSpecial ? (
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200 whitespace-nowrap">
+                                                            <Zap size={12} /> {c.specialRuleCount} sản phẩm
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-slate-400 text-xs">Theo giá mặc định</span>
+                                                    )}
+
+                                                    {hasPending && (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
+                                                            <Clock size={11} /> {c.pendingRuleCount} chờ duyệt
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+
+                                            {/* Chi Tiết */}
+                                            <td className="p-3.5 text-right">
+                                                <button
+                                                    type="button"
+                                                    onClick={e => {
+                                                        e.stopPropagation()
+                                                        handleOpenDrawer(c)
+                                                    }}
+                                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md bg-white group-hover:bg-[#0891B2] text-slate-700 group-hover:text-white border border-slate-300 group-hover:border-[#0891B2] transition shadow-2xs"
+                                                >
+                                                    Cấu hình <ChevronRight size={14} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    )
+                                })
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             {/* ══════════════════════════════════════════════════════════════════════ */}
-            {/* DRAWER / MODAL: CHI TIẾT CƠ CHẾ & GIÁ ĐẶC BIỆT CỦA 1 KHÁCH HÀNG       */}
+            {/* ALL-IN-ONE DRAWER: CẤU HÌNH CƠ CHẾ & GIÁ ĐẶC BIỆT CỦA 1 KHÁCH HÀNG     */}
             {/* ══════════════════════════════════════════════════════════════════════ */}
             {drawerCustomer && (
-                <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
                     <div className="w-full max-w-4xl h-full bg-white border-l border-slate-200 shadow-2xl flex flex-col overflow-hidden">
                         {/* Drawer Header */}
-                        <div className="p-4 bg-white border-b border-slate-200 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg bg-[#E6F4F1] border border-[#0E7490] flex items-center justify-center text-[#0D4F43] font-bold shadow-xs">
-                                    <Building2 size={20} />
+                        <div className="px-5 py-4 bg-white border-b border-slate-200 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-9 h-9 rounded-lg bg-[#E6F4F1] border border-[#0E7490]/30 flex items-center justify-center text-[#0891B2] shrink-0">
+                                    <Building2 size={18} />
                                 </div>
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="inline-block font-mono text-xs px-2.5 py-0.5 rounded-md bg-[#0E7490]/20 text-[#0891B2] border border-[#0E7490]/40 font-semibold whitespace-nowrap shrink-0">
+                                <div className="min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="font-mono text-xs px-2 py-0.5 rounded bg-slate-100 text-[#0891B2] border border-slate-200 font-bold">
                                             {drawerCustomer.code}
                                         </span>
-                                        <h3 className="text-base font-bold text-slate-900">{drawerCustomer.name}</h3>
+                                        <h3 className="text-base font-bold text-slate-900 truncate">{drawerCustomer.name}</h3>
+                                        {drawerDetails?.customer?.channel && (
+                                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                                                {CHANNEL_BADGES[drawerDetails.customer.channel]?.label ?? drawerDetails.customer.channel}
+                                            </span>
+                                        )}
                                     </div>
                                     <p className="text-xs text-slate-500 mt-0.5">
-                                        Chi tiết danh mục giá đặc biệt & chính sách chiết khấu toàn kho
+                                        Cấu hình cơ chế chiết khấu toàn kho & danh mục giá thỏa thuận riêng theo từng chai
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5 shrink-0">
                                 <button
                                     type="button"
                                     onClick={refreshDrawer}
-                                    className="p-2 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition"
+                                    className="p-2 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition"
                                     title="Tải lại dữ liệu"
                                 >
                                     <RefreshCw size={16} className={drawerLoading ? 'animate-spin' : ''} />
@@ -920,89 +706,229 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                         setDrawerCustomer(null)
                                         setDrawerDetails(null)
                                     }}
-                                    className="p-2 rounded text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition"
+                                    className="p-2 rounded-md text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition"
                                 >
                                     <X size={20} />
                                 </button>
                             </div>
                         </div>
 
-                        {/* Customer Mechanism Summary Box */}
-                        {drawerDetails?.customer && (
-                            <div className="p-4 bg-slate-50 border-b border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                                <div className="p-3 rounded-lg bg-white border border-slate-200 shadow-xs">
-                                    <span className="text-slate-600 font-medium">Kênh Khách Hàng:</span>
-                                    <div className="font-bold text-slate-900 mt-1 flex items-center gap-2">
-                                        <span className="text-sm">{drawerDetails.customer.channel}</span>
-                                    </div>
-                                </div>
-
-                                <div className="p-3 rounded-lg bg-white border border-slate-200 shadow-xs">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-slate-600 font-medium">Cơ Chế Giá Mặc Định:</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const found = masterOverview?.customers.find(x => x.id === drawerCustomer.id)
-                                                if (found) handleOpenPolicyModal(found)
-                                            }}
-                                            className="px-2.5 py-1 text-[11px] font-semibold text-slate-800 hover:text-teal-900 bg-slate-100 hover:bg-white rounded border border-slate-300 hover:border-slate-400 transition shadow-xs flex items-center gap-1"
+                        {/* Section 1: Inline Default Pricing Policy (Toàn Kho) */}
+                        <div className="px-5 py-3.5 bg-slate-50 border-b border-slate-200">
+                            <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
+                                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">
+                                            1. Bảng Giá Gốc Mặc Định (Toàn Kho)
+                                        </label>
+                                        <select
+                                            value={policyBasePriceType}
+                                            onChange={e => setPolicyBasePriceType(e.target.value)}
+                                            className="w-full px-3 py-2 text-xs bg-white border border-slate-300 text-slate-900 rounded-md outline-none focus:border-[#0891B2] font-medium"
                                         >
-                                            <Settings size={12} className="text-slate-600" /> Cập nhật
-                                        </button>
+                                            <option value="BY_CHANNEL">Theo Kênh Bán Hàng Mặc Định ({drawerDetails?.customer?.channel ?? 'Chuẩn'})</option>
+                                            <option value="WHOLESALE">Bảng Giá Buôn (Wholesale)</option>
+                                            <option value="RETAIL">Bảng Giá Lẻ (Retail)</option>
+                                            <option value="HORECA">Bảng Giá Riêng HORECA</option>
+                                        </select>
                                     </div>
-                                    <div className="mt-1">
-                                        {formatBaseType(drawerDetails.customer.basePriceType, drawerDetails.customer.defaultDiscountPct)}
+
+                                    <div>
+                                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">
+                                            Chiết Khấu Mặc Định Toàn Kho (%)
+                                        </label>
+                                        <div className="flex items-center gap-2">
+                                            <div className="relative flex-1">
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    max="100"
+                                                    step="0.5"
+                                                    value={policyDiscountPct}
+                                                    onChange={e => setPolicyDiscountPct(Number(e.target.value))}
+                                                    className="w-full px-3 py-2 pr-7 text-xs bg-white border border-slate-300 text-slate-900 rounded-md outline-none focus:border-[#0891B2] font-mono font-semibold"
+                                                />
+                                                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">%</span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                disabled={!isPolicyDirty || policySaving}
+                                                onClick={handleSaveInlinePolicy}
+                                                className="px-3.5 py-2 text-xs font-bold rounded-md bg-[#0891B2] text-white hover:bg-[#0E7490] disabled:opacity-40 transition shrink-0"
+                                            >
+                                                {policySaving ? <Loader2 size={14} className="animate-spin" /> : 'Lưu Cơ Chế'}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
 
-                                <div className="p-3 rounded-lg bg-white border border-slate-200 shadow-xs">
-                                    <span className="text-slate-600 font-medium">Tổng Số Chai Giá Riêng:</span>
-                                    <div className="font-bold text-[#0891B2] mt-1 flex items-center gap-1.5 text-sm">
-                                        <Zap size={14} /> {drawerDetails.rules.length} chai đã cấu hình
+                        {/* Section 2: Special Price Rules Toolbar */}
+                        <div className="px-5 py-3 bg-white border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                                    2. Danh Mục Giá Riêng Theo Chai ({drawerDetails?.rules.length ?? 0})
+                                </span>
+                            </div>
+
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <div className="relative w-48">
+                                    <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        value={drawerRuleSearch}
+                                        onChange={e => setDrawerRuleSearch(e.target.value)}
+                                        placeholder="Tìm SKU hoặc tên rượu..."
+                                        className="w-full pl-8 pr-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-md outline-none focus:border-[#0891B2]"
+                                    />
+                                </div>
+
+                                {canCreate && (drawerDetails?.rules.length ?? 0) > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => openCloneModal(drawerCustomer.id)}
+                                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-md bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 transition"
+                                    >
+                                        <Copy size={13} /> Sao Chép Sang Cơ Sở Khác
+                                    </button>
+                                )}
+
+                                {canCreate && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setAddRuleOpen(prev => !prev)}
+                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-md bg-[#0891B2] hover:bg-[#0E7490] text-white transition"
+                                    >
+                                        {addRuleOpen ? <X size={14} /> : <Plus size={14} />}
+                                        {addRuleOpen ? 'Đóng Khung Thêm' : 'Thêm Chai Giá Riêng'}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Inline Add Special Rule Form inside Drawer */}
+                        {addRuleOpen && (
+                            <div className="p-4 bg-cyan-50/50 border-b border-cyan-200 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-xs font-bold text-[#0E7490] uppercase tracking-wider">
+                                        Thêm Giá Thỏa Thuận Riêng Cho Khách Hàng Này
+                                    </h4>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                                    <div className="md:col-span-5">
+                                        <label className="block text-[11px] font-semibold text-slate-700 mb-1">Chọn Sản Phẩm *</label>
+                                        <input
+                                            value={formProductSearch}
+                                            onChange={e => setFormProductSearch(e.target.value)}
+                                            placeholder="Gõ mã SKU hoặc tên rượu để lọc..."
+                                            className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-md mb-1 outline-none focus:border-[#0891B2]"
+                                        />
+                                        <select
+                                            value={formProduct}
+                                            onChange={e => setFormProduct(e.target.value)}
+                                            size={3}
+                                            className="w-full p-1.5 text-xs bg-white border border-slate-300 rounded-md outline-none focus:border-[#0891B2]"
+                                        >
+                                            {products
+                                                .filter(p => !formProductSearch || p.productName.toLowerCase().includes(formProductSearch.toLowerCase()) || p.skuCode.toLowerCase().includes(formProductSearch.toLowerCase()))
+                                                .slice(0, 40)
+                                                .map(p => (
+                                                    <option key={p.id} value={p.id} className="p-1 cursor-pointer">
+                                                        [{p.skuCode}] {p.productName}
+                                                    </option>
+                                                ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="md:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-2.5 content-start">
+                                        <div>
+                                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">Hình Thức Giá</label>
+                                            <select
+                                                value={formType}
+                                                onChange={e => setFormType(e.target.value as any)}
+                                                className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-md outline-none focus:border-[#0891B2]"
+                                            >
+                                                <option value="SPECIAL_PRICE">Giá Cố Định Theo Chai (VND)</option>
+                                                <option value="FIXED_DISCOUNT">Chiết Khấu Riêng Theo Chai (%)</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                                {formType === 'FIXED_DISCOUNT' ? 'Mức Chiết Khấu (%) *' : 'Đơn Giá Thỏa Thuận (VND) *'}
+                                            </label>
+                                            <input
+                                                type="number"
+                                                value={formValue}
+                                                onChange={e => setFormValue(e.target.value)}
+                                                placeholder={formType === 'FIXED_DISCOUNT' ? 'VD: 15' : 'VD: 850000'}
+                                                className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-md outline-none focus:border-[#0891B2] font-mono font-semibold"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">Hiệu Lực Từ</label>
+                                            <input
+                                                type="date"
+                                                value={formStart}
+                                                onChange={e => setFormStart(e.target.value)}
+                                                className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-md outline-none focus:border-[#0891B2]"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">Đến Ngày (Tùy chọn)</label>
+                                            <input
+                                                type="date"
+                                                value={formEnd}
+                                                onChange={e => setFormEnd(e.target.value)}
+                                                className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-md outline-none focus:border-[#0891B2]"
+                                            />
+                                        </div>
+
+                                        <div className="sm:col-span-2 flex items-center justify-between gap-2 pt-1">
+                                            <input
+                                                value={formNotes}
+                                                onChange={e => setFormNotes(e.target.value)}
+                                                placeholder="Ghi chú số hợp đồng / tờ trình (tùy chọn)..."
+                                                className="flex-1 px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-md outline-none focus:border-[#0891B2]"
+                                            />
+                                            <button
+                                                type="button"
+                                                disabled={saving || !formProduct || !formValue}
+                                                onClick={handleCreateRule}
+                                                className="px-4 py-1.5 text-xs font-bold rounded-md bg-[#0891B2] text-white hover:bg-[#0E7490] disabled:opacity-40 shrink-0"
+                                            >
+                                                {saving ? <Loader2 size={14} className="animate-spin" /> : 'Lưu Giá Riêng'}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         )}
 
-                        {/* Drawer Actions Toolbar */}
-                        <div className="p-3 bg-white border-b border-slate-200 flex items-center justify-between">
-                            <span className="text-xs font-semibold text-slate-700">
-                                Danh Mục Giá Đặc Biệt ({drawerDetails?.rules.length ?? 0} chai)
-                            </span>
-
-                            {canCreate && (
-                                <button
-                                    type="button"
-                                    onClick={() => handleOpenCreateWithCustomer(drawerCustomer.id)}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded bg-[#0E7490] text-white shadow-xs hover:opacity-90 transition"
-                                >
-                                    <Plus size={14} /> Thêm Chai Mới
-                                </button>
-                            )}
-                        </div>
-
                         {/* Rules List Table */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/40">
+                        <div className="flex-1 overflow-y-auto p-4 bg-slate-50/40">
                             {drawerLoading ? (
                                 <div className="text-center py-16">
-                                    <Loader2 className="animate-spin mx-auto text-[#0891B2]" size={28} />
+                                    <Loader2 className="animate-spin mx-auto text-[#0891B2]" size={26} />
                                     <p className="mt-2 text-xs text-slate-600">Đang tải chi tiết giá khách hàng...</p>
                                 </div>
                             ) : !drawerDetails || drawerDetails.rules.length === 0 ? (
-                                <div className="text-center py-16 border border-dashed border-slate-300 rounded-lg bg-white">
-                                    <Zap size={32} className="mx-auto text-slate-400 mb-2" />
-                                    <h4 className="text-sm font-semibold text-slate-800">Khách hàng chưa có chai giá đặc biệt nào</h4>
+                                <div className="text-center py-14 border border-dashed border-slate-300 rounded-lg bg-white">
+                                    <SlidersHorizontal size={28} className="mx-auto text-slate-400 mb-2" />
+                                    <h4 className="text-sm font-semibold text-slate-800">Khách hàng chưa có chai giá riêng nào</h4>
                                     <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-                                        Hiện tại khách hàng này đang áp dụng 100% theo <strong>Cơ Chế Giá Mặc Định</strong> ở trên. Mọi sản phẩm mới về kho sẽ tự động áp dụng công thức này.
+                                        Toàn bộ sản phẩm đang áp dụng theo <strong>Cơ Chế Giá Mặc Định</strong> ở mục 1 phía trên.
                                     </p>
-                                    {canCreate && (
+                                    {canCreate && !addRuleOpen && (
                                         <button
                                             type="button"
-                                            onClick={() => handleOpenCreateWithCustomer(drawerCustomer.id)}
-                                            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded bg-[#0E7490] text-white"
+                                            onClick={() => setAddRuleOpen(true)}
+                                            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-md bg-[#0891B2] text-white hover:bg-[#0E7490]"
                                         >
-                                            <Plus size={14} /> Thiết Lập Giá Đặc Biệt Cho Chai Cụ Thể
+                                            <Plus size={14} /> Thêm Chai Giá Riêng Đầu Tiên
                                         </button>
                                     )}
                                 </div>
@@ -1011,17 +937,17 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                     <table className="w-full text-xs text-left border-collapse">
                                         <thead>
                                             <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
-                                                <th className="p-3 font-semibold">Tên Rượu Vang & SKU</th>
+                                                <th className="p-3 font-semibold">Sản Phẩm & SKU</th>
                                                 <th className="p-3 font-semibold text-right">Giá Niêm Yết</th>
                                                 <th className="p-3 font-semibold text-right">Giá Thỏa Thuận</th>
-                                                <th className="p-3 font-semibold text-center">Tiết Kiệm (%)</th>
-                                                <th className="p-3 font-semibold">Hiệu Lực</th>
+                                                <th className="p-3 font-semibold text-center">Chênh Lệch</th>
+                                                <th className="p-3 font-semibold">Thời Hạn</th>
                                                 <th className="p-3 text-center font-semibold">Trạng Thái</th>
-                                                <th className="p-3 text-right font-semibold">Hành Động</th>
+                                                <th className="p-3 text-right font-semibold">Thao Tác</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-200">
-                                            {drawerDetails.rules.map(rule => {
+                                            {filteredDrawerRules.map(rule => {
                                                 const statusCfg = STATUS_CFG[rule.status] ?? { label: rule.status, color: '#0F172A', bg: 'rgba(100,116,139,0.1)' }
                                                 return (
                                                     <tr key={rule.id} className="hover:bg-slate-50 transition">
@@ -1032,12 +958,12 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                         <td className="p-3 text-right font-mono text-slate-500">
                                                             {rule.basePrice ? formatVND(rule.basePrice) : '—'}
                                                         </td>
-                                                        <td className="p-3 text-right font-mono font-bold text-emerald-600">
+                                                        <td className="p-3 text-right font-mono font-bold text-emerald-700">
                                                             {formatVND(rule.effectivePrice)}
                                                         </td>
                                                         <td className="p-3 text-center">
                                                             {rule.savingsPct > 0 ? (
-                                                                <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
+                                                                <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
                                                                     -{rule.savingsPct}%
                                                                 </span>
                                                             ) : (
@@ -1047,11 +973,11 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                         <td className="p-3 text-[11px] text-slate-600">
                                                             <div className="font-medium text-slate-800">{new Date(rule.startDate).toLocaleDateString('vi-VN')}</div>
                                                             <div className="text-slate-500">
-                                                                {rule.endDate ? `Đến: ${new Date(rule.endDate).toLocaleDateString('vi-VN')}` : 'Không thời hạn'}
+                                                                {rule.endDate ? `Đến ${new Date(rule.endDate).toLocaleDateString('vi-VN')}` : 'Không thời hạn'}
                                                             </div>
                                                         </td>
                                                         <td className="p-3 text-center">
-                                                            <span className="inline-block px-2.5 py-1 rounded-full text-[10px] font-bold whitespace-nowrap shrink-0" style={{ color: statusCfg.color, background: statusCfg.bg }}>
+                                                            <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap" style={{ color: statusCfg.color, background: statusCfg.bg }}>
                                                                 {statusCfg.label}
                                                             </span>
                                                         </td>
@@ -1062,7 +988,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => handleApprove(rule.id)}
-                                                                            className="p-1 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition"
+                                                                            className="p-1.5 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition"
                                                                             title="Duyệt giá"
                                                                         >
                                                                             <Check size={14} />
@@ -1070,7 +996,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => handleReject(rule.id)}
-                                                                            className="p-1 rounded bg-rose-50 text-rose-600 hover:bg-rose-100 transition"
+                                                                            className="p-1.5 rounded bg-rose-50 text-rose-600 hover:bg-rose-100 transition"
                                                                             title="Từ chối"
                                                                         >
                                                                             <Ban size={14} />
@@ -1081,8 +1007,8 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => handleDelete(rule.id)}
-                                                                        className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
-                                                                        title="Xóa deal này"
+                                                                        className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                                                                        title="Xóa dòng giá riêng"
                                                                     >
                                                                         <Trash2 size={14} />
                                                                     </button>
@@ -1099,9 +1025,9 @@ export function CustomerRulesTab({ currentUser }: Props) {
                         </div>
 
                         {/* Drawer Footer */}
-                        <div className="p-4 bg-white border-t border-slate-200 flex items-center justify-between">
+                        <div className="px-5 py-3 bg-white border-t border-slate-200 flex items-center justify-between">
                             <span className="text-xs text-slate-500">
-                                Cập nhật tự động trên POS & Báo Giá Sales
+                                Giá riêng đã duyệt sẽ tự động ưu tiên áp dụng khi lên Đơn Bán Hàng (SO)
                             </span>
                             <button
                                 type="button"
@@ -1109,264 +1035,9 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                     setDrawerCustomer(null)
                                     setDrawerDetails(null)
                                 }}
-                                className="px-5 py-2 text-xs font-semibold rounded-md bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 hover:text-slate-950 transition shadow-xs"
+                                className="px-5 py-1.5 text-xs font-semibold rounded-md bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 transition"
                             >
                                 Đóng
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ══════════════════════════════════════════════════════════════════════ */}
-            {/* MODAL: ĐỔI CƠ CHẾ GIÁ MẶC ĐỊNH CHO KHÁCH HÀNG                          */}
-            {/* ══════════════════════════════════════════════════════════════════════ */}
-            {policyModalCustomer && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-                    <div className="w-full max-w-lg bg-white border border-slate-200 rounded-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                        {/* Header */}
-                        <div className="p-4 bg-white border-b border-slate-200 flex items-center justify-between">
-                            <div className="flex items-center gap-2.5">
-                                <div className="p-2 rounded-lg bg-[#0E7490]/15 text-[#0891B2]">
-                                    <SlidersHorizontal size={18} />
-                                </div>
-                                <div>
-                                    <h3 className="text-sm font-bold text-slate-900">
-                                        Cấu Hình Cơ Chế Giá Mặc Định
-                                    </h3>
-                                    <p className="text-xs text-slate-500 mt-0.5">
-                                        [{policyModalCustomer.code}] {policyModalCustomer.name}
-                                    </p>
-                                </div>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setPolicyModalCustomer(null)}
-                                className="text-slate-400 hover:text-slate-600 p-1"
-                            >
-                                <X size={18} />
-                            </button>
-                        </div>
-
-                        {/* Form */}
-                        <div className="p-5 space-y-4">
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                                    Bảng Giá Gốc Làm Chuẩn:
-                                </label>
-                                <select
-                                    value={policyBasePriceType}
-                                    onChange={e => setPolicyBasePriceType(e.target.value)}
-                                    className="w-full p-2.5 text-xs bg-white border border-slate-300 text-slate-900 rounded-lg outline-none cursor-pointer focus:border-[#0891B2] transition shadow-xs"
-                                >
-                                    <option value="BY_CHANNEL">Theo Kênh Bán Hàng Mặc Định ({policyModalCustomer.channel})</option>
-                                    <option value="WHOLESALE">Bảng Giá Buôn (Wholesale Price List)</option>
-                                    <option value="RETAIL">Bảng Giá Lẻ Niêm Yết (Retail Price List)</option>
-                                    <option value="HORECA">Bảng Giá Riêng Kênh HORECA</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                                    Mức Chiết Khấu Mặc Định Toàn Kho (%):
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        max="100"
-                                        step="0.5"
-                                        value={policyDiscountPct}
-                                        onChange={e => setPolicyDiscountPct(Number(e.target.value))}
-                                        placeholder="Ví dụ: 10 (nghĩa là -10%)"
-                                        className="w-full p-2.5 pr-8 text-xs bg-white border border-slate-300 text-slate-900 rounded-lg outline-none focus:border-[#0891B2] transition shadow-xs"
-                                    />
-                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">
-                                        %
-                                    </span>
-                                </div>
-                                <p className="text-[11px] text-slate-500 mt-1">
-                                    Nhập <code>10</code> để khách luôn được chiết khấu 10% trên bảng giá gốc.
-                                </p>
-                            </div>
-
-                            {/* Dynamic Explanation Box */}
-                            <div className="p-3.5 rounded-lg bg-emerald-50/70 border border-emerald-200 text-xs space-y-1.5">
-                                <div className="flex items-center gap-1.5 font-bold text-emerald-800">
-                                    <CheckCircle2 size={14} /> Tự Động Định Giá Động Khi Có Hàng Mới
-                                </div>
-                                <p className="text-slate-700 text-[11px] leading-relaxed">
-                                    Khi công ty nhập thêm bất kỳ chai vang mới nào về kho, hệ thống sẽ <strong>tự động tính giá bán</strong> cho khách hàng này theo công thức:
-                                </p>
-                                <div className="p-2.5 rounded-lg bg-white text-emerald-800 font-mono text-xs font-bold border border-emerald-300 shadow-xs">
-                                    Giá Khách Mua = [Bảng Giá {policyBasePriceType === 'WHOLESALE' ? 'Buôn' : policyBasePriceType === 'RETAIL' ? 'Lẻ' : 'Gốc'}] × (1 - {policyDiscountPct}%)
-                                </div>
-                                <p className="text-slate-500 text-[10px]">
-                                    * Ngoại trừ những chai rượu được cấu hình riêng trong mục "Giá Đặc Biệt" thì sẽ ưu tiên áp dụng giá thỏa thuận riêng.
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Footer */}
-                        <div className="p-4 bg-white border-t border-slate-200 flex items-center justify-between">
-                            <button
-                                type="button"
-                                onClick={() => setPolicyModalCustomer(null)}
-                                className="px-5 py-2 text-xs font-semibold rounded-md bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 hover:text-slate-950 transition shadow-xs"
-                            >
-                                Hủy Bỏ
-                            </button>
-
-                            <button
-                                type="button"
-                                disabled={policySaving}
-                                onClick={handleSavePolicy}
-                                className="flex items-center gap-2 px-5 py-2 text-xs font-bold rounded bg-[#0E7490] text-white shadow-md hover:opacity-90 transition disabled:opacity-50"
-                            >
-                                {policySaving ? (
-                                    <>
-                                        <Loader2 size={14} className="animate-spin" /> Đang lưu...
-                                    </>
-                                ) : (
-                                    'Lưu Cơ Chế Giá'
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ══════════════════════════════════════════════════════════════════════ */}
-            {/* MODAL: TẠO QUY TẮC GIÁ ĐẶC BIỆT ĐƠN LẺ                                 */}
-            {/* ══════════════════════════════════════════════════════════════════════ */}
-            {createOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-                    <div className="w-full max-w-lg bg-white border border-slate-200 rounded-md shadow-2xl overflow-hidden">
-                        <div className="p-4 bg-white border-b border-slate-200 flex items-center justify-between">
-                            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                <Plus size={16} className="text-[#0891B2]" /> Thêm Giá Đặc Biệt Cho Khách Hàng
-                            </h3>
-                            <button type="button" onClick={() => setCreateOpen(false)} className="text-slate-400 hover:text-slate-600">
-                                <X size={18} />
-                            </button>
-                        </div>
-
-                        <div className="p-5 space-y-4">
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-1">Khách Hàng:</label>
-                                <select
-                                    value={formCustomer}
-                                    onChange={e => setFormCustomer(e.target.value)}
-                                    className="w-full p-2.5 text-xs bg-white border border-slate-300 text-slate-900 rounded-lg outline-none focus:border-[#0891B2]"
-                                >
-                                    <option value="">-- Chọn khách hàng --</option>
-                                    {customers.map(c => (
-                                        <option key={c.id} value={c.id}>[{c.code}] {c.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-1">Sản Phẩm Vang:</label>
-                                <input
-                                    value={formProductSearch}
-                                    onChange={e => setFormProductSearch(e.target.value)}
-                                    placeholder="Gõ để lọc sản phẩm..."
-                                    className="w-full p-2 text-xs bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 rounded-lg mb-1.5 focus:border-[#0891B2]"
-                                />
-                                <select
-                                    value={formProduct}
-                                    onChange={e => setFormProduct(e.target.value)}
-                                    className="w-full p-2.5 text-xs bg-white border border-slate-300 text-slate-900 rounded-lg outline-none focus:border-[#0891B2]"
-                                    size={4}
-                                >
-                                    {products
-                                        .filter(p => !formProductSearch || p.productName.toLowerCase().includes(formProductSearch.toLowerCase()) || p.skuCode.toLowerCase().includes(formProductSearch.toLowerCase()))
-                                        .map(p => (
-                                             <option key={p.id} value={p.id} className="p-1.5 cursor-pointer text-slate-800">
-                                                [{p.skuCode}] {p.productName}
-                                            </option>
-                                        ))}
-                                </select>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Loại Quy Tắc:</label>
-                                    <select
-                                        value={formType}
-                                        onChange={e => setFormType(e.target.value as any)}
-                                        className="w-full p-2.5 text-xs bg-white border border-slate-300 text-slate-900 rounded-lg outline-none focus:border-[#0891B2]"
-                                    >
-                                        <option value="SPECIAL_PRICE">Giá Đặc Biệt (VND)</option>
-                                        <option value="FIXED_PRICE">Giá Cố Định (VND)</option>
-                                        <option value="FIXED_DISCOUNT">Chiết Khấu % (So với base)</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                        {formType === 'FIXED_DISCOUNT' ? 'Tỷ Lệ Chiết Khấu (%)' : 'Mức Giá (VND)'}:
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={formValue}
-                                        onChange={e => setFormValue(e.target.value)}
-                                        placeholder={formType === 'FIXED_DISCOUNT' ? 'Ví dụ: 15' : 'Ví dụ: 850000'}
-                                        className="w-full p-2.5 text-xs bg-white border border-slate-300 text-slate-900 rounded-lg outline-none focus:border-[#0891B2]"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Ngày Bắt Đầu:</label>
-                                    <input
-                                        type="date"
-                                        value={formStart}
-                                        onChange={e => setFormStart(e.target.value)}
-                                        className="w-full p-2.5 text-xs bg-white border border-slate-300 text-slate-900 rounded-lg focus:border-[#0891B2]"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Ngày Hết Hạn (Tùy chọn):</label>
-                                    <input
-                                        type="date"
-                                        value={formEnd}
-                                        onChange={e => setFormEnd(e.target.value)}
-                                        className="w-full p-2.5 text-xs bg-white border border-slate-300 text-slate-900 rounded-lg focus:border-[#0891B2]"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-1">Ghi Chú / Số Hợp Đồng:</label>
-                                <textarea
-                                    value={formNotes}
-                                    onChange={e => setFormNotes(e.target.value)}
-                                    placeholder="Thỏa thuận theo Hợp đồng số... hoặc tờ trình số..."
-                                    rows={2}
-                                    className="w-full p-2.5 text-xs bg-white border border-slate-300 text-slate-900 rounded-lg outline-none focus:border-[#0891B2]"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="p-4 bg-white border-t border-slate-200 flex items-center justify-between">
-                            <button
-                                type="button"
-                                onClick={() => setCreateOpen(false)}
-                                className="px-5 py-2 text-xs font-semibold rounded-md bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 hover:text-slate-950 transition shadow-xs"
-                            >
-                                Hủy Bỏ
-                            </button>
-
-                            <button
-                                type="button"
-                                disabled={saving}
-                                onClick={handleCreateRule}
-                                className="flex items-center gap-2 px-5 py-2 text-xs font-bold rounded bg-[#0E7490] text-white shadow-md hover:opacity-90 disabled:opacity-50"
-                            >
-                                {saving ? <Loader2 size={14} className="animate-spin" /> : 'Lưu & Trình Duyệt'}
                             </button>
                         </div>
                     </div>
@@ -1377,11 +1048,11 @@ export function CustomerRulesTab({ currentUser }: Props) {
             {/* MODAL: SAO CHÉP CHÍNH SÁCH GIÁ CHO CƠ SỞ / CHI NHÁNH KHÁC             */}
             {/* ══════════════════════════════════════════════════════════════════════ */}
             {cloneModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-                    <div className="w-full max-w-2xl bg-white border border-slate-200 rounded-md shadow-2xl overflow-hidden">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+                    <div className="w-full max-w-2xl bg-white border border-slate-200 rounded-lg shadow-2xl overflow-hidden">
                         <div className="p-4 bg-white border-b border-slate-200 flex items-center justify-between">
                             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                <Copy size={16} className="text-[#B45309]" /> Sao Chép Cơ Chế Giá Cho Các Cơ Sở Khác
+                                <Copy size={16} className="text-[#0891B2]" /> Sao Chép Giá Riêng Sang Các Cơ Sở Khác
                             </h3>
                             <button type="button" onClick={() => setCloneModalOpen(false)} className="text-slate-400 hover:text-slate-600">
                                 <X size={18} />
@@ -1390,7 +1061,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
 
                         <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
                             <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-1">Khách Hàng Nguồn (Đã có giá):</label>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">Khách Hàng Nguồn (Đã có giá đã duyệt):</label>
                                 <select
                                     value={cloneSourceCustomer}
                                     onChange={e => {
@@ -1399,54 +1070,57 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                         const sRules = rules.filter(r => r.customerId === sId && r.status === 'APPROVED')
                                         setCloneSelectedRuleIds(sRules.map(r => r.id))
                                     }}
-                                    className="w-full p-2.5 text-xs bg-white border border-slate-300 text-slate-900 rounded-lg outline-none focus:border-[#0891B2]"
+                                    className="w-full p-2.5 text-xs bg-white border border-slate-300 text-slate-900 rounded-md outline-none focus:border-[#0891B2]"
                                 >
                                     {customers.map(c => (
                                         <option key={c.id} value={c.id}>[{c.code}] {c.name}</option>
                                     ))}
                                 </select>
+                                <p className="text-[11px] text-slate-500 mt-1">
+                                    Có <strong>{cloneSelectedRuleIds.length}</strong> sản phẩm giá riêng đã duyệt sẵn sàng sao chép.
+                                </p>
                             </div>
 
                             <div>
                                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                    Chọn Các Cơ Sở / Khách Hàng Đích Cần Áp Dụng:
+                                    Chọn Các Cơ Sở / Chi Nhánh Đích Cần Áp Dụng:
                                 </label>
                                 <input
                                     value={cloneSearchTarget}
                                     onChange={e => setCloneSearchTarget(e.target.value)}
-                                    placeholder="Tìm tên cơ sở đích..."
-                                    className="w-full p-2 text-xs bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 rounded-lg mb-2 focus:border-[#0891B2]"
+                                    placeholder="Tìm mã hoặc tên cơ sở đích..."
+                                    className="w-full p-2 text-xs bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 rounded-md mb-2 focus:border-[#0891B2]"
                                 />
-                                <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-lg p-2 space-y-1 bg-white">
+                                <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-md p-2 space-y-1 bg-white">
                                     {customers
                                         .filter(c => c.id !== cloneSourceCustomer)
                                         .filter(c => !cloneSearchTarget || c.name.toLowerCase().includes(cloneSearchTarget.toLowerCase()) || c.code.toLowerCase().includes(cloneSearchTarget.toLowerCase()))
                                         .map(c => {
-                                             const isSelected = cloneTargetCustomers.includes(c.id)
-                                             return (
-                                                 <div
-                                                     key={c.id}
-                                                     onClick={() => {
-                                                         setCloneTargetCustomers(prev =>
-                                                             prev.includes(c.id) ? prev.filter(x => x !== c.id) : [...prev, c.id]
-                                                         )
-                                                     }}
-                                                     className={`p-2 rounded flex items-center justify-between text-xs cursor-pointer transition ${
-                                                         isSelected ? 'bg-[#0E7490]/20 border border-[#0E7490]/50' : 'hover:bg-slate-50 border border-transparent'
-                                                     }`}
-                                                 >
-                                                     <span className="text-slate-800 font-medium">
-                                                         <span className="font-mono text-[#0891B2] mr-1">[{c.code}]</span> {c.name}
-                                                     </span>
-                                                     <input
-                                                         type="checkbox"
-                                                         checked={isSelected}
-                                                         onChange={() => {}}
-                                                         className="rounded accent-[#0891B2]"
-                                                     />
-                                                 </div>
-                                             )
-                                         })}
+                                            const isSelected = cloneTargetCustomers.includes(c.id)
+                                            return (
+                                                <div
+                                                    key={c.id}
+                                                    onClick={() => {
+                                                        setCloneTargetCustomers(prev =>
+                                                            prev.includes(c.id) ? prev.filter(x => x !== c.id) : [...prev, c.id]
+                                                        )
+                                                    }}
+                                                    className={`p-2 rounded flex items-center justify-between text-xs cursor-pointer transition ${
+                                                        isSelected ? 'bg-[#0E7490]/15 border border-[#0E7490]/40' : 'hover:bg-slate-50 border border-transparent'
+                                                    }`}
+                                                >
+                                                    <span className="text-slate-800 font-medium">
+                                                        <span className="font-mono text-[#0891B2] mr-1">[{c.code}]</span> {c.name}
+                                                    </span>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isSelected}
+                                                        onChange={() => {}}
+                                                        className="rounded accent-[#0891B2]"
+                                                    />
+                                                </div>
+                                            )
+                                        })}
                                 </div>
                             </div>
 
@@ -1468,16 +1142,16 @@ export function CustomerRulesTab({ currentUser }: Props) {
                             <button
                                 type="button"
                                 onClick={() => setCloneModalOpen(false)}
-                                className="px-5 py-2 text-xs font-semibold rounded-md bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 hover:text-slate-950 transition shadow-xs"
+                                className="px-5 py-2 text-xs font-semibold rounded-md bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 transition"
                             >
                                 Hủy Bỏ
                             </button>
 
                             <button
                                 type="button"
-                                disabled={cloning || cloneTargetCustomers.length === 0}
+                                disabled={cloning || cloneTargetCustomers.length === 0 || cloneSelectedRuleIds.length === 0}
                                 onClick={handleExecuteClone}
-                                className="flex items-center gap-2 px-5 py-2 text-xs font-bold rounded bg-[#0E7490] text-white shadow-md hover:opacity-90 disabled:opacity-50"
+                                className="flex items-center gap-2 px-5 py-2 text-xs font-bold rounded-md bg-[#0891B2] text-white hover:bg-[#0E7490] transition disabled:opacity-50"
                             >
                                 {cloning ? <Loader2 size={14} className="animate-spin" /> : `Sao Chép Sang ${cloneTargetCustomers.length} Cơ Sở`}
                             </button>

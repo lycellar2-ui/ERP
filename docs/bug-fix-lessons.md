@@ -4120,3 +4120,40 @@ Qua đợt kiểm tra chuyên sâu toàn bộ 38 routes và tất cả component
 ### Bài học
 > ⚠️ **RULE 140: (1) Mọi component Drawer dùng mô hình kết hợp dữ liệu tức thì và dữ liệu chi tiết (`const active = detailData || initialRowData`) BẮT BUỘC phải trả về đầy đủ các trường tài liệu (`tastingNoteUrl`, `selfDeclarationUrl`) trong cả hàm lấy chi tiết (`getProductViewDetails`, `getProductEditDetails`) VÀ dùng toán tử fallback `detailData?.field ?? initialRowData?.field` để không bị mất dữ liệu khi `detailData` tải xong; (2) Các API route phục vụ xem trước tài liệu trong `<iframe>` (`/api/r2-file/...`) BẮT BUỘC phải được cấu hình `X-Frame-Options: SAMEORIGIN` trong `next.config.ts` và trả về `Content-Disposition: inline` cùng nguồn; (3) Mọi modal toàn màn hình (`fixed inset-0`) mở từ bên trong `Drawer` có animation `transform` BẮT BUỘC phải dùng `createPortal(..., document.body)`.**
 
+---
+
+## BUG-141: Màn Hình Tạo Tờ Trình Trên Điện Thoại (`/dashboard/proposals`) — Lệch Hàng Ngang Giữa Các Ô Input, Tràn Khung Thẻ Sản Phẩm Đề Xuất Giá & Dropdown Combobox Bị Tràn Màn Hình
+
+**Ngày:** 2026-10-18
+**Severity:** 🟡 High — Trải nghiệm tạo & phê duyệt Tờ trình trên thiết bị di động (`ProposalsClient.tsx`)
+
+### Triệu chứng
+1. **Lệch cao độ hàng ngang giữa 2 ô `Giá trị / Ngân sách đề xuất (VNĐ)` và `Hạn xử lý` (`CreateDrawer`):**
+   - Trên màn hình điện thoại (`360px–430px`), hàng này dùng `grid grid-cols-2 gap-4`. Nhãn bên trái `"GIÁ TRỊ / NGÂN SÁCH ĐỀ XUẤT (VNĐ)"` dài nên bị rớt thành 2–3 dòng, trong khi nhãn bên phải `"HẠN XỬ LÝ"` chỉ có 1 dòng. Hệ quả là ô `<input type="number">` bên trái bị đẩy tụt xuống thấp hơn 20–34px so với ô `<input type="date">` bên phải, đồng thời `<input type="date">` bị tràn chiều ngang.
+2. **Tràn khung và lệch hàng trên thẻ sản phẩm của Tờ trình Cơ chế giá (`PRICE_ADJUSTMENT`):**
+   - Dòng điều khiển bên dưới mỗi sản phẩm (`Số lượng` + `Giá đề xuất` + `Gốc (WS)` + nút `X`) có tổng chiều rộng cứng `80px + 112px + 75px + 28px + 30px (gap) = 325px`, vượt quá chiều rộng khả dụng bên trong thẻ trên màn hình điện thoại (`~268px–283px`), làm tràn viền phải.
+   - Nhãn `"Số lượng"` thiếu `mb-1` trong khi `"Giá đề xuất"` có wrapper flex kèm margin, làm 2 ô input cùng hàng bị lệch trục ngang.
+   - Hai ô `Ngày bắt đầu hiệu lực` và `Ngày kết thúc hiệu lực` dùng `grid grid-cols-2` bên trong 3 lớp thẻ lồng nhau (`p-5` -> `p-4` -> `p-3`), chỉ còn `~133px` mỗi cột khiến `<input type="date">` bị cắt chữ.
+3. **Lệch tâm dọc ở thẻ sản phẩm Tasting / Đào tạo (`TASTING` / `SPECIAL_EVENT` / `INTERNAL_TRAINING`) và CTKM (`PROMOTION_CAMPAIGN`):**
+   - Sử dụng `items-center` / `items-start` giữa các cột có chiều cao nhãn khác nhau (ô có nhãn phía trên so với cụm `Mua [X] chai` không có nhãn, hoặc cụm `Số lượng` cao 53px so với `Giá niêm yết` cao 31px).
+4. **Dropdown chọn Khách hàng / Sản phẩm (`SearchableCustomerCombobox`, `SearchableProductCombobox`) tràn ngang màn hình điện thoại:**
+   - Cả hai combobox đều đặt cứng `style={{ minWidth: '320px' }}` trên menu xổ xuống và dùng `onMouseDown` (dễ bị race condition với `blur` trên màn hình cảm ứng), cộng thêm `inputStyle` khóa cứng `fontSize: '14px'` gây iOS Safari auto-zoom khi chạm vào ô nhập.
+
+### Nguyên nhân gốc rễ
+- Sử dụng `grid-cols-2` cố định trên mobile cho các cặp trường có độ dài nhãn chênh lệch lớn hoặc chứa `<input type="date">` trong vùng container lồng nhau nhiều lớp padding.
+- Chưa đồng bộ `flex flex-col justify-end` trên các cột grid và `items-end` trên các dòng điều khiển ngang có nhãn (label) độ cao khác nhau.
+- Đặt `minWidth: '320px'` bằng inline style trên dropdown tuyệt đối và `fontSize: '14px'` trong `inputStyle` dùng chung.
+
+### Cách khắc phục
+1. **Chuẩn hóa Grid & Alignment trong `CreateDrawer` (`ProposalsClient.tsx`):**
+   - Chuyển cặp `Giá trị / Ngân sách đề xuất` + `Hạn xử lý` và cặp `Ngày bắt đầu hiệu lực` + `Ngày kết thúc hiệu lực` sang `grid grid-cols-1 sm:grid-cols-2` kèm `flex flex-col justify-end` trên từng cột.
+   - Cấu trúc lại dòng điều khiển giá theo chai trong `PRICE_ADJUSTMENT` bằng `grid grid-cols-[72px_1fr_auto_auto] sm:flex items-end gap-2`, đồng bộ nhãn `text-[10px] font-semibold mb-1`, vừa khít 100% chiều ngang màn hình điện thoại và thẳng hàng tuyệt đối theo đáy ô input.
+   - Đồng bộ `items-end` cho dòng sản phẩm `TASTING` / `INTERNAL_TRAINING` và `items-stretch sm:items-end` cho cụm `Mua X Tặng Y` của `PROMOTION_CAMPAIGN`.
+   - Chuyển cấu trúc khung `CreateDrawer` sang `flex flex-col overflow-hidden` với Header cố định (`shrink-0`), thân cuộn độc lập (`flex-1 overflow-y-auto overflow-x-hidden p-3.5 sm:p-5`) và Footer nút bấm dính đáy (`shrink-0`).
+2. **Sửa Combobox, Modal chọn hàng loạt & Thanh bộ lọc trên Mobile:**
+   - Gỡ bỏ `minWidth: '320px'` cứng trên `SearchableCustomerCombobox` và `SearchableProductCombobox`, thay bằng `w-full sm:min-w-[320px] max-w-full` và chuyển `onMouseDown` sang `onPointerDown` để bắt chạm cảm ứng chính xác.
+   - Loại bỏ `fontSize: '14px'` cứng khỏi `inputStyle`, áp dụng `text-base sm:text-sm` / `text-base sm:text-xs` để chặn iOS Safari auto-zoom.
+   - Sửa thanh tab trạng thái trên màn hình danh sách dùng `.no-scrollbar` chuẩn và xếp 2 bộ lọc Danh mục / Mức độ ưu tiên vào `grid grid-cols-2 sm:flex` cân đối trên điện thoại.
+
+### Bài học
+> ⚠️ **RULE 141: (1) Trong các form Drawer trên thiết bị di động, TUYỆT ĐỐI KHÔNG dùng `grid-cols-2` cố định dưới breakpoint `sm:` cho các ô `<input type="date">` hoặc các cặp trường có nhãn tiếng Việt dài ngắn khác nhau — phải dùng `grid-cols-1 sm:grid-cols-2` kết hợp `flex flex-col justify-end` trên mỗi cột để các ô input luôn thẳng hàng ngang; (2) Với các thẻ dòng sản phẩm (line-item cards) có nhiều ô nhập phụ (`Số lượng`, `Đơn giá`, `Giá gốc`, nút `Xóa`), trên mobile phải dùng CSS Grid tỷ lệ (`grid-cols-[72px_1fr_auto_auto] items-end`) thay vì cộng dồn các `w-20` + `w-28` cố định gây tràn viền; (3) Không đặt `minWidth` cứng bằng pixel trên dropdown combobox con hoặc `fontSize: '14px'` cứng trong inline style làm vô hiệu hóa `text-base sm:text-sm` chống auto-zoom trên iOS.**

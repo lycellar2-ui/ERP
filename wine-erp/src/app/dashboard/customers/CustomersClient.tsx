@@ -373,12 +373,19 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                 toast.error(res.error || 'Không tìm thấy thông tin đăng ký thuế cho MST này')
                 return
             }
-            if (!form.taxId && parentCandidate?.taxId) {
-                set('taxId', parentCandidate.taxId)
-            }
-            set('vatCompanyName', res.data.vatCompanyName)
-            set('vatAddress', res.data.vatAddress)
-            toast.success(`Lấy thành công: ${res.data.vatCompanyName}`)
+            const gdtName = res.data.vatCompanyName
+            const gdtAddr = res.data.vatAddress
+            setForm(prev => ({
+                ...prev,
+                ...(!prev.taxId && parentCandidate?.taxId ? { taxId: parentCandidate.taxId } : {}),
+                vatCompanyName: gdtName,
+                vatAddress: gdtAddr,
+                ...(prev.entityType === 'COMPANY' ? {
+                    name: !prev.name || prev.name === prev.vatCompanyName ? gdtName : prev.name,
+                    address: !prev.address || prev.address === prev.vatAddress ? gdtAddr : prev.address,
+                } : {}),
+            }))
+            toast.success(`Lấy thành công: ${gdtName}`)
         } catch (err: any) {
             toast.error('Lỗi tra cứu Cục Thuế: ' + err.message)
         } finally {
@@ -674,13 +681,25 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
         const e: Record<string, string> = {}
         if (!isEdit && !isSalesRep && !form.code) e.code = 'Bắt buộc'
         if (isEdit && !form.code) e.code = 'Bắt buộc'
-        if (!form.name) e.name = 'Bắt buộc'
+        const resolvedName = form.entityType === 'COMPANY' ? (form.name || form.vatCompanyName || '') : (form.name || '')
+        if (!resolvedName.trim()) e.name = 'Bắt buộc'
         setErrors(e)
         if (Object.keys(e).length) return
         setSaving(true)
+        const payload: CustomerInput = {
+            ...(form as CustomerInput),
+            name: resolvedName.trim(),
+            ...(form.entityType === 'COMPANY' ? {
+                parentId: null,
+                vatCompanyName: form.vatCompanyName || resolvedName.trim(),
+                address: form.vatAddress || form.address || null,
+                vatEmail: form.vatEmail || form.email || null,
+                email: form.vatEmail || form.email || null,
+            } : {}),
+        }
         try {
             if (isEdit) {
-                const res = await updateCustomer(editingId!, form as CustomerInput)
+                const res = await updateCustomer(editingId!, payload)
                 if (res.success) {
                     toast.success('Đã cập nhật khách hàng')
                     onSaved()
@@ -689,7 +708,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                     setErrors({ _global: res.error ?? 'Lỗi cập nhật khách hàng' })
                 }
             } else {
-                const res = await createCustomer(form as CustomerInput)
+                const res = await createCustomer(payload)
                 if (res.success) {
                     toast.success('Đã tạo khách hàng mới')
                     onSaved()
@@ -839,7 +858,69 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                 </div>
                             )}
 
-                            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>── Thông Tin Cơ Bản</p>
+                            {/* 1. PHÂN CẤP KHÁCH HÀNG (2 TAB TRỰC QUAN NGAY ĐẦU FORM) */}
+                            {form.channel === 'HORECA' && (
+                                <div className="space-y-2">
+                                    <label className="text-xs font-semibold uppercase tracking-wide block" style={{ color: '#64748B' }}>
+                                        Loại hình hồ sơ khách hàng *
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-2.5 p-1 rounded-lg bg-slate-100 border border-slate-200">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setForm(f => ({
+                                                    ...f,
+                                                    entityType: 'RESTAURANT',
+                                                    allowDirectSO: false,
+                                                }))
+                                            }}
+                                            className={cn(
+                                                "flex items-center justify-center gap-2 py-2.5 px-3 rounded-md text-xs font-bold transition-all cursor-pointer",
+                                                (form.entityType ?? 'RESTAURANT') === 'RESTAURANT'
+                                                    ? "bg-white text-emerald-800 shadow-xs border border-emerald-300"
+                                                    : "text-slate-600 hover:text-slate-900"
+                                            )}
+                                        >
+                                            <UtensilsCrossed size={14} className={(form.entityType ?? 'RESTAURANT') === 'RESTAURANT' ? "text-emerald-700 shrink-0" : "text-slate-500 shrink-0"} />
+                                            <span className="truncate">Điểm bán / Nhà hàng (Con)</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const hadParent = Boolean(form.parentId)
+                                                setForm(f => ({
+                                                    ...f,
+                                                    entityType: 'COMPANY',
+                                                    parentId: null,
+                                                }))
+                                                setParentSearch('')
+                                                setParentDropdownOpen(false)
+                                                if (!isEdit && !isSalesRep && (hadParent || (form.code && form.code.includes('-')))) {
+                                                    handleAutoGenerateCode(form.channel ?? 'HORECA', null)
+                                                }
+                                            }}
+                                            className={cn(
+                                                "flex items-center justify-center gap-2 py-2.5 px-3 rounded-md text-xs font-bold transition-all cursor-pointer",
+                                                form.entityType === 'COMPANY'
+                                                    ? "bg-white text-lys-teal-strong shadow-xs border border-cyan-300"
+                                                    : "text-slate-600 hover:text-slate-900"
+                                            )}
+                                        >
+                                            <Building2 size={14} className={form.entityType === 'COMPANY' ? "text-lys-teal-strong shrink-0" : "text-slate-500 shrink-0"} />
+                                            <span className="truncate">Công ty Mẹ (KH Cha)</span>
+                                        </button>
+                                    </div>
+                                    <p className="text-[11px] text-slate-500">
+                                        {form.entityType === 'COMPANY'
+                                            ? 'Hồ sơ Công ty Mẹ dùng để quản lý pháp nhân xuất hóa đơn VAT, hạn mức công nợ chung và hợp đồng chuỗi.'
+                                            : 'Hồ sơ Điểm bán / Nhà hàng dùng để lên đơn hàng, giao rượu thực tế và kế thừa MST / cơ chế giá từ Công ty Mẹ.'}
+                                    </p>
+                                </div>
+                            )}
+
+                            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
+                                {form.entityType === 'COMPANY' ? '── Định Danh Pháp Nhân & Thuế VAT' : '── Thông Tin Cơ Bản'}
+                            </p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div>
                                     <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Mã KH {(!isSalesRep || isEdit) && <span style={{ color: '#B91C1C' }}>*</span>}</label>
@@ -873,7 +954,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             setForm(f => ({
                                                 ...f,
                                                 channel: val,
-                                                ...(val !== 'HORECA' ? { parentId: null } : {})
+                                                ...(val !== 'HORECA' ? { parentId: null, entityType: 'RESTAURANT' } : {})
                                             }))
                                             if (!isEdit && !isSalesRep) {
                                                 handleAutoGenerateCode(val, val !== 'HORECA' ? null : form.parentId)
@@ -887,161 +968,145 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                 </div>
                             </div>
 
-                            {form.channel === 'HORECA' && (
+                            {/* ═══════════════════════════════════════════════════════════
+                                LUỒNG 1: HỒ SƠ CÔNG TY MẸ (KHÁCH HÀNG CHA — TỐI GIẢN)
+                               ═══════════════════════════════════════════════════════════ */}
+                            {form.channel === 'HORECA' && form.entityType === 'COMPANY' ? (
                                 <div className="space-y-4">
-                                    <div className="relative" ref={parentContainerRef}>
-                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Khách hàng Cha (Đơn vị quản lý)</label>
-                                        <div className="relative flex items-center">
-                                            <Search size={14} className="absolute left-3 text-slate-500 pointer-events-none" />
-                                            <input
-                                                type="text"
-                                                className={`${inputCls} pl-9 pr-8`}
-                                                style={inputStyle}
-                                                placeholder="Gõ tên hoặc mã KH cha để tìm..."
-                                                value={parentSearch}
-                                                onFocus={() => setParentDropdownOpen(true)}
-                                                onChange={e => {
-                                                    setParentSearch(e.target.value)
-                                                    setParentDropdownOpen(true)
-                                                    if (!e.target.value) {
-                                                        set('parentId', null)
-                                                        if (!isEdit && !isSalesRep) {
-                                                            handleAutoGenerateCode(form.channel ?? undefined, null)
-                                                        }
-                                                    }
-                                                }}
-                                            />
-                                            {form.parentId ? (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        set('parentId', null)
-                                                        setParentSearch('')
-                                                        setParentDropdownOpen(false)
-                                                        if (!isEdit && !isSalesRep) {
-                                                            handleAutoGenerateCode(form.channel ?? undefined, null)
-                                                        }
+                                    {/* Khối Pháp Nhân & Thuế VAT Gộp Chung (1 lần nhập duy nhất) */}
+                                    <div className="p-3.5 rounded-lg space-y-3.5" style={{ background: 'rgba(180,83,9,0.06)', border: '1px solid rgba(180,83,9,0.25)' }}>
+                                        <div className="flex items-center justify-between flex-wrap gap-2">
+                                            <p className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#B45309' }}>
+                                                <FileText size={14} /> Thông Tin Pháp Nhân & Hóa Đơn VAT
+                                            </p>
+                                            <span className="text-[11px] text-amber-800 font-medium">
+                                                Nhập MST và bấm Tra cứu để tự điền Tên & Địa chỉ công ty
+                                            </span>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                            <div className="flex flex-col justify-end">
+                                                <div className="flex items-center justify-between mb-1.5 gap-2">
+                                                    <label className="text-xs font-semibold uppercase tracking-wide block" style={{ color: '#475569' }}>
+                                                        Mã Số Thuế VAT
+                                                    </label>
+                                                    <button
+                                                        type="button"
+                                                        disabled={taxLookupLoading}
+                                                        onClick={handleLookupTax}
+                                                        className="px-2.5 py-1 sm:py-0.5 rounded text-xs sm:text-[11px] font-extrabold bg-teal-50 text-lys-teal-strong hover:bg-teal-100 transition-all flex items-center gap-1 cursor-pointer border border-teal-300 active:scale-95 shrink-0 min-h-[30px] sm:min-h-0"
+                                                        title="Tự động tra cứu Tên công ty & Địa chỉ từ Tổng cục Thuế"
+                                                    >
+                                                        {taxLookupLoading ? <Loader2 size={11} className="animate-spin" /> : <Search size={11} />}
+                                                        <span>Tra Cứu Cục Thuế</span>
+                                                    </button>
+                                                </div>
+                                                <input className={inputCls} style={inputStyle} value={form.taxId ?? ''} 
+                                                    placeholder="VD: 0302012345"
+                                                    onChange={e => set('taxId', e.target.value || null)}
+                                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                                {duplicateWarnings.find(w => w.type === 'TAX_ID') && (
+                                                    <p className="text-xs mt-1 font-medium flex items-center gap-1 text-[#B91C1C]">
+                                                        <AlertCircle size={12} /> {duplicateWarnings.find(w => w.type === 'TAX_ID')?.message}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="flex flex-col justify-end">
+                                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
+                                                    Email Nhận Hóa Đơn VAT
+                                                </label>
+                                                <input type="email" className={inputCls} style={inputStyle} value={form.vatEmail ?? form.email ?? ''} 
+                                                    placeholder="ketoan@company.com"
+                                                    onChange={e => {
+                                                        const val = e.target.value || null
+                                                        setForm(f => ({ ...f, vatEmail: val, email: val }))
                                                     }}
-                                                    className="absolute right-2.5 p-1 rounded-full text-slate-500 hover:text-slate-900 hover:bg-[#E2E8F0] transition-all"
-                                                >
-                                                    <X size={14} />
-                                                </button>
-                                            ) : (
-                                                <ChevronDown size={14} className="absolute right-3 text-slate-500 pointer-events-none" />
+                                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
+                                                Tên Pháp Nhân / Công Ty Mẹ (Xuất HĐ VAT) <span style={{ color: '#B91C1C' }}>*</span>
+                                            </label>
+                                            <input className={inputCls} style={inputStyle} value={form.name ?? form.vatCompanyName ?? ''} 
+                                                placeholder="VD: CÔNG TY TNHH THƯƠNG MẠI MINH ĐĂNG CONNECT"
+                                                onChange={e => {
+                                                    const val = e.target.value
+                                                    setForm(f => ({ ...f, name: val, vatCompanyName: val || null }))
+                                                }}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                            {errors.name && <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>{errors.name}</p>}
+                                            {duplicateWarnings.find(w => w.type === 'NAME') && (
+                                                <p className="text-xs mt-1 font-medium flex items-center gap-1 text-[#D4963A]">
+                                                    <AlertCircle size={12} /> {duplicateWarnings.find(w => w.type === 'NAME')?.message}
+                                                </p>
                                             )}
                                         </div>
 
-                                        {parentDropdownOpen && (
-                                            <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-lg overflow-hidden shadow-2xl border border-slate-200" style={{ background: '#F8FAFC' }}>
-                                                <div className="overflow-y-auto max-h-[210px] divide-y divide-[#FFFFFF]">
-                                                    <button
-                                                        type="button"
-                                                        className="w-full text-left px-3.5 py-2.5 text-xs text-slate-600 hover:bg-white transition-all"
-                                                        onClick={() => {
-                                                            set('parentId', null)
-                                                            setParentSearch('')
-                                                            setParentDropdownOpen(false)
-                                                            if (!isEdit && !isSalesRep) {
-                                                                handleAutoGenerateCode(form.channel ?? undefined, null)
-                                                            }
-                                                        }}
-                                                    >
-                                                        — Không chọn Khách hàng Cha —
-                                                    </button>
-                                                    {parentCandidates
-                                                        .filter(c => {
-                                                             if (!parentSearch.trim()) return true
-                                                             const q = parentSearch.toLowerCase()
-                                                             return c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)
-                                                        })
-                                                        .map(c => {
-                                                            const isSelected = form.parentId === c.id
-                                                            return (
-                                                                <button
-                                                                    key={c.id}
-                                                                    type="button"
-                                                                    className={`w-full text-left px-3.5 py-2.5 text-xs transition-all flex items-center justify-between ${
-                                                                        isSelected ? 'bg-white text-lys-teal-strong font-bold' : 'text-slate-900 hover:bg-white'
-                                                                    }`}
-                                                                    onClick={() => {
-                                                                        set('parentId', c.id)
-                                                                        setParentSearch(`${c.code} — ${c.name}`)
-                                                                        setParentDropdownOpen(false)
-                                                                        if (!isEdit && !isSalesRep) {
-                                                                            handleAutoGenerateCode(form.channel ?? undefined, c.id)
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    <div className="flex items-center gap-2 truncate">
-                                                                        <span className="inline-block font-mono text-lys-teal-strong bg-white px-1.5 py-0.5 rounded text-[11px] font-semibold border border-slate-200 whitespace-nowrap shrink-0">
-                                                                            {c.code}
-                                                                        </span>
-                                                                        <span className="truncate">{c.name}</span>
-                                                                        {c.childrenCount !== undefined && (
-                                                                            <span className="text-[10px] text-slate-500 font-normal shrink-0">
-                                                                                ({c.childrenCount} con)
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                    {c.entityType === 'COMPANY' && (
-                                                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#0E7490]/10 text-lys-teal-strong border border-[#0E7490]/20 font-semibold shrink-0 inline-flex items-center gap-1 whitespace-nowrap">
-                                                                            <Building2 size={10} /> Công ty Mẹ
-                                                                        </span>
-                                                                    )}
-                                                                </button>
-                                                            )
-                                                        })}
-                                                    {parentCandidates.filter(c => {
-                                                        if (!parentSearch.trim()) return true
-                                                        const q = parentSearch.toLowerCase()
-                                                        return c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)
-                                                    }).length === 0 && (
-                                                        <div className="px-3.5 py-3.5 text-center text-xs text-slate-500">
-                                                            Không tìm thấy đơn vị phù hợp
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
+                                                Địa Chỉ Đăng Ký Thuế VAT
+                                            </label>
+                                            <input className={inputCls} style={inputStyle} value={form.vatAddress ?? form.address ?? ''} 
+                                                placeholder="Số 123 Đường ABC, Phường X, Quận Y, TP..."
+                                                onChange={e => {
+                                                    const val = e.target.value || null
+                                                    setForm(f => ({ ...f, vatAddress: val, address: val }))
+                                                }}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                        </div>
+                                    </div>
+
+                                    {/* Tên thương hiệu / Viết tắt & Liên hệ kế toán */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên gọi tắt / Tên Chuỗi</label>
+                                            <input className={inputCls} style={inputStyle} value={form.shortName ?? ''} placeholder="VD: Minh Đăng / Golden Gate"
+                                                onChange={e => set('shortName', e.target.value || null)}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Sales phụ trách</label>
+                                            <select className={inputCls} style={inputStyle} value={form.salesRepId ?? ''}
+                                                onChange={e => set('salesRepId', e.target.value || null)}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
+                                                <option value="">— Chọn Sales —</option>
+                                                {salesReps.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                            </select>
+                                        </div>
                                     </div>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                         <div>
-                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Phân cấp khách hàng</label>
-                                            <select className={inputCls} style={inputStyle} value={form.entityType ?? 'RESTAURANT'}
-                                                onChange={e => {
-                                                    const val = e.target.value as 'COMPANY' | 'RESTAURANT'
-                                                    setForm(f => ({
-                                                        ...f,
-                                                        entityType: val,
-                                                        ...(val === 'COMPANY' ? { parentId: null } : { allowDirectSO: false })
-                                                    }))
-                                                }}
-                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
-                                                <option value="RESTAURANT">Điểm bán / Cơ sở con (Nhà hàng)</option>
-                                                <option value="COMPANY">Công ty Mẹ (Quản lý công nợ & pháp nhân)</option>
-                                            </select>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Người liên hệ (Kế toán / Đại diện)</label>
+                                            <input className={inputCls} style={inputStyle} value={form.contactName ?? ''} placeholder="VD: Chị Lan Kế Toán"
+                                                onChange={e => set('contactName', e.target.value || null)}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                         </div>
-                                        {form.entityType === 'COMPANY' ? (
-                                            <div className="flex items-center pt-2 sm:pt-6">
-                                                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold uppercase tracking-wide" style={{ color: '#0F172A' }}>
-                                                    <input type="checkbox" checked={form.allowDirectSO ?? false}
-                                                        onChange={e => set('allowDirectSO', e.target.checked)}
-                                                        className="rounded bg-white border-slate-200 text-lys-teal-strong focus:ring-0" />
-                                                    Cho phép đặt SO trực tiếp
-                                                </label>
-                                            </div>
-                                        ) : (
-                                            <div>
-                                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên Brand</label>
-                                                <input className={inputCls} style={inputStyle} value={form.brandGroup ?? ''} placeholder="Ví dụ: Manwah, Gogi"
-                                                    onChange={e => set('brandGroup', e.target.value || null)}
-                                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                                            </div>
-                                        )}
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Số điện thoại liên hệ</label>
+                                            <input className={inputCls} style={inputStyle} value={form.phone ?? ''} placeholder="0901234567"
+                                                onChange={e => set('phone', e.target.value || null)}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                            {duplicateWarnings.find(w => w.type === 'PHONE') && (
+                                                <p className="text-xs mt-1 font-medium flex items-center gap-1 text-[#D4963A]">
+                                                    <AlertCircle size={12} /> {duplicateWarnings.find(w => w.type === 'PHONE')?.message}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
 
-                                    {isEdit && (form.entityType === 'COMPANY' || loadedChildren.length > 0) && (
+                                    <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between gap-3">
+                                        <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-800">
+                                            <input type="checkbox" checked={form.allowDirectSO ?? false}
+                                                onChange={e => set('allowDirectSO', e.target.checked)}
+                                                className="rounded bg-white border-slate-300 text-lys-teal-strong focus:ring-0" />
+                                            <span>Cho phép lên Đơn bán hàng (SO) trực tiếp vào mã Công ty Mẹ này</span>
+                                        </label>
+                                    </div>
+
+                                    {isEdit && (
                                         <div className="rounded-md border border-slate-200 bg-slate-50/80 p-3.5 space-y-2.5">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
@@ -1079,305 +1144,404 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                         </div>
                                     )}
                                 </div>
-                            )}
-
-                            <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên Khách Hàng <span style={{ color: '#B91C1C' }}>*</span></label>
-                                <input className={inputCls} style={inputStyle} value={form.name ?? ''} placeholder="Park Hyatt Saigon"
-                                    onChange={e => set('name', e.target.value)}
-                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                                {errors.name && <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>{errors.name}</p>}
-                                {duplicateWarnings.find(w => w.type === 'NAME') && (
-                                    <p className="text-xs mt-1 font-medium flex items-center gap-1 text-[#D4963A]">
-                                        <AlertCircle size={12} /> {duplicateWarnings.find(w => w.type === 'NAME')?.message}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên viết tắt</label>
-                                    <input className={inputCls} style={inputStyle} value={form.shortName ?? ''} placeholder="PH Saigon"
-                                        onChange={e => set('shortName', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Sales phụ trách</label>
-                                    <select className={inputCls} style={inputStyle} value={form.salesRepId ?? ''}
-                                        onChange={e => set('salesRepId', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
-                                        <option value="">— Chọn Sales —</option>
-                                        {salesReps.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* VAT INVOICE SECTION */}
-                            <div className="p-3.5 rounded-lg space-y-3.5" style={{ background: 'rgba(180,83,9,0.06)', border: '1px solid rgba(180,83,9,0.25)' }}>
-                                <div className="flex items-center justify-between flex-wrap gap-2">
-                                    <p className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#B45309' }}>
-                                        <FileText size={14} /> Thông Tin Xuất Hóa Đơn VAT
-                                    </p>
-                                    {form.parentId && (() => {
-                                        const parent = parentCandidates.find(p => p.id === form.parentId)
-                                        return (
-                                            <span className="inline-block text-[11px] font-medium text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded border border-amber-300 whitespace-nowrap shrink-0">
-                                                ℹ️ {parent?.taxId ? `Kế thừa MST (${parent.taxId}) từ Công Ty Cha` : 'Để trống sẽ tự động lấy theo Công Ty Cha'}
-                                            </span>
-                                        )
-                                    })()}
-                                </div>
-
-                                <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
-                                        Tên Công Ty Xuất Hóa Đơn VAT
-                                    </label>
-                                    <input className={inputCls} style={inputStyle} value={form.vatCompanyName ?? ''} 
-                                        placeholder={form.parentId ? (parentCandidates.find(p => p.id === form.parentId)?.vatCompanyName ? `Tên Cty Cha: ${parentCandidates.find(p => p.id === form.parentId)?.vatCompanyName}` : "Tự động lấy theo Tên Công ty Cha nếu để trống...") : "CÔNG TY TNHH ABC..."}
-                                        onChange={e => set('vatCompanyName', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                    <div>
-                                        <div className="flex items-center justify-between mb-1.5 gap-2">
-                                            <label className="text-xs font-semibold uppercase tracking-wide block" style={{ color: '#475569' }}>
-                                                Mã Số Thuế VAT
-                                            </label>
-                                            <button
-                                                type="button"
-                                                disabled={taxLookupLoading}
-                                                onClick={handleLookupTax}
-                                                className="px-2.5 py-1 sm:py-0.5 rounded text-xs sm:text-[11px] font-extrabold bg-teal-50 text-lys-teal-strong hover:bg-teal-100 transition-all flex items-center gap-1 cursor-pointer border border-teal-300 active:scale-95 shrink-0 min-h-[30px] sm:min-h-0"
-                                                title="Tự động tra cứu Tên công ty & Địa chỉ từ Tổng cục Thuế"
-                                            >
-                                                {taxLookupLoading ? <Loader2 size={11} className="animate-spin" /> : <Search size={11} />}
-                                                <span>Tra Cứu Cục Thuế</span>
-                                            </button>
-                                        </div>
-                                        <input className={inputCls} style={inputStyle} value={form.taxId ?? ''} 
-                                            placeholder={form.parentId ? (parentCandidates.find(p => p.id === form.parentId)?.taxId ? `Kế thừa MST Cha: ${parentCandidates.find(p => p.id === form.parentId)?.taxId}` : "Tự động dùng MST Công ty Cha") : "0302012345"}
-                                            onChange={e => set('taxId', e.target.value || null)}
-                                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                                        {(() => {
-                                            const parent = parentCandidates.find(p => p.id === form.parentId)
-                                            if (parent?.taxId && !form.taxId) {
-                                                return (
-                                                    <div className="mt-1 inline-flex items-center justify-between text-[11px] text-amber-800 bg-amber-50 px-2 py-1 rounded border border-amber-200 whitespace-nowrap shrink-0">
-                                                        <span className="flex items-center gap-1"><Building2 size={12} className="text-amber-700" /> MST Công ty Cha: <strong className="font-mono">{parent.taxId}</strong></span>
+                            ) : (
+                                /* ═══════════════════════════════════════════════════════════
+                                   LUỒNG 2: ĐIỂM BÁN / NHÀ HÀNG CON HOẶC CORPORATE / RETAIL
+                                   ═══════════════════════════════════════════════════════════ */
+                                <>
+                                    {form.channel === 'HORECA' && (
+                                        <div className="space-y-4">
+                                            <div className="relative" ref={parentContainerRef}>
+                                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Khách hàng Cha (Đơn vị quản lý)</label>
+                                                <div className="relative flex items-center">
+                                                    <Search size={14} className="absolute left-3 text-slate-500 pointer-events-none" />
+                                                    <input
+                                                        type="text"
+                                                        className={`${inputCls} pl-9 pr-8`}
+                                                        style={inputStyle}
+                                                        placeholder="Gõ tên hoặc mã KH cha để tìm..."
+                                                        value={parentSearch}
+                                                        onFocus={() => setParentDropdownOpen(true)}
+                                                        onChange={e => {
+                                                            setParentSearch(e.target.value)
+                                                            setParentDropdownOpen(true)
+                                                            if (!e.target.value) {
+                                                                set('parentId', null)
+                                                                if (!isEdit && !isSalesRep) {
+                                                                    handleAutoGenerateCode(form.channel ?? undefined, null)
+                                                                }
+                                                            }
+                                                        }}
+                                                    />
+                                                    {form.parentId ? (
                                                         <button
                                                             type="button"
                                                             onClick={() => {
-                                                                set('taxId', parent.taxId)
-                                                                if (parent.vatCompanyName && !form.vatCompanyName) set('vatCompanyName', parent.vatCompanyName)
-                                                                if (parent.vatAddress && !form.vatAddress) set('vatAddress', parent.vatAddress)
-                                                                if (parent.vatEmail && !form.vatEmail) set('vatEmail', parent.vatEmail)
+                                                                set('parentId', null)
+                                                                setParentSearch('')
+                                                                setParentDropdownOpen(false)
+                                                                if (!isEdit && !isSalesRep) {
+                                                                    handleAutoGenerateCode(form.channel ?? undefined, null)
+                                                                }
                                                             }}
-                                                            className="text-[10px] font-bold text-lys-teal-strong hover:text-[#06748E] underline cursor-pointer ml-2"
+                                                            className="absolute right-2.5 p-1 rounded-full text-slate-500 hover:text-slate-900 hover:bg-[#E2E8F0] transition-all"
                                                         >
-                                                            Áp dụng
+                                                            <X size={14} />
                                                         </button>
+                                                    ) : (
+                                                        <ChevronDown size={14} className="absolute right-3 text-slate-500 pointer-events-none" />
+                                                    )}
+                                                </div>
+
+                                                {parentDropdownOpen && (
+                                                    <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-lg overflow-hidden shadow-2xl border border-slate-200" style={{ background: '#F8FAFC' }}>
+                                                        <div className="overflow-y-auto max-h-[210px] divide-y divide-[#FFFFFF]">
+                                                            <button
+                                                                type="button"
+                                                                className="w-full text-left px-3.5 py-2.5 text-xs text-slate-600 hover:bg-white transition-all"
+                                                                onClick={() => {
+                                                                    set('parentId', null)
+                                                                    setParentSearch('')
+                                                                    setParentDropdownOpen(false)
+                                                                    if (!isEdit && !isSalesRep) {
+                                                                        handleAutoGenerateCode(form.channel ?? undefined, null)
+                                                                    }
+                                                                }}
+                                                            >
+                                                                — Không chọn Khách hàng Cha —
+                                                            </button>
+                                                            {parentCandidates
+                                                                .filter(c => {
+                                                                     if (!parentSearch.trim()) return true
+                                                                     const q = parentSearch.toLowerCase()
+                                                                     return c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)
+                                                                })
+                                                                .map(c => {
+                                                                    const isSelected = form.parentId === c.id
+                                                                    return (
+                                                                        <button
+                                                                            key={c.id}
+                                                                            type="button"
+                                                                            className={`w-full text-left px-3.5 py-2.5 text-xs transition-all flex items-center justify-between ${
+                                                                                isSelected ? 'bg-white text-lys-teal-strong font-bold' : 'text-slate-900 hover:bg-white'
+                                                                            }`}
+                                                                            onClick={() => {
+                                                                                set('parentId', c.id)
+                                                                                setParentSearch(`${c.code} — ${c.name}`)
+                                                                                setParentDropdownOpen(false)
+                                                                                if (!isEdit && !isSalesRep) {
+                                                                                    handleAutoGenerateCode(form.channel ?? undefined, c.id)
+                                                                                }
+                                                                            }}
+                                                                        >
+                                                                            <div className="flex items-center gap-2 truncate">
+                                                                                <span className="inline-block font-mono text-lys-teal-strong bg-white px-1.5 py-0.5 rounded text-[11px] font-semibold border border-slate-200 whitespace-nowrap shrink-0">
+                                                                                    {c.code}
+                                                                                </span>
+                                                                                <span className="truncate">{c.name}</span>
+                                                                                {c.childrenCount !== undefined && (
+                                                                                    <span className="text-[10px] text-slate-500 font-normal shrink-0">
+                                                                                        ({c.childrenCount} con)
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                            {c.entityType === 'COMPANY' && (
+                                                                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#0E7490]/10 text-lys-teal-strong border border-[#0E7490]/20 font-semibold shrink-0 inline-flex items-center gap-1 whitespace-nowrap">
+                                                                                    <Building2 size={10} /> Công ty Mẹ
+                                                                                </span>
+                                                                            )}
+                                                                        </button>
+                                                                    )
+                                                                })}
+                                                            {parentCandidates.filter(c => {
+                                                                if (!parentSearch.trim()) return true
+                                                                const q = parentSearch.toLowerCase()
+                                                                return c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)
+                                                            }).length === 0 && (
+                                                                <div className="px-3.5 py-3.5 text-center text-xs text-slate-500">
+                                                                    Không tìm thấy đơn vị phù hợp
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                )
-                                            }
-                                            if (parent?.taxId && form.taxId === parent.taxId) {
-                                                return (
-                                                    <div className="mt-1 inline-flex items-center gap-1.5 text-[11px] text-teal-800 bg-teal-50 px-2 py-1 rounded border border-teal-200 whitespace-nowrap shrink-0">
-                                                        <span>Đang dùng chung MST với Công ty Cha (<strong className="font-mono">{parent.code}</strong> — {parent.name})</span>
-                                                    </div>
-                                                )
-                                            }
-                                            return null
-                                        })()}
-                                        {duplicateWarnings.find(w => w.type === 'TAX_ID') && (
-                                            <p className="text-xs mt-1 font-medium flex items-center gap-1 text-[#B91C1C]">
-                                                <AlertCircle size={12} /> {duplicateWarnings.find(w => w.type === 'TAX_ID')?.message}
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div>
+                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên Khách Hàng / Điểm Bán <span style={{ color: '#B91C1C' }}>*</span></label>
+                                        <input className={inputCls} style={inputStyle} value={form.name ?? ''} placeholder="Park Hyatt Saigon"
+                                            onChange={e => set('name', e.target.value)}
+                                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                        {errors.name && <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>{errors.name}</p>}
+                                        {duplicateWarnings.find(w => w.type === 'NAME') && (
+                                            <p className="text-xs mt-1 font-medium flex items-center gap-1 text-[#D4963A]">
+                                                <AlertCircle size={12} /> {duplicateWarnings.find(w => w.type === 'NAME')?.message}
                                             </p>
                                         )}
                                     </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên viết tắt</label>
+                                            <input className={inputCls} style={inputStyle} value={form.shortName ?? ''} placeholder="PH Saigon"
+                                                onChange={e => set('shortName', e.target.value || null)}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                        </div>
+                                        {form.channel === 'HORECA' && (
+                                            <div>
+                                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên Brand / Chuỗi</label>
+                                                <input className={inputCls} style={inputStyle} value={form.brandGroup ?? ''} placeholder="Ví dụ: Manwah, Gogi"
+                                                    onChange={e => set('brandGroup', e.target.value || null)}
+                                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                            </div>
+                                        )}
+                                        <div className={form.channel !== 'HORECA' ? 'sm:col-span-2' : ''}>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Sales phụ trách</label>
+                                            <select className={inputCls} style={inputStyle} value={form.salesRepId ?? ''}
+                                                onChange={e => set('salesRepId', e.target.value || null)}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
+                                                <option value="">— Chọn Sales —</option>
+                                                {salesReps.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {/* VAT INVOICE SECTION */}
+                                    <div className="p-3.5 rounded-lg space-y-3.5" style={{ background: 'rgba(180,83,9,0.06)', border: '1px solid rgba(180,83,9,0.25)' }}>
+                                        <div className="flex items-center justify-between flex-wrap gap-2">
+                                            <p className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#B45309' }}>
+                                                <FileText size={14} /> Thông Tin Xuất Hóa Đơn VAT
+                                            </p>
+                                            {form.parentId && (() => {
+                                                const parent = parentCandidates.find(p => p.id === form.parentId)
+                                                return (
+                                                    <span className="inline-block text-[11px] font-medium text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded border border-amber-300 whitespace-nowrap shrink-0">
+                                                        {parent?.taxId ? `Kế thừa MST (${parent.taxId}) từ Công Ty Cha` : 'Để trống sẽ tự động lấy theo Công Ty Cha'}
+                                                    </span>
+                                                )
+                                            })()}
+                                        </div>
+
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
+                                                Tên Công Ty Xuất Hóa Đơn VAT
+                                            </label>
+                                            <input className={inputCls} style={inputStyle} value={form.vatCompanyName ?? ''} 
+                                                placeholder={form.parentId ? (parentCandidates.find(p => p.id === form.parentId)?.vatCompanyName ? `Tên Cty Cha: ${parentCandidates.find(p => p.id === form.parentId)?.vatCompanyName}` : "Tự động lấy theo Tên Công ty Cha nếu để trống...") : "CÔNG TY TNHH ABC..."}
+                                                onChange={e => set('vatCompanyName', e.target.value || null)}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                            <div>
+                                                <div className="flex items-center justify-between mb-1.5 gap-2">
+                                                    <label className="text-xs font-semibold uppercase tracking-wide block" style={{ color: '#475569' }}>
+                                                        Mã Số Thuế VAT
+                                                    </label>
+                                                    <button
+                                                        type="button"
+                                                        disabled={taxLookupLoading}
+                                                        onClick={handleLookupTax}
+                                                        className="px-2.5 py-1 sm:py-0.5 rounded text-xs sm:text-[11px] font-extrabold bg-teal-50 text-lys-teal-strong hover:bg-teal-100 transition-all flex items-center gap-1 cursor-pointer border border-teal-300 active:scale-95 shrink-0 min-h-[30px] sm:min-h-0"
+                                                        title="Tự động tra cứu Tên công ty & Địa chỉ từ Tổng cục Thuế"
+                                                    >
+                                                        {taxLookupLoading ? <Loader2 size={11} className="animate-spin" /> : <Search size={11} />}
+                                                        <span>Tra Cứu Cục Thuế</span>
+                                                    </button>
+                                                </div>
+                                                <input className={inputCls} style={inputStyle} value={form.taxId ?? ''} 
+                                                    placeholder={form.parentId ? (parentCandidates.find(p => p.id === form.parentId)?.taxId ? `Kế thừa MST Cha: ${parentCandidates.find(p => p.id === form.parentId)?.taxId}` : "Tự động dùng MST Công ty Cha") : "0302012345"}
+                                                    onChange={e => set('taxId', e.target.value || null)}
+                                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                                {(() => {
+                                                    const parent = parentCandidates.find(p => p.id === form.parentId)
+                                                    if (parent?.taxId && !form.taxId) {
+                                                        return (
+                                                            <div className="mt-1 inline-flex items-center justify-between text-[11px] text-amber-800 bg-amber-50 px-2 py-1 rounded border border-amber-200 whitespace-nowrap shrink-0">
+                                                                <span className="flex items-center gap-1"><Building2 size={12} className="text-amber-700" /> MST Công ty Cha: <strong className="font-mono">{parent.taxId}</strong></span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        set('taxId', parent.taxId)
+                                                                        if (parent.vatCompanyName && !form.vatCompanyName) set('vatCompanyName', parent.vatCompanyName)
+                                                                        if (parent.vatAddress && !form.vatAddress) set('vatAddress', parent.vatAddress)
+                                                                        if (parent.vatEmail && !form.vatEmail) set('vatEmail', parent.vatEmail)
+                                                                    }}
+                                                                    className="text-[10px] font-bold text-lys-teal-strong hover:text-[#06748E] underline cursor-pointer ml-2"
+                                                                >
+                                                                    Áp dụng
+                                                                </button>
+                                                            </div>
+                                                        )
+                                                    }
+                                                    if (parent?.taxId && form.taxId === parent.taxId) {
+                                                        return (
+                                                            <div className="mt-1 inline-flex items-center gap-1.5 text-[11px] text-teal-800 bg-teal-50 px-2 py-1 rounded border border-teal-200 whitespace-nowrap shrink-0">
+                                                                <span>Đang dùng chung MST với Công ty Cha (<strong className="font-mono">{parent.code}</strong> — {parent.name})</span>
+                                                            </div>
+                                                        )
+                                                    }
+                                                    return null
+                                                })()}
+                                                {duplicateWarnings.find(w => w.type === 'TAX_ID') && (
+                                                    <p className="text-xs mt-1 font-medium flex items-center gap-1 text-[#B91C1C]">
+                                                        <AlertCircle size={12} /> {duplicateWarnings.find(w => w.type === 'TAX_ID')?.message}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
+                                                    Email Nhận Hóa Đơn VAT
+                                                </label>
+                                                <input className={inputCls} style={inputStyle} value={form.vatEmail ?? ''} 
+                                                    placeholder={form.parentId ? "Tự động dùng Email Công ty Cha" : "ketoan@company.com"}
+                                                    onChange={e => set('vatEmail', e.target.value || null)}
+                                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
+                                                Địa Chỉ Đăng Ký Thuế VAT
+                                            </label>
+                                            <input className={inputCls} style={inputStyle} value={form.vatAddress ?? ''} 
+                                                placeholder={form.parentId ? (parentCandidates.find(p => p.id === form.parentId)?.vatAddress ? `Địa chỉ Cty Cha: ${parentCandidates.find(p => p.id === form.parentId)?.vatAddress}` : "Tự động dùng Địa chỉ Công ty Cha nếu để trống...") : "Số 123 Đường ABC, Phường X, Quận Y, TP..."}
+                                                onChange={e => set('vatAddress', e.target.value || null)}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                        </div>
+                                    </div>
+
+                                    <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Liên Hệ & Địa Chỉ Giao Hàng</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Người liên hệ</label>
+                                            <input className={inputCls} style={inputStyle} value={form.contactName ?? ''} placeholder="Nguyễn Văn A"
+                                                onChange={e => set('contactName', e.target.value || null)}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Số điện thoại</label>
+                                            <input className={inputCls} style={inputStyle} value={form.phone ?? ''} placeholder="0901234567"
+                                                onChange={e => set('phone', e.target.value || null)}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                            {duplicateWarnings.find(w => w.type === 'PHONE') && (
+                                                <p className="text-xs mt-1 font-medium flex items-center gap-1 text-[#D4963A]">
+                                                    <AlertCircle size={12} /> {duplicateWarnings.find(w => w.type === 'PHONE')?.message}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
                                     <div>
-                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
-                                            Email Nhận Hóa Đơn VAT
-                                        </label>
-                                        <input className={inputCls} style={inputStyle} value={form.vatEmail ?? ''} 
-                                            placeholder={form.parentId ? "Tự động dùng Email Công ty Cha" : "ketoan@company.com"}
-                                            onChange={e => set('vatEmail', e.target.value || null)}
+                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Email</label>
+                                        <input type="email" className={inputCls} style={inputStyle} value={form.email ?? ''} placeholder="contact@hotel.com"
+                                            onChange={e => set('email', e.target.value || null)}
                                             onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                     </div>
-                                </div>
-
-                                <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
-                                        Địa Chỉ Đăng Ký Thuế VAT
-                                    </label>
-                                    <input className={inputCls} style={inputStyle} value={form.vatAddress ?? ''} 
-                                        placeholder={form.parentId ? (parentCandidates.find(p => p.id === form.parentId)?.vatAddress ? `Địa chỉ Cty Cha: ${parentCandidates.find(p => p.id === form.parentId)?.vatAddress}` : "Tự động dùng Địa chỉ Công ty Cha nếu để trống...") : "Số 123 Đường ABC, Phường X, Quận Y, TP..."}
-                                        onChange={e => set('vatAddress', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                                </div>
-                            </div>
-
-                            <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Liên Hệ & Địa Chỉ</p>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Người liên hệ</label>
-                                    <input className={inputCls} style={inputStyle} value={form.contactName ?? ''} placeholder="Nguyễn Văn A"
-                                        onChange={e => set('contactName', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Số điện thoại</label>
-                                    <input className={inputCls} style={inputStyle} value={form.phone ?? ''} placeholder="0901234567"
-                                        onChange={e => set('phone', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                                    {duplicateWarnings.find(w => w.type === 'PHONE') && (
-                                        <p className="text-xs mt-1 font-medium flex items-center gap-1 text-[#D4963A]">
-                                            <AlertCircle size={12} /> {duplicateWarnings.find(w => w.type === 'PHONE')?.message}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                            <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Email</label>
-                                <input type="email" className={inputCls} style={inputStyle} value={form.email ?? ''} placeholder="contact@hotel.com"
-                                    onChange={e => set('email', e.target.value || null)}
-                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                            </div>
-                            <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Địa chỉ</label>
-                                <input className={inputCls} style={inputStyle} value={form.address ?? ''} placeholder="123 Đường Lê Lai, Quận 1"
-                                    onChange={e => set('address', e.target.value || null)}
-                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Phường/Xã</label>
-                                    <input className={inputCls} style={inputStyle} value={form.ward ?? ''} placeholder="Phường Bến Nghé"
-                                        onChange={e => set('ward', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Quận/Huyện</label>
-                                    <input className={inputCls} style={inputStyle} value={form.district ?? ''} placeholder="Quận 1"
-                                        onChange={e => set('district', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Thành phố</label>
-                                    <select className={inputCls} style={inputStyle} value={form.city ?? ''}
-                                        onChange={e => set('city', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
-                                        <option value="">— Chọn —</option>
-                                        {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Thông Tin Thu Mua & Kênh Nhận Order</p>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                                <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên người thu mua</label>
-                                    <input className={inputCls} style={inputStyle} value={form.purchasingName ?? ''} placeholder="Ví dụ: Anh Nam Thu Mua"
-                                        onChange={e => set('purchasingName', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>SĐT thu mua</label>
-                                    <input className={inputCls} style={inputStyle} value={form.purchasingPhone ?? ''} placeholder="0912345678"
-                                        onChange={e => set('purchasingPhone', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Kênh nhận order</label>
-                                    <select className={inputCls} style={inputStyle} value={form.orderChannel ?? 'ZALO'}
-                                        onChange={e => set('orderChannel', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
-                                        <option value="ZALO">Zalo</option>
-                                        <option value="EMAIL">Email</option>
-                                        <option value="WHATSAPP">WhatsApp</option>
-                                        <option value="PHONE">Điện thoại</option>
-                                        <option value="DIRECT">Trực tiếp</option>
-                                        <option value="OTHER">Khác</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Thông Tin Giao Hàng & Lưu Ý</p>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Người nhận hàng</label>
-                                    <input className={inputCls} style={inputStyle} value={form.receiverName ?? ''} placeholder="Ví dụ: Quản lý nhà hàng / Thủ kho"
-                                        onChange={e => set('receiverName', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>SĐT người nhận</label>
-                                    <input className={inputCls} style={inputStyle} value={form.receiverPhone ?? ''} placeholder="0987654321"
-                                        onChange={e => set('receiverPhone', e.target.value || null)}
-                                        onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Lưu ý về giao hàng</label>
-                                <textarea className={`${inputCls} h-20 resize-none`} style={inputStyle} value={form.deliveryNotes ?? ''} placeholder="Ví dụ: Giao sau 14h, báo trước 30 phút, giao tầng hầm B2..."
-                                    onChange={e => set('deliveryNotes', e.target.value || null)}
-                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                            </div>
-
-                            {/* CƠ CHẾ GIÁ & CHIẾT KHẤU MẶC ĐỊNH */}
-                            <div className="p-3.5 rounded-lg space-y-3.5" style={{ background: 'rgba(8,145,178,0.06)', border: '1px solid rgba(8,145,178,0.25)' }}>
-                                <div className="flex items-center justify-between flex-wrap gap-1">
-                                    <p className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#0891B2' }}>
-                                        <Tag size={14} /> Cơ Chế Giá & Chiết Khấu Mặc Định (Toàn Kho)
-                                    </p>
-                                    {isEdit && (
-                                        <Link href="/dashboard/price-list" className="text-[11px] text-lys-teal-strong hover:underline flex items-center gap-1 font-semibold">
-                                            Trung tâm giá <ArrowUpRight size={12} />
-                                        </Link>
-                                    )}
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                     <div>
-                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
-                                            Bảng giá gốc áp dụng
-                                        </label>
-                                        <select
-                                            className={inputCls}
-                                            style={inputStyle}
-                                            value={form.basePriceType ?? 'BY_CHANNEL'}
-                                            onChange={e => set('basePriceType', e.target.value)}
-                                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
-                                        >
-                                            <option value="BY_CHANNEL">Theo kênh bán hàng ({form.channel || 'HORECA'})</option>
-                                            <option value="WHOLESALE">Bảng giá Buôn (Wholesale)</option>
-                                            <option value="RETAIL">Bảng giá Lẻ (Retail)</option>
-                                            <option value="HORECA">Bảng giá HORECA</option>
-                                        </select>
+                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Địa chỉ giao hàng</label>
+                                        <input className={inputCls} style={inputStyle} value={form.address ?? ''} placeholder="123 Đường Lê Lai, Quận 1"
+                                            onChange={e => set('address', e.target.value || null)}
+                                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Phường/Xã</label>
+                                            <input className={inputCls} style={inputStyle} value={form.ward ?? ''} placeholder="Phường Bến Nghé"
+                                                onChange={e => set('ward', e.target.value || null)}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Quận/Huyện</label>
+                                            <input className={inputCls} style={inputStyle} value={form.district ?? ''} placeholder="Quận 1"
+                                                onChange={e => set('district', e.target.value || null)}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Thành phố</label>
+                                            <select className={inputCls} style={inputStyle} value={form.city ?? ''}
+                                                onChange={e => set('city', e.target.value || null)}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
+                                                <option value="">— Chọn —</option>
+                                                {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Thông Tin Thu Mua & Kênh Nhận Order</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên người thu mua</label>
+                                            <input className={inputCls} style={inputStyle} value={form.purchasingName ?? ''} placeholder="Ví dụ: Anh Nam Thu Mua"
+                                                onChange={e => set('purchasingName', e.target.value || null)}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>SĐT thu mua</label>
+                                            <input className={inputCls} style={inputStyle} value={form.purchasingPhone ?? ''} placeholder="0912345678"
+                                                onChange={e => set('purchasingPhone', e.target.value || null)}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Kênh nhận order</label>
+                                            <select className={inputCls} style={inputStyle} value={form.orderChannel ?? 'ZALO'}
+                                                onChange={e => set('orderChannel', e.target.value || null)}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
+                                                <option value="ZALO">Zalo</option>
+                                                <option value="EMAIL">Email</option>
+                                                <option value="WHATSAPP">WhatsApp</option>
+                                                <option value="PHONE">Điện thoại</option>
+                                                <option value="DIRECT">Trực tiếp</option>
+                                                <option value="OTHER">Khác</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Thông Tin Giao Hàng & Lưu Ý</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Người nhận hàng</label>
+                                            <input className={inputCls} style={inputStyle} value={form.receiverName ?? ''} placeholder="Ví dụ: Quản lý nhà hàng / Thủ kho"
+                                                onChange={e => set('receiverName', e.target.value || null)}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>SĐT người nhận</label>
+                                            <input className={inputCls} style={inputStyle} value={form.receiverPhone ?? ''} placeholder="0987654321"
+                                                onChange={e => set('receiverPhone', e.target.value || null)}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                        </div>
                                     </div>
                                     <div>
-                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
-                                            Chiết khấu mặc định toàn kho (%)
-                                        </label>
-                                        <input
-                                            type="number"
-                                            min={0}
-                                            max={100}
-                                            step={0.5}
-                                            className={inputCls}
-                                            style={inputStyle}
-                                            value={form.defaultDiscountPct ?? 0}
-                                            placeholder="Ví dụ: 10 (nghĩa là -10%)"
-                                            onChange={e => set('defaultDiscountPct', Number(e.target.value))}
-                                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
-                                        />
+                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Lưu ý về giao hàng</label>
+                                        <textarea className={`${inputCls} h-20 resize-none`} style={inputStyle} value={form.deliveryNotes ?? ''} placeholder="Ví dụ: Giao sau 14h, báo trước 30 phút, giao tầng hầm B2..."
+                                            onChange={e => set('deliveryNotes', e.target.value || null)}
+                                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                     </div>
+                                </>
+                            )}
+
+                            {/* CƠ CHẾ GIÁ: Ẩn khi Tạo mới; chỉ hiện tóm tắt + link sang Trung tâm giá khi Chỉnh sửa */}
+                            {isEdit && (
+                                <div className="p-3 rounded-lg flex items-center justify-between flex-wrap gap-2" style={{ background: 'rgba(8,145,178,0.06)', border: '1px solid rgba(8,145,178,0.25)' }}>
+                                    <div className="flex items-center gap-2 text-xs">
+                                        <Tag size={14} className="text-[#0891B2] shrink-0" />
+                                        <span className="font-semibold text-slate-700">Cơ chế giá đang áp dụng:</span>
+                                        <span className="font-mono font-bold text-slate-900">
+                                            {form.basePriceType === 'WHOLESALE' ? 'Giá Buôn (WS)' : form.basePriceType === 'RETAIL' ? 'Giá Lẻ (Retail)' : `Theo kênh (${form.channel || 'HORECA'})`}
+                                        </span>
+                                        {Number(form.defaultDiscountPct || 0) > 0 && (
+                                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                -{form.defaultDiscountPct}% toàn kho
+                                            </span>
+                                        )}
+                                    </div>
+                                    <Link href="/dashboard/price-list" className="text-xs text-lys-teal-strong hover:underline flex items-center gap-1 font-bold">
+                                        Quản lý tại Trung tâm giá <ArrowUpRight size={13} />
+                                    </Link>
                                 </div>
-                                <p className="text-[11px] text-slate-400 flex items-center gap-1.5">
-                                    <Info size={13} className="text-slate-400 shrink-0" /> <em>Tự động áp dụng cho mọi sản phẩm trong kho & hàng mới về: [Bảng giá gốc] - [X% chiết khấu].</em>
-                                </p>
-                            </div>
+                            )}
 
                             <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Tín Dụng & Thanh Toán</p>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">

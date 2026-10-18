@@ -39,7 +39,7 @@ type ProposalDetail = NonNullable<Awaited<ReturnType<typeof import('./actions').
 const inputStyle: React.CSSProperties = {
     width: '100%', padding: '10px 12px', borderRadius: '6px',
     border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#0F172A',
-    fontSize: '14px', outline: 'none',
+    outline: 'none',
 }
 
 interface Props {
@@ -1035,17 +1035,17 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             </div>
 
             {/* Filter + Search Bar */}
-            <div className="flex items-center gap-3 flex-wrap w-full">
-                <div className="max-w-full overflow-x-auto scrollbar-none flex rounded-md flex-shrink-0" style={{ border: '1px solid #E2E8F0' }}>
-                    {(['ALL', 'PENDING', 'DRAFT', 'APPROVED', 'REJECTED'] as const).map(f => (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 flex-wrap w-full">
+                <div className="w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar flex rounded-md flex-shrink-0" style={{ border: '1px solid #E2E8F0' }}>
+                    {(['ALL', 'PENDING', 'DRAFT', 'APPROVED', 'REJECTED'] as const).map((f, idx, arr) => (
                         <button
                             key={f}
                             onClick={() => setFilter(f)}
-                            className="px-4 py-2 text-xs font-semibold transition-all whitespace-nowrap"
+                            className="flex-1 sm:flex-initial px-3 sm:px-4 py-2 text-xs font-semibold transition-all whitespace-nowrap text-center"
                             style={{
                                 background: filter === f ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
                                 color: filter === f ? '#0E7490' : '#64748B',
-                                borderRight: '1px solid #E2E8F0',
+                                borderRight: idx < arr.length - 1 ? '1px solid #E2E8F0' : 'none',
                             }}
                         >
                             {f === 'ALL' ? t.tabs.all : f === 'PENDING' ? t.tabs.pending : f === 'DRAFT' ? t.tabs.draft : f === 'APPROVED' ? t.tabs.approved : t.tabs.rejected}
@@ -1053,62 +1053,64 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     ))}
                 </div>
 
-                {/* Category Dropdown Filter */}
-                <div className="flex-shrink-0">
-                    <select
-                        value={categoryFilter}
-                        onChange={e => setCategoryFilter(e.target.value)}
-                        className="px-3 py-2 text-xs font-semibold rounded-md outline-none cursor-pointer"
-                        style={{
-                            background: categoryFilter === 'ALL' ? '#FFFFFF' : 'rgba(8, 145, 178, 0.08)',
-                            border: '1px solid #E2E8F0',
-                            color: categoryFilter === 'ALL' ? '#475569' : '#0E7490',
-                        }}
-                    >
-                        <option value="ALL">{t.filters.allCategories}</option>
-                        <option value="INTERNAL_TRAINING">{locale === 'en' ? 'Internal Training' : 'Tờ Trình Đào Tạo Nội Bộ'}</option>
-                        <option value="TASTING">{locale === 'en' ? 'Wine Tasting & Sample' : 'Tờ Trình Tasting (Thử Rượu)'}</option>
-                        <option value="SPECIAL_EVENT">{locale === 'en' ? 'Special Event' : 'Sự Kiện / Event'}</option>
-                        <option value="PRICE_ADJUSTMENT">{locale === 'en' ? 'Special Pricing Mechanism' : 'Tờ Trình Cơ Chế Giá & Giá Đặc Biệt'}</option>
-                        <option value="BUDGET_REQUEST">{locale === 'en' ? 'Budget Request' : 'Xin Ngân Sách'}</option>
-                        <option value="CAPITAL_EXPENDITURE">{locale === 'en' ? 'CAPEX' : 'Mua Sắm TSCĐ'}</option>
-                        <option value="NEW_SUPPLIER">{locale === 'en' ? 'New Supplier' : 'Nhà Cung Cấp Mới'}</option>
-                        <option value="NEW_PRODUCT">{locale === 'en' ? 'New Product' : 'Sản Phẩm Mới'}</option>
-                        <option value="POLICY_CHANGE">{locale === 'en' ? 'Policy Change' : 'Thay Đổi Quy Trình'}</option>
-                        <option value="PAYMENT_SCHEDULE">{locale === 'en' ? 'Payment Schedule' : 'Lịch Thanh Toán'}</option>
-                        <option value="PROMOTION_CAMPAIGN">{locale === 'en' ? 'Promotion' : 'Chương Trình KM'}</option>
-                        <option value="OTHER">{locale === 'en' ? 'Other' : 'Khác'}</option>
-                    </select>
+                <div className="grid grid-cols-2 sm:flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                    {/* Category Dropdown Filter */}
+                    <div className="min-w-0 flex-1 sm:flex-shrink-0">
+                        <select
+                            value={categoryFilter}
+                            onChange={e => setCategoryFilter(e.target.value)}
+                            className="w-full px-2.5 sm:px-3 py-2 text-base sm:text-xs font-semibold rounded-md outline-none cursor-pointer truncate"
+                            style={{
+                                background: categoryFilter === 'ALL' ? '#FFFFFF' : 'rgba(8, 145, 178, 0.08)',
+                                border: '1px solid #E2E8F0',
+                                color: categoryFilter === 'ALL' ? '#475569' : '#0E7490',
+                            }}
+                        >
+                            <option value="ALL">{t.filters.allCategories}</option>
+                            <option value="INTERNAL_TRAINING">{locale === 'en' ? 'Internal Training' : 'Tờ Trình Đào Tạo Nội Bộ'}</option>
+                            <option value="TASTING">{locale === 'en' ? 'Wine Tasting & Sample' : 'Tờ Trình Tasting (Thử Rượu)'}</option>
+                            <option value="SPECIAL_EVENT">{locale === 'en' ? 'Special Event' : 'Sự Kiện / Event'}</option>
+                            <option value="PRICE_ADJUSTMENT">{locale === 'en' ? 'Special Pricing Mechanism' : 'Tờ Trình Cơ Chế Giá & Giá Đặc Biệt'}</option>
+                            <option value="BUDGET_REQUEST">{locale === 'en' ? 'Budget Request' : 'Xin Ngân Sách'}</option>
+                            <option value="CAPITAL_EXPENDITURE">{locale === 'en' ? 'CAPEX' : 'Mua Sắm TSCĐ'}</option>
+                            <option value="NEW_SUPPLIER">{locale === 'en' ? 'New Supplier' : 'Nhà Cung Cấp Mới'}</option>
+                            <option value="NEW_PRODUCT">{locale === 'en' ? 'New Product' : 'Sản Phẩm Mới'}</option>
+                            <option value="POLICY_CHANGE">{locale === 'en' ? 'Policy Change' : 'Thay Đổi Quy Trình'}</option>
+                            <option value="PAYMENT_SCHEDULE">{locale === 'en' ? 'Payment Schedule' : 'Lịch Thanh Toán'}</option>
+                            <option value="PROMOTION_CAMPAIGN">{locale === 'en' ? 'Promotion' : 'Chương Trình KM'}</option>
+                            <option value="OTHER">{locale === 'en' ? 'Other' : 'Khác'}</option>
+                        </select>
+                    </div>
+
+                    {/* Priority Dropdown Filter */}
+                    <div className="min-w-0 flex-1 sm:flex-shrink-0">
+                        <select
+                            value={priorityFilter}
+                            onChange={e => setPriorityFilter(e.target.value)}
+                            className="w-full px-2.5 sm:px-3 py-2 text-base sm:text-xs font-semibold rounded-md outline-none cursor-pointer truncate"
+                            style={{
+                                background: priorityFilter === 'ALL' ? '#FFFFFF' : 'rgba(180,83,9,0.15)',
+                                border: '1px solid #E2E8F0',
+                                color: priorityFilter === 'ALL' ? '#475569' : '#B45309',
+                            }}
+                        >
+                            <option value="ALL">{t.filters.allPriorities}</option>
+                            <option value="URGENT">{locale === 'en' ? 'Urgent' : 'Khẩn cấp (Urgent)'}</option>
+                            <option value="HIGH">{locale === 'en' ? 'High' : 'Cao (High)'}</option>
+                            <option value="NORMAL">{locale === 'en' ? 'Normal' : 'Bình thường (Normal)'}</option>
+                            <option value="LOW">{locale === 'en' ? 'Low' : 'Thấp (Low)'}</option>
+                        </select>
+                    </div>
                 </div>
 
-                {/* Priority Dropdown Filter */}
-                <div className="flex-shrink-0">
-                    <select
-                        value={priorityFilter}
-                        onChange={e => setPriorityFilter(e.target.value)}
-                        className="px-3 py-2 text-xs font-semibold rounded-md outline-none cursor-pointer"
-                        style={{
-                            background: priorityFilter === 'ALL' ? '#FFFFFF' : 'rgba(180,83,9,0.15)',
-                            border: '1px solid #E2E8F0',
-                            color: priorityFilter === 'ALL' ? '#475569' : '#B45309',
-                        }}
-                    >
-                        <option value="ALL">{t.filters.allPriorities}</option>
-                        <option value="URGENT">{locale === 'en' ? 'Urgent' : 'Khẩn cấp (Urgent)'}</option>
-                        <option value="HIGH">{locale === 'en' ? 'High' : 'Cao (High)'}</option>
-                        <option value="NORMAL">{locale === 'en' ? 'Normal' : 'Bình thường (Normal)'}</option>
-                        <option value="LOW">{locale === 'en' ? 'Low' : 'Thấp (Low)'}</option>
-                    </select>
-                </div>
-
-                <div className="flex-1 relative min-w-[240px]">
+                <div className="w-full sm:flex-1 relative min-w-0 sm:min-w-[220px]">
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
                     <input
                         type="text"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         placeholder={t.filters.searchPlaceholder}
-                        className="w-full pl-9 pr-3 py-2 text-xs rounded-md"
+                        className="w-full pl-9 pr-3 py-2 text-base sm:text-xs rounded-md"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', outline: 'none' }}
                     />
                 </div>
@@ -1515,13 +1517,14 @@ function SearchableCustomerCombobox({
                         }, 250)
                     }}
                     placeholder="Gõ mã (VD: HR10084) hoặc tên khách hàng để tìm..."
-                    style={{ ...inputStyle, padding: '9px 36px 9px 32px', fontSize: '13px', background: '#FFFFFF', color: '#0F172A', border: '1px solid #CBD5E1' }}
+                    className="text-base sm:text-[13px]"
+                    style={{ ...inputStyle, padding: '9px 36px 9px 32px', background: '#FFFFFF', color: '#0F172A', border: '1px solid #CBD5E1' }}
                 />
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 {selectedCust ? (
                     <button
                         type="button"
-                        onMouseDown={(e) => {
+                        onPointerDown={(e) => {
                             e.preventDefault()
                             onSelect({ id: '', name: '', code: '' })
                             setInputValue('')
@@ -1539,7 +1542,7 @@ function SearchableCustomerCombobox({
 
             {open && (
                 <div
-                    className="absolute left-0 right-0 top-full mt-1 z-50 max-h-64 overflow-y-auto rounded-md shadow-2xl divide-y divide-slate-100 bg-white border border-slate-200"
+                    className="absolute left-0 right-0 top-full mt-1 z-50 max-h-64 overflow-y-auto rounded-md shadow-2xl divide-y divide-slate-100 bg-white border border-slate-200 w-full max-w-full"
                 >
                     {filtered.length === 0 ? (
                         <div className="p-3 text-xs text-center text-slate-400">
@@ -1549,20 +1552,20 @@ function SearchableCustomerCombobox({
                         filtered.map((c: any) => (
                             <div
                                 key={c.id}
-                                onMouseDown={(e) => {
+                                onPointerDown={(e) => {
                                     e.preventDefault()
                                     onSelect(c)
                                     setInputValue(`[${c.code}] ${c.name}`)
                                     setOpen(false)
                                 }}
-                                className={`w-full text-left p-2.5 hover:bg-slate-50 transition flex items-center justify-between text-xs cursor-pointer ${c.id === selectedCustomerId ? 'bg-amber-50' : ''}`}
+                                className={`w-full text-left p-2.5 hover:bg-slate-50 transition flex items-center justify-between gap-2 text-xs cursor-pointer ${c.id === selectedCustomerId ? 'bg-amber-50' : ''}`}
                             >
-                                <div className="min-w-0 flex-1 pr-2">
-                                    <span className="font-mono font-bold text-amber-700 mr-2 text-xs">[{c.code}]</span>
-                                    <span className="text-slate-900 font-medium">{c.name}</span>
+                                <div className="min-w-0 flex-1 pr-1">
+                                    <span className="font-mono font-bold text-amber-700 mr-1.5 text-xs">[{c.code}]</span>
+                                    <span className="text-slate-900 font-medium break-words">{c.name}</span>
                                 </div>
                                 {c.channel && (
-                                    <span className="text-[10px] text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded whitespace-nowrap border border-slate-200">
+                                    <span className="text-[10px] text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded whitespace-nowrap border border-slate-200 shrink-0">
                                         {c.channel}
                                     </span>
                                 )}
@@ -1586,7 +1589,6 @@ function SearchableProductCombobox({
     onSelect: (product: any) => void
 }) {
     const [open, setOpen] = useState(false)
-    const [dropUp, setDropUp] = useState(false)
     const containerRef = React.useRef<HTMLDivElement>(null)
 
     const selectedProd = React.useMemo(() => {
@@ -1631,7 +1633,7 @@ function SearchableProductCombobox({
     }, [products, inputValue, selectedProd, selectedProdTitle])
 
     return (
-        <div ref={containerRef} className={`relative flex-1 min-w-0 ${open ? 'z-50' : 'z-10'}`}>
+        <div ref={containerRef} className={`relative flex-1 min-w-0 w-full ${open ? 'z-50' : 'z-10'}`}>
             <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: '#475569' }}>Sản phẩm (Gõ SKU hoặc tên để tìm)</label>
             <div className="relative">
                 <input
@@ -1646,7 +1648,8 @@ function SearchableProductCombobox({
                         setOpen(true)
                     }}
                     placeholder="Gõ mã SKU hoặc tên sản phẩm..."
-                    style={{ ...inputStyle, padding: '7px 32px 7px 10px', fontSize: '13px', background: '#FFFFFF', color: '#0F172A', border: '1px solid #CBD5E1' }}
+                    className="text-base sm:text-[13px]"
+                    style={{ ...inputStyle, padding: '8px 32px 8px 10px', background: '#FFFFFF', color: '#0F172A', border: '1px solid #CBD5E1' }}
                 />
                 {selectedProd ? (
                     <button
@@ -1669,8 +1672,7 @@ function SearchableProductCombobox({
 
             {open && (
                 <div
-                    className="absolute left-0 right-0 top-full mt-1.5 z-50 max-h-72 overflow-y-auto rounded-lg shadow-2xl divide-y divide-slate-100 bg-white border border-slate-200"
-                    style={{ minWidth: '320px' }}
+                    className="absolute left-0 right-0 top-full mt-1.5 z-50 w-full sm:min-w-[320px] max-w-full max-h-72 overflow-y-auto rounded-lg shadow-2xl divide-y divide-slate-100 bg-white border border-slate-200"
                 >
                     {filtered.length === 0 ? (
                         <div className="p-3 text-xs text-center text-slate-400">Không tìm thấy sản phẩm khớp &quot;{inputValue}&quot;</div>
@@ -1678,19 +1680,19 @@ function SearchableProductCombobox({
                         filtered.map(p => (
                             <div
                                 key={p.id}
-                                onMouseDown={(e) => {
+                                onPointerDown={(e) => {
                                     e.preventDefault()
                                     onSelect(p)
                                     setInputValue(`[${p.skuCode}] ${p.productName}`)
                                     setOpen(false)
                                 }}
-                                className="w-full text-left p-2.5 hover:bg-slate-50 transition flex items-center justify-between text-xs cursor-pointer group"
+                                className="w-full text-left p-2.5 hover:bg-slate-50 transition flex items-center justify-between gap-2 text-xs cursor-pointer group"
                             >
-                                <div className="min-w-0 flex-1 pr-3">
-                                    <span className="font-mono font-bold text-[#0891B2] mr-2 text-xs">[{p.skuCode}]</span>
-                                    <span className="text-slate-900 font-medium group-hover:text-amber-600 transition-colors">{p.productName}</span>
+                                <div className="min-w-0 flex-1 pr-2">
+                                    <span className="font-mono font-bold text-[#0891B2] mr-1.5 text-xs">[{p.skuCode}]</span>
+                                    <span className="text-slate-900 font-medium group-hover:text-amber-600 transition-colors break-words">{p.productName}</span>
                                 </div>
-                                <span className="font-mono text-xs text-slate-700 font-semibold whitespace-nowrap bg-slate-50 px-2 py-1 rounded border border-slate-200">
+                                <span className="font-mono text-xs text-slate-700 font-semibold whitespace-nowrap bg-slate-50 px-2 py-1 rounded border border-slate-200 shrink-0">
                                     {formatVND(p.wholesalePrice)}
                                 </span>
                             </div>
@@ -1760,11 +1762,11 @@ function BatchProductPickerModal({
     const selectedCount = Object.keys(selected).length
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
             <div className="w-full max-w-4xl max-h-[90vh] rounded-lg flex flex-col shadow-2xl bg-white border border-slate-200 animate-in zoom-in-95 duration-150">
                 <div className="flex items-center justify-between p-3.5 sm:p-5 border-b border-slate-200">
-                    <h4 className="text-sm sm:text-base font-bold text-slate-900">Chọn Nhanh Sản Phẩm Đề Xuất Giá (Batch Picker)</h4>
-                    <button onClick={onClose} className="p-1 rounded hover:bg-slate-100 cursor-pointer"><X size={20} className="text-slate-400" /></button>
+                    <h4 className="text-sm sm:text-base font-bold text-slate-900 pr-2">Chọn Nhanh Sản Phẩm Đề Xuất Giá (Batch Picker)</h4>
+                    <button onClick={onClose} className="p-1 rounded hover:bg-slate-100 cursor-pointer shrink-0"><X size={20} className="text-slate-400" /></button>
                 </div>
 
                 <div className="p-3 sm:p-4 space-y-3 flex-1 overflow-hidden flex flex-col">
@@ -1774,7 +1776,7 @@ function BatchProductPickerModal({
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             placeholder="Tìm SKU hoặc tên sản phẩm..."
-                            className="w-full pl-9 pr-3 py-2 text-xs outline-none rounded-md"
+                            className="w-full pl-9 pr-3 py-2 text-base sm:text-xs outline-none rounded-md"
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                         />
                     </div>
@@ -1797,26 +1799,27 @@ function BatchProductPickerModal({
 
                             return (
                                 <div key={p.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 sm:p-2.5 rounded hover:bg-white transition border-b border-slate-200/30 text-xs">
-                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                    <div className="flex items-start sm:items-center gap-2.5 min-w-0 flex-1">
                                         <input
                                             type="checkbox"
                                             checked={isChecked}
                                             onChange={() => toggleSelect(p)}
-                                            className="w-4 h-4 accent-[#0E7490] cursor-pointer flex-shrink-0"
+                                            className="w-4 h-4 mt-0.5 sm:mt-0 accent-[#0E7490] cursor-pointer flex-shrink-0"
                                         />
                                         <div className="min-w-0 flex-1">
-                                            <span className="font-mono font-bold text-[#0891B2] mr-2">{p.skuCode}</span>
-                                            <span className="text-slate-900 font-medium">{p.productName}</span>
-                                            <span className="text-[10px] text-gray-500 block">Giá niêm yết: {formatVND(p.wholesalePrice)}</span>
+                                            <span className="font-mono font-bold text-[#0891B2] mr-1.5">{p.skuCode}</span>
+                                            <span className="text-slate-900 font-medium break-words">{p.productName}</span>
+                                            <span className="text-[10px] text-gray-500 block mt-0.5">Giá niêm yết: {formatVND(p.wholesalePrice)}</span>
                                         </div>
                                     </div>
 
                                     {isChecked && (
-                                        <div className="flex items-center justify-end gap-2 w-full sm:w-auto pl-7 sm:pl-3 pt-1.5 sm:pt-0 border-t sm:border-t-0 border-slate-200/40">
-                                            <div className="text-right">
-                                                <label className="text-[9px] block text-amber-600 font-bold">Số lượng (chai)</label>
+                                        <div className="flex items-end justify-between sm:justify-end gap-2 w-full sm:w-auto pl-6 sm:pl-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/40">
+                                            <div className="w-20 sm:w-16 shrink-0">
+                                                <label className="text-[10px] block text-amber-700 font-bold mb-1">Số lượng</label>
                                                 <input
                                                     type="number"
+                                                    inputMode="numeric"
                                                     min={1}
                                                     value={selected[p.id]?.quantity ?? 1}
                                                     onChange={e => {
@@ -1826,15 +1829,21 @@ function BatchProductPickerModal({
                                                             [p.id]: { ...(prev[p.id] || { proposedPrice: p.wholesalePrice }), quantity: qty }
                                                         }))
                                                     }}
-                                                    className="w-16 px-2 py-1 text-xs font-bold font-mono outline-none rounded text-center"
+                                                    className="w-full px-2 py-1.5 text-base sm:text-xs font-bold font-mono outline-none rounded text-center"
                                                     style={{ background: '#FFFFFF', border: '1px solid #B45309', color: '#B45309' }}
                                                 />
                                             </div>
 
-                                            <div className="text-right">
-                                                <label className="text-[9px] block text-gray-400">Giá đề xuất</label>
+                                            <div className="flex-1 sm:flex-initial sm:w-28 min-w-0">
+                                                <div className="flex items-center justify-between gap-1 mb-1">
+                                                    <label className="text-[10px] text-slate-500 font-semibold truncate">Giá đề xuất</label>
+                                                    <span className={`text-[10px] font-bold px-1 rounded shrink-0 ${diffPct < 0 ? 'bg-red-500/10 text-red-700' : 'bg-green-500/10 text-green-700'}`}>
+                                                        {diffPct > 0 ? '+' : ''}{diffPct.toFixed(1)}%
+                                                    </span>
+                                                </div>
                                                 <input
                                                     type="number"
+                                                    inputMode="numeric"
                                                     value={currentPrice}
                                                     onChange={e => {
                                                         const val = parseFloat(e.target.value) || 0
@@ -1843,13 +1852,10 @@ function BatchProductPickerModal({
                                                             [p.id]: { ...(prev[p.id] || { quantity: 1 }), proposedPrice: val }
                                                         }))
                                                     }}
-                                                    className="w-24 px-2 py-1 text-xs font-bold font-mono outline-none rounded"
+                                                    className="w-full px-2 py-1.5 text-base sm:text-xs font-bold font-mono outline-none rounded"
                                                     style={{ background: '#FFFFFF', border: '1px solid #0E7490', color: '#0891B2' }}
                                                 />
                                             </div>
-                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${diffPct < 0 ? 'bg-red-500/10 text-red-700' : 'bg-green-500/10 text-green-700'}`}>
-                                                {diffPct > 0 ? '+' : ''}{diffPct.toFixed(1)}%
-                                            </span>
                                         </div>
                                     )}
                                 </div>
@@ -1858,14 +1864,13 @@ function BatchProductPickerModal({
                     </div>
                 </div>
 
-                <div className="p-4 border-t border-slate-200 flex justify-end gap-3">
-                    <button type="button" onClick={onClose} className="px-4 py-2 text-xs font-medium rounded text-gray-400 hover:bg-white">Huỷ</button>
+                <div className="p-3.5 sm:p-4 border-t border-slate-200 flex justify-end gap-2.5 sm:gap-3">
+                    <button type="button" onClick={onClose} className="px-4 py-2 text-xs font-medium rounded text-slate-600 border border-slate-200 hover:bg-slate-50">Huỷ</button>
                     <button
                         type="button"
                         onClick={handleConfirm}
                         disabled={selectedCount === 0}
-                        className="px-5 py-2 text-xs font-semibold rounded disabled:opacity-40"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}
+                        className="px-4 sm:px-5 py-2 text-xs font-semibold rounded disabled:opacity-40 bg-[#0E7490] text-white"
                     >
                         Thêm {selectedCount} Sản Phẩm Vào Tờ Trình
                     </button>
@@ -2152,21 +2157,21 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-4xl h-full overflow-y-auto shadow-2xl bg-white border-l border-slate-200">
+            <div className="w-full max-w-4xl h-full flex flex-col overflow-hidden shadow-2xl bg-white border-l border-slate-200">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-slate-50/50">
-                    <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                        <FileText size={22} className="text-amber-500" />
-                        {t.createDrawer.title}
+                <div className="flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-200 bg-slate-50/50 shrink-0">
+                    <h3 className="text-base sm:text-xl font-bold text-slate-900 flex items-center gap-2 min-w-0">
+                        <FileText size={20} className="text-amber-500 shrink-0" />
+                        <span className="truncate">{t.createDrawer.title}</span>
                     </h3>
-                    <button onClick={onClose} className="p-1.5 rounded hover:bg-white"><X size={20} style={{ color: '#64748B' }} /></button>
+                    <button onClick={onClose} className="p-1.5 rounded hover:bg-white shrink-0"><X size={20} style={{ color: '#64748B' }} /></button>
                 </div>
 
-                <div className="p-5 space-y-4">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden p-3.5 sm:p-5 space-y-4">
                     {/* Category */}
                     <div>
                         <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>{t.createDrawer.categoryLabel}</label>
-                        <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} style={inputStyle}>
+                        <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} style={inputStyle} className="text-base sm:text-sm">
                             {Object.entries(CATEGORY_LABELS).map(([k]) => (
                                 <option key={k} value={k}>{getCategoryLabel(k, locale)}</option>
                             ))}
@@ -2175,12 +2180,12 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
                     {/* Promotion Campaign (CTKM 1 Mã, Mua X Tặng Y, Kênh, Quota) */}
                     {form.category === 'PROMOTION_CAMPAIGN' && (
-                        <div className="space-y-4 p-5 rounded-md border border-amber-300 bg-gradient-to-br from-amber-50/70 via-orange-50/40 to-amber-50/70 shadow-xs">
+                        <div className="space-y-4 p-3.5 sm:p-5 rounded-md border border-amber-300 bg-gradient-to-br from-amber-50/70 via-orange-50/40 to-amber-50/70 shadow-xs">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-amber-200/80 pb-3 gap-2">
                                 <div>
-                                    <h4 className="text-sm font-black uppercase text-amber-950 flex items-center gap-2 tracking-wide">
-                                        <Gift size={18} className="text-amber-600" />
-                                        {locale === 'en' ? 'PROMOTION MECHANISM (BUY X GET Y & QUOTA)' : 'CẤU HÌNH CHƯƠNG TRÌNH KHUYẾN MÃI (CTKM 1 MÃ & TẶNG HÀNG)'}
+                                    <h4 className="text-xs sm:text-sm font-black uppercase text-amber-950 flex items-center gap-2 tracking-wide">
+                                        <Gift size={18} className="text-amber-600 shrink-0" />
+                                        <span>{locale === 'en' ? 'PROMOTION MECHANISM (BUY X GET Y & QUOTA)' : 'CẤU HÌNH CHƯƠNG TRÌNH KHUYẾN MÃI (CTKM 1 MÃ & TẶNG HÀNG)'}</span>
                                     </h4>
                                     <p className="text-xs text-amber-800 mt-0.5">
                                         {locale === 'en' 
@@ -2191,7 +2196,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                 <button
                                     type="button"
                                     onClick={handleAutoFillPromoContent}
-                                    className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer self-start sm:self-auto"
+                                    className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer self-start sm:self-auto shrink-0"
                                 >
                                     <Sparkles size={14} />
                                     {locale === 'en' ? 'Auto-fill Content' : 'Điền nhanh tiêu đề & nội dung'}
@@ -2200,7 +2205,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
                             {/* 1. Target Channels */}
                             <div className="space-y-2">
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between gap-2 flex-wrap">
                                     <label className="text-xs font-bold uppercase tracking-wider text-amber-900 block">
                                         1. {locale === 'en' ? 'Applicable Customer Channels *' : 'Kênh Khách Hàng Áp Dụng *'}
                                     </label>
@@ -2235,14 +2240,14 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                             : [...p.targetChannels, ch.id]
                                                     }))
                                                 }}
-                                                className={`p-2.5 rounded-lg border text-left text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
+                                                className={`p-2.5 rounded-lg border text-left text-xs font-bold flex items-center justify-between gap-2 transition-all cursor-pointer ${
                                                     isSelected 
                                                         ? 'bg-amber-100/90 border-amber-500 text-amber-950 shadow-2xs' 
                                                         : 'bg-white border-slate-200 text-slate-600 hover:border-amber-300'
                                                 }`}
                                             >
                                                 <span>{locale === 'en' ? ch.labelEn : ch.labelVi}</span>
-                                                <div className={`w-4 h-4 rounded flex items-center justify-center border text-[10px] ${
+                                                <div className={`w-4 h-4 rounded flex items-center justify-center border text-[10px] shrink-0 ${
                                                     isSelected ? 'bg-amber-600 border-amber-600 text-white' : 'border-slate-300'
                                                 }`}>
                                                     {isSelected && <Check size={10} strokeWidth={3} />}
@@ -2255,7 +2260,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
                             {/* 2. Validity Dates */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
+                                <div className="flex flex-col justify-end">
                                     <label className="text-xs font-bold uppercase tracking-wider text-amber-900 block mb-1">
                                         2. {locale === 'en' ? 'Start Date (Effective From) *' : 'Thời Gian Bắt Đầu (Từ Ngày) *'}
                                     </label>
@@ -2264,10 +2269,10 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                         value={form.startDate}
                                         onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
                                         style={inputStyle}
-                                        className="font-medium"
+                                        className="font-medium text-base sm:text-sm"
                                     />
                                 </div>
-                                <div>
+                                <div className="flex flex-col justify-end">
                                     <label className="text-xs font-bold uppercase tracking-wider text-amber-900 block mb-1">
                                         {locale === 'en' ? 'End Date (Effective Until) *' : 'Thời Gian Kết Thúc (Đến Ngày) *'}
                                     </label>
@@ -2276,15 +2281,15 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                         value={form.endDate}
                                         onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
                                         style={inputStyle}
-                                        className="font-medium"
+                                        className="font-medium text-base sm:text-sm"
                                     />
                                 </div>
                             </div>
 
                             {/* 3. Buy & Gift Mechanics */}
-                            <div className="p-4 rounded-md bg-white border border-amber-200 space-y-4">
+                            <div className="p-3 sm:p-4 rounded-md bg-white border border-amber-200 space-y-4">
                                 <div>
-                                    <div className="flex items-center justify-between mb-1.5">
+                                    <div className="flex items-center justify-between flex-wrap gap-1 mb-1.5">
                                         <label className="text-xs font-bold uppercase tracking-wider text-slate-800">
                                             3. {locale === 'en' ? 'Purchased Product (Main SKU) *' : 'Mã Sản Phẩm Mua (1 Mã Chính) *'}
                                         </label>
@@ -2292,8 +2297,8 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                             {locale === 'en' ? 'Select SKU that triggers promo' : 'Chọn SKU kích hoạt khuyến mãi'}
                                         </span>
                                     </div>
-                                    <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-                                        <div className="flex-1 w-full">
+                                    <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
+                                        <div className="flex-1 min-w-0 w-full">
                                             <SearchableProductCombobox
                                                 products={products}
                                                 selectedProductId={promoConfig.buyProductId}
@@ -2316,7 +2321,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                     min={1}
                                                     value={promoConfig.buyQty}
                                                     onChange={e => setPromoConfig(p => ({ ...p, buyQty: Math.max(1, parseInt(e.target.value) || 1) }))}
-                                                    className="w-full px-2 py-2 text-center text-xs font-black text-amber-900 outline-none bg-white"
+                                                    className="w-full px-2 py-2 text-center text-base sm:text-xs font-black text-amber-900 outline-none bg-white"
                                                 />
                                                 <span className="text-xs px-2 text-slate-500 font-medium">
                                                     {locale === 'en' ? 'btls' : 'chai'}
@@ -2332,7 +2337,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                         <label className="text-xs font-bold uppercase tracking-wider text-slate-800">
                                             {locale === 'en' ? 'Gift Product (Free of charge - 0 VND) *' : 'Sản Phẩm Quà Tặng (Đơn Giá 0 VNĐ) *'}
                                         </label>
-                                        <div className="flex items-center gap-3 text-xs">
+                                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
                                             <label className="flex items-center gap-1.5 cursor-pointer font-bold text-slate-700">
                                                 <input
                                                     type="radio"
@@ -2356,11 +2361,11 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-                                        <div className="flex-1 w-full">
+                                    <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
+                                        <div className="flex-1 min-w-0 w-full">
                                             {promoConfig.giftType === 'SAME_PRODUCT' ? (
-                                                <div className="p-2.5 rounded-lg bg-amber-50/70 border border-amber-200 text-xs flex items-center justify-between">
-                                                    <span className="font-bold text-amber-950">
+                                                <div className="p-2.5 rounded-lg bg-amber-50/70 border border-amber-200 text-xs flex items-center justify-between gap-2">
+                                                    <span className="font-bold text-amber-950 truncate">
                                                         {selectedBuyProduct ? `[${selectedBuyProduct.skuCode}] ${selectedBuyProduct.productName}` : (locale === 'en' ? 'Select purchased product above' : 'Vui lòng chọn sản phẩm mua ở trên')}
                                                     </span>
                                                     <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900 whitespace-nowrap shrink-0">
@@ -2390,7 +2395,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                     min={1}
                                                     value={promoConfig.giftQty}
                                                     onChange={e => setPromoConfig(p => ({ ...p, giftQty: Math.max(1, parseInt(e.target.value) || 1) }))}
-                                                    className="w-full px-2 py-2 text-center text-xs font-black text-emerald-900 outline-none bg-white"
+                                                    className="w-full px-2 py-2 text-center text-base sm:text-xs font-black text-emerald-900 outline-none bg-white"
                                                 />
                                                 <span className="text-xs px-2 text-slate-500 font-medium">
                                                     {locale === 'en' ? 'btls' : 'chai'}
@@ -2402,12 +2407,12 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                             </div>
 
                             {/* 4. Quota Limits */}
-                            <div className="p-4 rounded-md bg-white border border-amber-200 space-y-3">
+                            <div className="p-3 sm:p-4 rounded-md bg-white border border-amber-200 space-y-3">
                                 <label className="text-xs font-bold uppercase tracking-wider text-slate-800 block">
                                     4. {locale === 'en' ? 'Maximum Quantity Limits (Quota) *' : 'Thiết Lập Số Lượng Tối Đa (Quota Hạn Mức) *'}
                                 </label>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div>
+                                    <div className="flex flex-col justify-end">
                                         <label className="text-[11px] font-bold text-slate-600 block mb-1">
                                             {locale === 'en' ? 'Total campaign gift allocation (bottles/items)' : 'Tổng số lượng quà tặng toàn chiến dịch (chai/suất)'}
                                         </label>
@@ -2417,16 +2422,16 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                 min={1}
                                                 value={promoConfig.maxTotalQty}
                                                 onChange={e => setPromoConfig(p => ({ ...p, maxTotalQty: Math.max(1, parseInt(e.target.value) || 1) }))}
-                                                className="w-full px-3 py-2 text-xs font-bold text-slate-900 outline-none"
+                                                className="w-full px-3 py-2 text-base sm:text-xs font-bold text-slate-900 outline-none"
                                                 placeholder="VD: 300"
                                             />
-                                            <span className="text-xs px-3 text-slate-500 bg-slate-50 border-l border-slate-200 py-2">
+                                            <span className="text-xs px-3 text-slate-500 bg-slate-50 border-l border-slate-200 py-2 whitespace-nowrap">
                                                 {locale === 'en' ? 'total' : 'tổng'}
                                             </span>
                                         </div>
                                     </div>
 
-                                    <div>
+                                    <div className="flex flex-col justify-end">
                                         <label className="text-[11px] font-bold text-slate-600 block mb-1">
                                             {locale === 'en' ? 'Max gift bottles per order / customer' : 'Số lượng quà tặng tối đa trên mỗi đơn hàng / mỗi khách'}
                                         </label>
@@ -2436,10 +2441,10 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                 min={1}
                                                 value={promoConfig.maxQtyPerOrder}
                                                 onChange={e => setPromoConfig(p => ({ ...p, maxQtyPerOrder: Math.max(1, parseInt(e.target.value) || 1) }))}
-                                                className="w-full px-3 py-2 text-xs font-bold text-slate-900 outline-none"
+                                                className="w-full px-3 py-2 text-base sm:text-xs font-bold text-slate-900 outline-none"
                                                 placeholder="VD: 5"
                                             />
-                                            <span className="text-xs px-3 text-slate-500 bg-slate-50 border-l border-slate-200 py-2">
+                                            <span className="text-xs px-3 text-slate-500 bg-slate-50 border-l border-slate-200 py-2 whitespace-nowrap">
                                                 {locale === 'en' ? 'max/order' : 'tối đa/đơn'}
                                             </span>
                                         </div>
@@ -2447,7 +2452,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                 </div>
 
                                 {calculatedPromoBudget > 0 && (
-                                    <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs">
+                                    <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-2 flex-wrap text-xs">
                                         <span className="font-semibold text-emerald-900">
                                             {locale === 'en' ? 'Estimated Total Gift Budget: ' : 'Ước tính ngân sách quà tặng toàn chiến dịch: '}
                                         </span>
@@ -2462,7 +2467,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
                     {/* Tasting / Training Custom Fields */}
                     {(form.category === 'TASTING' || form.category === 'SPECIAL_EVENT' || form.category === 'INTERNAL_TRAINING') && (
-                        <div className={`space-y-4 p-4 rounded-md border ${form.category === 'INTERNAL_TRAINING' ? 'border-emerald-200/90 bg-emerald-50/30' : 'border-amber-200/90 bg-amber-50/30'} shadow-xs`}>
+                        <div className={`space-y-4 p-3.5 sm:p-4 rounded-md border ${form.category === 'INTERNAL_TRAINING' ? 'border-emerald-200/90 bg-emerald-50/30' : 'border-amber-200/90 bg-amber-50/30'} shadow-xs`}>
                             <div>
                                 <label className={`text-xs font-bold uppercase mb-1.5 block tracking-wider ${form.category === 'INTERNAL_TRAINING' ? 'text-emerald-900' : 'text-amber-900'}`}>
                                     {form.category === 'INTERNAL_TRAINING' ? 'Đơn Vị / Khách Hàng / Đối Tác Phối Hợp (Tùy Chọn)' : 'Khách Hàng Áp Dụng Tasting (Tùy Chọn)'}
@@ -2486,7 +2491,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                     <label className={`text-xs font-bold uppercase tracking-wider ${form.category === 'INTERNAL_TRAINING' ? 'text-emerald-900' : 'text-amber-900'}`}>
                                         {form.category === 'INTERNAL_TRAINING' ? 'Rượu Vang Dùng Thử Nếm Trong Đào Tạo (Tùy Chọn)' : 'Mã Sản Phẩm & Số Lượng Thử Vang (Tasting) *'}
                                     </label>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 flex-wrap">
                                         <button 
                                             type="button" 
                                             onClick={() => setBatchPickerOpen(true)}
@@ -2520,7 +2525,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                             return (
                                                 <div 
                                                     key={idx} 
-                                                    className="flex flex-col sm:flex-row gap-2.5 sm:items-center p-3 rounded-lg bg-white border border-slate-200 shadow-2xs relative"
+                                                    className="flex flex-col sm:flex-row gap-2.5 sm:items-end p-3 rounded-lg bg-white border border-slate-200 shadow-2xs relative"
                                                     style={{ zIndex: priceLines.length - idx + 10 }}
                                                 >
                                                     <div className="flex-1 min-w-0 w-full">
@@ -2536,8 +2541,8 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                         />
                                                     </div>
                                                     
-                                                    <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                                                        <div className="w-24 sm:w-28 text-center flex-shrink-0">
+                                                    <div className="flex items-end justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                                                        <div className="w-28 text-center flex-shrink-0">
                                                             <label className="text-[10px] block text-amber-800 font-bold mb-1">Số lượng (chai)</label>
                                                             <input 
                                                                 type="number"
@@ -2548,10 +2553,10 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                                     copy[idx].quantity = Math.max(1, parseInt(e.target.value) || 1)
                                                                     setPriceLines(copy)
                                                                 }}
+                                                                className="text-base sm:text-xs"
                                                                 style={{
                                                                     width: '100%',
                                                                     padding: '6px 8px',
-                                                                    fontSize: '13px',
                                                                     background: '#FFFFFF',
                                                                     border: '1px solid #B45309',
                                                                     fontWeight: 'bold',
@@ -2563,15 +2568,15 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                             />
                                                         </div>
 
-                                                        <div className="text-right flex flex-col justify-center px-2 min-w-[85px] sm:min-w-[95px] flex-shrink-0">
-                                                            <span className="text-[10px] block text-slate-500 font-medium">Giá niêm yết</span>
+                                                        <div className="text-right flex flex-col justify-end pb-1.5 px-1 min-w-[85px] sm:min-w-[95px] flex-shrink-0">
+                                                            <span className="text-[10px] block text-slate-500 font-medium mb-0.5">Giá niêm yết</span>
                                                             <span className="text-xs block font-mono font-bold text-slate-900">{formatVND(wholesale)}</span>
                                                         </div>
 
                                                         <button 
                                                             type="button" 
                                                             onClick={() => setPriceLines(priceLines.filter((_, i) => i !== idx))}
-                                                            className="p-1.5 rounded text-rose-500 hover:bg-rose-50 transition-all flex-shrink-0 cursor-pointer"
+                                                            className="p-2 rounded text-rose-500 hover:bg-rose-50 transition-all flex-shrink-0 cursor-pointer mb-0.5"
                                                             title="Xóa dòng"
                                                         >
                                                             <Trash2 size={16} />
@@ -2588,7 +2593,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
                     {/* Price adjustment custom fields */}
                     {form.category === 'PRICE_ADJUSTMENT' && (
-                        <div className="space-y-4 p-4 rounded-md border border-slate-200 bg-white">
+                        <div className="space-y-4 p-3.5 sm:p-4 rounded-md border border-slate-200 bg-white">
                             <div>
                                 <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#475569' }}>Khách hàng chính áp dụng *</label>
                                 <SearchableCustomerCombobox
@@ -2612,13 +2617,13 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                     <div className="flex items-center justify-between">
                                         <label className="text-xs font-bold text-[#0891B2] flex items-center gap-1.5">
                                             <Building2 size={13} className="shrink-0" />
-                                            Áp dụng đồng thời cho các cơ sở khác ({additionalBranches.length} cơ sở đã chọn)
+                                            <span>Áp dụng đồng thời cho các cơ sở khác ({additionalBranches.length} cơ sở đã chọn)</span>
                                         </label>
                                     </div>
 
                                     {relatedBranchesForProposal.length > 0 && (
                                         <div className="p-2.5 rounded bg-[#B45309]/10 border border-[#B45309]/30 space-y-1.5">
-                                            <div className="flex items-center justify-between text-[11px]">
+                                            <div className="flex items-center justify-between flex-wrap gap-1 text-[11px]">
                                                 <span className="text-[#B45309] font-semibold">Gợi ý cùng chuỗi / thương hiệu ({relatedBranchesForProposal.length} cơ sở):</span>
                                                 <button
                                                     type="button"
@@ -2659,29 +2664,31 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                             )}
 
                             {/* Effective Validity Period (Start & End Date) */}
-                            <div className="grid grid-cols-2 gap-3 p-3 rounded-lg border border-slate-200 bg-white">
-                                <div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-lg border border-slate-200 bg-white">
+                                <div className="flex flex-col justify-end">
                                     <label className="text-xs font-bold uppercase mb-1 flex items-center gap-1 text-[#0891B2]">
                                         <Calendar size={12} className="shrink-0" />
-                                        Ngày bắt đầu hiệu lực
+                                        <span>Ngày bắt đầu hiệu lực</span>
                                     </label>
                                     <input 
                                         type="date"
                                         value={form.startDate}
                                         onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
                                         style={{ ...inputStyle, background: '#FFFFFF', borderColor: '#E2E8F0' }}
+                                        className="text-base sm:text-sm"
                                     />
                                 </div>
-                                <div>
+                                <div className="flex flex-col justify-end">
                                     <label className="text-xs font-bold uppercase mb-1 flex items-center gap-1 text-[#B45309]">
                                         <Calendar size={12} className="shrink-0" />
-                                        Ngày kết thúc hiệu lực
+                                        <span>Ngày kết thúc hiệu lực</span>
                                     </label>
                                     <input 
                                         type="date"
                                         value={form.endDate}
                                         onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
                                         style={{ ...inputStyle, background: '#FFFFFF', borderColor: '#E2E8F0' }}
+                                        className="text-base sm:text-sm"
                                     />
                                 </div>
                             </div>
@@ -2692,6 +2699,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                     value={form.scope} 
                                     onChange={e => setForm(f => ({ ...f, scope: e.target.value }))} 
                                     style={{ ...inputStyle, background: '#FFFFFF' }}
+                                    className="text-base sm:text-sm"
                                 >
                                     <option value="ENTIRE_PORTFOLIO">Toàn bộ danh mục (% chiết khấu)</option>
                                     <option value="SPECIFIC_PRODUCTS">Một số sản phẩm cụ thể (gõ giá riêng)</option>
@@ -2707,16 +2715,17 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                         placeholder="VD: 15" 
                                         value={form.discountPct} 
                                         onChange={e => setForm(f => ({ ...f, discountPct: e.target.value }))} 
-                                        style={{ ...inputStyle, background: '#FFFFFF' }} 
+                                        style={{ ...inputStyle, background: '#FFFFFF' }}
+                                        className="text-base sm:text-sm"
                                     />
                                 </div>
                             )}
 
                             {(form.scope === 'SPECIFIC_PRODUCTS' || form.scope === 'MIXED') && (
                                 <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between flex-wrap gap-2">
                                         <label className="text-xs font-semibold uppercase block" style={{ color: '#475569' }}>Đề xuất giá theo chai *</label>
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-3 flex-wrap">
                                             <button 
                                                 type="button" 
                                                 onClick={() => setBatchPickerOpen(true)}
@@ -2763,9 +2772,9 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                         />
                                                     </div>
                                                     
-                                                    <div className="flex items-end justify-between sm:justify-end gap-2.5 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                                                        <div className="w-20 flex-shrink-0">
-                                                            <label className="text-[9px] block text-slate-600">Số lượng</label>
+                                                    <div className="grid grid-cols-[72px_1fr_auto_auto] sm:flex items-end gap-2 sm:gap-2.5 w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                                                        <div className="w-full sm:w-20 flex-shrink-0">
+                                                            <label className="text-[10px] font-semibold block text-slate-600 mb-1">Số lượng</label>
                                                             <input 
                                                                 type="number"
                                                                 min={1}
@@ -2775,15 +2784,16 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                                     copy[idx].quantity = Math.max(1, parseInt(e.target.value) || 1)
                                                                     setPriceLines(copy)
                                                                 }}
-                                                                style={{ ...inputStyle, padding: '5px 8px', fontSize: '12px', background: '#FFFFFF', fontWeight: 'bold', color: '#B45309', textAlign: 'center' }}
+                                                                className="text-base sm:text-xs"
+                                                                style={{ ...inputStyle, padding: '6px 8px', background: '#FFFFFF', fontWeight: 'bold', color: '#B45309', textAlign: 'center' }}
                                                             />
                                                         </div>
 
-                                                        <div className="w-28 flex-shrink-0">
-                                                            <div className="flex items-center justify-between mb-0.5">
-                                                                <label className="text-[9px]" style={{ color: '#64748B' }}>Giá đề xuất</label>
+                                                        <div className="w-full sm:w-28 min-w-0 flex-shrink-0">
+                                                            <div className="flex items-center justify-between gap-1 mb-1">
+                                                                <label className="text-[10px] font-semibold truncate" style={{ color: '#64748B' }}>Giá đề xuất</label>
                                                                 {line.proposedPrice > 0 && wholesale > 0 && (
-                                                                    <span className={`text-[9px] font-bold ${diffPct < 0 ? 'text-red-700' : 'text-green-700'}`}>
+                                                                    <span className={`text-[9px] font-bold shrink-0 ${diffPct < 0 ? 'text-red-700' : 'text-green-700'}`}>
                                                                         {diffPct > 0 ? '+' : ''}{diffPct.toFixed(1)}%
                                                                     </span>
                                                                 )}
@@ -2797,12 +2807,13 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                                     setPriceLines(copy)
                                                                 }}
                                                                 placeholder="0"
-                                                                style={{ ...inputStyle, padding: '5px 8px', fontSize: '12px', background: '#FFFFFF', fontWeight: 'bold', color: '#0891B2' }}
+                                                                className="text-base sm:text-xs"
+                                                                style={{ ...inputStyle, padding: '6px 8px', background: '#FFFFFF', fontWeight: 'bold', color: '#0891B2' }}
                                                             />
                                                         </div>
                                                         
-                                                        <div className="text-right flex flex-col justify-end pb-1 pr-1 min-w-[70px] sm:min-w-[75px] flex-shrink-0">
-                                                            <span className="text-[9px] block text-gray-500">Gốc (WS)</span>
+                                                        <div className="text-right flex flex-col justify-end pb-1.5 pr-0.5 min-w-[65px] sm:min-w-[75px] flex-shrink-0">
+                                                            <span className="text-[9px] block text-slate-500 mb-0.5">Gốc (WS)</span>
                                                             <span className="text-[11px] block font-mono font-semibold" style={{ color: '#0F172A' }}>{formatVND(wholesale)}</span>
                                                         </div>
 
@@ -2812,7 +2823,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                             className="p-1.5 rounded text-red-700 hover:bg-red-500/10 mb-0.5 cursor-pointer flex-shrink-0"
                                                             title="Xóa dòng"
                                                         >
-                                                            <X size={15} />
+                                                            <X size={16} />
                                                         </button>
                                                     </div>
                                                 </div>
@@ -2846,7 +2857,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                     {/* Priority */}
                     <div>
                         <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>{t.createDrawer.priorityLabel}</label>
-                        <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))} style={inputStyle}>
+                        <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))} style={inputStyle} className="text-base sm:text-sm">
                             {Object.entries(PRIORITY_LABELS).map(([k]) => (
                                 <option key={k} value={k}>{getPriorityLabel(k, locale).label}</option>
                             ))}
@@ -2854,25 +2865,27 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                     </div>
 
                     {/* Title & English Title */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 md:gap-3">
+                        <div className="flex flex-col justify-end">
                             <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>
                                 {locale === 'en' ? 'Title (Vietnamese) *' : 'Tiêu đề (Tiếng Việt) *'}
                             </label>
                             <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                                 placeholder={locale === 'en' ? 'e.g. Special pricing proposal for Daewoo Hotel' : 'VD: Đề xuất giá đặc biệt cho Khách sạn Daewoo'}
                                 style={inputStyle}
+                                className="text-base sm:text-sm"
                                 onFocus={e => e.target.style.borderColor = '#0891B2'}
                                 onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
                         </div>
-                        <div>
-                            <label className="text-xs font-semibold uppercase mb-1.5 flex items-center justify-between" style={{ color: '#64748B' }}>
+                        <div className="flex flex-col justify-end">
+                            <label className="text-xs font-semibold uppercase mb-1.5 flex items-center justify-between flex-wrap gap-x-2 gap-y-0.5" style={{ color: '#64748B' }}>
                                 <span>{locale === 'en' ? 'Title (English)' : 'Tiêu đề tiếng Anh / English Title'}</span>
                                 <span className="text-[10px] lowercase font-normal text-slate-400">{locale === 'en' ? '(Bilingual option)' : '(Tùy chọn song ngữ)'}</span>
                             </label>
                             <input value={form.titleEn} onChange={e => setForm(f => ({ ...f, titleEn: e.target.value }))}
                                 placeholder="e.g. Special pricing proposal for Daewoo Hotel"
                                 style={inputStyle}
+                                className="text-base sm:text-sm"
                                 onFocus={e => e.target.style.borderColor = '#0891B2'}
                                 onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
                         </div>
@@ -2884,6 +2897,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                         <textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
                             rows={5} placeholder={t.createDrawer.contentPlaceholder}
                             style={{ ...inputStyle, resize: 'vertical' }}
+                            className="text-base sm:text-sm"
                             onFocus={e => e.target.style.borderColor = '#0891B2'}
                             onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
                     </div>
@@ -2894,6 +2908,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                         <textarea value={form.justification} onChange={e => setForm(f => ({ ...f, justification: e.target.value }))}
                             rows={3} placeholder={locale === 'en' ? 'Provide background, rationale, and cost-benefit analysis...' : 'Căn cứ và phân tích chi phí/lợi ích...'}
                             style={{ ...inputStyle, resize: 'vertical' }}
+                            className="text-base sm:text-sm"
                             onFocus={e => e.target.style.borderColor = '#0891B2'}
                             onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
                     </div>
@@ -2904,49 +2919,52 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                         <input value={form.expectedOutcome} onChange={e => setForm(f => ({ ...f, expectedOutcome: e.target.value }))}
                             placeholder={locale === 'en' ? 'e.g. Expand 15 new SKUs, increase revenue by 20%' : 'VD: Mở rộng danh mục 15 SKU mới, tăng doanh thu 20%'}
                             style={inputStyle}
+                            className="text-base sm:text-sm"
                             onFocus={e => e.target.style.borderColor = '#0891B2'}
                             onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
                     </div>
 
                     {/* Amount + Deadline row */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+                        <div className="flex flex-col justify-end">
                             <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>{t.createDrawer.valueLabel}</label>
                             <input type="number" value={form.estimatedAmount}
                                 onChange={e => setForm(f => ({ ...f, estimatedAmount: e.target.value }))}
                                 placeholder="0" style={inputStyle}
+                                className="text-base sm:text-sm"
                                 onFocus={e => e.target.style.borderColor = '#0891B2'}
                                 onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
                         </div>
-                        <div>
+                        <div className="flex flex-col justify-end">
                             <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>{locale === 'en' ? 'Deadline' : 'Hạn xử lý'}</label>
                             <input type="date" value={form.deadline}
                                 onChange={e => setForm(f => ({ ...f, deadline: e.target.value }))}
                                 style={inputStyle}
+                                className="text-base sm:text-sm"
                                 onFocus={e => e.target.style.borderColor = '#0891B2'}
                                 onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
                         </div>
                     </div>
+                </div>
 
-                    {/* Submit buttons */}
-                    <div className="flex gap-3 pt-4" style={{ borderTop: '1px solid #E2E8F0' }}>
-                        <button
-                            onClick={handleSave}
-                            disabled={saving}
-                            className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all"
-                            style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)' }}
-                        >
-                            {saving ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
-                            {t.actions.saveDraft}
-                        </button>
-                        <button
-                            onClick={onClose}
-                            className="px-5 py-3 text-sm font-medium rounded-md"
-                            style={{ background: '#FFFFFF', color: '#64748B', border: '1px solid #E2E8F0' }}
-                        >
-                            {t.actions.cancel}
-                        </button>
-                    </div>
+                {/* Sticky Submit Footer */}
+                <div className="flex gap-3 px-4 py-3 sm:px-5 sm:py-4 border-t border-slate-200 bg-white shrink-0">
+                    <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 sm:py-3 text-sm font-semibold rounded-md transition-all cursor-pointer"
+                        style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)' }}
+                    >
+                        {saving ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
+                        {t.actions.saveDraft}
+                    </button>
+                    <button
+                        onClick={onClose}
+                        className="px-5 py-2.5 sm:py-3 text-sm font-medium rounded-md cursor-pointer hover:bg-slate-50"
+                        style={{ background: '#FFFFFF', color: '#64748B', border: '1px solid #E2E8F0' }}
+                    >
+                        {t.actions.cancel}
+                    </button>
                 </div>
             </div>
         </div>
