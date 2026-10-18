@@ -137,7 +137,7 @@ export function ContactsPanel({ customerId }: { customerId: string }) {
                             className="px-3 py-1.5 text-xs rounded" style={{ color: '#64748B' }}>Hủy</button>
                         <button onClick={handleSave} disabled={!form.name.trim() || saving}
                             className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded disabled:opacity-50"
-                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                            style={{ background: '#0E7490', color: '#FFFFFF' }}>
                             {saving ? <Loader2 size={10} className="animate-spin" /> : <Check size={10} />}
                             {editId ? 'Cập Nhật' : 'Thêm'}
                         </button>
@@ -224,7 +224,7 @@ export function TagsPanel({ customerId }: { customerId: string }) {
                         style={{ background: `${t.color}20`, color: t.color, border: `1px solid ${t.color}40` }}>
                         {t.tag}
                         <button onClick={() => handleRemove(t.id)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 -mr-1 rounded-full hover:bg-white/10">
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 -mr-1 rounded-full hover:bg-black/10">
                             <X size={8} />
                         </button>
                     </span>
@@ -254,7 +254,7 @@ export function TagsPanel({ customerId }: { customerId: string }) {
                             onKeyDown={e => e.key === 'Enter' && handleCustom()} />
                         <button onClick={handleCustom} disabled={!customTag.trim() || saving}
                             className="px-3 py-1.5 text-xs font-semibold rounded disabled:opacity-50"
-                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                            style={{ background: '#0E7490', color: '#FFFFFF' }}>
                             Thêm
                         </button>
                     </div>

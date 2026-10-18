@@ -412,7 +412,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                             <button onClick={() => setShowContactForm(false)} className="text-[10px] px-2 py-1" style={{ color: '#64748B' }}>Hủy</button>
                                                             <button onClick={handleAddContact} disabled={!contactName.trim() || savingContact}
                                                                 className="text-[10px] px-3 py-1 rounded font-semibold disabled:opacity-50"
-                                                                style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                                                                style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                                                 {savingContact ? 'Đang tạo...' : 'Lưu'}
                                                             </button>
                                                         </div>
@@ -428,10 +428,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                             </div>
                                                             {!c.isPrimary && (
                                                                 <button onClick={() => handleDeleteContact(c.id, c.name)}
-                                                                    className="p-1 rounded transition-all opacity-0 group-hover:opacity-100"
-                                                                    style={{ color: '#64748B' }}
-                                                                    onMouseEnter={e => { e.currentTarget.style.color = '#B91C1C'; e.currentTarget.style.background = 'rgba(185,28,28,0.12)' }}
-                                                                    onMouseLeave={e => { e.currentTarget.style.color = '#64748B'; e.currentTarget.style.background = '' }}
+                                                                    className="p-1 rounded transition-all opacity-0 group-hover:opacity-100 text-[#64748B] hover:text-[#B91C1C] hover:bg-[#B91C1C]/12"
                                                                     title="Xóa liên hệ">
                                                                     <Trash2 size={13} />
                                                                 </button>
@@ -503,7 +500,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                             <button onClick={() => setShowAddressForm(false)} className="text-[10px] px-2 py-1" style={{ color: '#64748B' }}>Hủy</button>
                                                             <button onClick={handleAddAddress} disabled={!addressVal.trim() || savingAddress}
                                                                 className="text-[10px] px-3 py-1 rounded font-semibold disabled:opacity-50"
-                                                                style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                                                                style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                                                 {savingAddress ? 'Đang tạo...' : 'Lưu'}
                                                             </button>
                                                         </div>
@@ -519,10 +516,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                                             </div>
                                                             {!a.isDefault && (
                                                                 <button onClick={() => handleDeleteAddress(a.id, a.label)}
-                                                                    className="p-1 rounded transition-all opacity-0 group-hover:opacity-100"
-                                                                    style={{ color: '#64748B' }}
-                                                                    onMouseEnter={e => { e.currentTarget.style.color = '#B91C1C'; e.currentTarget.style.background = 'rgba(185,28,28,0.12)' }}
-                                                                    onMouseLeave={e => { e.currentTarget.style.color = '#64748B'; e.currentTarget.style.background = '' }}
+                                                                    className="p-1 rounded transition-all opacity-0 group-hover:opacity-100 text-[#64748B] hover:text-[#B91C1C] hover:bg-[#B91C1C]/12"
                                                                     title="Xóa địa chỉ">
                                                                     <Trash2 size={13} />
                                                                 </button>
@@ -604,7 +598,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                             <p className="text-xs uppercase tracking-widest font-bold mb-3" style={{ color: '#0891B2' }}>── Danh Mục Sản Phẩm ({products.length})</p>
                                             <div className="space-y-1.5">
                                                 {products.slice(0, 15).map(p => (
-                                                    <div key={p.id} className="flex items-center justify-between py-2 px-3 rounded" style={{ background: '#FFFFFF' }}>
+                                                    <div key={p.id} className="flex items-center justify-between py-2 px-3 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                                         <div>
                                                             <span className="text-xs font-semibold" style={{ color: '#0F172A' }}>{p.productName}</span>
                                                             <span className="text-[10px] ml-2" style={{ color: '#64748B' }}>{p.skuCode}</span>
@@ -811,7 +805,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                                         <div className="flex justify-end mt-2">
                                             <button onClick={handleAddNote} disabled={!newNote.trim() || savingNote}
                                                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold disabled:opacity-50"
-                                                style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                                                style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                                 {savingNote ? <Loader2 size={12} className="animate-spin" /> : <MessageSquare size={12} />}
                                                 {savingNote ? 'Đang lưu...' : 'Thêm ghi chú'}
                                             </button>

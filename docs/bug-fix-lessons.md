@@ -4196,3 +4196,42 @@ Qua đợt kiểm tra chuyên sâu toàn bộ 38 routes và tất cả component
 ### Bài học
 > ⚠️ **RULE 142: (1) Mọi bố cục chia cột 12 phần (`grid-cols-12`) BẮT BUỘC phải khai báo `grid-cols-1 lg:grid-cols-12` và dùng prefix `lg:col-span-*` cho các cột con để tự động xếp chồng trên điện thoại; (2) Mọi bảng `<table>` trong Page, Tab, Drawer hoặc Modal (trừ mẫu in ẩn `hidden print:block`) BẮT BUỘC phải đặt trong `<div className="overflow-x-auto">`; (3) Mọi popup/dropdown có chiều rộng lớn (`w-[520px]`, `w-80`, `w-72`) BẮT BUỘC phải giới hạn `w-[calc(100vw-2.5rem)]` hoặc `max-w-[calc(100vw-2rem)]` trên màn hình `< 640px`.**
 
+---
+
+## BUG-143: Bất Đồng Nhất Ngôn Ngữ Thiết Kế (UI Design System v3.9) — Lỗi Trắng-Trên-Trắng (White-on-White Borders/Tracks/Sub-cards), Nút `slate-900` Lệch Tông, Nút `#0891B2` Kém Tương Phản & Hover DOM Inline
+
+**Ngày:** 2026-10-18
+**Severity:** 🟡 High — Đồng nhất thị giác, khả năng tiếp cận WCAG AA và tuân thủ `docs/architecture/ui-design-system.md` trên 80+ files
+
+### Triệu chứng
+1. **Di tích Codemod Trắng-Trên-Trắng (`#FFFFFF` trên `#FFFFFF`):**
+   - Đường viền `border: 1px solid #FFFFFF` / `borderColor: '#FFFFFF'` làm mất toàn bộ đường kẻ phân cách dòng trong `AuditLogClient.tsx`, header drawer trong `SettingsClient.tsx` và `Header.tsx`.
+   - Thanh tiến độ (progress bar track `h-1.5` / `h-2`) có `background: '#FFFFFF'` nằm trên nền card `#FFFFFF` trở nên tàng hình tại `AllocationClient.tsx`, `AuditLogClient.tsx`, `LandedCostTab.tsx`, `FinanceClient.tsx`, `KpiClient.tsx`, `SettingsClient.tsx`.
+   - Hơn 100 thẻ thống kê con (sub-cards), dòng danh sách tóm tắt và header bảng (`<thead><tr>`) có `style={{ background: '#FFFFFF' }}` không viền nằm bên trong card `#FFFFFF`, khiến bố cục bị phẳng lì và mất phân cấp thị giác.
+   - Skeleton loading trong `margin/page.tsx`, `ShipmentsClient.tsx`, `SuppliersClient.tsx` dùng `background: '#FFFFFF'` trên nền trắng; `payment-requests/loading.tsx` và `media/loading.tsx` dùng spinner thay vì `<SubPageLoading />`.
+2. **Nút bấm & Tab Active dùng màu đen/xám đậm (`bg-slate-900` / `bg-slate-800`) hoặc Hover Dark Mode cũ (`hover:bg-slate-800`, `hover:bg-white/10`):**
+   - Các phân hệ `SOP`, `PaymentRequests`, `POFinancialTab`, `ProcurementCashFlowModal`, `DailyCallPlannerView`, `CustomerAnalyticsDashboard`, `Warehouse` (`InspectionTab`, `ReplenishmentTab`, `WarehouseMapTab`), `StockCount` (`MobileLocationCounter`) dùng `bg-slate-900` / `bg-slate-800` cho nút chính và tab active thay vì màu nhận diện thương hiệu `#0E7490` (`lys-teal-strong`).
+   - Nút chuyển tuần trong `WeeklyVisitPlannerPanel.tsx` còn sót `hover:bg-slate-800` làm tối đen nút khi di chuột vào; `MarginClient.tsx`, `ContactsTagsPanel.tsx`, `SignaturePad.tsx` còn sót `hover:bg-white/10`.
+3. **Nút hành động chính dùng `#0891B2` với chữ `#FFFFFF` (chỉ đạt tương phản 3.7:1, dưới ngưỡng WCAG AA 4.5:1):**
+   - 96 vị trí nút bấm chính (15 class Tailwind + 81 inline style) dùng `background: '#0891B2', color: '#FFFFFF'` thay vì `#0E7490` (tương phản 5.36:1).
+4. **Vi phạm quy tắc Hover & Typography của Design System:**
+   - 56 vị trí dùng `onMouseEnter`/`onMouseLeave` can thiệp trực tiếp `e.currentTarget.style.background` (trong đó 7 vị trí gán ngược về `#FFFFFF` làm mất màu nền).
+   - Còn sót `rounded-xl` tại 3 modal xem tài liệu của `Products` và tiêu đề trang trùng lặp dưới thanh `Header.tsx`.
+
+### Nguyên nhân gốc rễ
+- Codemod tự động trước đây khi chuyển từ Dark Theme (`#142433` card / `#1B2E3D` sub-card & border) sang Light Theme đã gộp cả hai mã màu thành `#FFFFFF`, dẫn đến các phần tử con hoặc đường viền bên trong card trắng bị trùng màu nền.
+- Một số module mới được phát triển riêng lẻ sử dụng `bg-slate-900` của Shadcn mặc định hoặc `#0891B2` thay vì token `lys-teal-strong` (`#0E7490`).
+
+### Cách khắc phục
+1. **Xử lý triệt để 100% lỗi Trắng-Trên-Trắng (White-on-White):**
+   - Đổi toàn bộ viền `#FFFFFF` và progress bar track `#FFFFFF` sang `#E2E8F0`.
+   - Chuẩn hóa toàn bộ >100 thẻ sub-card không viền bên trong card/drawer trắng sang `background: '#F8FAFC', border: '1px solid #E2E8F0'` và `<thead><tr>` sang `#F8FAFC`.
+   - Chuẩn hóa `media/loading.tsx`, `payment-requests/loading.tsx`, `margin/page.tsx`, `ShipmentsClient.tsx`, `SuppliersClient.tsx` về skeleton chuẩn Light Design System.
+2. **Đồng bộ 100% Nút Chính & Tab Active về `#0E7490` (`lys-teal-strong`, hover `#155E75`):**
+   - Thay thế toàn bộ nút/pill `bg-slate-900` / `bg-slate-800` và 96 nút `#0891B2` chữ trắng sang `#0E7490` đạt chuẩn tương phản WCAG AA (5.36:1).
+3. **Loại bỏ hoàn toàn 56 vị trí `onMouseEnter`/`onMouseLeave` đổi màu inline, xóa `rounded-xl` & `fontFamily` inline thừa, đồng bộ `Header.tsx` & `globals.css`.**
+
+### Bài học
+> ⚠️ **RULE 143: (1) TUYỆT ĐỐI KHÔNG đặt phần tử con có `background: '#FFFFFF'` không viền hoặc thanh tiến độ / skeleton có `background: '#FFFFFF'` bên trong Card/Drawer nền trắng (`#FFFFFF`) — thẻ con BẮT BUỘC phải dùng `background: '#F8FAFC'` kèm `border: '1px solid #E2E8F0'`, và rãnh progress bar / skeleton phải dùng `#E2E8F0`; (2) Mọi nút hành động chính (Primary Button) và Tab/Pill đang chọn có chữ trắng BẮT BUỘC phải dùng `bg-[#0E7490] hover:bg-[#155E75] text-white` (`bg-lys-teal-strong`), CẤM dùng `bg-slate-900`/`bg-slate-800` hoặc `bg-[#0891B2] text-white`; (3) CẤM dùng `onMouseEnter`/`onMouseLeave` để đổi màu DOM style inline — luôn dùng class `hover:` của Tailwind CSS.**
+
+

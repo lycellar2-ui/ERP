@@ -177,7 +177,7 @@ function CreateShipmentDrawer({ open, onClose, onCreated }: {
                     <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm" style={{ color: '#475569', border: '1px solid #E2E8F0' }}>Huỷ</button>
                     <button onClick={handleSave} disabled={saving}
                         className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold disabled:opacity-60"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                        style={{ background: '#0E7490', color: '#FFFFFF' }}>
                         {saving ? <Loader2 size={14} className="animate-spin" /> : <Ship size={14} />}
                         {saving ? 'Đang tạo...' : 'Tạo Lô Hàng'}
                     </button>
@@ -221,7 +221,7 @@ function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose:
                                 { label: 'Tổng Chi Phí', value: fmtNum(data.totalCosts), color: '#B45309' },
                                 { label: 'TỔNG GIÁ VỐN', value: `${fmtNum(data.grandTotal)} ₫`, color: '#0F172A' },
                             ].map(c => (
-                                <div key={c.label} className="p-3 rounded-lg text-center" style={{ background: '#FFFFFF' }}>
+                                <div key={c.label} className="p-3 rounded-lg text-center" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                     <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>{c.label}</p>
                                     <p className="text-sm font-bold mt-1" style={{ color: c.color }}>{c.value}</p>
                                 </div>
@@ -233,7 +233,7 @@ function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose:
                             <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: '#B45309' }}>Chi Phí Theo Loại</p>
                             <div className="space-y-1">
                                 {data.costsByCategory.map((c: any) => (
-                                    <div key={c.category} className="flex items-center justify-between px-3 py-2 rounded" style={{ background: '#FFFFFF' }}>
+                                    <div key={c.category} className="flex items-center justify-between px-3 py-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                         <span className="text-xs" style={{ color: '#475569' }}>{c.label}</span>
                                         <span className="text-xs font-bold" style={{ color: '#0F172A' }}>{fmtNum(c.totalVND)} ₫</span>
                                     </div>
@@ -509,7 +509,7 @@ export function ShipmentsClient({ initialRows, initialTotal, stats }: Props) {
                             Array.from({ length: 4 }).map((_, i) => (
                                 <tr key={i} style={{ borderBottom: '1px solid #E2E8F0' }}>
                                     {Array.from({ length: 10 }).map((_, j) => (
-                                        <td key={j} className="px-3 py-4"><div className="h-4 rounded animate-pulse" style={{ background: '#FFFFFF', width: '70%' }} /></td>
+                                        <td key={j} className="px-3 py-4"><div className="h-4 rounded animate-pulse" style={{ background: '#E2E8F0', width: '70%' }} /></td>
                                     ))}
                                 </tr>
                             ))
@@ -527,13 +527,11 @@ export function ShipmentsClient({ initialRows, initialTotal, stats }: Props) {
                         ) : rows.map(row => {
                             const st = STATUS_CFG[row.status] ?? { label: row.status, color: '#64748B' }
                             return (
-                                <tr key={row.id} className="group transition-colors"
-                                    style={{ borderBottom: '1px solid #E2E8F0' }}
-                                    onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
-                                    onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                                <tr key={row.id} className="group transition-colors hover:bg-[#F8FAFC]"
+                                    style={{ borderBottom: '1px solid #E2E8F0' }}>
                                     <td className="px-3 py-3">
                                         <button onClick={() => { setSelectedId(row.id); setDetailOpen(true) }}
-                                            className="text-xs font-bold hover:underline" style={{ color: '#0891B2', fontFamily: 'var(--font-sans)' }}>
+                                            className="text-xs font-bold hover:underline" style={{ color: '#0891B2' }}>
                                             {row.billOfLading}
                                         </button>
                                     </td>

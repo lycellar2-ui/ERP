@@ -262,7 +262,7 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
                     <p className="text-sm" style={{ color: '#64748B' }}>Chưa có hình ảnh nào</p>
                     <button onClick={() => setShowUpload(true)}
                         className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold mt-2"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                        style={{ background: '#0E7490', color: '#FFFFFF' }}>
                         <Upload size={14} /> Upload ảnh đầu tiên
                     </button>
                 </div>

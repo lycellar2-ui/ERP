@@ -71,7 +71,7 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                 </h3>
                 <button onClick={() => { setShowAdd(!showAdd); setSaveError('') }}
                     className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold"
-                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
                     <Plus size={12} /> Thêm Key
                 </button>
             </div>
@@ -116,7 +116,7 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                         <button onClick={() => setShowAdd(false)} className="text-xs px-4 py-2" style={{ color: '#64748B' }}>Hủy</button>
                         <button onClick={handleSave} disabled={!form.apiKey || loading === 'save'}
                             className="flex items-center gap-1.5 text-xs px-4 py-2 rounded font-semibold"
-                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                            style={{ background: '#0E7490', color: '#FFFFFF' }}>
                             {loading === 'save' ? <Loader2 size={12} className="animate-spin" /> : <><Lock size={12} /> Mã hóa & Lưu</>}
                         </button>
                     </div>
@@ -273,7 +273,7 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
                 </h3>
                 <button onClick={() => setShowCreate(!showCreate)}
                     className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold"
-                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
                     <Plus size={12} /> Tạo Prompt
                 </button>
             </div>
@@ -336,7 +336,7 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
                         <button onClick={() => setShowCreate(false)} className="text-xs px-4 py-2" style={{ color: '#64748B' }}>Hủy</button>
                         <button onClick={handleCreate} disabled={!form.slug || !form.name || loading}
                             className="text-xs px-4 py-2 rounded font-semibold"
-                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                            style={{ background: '#0E7490', color: '#FFFFFF' }}>
                             {loading ? <Loader2 size={12} className="animate-spin" /> : 'Tạo'}
                         </button>
                     </div>
@@ -403,7 +403,7 @@ export function AiUsageCard({ stats }: { stats: { totalRuns: number; monthRuns: 
                     { label: 'Cost', value: `$${stats.monthCostUsd.toFixed(2)}`, color: '#1D4ED8' },
                     { label: 'Avg Speed', value: `${stats.avgDurationMs}ms`, color: '#0891B2' },
                 ].map(s => (
-                    <div key={s.label} className="p-3 rounded-md text-center" style={{ background: '#FFFFFF' }}>
+                    <div key={s.label} className="p-3 rounded-md text-center" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                         <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>{s.label}</p>
                         <p className="text-sm font-bold font-mono" style={{ color: s.color }}>{s.value}</p>
                     </div>

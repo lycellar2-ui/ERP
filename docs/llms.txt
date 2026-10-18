@@ -1,12 +1,12 @@
 # Wine Import & Distribution ERP — AI Context Index
-> Last updated: 2026-10-18 17:20
-> Status: Production — 32 modules, 147 DB models, 95 enums, 38 dashboard routes, 107 RBAC permissions, Pure Light Design System v3.8 (Zero-Emoji, WCAG AA & Full Mobile/Desktop Responsive)
+> Last updated: 2026-10-18 18:05
+> Status: Production — 32 modules, 147 DB models, 95 enums, 38 dashboard routes, 107 RBAC permissions, Pure Light Design System v3.9 (Zero-Emoji, WCAG AA & Full Mobile/Desktop Responsive)
  
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules
 - docs/architecture/data-flow.md — Database constraints (NEVER violate)
 - docs/architecture/module-dependencies.md — Domain ownership rules
-- docs/bug-fix-lessons.md — 142 rules from 106 bugs (MUST READ before coding)
+- docs/bug-fix-lessons.md — 143 rules from 107 bugs (MUST READ before coding)
 - CODEBASE.md — Code conventions, modular boundaries, workflow
  
 ## Tech Stack (Verified)

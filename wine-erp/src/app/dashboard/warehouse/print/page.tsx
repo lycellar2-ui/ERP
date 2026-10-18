@@ -130,7 +130,7 @@ export default function DOPrintPage({ searchParams }: Props) {
                 <div className="flex gap-2">
                     <button 
                         onClick={() => window.print()} 
-                        className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded bg-[#0891B2] text-white hover:bg-[#A5DED0] transition-colors shadow-sm"
+                        className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded bg-[#0E7490] text-white hover:bg-[#155E75] transition-colors shadow-sm"
                     >
                         <Printer size={14} /> In phiếu xuất kho
                     </button>

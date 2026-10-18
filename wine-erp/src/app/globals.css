@@ -569,6 +569,14 @@ a,
 /* ── Hide duplicate page titles in main layout (shown in top Header bar) ── */
 main > div > div:first-child h1.text-2xl.font-bold,
 main > div > div:first-child h2.text-2xl.font-bold,
-main > div > div.flex.items-start.justify-between.gap-4:first-child h2.text-2xl.font-bold {
+main > div > div.flex.items-start.justify-between.gap-4:first-child h2.text-2xl.font-bold,
+main > div > div:first-child > div:first-child > h1[class*="text-2xl"],
+main > div > div:first-child > div:first-child > h1[class*="sm:text-2xl"],
+main > div > div:first-child > div:first-child > h1[class*="md:text-2xl"],
+main > div > div:first-child > div:first-child > h1[class*="sm:text-3xl"],
+main > div > div:first-child > div:first-child > h2[class*="text-2xl"],
+main > div > div:first-child > div:first-child > h2[class*="sm:text-2xl"],
+main > div > div:first-child > div:first-child > h2[class*="md:text-2xl"],
+main > div > div:first-child > div:first-child > h2[class*="sm:text-3xl"] {
   display: none !important;
 }

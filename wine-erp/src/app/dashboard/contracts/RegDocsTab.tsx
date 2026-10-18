@@ -368,7 +368,7 @@ function RegDocDetailRow({ doc, onUpload, onRenew, onDelete }: {
     }, [doc.id])
 
     return (
-        <tr style={{ background: '#FFFFFF' }}>
+        <tr style={{ background: '#F8FAFC' }}>
             <td colSpan={10} className="px-6 py-4">
                 <div className="space-y-4">
                     {/* Info grid */}
@@ -414,10 +414,7 @@ function RegDocDetailRow({ doc, onUpload, onRenew, onDelete }: {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                                 {files.map((f: any) => (
                                     <a key={f.id} href={f.fileUrl} target="_blank" rel="noreferrer"
-                                        className="flex items-center gap-3 p-2.5 rounded transition-colors"
-                                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
-                                        onMouseEnter={e => (e.currentTarget.style.background = '#F1F5F9')}
-                                        onMouseLeave={e => (e.currentTarget.style.background = '#FFFFFF')}>
+                                        className="flex items-center gap-3 p-2.5 rounded transition-colors bg-white hover:bg-[#F1F5F9] border border-[#E2E8F0]">
                                         <FileText size={16} style={{ color: '#475569' }} />
                                         <div className="overflow-hidden">
                                             <p className="text-xs font-medium truncate" style={{ color: '#0F172A' }}>{f.name}</p>
@@ -578,10 +575,7 @@ export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
                     ))}
                 </select>
                 <button onClick={() => { setRenewTarget(null); setDrawerOpen(true) }}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold ml-auto"
-                    style={{ background: '#0891B2', color: '#FFFFFF' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#0891B2')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '#0E7490')}>
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold ml-auto bg-[#0E7490] hover:bg-[#155E75] text-white transition-colors">
                     <Plus size={16} /> Thêm Giấy Tờ
                 </button>
             </div>
@@ -611,11 +605,9 @@ export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
                             return (
                                 <React.Fragment key={row.id}>
                                     <tr
-                                        className="cursor-pointer"
+                                        className="cursor-pointer hover:bg-[#0891B2]/4"
                                         style={{ borderBottom: '1px solid #E2E8F0' }}
-                                        onClick={() => setSelectedId(isExpanded ? null : row.id)}
-                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(8,145,178,0.04)')}
-                                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                                        onClick={() => setSelectedId(isExpanded ? null : row.id)}>
                                         <td className="px-3 py-3">
                                             <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{row.docNo}</span>
                                         </td>

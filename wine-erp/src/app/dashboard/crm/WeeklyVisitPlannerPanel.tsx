@@ -391,13 +391,13 @@ export function WeeklyVisitPlannerPanel() {
                     )}
 
                     <div className="flex items-center gap-1.5">
-                        <button onClick={() => setWeekOffset(prev => prev - 1)} className="p-1.5 rounded transition hover:bg-slate-800" style={{ color: '#475569' }}>
+                        <button onClick={() => setWeekOffset(prev => prev - 1)} className="p-1.5 rounded transition hover:bg-slate-100" style={{ color: '#475569' }}>
                             <ArrowLeft size={15} />
                         </button>
                         <button onClick={() => setWeekOffset(0)} className="inline-block px-2.5 py-1 text-xs rounded transition border font-semibold whitespace-nowrap shrink-0" style={{ borderColor: '#E2E8F0', color: '#0891B2' }}>
                             Tuần Này
                         </button>
-                        <button onClick={() => setWeekOffset(prev => prev + 1)} className="p-1.5 rounded transition hover:bg-slate-800" style={{ color: '#475569' }}>
+                        <button onClick={() => setWeekOffset(prev => prev + 1)} className="p-1.5 rounded transition hover:bg-slate-100" style={{ color: '#475569' }}>
                             <ArrowRight size={15} />
                         </button>
                     </div>
@@ -426,7 +426,7 @@ export function WeeklyVisitPlannerPanel() {
                                         onClick={handleSavePlan}
                                         disabled={saving}
                                         className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
-                                        style={{ background: '#0891B2', color: '#FFFFFF' }}
+                                        style={{ background: '#0E7490', color: '#FFFFFF' }}
                                     >
                                         {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
                                         Lưu kế hoạch
@@ -482,7 +482,7 @@ export function WeeklyVisitPlannerPanel() {
                                 </div>
                                 <div className="flex justify-end gap-2">
                                     <button onClick={() => setShowAddVisit(false)} className="inline-block px-3 py-1 text-xs font-semibold rounded border whitespace-nowrap shrink-0" style={{ borderColor: '#E2E8F0', color: '#64748B' }}>Hủy</button>
-                                    <button onClick={handleAddLocalVisit} className="inline-block px-3 py-1 text-xs font-semibold rounded whitespace-nowrap shrink-0" style={{ background: '#0891B2', color: '#FFFFFF' }}>Thêm</button>
+                                    <button onClick={handleAddLocalVisit} className="inline-block px-3 py-1 text-xs font-semibold rounded whitespace-nowrap shrink-0" style={{ background: '#0E7490', color: '#FFFFFF' }}>Thêm</button>
                                 </div>
                             </div>
                         )}

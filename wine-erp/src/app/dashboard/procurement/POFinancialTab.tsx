@@ -281,7 +281,7 @@ export function POFinancialTab({ po }: POFinancialTabProps) {
                                     onClick={() => setImportTaxPct(p)}
                                     className={`px-1.5 py-0.2 rounded border text-[9px] transition-all ${
                                         importTaxPct === p
-                                            ? 'bg-slate-800 text-white border-slate-800 font-bold'
+                                            ? 'bg-[#0E7490] text-white border-[#0E7490] font-bold'
                                              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
                                     }`}
                                 >
@@ -361,7 +361,7 @@ export function POFinancialTab({ po }: POFinancialTabProps) {
                                     onClick={() => setVatPct(p)}
                                     className={`px-1.5 py-0.2 rounded border text-[9px] transition-all ${
                                         vatPct === p
-                                            ? 'bg-slate-800 text-white border-slate-800 font-bold'
+                                            ? 'bg-[#0E7490] text-white border-[#0E7490] font-bold'
                                             : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
                                     }`}
                                 >

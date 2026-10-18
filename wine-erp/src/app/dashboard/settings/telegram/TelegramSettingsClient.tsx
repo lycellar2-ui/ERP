@@ -263,7 +263,7 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
                 <ol className="text-xs sm:text-sm text-slate-600 space-y-3 list-decimal pl-5">
                     <li>Tạo bot trên Telegram qua <strong>@BotFather</strong> → nhận <code className="text-[#0891B2] font-mono">BOT_TOKEN</code></li>
                     <li>Thêm vào <code className="text-[#0891B2] font-mono">.env</code>:
-                        <pre className="p-3 rounded-lg bg-slate-900 text-slate-200 text-xs font-mono mt-1.5 overflow-x-auto">
+                        <pre className="p-3 rounded-lg bg-slate-50 text-slate-800 border border-slate-200 text-xs font-mono mt-1.5 overflow-x-auto">
 {`TELEGRAM_BOT_TOKEN=your_bot_token
 TELEGRAM_WEBHOOK_SECRET=random_secret_string
 TELEGRAM_CEO_CHAT_ID=your_telegram_user_id
@@ -273,7 +273,7 @@ TELEGRAM_SETUP_SECRET=lyscellars-setup-2026`}
                     </li>
                     <li>Mở bot trên Telegram, gửi <code className="text-[#0891B2] font-mono">/start</code> → ghi lại Telegram ID hiển thị</li>
                     <li>Deploy lên hệ thống, sau đó gọi URL cấu hình:
-                        <pre className="p-3 rounded-lg bg-slate-900 text-slate-200 text-xs font-mono mt-1.5 overflow-x-auto">
+                        <pre className="p-3 rounded-lg bg-slate-50 text-slate-800 border border-slate-200 text-xs font-mono mt-1.5 overflow-x-auto">
 {`https://your-domain.com/api/telegram/setup?action=register&secret=lyscellars-setup-2026`}
                         </pre>
                     </li>

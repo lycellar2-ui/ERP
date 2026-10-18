@@ -101,9 +101,7 @@ export function QRCodeClient({ initialData, stats }: {
                                 Chưa có QR Code — Confirm GR để auto-sinh
                             </td></tr>
                         ) : data.rows.map(qr => (
-                            <tr key={qr.id} style={{ borderBottom: '1px solid #E2E8F0' }}
-                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(8,145,178,0.04)'}
-                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                            <tr key={qr.id} className="hover:bg-[#0891B2]/4" style={{ borderBottom: '1px solid #E2E8F0' }}>
                                 <td className="px-3 py-2.5">
                                     <input type="checkbox" checked={selectedIds.has(qr.id)}
                                         onChange={e => {

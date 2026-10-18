@@ -532,7 +532,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                         onClick={() => setPreviewDoc(null)}
                     >
                         <div
-                            className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-5xl h-[88vh] flex flex-col overflow-hidden"
+                            className="bg-white rounded-lg shadow-2xl border border-slate-200 w-full max-w-5xl h-[88vh] flex flex-col overflow-hidden"
                             onClick={e => e.stopPropagation()}
                         >
                             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50">

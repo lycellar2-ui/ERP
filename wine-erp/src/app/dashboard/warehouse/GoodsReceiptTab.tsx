@@ -1600,7 +1600,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                         onClick={() => handleSave(true)}
                         disabled={saving || !selectedPO}
                         className="flex-1 flex items-center justify-center gap-2 py-3 text-xs sm:text-sm font-extrabold rounded-lg transition-all shadow-md cursor-pointer disabled:opacity-50 hover:brightness-105 active:scale-[0.99]"
-                        style={{ background: '#0891B2', color: '#FFFFFF', minHeight: '44px' }}
+                        style={{ background: '#0E7490', color: '#FFFFFF', minHeight: '44px' }}
                         title="Tạo phiếu và ghi nhận tồn kho vào kho thực tế ngay lập tức"
                     >
                         {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}

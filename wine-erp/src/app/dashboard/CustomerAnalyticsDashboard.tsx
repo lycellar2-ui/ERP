@@ -301,7 +301,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                         onClick={() => handleSelectCustomer(tc.id, tc.name)}
                                         className={`px-2 py-0.5 rounded text-xs transition-all flex items-center gap-1 flex-shrink-0 border ${
                                             isSelected
-                                                ? 'bg-slate-900 text-white font-semibold border-slate-900'
+                                                ? 'bg-[#0E7490] text-white font-semibold border-[#0E7490]'
                                                 : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200'
                                         }`}
                                     >

@@ -677,9 +677,8 @@ export function ReportsClient({
                                         return (
                                             <tr
                                                 key={r.key}
+                                                className="hover:bg-[#0891B2]/3 transition-colors"
                                                 style={{ borderBottom: '1px solid #E2E8F0' }}
-                                                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(8, 145, 178, 0.03)')}
-                                                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                                             >
                                                 <td className="px-4 py-3">
                                                     <span

@@ -221,7 +221,7 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
 
                     <button onClick={handleSave} disabled={saving}
                         className="flex items-center gap-2 px-3 py-2 rounded text-xs font-semibold disabled:opacity-50"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                        style={{ background: '#0E7490', color: '#FFFFFF' }}>
                         {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
                         {saving ? 'Đang lưu...' : 'Lưu Sở Thích'}
                     </button>

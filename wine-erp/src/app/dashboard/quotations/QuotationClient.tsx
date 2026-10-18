@@ -273,7 +273,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                             toast.success('Đã copy link báo giá!')
                                         }}
                                         className="text-xs px-2.5 py-1 rounded font-medium transition"
-                                        style={{ background: '#0891B2', color: '#FFFFFF' }}
+                                        style={{ background: '#0E7490', color: '#FFFFFF' }}
                                     >
                                         Copy Link
                                     </button>
@@ -430,10 +430,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                         <span>Thống Kê</span>
                     </button>
                     <button onClick={openCreate}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all duration-150"
-                        style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#0891B2')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '#0E7490')}>
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all duration-150 rounded-md bg-[#0E7490] hover:bg-[#155E75] text-white">
                         <Plus size={16} /> Tạo Báo Giá
                     </button>
                 </div>
@@ -516,9 +513,8 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                             const isExpired = new Date(row.validUntil) < new Date() && !['CONVERTED', 'CANCELLED', 'EXPIRED'].includes(row.status)
                             return (
                                 <tr key={row.id}
-                                    style={{ borderBottom: '1px solid #E2E8F0' }}
-                                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(8,145,178,0.04)')}
-                                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                                    className="hover:bg-[#0891B2]/4 transition-colors"
+                                    style={{ borderBottom: '1px solid #E2E8F0' }}>
                                     <td className="px-4 py-3">
                                         <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{row.quotationNo}</span>
                                     </td>
@@ -742,7 +738,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                     <div className="rounded-md overflow-hidden overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
                                         <table className="w-full text-xs" style={{ borderCollapse: 'collapse' }}>
                                             <thead>
-                                                <tr style={{ background: '#FFFFFF' }}>
+                                                <tr style={{ background: '#F8FAFC' }}>
                                                     {['SKU', 'Sản Phẩm', 'SL', 'Giá', 'CK%', 'VAT%', 'Thành Tiền'].map(h => (
                                                         <th key={h} className="px-3 py-2 text-left font-semibold" style={{ color: '#64748B' }}>{h}</th>
                                                     ))}
@@ -830,7 +826,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                     {!['CONVERTED', 'CANCELLED', 'EXPIRED'].includes(detail.status) && (
                                         <button onClick={() => { handleConvert(detail.id); setDetailId(null) }}
                                             className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold"
-                                            style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}>
+                                            style={{ background: '#0E7490', color: '#FFFFFF', borderRadius: '6px' }}>
                                             <ArrowRight size={14} /> Chuyển → SO
                                         </button>
                                     )}
@@ -1095,22 +1091,14 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                             <div className="flex gap-3">
                                 <button onClick={handlePreview} disabled={!formData.customerId || formLines.length === 0}
                                     type="button"
-                                    className="flex-1 py-2.5 text-sm font-semibold transition-all disabled:opacity-50 border"
+                                    className="flex-1 py-2.5 text-sm font-semibold transition-all disabled:opacity-50 border hover:enabled:bg-slate-500/20"
                                     style={{ background: 'rgba(100,116,139,0.1)', color: '#475569', borderColor: 'rgba(100,116,139,0.25)', borderRadius: '6px' }}
-                                    onMouseEnter={e => {
-                                        if (formData.customerId && formLines.length > 0) {
-                                            e.currentTarget.style.background = 'rgba(100,116,139,0.2)';
-                                        }
-                                    }}
-                                    onMouseLeave={e => {
-                                        e.currentTarget.style.background = 'rgba(100,116,139,0.1)';
-                                    }}
                                 >
                                     Xem Trước
                                 </button>
                                 <button onClick={handleCreate} disabled={saving || !formData.customerId || formLines.length === 0}
                                     className="w-[60%] py-2.5 text-sm font-semibold transition-all disabled:opacity-50"
-                                    style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}>
+                                    style={{ background: '#0E7490', color: '#FFFFFF', borderRadius: '6px' }}>
                                     {saving ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Tạo Báo Giá'}
                                 </button>
                             </div>
@@ -1146,10 +1134,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                     reload()
                                 } else toast.error(res.error || 'Lỗi gửi email')
                             }} disabled={sendLoading}
-                                className="w-full p-4 rounded-lg text-left transition-all"
-                                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
-                                onMouseEnter={e => (e.currentTarget.style.borderColor = '#B45309')}
-                                onMouseLeave={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
+                                className="w-full p-4 rounded-lg text-left transition-all border border-[#E2E8F0] hover:border-[#B45309] bg-white">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(180,83,9,0.15)' }}>
                                         <Mail size={18} style={{ color: '#B45309' }} />
@@ -1173,10 +1158,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                     reload()
                                 } else toast.error(res.error || 'Lỗi tạo link')
                             }} disabled={sendLoading}
-                                className="w-full p-4 rounded-lg text-left transition-all"
-                                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
-                                onMouseEnter={e => (e.currentTarget.style.borderColor = '#3B82F6')}
-                                onMouseLeave={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
+                                className="w-full p-4 rounded-lg text-left transition-all border border-[#E2E8F0] hover:border-[#3B82F6] bg-white">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(59,130,246,0.15)' }}>
                                         <Link2 size={18} style={{ color: '#3B82F6' }} />
@@ -1192,10 +1174,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                             <button onClick={() => {
                                 window.open(`/api/export/quotation-pdf?id=${sendDrawerOpen}&style=professional`, '_blank')
                             }}
-                                className="w-full p-4 rounded-lg text-left transition-all"
-                                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
-                                onMouseEnter={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                                onMouseLeave={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
+                                className="w-full p-4 rounded-lg text-left transition-all border border-[#E2E8F0] hover:border-[#0891B2] bg-white">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(8, 145, 178, 0.08)' }}>
                                         <Printer size={18} style={{ color: '#0891B2' }} />
@@ -1391,7 +1370,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                 <button 
                                     onClick={confirmPickerAdd}
                                     className="px-5 py-2 text-xs font-semibold rounded"
-                                    style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '4px' }}
+                                    style={{ background: '#0E7490', color: '#FFFFFF', borderRadius: '4px' }}
                                 >
                                     Xác nhận thêm
                                 </button>

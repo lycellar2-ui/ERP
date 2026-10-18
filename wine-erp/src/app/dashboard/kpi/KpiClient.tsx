@@ -168,7 +168,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                                             </span>
                                             <span style={{ color: '#64748B' }}>KH: {formatValue(kpi.target, kpi.unit)}</span>
                                         </div>
-                                        <div className="h-2.5 rounded-full overflow-hidden" style={{ background: '#FFFFFF' }}>
+                                        <div className="h-2.5 rounded-full overflow-hidden" style={{ background: '#E2E8F0' }}>
                                             <div className="h-full rounded-full transition-all duration-700"
                                                 style={{
                                                     width: `${barPct}%`,
@@ -207,7 +207,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                         </h3>
                         <div className="flex gap-2">
                             <button onClick={() => setAddOpen(true)} className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
-                                style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                                style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                 <Plus size={12} /> Thêm Chỉ Tiêu
                             </button>
                             <div className="flex items-center gap-1">
@@ -285,7 +285,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                                 </div>
                             </div>
                             <button onClick={handleSave} className="flex items-center gap-1 px-4 py-2 text-xs font-bold rounded"
-                                style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                                style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                 <Save size={12} /> Lưu Chỉ Tiêu
                             </button>
                         </div>
@@ -325,10 +325,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                                                 {t.salesRepName ?? 'Toàn công ty'}
                                             </td>
                                             <td className="px-3 py-2.5">
-                                                <button onClick={() => handleDelete(t.id)} className="p-1 transition-all"
-                                                    style={{ color: '#64748B' }}
-                                                    onMouseEnter={e => (e.currentTarget.style.color = '#B91C1C')}
-                                                    onMouseLeave={e => (e.currentTarget.style.color = '#64748B')}>
+                                                <button onClick={() => handleDelete(t.id)} className="p-1 transition-all text-[#64748B] hover:text-[#B91C1C]">
                                                     <Trash2 size={13} />
                                                 </button>
                                             </td>

@@ -47,10 +47,8 @@ export function DataPagination({
             </div>
             <div className="flex items-center gap-1">
                 <button onClick={() => onPageChange(page - 1)} disabled={page <= 1}
-                    className="p-1.5 rounded disabled:opacity-30 transition-colors"
-                    style={{ color: '#475569' }}
-                    onMouseEnter={e => !e.currentTarget.disabled && (e.currentTarget.style.background = '#FFFFFF')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                    className="p-1.5 rounded hover:bg-slate-100 disabled:hover:bg-transparent disabled:opacity-30 transition-colors"
+                    style={{ color: '#475569' }}>
                     <ChevronLeft size={16} />
                 </button>
                 {getPageNumbers().map((p, i) =>
@@ -68,10 +66,8 @@ export function DataPagination({
                     )
                 )}
                 <button onClick={() => onPageChange(page + 1)} disabled={page >= totalPages}
-                    className="p-1.5 rounded disabled:opacity-30 transition-colors"
-                    style={{ color: '#475569' }}
-                    onMouseEnter={e => !e.currentTarget.disabled && (e.currentTarget.style.background = '#FFFFFF')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                    className="p-1.5 rounded hover:bg-slate-100 disabled:hover:bg-transparent disabled:opacity-30 transition-colors"
+                    style={{ color: '#475569' }}>
                     <ChevronRight size={16} />
                 </button>
             </div>

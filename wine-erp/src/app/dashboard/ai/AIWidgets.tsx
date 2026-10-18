@@ -34,7 +34,7 @@ export function AnomalyWidget() {
                 </h3>
                 <button onClick={load} disabled={loading}
                     className="text-xs px-3 py-1.5 rounded font-semibold"
-                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
                     {loading ? <Loader2 size={12} className="animate-spin" /> : 'Quét Bất Thường'}
                 </button>
             </div>
@@ -105,7 +105,7 @@ export function DemandForecastWidget() {
                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                 <button onClick={run} disabled={loading || !productId}
                     className="text-xs px-4 py-2 rounded font-semibold"
-                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
                     {loading ? <Loader2 size={12} className="animate-spin" /> : 'Phân tích'}
                 </button>
             </div>
@@ -113,7 +113,7 @@ export function DemandForecastWidget() {
             {result && (
                 <div className="space-y-3">
                     <div className="flex gap-3">
-                        <div className="flex-1 p-3 rounded-md" style={{ background: '#FFFFFF' }}>
+                        <div className="flex-1 p-3 rounded-md" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                             <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Xu hướng</p>
                             {(() => {
                                 const TrendIcon = trendIcon[result.trend as keyof typeof trendIcon] || Minus
@@ -125,7 +125,7 @@ export function DemandForecastWidget() {
                                 )
                             })()}
                         </div>
-                        <div className="flex-1 p-3 rounded-md" style={{ background: '#FFFFFF' }}>
+                        <div className="flex-1 p-3 rounded-md" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                             <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>TB/tháng</p>
                             <p className="text-sm font-bold" style={{ color: '#0F172A' }}>
                                 {result.avgMonthlyDemand} chai
@@ -134,7 +134,7 @@ export function DemandForecastWidget() {
                     </div>
                     {result.forecast.map((f: any) => (
                         <div key={f.month} className="flex items-center justify-between p-2 rounded"
-                            style={{ background: '#FFFFFF' }}>
+                            style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                             <span className="text-xs" style={{ color: '#475569' }}>{f.month}</span>
                             <span className="text-xs font-bold" style={{ color: '#0891B2' }}>
                                 {f.predicted} chai
@@ -175,7 +175,7 @@ export function PricingWidget() {
                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                 <button onClick={run} disabled={loading || !productId}
                     className="text-xs px-4 py-2 rounded font-semibold"
-                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
                     {loading ? <Loader2 size={12} className="animate-spin" /> : 'Phân tích'}
                 </button>
             </div>
@@ -188,7 +188,7 @@ export function PricingWidget() {
                             { label: 'Giá thị trường', value: formatVND(result.latestMarketPrice), color: '#B45309' },
                             { label: 'Tồn kho', value: `${result.currentStock}`, color: '#0891B2' },
                         ].map(s => (
-                            <div key={s.label} className="p-2 rounded-md text-center" style={{ background: '#FFFFFF' }}>
+                            <div key={s.label} className="p-2 rounded-md text-center" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>{s.label}</p>
                                 <p className="text-xs font-bold" style={{ color: s.color }}>{s.value}</p>
                             </div>
@@ -216,7 +216,7 @@ export function PricingWidget() {
                         ))}
                     </div>
 
-                    <div className="p-3 rounded-md text-xs" style={{ background: '#FFFFFF', color: '#475569' }}>
+                    <div className="p-3 rounded-md text-xs" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#475569' }}>
                         {result.reasoning}
                     </div>
                 </div>

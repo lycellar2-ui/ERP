@@ -387,7 +387,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                             onClick={() => setFilterMasterType('ALL')}
                             className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all border ${
                                 filterMasterType === 'ALL'
-                                    ? 'bg-[#0891B2] text-white border-[#0891B2] shadow-xs'
+                                    ? 'bg-[#0E7490] text-white border-[#0E7490] shadow-xs'
                                     : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                             }`}
                         >
@@ -398,7 +398,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                             onClick={() => setFilterMasterType('HAS_SPECIAL')}
                             className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all border ${
                                 filterMasterType === 'HAS_SPECIAL'
-                                    ? 'bg-[#0891B2] text-white border-[#0891B2] shadow-xs'
+                                    ? 'bg-[#0E7490] text-white border-[#0E7490] shadow-xs'
                                     : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                             }`}
                         >
@@ -409,7 +409,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                             onClick={() => setFilterMasterType('HAS_CUSTOM_DISCOUNT')}
                             className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all border ${
                                 filterMasterType === 'HAS_CUSTOM_DISCOUNT'
-                                    ? 'bg-[#0891B2] text-white border-[#0891B2] shadow-xs'
+                                    ? 'bg-[#0E7490] text-white border-[#0E7490] shadow-xs'
                                     : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                             }`}
                         >
@@ -442,7 +442,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                             </button>
                             <Link
                                 href="/dashboard/proposals?category=PRICE_ADJUSTMENT&action=create"
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-[#0891B2] hover:bg-[#0E7490] text-white transition shadow-xs"
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-[#0E7490] hover:bg-[#155E75] text-white transition shadow-xs"
                             >
                                 <FileText size={13} /> Lập Tờ Trình Giá
                             </Link>
@@ -647,7 +647,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                         e.stopPropagation()
                                                         handleOpenDrawer(c)
                                                     }}
-                                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md bg-white group-hover:bg-[#0891B2] text-slate-700 group-hover:text-white border border-slate-300 group-hover:border-[#0891B2] transition shadow-2xs"
+                                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md bg-white group-hover:bg-[#0E7490] text-slate-700 group-hover:text-white border border-slate-300 group-hover:border-[#0E7490] transition shadow-2xs"
                                                 >
                                                     Cấu hình <ChevronRight size={14} />
                                                 </button>
@@ -754,7 +754,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                 type="button"
                                                 disabled={!isPolicyDirty || policySaving}
                                                 onClick={handleSaveInlinePolicy}
-                                                className="px-3.5 py-2 text-xs font-bold rounded-md bg-[#0891B2] text-white hover:bg-[#0E7490] disabled:opacity-40 transition shrink-0"
+                                                className="px-3.5 py-2 text-xs font-bold rounded-md bg-[#0E7490] text-white hover:bg-[#155E75] disabled:opacity-40 transition shrink-0"
                                             >
                                                 {policySaving ? <Loader2 size={14} className="animate-spin" /> : 'Lưu Cơ Chế'}
                                             </button>
@@ -797,7 +797,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                     <button
                                         type="button"
                                         onClick={() => setAddRuleOpen(prev => !prev)}
-                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-md bg-[#0891B2] hover:bg-[#0E7490] text-white transition"
+                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-md bg-[#0E7490] hover:bg-[#155E75] text-white transition"
                                     >
                                         {addRuleOpen ? <X size={14} /> : <Plus size={14} />}
                                         {addRuleOpen ? 'Đóng Khung Thêm' : 'Thêm Chai Giá Riêng'}
@@ -898,7 +898,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                 type="button"
                                                 disabled={saving || !formProduct || !formValue}
                                                 onClick={handleCreateRule}
-                                                className="px-4 py-1.5 text-xs font-bold rounded-md bg-[#0891B2] text-white hover:bg-[#0E7490] disabled:opacity-40 shrink-0"
+                                                className="px-4 py-1.5 text-xs font-bold rounded-md bg-[#0E7490] text-white hover:bg-[#155E75] disabled:opacity-40 shrink-0"
                                             >
                                                 {saving ? <Loader2 size={14} className="animate-spin" /> : 'Lưu Giá Riêng'}
                                             </button>
@@ -926,7 +926,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                         <button
                                             type="button"
                                             onClick={() => setAddRuleOpen(true)}
-                                            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-md bg-[#0891B2] text-white hover:bg-[#0E7490]"
+                                            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-md bg-[#0E7490] text-white hover:bg-[#155E75]"
                                         >
                                             <Plus size={14} /> Thêm Chai Giá Riêng Đầu Tiên
                                         </button>
@@ -1153,7 +1153,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                 type="button"
                                 disabled={cloning || cloneTargetCustomers.length === 0 || cloneSelectedRuleIds.length === 0}
                                 onClick={handleExecuteClone}
-                                className="flex items-center gap-2 px-5 py-2 text-xs font-bold rounded-md bg-[#0891B2] text-white hover:bg-[#0E7490] transition disabled:opacity-50"
+                                className="flex items-center gap-2 px-5 py-2 text-xs font-bold rounded-md bg-[#0E7490] text-white hover:bg-[#155E75] transition disabled:opacity-50"
                             >
                                 {cloning ? <Loader2 size={14} className="animate-spin" /> : `Sao Chép Sang ${cloneTargetCustomers.length} Cơ Sở`}
                             </button>

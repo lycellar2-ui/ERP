@@ -1,18 +1,29 @@
 'use client'
 
-import React, { useTransition } from 'react'
+import React, { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
     TrendingUp, TrendingDown, Ship, Package, CheckCircle2,
     ArrowDownLeft, ArrowUpRight, DollarSign, BarChart3, Wallet, Target, ClipboardCheck,
     Link as LinkIcon, Shield, AlertTriangle, FileText, Users, Wine, Trophy, AlertCircle, Clock, LineChart,
+    CreditCard, ExternalLink, Archive, X,
 } from 'lucide-react'
-import { formatVND } from '@/lib/utils'
 import { useAppLocale } from '@/lib/i18n'
 import { getDashboardDictionary } from './i18n'
 import { DailyRevenueChart } from './DailyRevenueChart'
-import { approveSO, rejectSO, type WaterfallBar, type DailyRevenueSummary } from './actions'
+import {
+    approveSO,
+    rejectSO,
+    approveProposalFromDashboard,
+    rejectProposalFromDashboard,
+    approvePaymentRequestFromDashboard,
+    rejectPaymentRequestFromDashboard,
+    approveEngineRequestFromDashboard,
+    rejectEngineRequestFromDashboard,
+    type WaterfallBar,
+    type DailyRevenueSummary,
+} from './actions'
 import { REG_DOC_TYPE_LABELS } from './contracts/reg-doc-constants'
 import { CATEGORY_LABELS, PRIORITY_LABELS } from './proposals/constants'
 import type { PresetKey } from './DashboardFilterBar'
@@ -77,6 +88,14 @@ const SHIP_STATUS_TRANSLATIONS: Record<string, { vi: string; en: string; color: 
     DELIVERED_TO_WAREHOUSE: { vi: 'Đã về kho', en: 'In Warehouse', color: '#64748B' },
 }
 
+type ApprovalFilterTab = 'ALL' | 'SO' | 'PROPOSAL' | 'PAYMENT' | 'SYSTEM'
+
+interface RejectTarget {
+    type: 'SO' | 'PROPOSAL' | 'PAYMENT' | 'SYSTEM'
+    id: string
+    code: string
+}
+
 interface CeoOverviewContentProps {
     primaryRevenue: number
     revenueSource: string
@@ -90,6 +109,8 @@ interface CeoOverviewContentProps {
     pendingSub: string
     pendingProposals: any[]
     pendingApprovalReqs: any[]
+    pendingPaymentRequests?: any[]
+    slowMovingStock?: any[]
     topCustomers: any[]
     topProducts: any[]
     channels: any
@@ -97,6 +118,7 @@ interface CeoOverviewContentProps {
     wf: any
     kpis: any[]
     preset: PresetKey
+    currentEntity?: string
     displayRangeText: string
     complianceWarnings: any[]
     mySales: any
@@ -118,6 +140,8 @@ export function CeoOverviewContent({
     pendingSub,
     pendingProposals,
     pendingApprovalReqs,
+    pendingPaymentRequests = [],
+    slowMovingStock = [],
     topCustomers,
     topProducts,
     channels,
@@ -125,6 +149,7 @@ export function CeoOverviewContent({
     wf,
     kpis,
     preset,
+    currentEntity,
     displayRangeText,
     complianceWarnings,
     mySales,
@@ -137,6 +162,11 @@ export function CeoOverviewContent({
     const { locale, isEn, formatCurrency, formatDate } = useAppLocale()
     const t = getDashboardDictionary(locale)
 
+    const [approvalFilter, setApprovalFilter] = useState<ApprovalFilterTab>('ALL')
+    const [rejectTarget, setRejectTarget] = useState<RejectTarget | null>(null)
+    const [rejectReason, setRejectReason] = useState('')
+    const [actionError, setActionError] = useState<string | null>(null)
+
     const revenueKpiLabel = preset === 'THIS_MONTH'
         ? t.kpis.revenueMonth
         : preset === 'TODAY'
@@ -147,18 +177,35 @@ export function CeoOverviewContent({
         ? t.kpis.revenue7Days
         : t.kpis.revenuePeriod
 
-    const handleApproveSo = (id: string) => {
+    const runAction = (fn: () => Promise<{ success: boolean; error?: string }>) => {
+        setActionError(null)
         startTransition(async () => {
-            await approveSO(id)
+            const res = await fn()
+            if (!res.success && res.error) {
+                setActionError(res.error)
+            }
             router.refresh()
         })
     }
 
-    const handleRejectSo = (id: string) => {
-        startTransition(async () => {
-            await rejectSO(id)
-            router.refresh()
-        })
+    const handleApproveItem = (type: RejectTarget['type'], id: string) => {
+        if (type === 'SO') runAction(() => approveSO(id))
+        else if (type === 'PROPOSAL') runAction(() => approveProposalFromDashboard(id))
+        else if (type === 'PAYMENT') runAction(() => approvePaymentRequestFromDashboard(id))
+        else if (type === 'SYSTEM') runAction(() => approveEngineRequestFromDashboard(id))
+    }
+
+    const handleConfirmReject = () => {
+        if (!rejectTarget) return
+        const reason = rejectReason.trim() || (isEn ? 'Rejected by CEO' : 'CEO từ chối phê duyệt')
+        const target = rejectTarget
+        setRejectTarget(null)
+        setRejectReason('')
+
+        if (target.type === 'SO') runAction(() => rejectSO(target.id, reason))
+        else if (target.type === 'PROPOSAL') runAction(() => rejectProposalFromDashboard(target.id, reason))
+        else if (target.type === 'PAYMENT') runAction(() => rejectPaymentRequestFromDashboard(target.id, reason))
+        else if (target.type === 'SYSTEM') runAction(() => rejectEngineRequestFromDashboard(target.id, reason))
     }
 
     const translateBucketLabel = (label: string) => {
@@ -185,7 +232,8 @@ export function CeoOverviewContent({
     const hasYoy = Boolean(yoyData && Array.isArray(yoyData.current) && Array.isArray(yoyData.previous) && (!dashConfig?.sections || dashConfig.sections.includes('revenue_yoy')))
     const hasWf = Boolean(wf && Array.isArray(wf.bars) && wf.bars.length > 0 && (!dashConfig?.sections || dashConfig.sections.includes('cost_waterfall')))
     const hasCompliance = Boolean(complianceWarnings && complianceWarnings.length > 0 && (!dashConfig?.sections || dashConfig.sections.includes('legal_compliance')))
-    const hasLayer5 = hasKpis || hasChannels || hasYoy || hasWf || hasCompliance
+    const hasSlowStock = Boolean(Array.isArray(slowMovingStock) && slowMovingStock.length > 0 && (!dashConfig?.sections || dashConfig.sections.includes('stock_alerts')))
+    const hasLayer5 = hasKpis || hasChannels || hasYoy || hasWf || hasCompliance || hasSlowStock
 
     return (
         <div className="space-y-5">
@@ -334,79 +382,103 @@ export function CeoOverviewContent({
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {/* P&L Summary */}
                     <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <SectionHead
-                        icon={<BarChart3 size={15} style={{ color: '#0891B2' }} />}
-                        title={preset === 'THIS_MONTH' ? t.pnl.monthlyTitle : `${t.pnl.periodTitle} (${displayRangeText})`}
-                        badge={
-                            <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold ml-1 whitespace-nowrap shrink-0" style={{ background: pl.grossMargin >= 25 ? 'rgba(21,128,61,0.15)' : 'rgba(180,83,9,0.15)', color: pl.grossMargin >= 25 ? '#15803D' : '#B45309' }}>
-                                {t.pnl.marginBadge} {pl.grossMargin.toFixed(1)}%
-                            </span>
-                        }
-                    />
-                    <div className="space-y-2.5">
-                        {[
-                            { label: t.pnl.netRevenue, value: primaryRevenue, color: '#0891B2' },
-                            { label: t.pnl.cogs, value: -pl.cogs, color: '#B91C1C', neg: true },
-                            { label: t.pnl.grossProfit, value: pl.grossProfit, color: pl.grossProfit >= 0 ? '#B45309' : '#B91C1C', bold: true, line: true },
-                            { label: t.pnl.expenses, value: -pl.expenses, color: '#475569', neg: true },
-                            { label: t.pnl.netProfit, value: pl.netProfit, color: pl.netProfit >= 0 ? '#15803D' : '#B91C1C', bold: true, line: true },
-                        ].map((r, idx) => (
-                            <div key={idx}>
-                                {r.line && <div className="mb-2" style={{ borderTop: '1px dashed #E2E8F0' }} />}
-                                <div className="flex justify-between items-center">
-                                    <span className={`text-xs ${r.bold ? 'font-bold' : ''}`} style={{ color: r.bold ? r.color : '#475569' }}>{r.label}</span>
-                                    <span className={`text-sm ${r.bold ? 'font-bold' : 'font-medium'}`} style={{ color: r.color }}>
-                                        {r.value < 0 ? `− ${formatCurrency(Math.abs(r.value))}` : formatCurrency(r.value)}
-                                    </span>
+                        <SectionHead
+                            icon={<BarChart3 size={15} style={{ color: '#0891B2' }} />}
+                            title={preset === 'THIS_MONTH' ? t.pnl.monthlyTitle : `${t.pnl.periodTitle} (${displayRangeText})`}
+                            badge={
+                                <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold ml-1 whitespace-nowrap shrink-0" style={{ background: pl.grossMargin >= 25 ? 'rgba(21,128,61,0.15)' : 'rgba(180,83,9,0.15)', color: pl.grossMargin >= 25 ? '#15803D' : '#B45309' }}>
+                                    {t.pnl.marginBadge} {pl.grossMargin.toFixed(1)}%
+                                </span>
+                            }
+                        />
+                        <div className="space-y-2.5">
+                            {[
+                                { label: t.pnl.netRevenue, value: primaryRevenue, color: '#0891B2', pct: primaryRevenue > 0 ? 100 : null },
+                                { label: t.pnl.cogs, value: -pl.cogs, color: '#B91C1C', neg: true, pct: primaryRevenue > 0 ? (pl.cogs / primaryRevenue) * 100 : null },
+                                { label: t.pnl.grossProfit, value: pl.grossProfit, color: pl.grossProfit >= 0 ? '#B45309' : '#B91C1C', bold: true, line: true, pct: primaryRevenue > 0 ? (pl.grossProfit / primaryRevenue) * 100 : null },
+                                { label: t.pnl.expenses, value: -pl.expenses, color: '#475569', neg: true, pct: primaryRevenue > 0 ? (pl.expenses / primaryRevenue) * 100 : null },
+                                { label: t.pnl.netProfit, value: pl.netProfit, color: pl.netProfit >= 0 ? '#15803D' : '#B91C1C', bold: true, line: true, pct: primaryRevenue > 0 ? (pl.netProfit / primaryRevenue) * 100 : null },
+                            ].map((r, idx) => (
+                                <div key={idx}>
+                                    {r.line && <div className="mb-2" style={{ borderTop: '1px dashed #E2E8F0' }} />}
+                                    <div className="flex justify-between items-center">
+                                        <span className={`text-xs ${r.bold ? 'font-bold' : ''}`} style={{ color: r.bold ? r.color : '#475569' }}>{r.label}</span>
+                                        <div className="flex items-center gap-2">
+                                            {r.pct !== null && idx > 0 && (
+                                                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ background: '#F8FAFC', color: '#64748B', border: '1px solid #E2E8F0' }}>
+                                                    {r.pct.toFixed(1)}%
+                                                </span>
+                                            )}
+                                            <span className={`text-sm font-mono ${r.bold ? 'font-bold' : 'font-medium'}`} style={{ color: r.color }}>
+                                                {r.value < 0 ? `− ${formatCurrency(Math.abs(r.value))}` : formatCurrency(r.value)}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                        {stats.revenueGrowth !== 0 && (
-                            <p className="text-[10px] text-right mt-1" style={{ color: '#64748B' }}>
-                                {t.kpis.vsPrevPeriod}: {stats.revenueGrowth > 0 ? '+' : ''}{stats.revenueGrowth.toFixed(1)}%
-                            </p>
-                        )}
+                            ))}
+                            {stats.revenueGrowth !== 0 && (
+                                <p className="text-[10px] text-right mt-1" style={{ color: '#64748B' }}>
+                                    {t.kpis.vsPrevPeriod}: {stats.revenueGrowth > 0 ? '+' : ''}{stats.revenueGrowth.toFixed(1)}%
+                                </p>
+                            )}
+                        </div>
                     </div>
-                </div>
 
-                {/* Cash Position */}
-                <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <SectionHead icon={<Wallet size={15} style={{ color: '#0891B2' }} />} title={t.cashFlow.title} />
-                    <div className="p-3 rounded-md mb-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <p className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: '#64748B' }}>{t.cashFlow.periodNetCash}</p>
-                        <p className="text-xl font-bold font-mono" style={{ color: cash.netCashFlow >= 0 ? '#15803D' : '#B91C1C' }}>
-                            {cash.netCashFlow >= 0 ? '+' : ''}{formatCurrency(cash.netCashFlow)}
-                        </p>
-                    </div>
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between p-2.5 rounded" style={{ background: 'rgba(21,128,61,0.06)' }}>
-                            <div className="flex items-center gap-2">
-                                <ArrowDownLeft size={13} style={{ color: '#15803D' }} />
-                                <span className="text-xs" style={{ color: '#15803D' }}>{t.cashFlow.inflowSub}</span>
-                            </div>
-                            <span className="text-xs font-bold font-mono" style={{ color: '#15803D' }}>+{formatCurrency(cash.cashIn)}</span>
+                    {/* Cash Position */}
+                    <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                        <SectionHead icon={<Wallet size={15} style={{ color: '#0891B2' }} />} title={t.cashFlow.title} />
+                        <div className="p-3 rounded-md mb-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                            <p className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: '#64748B' }}>{t.cashFlow.periodNetCash}</p>
+                            <p className="text-xl font-bold font-mono" style={{ color: cash.netCashFlow >= 0 ? '#15803D' : '#B91C1C' }}>
+                                {cash.netCashFlow >= 0 ? '+' : ''}{formatCurrency(cash.netCashFlow)}
+                            </p>
                         </div>
-                        <div className="flex items-center justify-between p-2.5 rounded" style={{ background: 'rgba(185,28,28,0.04)' }}>
-                            <div className="flex items-center gap-2">
-                                <ArrowUpRight size={13} style={{ color: '#B91C1C' }} />
-                                <span className="text-xs" style={{ color: '#B91C1C' }}>{t.cashFlow.outflowAP}</span>
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between p-2.5 rounded" style={{ background: 'rgba(21,128,61,0.06)' }}>
+                                <div className="flex items-center gap-2">
+                                    <ArrowDownLeft size={13} style={{ color: '#15803D' }} />
+                                    <span className="text-xs" style={{ color: '#15803D' }}>{t.cashFlow.inflowSub}</span>
+                                </div>
+                                <span className="text-xs font-bold font-mono" style={{ color: '#15803D' }}>+{formatCurrency(cash.cashIn)}</span>
                             </div>
-                            <span className="text-xs font-bold font-mono" style={{ color: '#B91C1C' }}>−{formatCurrency(cash.cashOutAP)}</span>
-                        </div>
-                        <div className="flex items-center justify-between p-2.5 rounded" style={{ background: 'rgba(185,28,28,0.04)' }}>
-                            <div className="flex items-center gap-2">
-                                <ArrowUpRight size={13} style={{ color: '#B45309' }} />
-                                <span className="text-xs" style={{ color: '#B45309' }}>{t.cashFlow.outflowExpense}</span>
+                            <div className="flex items-center justify-between p-2.5 rounded" style={{ background: 'rgba(185,28,28,0.04)' }}>
+                                <div className="flex items-center gap-2">
+                                    <ArrowUpRight size={13} style={{ color: '#B91C1C' }} />
+                                    <span className="text-xs" style={{ color: '#B91C1C' }}>{t.cashFlow.outflowAP}</span>
+                                </div>
+                                <span className="text-xs font-bold font-mono" style={{ color: '#B91C1C' }}>−{formatCurrency(cash.cashOutAP)}</span>
                             </div>
-                            <span className="text-xs font-bold font-mono" style={{ color: '#B45309' }}>−{formatCurrency(cash.cashOutExpenses)}</span>
-                        </div>
-                        <div style={{ borderTop: '1px solid #E2E8F0' }} className="pt-2 flex justify-between text-xs">
-                            <span style={{ color: '#64748B' }}>{t.cashFlow.workingCapital}</span>
-                            <span style={{ color: '#475569' }} className="font-mono">{formatCurrency(cash.arOutstanding)} / {formatCurrency(cash.apOutstanding)}</span>
+                            <div className="flex items-center justify-between p-2.5 rounded" style={{ background: 'rgba(185,28,28,0.04)' }}>
+                                <div className="flex items-center gap-2">
+                                    <ArrowUpRight size={13} style={{ color: '#B45309' }} />
+                                    <span className="text-xs" style={{ color: '#B45309' }}>{t.cashFlow.outflowExpense}</span>
+                                </div>
+                                <span className="text-xs font-bold font-mono" style={{ color: '#B45309' }}>−{formatCurrency(cash.cashOutExpenses)}</span>
+                            </div>
+                            <div style={{ borderTop: '1px solid #E2E8F0' }} className="pt-2 space-y-1.5 text-xs">
+                                <div className="flex justify-between">
+                                    <span style={{ color: '#64748B' }}>{t.cashFlow.workingCapital}</span>
+                                    <span style={{ color: '#475569' }} className="font-mono">{formatCurrency(cash.arOutstanding)} / {formatCurrency(cash.apOutstanding)}</span>
+                                </div>
+                                {((cash.apDueWithin30d ?? 0) > 0 || (cash.pendingDisbursementPR ?? 0) > 0) && (
+                                    <div className="p-2 rounded space-y-1" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                        <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#B45309' }}>
+                                            {t.cashFlow.upcomingObligations}
+                                        </p>
+                                        <div className="flex justify-between text-[11px]">
+                                            <span style={{ color: '#64748B' }}>{t.cashFlow.apDue30d}</span>
+                                            <span className="font-mono font-semibold" style={{ color: '#B91C1C' }}>{formatFriendlyVND(cash.apDueWithin30d ?? 0, isEn)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-[11px]">
+                                            <span style={{ color: '#64748B' }}>{t.cashFlow.pendingPRDisbursement}</span>
+                                            <span className="font-mono font-semibold" style={{ color: '#B45309' }}>{formatFriendlyVND(cash.pendingDisbursementPR ?? 0, isEn)}</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
             )}
 
             {/* ═══ LAYER 3 — OPERATIONS ═══ */}
@@ -425,7 +497,13 @@ export function CeoOverviewContent({
                                 icon={<Ship size={15} style={{ color: '#0891B2' }} />}
                                 title={t.containers.title}
                                 badge={<span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(29,78,216,0.15)', color: '#1D4ED8' }}>{stats.inTransitShipments.length}</span>}
-                            />
+                            >
+                                {stats.inTransitShipments.length > 0 && (
+                                    <span className="text-[10px] font-mono font-semibold" style={{ color: '#475569' }}>
+                                        {t.containers.totalCif}: ${stats.inTransitShipments.reduce((s: number, sh: any) => s + Number(sh.cifAmount ?? 0), 0).toLocaleString(isEn ? 'en-US' : 'vi-VN')}
+                                    </span>
+                                )}
+                            </SectionHead>
                             {stats.inTransitShipments.length === 0 ? (
                                 <div className="flex flex-col items-center py-6 gap-1">
                                     <Package size={24} style={{ color: '#E2E8F0' }} />
@@ -468,7 +546,7 @@ export function CeoOverviewContent({
                                 title={t.arAging.title}
                                 badge={<span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(29,78,216,0.15)', color: '#1D4ED8' }}>{ar.invoiceCount} {t.arAging.invoicesCount}</span>}
                             />
-                            <div className="p-2.5 rounded mb-3" style={{ background: '#FFFFFF' }}>
+                            <div className="p-2.5 rounded mb-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <p className="text-[10px] uppercase mb-0.5" style={{ color: '#64748B' }}>{t.arAging.totalOutstanding}</p>
                                 <p className="text-lg font-bold font-mono" style={{ color: '#B45309' }}>{formatCurrency(ar.totalOutstanding)}</p>
                             </div>
@@ -495,7 +573,7 @@ export function CeoOverviewContent({
                                 icon={<Trophy size={15} style={{ color: '#B45309' }} />}
                                 title={preset === 'THIS_MONTH' ? t.rankings.monthTitle : t.rankings.periodTitle}
                             />
-                            {/* Top Customers */}
+                            {/* Top Customers (1-click drill-down to Customer 360) */}
                             <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#64748B' }}>
                                 <Users size={11} className="inline mr-1" />{t.rankings.topCustomers}
                             </p>
@@ -503,15 +581,25 @@ export function CeoOverviewContent({
                                 <p className="text-xs mb-3" style={{ color: '#64748B' }}>{t.noData}</p>
                             ) : (
                                 <div className="space-y-1 mb-4">
-                                    {topCustomers.map((c: any, i: number) => (
-                                        <div key={i} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: i === 0 ? 'rgba(8,145,178,0.06)' : 'transparent' }}>
-                                            <div className="flex items-center gap-2 min-w-0">
-                                                <span className="text-[10px] font-bold w-4" style={{ color: i === 0 ? '#B45309' : '#64748B' }}>{i + 1}.</span>
-                                                <span className="text-xs truncate" style={{ color: '#0F172A' }}>{c.name}</span>
-                                            </div>
-                                            <span className="text-[11px] font-bold font-mono flex-shrink-0" style={{ color: '#0891B2' }}>{formatFriendlyVND(c.revenue, isEn)}</span>
-                                        </div>
-                                    ))}
+                                    {topCustomers.map((c: any, i: number) => {
+                                        const custHref = `/dashboard?tab=customers&customerId=${c.id}${preset ? `&preset=${preset}` : ''}${currentEntity && currentEntity !== 'ALL' ? `&entity=${currentEntity}` : ''}`
+                                        return (
+                                            <Link
+                                                key={c.id || i}
+                                                href={custHref}
+                                                title={t.rankings.clickCustomerHint}
+                                                className="group flex items-center justify-between py-1.5 px-2 rounded transition-colors hover:bg-sky-50/70"
+                                                style={{ background: i === 0 ? 'rgba(8,145,178,0.06)' : 'transparent' }}
+                                            >
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <span className="text-[10px] font-bold w-4" style={{ color: i === 0 ? '#B45309' : '#64748B' }}>{i + 1}.</span>
+                                                    <span className="text-xs truncate group-hover:text-cyan-700 font-medium" style={{ color: '#0F172A' }}>{c.name}</span>
+                                                    <ExternalLink size={11} className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0" style={{ color: '#0891B2' }} />
+                                                </div>
+                                                <span className="text-[11px] font-bold font-mono flex-shrink-0" style={{ color: '#0891B2' }}>{formatFriendlyVND(c.revenue, isEn)}</span>
+                                            </Link>
+                                        )
+                                    })}
                                 </div>
                             )}
                             {/* Top Products */}
@@ -523,14 +611,27 @@ export function CeoOverviewContent({
                             ) : (
                                 <div className="space-y-1">
                                     {topProducts.map((p: any, i: number) => (
-                                        <div key={i} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: i === 0 ? 'rgba(180,83,9,0.06)' : 'transparent' }}>
+                                        <div key={p.sku || i} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: i === 0 ? 'rgba(180,83,9,0.06)' : 'transparent' }}>
                                             <div className="flex items-center gap-2 min-w-0">
                                                 <span className="text-[10px] font-bold w-4" style={{ color: i === 0 ? '#B45309' : '#64748B' }}>{i + 1}.</span>
                                                 <span className="text-xs truncate" style={{ color: '#0F172A' }}>{p.name}</span>
                                             </div>
-                                            <span className="text-[10px] font-mono flex-shrink-0" style={{ color: '#475569' }}>
-                                                {p.qty} {t.rankings.bottlesSold} · {formatFriendlyVND(p.revenue, isEn)}
-                                            </span>
+                                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                                                {typeof p.marginPct === 'number' && (
+                                                    <span
+                                                        className="text-[9px] font-mono font-bold px-1 py-0.5 rounded"
+                                                        style={{
+                                                            background: p.marginPct >= 25 ? 'rgba(21,128,61,0.12)' : 'rgba(180,83,9,0.12)',
+                                                            color: p.marginPct >= 25 ? '#15803D' : '#B45309',
+                                                        }}
+                                                    >
+                                                        GM {p.marginPct}%
+                                                    </span>
+                                                )}
+                                                <span className="text-[10px] font-mono" style={{ color: '#475569' }}>
+                                                    {p.qty} {t.rankings.bottlesSold} &middot; {formatFriendlyVND(p.revenue, isEn)}
+                                                </span>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -540,96 +641,231 @@ export function CeoOverviewContent({
                 </div>
             )}
 
-            {/* ═══ LAYER 4 — CEO ACTION HUB ═══ */}
+            {/* ═══ LAYER 4 — UNIFIED CEO ACTION HUB ═══ */}
             {canSeePendingApprovals && (
                 <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                         <div className="flex items-center gap-2">
                             <Clock size={15} style={{ color: '#B91C1C' }} />
                             <h3 className="font-semibold text-sm" style={{ color: '#0F172A' }}>
                                 {t.approvals.title}
                             </h3>
-                            <span className="inline-block px-2 py-0.5 text-xs font-bold rounded-full whitespace-nowrap shrink-0" style={{ background: 'rgba(185,28,28,0.2)', color: '#B91C1C' }}>
+                            <span className="inline-block px-2 py-0.5 text-xs font-bold rounded-full whitespace-nowrap shrink-0" style={{ background: 'rgba(185,28,28,0.18)', color: '#B91C1C' }}>
                                 {totalPending}
                             </span>
                         </div>
-                        <Link
-                            href="/dashboard/proposals"
-                            className="text-xs font-medium px-3 py-1.5 rounded transition-colors"
-                            style={{ background: 'rgba(8,145,178,0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.08)' }}
-                        >
-                            {t.approvals.viewAll}
-                        </Link>
+
+                        {/* Filter Pills */}
+                        {totalPending > 0 && (
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                {([
+                                    { key: 'ALL' as const, label: t.approvals.filterAll, count: totalPending },
+                                    { key: 'SO' as const, label: t.approvals.filterSO, count: stats.pendingSOs.length },
+                                    { key: 'PROPOSAL' as const, label: t.approvals.filterProposals, count: pendingProposals.length },
+                                    { key: 'PAYMENT' as const, label: t.approvals.filterPayments, count: pendingPaymentRequests.length },
+                                    { key: 'SYSTEM' as const, label: t.approvals.filterEngine, count: Array.isArray(pendingApprovalReqs) ? pendingApprovalReqs.length : 0 },
+                                ]).filter(tab => tab.key === 'ALL' || tab.count > 0).map(tab => {
+                                    const active = approvalFilter === tab.key
+                                    return (
+                                        <button
+                                            key={tab.key}
+                                            type="button"
+                                            onClick={() => setApprovalFilter(tab.key)}
+                                            className="px-2.5 py-1 text-[11px] font-semibold rounded transition-colors cursor-pointer"
+                                            style={{
+                                                background: active ? '#0F172A' : '#F8FAFC',
+                                                color: active ? '#FFFFFF' : '#475569',
+                                                border: `1px solid ${active ? '#0F172A' : '#E2E8F0'}`,
+                                            }}
+                                        >
+                                            {tab.label} ({tab.count})
+                                        </button>
+                                    )
+                                })}
+                            </div>
+                        )}
                     </div>
-                {totalPending === 0 ? (
-                    <div className="flex flex-col items-center py-6 gap-1">
-                        <CheckCircle2 size={24} style={{ color: '#15803D' }} />
-                        <p className="text-xs" style={{ color: '#64748B' }}>
-                            {t.approvals.noPending}
-                        </p>
-                    </div>
-                ) : (
-                    <div className="space-y-2">
-                        {/* Proposals */}
-                        {pendingProposals.map((p: any) => {
-                            const prioCfg = PRIORITY_LABELS[p.priority] ?? PRIORITY_LABELS.NORMAL
-                            return (
-                                <div key={p.id} className="flex items-center justify-between py-2.5 px-3" style={{ background: 'rgba(180,83,9,0.03)', border: '1px solid rgba(180,83,9,0.15)', borderRadius: '6px', borderLeft: `3px solid ${prioCfg.color}` }}>
-                                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                                        <FileText size={14} style={{ color: '#B45309' }} className="flex-shrink-0" />
-                                        <div className="min-w-0">
-                                            <div className="flex items-center gap-1.5 mb-0.5">
-                                                <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: prioCfg.bg, color: prioCfg.color }}>{prioCfg.label}</span>
-                                                <span className="inline-block text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: 'rgba(29,78,216,0.1)', color: '#1D4ED8' }}>{CATEGORY_LABELS[p.category] ?? p.category}</span>
-                                                <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{p.proposalNo}</span>
+
+                    {actionError && (
+                        <div className="mb-3 p-2.5 rounded text-xs flex items-center justify-between" style={{ background: 'rgba(185,28,28,0.08)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.2)' }}>
+                            <span>{actionError}</span>
+                            <button type="button" onClick={() => setActionError(null)} className="cursor-pointer">
+                                <X size={13} />
+                            </button>
+                        </div>
+                    )}
+
+                    {totalPending === 0 ? (
+                        <div className="flex flex-col items-center py-6 gap-1">
+                            <CheckCircle2 size={24} style={{ color: '#15803D' }} />
+                            <p className="text-xs" style={{ color: '#64748B' }}>
+                                {t.approvals.noPending}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            {/* Pending Sales Orders (with Margin %, Discount %, Rep, Payment Term, Bottles) */}
+                            {(approvalFilter === 'ALL' || approvalFilter === 'SO') && stats.pendingSOs.map((so: any) => {
+                                const marginColor = (so.estimatedMarginPct ?? 0) >= 25 ? '#15803D' : (so.estimatedMarginPct ?? 0) >= 15 ? '#B45309' : '#B91C1C'
+                                return (
+                                    <div key={so.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 py-2.5 px-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px', borderLeft: '3px solid #0891B2' }}>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                                                <AlertCircle size={13} style={{ color: '#0891B2' }} />
+                                                <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(8, 145, 178, 0.1)', color: '#0891B2' }}>SO</span>
+                                                <Link href="/dashboard/sales" className="text-xs font-bold hover:underline" style={{ color: '#0F172A' }}>{so.soNo}</Link>
+                                                <span className="text-xs font-medium truncate" style={{ color: '#334155' }}>&middot; {so.customerName}</span>
+                                                {typeof so.estimatedMarginPct === 'number' && (
+                                                    <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-mono font-bold whitespace-nowrap" style={{ background: `${marginColor}18`, color: marginColor }}>
+                                                        {t.approvals.margin}: {so.estimatedMarginPct}%
+                                                    </span>
+                                                )}
+                                                {(so.effectiveDiscountPct ?? 0) > 0 && (
+                                                    <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-mono font-bold whitespace-nowrap" style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C' }}>
+                                                        {t.approvals.discount}: -{so.effectiveDiscountPct}%
+                                                    </span>
+                                                )}
                                             </div>
-                                            <p className="text-sm truncate" style={{ color: '#0F172A' }}>{p.title}</p>
-                                            <span className="text-[10px]" style={{ color: '#64748B' }}>{p.creatorName}</span>
+                                            <div className="flex items-center gap-3 text-[11px]" style={{ color: '#64748B' }}>
+                                                <span>{t.approvals.salesRep}: <strong style={{ color: '#475569' }}>{so.salesRepName}</strong></span>
+                                                <span>&middot; {t.approvals.paymentTerm}: <strong style={{ color: '#475569' }}>{so.paymentTerm}</strong></span>
+                                                {so.bottleCount > 0 && <span>&middot; {so.bottleCount} {t.kpis.bottlesUnit}</span>}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0">
+                                            <p className="text-sm font-bold font-mono" style={{ color: '#0F172A' }}>{formatCurrency(so.amount)}</p>
+                                            <div className="flex gap-1.5">
+                                                <button
+                                                    type="button"
+                                                    disabled={isPendingAction}
+                                                    onClick={() => handleApproveItem('SO', so.id)}
+                                                    className="px-2.5 py-1 text-xs font-semibold cursor-pointer disabled:opacity-50"
+                                                    style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)', borderRadius: '4px' }}
+                                                >
+                                                    {t.approvals.approve}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={isPendingAction}
+                                                    onClick={() => setRejectTarget({ type: 'SO', id: so.id, code: so.soNo })}
+                                                    className="px-2.5 py-1 text-xs font-semibold cursor-pointer disabled:opacity-50"
+                                                    style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.25)', borderRadius: '4px' }}
+                                                >
+                                                    {t.approvals.reject}
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3 flex-shrink-0">
-                                        {p.estimatedAmount && <span className="text-sm font-bold font-mono" style={{ color: '#0F172A' }}>{formatCurrency(p.estimatedAmount)}</span>}
-                                        <Link href="/dashboard/proposals" className="px-2.5 py-1 text-xs font-semibold rounded" style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)' }}>
-                                            {t.approvals.reviewAndApprove}
-                                        </Link>
+                                )
+                            })}
+
+                            {/* Proposals */}
+                            {(approvalFilter === 'ALL' || approvalFilter === 'PROPOSAL') && pendingProposals.map((p: any) => {
+                                const prioCfg = PRIORITY_LABELS[p.priority] ?? PRIORITY_LABELS.NORMAL
+                                return (
+                                    <div key={p.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 py-2.5 px-3" style={{ background: 'rgba(180,83,9,0.03)', border: '1px solid rgba(180,83,9,0.15)', borderRadius: '6px', borderLeft: `3px solid ${prioCfg.color}` }}>
+                                        <div className="flex items-start gap-2 min-w-0 flex-1">
+                                            <FileText size={14} style={{ color: '#B45309' }} className="flex-shrink-0 mt-0.5" />
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                                                    <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: prioCfg.bg, color: prioCfg.color }}>{prioCfg.label}</span>
+                                                    <span className="inline-block text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: 'rgba(29,78,216,0.1)', color: '#1D4ED8' }}>{CATEGORY_LABELS[p.category] ?? p.category}</span>
+                                                    <Link href="/dashboard/proposals" className="text-xs font-bold hover:underline" style={{ color: '#0891B2' }}>{p.proposalNo}</Link>
+                                                </div>
+                                                <p className="text-sm truncate font-medium" style={{ color: '#0F172A' }}>{p.title}</p>
+                                                <span className="text-[10px]" style={{ color: '#64748B' }}>{p.creatorName}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0">
+                                            {p.estimatedAmount && <span className="text-sm font-bold font-mono" style={{ color: '#0F172A' }}>{formatCurrency(p.estimatedAmount)}</span>}
+                                            <div className="flex gap-1.5">
+                                                <button
+                                                    type="button"
+                                                    disabled={isPendingAction}
+                                                    onClick={() => handleApproveItem('PROPOSAL', p.id)}
+                                                    className="px-2.5 py-1 text-xs font-semibold cursor-pointer disabled:opacity-50"
+                                                    style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)', borderRadius: '4px' }}
+                                                >
+                                                    {t.approvals.approve}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={isPendingAction}
+                                                    onClick={() => setRejectTarget({ type: 'PROPOSAL', id: p.id, code: p.proposalNo })}
+                                                    className="px-2.5 py-1 text-xs font-semibold cursor-pointer disabled:opacity-50"
+                                                    style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.25)', borderRadius: '4px' }}
+                                                >
+                                                    {t.approvals.reject}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+
+                            {/* Payment Requests */}
+                            {(approvalFilter === 'ALL' || approvalFilter === 'PAYMENT') && pendingPaymentRequests.map((pr: any) => (
+                                <div key={pr.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 py-2.5 px-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px', borderLeft: '3px solid #1D4ED8' }}>
+                                    <div className="flex items-start gap-2 min-w-0 flex-1">
+                                        <CreditCard size={14} style={{ color: '#1D4ED8' }} className="flex-shrink-0 mt-0.5" />
+                                        <div className="min-w-0">
+                                            <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                                                <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(29,78,216,0.12)', color: '#1D4ED8' }}>
+                                                    {t.approvals.paymentReqBadge}
+                                                </span>
+                                                <span className="inline-block text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: '#F1F5F9', color: '#475569' }}>
+                                                    {pr.purposeLabel}
+                                                </span>
+                                                <Link href="/dashboard/payment-requests" className="text-xs font-bold hover:underline" style={{ color: '#0F172A' }}>
+                                                    {pr.requestNo}
+                                                </Link>
+                                            </div>
+                                            <p className="text-xs truncate font-medium" style={{ color: '#0F172A' }}>{pr.beneficiary}</p>
+                                            <span className="text-[10px]" style={{ color: '#64748B' }}>
+                                                {pr.requesterName} &middot; {formatDate(pr.dueDate)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0">
+                                        <span className="text-sm font-bold font-mono" style={{ color: '#0F172A' }}>{formatCurrency(pr.amount)}</span>
+                                        <div className="flex gap-1.5">
+                                            <button
+                                                type="button"
+                                                disabled={isPendingAction}
+                                                onClick={() => handleApproveItem('PAYMENT', pr.id)}
+                                                className="px-2.5 py-1 text-xs font-semibold cursor-pointer disabled:opacity-50"
+                                                style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)', borderRadius: '4px' }}
+                                            >
+                                                {t.approvals.approve}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                disabled={isPendingAction}
+                                                onClick={() => setRejectTarget({ type: 'PAYMENT', id: pr.id, code: pr.requestNo })}
+                                                className="px-2.5 py-1 text-xs font-semibold cursor-pointer disabled:opacity-50"
+                                                style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.25)', borderRadius: '4px' }}
+                                            >
+                                                {t.approvals.reject}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            )
-                        })}
+                            ))}
 
-                        {/* Approval Engine */}
-                        {Array.isArray(pendingApprovalReqs) && pendingApprovalReqs.map((arItem: any) => (
-                            <div key={arItem.id} className="flex items-center justify-between py-2.5 px-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px' }}>
-                                <div className="flex items-center gap-2">
-                                    <ClipboardCheck size={13} style={{ color: '#0891B2' }} />
-                                    <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0" style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309' }}>{arItem.docType}</span>
-                                    <span className="text-sm" style={{ color: '#0F172A' }}>{arItem.templateName}</span>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-[10px]" style={{ color: '#475569' }}>{t.approvals.step} {arItem.currentStep}</p>
-                                    <p className="text-[10px]" style={{ color: '#64748B' }}>{arItem.requestedBy}</p>
-                                </div>
-                            </div>
-                        ))}
-
-                        {/* Pending SOs */}
-                        {stats.pendingSOs.map((so: any) => (
-                            <div key={so.id} className="flex items-center justify-between py-2.5 px-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px' }}>
-                                <div className="flex items-center gap-2">
-                                    {so.status === 'PENDING_APPROVAL' && <AlertCircle size={13} style={{ color: '#B45309' }} />}
-                                    <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0" style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>SO</span>
-                                    <span className="text-sm font-semibold" style={{ color: '#0F172A' }}>{so.soNo}</span>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="text-right">
-                                        <p className="text-sm font-bold font-mono" style={{ color: '#0F172A' }}>{formatCurrency(so.amount)}</p>
-                                        <p className="text-[10px]" style={{ color: '#64748B' }}>{so.customerName}</p>
+                            {/* System Approval Engine */}
+                            {(approvalFilter === 'ALL' || approvalFilter === 'SYSTEM') && Array.isArray(pendingApprovalReqs) && pendingApprovalReqs.map((arItem: any) => (
+                                <div key={arItem.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 py-2.5 px-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px' }}>
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <ClipboardCheck size={13} style={{ color: '#0891B2' }} />
+                                        <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0" style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309' }}>{arItem.docType}</span>
+                                        <span className="text-xs font-medium truncate" style={{ color: '#0F172A' }}>{arItem.templateName}</span>
+                                        <span className="text-[10px]" style={{ color: '#64748B' }}>({t.approvals.step} {arItem.currentStep} &middot; {arItem.requestedBy})</span>
                                     </div>
-                                    <div className="flex gap-1.5">
+                                    <div className="flex items-center justify-end gap-1.5 flex-shrink-0">
                                         <button
                                             type="button"
                                             disabled={isPendingAction}
-                                            onClick={() => handleApproveSo(so.id)}
+                                            onClick={() => handleApproveItem('SYSTEM', arItem.id)}
                                             className="px-2.5 py-1 text-xs font-semibold cursor-pointer disabled:opacity-50"
                                             style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)', borderRadius: '4px' }}
                                         >
@@ -638,7 +874,7 @@ export function CeoOverviewContent({
                                         <button
                                             type="button"
                                             disabled={isPendingAction}
-                                            onClick={() => handleRejectSo(so.id)}
+                                            onClick={() => setRejectTarget({ type: 'SYSTEM', id: arItem.id, code: `${arItem.docType} #${arItem.docId?.slice(-6) ?? ''}` })}
                                             className="px-2.5 py-1 text-xs font-semibold cursor-pointer disabled:opacity-50"
                                             style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.25)', borderRadius: '4px' }}
                                         >
@@ -646,11 +882,53 @@ export function CeoOverviewContent({
                                         </button>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Reject Reason Modal */}
+            {rejectTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15, 23, 42, 0.45)' }}>
+                    <div className="w-full max-w-md rounded-md p-5 shadow-xl" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                        <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-sm font-bold" style={{ color: '#0F172A' }}>
+                                {t.approvals.rejectReasonTitle}: <span style={{ color: '#B91C1C' }}>{rejectTarget.code}</span>
+                            </h4>
+                            <button type="button" onClick={() => { setRejectTarget(null); setRejectReason('') }} className="cursor-pointer" style={{ color: '#64748B' }}>
+                                <X size={15} />
+                            </button>
+                        </div>
+                        <textarea
+                            rows={3}
+                            value={rejectReason}
+                            onChange={e => setRejectReason(e.target.value)}
+                            placeholder={t.approvals.rejectReasonPlaceholder}
+                            className="w-full rounded p-2.5 text-xs mb-3 focus:outline-none"
+                            style={{ border: '1px solid #CBD5E1', color: '#0F172A' }}
+                        />
+                        <div className="flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => { setRejectTarget(null); setRejectReason('') }}
+                                className="px-3 py-1.5 text-xs font-medium rounded cursor-pointer"
+                                style={{ background: '#F1F5F9', color: '#475569' }}
+                            >
+                                {t.approvals.cancel}
+                            </button>
+                            <button
+                                type="button"
+                                disabled={isPendingAction}
+                                onClick={handleConfirmReject}
+                                className="px-3 py-1.5 text-xs font-semibold rounded cursor-pointer disabled:opacity-50"
+                                style={{ background: '#B91C1C', color: '#FFFFFF' }}
+                            >
+                                {t.approvals.confirmReject}
+                            </button>
+                        </div>
                     </div>
-                )}
-            </div>
+                </div>
             )}
 
             {/* ═══ LAYER 5 — DEEP ANALYSIS (Grid of cards) ═══ */}
@@ -822,6 +1100,58 @@ export function CeoOverviewContent({
                             )}
                         </div>
                     )}
+
+                    {/* Slow-Moving & Dead Stock Capital Alert */}
+                    {hasSlowStock && (() => {
+                        const deadLots = slowMovingStock.filter((l: any) => l.status === 'DEAD')
+                        const slowLots = slowMovingStock.filter((l: any) => l.status === 'SLOW')
+                        const totalTiedCapital = slowMovingStock.reduce((s: number, l: any) => s + Number(l.stockValue ?? 0), 0)
+                        return (
+                            <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                <SectionHead
+                                    icon={<Archive size={15} style={{ color: '#B45309' }} />}
+                                    title={t.slowStock.title}
+                                    badge={
+                                        <span className="inline-block px-2 py-0.5 text-[10px] font-bold rounded-full whitespace-nowrap shrink-0" style={{ background: deadLots.length > 0 ? 'rgba(185,28,28,0.16)' : 'rgba(180,83,9,0.16)', color: deadLots.length > 0 ? '#B91C1C' : '#B45309' }}>
+                                            {t.slowStock.tiedCapital}: {formatFriendlyVND(totalTiedCapital, isEn)}
+                                        </span>
+                                    }
+                                >
+                                    <div className="flex items-center gap-2 text-[10px] font-semibold">
+                                        <span className="px-1.5 py-0.5 rounded" style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C' }}>
+                                            {t.slowStock.deadLabel}: {deadLots.length}
+                                        </span>
+                                        <span className="px-1.5 py-0.5 rounded" style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309' }}>
+                                            {t.slowStock.slowLabel}: {slowLots.length}
+                                        </span>
+                                    </div>
+                                </SectionHead>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                                    {slowMovingStock.slice(0, 6).map((lot: any) => {
+                                        const isDead = lot.status === 'DEAD'
+                                        return (
+                                            <div key={lot.lotId} className="p-2.5 rounded flex items-center justify-between gap-2" style={{ background: isDead ? 'rgba(185,28,28,0.04)' : '#F8FAFC', border: `1px solid ${isDead ? 'rgba(185,28,28,0.2)' : '#E2E8F0'}` }}>
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-semibold truncate" style={{ color: '#0F172A' }}>{lot.productName}</p>
+                                                    <p className="text-[10px] font-mono truncate" style={{ color: '#64748B' }}>
+                                                        {lot.sku} &middot; {lot.locationCode} &middot; {lot.qtyRemaining} {t.kpis.bottlesUnit}
+                                                    </p>
+                                                </div>
+                                                <div className="text-right shrink-0">
+                                                    <p className="text-xs font-bold font-mono" style={{ color: isDead ? '#B91C1C' : '#B45309' }}>
+                                                        {formatFriendlyVND(lot.stockValue, isEn)}
+                                                    </p>
+                                                    <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-mono font-bold" style={{ background: isDead ? 'rgba(185,28,28,0.15)' : 'rgba(180,83,9,0.15)', color: isDead ? '#B91C1C' : '#B45309' }}>
+                                                        {lot.daysInStock} {t.slowStock.daysInStock}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        )
+                    })()}
 
                     {/* Legal Compliance */}
                     {hasCompliance && (

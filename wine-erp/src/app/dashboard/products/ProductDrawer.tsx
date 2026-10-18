@@ -452,7 +452,6 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                     value={form.sku ?? ''}
                                     onChange={e => set('sku', e.target.value.toUpperCase())}
                                     placeholder="CHATEAU-PETRUS-750"
-                                    style={{ fontFamily: 'var(--font-sans)' }}
                                 />
                             </Field>
                         </div>
@@ -563,10 +562,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                     <button
                                         type="button"
                                         onClick={() => setShowNewProducer(true)}
-                                        className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold transition-colors"
-                                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0891B2' }}
-                                        onMouseEnter={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                                        onMouseLeave={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
+                                        className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold transition-colors bg-white border border-[#E2E8F0] hover:border-[#0891B2] text-[#0891B2]"
                                         title="Tạo nhà SX mới">
                                         +
                                     </button>
@@ -619,7 +615,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                             setCreatingProducer(false)
                                         }}
                                         className="text-xs px-3 py-1 rounded font-semibold disabled:opacity-50"
-                                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                                        style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                         {creatingProducer ? 'Đang tạo...' : 'Tạo'}
                                     </button>
                                 </div>
@@ -991,10 +987,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                         {isEdit ? (
                             <>
                                 {/* Upload button */}
-                                <label className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg cursor-pointer transition-all"
-                                    style={{ background: '#FFFFFF', border: '2px dashed #E2E8F0', color: '#64748B' }}
-                                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#0891B2'; e.currentTarget.style.color = '#0891B2' }}
-                                    onMouseLeave={e => { e.currentTarget.style.borderColor = '#E2E8F0'; e.currentTarget.style.color = '#64748B' }}>
+                                <label className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg cursor-pointer transition-all bg-white border-2 border-dashed border-[#E2E8F0] text-[#64748B] hover:border-[#0891B2] hover:text-[#0891B2]">
                                     {uploadingMedia
                                         ? <><Loader2 size={16} className="animate-spin" /> Đang upload...</>
                                         : <><UploadCloud size={16} /> Thêm hình ảnh (JPG, PNG, WEBP)</>
@@ -1093,8 +1086,8 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="flex flex-col items-center gap-2 py-6 rounded-lg" style={{ background: '#FFFFFF' }}>
-                                        <ImageIcon size={24} style={{ color: '#E2E8F0' }} />
+                                    <div className="flex flex-col items-center gap-2 py-6 rounded-lg" style={{ background: '#F8FAFC', border: '1px dashed #E2E8F0' }}>
+                                        <ImageIcon size={24} style={{ color: '#94A3B8' }} />
                                         <p className="text-xs" style={{ color: '#64748B' }}>Chưa có hình ảnh nào</p>
                                     </div>
                                 )}
@@ -1257,8 +1250,8 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                         ))}
                                     </div>
                                 ) : !showAwardForm && (
-                                    <div className="flex flex-col items-center gap-2 py-6 rounded-lg" style={{ background: '#FFFFFF' }}>
-                                        <Award size={24} style={{ color: '#E2E8F0' }} />
+                                    <div className="flex flex-col items-center gap-2 py-6 rounded-lg" style={{ background: '#F8FAFC', border: '1px dashed #E2E8F0' }}>
+                                        <Award size={24} style={{ color: '#94A3B8' }} />
                                         <p className="text-xs" style={{ color: '#64748B' }}>Chưa có giải thưởng nào</p>
                                     </div>
                                 )}
@@ -1281,7 +1274,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                     onClick={() => setPreviewDoc(null)}
                 >
                     <div
-                        className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-5xl h-[88vh] flex flex-col overflow-hidden"
+                        className="bg-white rounded-lg shadow-2xl border border-slate-200 w-full max-w-5xl h-[88vh] flex flex-col overflow-hidden"
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50">

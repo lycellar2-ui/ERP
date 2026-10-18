@@ -790,7 +790,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
                             setExecutingInspection(null)
                             setOpenPeriodicModal(true)
                         }}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-medium transition shadow-xs active:scale-98"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#0E7490] hover:bg-[#155E75] text-white rounded-lg text-xs font-medium transition shadow-xs active:scale-98"
                     >
                         <ShieldCheck className="w-4 h-4" />
                         <span>Phiếu định kỳ T2 & T5</span>
@@ -2028,7 +2028,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
                                 <button
                                     type="submit"
                                     disabled={saving}
-                                    className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white rounded-lg font-medium transition shadow-xs"
+                                    className="px-5 py-2.5 bg-[#0E7490] hover:bg-[#155E75] disabled:opacity-50 text-white rounded-lg font-medium transition shadow-xs"
                                 >
                                     {saving ? 'Đang lưu...' : 'Lưu phiếu kiểm tra định kỳ'}
                                 </button>

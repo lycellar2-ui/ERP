@@ -1485,6 +1485,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                         {/* Close button */}
                         <button 
                             onClick={() => setActiveModalLine(null)} 
+                            className="text-[#94A3B8] hover:text-[#B91C1C] transition-colors"
                             style={{
                                 position: 'absolute',
                                 top: 16,
@@ -1492,16 +1493,12 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                 background: 'transparent',
                                 border: 'none',
                                 cursor: 'pointer',
-                                color: '#94A3B8',
                                 padding: 4,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                transition: 'color 0.2s ease',
                                 zIndex: 10
                             }}
-                            onMouseEnter={e => e.currentTarget.style.color = '#B91C1C'}
-                            onMouseLeave={e => e.currentTarget.style.color = '#94A3B8'}
                         >
                             <XCircle size={26} />
                         </button>

@@ -347,7 +347,7 @@ export function AgencyClient() {
                         </div>
                         <button onClick={openCreateSub}
                             className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-md"
-                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                            style={{ background: '#0E7490', color: '#FFFFFF' }}>
                             <Plus size={14} /> Tạo Submission
                         </button>
                     </div>
@@ -435,7 +435,7 @@ export function AgencyClient() {
                                     style={{ color: '#475569', border: '1px solid #E2E8F0' }}>Huỷ</button>
                                 <button onClick={handleCreateSub} disabled={creatingSub || !subForm.partnerId || !subForm.shipmentId}
                                     className="px-5 py-2 text-xs font-semibold rounded-md disabled:opacity-50"
-                                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                     {creatingSub ? 'Đang tạo...' : 'Gửi Submission'}
                                 </button>
                             </div>
@@ -470,11 +470,9 @@ export function AgencyClient() {
                                     return (
                                         <React.Fragment key={sub.id}>
                                             <tr
-                                                className="cursor-pointer"
+                                                className="cursor-pointer hover:bg-[#0891B2]/4"
                                                 style={{ borderBottom: '1px solid #E2E8F0' }}
-                                                onClick={() => toggleExpand(sub.id)}
-                                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(8,145,178,0.04)'}
-                                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                                onClick={() => toggleExpand(sub.id)}>
                                                 <td className="px-3 py-3 text-sm font-medium" style={{ color: '#0F172A' }}>{sub.partnerName}</td>
                                                 <td className="px-3 py-3">
                                                     <span className="inline-block text-xs font-semibold px-2 py-0.5 rounded whitespace-nowrap shrink-0"
@@ -528,7 +526,7 @@ export function AgencyClient() {
                                             </tr>
                                             {/* ── Document Expansion Row ── */}
                                             {isExpanded && (
-                                                <tr style={{ background: '#FFFFFF' }}>
+                                                <tr style={{ background: '#F8FAFC' }}>
                                                     <td colSpan={8} className="px-6 py-4">
                                                         {docsLoading ? (
                                                             <div className="flex items-center gap-2 text-xs" style={{ color: '#64748B' }}>
@@ -609,10 +607,7 @@ export function AgencyClient() {
                                                                         {documents.map(doc => (
                                                                             <a key={doc.id} href={doc.fileUrl} target="_blank" rel="noreferrer"
                                                                                 onClick={e => e.stopPropagation()}
-                                                                                className="flex items-center gap-3 p-3 rounded transition-colors"
-                                                                                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
-                                                                                onMouseEnter={e => e.currentTarget.style.background = '#F1F5F9'}
-                                                                                onMouseLeave={e => e.currentTarget.style.background = '#FFFFFF'}>
+                                                                                className="flex items-center gap-3 p-3 rounded transition-colors bg-white hover:bg-[#F1F5F9] border border-[#E2E8F0]">
                                                                                 <FileText size={18} style={{ color: '#475569', flexShrink: 0 }} />
                                                                                 <div className="overflow-hidden flex-1">
                                                                                     <p className="text-xs font-semibold" style={{ color: '#B45309' }}>{doc.typeLabel}</p>
@@ -724,7 +719,7 @@ export function AgencyClient() {
                                 setAssigning(false)
                             }} disabled={assigning || !assignForm.shipmentId || !assignForm.partnerId}
                                 className="px-5 py-2 text-xs font-semibold rounded-md disabled:opacity-50 flex items-center gap-1.5"
-                                style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                                style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                 {assigning ? <Loader2 size={12} className="animate-spin" /> : <Link size={12} />}
                                 {assigning ? 'Đang gán...' : 'Gán Đối Tác'}
                             </button>
@@ -769,7 +764,7 @@ export function AgencyClient() {
                         </p>
                         <button onClick={() => { setShowCreatePartner(true); setPartnerError('') }}
                             className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-md"
-                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                            style={{ background: '#0E7490', color: '#FFFFFF' }}>
                             <Plus size={14} /> Thêm Đối Tác
                         </button>
                     </div>
@@ -827,7 +822,7 @@ export function AgencyClient() {
                                     style={{ color: '#475569', border: '1px solid #E2E8F0' }}>Huỷ</button>
                                 <button onClick={handleCreatePartner} disabled={creatingPartner}
                                     className="px-5 py-2 text-xs font-semibold rounded-md disabled:opacity-50"
-                                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                     {creatingPartner ? 'Đang tạo...' : 'Thêm Đối Tác'}
                                 </button>
                             </div>

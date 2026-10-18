@@ -42,7 +42,7 @@ export function MarkdownViewer({ content, className = '' }: MarkdownViewerProps)
                 [&_td]:border [&_td]:border-slate-200 [&_td]:p-2.5 [&_td]:text-slate-700
                 [&_blockquote]:border-l-4 [&_blockquote]:border-lys-teal [&_blockquote]:bg-lys-teal-soft/50 [&_blockquote]:px-4 [&_blockquote]:py-2.5 [&_blockquote]:rounded-r-lg [&_blockquote]:italic [&_blockquote]:my-3
                 [&_code]:bg-slate-100 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono [&_code]:text-lys-teal-strong
-                [&_pre]:bg-slate-900 [&_pre]:text-slate-100 [&_pre]:p-4 [&_pre]:rounded-lg [&_pre]:my-4 [&_pre]:overflow-x-auto [&_pre_code]:bg-transparent [&_pre_code]:text-slate-100 [&_pre_code]:p-0
+                [&_pre]:bg-slate-50 [&_pre]:text-slate-800 [&_pre]:border [&_pre]:border-slate-200 [&_pre]:p-4 [&_pre]:rounded-lg [&_pre]:my-4 [&_pre]:overflow-x-auto [&_pre_code]:bg-transparent [&_pre_code]:text-slate-800 [&_pre_code]:p-0
                 ${className}`}
             dangerouslySetInnerHTML={{ __html: htmlContent }}
         />

@@ -181,7 +181,7 @@ function CreateUserDrawer({ open, onClose, onCreated, roles }: {
 
                 <button onClick={handleSave} disabled={saving}
                     className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all"
-                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
                     {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                     {saving ? 'Đang lưu...' : 'Tạo Người Dùng'}
                 </button>
@@ -466,7 +466,7 @@ function CreateRoleDrawer({ open, onClose, onCreated, permissions }: {
 
                 <button onClick={handleSave} disabled={saving || !name}
                     className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all shrink-0 cursor-pointer"
-                    style={{ background: name ? '#0891B2' : '#E2E8F0', color: name ? '#FFFFFF' : '#64748B' }}>
+                    style={{ background: name ? '#0E7490' : '#E2E8F0', color: name ? '#FFFFFF' : '#64748B' }}>
                     {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                     {saving ? 'Đang lưu...' : `Tạo Vai Trò (${selectedPerms.length} quyền)`}
                 </button>
@@ -552,7 +552,7 @@ function EditRolePermissionsDrawer({ open, onClose, onUpdated, role, permissions
 
                 <button onClick={handleSave} disabled={saving || loading}
                     className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all shrink-0 cursor-pointer"
-                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
                     {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                     {saving ? 'Đang lưu...' : `Lưu Quyền Hạn (${selectedPerms.length} quyền)`}
                 </button>
@@ -647,7 +647,7 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
             <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between shadow-2xl bg-white border-l border-slate-200">
                 <div>
-                    <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '1px solid #FFFFFF' }}>
+                    <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
                         <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
                             {isAdmin ? 'Chỉnh Sửa Người Dùng' : 'Thông Tin Chi Tiết'}
                         </h3>
@@ -752,7 +752,7 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
                 {isAdmin && (
                     <button onClick={handleSave} disabled={saving}
                         className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all hover:opacity-90"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                        style={{ background: '#0E7490', color: '#FFFFFF' }}>
                         {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                         {saving ? 'Đang lưu...' : 'Lưu Thay Đổi'}
                     </button>
@@ -953,7 +953,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                         </div>
                         <button onClick={() => setShowCreateUser(true)}
                             className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md shrink-0"
-                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                            style={{ background: '#0E7490', color: '#FFFFFF' }}>
                             <Plus size={16} /> Thêm Người Dùng
                         </button>
                     </div>
@@ -976,9 +976,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                 ) : filteredUsers.map(u => {
                                     const st = STATUS_CFG[u.status] ?? STATUS_CFG.ACTIVE
                                     return (
-                                        <tr key={u.id} style={{ borderBottom: '1px solid #E2E8F0' }}
-                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(8,145,178,0.04)'}
-                                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                        <tr key={u.id} className="hover:bg-cyan-50/40 transition-colors" style={{ borderBottom: '1px solid #E2E8F0' }}>
                                             <td className="px-3 py-2.5 text-sm font-semibold cursor-pointer hover:underline hover:text-[#0891B2] transition-all"
                                                 style={{ color: '#0F172A' }}
                                                 onClick={() => setSelectedUser(u)}>
@@ -1036,14 +1034,14 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                         </p>
                         <button onClick={() => setShowCreateRole(true)}
                             className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md"
-                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                            style={{ background: '#0E7490', color: '#FFFFFF' }}>
                             <Plus size={16} /> Tạo Vai Trò
                         </button>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                         {roles.map(r => (
-                            <div key={r.id} className="p-5 rounded-md cursor-pointer border border-transparent hover:border-[#0E7490]/45 hover:bg-[#1C3245] transition-all" 
+                            <div key={r.id} className="p-5 rounded-md cursor-pointer border border-transparent hover:border-[#0E7490]/45 hover:bg-slate-50 transition-all" 
                                 style={card}
                                 onClick={() => {
                                     setSelectedRole(r)
@@ -1068,7 +1066,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                         {r.userCount === 0 ? 'Chưa có người dùng' : `${r.userCount} người dùng`}
                                     </span>
                                 </div>
-                                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#FFFFFF' }}>
+                                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#E2E8F0' }}>
                                     <div className="h-full rounded-full transition-all"
                                         style={{
                                             width: `${Math.min((r.permissionCount / permissions.length) * 100, 100)}%`,
@@ -1148,7 +1146,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                             {(tpl.steps || []).map((step: any, i: number) => (
                                                 <div key={i} className="flex items-center gap-2 text-xs" style={{ color: '#475569' }}>
                                                     <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
-                                                        style={{ background: '#FFFFFF', color: '#0891B2' }}>{i + 1}</span>
+                                                        style={{ background: '#ECFEFF', color: '#0E7490' }}>{i + 1}</span>
                                                     {step.approverRole}
                                                     {step.threshold && <span style={{ color: '#64748B' }}>(≥{(step.threshold / 1e6).toFixed(0)}M)</span>}
                                                 </div>
@@ -1222,7 +1220,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                             </td>
                                         </tr>
                                         {expandedLogId === log.id && (
-                                            <tr><td colSpan={6} style={{ background: '#FFFFFF', padding: '12px 16px' }}>
+                                            <tr><td colSpan={6} style={{ background: '#F8FAFC', padding: '12px 16px' }}>
                                                 {loadingChanges ? (
                                                     <div className="flex items-center gap-2 py-2">
                                                         <Loader2 size={14} className="animate-spin" style={{ color: '#0891B2' }} />
@@ -1502,7 +1500,7 @@ function EditEntityDrawer({ open, onClose, onSave, entity, saving }: {
 
                 <button onClick={() => onSave(entity.id, form)} disabled={saving}
                     className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all"
-                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
                     {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                     {saving ? 'Đang lưu...' : 'Lưu Thay Đổi'}
                 </button>

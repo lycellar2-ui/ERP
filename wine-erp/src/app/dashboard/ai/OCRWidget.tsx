@@ -215,7 +215,7 @@ export function OCRUploadWidget() {
                     <button onClick={file ? handleExtract : handleManualProcess}
                         disabled={loading || (!file && !extractedText.trim())}
                         className="w-full flex items-center justify-center gap-2 mt-4 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50 transition-all"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                        style={{ background: '#0E7490', color: '#FFFFFF' }}>
                         {loading
                             ? <><Loader2 size={14} className="animate-spin" /> Đang xử lý OCR...</>
                             : <><ArrowRight size={14} /> Trích Xuất Dữ Liệu</>}
@@ -300,13 +300,13 @@ function LogisticsResultView({ result }: { result: OCRLogisticsResult }) {
 
             <div className="grid grid-cols-2 gap-3">
                 {result.invoiceNo && (
-                    <div className="p-3 rounded-lg" style={{ background: '#FFFFFF' }}>
+                    <div className="p-3 rounded-lg" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                         <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Số Invoice</p>
                         <p className="text-sm font-bold" style={{ color: '#0F172A' }}>{result.invoiceNo}</p>
                     </div>
                 )}
                 {result.supplierName && (
-                    <div className="p-3 rounded-lg" style={{ background: '#FFFFFF' }}>
+                    <div className="p-3 rounded-lg" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                         <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Nhà Cung Cấp</p>
                         <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{result.supplierName}</p>
                     </div>

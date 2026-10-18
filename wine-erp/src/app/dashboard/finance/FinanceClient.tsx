@@ -68,7 +68,7 @@ function AgingBars({ buckets }: { buckets: Record<string, number> }) {
                                     <span className="text-xs w-12 text-right" style={{ color: b.color }}>{pct.toFixed(1)}%</span>
                                 </div>
                             </div>
-                            <div className="h-2 rounded-full overflow-hidden" style={{ background: '#FFFFFF' }}>
+                            <div className="h-2 rounded-full overflow-hidden" style={{ background: '#E2E8F0' }}>
                                 <div className="h-full rounded-full transition-all duration-500"
                                     style={{ width: `${pct}%`, background: b.color }} />
                             </div>
@@ -182,9 +182,8 @@ function ARTable({ rows, onPayment }: { rows: ARRow[]; onPayment: (id: string) =
                                 </td></tr>
                             ) : rows.map(row => (
                                 <tr key={row.id}
-                                    style={{ borderBottom: '1px solid #E2E8F0', background: row.isOverdue ? 'rgba(185,28,28,0.04)' : 'transparent' }}
-                                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(8,145,178,0.04)')}
-                                    onMouseLeave={e => (e.currentTarget.style.background = row.isOverdue ? 'rgba(185,28,28,0.04)' : 'transparent')}
+                                    className={`transition-colors hover:bg-[#0891B2]/4 ${row.isOverdue ? 'bg-[#B91C1C]/4' : ''}`}
+                                    style={{ borderBottom: '1px solid #E2E8F0' }}
                                 >
                                     <td className="px-3 py-3">
                                         <div className="flex items-center gap-1.5">
@@ -219,10 +218,7 @@ function ARTable({ rows, onPayment }: { rows: ARRow[]; onPayment: (id: string) =
                                     <td className="px-3 py-3">
                                         {row.outstanding > 0 && row.status !== 'CANCELLED' && (
                                             <button onClick={() => onPayment(row.id)}
-                                                className="px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer"
-                                                style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)', borderRadius: '4px' }}
-                                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(21,128,61,0.25)')}
-                                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(21,128,61,0.15)')}
+                                                className="px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer rounded bg-[#15803D]/15 hover:bg-[#15803D]/25 text-[#15803D] border border-[#15803D]/30"
                                             >
                                                 Ghi Thu
                                             </button>
@@ -454,7 +450,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
 
             {/* Tabs — 2 groups: Operational | Accounting */}
             <div className="overflow-x-auto pb-1" style={{ scrollbarWidth: 'thin', scrollbarColor: '#E2E8F0 transparent' }}>
-                <div className="flex items-center gap-1 p-1 rounded-md" style={{ background: '#FFFFFF', width: 'max-content', minWidth: '100%' }}>
+                <div className="flex items-center gap-1 p-1 rounded-md" style={{ background: '#F1F5F9', border: '1px solid #E2E8F0', width: 'max-content', minWidth: '100%' }}>
                     {/* Group: Operational */}
                     <span className="text-xs font-bold uppercase tracking-wider px-2" style={{ color: '#64748B' }}>Vận hành</span>
                     {tabs.filter(t => t.group === 'ops').map(t => {
@@ -570,9 +566,8 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                         const fmtFx = (val: number) => `${row.currency === 'USD' ? '$' : row.currency === 'EUR' ? '€' : row.currency + ' '}${val.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
                                         return (
                                             <tr key={row.id}
-                                                style={{ borderBottom: '1px solid #E2E8F0', background: row.isOverdue ? 'rgba(185,28,28,0.04)' : 'transparent' }}
-                                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(8,145,178,0.04)')}
-                                                onMouseLeave={e => (e.currentTarget.style.background = row.isOverdue ? 'rgba(185,28,28,0.04)' : 'transparent')}
+                                                className={`transition-colors hover:bg-[#0891B2]/4 ${row.isOverdue ? 'bg-[#B91C1C]/4' : ''}`}
+                                                style={{ borderBottom: '1px solid #E2E8F0' }}
                                             >
                                                 <td className="px-3 py-3 text-xs font-bold" style={{ color: '#0891B2' }}>{row.invoiceNo}</td>
                                                 <td className="px-3 py-3">
@@ -621,10 +616,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                                 <td className="px-3 py-3">
                                                     {row.outstanding > 0 && (
                                                         <button onClick={() => { setApPaymentModal(row.id); setPayAmount(String(Math.round(row.outstanding))); }}
-                                                            className="px-2.5 py-1 text-xs font-semibold cursor-pointer"
-                                                            style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)', borderRadius: '4px' }}
-                                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(180,83,9,0.25)')}
-                                                            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(180,83,9,0.15)')}>
+                                                            className="px-2.5 py-1 text-xs font-semibold cursor-pointer rounded bg-[#B45309]/15 hover:bg-[#B45309]/25 text-[#B45309] border border-[#B45309]/30">
                                                             Ghi Trả
                                                         </button>
                                                     )}
@@ -736,7 +728,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                 style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '6px' }}>Huỷ</button>
                             <button onClick={handlePayment} disabled={payLoading || !payAmount}
                                 className="px-5 py-2 text-sm font-semibold transition-all"
-                                style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}>
+                                style={{ background: '#0E7490', color: '#FFFFFF', borderRadius: '6px' }}>
                                 {payLoading ? 'Đang lưu...' : 'Xác Nhận'}
                             </button>
                         </div>

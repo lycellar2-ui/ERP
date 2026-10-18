@@ -69,7 +69,10 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
         setLoadingNoti(true)
         try {
             const offset = isLoadMore ? notifications.length : 0
-            const res = await getNotifications(10, offset)
+            const [res, countRes] = await Promise.all([
+                getNotifications(10, offset),
+                getUnreadCount(),
+            ])
             if (res.success && res.notifications) {
                 const newNotis = res.notifications as unknown as NotificationItem[]
                 if (isLoadMore) {
@@ -79,8 +82,6 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                 }
                 setHasMore(newNotis.length === 10)
             }
-            
-            const countRes = await getUnreadCount()
             if (countRes.success) {
                 setUnreadCount(countRes.count)
             }
@@ -152,7 +153,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
     const getHeaderTitle = (): string => {
         if (customTitle && customTitle !== "LY's Cellars") return customTitle
 
-        if (pathname === '/dashboard/margin') return 'Check Margin'
+        if (pathname === '/dashboard/margin') return locale === 'en' ? 'Margin Calculator' : 'Kiểm Tra Biên Lợi Nhuận'
 
         const routes = [
             { path: '/dashboard/proposals', title: locale === 'en' ? 'Proposals & Submissions' : 'Tờ Trình — Đề Xuất' },
@@ -165,7 +166,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
             { path: '/dashboard/contracts', title: locale === 'en' ? 'Contracts' : 'Hợp Đồng' },
             { path: '/dashboard/procurement', title: locale === 'en' ? 'Purchase Orders' : 'Đơn Mua Hàng' },
             { path: '/dashboard/shipments', title: locale === 'en' ? 'Shipments' : 'Lô Hàng' },
-            { path: '/dashboard/agency', title: 'Agency Portal' },
+            { path: '/dashboard/agency', title: locale === 'en' ? 'Agency Portal' : 'Cổng Đối Tác' },
             { path: '/dashboard/costing', title: locale === 'en' ? 'Costing (CST)' : 'Tính Giá Vốn (CST)' },
             { path: '/dashboard/warehouse', title: locale === 'en' ? 'Warehouses & Stock' : 'Kho Hàng' },
             { path: '/dashboard/transfers', title: locale === 'en' ? 'Transfers' : 'Chuyển Kho' },
@@ -176,10 +177,12 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
             { path: '/dashboard/price-list', title: locale === 'en' ? 'Price Lists' : 'Bảng Giá' },
             { path: '/dashboard/crm', title: locale === 'en' ? 'CRM — Customers' : 'CRM — Khách Hàng' },
             { path: '/dashboard/consignment', title: locale === 'en' ? 'Consignments (CSG)' : 'Ký Gửi (CSG)' },
-            { path: '/dashboard/allocation', title: 'Allocation Engine' },
+            { path: '/dashboard/allocation', title: locale === 'en' ? 'Allocation Engine' : 'Phân Bổ Hàng Hóa' },
+            { path: '/dashboard/delivery/shipper', title: locale === 'en' ? 'Shipper E-POD' : 'Giao Hàng (Shipper)' },
             { path: '/dashboard/delivery', title: locale === 'en' ? 'Deliveries & Logistics' : 'Vận Chuyển' },
             { path: '/dashboard/returns', title: locale === 'en' ? 'Returns & CN' : 'Trả Hàng & CN' },
-            { path: '/dashboard/pos', title: 'POS Showroom' },
+            { path: '/dashboard/pos/loyalty', title: locale === 'en' ? 'POS Loyalty Program' : 'POS — Khách Hàng Thân Thiết' },
+            { path: '/dashboard/pos', title: locale === 'en' ? 'POS Showroom' : 'POS Showroom' },
             { path: '/dashboard/qr-codes', title: locale === 'en' ? 'QR Traceability' : 'QR Truy Xuất' },
             { path: '/dashboard/payment-requests', title: locale === 'en' ? 'Payment Requests & Budgets' : 'Đề Nghị Thanh Toán & Ngân Sách' },
             { path: '/dashboard/finance', title: locale === 'en' ? 'Finance & Accounting' : 'Công Nợ & Kế Toán' },
@@ -191,7 +194,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
             { path: '/dashboard/kpi', title: locale === 'en' ? 'KPI Targets' : 'KPI Chỉ Tiêu' },
             { path: '/dashboard/media', title: locale === 'en' ? 'Media Library' : 'Thư Viện Ảnh' },
             { path: '/dashboard/audit-log', title: locale === 'en' ? 'Audit Log' : 'Nhật Ký Hệ Thống' },
-            { path: '/dashboard/ai', title: 'AI & Prompt' },
+            { path: '/dashboard/ai', title: locale === 'en' ? 'AI & Prompt' : 'Trợ Lý AI & Prompt' },
             { path: '/dashboard/settings/approval-matrix', title: locale === 'en' ? 'Approval Matrix' : 'Ma Trận Phân Quyền' },
             { path: '/dashboard/settings/telegram', title: locale === 'en' ? 'Telegram Bot Settings' : 'Cấu Hình Telegram Bot' },
             { path: '/dashboard/settings', title: locale === 'en' ? 'Settings & RBAC' : 'Cài Đặt & RBAC' },
@@ -514,7 +517,7 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
             <div className="w-full max-w-md h-full overflow-y-auto p-4 sm:p-6 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-250" 
                 style={{ background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}>
                 <div>
-                    <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '1px solid #FFFFFF' }}>
+                    <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
                         <div className="flex items-center gap-2">
                             <User size={18} style={{ color: '#0891B2' }} />
                             <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>Tài Khoản Của Tôi</h3>
@@ -544,7 +547,7 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
                             <div className="flex flex-wrap gap-1 p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                 {(currentUser.roles || []).map(r => (
                                     <span key={r} className="inline-block text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap shrink-0"
-                                        style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>
+                                        style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0E7490' }}>
                                         {r}
                                     </span>
                                 ))}
@@ -597,7 +600,7 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
                     onClick={handleSave} 
                     disabled={saving}
                     className="w-full mt-8 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all hover:opacity-90 disabled:opacity-50"
-                    style={{ background: '#0891B2', color: '#FFFFFF' }}
+                    style={{ background: '#0E7490', color: '#FFFFFF' }}
                 >
                     {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                     {saving ? 'Đang lưu thay đổi...' : 'Lưu Thay Đổi'}

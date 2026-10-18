@@ -620,7 +620,7 @@ export function WarehouseMapTab({
                         <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
                             <button
                                 onClick={() => setSelectedZoneFilter('ALL')}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 ${selectedZoneFilter === 'ALL' ? 'bg-slate-900 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-50'}`}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 ${selectedZoneFilter === 'ALL' ? 'bg-[#0E7490] text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-50'}`}
                             >
                                 Tất Cả Vị Trí ({locations.length})
                             </button>
@@ -1143,7 +1143,7 @@ export function WarehouseMapTab({
                         <div className="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
                             <button
                                 onClick={() => setShowLocModal(false)}
-                                className="px-5 py-2 rounded-lg text-xs font-extrabold bg-slate-900 text-white cursor-pointer shadow-xs"
+                                className="px-5 py-2 rounded-lg text-xs font-extrabold bg-[#0E7490] text-white cursor-pointer shadow-xs"
                             >
                                 Đóng
                             </button>

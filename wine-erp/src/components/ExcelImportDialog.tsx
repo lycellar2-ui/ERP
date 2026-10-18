@@ -147,10 +147,8 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
                                 </p>
                             </div>
                         </div>
-                        <button onClick={handleClose} className="p-2 rounded-lg transition-colors"
-                            style={{ color: '#64748B' }}
-                            onMouseEnter={e => (e.currentTarget.style.background = '#FFFFFF')}
-                            onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                        <button onClick={handleClose} className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                            style={{ color: '#64748B' }}>
                             <X size={18} />
                         </button>
                     </div>
@@ -160,10 +158,8 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
 
                         {/* Step 1: Download template */}
                         <button onClick={downloadTemplate}
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all group"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
-                            onMouseEnter={e => (e.currentTarget.style.borderColor = '#1D4ED8')}
-                            onMouseLeave={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all group border border-[#E2E8F0] hover:border-[#1D4ED8]"
+                            style={{ background: '#FFFFFF' }}>
                             <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
                                 style={{ background: 'rgba(29,78,216,0.12)' }}>
                                 <Download size={18} style={{ color: '#1D4ED8' }} />
@@ -296,26 +292,20 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
                         {step === 'result' ? (
                             <>
                                 <button onClick={() => { reset() }}
-                                    className="px-4 py-2.5 rounded-lg text-sm font-semibold"
-                                    style={{ color: '#475569', border: '1px solid #E2E8F0' }}
-                                    onMouseEnter={e => (e.currentTarget.style.background = '#FFFFFF')}
-                                    onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                                    className="px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors"
+                                    style={{ color: '#475569', border: '1px solid #E2E8F0' }}>
                                     Import thêm
                                 </button>
                                 <button onClick={handleClose}
-                                    className="px-5 py-2.5 rounded-lg text-sm font-semibold"
-                                    style={{ background: '#0891B2', color: '#FFFFFF' }}
-                                    onMouseEnter={e => (e.currentTarget.style.background = '#0891B2')}
-                                    onMouseLeave={e => (e.currentTarget.style.background = '#0E7490')}>
+                                    className="px-5 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
+                                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                     Đóng
                                 </button>
                             </>
                         ) : (
                             <button onClick={handleClose}
-                                className="px-4 py-2.5 rounded-lg text-sm"
-                                style={{ color: '#475569', border: '1px solid #E2E8F0' }}
-                                onMouseEnter={e => (e.currentTarget.style.background = '#FFFFFF')}
-                                onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                                className="px-4 py-2.5 rounded-lg text-sm hover:bg-slate-50 transition-colors"
+                                style={{ color: '#475569', border: '1px solid #E2E8F0' }}>
                                 Hủy
                             </button>
                         )}

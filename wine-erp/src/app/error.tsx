@@ -21,7 +21,6 @@ export default function GlobalError({
             alignItems: 'center',
             justifyContent: 'center',
             background: '#F8FAFC',
-            fontFamily: 'system-ui, sans-serif',
         }}>
             <div style={{
                 maxWidth: '480px',
@@ -29,7 +28,7 @@ export default function GlobalError({
                 padding: '48px 32px',
                 background: '#FFFFFF',
                 border: '1px solid #E2E8F0',
-                borderRadius: '12px',
+                borderRadius: '8px',
             }}>
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
                     <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(180,83,9,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#B45309' }}>
@@ -52,7 +51,7 @@ export default function GlobalError({
                     style={{
                         padding: '10px 24px',
                         background: 'rgba(8, 145, 178, 0.08)',
-                        color: '#0891B2',
+                        color: '#0E7490',
                         border: '1px solid rgba(8, 145, 178, 0.25)',
                         borderRadius: '6px',
                         cursor: 'pointer',

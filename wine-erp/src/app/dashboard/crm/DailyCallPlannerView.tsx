@@ -628,7 +628,7 @@ export function DailyCallPlannerView({
                                     onClick={() => setStatusFilter(st)}
                                     className={`px-2.5 py-1 text-xs font-bold rounded-lg transition shrink-0 cursor-pointer ${
                                         statusFilter === st
-                                            ? 'bg-slate-900 text-white shadow-2xs'
+                                            ? 'bg-[#0E7490] text-white shadow-2xs'
                                             : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >

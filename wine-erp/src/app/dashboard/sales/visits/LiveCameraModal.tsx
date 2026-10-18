@@ -401,7 +401,7 @@ export function LiveCameraModal({
                                     onClick={takeSnapshot}
                                     disabled={starting}
                                     className="flex-1 py-3 text-xs font-bold rounded-md flex items-center justify-center gap-2 transition-all disabled:opacity-40"
-                                    style={{ background: '#0891B2', color: '#FFFFFF' }}
+                                    style={{ background: '#0E7490', color: '#FFFFFF' }}
                                 >
                                     <Camera size={16} /> {locale === 'en' ? 'Take Field Photo' : 'Chụp Ảnh Điểm Bán'}
                                 </button>

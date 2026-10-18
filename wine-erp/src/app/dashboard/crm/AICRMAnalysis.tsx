@@ -116,17 +116,17 @@ export function AICRMAnalysis() {
                     <div className="px-5 pt-4">
                         {/* Row 1: Core KPIs */}
                         <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 mb-3">
-                            <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
+                            <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><Users size={11} style={{ color: '#0891B2' }} /></div>
                                 <p className="text-lg font-bold" style={{ color: '#0891B2' }}>{stats.totalCustomers}</p>
                                 <p className="text-xs" style={{ color: '#64748B' }}>Khách Hàng</p>
                             </div>
-                            <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
+                            <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><DollarSign size={11} style={{ color: '#B45309' }} /></div>
                                 <p className="text-lg font-bold" style={{ color: '#B45309' }}>{fmtVND(stats.totalRevenue)}</p>
                                 <p className="text-xs" style={{ color: '#64748B' }}>Tổng Doanh Thu</p>
                             </div>
-                            <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
+                            <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <p className="text-lg font-bold font-mono" style={{ color: stats.revenueGrowth >= 0 ? '#15803D' : '#B91C1C' }}>
                                     {stats.revenueGrowth >= 0 ? '+' : ''}{stats.revenueGrowth}%
                                 </p>
@@ -151,7 +151,7 @@ export function AICRMAnalysis() {
 
                         {/* Row 2: Tier Distribution + Revenue */}
                         <div className="grid grid-cols-2 gap-2">
-                            <div className="flex items-center gap-3 p-2.5 rounded" style={{ background: '#FFFFFF' }}>
+                            <div className="flex items-center gap-3 p-2.5 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Tiers:</span>
                                 {(['PLATINUM', 'GOLD', 'SILVER', 'BRONZE'] as const).map(tier => (
                                     <span key={tier} className="text-xs font-bold" style={{ color: TIER_COLORS[tier] }}>
@@ -159,7 +159,7 @@ export function AICRMAnalysis() {
                                     </span>
                                 ))}
                             </div>
-                            <div className="flex items-center justify-between p-2.5 rounded" style={{ background: '#FFFFFF' }}>
+                            <div className="flex items-center justify-between p-2.5 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
                                     Tháng này: <span style={{ color: '#B45309' }}>{fmtVND(stats.monthRevenue)}</span>
                                 </span>

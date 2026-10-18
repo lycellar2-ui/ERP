@@ -114,9 +114,7 @@ export default function PartnerLoginPage() {
                                                 {shipments.map(s => {
                                                     const st = STATUS_MAP[s.status] ?? { label: s.status, color: '#64748B' }
                                                     return (
-                                                        <tr key={s.id} style={{ borderBottom: '1px solid #E2E8F0' }}
-                                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(8,145,178,0.04)'}
-                                                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                                        <tr key={s.id} className="hover:bg-cyan-50/40 transition-colors" style={{ borderBottom: '1px solid #E2E8F0' }}>
                                                             <td className="px-4 py-3 text-sm font-bold" style={{ color: '#0891B2' }}>
                                                                 {s.billOfLading}
                                                             </td>
@@ -247,10 +245,8 @@ export default function PartnerLoginPage() {
                     <button
                         onClick={handleLogin}
                         disabled={loading || !email || !password}
-                        className="w-full flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}
-                        onMouseEnter={e => !loading && (e.currentTarget.style.background = '#0891B2')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '#0E7490')}>
+                        className="w-full flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-50"
+                        style={{ background: '#0E7490', color: '#FFFFFF' }}>
                         {loading ? <Loader2 size={16} className="animate-spin" /> : <Shield size={16} />}
                         {loading ? 'Đang đăng nhập...' : 'Đăng Nhập'}
                     </button>

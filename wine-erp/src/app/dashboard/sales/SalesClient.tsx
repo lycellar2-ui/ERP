@@ -1088,7 +1088,7 @@ function SODetailDrawer({
                             <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                                 <div style={{ overflowX: 'auto' }}>
                                     <table className="w-full text-xs" style={{ borderCollapse: 'collapse', minWidth: 640 }}>
-                                        <thead><tr style={{ background: '#FFFFFF' }}>
+                                        <thead><tr style={{ background: '#F8FAFC' }}>
                                             {(canSeeMargin 
                                                 ? (isEn ? ['SKU / Product Name', 'Qty', 'Unit Price', 'Price Source', 'Line Total', 'COGS', 'Profit', 'Margin %'] : ['SKU / Tên Sản Phẩm', 'SL', 'Giá Bán', 'Nguồn Giá', 'Thành Tiền', 'Giá Vốn', 'Lãi Gộp', 'Biên %']) 
                                                 : (isEn ? ['SKU / Product Name', 'Qty', 'Unit Price', 'Price Source', 'Line Total'] : ['SKU / Tên Sản Phẩm', 'SL', 'Giá Bán', 'Nguồn Giá', 'Thành Tiền'])
@@ -2162,7 +2162,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
         initialData: !search && !statusFilter && page === 1 && pageSize === 20 && sortBy === 'createdAt' && sortDir === 'desc' && !dateFrom && !dateTo && !salesRepFilter && !channelFilter && !legalEntityFilter && !warehouseFilter && !paymentTermFilter && !pendingActionFilter && orderTypeFilter === 'ALL' && invoiceFilter === 'ALL'
             ? initialData
             : undefined,
-        staleTime: 0,
+        staleTime: 30_000,
     })
 
     const rows = queryData?.rows ?? []
@@ -2219,11 +2219,8 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
         }, true)
     }
 
-    // Realtime Supabase Database Listener + Drawer data prefetching
+    // Realtime Supabase Database Listener
     useEffect(() => {
-        getLegalEntities().then(setLegalEntities).catch(() => { })
-        getCustomersForSO().catch(() => { })
-        getProductsWithStock().catch(() => { })
 
         // Initialize Supabase realtime channel for live sales_orders updates
         const supabase = createClient()

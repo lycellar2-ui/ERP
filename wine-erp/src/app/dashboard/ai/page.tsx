@@ -115,7 +115,7 @@ export default async function AIPage() {
                             </div>
                             <h3 className="font-semibold mb-1" style={{ color: '#0F172A' }}>{f.title}</h3>
                             <p className="text-xs mb-3" style={{ color: '#64748B' }}>{f.desc}</p>
-                            <div className="flex items-center gap-2 p-2 rounded-md" style={{ background: '#FFFFFF' }}>
+                            <div className="flex items-center gap-2 p-2 rounded-md" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <Brain size={12} style={{ color: f.color }} />
                                 <span className="text-xs font-mono" style={{ color: '#475569' }}>{f.model}</span>
                             </div>

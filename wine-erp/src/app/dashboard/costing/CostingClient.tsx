@@ -120,14 +120,13 @@ export function CostingClient({ products }: Props) {
                                             return (
                                                 <tr key={p.id}
                                                     onClick={() => setSelected(p)}
+                                                    className={!isSelected ? 'hover:bg-cyan-50/40' : ''}
                                                     style={{
                                                         borderBottom: '1px solid #E2E8F0',
-                                                        background: isSelected ? 'rgba(8,145,178,0.08)' : p.isLoss ? 'rgba(185,28,28,0.05)' : 'transparent',
+                                                        background: isSelected ? 'rgba(8,145,178,0.08)' : p.isLoss ? 'rgba(185,28,28,0.05)' : undefined,
                                                         cursor: 'pointer',
                                                         borderLeft: isSelected ? '2px solid #0E7490' : p.isLoss ? '2px solid #B91C1C' : 'none',
                                                     }}
-                                                    onMouseEnter={e => !isSelected && (e.currentTarget.style.background = 'rgba(8,145,178,0.04)')}
-                                                    onMouseLeave={e => !isSelected && (e.currentTarget.style.background = p.isLoss ? 'rgba(185,28,28,0.05)' : 'transparent')}
                                                 >
                                                     <td className="px-3 py-2.5">
                                                         <span className="inline-block text-xs px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0"
@@ -182,7 +181,7 @@ export function CostingClient({ products }: Props) {
                                         </div>
                                     </div>
 
-                                    <div className="p-3 rounded-md mb-4" style={{ background: '#FFFFFF' }}>
+                                    <div className="p-3 rounded-md mb-4" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                         <div className="flex justify-between mb-1">
                                             <span className="text-xs" style={{ color: '#64748B' }}>Giá Vốn / Chai (WA)</span>
                                             <span className="text-sm font-bold" style={{ color: '#B45309' }}>
@@ -214,7 +213,7 @@ export function CostingClient({ products }: Props) {
                                             Đề Xuất Theo Kênh (Target Margin)
                                         </p>
                                         {suggestions.map(s => (
-                                            <div key={s.channel} className="p-3 rounded-md" style={{ background: '#FFFFFF' }}>
+                                            <div key={s.channel} className="p-3 rounded-md" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                                 <div className="flex justify-between items-start mb-2">
                                                     <p className="text-xs font-semibold" style={{ color: '#0F172A' }}>{CHANNEL_LABEL[s.channel]}</p>
                                                     <span className="inline-block text-xs px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0"
@@ -284,10 +283,7 @@ function SensitivityPanel({ products }: { products: CostingProduct[] }) {
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                     {presets.map((s, i) => (
                         <button key={i} onClick={() => runAnalysis(s)}
-                            className="p-3 text-left rounded-md transition-all"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
-                            onMouseEnter={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                            onMouseLeave={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
+                            className="p-3 text-left rounded-md transition-all bg-white border border-[#E2E8F0] hover:border-[#0891B2]">
                             <p className="text-xs font-bold mb-1" style={{ color: '#0F172A' }}>{s.label}</p>
                             <div className="flex gap-3 text-[10px]" style={{ color: '#64748B' }}>
                                 {s.exchangeRateChange !== 0 && <span>FX: {s.exchangeRateChange > 0 ? '+' : ''}{s.exchangeRateChange}%</span>}

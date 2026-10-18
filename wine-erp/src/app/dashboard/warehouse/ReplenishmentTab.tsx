@@ -185,7 +185,7 @@ export function ReplenishmentTab() {
                     <button
                         onClick={handleExportCSV}
                         disabled={suggestions.length === 0}
-                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-bold border transition-colors cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700"
+                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-bold border transition-colors cursor-pointer bg-[#0E7490] hover:bg-[#155E75] text-white border-[#0E7490]"
                     >
                         <Download size={13} />
                         Xuất CSV

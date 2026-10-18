@@ -274,7 +274,7 @@ export function LandedCostTab() {
                                     style={{ color: '#475569', border: '1px solid #E2E8F0' }}>Huỷ</button>
                                 <button onClick={handleSaveEdit} disabled={creating}
                                     className="px-4 py-1.5 text-xs font-semibold rounded-md"
-                                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                     {creating ? 'Đang lưu...' : 'Lưu'}
                                 </button>
                             </div>
@@ -289,7 +289,7 @@ export function LandedCostTab() {
                                     { label: 'VAT', value: detail.totalVat, color: '#1D4ED8' },
                                     { label: 'Chi phí khác', value: detail.totalOtherCost, color: '#0891B2' },
                                 ].map(s => (
-                                    <div key={s.label} className="p-3 rounded-md" style={{ background: '#FFFFFF' }}>
+                                    <div key={s.label} className="p-3 rounded-md" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                         <p className="text-xs uppercase mb-0.5" style={{ color: '#64748B' }}>{s.label}</p>
                                         <p className="text-sm font-bold" style={{ color: s.color }}>
                                             {s.label === 'CIF' ? `${s.value.toLocaleString('en-US')} ${(s as any).suffix}` : formatVND(s.value)}
@@ -379,9 +379,7 @@ export function LandedCostTab() {
                                         const pct = totalQty > 0 ? (a.qty / totalQty) * 100 : 0
                                         const typeColor = WINE_COLORS[a.wineType] ?? '#475569'
                                         return (
-                                            <tr key={a.id} style={{ borderBottom: '1px solid #E2E8F0' }}
-                                                onMouseEnter={ev => ev.currentTarget.style.background = 'rgba(8,145,178,0.04)'}
-                                                onMouseLeave={ev => ev.currentTarget.style.background = 'transparent'}>
+                                            <tr key={a.id} className="hover:bg-cyan-50/40" style={{ borderBottom: '1px solid #E2E8F0' }}>
                                                 <td className="px-3 py-2.5">
                                                     <span className="inline-block text-xs px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0"
                                                         style={{ background: `${typeColor}25`, color: typeColor }}>
@@ -401,7 +399,7 @@ export function LandedCostTab() {
                                                 </td>
                                                 <td className="px-3 py-2.5">
                                                     <div className="flex items-center gap-2">
-                                                        <div className="flex-1 h-1.5 rounded-full" style={{ background: '#FFFFFF' }}>
+                                                        <div className="flex-1 h-1.5 rounded-full" style={{ background: '#E2E8F0' }}>
                                                             <div className="h-full rounded-full" style={{
                                                                 width: `${Math.min(pct, 100)}%`,
                                                                 background: '#0E7490',
@@ -447,7 +445,7 @@ export function LandedCostTab() {
                 </p>
                 <button onClick={openCreate}
                     className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-md transition-all"
-                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
                     <Plus size={14} /> Tạo Campaign
                 </button>
             </div>
@@ -484,10 +482,7 @@ export function LandedCostTab() {
                                         const ss = SHIPMENT_STATUS_MAP[s.status] ?? SHIPMENT_STATUS_MAP.BOOKED
                                         return (
                                             <button key={s.id} onClick={() => setSelectedShipment(s)}
-                                                className="w-full text-left p-3 rounded-md flex items-center justify-between group transition-all"
-                                                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
-                                                onMouseEnter={e => e.currentTarget.style.borderColor = '#0891B2'}
-                                                onMouseLeave={e => e.currentTarget.style.borderColor = '#E2E8F0'}>
+                                                className="w-full text-left p-3 rounded-md flex items-center justify-between group transition-all bg-white border border-[#E2E8F0] hover:border-[#0891B2]">
                                                 <div>
                                                     <p className="text-xs font-bold" style={{ color: '#0F172A' }}>
                                                         B/L: {s.billOfLading}
@@ -528,7 +523,7 @@ export function LandedCostTab() {
                                 </button>
                             </div>
 
-                            <div className="p-3 rounded-md" style={{ background: '#FFFFFF' }}>
+                            <div className="p-3 rounded-md" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <p className="text-xs font-bold" style={{ color: '#0F172A' }}>
                                     B/L: {selectedShipment.billOfLading}
                                 </p>
@@ -559,7 +554,7 @@ export function LandedCostTab() {
                             </div>
 
                             {/* Total preview */}
-                            <div className="flex justify-between items-center p-3 rounded-md" style={{ background: '#FFFFFF' }}>
+                            <div className="flex justify-between items-center p-3 rounded-md" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <span className="text-xs uppercase font-semibold" style={{ color: '#64748B' }}>
                                     Tổng Chi Phí
                                 </span>
@@ -584,7 +579,7 @@ export function LandedCostTab() {
                                     style={{ color: '#475569', border: '1px solid #E2E8F0' }}>Huỷ</button>
                                 <button onClick={handleCreate} disabled={creating}
                                     className="px-5 py-2 text-xs font-semibold rounded-md"
-                                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                     {creating ? 'Đang tạo...' : 'Tạo Campaign'}
                                 </button>
                             </div>
@@ -625,9 +620,8 @@ export function LandedCostTab() {
                                 return (
                                     <tr key={c.id}
                                         onClick={() => openDetail(c.id)}
-                                        style={{ borderBottom: '1px solid #E2E8F0', cursor: 'pointer' }}
-                                        onMouseEnter={ev => ev.currentTarget.style.background = 'rgba(8,145,178,0.04)'}
-                                        onMouseLeave={ev => ev.currentTarget.style.background = 'transparent'}>
+                                        className="hover:bg-cyan-50/40"
+                                        style={{ borderBottom: '1px solid #E2E8F0', cursor: 'pointer' }}>
                                         <td className="px-3 py-2.5">
                                             <span className="text-xs font-bold" style={{ color: '#0891B2' }}>
                                                 {c.shipmentBol || '—'}

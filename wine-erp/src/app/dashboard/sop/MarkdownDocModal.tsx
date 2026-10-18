@@ -191,7 +191,7 @@ export function MarkdownDocModal({
                                 href={docUrl}
                                 download={fileName || 'tai_lieu.md'}
                                 title="Tải về tệp .md gốc"
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-sm transition"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#0E7490] hover:bg-[#155E75] text-white text-xs font-semibold shadow-sm transition"
                             >
                                 <Download className="w-3.5 h-3.5" />
                                 <span className="hidden sm:inline">Tải về</span>

@@ -177,7 +177,7 @@ export function JournalEntryTab() {
                         </div>
                         <button onClick={loadExportStats} disabled={statsLoading}
                             className="px-3 py-2 text-xs font-semibold rounded"
-                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                            style={{ background: '#0E7490', color: '#FFFFFF' }}>
                             {statsLoading ? '...' : 'Xem Trước'}
                         </button>
                     </div>
@@ -273,9 +273,7 @@ export function JournalEntryTab() {
                             {entries.map(e => {
                                 const typeColor = DOC_TYPE_COLOR[e.docType] ?? '#475569'
                                 return (
-                                    <tr key={e.id} style={{ borderBottom: '1px solid #E2E8F0' }}
-                                        onMouseEnter={ev => ev.currentTarget.style.background = 'rgba(8,145,178,0.04)'}
-                                        onMouseLeave={ev => ev.currentTarget.style.background = 'transparent'}>
+                                    <tr key={e.id} className="hover:bg-[#0891B2]/4 transition-colors" style={{ borderBottom: '1px solid #E2E8F0' }}>
                                         <td className="px-3 py-2.5">
                                             <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{e.entryNo}</span>
                                         </td>
@@ -374,7 +372,7 @@ export function ProfitLossTab() {
                         ))}
                     </select>
                     <button onClick={loadPL} className="inline-block text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                        style={{ background: '#0E7490', color: '#FFFFFF' }}>
                         Xem
                     </button>
                     {data && (
@@ -591,7 +589,7 @@ export function ExpenseTab({ userId }: { userId: string }) {
                 <p className="text-sm" style={{ color: '#475569' }}>{expenses.length} chi phí</p>
                 <button onClick={() => setShowCreate(!showCreate)}
                     className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-md transition-all"
-                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
                     <Plus size={14} /> Thêm Chi Phí
                 </button>
             </div>
@@ -634,7 +632,7 @@ export function ExpenseTab({ userId }: { userId: string }) {
                             style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '6px' }}>Huỷ</button>
                         <button onClick={handleCreate} disabled={saving || !amount || !desc}
                             className="px-4 py-1.5 text-xs font-semibold rounded-md"
-                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                            style={{ background: '#0E7490', color: '#FFFFFF' }}>
                             {saving ? 'Đang lưu...' : 'Tạo Chi Phí'}
                         </button>
                     </div>
@@ -661,9 +659,7 @@ export function ExpenseTab({ userId }: { userId: string }) {
                             {expenses.map(e => {
                                 const st = EXP_STATUS[e.status] ?? EXP_STATUS.DRAFT
                                 return (
-                                    <tr key={e.id} style={{ borderBottom: '1px solid #E2E8F0' }}
-                                        onMouseEnter={ev => ev.currentTarget.style.background = 'rgba(8,145,178,0.04)'}
-                                        onMouseLeave={ev => ev.currentTarget.style.background = 'transparent'}>
+                                    <tr key={e.id} className="hover:bg-[#0891B2]/4 transition-colors" style={{ borderBottom: '1px solid #E2E8F0' }}>
                                         <td className="px-3 py-2 text-xs font-bold" style={{ color: '#0891B2' }}>{e.expenseNo}</td>
                                         <td className="px-3 py-2 text-xs" style={{ color: '#0F172A' }}>{e.categoryLabel}</td>
                                         <td className="px-3 py-2 text-xs" style={{ color: '#64748B' }}>{e.account.split(' - ')[0]}</td>
@@ -767,7 +763,7 @@ export function PeriodCloseTab({ userId }: { userId: string }) {
                         {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
                     <button onClick={load} className="inline-block text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}>Kiểm Tra</button>
+                        style={{ background: '#0E7490', color: '#FFFFFF' }}>Kiểm Tra</button>
                 </div>
             </div>
 
@@ -885,7 +881,7 @@ export function BalanceSheetTab() {
                         ))}
                     </select>
                     <button onClick={loadBS} className="inline-block text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                        style={{ background: '#0E7490', color: '#FFFFFF' }}>
                         Xem
                     </button>
                     {data && (
@@ -964,7 +960,6 @@ export function BalanceSheetTab() {
                                         }}>
                                             <td className="px-4 py-2.5 text-xs" style={{
                                                 color: isSummary ? '#0F172A' : '#64748B',
-                                                fontFamily: 'var(--font-sans)',
                                                 paddingLeft: `${16 + (line.indent ?? 0) * 20}px`,
                                                 fontWeight: isSummary ? 700 : 400,
                                             }}>
@@ -1238,7 +1233,7 @@ export function CashFlowTab() {
                             <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#B45309' }}>Vị Thế Tiền Mặt</h3>
                             <div className="flex gap-2">
                                 <button onClick={load} className="inline-block text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
-                                    style={{ background: '#0891B2', color: '#FFFFFF' }}>Làm Mới</button>
+                                    style={{ background: '#0E7490', color: '#FFFFFF' }}>Làm Mới</button>
                                 <button onClick={async () => {
                                     setVatExporting(true)
                                     try {
@@ -1349,9 +1344,7 @@ export function CashFlowTab() {
                                     {forecast.buckets.map((b, i) => {
                                         const riskColor = b.cumulative < 0 ? '#B91C1C' : b.netCashFlow < 0 ? '#B45309' : '#15803D'
                                         return (
-                                            <tr key={i} style={{ borderBottom: '1px solid #E2E8F0' }}
-                                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(8,145,178,0.04)'}
-                                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                            <tr key={i} className="hover:bg-[#0891B2]/4 transition-colors" style={{ borderBottom: '1px solid #E2E8F0' }}>
                                                 <td className="px-4 py-2.5 text-sm font-semibold" style={{ color: '#0F172A' }}>{b.period}</td>
                                                 <td className="px-4 py-2.5 text-right text-sm" style={{ color: '#15803D' }}>+{formatVND(b.arExpected)}</td>
                                                 <td className="px-4 py-2.5 text-right text-sm" style={{ color: '#B45309' }}>-{formatVND(b.apDue)}</td>
@@ -1400,7 +1393,7 @@ export function CashFlowTab() {
                             <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#B45309' }}>Credit Hold — Kiểm Soát Hạn Mức</h3>
                             <button onClick={handleCreditCheck} disabled={creditRunning}
                                 className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all"
-                                style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                                style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                 {creditRunning ? <Loader2 size={14} className="animate-spin" /> : <AlertTriangle size={14} />}
                                 {creditRunning ? 'Đang kiểm tra...' : 'Chạy Credit Check'}
                             </button>
@@ -1525,7 +1518,7 @@ export function TrialBalanceTab() {
                         ))}
                     </select>
                     <button onClick={load} className="inline-block text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}>Tải lại</button>
+                        style={{ background: '#0E7490', color: '#FFFFFF' }}>Tải lại</button>
                 </div>
             </div>
 
@@ -1552,9 +1545,7 @@ export function TrialBalanceTab() {
                         </thead>
                         <tbody>
                             {data.rows.map(r => (
-                                <tr key={r.accountCode} style={{ borderBottom: '1px solid #E2E8F0' }}
-                                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(8,145,178,0.04)'}
-                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                <tr key={r.accountCode} className="hover:bg-[#0891B2]/4 transition-colors" style={{ borderBottom: '1px solid #E2E8F0' }}>
                                     <td className="px-3 py-2" style={{ borderRight: '1px solid #E2E8F0' }}>
                                         <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{r.accountCode}</span>
                                         <span className="text-xs ml-2" style={{ color: '#475569' }}>{r.accountName}</span>
@@ -1614,7 +1605,7 @@ export function AccountLedgerTab() {
                 <div className="flex gap-2 flex-wrap">
                     <select value={accountCode} onChange={e => { setAccountCode(e.target.value); setData(null) }}
                         className="text-xs px-3 py-1.5 rounded"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0891B2', fontFamily: 'var(--font-sans)' }}>
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0891B2' }}>
                         {accountOptions.map(([code, name]) => (
                             <option key={code} value={code}>{code} - {name}</option>
                         ))}
@@ -1634,7 +1625,7 @@ export function AccountLedgerTab() {
                         ))}
                     </select>
                     <button onClick={load} className="inline-block text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}>Xem</button>
+                        style={{ background: '#0E7490', color: '#FFFFFF' }}>Xem</button>
                 </div>
             </div>
 
@@ -1692,9 +1683,7 @@ export function AccountLedgerTab() {
                                         </td>
                                     </tr>
                                     {data.entries.map((e, i) => (
-                                        <tr key={i} style={{ borderBottom: '1px solid #E2E8F0' }}
-                                            onMouseEnter={ev => ev.currentTarget.style.background = 'rgba(8,145,178,0.04)'}
-                                            onMouseLeave={ev => ev.currentTarget.style.background = 'transparent'}>
+                                        <tr key={i} className="hover:bg-[#0891B2]/4 transition-colors" style={{ borderBottom: '1px solid #E2E8F0' }}>
                                             <td className="px-3 py-2 text-xs" style={{ color: '#475569' }}>{formatDate(e.date)}</td>
                                             <td className="px-3 py-2 text-xs font-bold" style={{ color: '#0891B2' }}>{e.entryNo}</td>
                                             <td className="px-3 py-2">

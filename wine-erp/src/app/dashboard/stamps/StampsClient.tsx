@@ -1084,7 +1084,7 @@ export default function StampsClient({
                                                     <td style={{ ...tdStyle, fontWeight: 600, color: '#0F172A' }}>
                                                         {p.symbol}
                                                     </td>
-                                                    <td style={{ ...tdStyle, fontFamily: 'monospace', color: '#475569' }}>
+                                                    <td className="font-mono" style={{ ...tdStyle, color: '#475569' }}>
                                                         {p.serialStart} → {p.serialEnd}
                                                     </td>
                                                     <td style={{ ...tdStyle, textAlign: 'right' }}>
@@ -1406,7 +1406,7 @@ export default function StampsClient({
                                                                                 <span className="text-slate-400 text-xs italic">Không tách SR</span>
                                                                             )}
                                                                         </td>
-                                                                        <td style={{ ...tdStyle, textAlign: 'center', fontFamily: 'monospace', fontWeight: 700, color: '#0891B2', background: '#F8FAFC' }}>
+                                                                        <td className="font-mono" style={{ ...tdStyle, textAlign: 'center', fontWeight: 700, color: '#0891B2', background: '#F8FAFC' }}>
                                                                             {it.serialStart} → {it.serialEnd}
                                                                         </td>
                                                                         <td style={{ ...tdStyle, textAlign: 'right', color: it.qtyDamaged > 0 ? '#B91C1C' : '#94A3B8' }}>
@@ -1583,10 +1583,10 @@ export default function StampsClient({
                                                 <td style={tdStyle}>
                                                     {e.stampTypeLabel}
                                                 </td>
-                                                <td style={{ ...tdStyle, fontFamily: 'monospace' }}>
+                                                <td className="font-mono" style={tdStyle}>
                                                     {e.serialStart}
                                                 </td>
-                                                <td style={{ ...tdStyle, fontFamily: 'monospace' }}>
+                                                <td className="font-mono" style={tdStyle}>
                                                     {e.serialEnd}
                                                 </td>
                                                 <td style={{ ...tdStyle, textAlign: 'right', fontWeight: e.qtyIn > 0 ? 600 : 400, color: e.qtyIn > 0 ? '#0891B2' : '#94A3B8' }}>
@@ -2021,11 +2021,12 @@ export default function StampsClient({
                                             3. Số Seri Bắt Đầu Của Đơn PO *
                                         </label>
                                         <input
+                                            className="font-mono"
                                             placeholder="Ví dụ: 001001 hoặc 000001"
                                             value={poBaseSerialStart}
                                             onChange={e => handleBaseSerialChange(e.target.value)}
                                             required
-                                            style={{ ...inputStyle, borderColor: '#0891B2', fontWeight: 600, fontFamily: 'monospace' }}
+                                            style={{ ...inputStyle, borderColor: '#0891B2', fontWeight: 600 }}
                                         />
                                         <span className="text-[11px] text-cyan-800 mt-1 block">
                                             Nhập số đầu, hệ thống sẽ tự động gán nối tiếp dải số cho từng sản phẩm bên dưới.
@@ -2545,7 +2546,7 @@ export default function StampsClient({
                                                             <span className="text-slate-400 text-xs italic">Không tách SR</span>
                                                         )}
                                                     </td>
-                                                    <td style={{ ...tdStyle, textAlign: 'center', fontFamily: 'monospace', fontWeight: 700, color: '#0891B2', background: '#F8FAFC' }}>
+                                                    <td className="font-mono" style={{ ...tdStyle, textAlign: 'center', fontWeight: 700, color: '#0891B2', background: '#F8FAFC' }}>
                                                         {it.serialStart} → {it.serialEnd}
                                                     </td>
                                                     <td style={{ ...tdStyle, textAlign: 'center' }}>

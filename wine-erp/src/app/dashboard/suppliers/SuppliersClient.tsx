@@ -385,7 +385,7 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                     <button onClick={onClose} className="px-4 py-2.5 rounded-lg text-sm" style={{ color: '#475569', border: '1px solid #E2E8F0' }}>Hủy</button>
                     <button onClick={handleSave} disabled={saving || loading}
                         className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                        style={{ background: '#0E7490', color: '#FFFFFF' }}>
                         {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                         {saving ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo NCC'}
                     </button>
@@ -644,7 +644,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
             </StatGrid>
 
             {/* Tabs */}
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FFFFFF' }}>
+            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#F1F5F9', border: '1px solid #E2E8F0' }}>
                 {([
                     { key: 'list', label: 'Danh Sách NCC', icon: Building2 },
                     { key: 'scorecard', label: 'Scorecard', icon: Award },
@@ -769,7 +769,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                             <tbody>
                                 {loading ? Array.from({ length: 5 }).map((_, i) => (
                                     <tr key={i} style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                        {Array.from({ length: 9 }).map((_, j) => <td key={j} className="px-4 py-4"><div className="h-4 rounded animate-pulse" style={{ background: '#FFFFFF', width: j === 0 ? '80%' : '55%' }} /></td>)}
+                                        {Array.from({ length: 9 }).map((_, j) => <td key={j} className="px-4 py-4"><div className="h-4 rounded animate-pulse" style={{ background: '#E2E8F0', width: j === 0 ? '80%' : '55%' }} /></td>)}
                                     </tr>
                                 )) : rows.length === 0 ? (
                                     <tr><td colSpan={9}>
@@ -781,10 +781,8 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                                 ) : rows.map(row => {
                                     const isDomestic = row.country === 'VN' || row.country === 'Việt Nam' || row.country === 'Vietnam'
                                     return (
-                                        <tr key={row.id} className="group transition-colors duration-100 cursor-pointer"
+                                        <tr key={row.id} className="group transition-colors duration-100 cursor-pointer hover:bg-[#F8FAFC]"
                                             style={{ borderBottom: '1px solid #E2E8F0' }}
-                                            onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
-                                            onMouseLeave={e => (e.currentTarget.style.background = '')}
                                             onClick={() => { setDetailId(row.id); setDetailOpen(true) }}>
                                             <td className="px-4 py-3">
                                                 <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{row.name}</p>

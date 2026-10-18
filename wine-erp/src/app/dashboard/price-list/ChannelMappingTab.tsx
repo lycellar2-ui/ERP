@@ -172,7 +172,7 @@ export function ChannelMappingTab({ currentUser, onSaved }: Props) {
                     type="button"
                     onClick={handleSaveMapping}
                     disabled={saving || !canApprove}
-                    className="px-5 py-2 text-xs font-bold rounded-md bg-[#0891B2] text-white hover:bg-[#0E7490] transition-all disabled:opacity-40"
+                    className="px-5 py-2 text-xs font-bold rounded-md bg-[#0E7490] text-white hover:bg-[#155E75] transition-all disabled:opacity-40"
                 >
                     {saving ? <Loader2 size={14} className="animate-spin mx-auto" /> : 'Lưu Cấu Hình'}
                 </button>

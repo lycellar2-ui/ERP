@@ -347,7 +347,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                         onClick={() => setLang('vi')}
                         className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
                             lang === 'vi' 
-                                ? 'bg-[#0891B2] text-white shadow-xs' 
+                                ? 'bg-[#0E7490] text-white shadow-xs' 
                                 : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                         }`}
                     >
@@ -358,7 +358,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                         onClick={() => setLang('en')}
                         className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
                             lang === 'en' 
-                                ? 'bg-[#0891B2] text-white shadow-xs' 
+                                ? 'bg-[#0E7490] text-white shadow-xs' 
                                 : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                         }`}
                     >
@@ -369,7 +369,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                 <div className="flex gap-2">
                     <button 
                         onClick={() => window.print()} 
-                        className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded bg-[#0891B2] text-white hover:bg-[#A5DED0] transition-colors shadow-sm cursor-pointer"
+                        className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded bg-[#0E7490] text-white hover:bg-[#155E75] transition-colors shadow-sm cursor-pointer"
                     >
                         <Printer size={14} /> {t.printDoc}
                     </button>

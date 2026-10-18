@@ -241,7 +241,7 @@ export function PipelinePanel() {
                     </button>
                     <button onClick={openCreate}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-all rounded"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                        style={{ background: '#0E7490', color: '#FFFFFF' }}>
                         <Plus size={13} /> Thêm Cơ Hội
                     </button>
                 </div>
@@ -370,7 +370,7 @@ export function PipelinePanel() {
                                     <div className="flex-1 min-w-0">
                                         {editing ? (
                                             <input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
-                                                className="w-full text-lg font-bold px-2 py-1 outline-none" style={{ ...inputStyle, fontFamily: '"Cormorant Garamond", serif', color: '#0F172A' }} />
+                                                className="w-full text-lg font-bold px-2 py-1 outline-none" style={{ ...inputStyle, color: '#0F172A' }} />
                                         ) : (
                                             <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
                                                 {detail.name}
@@ -433,10 +433,10 @@ export function PipelinePanel() {
 
                                 {/* KPIs Grid */}
                                 <div className="grid grid-cols-2 gap-3">
-                                    <div className="p-3 rounded-md text-center" style={{ background: '#FFFFFF' }}>
+                                    <div className="p-3 rounded-md text-center" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                         {editing ? (
                                             <input type="number" value={editForm.expectedValue} onChange={e => setEditForm(f => ({ ...f, expectedValue: e.target.value }))}
-                                                className="w-full text-center text-sm font-bold outline-none" style={{ ...inputStyle, fontFamily: 'var(--font-sans)', color: '#B45309' }} />
+                                                className="w-full text-center text-sm font-bold outline-none" style={{ ...inputStyle, color: '#B45309' }} />
                                         ) : (
                                             <p className="text-sm font-bold" style={{ color: '#B45309' }}>
                                                 {formatVND(detail.expectedValue)}
@@ -444,7 +444,7 @@ export function PipelinePanel() {
                                         )}
                                         <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>Giá Trị</p>
                                     </div>
-                                    <div className="p-3 rounded-md text-center" style={{ background: '#FFFFFF' }}>
+                                    <div className="p-3 rounded-md text-center" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                         <p className="text-sm font-bold" style={{ color: '#0891B2' }}>{detail.probability}%</p>
                                         <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>Xác suất</p>
                                     </div>
@@ -457,7 +457,7 @@ export function PipelinePanel() {
                                             Trong Stage
                                         </p>
                                     </div>
-                                    <div className="p-3 rounded-md text-center" style={{ background: '#FFFFFF' }}>
+                                    <div className="p-3 rounded-md text-center" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                         <p className="text-sm font-bold" style={{ color: '#475569' }}>{detail.totalAge}d</p>
                                         <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>Tổng Thời Gian</p>
                                     </div>
@@ -508,7 +508,7 @@ export function PipelinePanel() {
                                         <textarea value={editForm.notes} onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))}
                                             rows={3} className="w-full px-3 py-2 text-xs outline-none resize-none" style={inputStyle} />
                                     ) : (
-                                        <p className="text-xs leading-relaxed p-3 rounded-md" style={{ background: '#FFFFFF', color: detail.notes ? '#475569' : '#64748B' }}>
+                                        <p className="text-xs leading-relaxed p-3 rounded-md" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: detail.notes ? '#475569' : '#64748B' }}>
                                             {detail.notes || 'Chưa có ghi chú'}
                                         </p>
                                     )}
@@ -521,7 +521,7 @@ export function PipelinePanel() {
                                             <button onClick={() => handleMove(detail.id, getNextStage(detail.stage)!)}
                                                 disabled={actionLoading === detail.id}
                                                 className="flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-md transition-all"
-                                                style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                                                style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                                 {actionLoading === detail.id ? <Loader2 size={13} className="animate-spin" /> : <MoveRight size={13} />}
                                                 Chuyển → {getNextStage(detail.stage)}
                                             </button>
@@ -597,7 +597,7 @@ export function PipelinePanel() {
                                     {reps.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
                                 </select>
                                 <input type="number" value={formValue} onChange={e => setFormValue(e.target.value)} placeholder="Giá trị kỳ vọng"
-                                    className="px-3 py-2 text-sm outline-none" style={{ ...inputStyle, color: '#B45309', fontFamily: 'var(--font-sans)' }} />
+                                    className="px-3 py-2 text-sm outline-none" style={{ ...inputStyle, color: '#B45309' }} />
                             </div>
                             <input type="date" value={formCloseDate} onChange={e => setFormCloseDate(e.target.value)}
                                 className="w-full px-3 py-2 text-sm outline-none" style={inputStyle} />
@@ -605,7 +605,7 @@ export function PipelinePanel() {
                                 className="w-full px-3 py-2 text-sm outline-none resize-none" style={inputStyle} />
                             <button onClick={handleCreate} disabled={saving || !formName || !formCustomerId || !formAssignee || !formValue}
                                 className="w-full py-2.5 text-sm font-semibold transition-all disabled:opacity-50"
-                                style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}>
+                                style={{ background: '#0E7490', color: '#FFFFFF', borderRadius: '6px' }}>
                                 {saving ? <Loader2 size={14} className="animate-spin mx-auto" /> : 'Tạo Cơ Hội (→ Lead)'}
                             </button>
                         </div>

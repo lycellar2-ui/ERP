@@ -74,7 +74,7 @@ export function TastingEventsPanel() {
                 </div>
                 <button onClick={() => setShowCreate(true)}
                     className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold"
-                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
                     <Plus size={14} /> Tạo Sự Kiện
                 </button>
             </div>
@@ -101,7 +101,7 @@ export function TastingEventsPanel() {
                         value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
                     <button onClick={handleCreate} disabled={saving || !form.name || !form.date || !form.venue}
                         className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold disabled:opacity-50"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                        style={{ background: '#0E7490', color: '#FFFFFF' }}>
                         {saving ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
                         {saving ? 'Đang tạo...' : 'Tạo Sự Kiện'}
                     </button>
@@ -145,7 +145,7 @@ export function TastingEventsPanel() {
                                         { label: 'Check-in', value: ev.checkinCount, color: '#15803D' },
                                         { label: 'Chuyển đổi', value: ev.conversionCount, color: '#B45309' },
                                     ].map(m => (
-                                        <div key={m.label} className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
+                                        <div key={m.label} className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                             <p className="text-sm font-bold" style={{ color: m.color }}>{m.value}</p>
                                             <p className="text-xs" style={{ color: '#64748B' }}>{m.label}</p>
                                         </div>

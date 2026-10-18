@@ -267,7 +267,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                     {/* Summary & Scope */}
                     <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-2">
                         <div className="font-semibold text-slate-900 text-xs flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-900" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#0891B2]" />
                             Mục tiêu & Tóm tắt nghiệp vụ:
                         </div>
                         <p className="text-slate-600 text-xs leading-relaxed">{sop.summary}</p>
@@ -302,7 +302,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                             url: f.downloadUrl,
                                             fileName: f.fileName
                                         })}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition"
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0E7490] hover:bg-[#155E75] text-white text-xs font-semibold shadow-xs transition"
                                     >
                                         <BookOpen className="w-3.5 h-3.5" />
                                         <span>Đọc Sổ Tay (.md)</span>
@@ -380,7 +380,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                                     <Link
                                                         href={step.erpLink.path}
                                                         target="_blank"
-                                                        className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white shadow-xs transition"
+                                                        className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-[#0E7490] hover:bg-[#155E75] text-white shadow-xs transition"
                                                     >
                                                         <span>{step.erpLink.label}</span>
                                                         <ExternalLink className="w-3 h-3" />
@@ -459,7 +459,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                                                 url: form.downloadUrl,
                                                                 fileName: form.fileName
                                                             })}
-                                                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs shadow-xs transition"
+                                                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#0E7490] hover:bg-[#155E75] text-white font-semibold text-xs shadow-xs transition"
                                                         >
                                                             <Eye className="w-3.5 h-3.5" />
                                                             <span>Đọc Văn Bản</span>
@@ -522,7 +522,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div className="p-3.5 rounded-lg border border-slate-200 bg-white space-y-2">
                                     <div className="flex items-center gap-2">
-                                        <span className="w-6 h-6 rounded-md bg-slate-900 text-white font-black text-xs flex items-center justify-center">
+                                        <span className="w-6 h-6 rounded-md bg-[#0E7490] text-white font-black text-xs flex items-center justify-center">
                                             R
                                         </span>
                                         <div>
@@ -615,7 +615,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
 
                             <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
                                 <div
-                                    className="bg-slate-900 h-1.5 rounded-full transition-all duration-200"
+                                    className="bg-[#0891B2] h-1.5 rounded-full transition-all duration-200"
                                     style={{ width: `${progressPercent}%` }}
                                 />
                             </div>

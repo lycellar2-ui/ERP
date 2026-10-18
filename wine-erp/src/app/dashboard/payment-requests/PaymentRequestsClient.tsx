@@ -1274,7 +1274,7 @@ export function PaymentRequestsClient({
                                     onClick={() => setSelectedGroupFilter(grp)}
                                     className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                                         selectedGroupFilter === grp
-                                            ? 'bg-slate-800 text-white'
+                                            ? 'bg-[#0E7490] text-white'
                                             : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                     }`}
                                 >
@@ -1293,7 +1293,7 @@ export function PaymentRequestsClient({
                                 defaultAccount: '642',
                                 description: '',
                             })}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-slate-900 transition"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-[#0E7490] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#155E75] transition"
                         >
                             <Plus className="h-3.5 w-3.5" /> Thêm Hạng Mục
                         </button>

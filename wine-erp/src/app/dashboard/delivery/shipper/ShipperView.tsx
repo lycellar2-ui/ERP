@@ -117,7 +117,7 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
             <div className="min-h-screen flex flex-col" style={{ background: '#F8FAFC' }}>
                 <div className="flex items-center gap-3 px-4 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
                     <button onClick={() => setSelectedDriverId('')} className="p-2 rounded-lg"
-                        style={{ background: '#FFFFFF' }}>
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                         <ArrowLeft size={18} style={{ color: '#475569' }} />
                     </button>
                     <h2 className="font-semibold" style={{ color: '#0F172A' }}>Lộ Trình Hôm Nay</h2>
@@ -146,7 +146,7 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
             <div className="px-4 pt-4 pb-3" style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                 <div className="flex items-center gap-3 mb-3">
                     <button onClick={() => setSelectedDriverId('')} className="p-2 rounded-lg"
-                        style={{ background: '#FFFFFF' }}>
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                         <ArrowLeft size={18} style={{ color: '#475569' }} />
                     </button>
                     <div className="flex-1">
@@ -160,7 +160,7 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
                     {manifest.status === 'PLANNED' && (
                         <button onClick={handleStartRoute}
                             className="px-3 py-2 rounded-lg text-xs font-bold"
-                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                            style={{ background: '#0E7490', color: '#FFFFFF' }}>
                             Bắt Đầu
                         </button>
                     )}
@@ -278,7 +278,7 @@ export function ShipperView({ drivers }: { drivers: { id: string; name: string; 
                                     </a>
                                     <button onClick={() => setActiveStop(stop)}
                                         className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold flex-1 justify-center"
-                                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                                        style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                         <CheckCircle2 size={12} /> Giao
                                     </button>
                                 </div>
@@ -447,7 +447,7 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
         <div className="min-h-screen flex flex-col" style={{ background: '#F8FAFC' }}>
             {/* Header */}
             <div className="flex items-center gap-3 px-4 py-4" style={{ borderBottom: '1px solid #E2E8F0', background: '#FFFFFF' }}>
-                <button onClick={onBack} className="p-2 rounded-lg" style={{ background: '#FFFFFF' }}>
+                <button onClick={onBack} className="p-2 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <ArrowLeft size={18} style={{ color: '#475569' }} />
                 </button>
                 <div>
@@ -568,7 +568,7 @@ function ConfirmDeliveryScreen({ stop, onBack, onConfirmed }: {
                 <button onClick={handleSave}
                     disabled={!name.trim() || !signatureUrl || saving}
                     className="w-full flex items-center justify-center gap-2 py-3.5 rounded-md text-sm font-bold disabled:opacity-50 transition-all active:scale-[0.98]"
-                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
                     {saving
                         ? <><Loader2 size={16} className="animate-spin" /> Đang lưu...</>
                         : <><CheckCircle2 size={16} /> Xác Nhận Đã Giao</>}

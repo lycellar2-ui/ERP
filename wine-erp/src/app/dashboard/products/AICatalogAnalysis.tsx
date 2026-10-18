@@ -125,17 +125,17 @@ export function AICatalogAnalysis() {
                     <div className="px-5 pt-4 space-y-3">
                         {/* Row 1: Product KPIs */}
                         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
-                            <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
+                            <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><Package size={11} style={{ color: '#0891B2' }} /></div>
                                 <p className="text-lg font-bold" style={{ color: '#0891B2' }}>{stats.totalProducts}</p>
                                 <p className="text-xs" style={{ color: '#64748B' }}>Sản Phẩm</p>
                             </div>
-                            <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
+                            <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><TrendingUp size={11} style={{ color: '#B45309' }} /></div>
                                 <p className="text-lg font-bold" style={{ color: '#B45309' }}>{fmtVND(stats.totalProductRevenue)}</p>
                                 <p className="text-xs" style={{ color: '#64748B' }}>Tổng Doanh Thu</p>
                             </div>
-                            <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
+                            <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><BarChart3 size={11} style={{ color: '#15803D' }} /></div>
                                 <p className="text-lg font-bold" style={{ color: '#15803D' }}>{stats.productsWithSales}</p>
                                 <p className="text-xs" style={{ color: '#64748B' }}>Có Dữ Liệu Bán</p>
@@ -150,12 +150,12 @@ export function AICatalogAnalysis() {
                                 <p className="text-lg font-bold" style={{ color: stats.outOfStock > 0 ? '#B91C1C' : '#64748B' }}>{stats.outOfStock}</p>
                                 <p className="text-xs" style={{ color: '#64748B' }}>Hết Hàng</p>
                             </div>
-                            <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
+                            <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><Truck size={11} style={{ color: '#1D4ED8' }} /></div>
                                 <p className="text-lg font-bold" style={{ color: '#1D4ED8' }}>{stats.totalSuppliers}</p>
                                 <p className="text-xs" style={{ color: '#64748B' }}>NCC</p>
                             </div>
-                            <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
+                            <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><Globe size={11} style={{ color: '#475569' }} /></div>
                                 <p className="text-lg font-bold" style={{ color: '#475569' }}>{stats.supplierCountries}</p>
                                 <p className="text-xs" style={{ color: '#64748B' }}>Quốc Gia NCC</p>
@@ -164,7 +164,7 @@ export function AICatalogAnalysis() {
 
                         {/* Row 2: Type + Country Distribution */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <div className="p-2.5 rounded" style={{ background: '#FFFFFF' }}>
+                            <div className="p-2.5 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Wine Types:</span>
                                 <div className="flex flex-wrap gap-1.5">
                                     {Object.entries(stats.typeDistribution).map(([type, count]) => (
@@ -175,7 +175,7 @@ export function AICatalogAnalysis() {
                                     ))}
                                 </div>
                             </div>
-                            <div className="p-2.5 rounded" style={{ background: '#FFFFFF' }}>
+                            <div className="p-2.5 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Countries:</span>
                                 <div className="flex flex-wrap gap-1.5">
                                     {Object.entries(stats.countryDistribution).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([country, count]) => (

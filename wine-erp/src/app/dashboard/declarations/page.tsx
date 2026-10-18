@@ -156,11 +156,9 @@ export default function DeclarationsPage() {
                 ].map(item => {
                     const ActionIcon = item.Icon
                     return (
-                        <div key={item.title} className="p-5 rounded-md cursor-pointer transition-all"
+                        <div key={item.title} className="p-5 rounded-md cursor-pointer transition-all hover:border-cyan-600"
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
-                            onClick={() => handleCreate(item.type, now.getFullYear(), now.getMonth() + 1)}
-                            onMouseEnter={e => (e.currentTarget.style.borderColor = item.color)}
-                            onMouseLeave={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
+                            onClick={() => handleCreate(item.type, now.getFullYear(), now.getMonth() + 1)}>
                             <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style={{ background: `${item.color}15`, color: item.color }}>
                                 <ActionIcon size={20} />
                             </div>
@@ -213,10 +211,8 @@ export default function DeclarationsPage() {
                             const tp = TYPE_MAP[row.type] ?? { label: row.type, color: '#475569' }
                             const st = STATUS_MAP[row.status] ?? STATUS_MAP.DRAFT
                             return (
-                                <tr key={row.id} className="cursor-pointer" style={{ borderBottom: '1px solid #E2E8F0' }}
-                                    onClick={() => handleViewDetail(row)}
-                                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(8,145,178,0.04)')}
-                                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                                <tr key={row.id} className="cursor-pointer hover:bg-cyan-50/40 transition-colors" style={{ borderBottom: '1px solid #E2E8F0' }}
+                                    onClick={() => handleViewDetail(row)}>
                                     <td className="px-3 py-2.5">
                                         <span className="text-xs font-bold" style={{ color: tp.color }}>{tp.label}</span>
                                     </td>
@@ -274,7 +270,7 @@ export default function DeclarationsPage() {
                             {detailRow.status === 'APPROVED' && (
                                 <button onClick={() => handleStatusChange(detailRow.id, 'SUBMITTED')}
                                     className="w-full py-2 text-xs font-bold rounded"
-                                    style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                     Đánh Dấu Đã Nộp
                                 </button>
                             )}
@@ -283,17 +279,17 @@ export default function DeclarationsPage() {
                             {detailData?.type === 'VAT' && (
                                 <div className="space-y-3">
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                        <div className="p-3 rounded" style={{ background: '#FFFFFF' }}>
+                                        <div className="p-3 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                             <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Số HĐ</p>
                                             <p className="text-sm font-bold" style={{ color: '#0F172A' }}>{detailData.invoiceCount}</p>
                                         </div>
-                                        <div className="p-3 rounded" style={{ background: '#FFFFFF' }}>
+                                        <div className="p-3 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                             <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Tổng Tiền</p>
                                             <p className="text-sm font-bold" style={{ color: '#B45309' }}>
                                                 {detailData.totalAmount?.toLocaleString('vi-VN')} ₫
                                             </p>
                                         </div>
-                                        <div className="p-3 rounded" style={{ background: '#FFFFFF' }}>
+                                        <div className="p-3 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                             <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>VAT</p>
                                             <p className="text-sm font-bold" style={{ color: '#0891B2' }}>
                                                 {detailData.totalVat?.toLocaleString('vi-VN')} ₫
@@ -302,7 +298,7 @@ export default function DeclarationsPage() {
                                     </div>
                                     {detailData.invoices?.map((inv: any) => (
                                         <div key={inv.invoiceNo} className="flex justify-between text-xs p-2 rounded"
-                                            style={{ background: '#FFFFFF' }}>
+                                            style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                             <span style={{ color: '#0891B2' }}>{inv.invoiceNo}</span>
                                             <span style={{ color: '#B45309' }}>{inv.amount?.toLocaleString('vi-VN')} ₫</span>
                                             <span style={{ color: '#15803D' }}>VAT: {inv.vatAmount?.toLocaleString('vi-VN')} ₫</span>
@@ -332,7 +328,7 @@ export default function DeclarationsPage() {
 
                                                 {/* 3-column summary: Input | Output | Net */}
                                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                                    <div className="p-3 rounded-lg" style={{ background: '#FFFFFF' }}>
+                                                    <div className="p-3 rounded-lg" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                                         <p className="text-[10px] uppercase tracking-wide mb-1 font-bold" style={{ color: '#1D4ED8' }}>Đầu Vào (Nhập)</p>
                                                         <p className="text-xs" style={{ color: '#475569' }}>SL: <b>{sctReport.inputSummary.totalQty.toLocaleString('vi-VN')}</b></p>
                                                         <p className="text-xs" style={{ color: '#475569' }}>GT: <b>{sctReport.inputSummary.totalValue.toLocaleString('vi-VN')} ₫</b></p>
@@ -340,7 +336,7 @@ export default function DeclarationsPage() {
                                                             TTĐB: {sctReport.inputSummary.totalSCT.toLocaleString('vi-VN')} ₫
                                                         </p>
                                                     </div>
-                                                    <div className="p-3 rounded-lg" style={{ background: '#FFFFFF' }}>
+                                                    <div className="p-3 rounded-lg" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                                         <p className="text-[10px] uppercase tracking-wide mb-1 font-bold" style={{ color: '#B45309' }}>Đầu Ra (Bán)</p>
                                                         <p className="text-xs" style={{ color: '#475569' }}>SL: <b>{sctReport.outputSummary.totalQty.toLocaleString('vi-VN')}</b></p>
                                                         <p className="text-xs" style={{ color: '#475569' }}>DT: <b>{sctReport.outputSummary.totalRevenue.toLocaleString('vi-VN')} ₫</b></p>
@@ -366,7 +362,7 @@ export default function DeclarationsPage() {
                                                 <div className="rounded-md overflow-x-auto border border-slate-200">
                                                     <table className="w-full text-left min-w-[550px]" style={{ borderCollapse: 'collapse' }}>
                                                         <thead>
-                                                            <tr style={{ background: '#FFFFFF' }}>
+                                                            <tr style={{ background: '#F8FAFC' }}>
                                                                 {['SKU', 'Sản Phẩm', 'ABV', 'TTĐB%', 'Nhập (SL)', 'TTĐB Nhập', 'Bán (SL)', 'TTĐB Bán', 'Nộp'].map(h => (
                                                                     <th key={h} className="px-2 py-2 text-xs uppercase tracking-wider font-bold" style={{ color: '#64748B', borderBottom: '1px solid #E2E8F0' }}>{h}</th>
                                                                 ))}
@@ -405,7 +401,7 @@ export default function DeclarationsPage() {
                                     {!sctReport && detailData.lots?.length > 0 && (
                                         <div className="space-y-1">
                                             {detailData.lots.map((lot: any) => (
-                                                <div key={lot.lotNo} className="p-2 rounded text-xs" style={{ background: '#FFFFFF' }}>
+                                                <div key={lot.lotNo} className="p-2 rounded text-xs" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                                     <div className="flex justify-between">
                                                         <span style={{ color: '#0891B2' }}>{lot.lotNo}</span>
                                                         <span className="px-2 py-0.5 rounded" style={{
@@ -466,7 +462,7 @@ export default function DeclarationsPage() {
                                                         <div className="flex justify-end">
                                                             <button onClick={() => handleSign(detailRow.id)} disabled={!signatureUrl || savingSignature}
                                                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold disabled:opacity-50"
-                                                                style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                                                                style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                                                 {savingSignature ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
                                                                 Lưu Chữ Ký & Duyệt
                                                             </button>
@@ -503,10 +499,8 @@ export default function DeclarationsPage() {
                             {Object.entries(TYPE_MAP).map(([type, info]) => (
                                 <button key={type}
                                     onClick={() => handleCreate(type, now.getFullYear(), now.getMonth() + 1)}
-                                    className="w-full p-4 rounded text-left transition-all"
-                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
-                                    onMouseEnter={e => (e.currentTarget.style.borderColor = info.color)}
-                                    onMouseLeave={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
+                                    className="w-full p-4 rounded text-left transition-all hover:border-cyan-600"
+                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                     <div className="flex items-center gap-2 mb-1">
                                         <FileText size={16} style={{ color: info.color }} />
                                         <span className="text-sm font-bold" style={{ color: info.color }}>{info.label}</span>

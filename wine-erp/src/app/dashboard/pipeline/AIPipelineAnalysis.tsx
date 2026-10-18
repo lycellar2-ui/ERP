@@ -101,17 +101,17 @@ export function AIPipelineAnalysis() {
                 {/* Stats Row */}
                 {stats && !loading && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 px-5 pt-4">
-                        <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
+                        <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                             <div className="flex items-center justify-center gap-1 mb-0.5"><Target size={11} style={{ color: '#0891B2' }} /></div>
                             <p className="text-lg font-bold" style={{ color: '#0891B2' }}>{stats.activeDeals}</p>
                             <p className="text-xs" style={{ color: '#64748B' }}>Active Deals</p>
                         </div>
-                        <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
+                        <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                             <div className="flex items-center justify-center gap-1 mb-0.5"><TrendingUp size={11} style={{ color: '#B45309' }} /></div>
                             <p className="text-lg font-bold" style={{ color: '#B45309' }}>{fmtVND(stats.pipelineValue)}</p>
                             <p className="text-xs" style={{ color: '#64748B' }}>Pipeline Value</p>
                         </div>
-                        <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
+                        <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                             <p className="text-lg font-bold" style={{ color: '#1D4ED8' }}>{fmtVND(stats.weightedValue)}</p>
                             <p className="text-xs" style={{ color: '#64748B' }}>Weighted Value</p>
                         </div>
@@ -125,7 +125,7 @@ export function AIPipelineAnalysis() {
                             <p className="text-lg font-bold" style={{ color: stats.staleDeals > 0 ? '#B91C1C' : '#64748B' }}>{stats.staleDeals}</p>
                             <p className="text-xs" style={{ color: '#64748B' }}>Stale Deals</p>
                         </div>
-                        <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
+                        <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                             <div className="flex items-center justify-center gap-1 mb-0.5"><XCircle size={11} style={{ color: '#B91C1C' }} /></div>
                             <p className="text-lg font-bold" style={{ color: '#B91C1C' }}>{stats.lostDeals}</p>
                             <p className="text-xs" style={{ color: '#64748B' }}>Lost</p>

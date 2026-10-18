@@ -190,14 +190,9 @@ function FilterTabs({ active, counts, onChange }: { active: string; counts: Reco
                 const count = tab === 'ALL' ? (counts.ALL ?? 0) : (counts[tab] ?? 0)
                 return (
                     <button key={tab} onClick={() => onChange(tab === 'ALL' ? '' : tab)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap transition-all flex-shrink-0"
-                        style={{
-                            background: isActive ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
-                            color: isActive ? '#0E7490' : '#64748B',
-                            border: `1px solid ${isActive ? 'rgba(8, 145, 178, 0.25)' : 'transparent'}`,
-                        }}
-                        onMouseEnter={e => !isActive && (e.currentTarget.style.background = 'rgba(8,145,178,0.06)')}
-                        onMouseLeave={e => !isActive && (e.currentTarget.style.background = 'transparent')}>
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap transition-all flex-shrink-0 ${
+                            isActive ? 'bg-[#0891B2]/8 text-[#0E7490] border border-[#0891B2]/25' : 'bg-transparent text-[#64748B] border border-transparent hover:bg-[#0891B2]/6'
+                        }`}>
                         {TAB_LABELS[tab]}
                         <span className="inline-block px-1.5 py-0.5 text-[10px] rounded-full font-bold whitespace-nowrap shrink-0"
                             style={{ background: isActive ? 'rgba(8, 145, 178, 0.15)' : 'rgba(100,116,139,0.15)', color: isActive ? '#0E7490' : '#64748B' }}>
@@ -1223,7 +1218,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                         </button>
                         <button type="button" onClick={() => handleSave(true)} disabled={saving}
                             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold transition-all shadow-sm hover:opacity-90"
-                            style={{ background: '#0891B2', color: '#FFFFFF' }}
+                            style={{ background: '#0E7490', color: '#FFFFFF' }}
                             title="Tạo đơn và gửi trình duyệt ngay">
                             {saving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Tạo & Gửi Trình Duyệt
@@ -1890,7 +1885,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                 </button>
                                 <button type="button" onClick={() => handleSave(true)} disabled={saving}
                                     className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold transition-all shadow-sm hover:opacity-90"
-                                    style={{ background: '#0891B2', color: '#FFFFFF' }}
+                                    style={{ background: '#0E7490', color: '#FFFFFF' }}
                                     title="Lưu thay đổi và gửi trình duyệt phê duyệt ngay">
                                     {saving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                                     Lưu & Gửi Duyệt
@@ -2251,22 +2246,16 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
                 <div className="flex items-center gap-2">
                     <button onClick={() => setShowStats(!showStats)}
-                        className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md"
-                        style={{ 
-                            background: showStats ? 'rgba(8, 145, 178, 0.08)' : 'rgba(100,116,139,0.1)', 
-                            color: showStats ? '#0E7490' : '#475569', 
-                            border: `1px solid ${showStats ? 'rgba(8, 145, 178, 0.25)' : 'rgba(100,116,139,0.25)'}` 
-                        }}
-                        onMouseEnter={e => { if (!showStats) e.currentTarget.style.background = 'rgba(100,116,139,0.2)' }}
-                        onMouseLeave={e => { if (!showStats) e.currentTarget.style.background = 'rgba(100,116,139,0.1)' }}>
+                        className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md border ${
+                            showStats
+                                ? 'bg-[#0891B2]/8 text-[#0E7490] border-[#0891B2]/25'
+                                : 'bg-[#64748B]/10 hover:bg-[#64748B]/20 text-[#475569] border-[#64748B]/25'
+                        }`}>
                         Thống kê
                     </button>
 
                     <button onClick={() => setCashFlowModalOpen(true)}
-                        className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-bold transition-all rounded-md shadow-xs"
-                        style={{ background: 'rgba(13, 148, 136, 0.1)', color: '#0F766E', border: '1px solid rgba(13, 148, 136, 0.3)' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(13, 148, 136, 0.2)')}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(13, 148, 136, 0.1)')}
+                        className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-bold transition-all rounded-md shadow-xs bg-[#0D9488]/10 hover:bg-[#0D9488]/20 text-[#0F766E] border border-[#0D9488]/30"
                         title="Kế hoạch dự trù chi phí & dòng tiền theo thời điểm">
                         <DollarSign size={14} /> Dòng Tiền Lô Hàng
                     </button>
@@ -2280,26 +2269,17 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                             setFxLoading(false) 
                         } 
                     }}
-                        className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md"
-                        style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309', border: '1px solid rgba(180,83,9,0.25)' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(180,83,9,0.2)')}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(180,83,9,0.1)')}>
+                        className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md bg-[#B45309]/10 hover:bg-[#B45309]/20 text-[#B45309] border border-[#B45309]/25">
                         <Globe size={14} /> Tỷ Giá Ngoại Tệ
                     </button>
 
                     <button onClick={handleExportExcel}
-                        className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md"
-                        style={{ background: 'rgba(100,116,139,0.1)', color: '#475569', border: '1px solid rgba(100,116,139,0.25)' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(100,116,139,0.2)')}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(100,116,139,0.1)')}>
+                        className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md bg-[#64748B]/10 hover:bg-[#64748B]/20 text-[#475569] border border-[#64748B]/25">
                         <Download size={14} /> Excel
                     </button>
 
                     <button onClick={() => setDrawerOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all duration-150"
-                        style={{ background: '#0891B2', color: '#FFFFFF', borderRadius: '6px' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#0891B2')}
-                        onMouseLeave={e => (e.currentTarget.style.background = '#0E7490')}>
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-md transition-all duration-150 bg-[#0E7490] hover:bg-[#155E75] text-white">
                         <Plus size={16} /> Tạo PO Mới
                     </button>
                 </div>
@@ -2513,10 +2493,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 return (
                                     <tr key={row.id}
                                         onClick={() => showDetail(row.id)}
-                                        className="transition-colors cursor-pointer group"
-                                        style={{ background: isSelected ? 'rgba(8,145,178,0.06)' : 'transparent' }}
-                                        onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(8,145,178,0.03)' }}
-                                        onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}>
+                                        className={`transition-colors cursor-pointer group ${isSelected ? 'bg-[#0891B2]/6' : 'bg-transparent hover:bg-[#0891B2]/3'}`}>
                                         
                                         {/* Col 1: PO No & Shipping info */}
                                         <td className="px-4 py-3">

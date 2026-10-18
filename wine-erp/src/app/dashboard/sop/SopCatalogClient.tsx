@@ -307,7 +307,7 @@ export function SopCatalogClient({
                     </button>
                     <button
                         onClick={() => setIsCreatingSop(true)}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-sm transition"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#0E7490] hover:bg-[#155E75] text-white text-xs font-semibold shadow-sm transition"
                     >
                         <Plus className="w-3.5 h-3.5" />
                         <span>Thêm Quy Trình Mới</span>
@@ -478,7 +478,7 @@ export function SopCatalogClient({
                             onClick={() => setSelectedDocGroup('all')}
                             className={`px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transition border ${
                                 selectedDocGroup === 'all'
-                                    ? 'bg-slate-900 text-white border-slate-900'
+                                    ? 'bg-[#0E7490] text-white border-[#0E7490]'
                                     : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                             }`}
                         >
@@ -490,7 +490,7 @@ export function SopCatalogClient({
                                 onClick={() => setSelectedDocGroup(grp.key)}
                                 className={`px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transition border ${
                                     selectedDocGroup === grp.key
-                                        ? 'bg-slate-900 text-white border-slate-900'
+                                        ? 'bg-[#0E7490] text-white border-[#0E7490]'
                                         : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                                 }`}
                             >
@@ -581,7 +581,7 @@ export function SopCatalogClient({
                                                 lastUpdated: doc.lastUpdated,
                                                 groupLabel: doc.groupLabel
                                             })}
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition"
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0E7490] hover:bg-[#155E75] text-white text-xs font-semibold shadow-xs transition"
                                         >
                                             <Eye className="w-3.5 h-3.5" />
                                             <span>Đọc Văn Bản</span>
@@ -644,7 +644,7 @@ export function SopCatalogClient({
                                     onClick={() => setSelectedCategory(cat.id)}
                                     className={`px-3 py-1.5 rounded-lg whitespace-nowrap font-medium transition border ${
                                         isSelected
-                                            ? 'bg-slate-900 text-white border-slate-900'
+                                            ? 'bg-[#0E7490] text-white border-[#0E7490]'
                                             : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                                     }`}
                                 >
@@ -791,7 +791,7 @@ export function SopCatalogClient({
                                 setTargetUploadFile(null)
                                 setShowUploadModal(true)
                             }}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition shadow-xs self-start sm:self-auto"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#0E7490] hover:bg-[#155E75] text-white text-xs font-semibold transition shadow-xs self-start sm:self-auto"
                         >
                             <Upload className="w-3.5 h-3.5" />
                             <span>Tải Biểu Mẫu Mới Lên</span>
@@ -832,7 +832,7 @@ export function SopCatalogClient({
                                                     url: form.downloadUrl,
                                                     fileName: form.fileName
                                                 })}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition"
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0E7490] hover:bg-[#155E75] text-white text-xs font-semibold shadow-xs transition"
                                             >
                                                 <Eye className="w-3.5 h-3.5" />
                                                 <span>Xem Văn Bản</span>
@@ -850,7 +850,7 @@ export function SopCatalogClient({
                                         <a
                                             href={form.downloadUrl}
                                             download={form.fileName}
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition"
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0E7490] hover:bg-[#155E75] text-white text-xs font-semibold shadow-xs transition"
                                         >
                                             <Download className="w-3.5 h-3.5" />
                                             <span>Tải Mẫu Về</span>

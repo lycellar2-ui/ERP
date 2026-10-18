@@ -959,7 +959,7 @@ export function ProcurementCashFlowModal({
 
                     <button
                         onClick={onClose}
-                        className="px-5 py-2 text-xs font-bold text-white bg-slate-800 hover:bg-slate-900 rounded-md transition-all shadow-sm"
+                        className="px-5 py-2 text-xs font-bold text-white bg-[#0E7490] hover:bg-[#155E75] rounded-md transition-all shadow-sm"
                     >
                         Hoàn tất & Đóng
                     </button>

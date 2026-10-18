@@ -702,10 +702,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
 
                             <button
                                 onClick={handleAddToReport}
-                                className="w-full py-2.5 rounded-lg font-bold flex items-center justify-center gap-1.5 text-xs transition-all duration-150"
-                                style={{ background: '#D97706', color: '#FFFFFF' }}
-                                onMouseEnter={e => (e.currentTarget.style.background = '#E5B964')}
-                                onMouseLeave={e => (e.currentTarget.style.background = '#B45309')}
+                                className="w-full py-2.5 rounded-lg font-bold flex items-center justify-center gap-1.5 text-xs transition-all duration-150 bg-[#D97706] hover:bg-[#B45309] text-white"
                             >
                                 <Plus size={14} /> THÊM VÀO BẢNG CHECK MARGIN
                             </button>
@@ -728,7 +725,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                     <h3 className="text-base font-bold text-slate-900">
                         Danh sách check margin
                     </h3>
-                    <span className="inline-block text-xs px-2 py-0.5 bg-white border border-slate-200/60 text-slate-700 rounded-full font-normal font-sans whitespace-nowrap shrink-0" style={{ fontFamily: 'var(--font-sans)' }}>
+                    <span className="inline-block text-xs px-2 py-0.5 bg-white border border-slate-200/60 text-slate-700 rounded-md font-normal font-sans whitespace-nowrap shrink-0">
                         {addedProducts.length} sản phẩm
                     </span>
                 </div>
@@ -792,7 +789,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                     {computedRows.map(row => {
                                         const p = row.product
                                         return (
-                                            <tr key={p.id} className="group border-b border-slate-200/30 hover:bg-white/10 transition-colors">
+                                            <tr key={p.id} className="group border-b border-slate-200/30 hover:bg-slate-50 transition-colors">
                                                 <td className="px-3 py-2.5 text-xs text-slate-600 font-sans font-medium whitespace-nowrap">{p.skuCode}</td>
                                                 <td className="px-3 py-2.5 text-xs text-slate-900 font-medium leading-snug">{p.productName}</td>
                                                 <td className="px-3 py-2.5 text-xs text-right font-sans text-[#B45309] font-semibold whitespace-nowrap">{formatNumberOnly(p.wholesalePrice)}</td>
@@ -1018,7 +1015,7 @@ function SimulatedTableRow({
     }, [p.primaryImageUrl])
 
     return (
-        <tr className="group border-b border-slate-200/30 hover:bg-white/10 transition-colors">
+        <tr className="group border-b border-slate-200/30 hover:bg-slate-50 transition-colors">
             {/* Thumbnail & details */}
             <td className="px-3 py-2.5">
                 <div className="flex items-center gap-2 min-w-0">

@@ -499,7 +499,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                                 <button
                                     onClick={() => handleOpenPrintCount(wh.id)}
                                     className="w-full py-2 px-3 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 cursor-pointer transition shadow-xs"
-                                    style={{ background: '#0891B2', color: '#FFFFFF' }}
+                                    style={{ background: '#0E7490', color: '#FFFFFF' }}
                                 >
                                     <Printer size={14} /> Mở Biên Bản Kiểm Kê (A4)
                                 </button>
@@ -517,7 +517,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                         <button
                             onClick={() => setCreateAgreementOpen(true)}
                             className="px-3 py-1.5 text-xs font-bold rounded cursor-pointer transition"
-                            style={{ background: '#0891B2', color: '#FFFFFF' }}
+                            style={{ background: '#0E7490', color: '#FFFFFF' }}
                         >
                             <Plus size={14} /> Thêm Hợp Đồng Ký Gửi
                         </button>

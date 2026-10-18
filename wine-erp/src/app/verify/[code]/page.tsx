@@ -16,7 +16,6 @@ export default async function VerifyPage({ params }: { params: Promise<{ code: s
         <div style={{
             minHeight: '100vh', background: 'linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 100%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
-            fontFamily: '"Inter", sans-serif',
         }}>
             <div style={{
                 maxWidth: '440px', width: '100%', background: '#FFFFFF',
@@ -88,7 +87,7 @@ export default async function VerifyPage({ params }: { params: Promise<{ code: s
                     <p style={{ color: '#64748B', fontSize: '10px', letterSpacing: '0.5px' }}>
                         LYS CELLARS — Hệ Thống Truy Xuất Nguồn Gốc
                     </p>
-                    <p style={{ color: '#64748B', fontSize: 12, marginTop: '4px', fontFamily: 'monospace' }}>
+                    <p className="font-mono" style={{ color: '#64748B', fontSize: 12, marginTop: '4px' }}>
                         QR: {code}
                     </p>
                 </div>

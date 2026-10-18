@@ -361,7 +361,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                             disabled={actionLoading}
                                             onClick={handleSubmitDraft}
                                             className="px-4 py-2.5 rounded-lg text-xs font-bold transition-all shadow-xs"
-                                            style={{ background: '#0891B2', color: '#FFFFFF' }}
+                                            style={{ background: '#0E7490', color: '#FFFFFF' }}
                                         >
                                             Gửi Kế Toán Duyệt
                                         </button>
@@ -391,7 +391,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                         disabled={actionLoading}
                                                         onClick={handleApprove}
                                                         className="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-xs cursor-pointer"
-                                                        style={{ background: '#0891B2', color: '#FFFFFF' }}
+                                                        style={{ background: '#0E7490', color: '#FFFFFF' }}
                                                     >
                                                         <Check size={15} /> Duyệt Phiếu Chuyển Kho
                                                     </button>
@@ -451,7 +451,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                             disabled={actionLoading || loadingLocations}
                                             onClick={openReceiveModal}
                                             className="px-4 py-2.5 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
-                                            style={{ background: '#0891B2', color: '#FFFFFF' }}
+                                            style={{ background: '#0E7490', color: '#FFFFFF' }}
                                         >
                                             {loadingLocations ? <Loader2 size={15} className="animate-spin" /> : <PackageCheck size={15} />}
                                             Kiểm Đếm &amp; Nhận Hàng

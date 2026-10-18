@@ -122,7 +122,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                         </div>
                                         <span className="inline-block text-xs px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0" style={{ color: st.color, background: st.bg }}>{st.label}</span>
                                     </div>
-                                    <div className="h-1.5 rounded-full overflow-hidden mb-1" style={{ background: '#FFFFFF' }}>
+                                    <div className="h-1.5 rounded-full overflow-hidden mb-1" style={{ background: '#E2E8F0' }}>
                                         <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, background: barColor }} />
                                     </div>
                                     <div className="flex justify-between items-center text-xs" style={{ color: '#64748B' }}>
@@ -158,22 +158,22 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                         </p>
                                     </div>
                                     <button onClick={() => { setAddQuotaOpen(true) }} className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
-                                        style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                                        style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                         <Plus size={12} /> Thêm Quota
                                     </button>
                                 </div>
 
                                 {/* Summary bars */}
                                 <div className="grid grid-cols-3 gap-2 mb-3">
-                                    <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
+                                    <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                         <p className="text-sm font-bold" style={{ color: '#0891B2' }}>{selected.totalQty}</p>
                                         <p className="text-[10px]" style={{ color: '#64748B' }}>Tổng {selected.unit}</p>
                                     </div>
-                                    <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
+                                    <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                         <p className="text-sm font-bold" style={{ color: '#B45309' }}>{selected.allocatedQty}</p>
                                         <p className="text-[10px]" style={{ color: '#64748B' }}>Đã phân bổ</p>
                                     </div>
-                                    <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
+                                    <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                         <p className="text-sm font-bold" style={{ color: '#15803D' }}>{selected.soldQty}</p>
                                         <p className="text-[10px]" style={{ color: '#64748B' }}>Đã bán</p>
                                     </div>
@@ -223,7 +223,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                                 </td>
                                                 <td className="px-3 py-2.5">
                                                     <div className="flex items-center gap-2">
-                                                        <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: '#FFFFFF' }}>
+                                                        <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: '#E2E8F0' }}>
                                                             <div className="h-full rounded-full" style={{
                                                                 width: `${Math.min(q.pctUsed, 100)}%`,
                                                                 background: q.pctUsed > 90 ? '#B91C1C' : q.pctUsed > 70 ? '#B45309' : '#0E7490',
@@ -281,7 +281,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                 </select>
                             </div>
                             <button onClick={handleCreateCampaign} className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded"
-                                style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                                style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                 <Save size={14} /> Tạo Campaign
                             </button>
                         </div>
@@ -327,7 +327,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
                                     className="w-full px-3 py-2 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#B45309' }} />
                             </div>
                             <button onClick={handleAddQuota} className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded"
-                                style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                                style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                 <Save size={14} /> Thêm Quota
                             </button>
                         </div>

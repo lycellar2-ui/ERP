@@ -1298,13 +1298,10 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                     return (
                                         <tr key={p.id}
                                             onClick={() => openDetail(p.id)}
-                                            className="transition-all cursor-pointer hover:brightness-110"
+                                            className={`transition-all cursor-pointer hover:bg-[#0891B2]/6 ${canApproveThis ? 'bg-[#B45309]/3' : ''}`}
                                             style={{
                                                 borderBottom: '1px solid #E2E8F0',
-                                                background: canApproveThis ? 'rgba(180,83,9,0.03)' : 'transparent',
                                             }}
-                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(8,145,178,0.06)'}
-                                            onMouseLeave={e => e.currentTarget.style.background = canApproveThis ? 'rgba(180,83,9,0.03)' : 'transparent'}
                                         >
                                             <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
                                                 <span className="text-xs font-bold font-mono text-[#0891B2] whitespace-nowrap block truncate" title={p.proposalNo}>
@@ -3195,11 +3192,11 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                     {locale === 'en' ? 'Special Pricing & Mechanism Information' : 'Thông Tin Áp Dụng Cơ Chế Giá & Giá Đặc Biệt'}
                                 </p>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                                    <div className="p-2.5 rounded" style={{ background: '#FFFFFF' }}>
+                                    <div className="p-2.5 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                         <p style={{ color: '#64748B' }}>{locale === 'en' ? 'Applicable Customer' : 'Khách hàng áp dụng'}</p>
                                         <p className="font-bold mt-0.5" style={{ color: '#0F172A' }}>{detail.customer?.name} ({detail.customer?.code || 'N/A'})</p>
                                     </div>
-                                    <div className="p-2.5 rounded" style={{ background: '#FFFFFF' }}>
+                                    <div className="p-2.5 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                         <p style={{ color: '#64748B' }}>{locale === 'en' ? 'Scope of Application' : 'Phạm vi áp dụng'}</p>
                                         <p className="font-bold mt-0.5" style={{ color: '#0F172A' }}>
                                             {detail.scope?.startsWith('ENTIRE_PORTFOLIO') ? (locale === 'en' ? 'Entire Portfolio' : 'Toàn danh mục') : 
@@ -3227,7 +3224,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                         </div>
                                     </div>
                                 )}
-                                <div className="p-2.5 rounded text-xs" style={{ background: '#FFFFFF' }}>
+                                <div className="p-2.5 rounded text-xs" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                     <p style={{ color: '#64748B' }}>{locale === 'en' ? 'Validity Period (Start & End Date)' : 'Thời hạn hiệu lực (Ngày bắt đầu & Kết thúc)'}</p>
                                     <p className="font-bold mt-0.5 flex items-center gap-1.5" style={{ color: '#0891B2' }}>
                                         <Calendar size={13} className="shrink-0" />
@@ -3240,7 +3237,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                 </div>
                                 
                                 {detail.discountPct !== null && detail.discountPct !== undefined && (
-                                    <div className="p-2.5 rounded" style={{ background: '#FFFFFF' }}>
+                                    <div className="p-2.5 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                         <p className="text-xs" style={{ color: '#64748B' }}>{locale === 'en' ? 'Entire portfolio discount' : 'Chiết khấu toàn danh mục'}</p>
                                         <p className="text-lg font-bold" style={{ color: '#B45309' }}>{detail.discountPct}%</p>
                                     </div>
@@ -3256,7 +3253,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                                     ? ((item.proposedPrice - originalPrice) / originalPrice) * 100 
                                                     : 0
                                                 return (
-                                                    <div key={item.id} className="flex justify-between items-center p-2 rounded text-xs" style={{ background: '#FFFFFF' }}>
+                                                    <div key={item.id} className="flex justify-between items-center p-2 rounded text-xs" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                                         <div className="min-w-0 flex-1">
                                                             <p className="font-medium truncate" style={{ color: '#0F172A' }}>{item.product?.productName}</p>
                                                             <p className="text-[10px] font-mono" style={{ color: '#64748B' }}>{item.product?.skuCode}</p>
@@ -3589,7 +3586,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                             </p>
                             <div className="space-y-2 mb-3 max-h-[200px] overflow-y-auto">
                                 {detail.comments.map(c => (
-                                    <div key={c.id} className="p-2.5 rounded" style={{ background: '#FFFFFF' }}>
+                                    <div key={c.id} className="p-2.5 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                         <div className="flex items-center justify-between mb-1">
                                             <span className="text-xs font-semibold" style={{ color: '#0891B2' }}>{c.author.name}</span>
                                             <span className="text-xs" style={{ color: '#64748B' }}>{new Date(c.createdAt).toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')}</span>

@@ -149,7 +149,7 @@ function CostItemsSection({ items, shipmentId, onRefresh }: {
             {items.length > 0 && (
                 <div className="space-y-1">
                     {items.map(c => (
-                        <div key={c.id} className="flex items-center justify-between px-3 py-2 rounded-lg group" style={{ background: '#FFFFFF' }}>
+                        <div key={c.id} className="flex items-center justify-between px-3 py-2 rounded-lg group" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
                                     <span className="inline-block text-[10px] uppercase px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ color: '#0891B2', background: 'rgba(8,145,178,0.1)' }}>
@@ -197,7 +197,7 @@ function CostItemsSection({ items, shipmentId, onRefresh }: {
                     <div className="flex justify-end gap-2">
                         <button onClick={() => setAdding(false)} className="inline-block px-3 py-1.5 text-xs rounded whitespace-nowrap shrink-0" style={{ color: '#64748B' }}>Huỷ</button>
                         <button onClick={handleAdd} disabled={saving} className="px-3 py-1.5 text-xs rounded font-semibold inline-flex items-center gap-1 whitespace-nowrap shrink-0"
-                            style={{ background: '#0891B2', color: '#FFFFFF' }}>
+                            style={{ background: '#0E7490', color: '#FFFFFF' }}>
                             {saving ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} Thêm
                         </button>
                     </div>
@@ -257,7 +257,7 @@ function CustomsSection({ customs, shipmentId, onRefresh }: {
                             { label: 'HS Code', value: customs.hsCode },
                             { label: 'Trạng thái', value: customs.status },
                         ].filter(r => r.value).map(r => (
-                            <div key={r.label} className="p-2 rounded" style={{ background: '#FFFFFF' }}>
+                            <div key={r.label} className="p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>{r.label}</p>
                                 <p className="text-xs font-semibold" style={{ color: '#0F172A' }}>{r.value}</p>
                             </div>
@@ -387,7 +387,7 @@ function InsuranceSection({ insurance, shipmentId, onRefresh }: {
                             { label: 'Loại', value: insurance.coverageType },
                             { label: 'Trạng thái', value: insurance.status },
                         ].filter(r => r.value).map(r => (
-                            <div key={r.label} className="p-2 rounded" style={{ background: '#FFFFFF' }}>
+                            <div key={r.label} className="p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>{r.label}</p>
                                 <p className="text-xs font-semibold" style={{ color: '#0F172A' }}>{r.value}</p>
                             </div>
@@ -660,7 +660,7 @@ export function ShipmentDetailDrawer({ open, shipmentId, onClose }: {
                                         { icon: Package, label: 'Container', value: data.containerNo ? `${data.containerNo} (${data.containerType ?? ''})` : '—' },
                                         { icon: Globe, label: 'Incoterms', value: data.incoterms ?? '—' },
                                     ].map(c => (
-                                        <div key={c.label} className="p-3 rounded-lg" style={{ background: '#FFFFFF' }}>
+                                        <div key={c.label} className="p-3 rounded-lg" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                             <c.icon size={14} style={{ color: '#1D4ED8' }} />
                                             <p className="text-[10px] uppercase mt-1" style={{ color: '#64748B' }}>{c.label}</p>
                                             <p className="text-xs font-semibold" style={{ color: '#0F172A' }}>{c.value}</p>
@@ -674,18 +674,18 @@ export function ShipmentDetailDrawer({ open, shipmentId, onClose }: {
                                         { label: 'ETD', value: fmtDate(data.etd) },
                                         { label: 'ETA', value: fmtDate(data.eta) },
                                     ].map(c => (
-                                        <div key={c.label} className="p-2 rounded text-center" style={{ background: '#FFFFFF' }}>
+                                        <div key={c.label} className="p-2 rounded text-center" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                             <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>{c.label}</p>
                                             <p className="text-xs font-bold" style={{ color: '#0891B2' }}>{c.value}</p>
                                         </div>
                                     ))}
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div className="p-3 rounded-lg" style={{ background: '#FFFFFF' }}>
+                                    <div className="p-3 rounded-lg" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                         <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Giá trị CIF</p>
                                         <p className="text-lg font-bold" style={{ color: '#0F172A' }}>{data.cifCurrency} {fmtNum(data.cifAmount)}</p>
                                     </div>
-                                    <div className="p-3 rounded-lg" style={{ background: '#FFFFFF' }}>
+                                    <div className="p-3 rounded-lg" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                         <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Tiến độ</p>
                                         <div className="flex items-center gap-2 mt-1">
                                             <div className="flex-1 h-2 rounded-full" style={{ background: '#E2E8F0' }}>

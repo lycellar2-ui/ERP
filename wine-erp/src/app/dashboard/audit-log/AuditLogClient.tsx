@@ -274,7 +274,7 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                                         <config.icon size={12} style={{ color: config.color }} />
                                         <span className="text-xs truncate" style={{ color: '#475569' }}>{config.label}</span>
                                     </div>
-                                    <div className="flex-1 h-1.5 rounded-full" style={{ background: '#FFFFFF' }}>
+                                    <div className="flex-1 h-1.5 rounded-full" style={{ background: '#E2E8F0' }}>
                                         <div
                                             className="h-full rounded-full transition-all duration-500"
                                             style={{ width: `${Math.max(pct, 2)}%`, background: config.color }}
@@ -299,7 +299,7 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                             return (
                                 <div key={m.entityType} className="flex items-center gap-3">
                                     <span className="text-xs w-32 truncate" style={{ color: '#475569' }}>{formatEntityType(m.entityType)}</span>
-                                    <div className="flex-1 h-1.5 rounded-full" style={{ background: '#FFFFFF' }}>
+                                    <div className="flex-1 h-1.5 rounded-full" style={{ background: '#E2E8F0' }}>
                                         <div
                                             className="h-full rounded-full transition-all duration-500"
                                             style={{ width: `${Math.max(pct, 2)}%`, background: '#0E7490' }}
@@ -333,7 +333,7 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                     <button
                         onClick={handleSearch}
                         className="px-4 py-2 text-sm font-medium rounded-md transition-all"
-                        style={{ background: '#0891B2', color: '#FFFFFF' }}
+                        style={{ background: '#0E7490', color: '#FFFFFF' }}
                     >
                         Tìm kiếm
                     </button>
@@ -367,7 +367,7 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
 
                 {/* Filter Row */}
                 {showFilters && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2" style={{ borderTop: '1px solid #FFFFFF' }}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2" style={{ borderTop: '1px solid #E2E8F0' }}>
                         <div>
                             <label className="block text-xs mb-1" style={{ color: '#64748B' }}>Module</label>
                             <select
@@ -423,7 +423,7 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
             {/* Timeline */}
             <div className="rounded-lg overflow-hidden" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 {/* Header */}
-                <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid #FFFFFF' }}>
+                <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid #E2E8F0' }}>
                     <span className="text-sm font-medium" style={{ color: '#475569' }}>
                         {total.toLocaleString('vi-VN')} sự kiện
                     </span>
@@ -439,7 +439,7 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                         <p className="text-sm" style={{ color: '#64748B' }}>Chưa có sự kiện nào</p>
                     </div>
                 ) : (
-                    <div className="divide-y" style={{ borderColor: '#FFFFFF' }}>
+                    <div className="divide-y divide-slate-200" style={{ borderColor: '#E2E8F0' }}>
                         {rows.map((row) => {
                             const config = getActionConfig(row.action)
                             const Icon = config.icon
@@ -521,7 +521,7 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                    <div className="px-4 py-3 flex items-center justify-between" style={{ borderTop: '1px solid #FFFFFF' }}>
+                    <div className="px-4 py-3 flex items-center justify-between" style={{ borderTop: '1px solid #E2E8F0' }}>
                         <button
                             onClick={() => handlePageChange(page - 1)}
                             disabled={page <= 1}

@@ -27,7 +27,7 @@ export default function DashboardError({
                 padding: '48px 32px',
                 background: '#FFFFFF',
                 border: '1px solid #E2E8F0',
-                borderRadius: '12px',
+                borderRadius: '8px',
             }}>
                 <div className="w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center bg-rose-50 text-rose-600">
                     <AlertTriangle size={24} />
@@ -54,7 +54,7 @@ export default function DashboardError({
                         style={{
                             padding: '10px 24px',
                             background: 'rgba(8, 145, 178, 0.08)',
-                            color: '#0891B2',
+                            color: '#0E7490',
                             border: '1px solid rgba(8, 145, 178, 0.25)',
                             borderRadius: '6px',
                             cursor: 'pointer',
