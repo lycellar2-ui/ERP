@@ -655,7 +655,7 @@ export function DailyCallPlannerView({
                     </div>
 
                     {/* Search query */}
-                    <div className="relative min-w-[220px]">
+                    <div className="relative w-full sm:w-auto sm:min-w-[220px]">
                         <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                             type="text"

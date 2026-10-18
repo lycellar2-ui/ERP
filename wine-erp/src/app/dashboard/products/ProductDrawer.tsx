@@ -446,7 +446,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                             ── Thông Tin Cơ Bản
                         </p>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Field label="SKU" required error={errors.sku}>
                                 <Input
                                     value={form.sku ?? ''}
@@ -465,7 +465,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                             />
                         </Field>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Field label="Loại rượu">
                                 <Select value={form.wineType ?? ''} onChange={e => set('wineType', e.target.value || null)}>
                                     <option value="">Chọn loại...</option>
@@ -492,7 +492,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                         <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
                             ── Quy Cách Đóng Gói
                         </p>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <Field label="Dung tích (ml)">
                                 <Select value={form.volumeMl ?? 750} onChange={e => set('volumeMl', Number(e.target.value))}>
                                     <option value={375}>375 ml (Nửa)  </option>
@@ -584,7 +584,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                         {showNewProducer && (
                             <div className="p-3 rounded-lg space-y-2" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                 <p className="text-xs font-bold" style={{ color: '#0891B2' }}>Tạo Nhà SX Mới</p>
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <Input
                                         value={newProducerName}
                                         onChange={e => setNewProducerName(e.target.value)}
@@ -643,7 +643,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                         <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
                             ── Giá, Phân Loại & Trạng Thái
                         </p>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Field label="Giá bán lẻ (VND)">
                                 <Input
                                     type="number"
@@ -668,7 +668,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                         <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
                             ── Best Drinking Window
                         </p>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Field label="Uống từ năm">
                                 <Input
                                     type="number"
@@ -889,7 +889,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                             ── Đặc Tính Sản Phẩm (Wine Profile)
                         </p>
                         
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Field label="Giống nho (Grapes)">
                                 <Input
                                     value={form.grapes ?? ''}
@@ -906,7 +906,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                             </Field>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Field label="Xuất xứ chi tiết">
                                 <Input
                                     value={form.originDetail ?? ''}
@@ -923,7 +923,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                             </Field>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Field label="Màu sắc (Color)">
                                 <Input
                                     value={form.color ?? ''}
@@ -962,7 +962,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                             />
                         </Field>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Field label="Món ăn kèm (Food Pairings)">
                                 <Input
                                     value={form.foodPairings ?? ''}
@@ -1034,7 +1034,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
 
                                 {/* Media grid */}
                                 {mediaList.length > 0 ? (
-                                    <div className="grid grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                         {mediaList.map(m => (
                                             <div key={m.id} className="relative group rounded-lg overflow-hidden"
                                                 style={{ border: m.isPrimary ? '2px solid #0E7490' : '1px solid #E2E8F0', aspectRatio: '3/4', background: '#FFFFFF' }}>
@@ -1130,7 +1130,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                 {/* Add form */}
                                 {showAwardForm && (
                                     <div className="p-4 rounded-lg space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                             <Field label="Nguồn">
                                                 <Select value={awardSource} onChange={e => setAwardSource(e.target.value)}>
                                                     <option>Robert Parker</option>
@@ -1147,7 +1147,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                                     placeholder="95" min={0} max={100} />
                                             </Field>
                                         </div>
-                                        <div className="grid grid-cols-3 gap-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                             <Field label="Huy chương">
                                                 <Select value={awardMedal} onChange={e => setAwardMedal(e.target.value)}>
                                                     <option value="">— Không —</option>

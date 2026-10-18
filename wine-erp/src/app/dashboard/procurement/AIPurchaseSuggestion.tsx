@@ -71,7 +71,7 @@ export function AIPurchaseSuggestion() {
 
             {/* Stats Cards */}
             {stats && !loading && (
-                <div className="grid grid-cols-4 gap-2 px-5 pt-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 px-5 pt-4">
                     <div className="text-center p-2 rounded" style={{ background: '#FFFFFF' }}>
                         <p className="text-lg font-bold" style={{ color: '#0891B2' }}>{stats.totalProducts}</p>
                         <p className="text-[10px]" style={{ color: '#64748B' }}>Sản phẩm</p>

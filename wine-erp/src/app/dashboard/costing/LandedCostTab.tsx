@@ -363,7 +363,7 @@ export function LandedCostTab() {
                             </p>
                         </div>
                     ) : (
-                        <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
+                        <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
                             <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                                 <thead>
                                     <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
@@ -537,7 +537,7 @@ export function LandedCostTab() {
                                 </p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {[
                                     { key: 'importTax', label: 'Thuế Nhập Khẩu (VND)', placeholder: 'VD: 127500000' },
                                     { key: 'sct', label: 'Thuế TTĐB / SCT (VND)', placeholder: 'VD: 248625000' },
@@ -609,7 +609,7 @@ export function LandedCostTab() {
                     </p>
                 </div>
             ) : (
-                <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
+                <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
                     <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>

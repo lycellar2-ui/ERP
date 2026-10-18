@@ -174,7 +174,7 @@ function CostItemsSection({ items, shipmentId, onRefresh }: {
             )}
             {adding ? (
                 <div className="p-3 rounded-lg space-y-2" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
                             className="px-2 py-1.5 rounded text-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                             {COST_CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
@@ -186,7 +186,7 @@ function CostItemsSection({ items, shipmentId, onRefresh }: {
                     </div>
                     <input placeholder="Mô tả chi phí..." value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                         className="w-full px-2 py-1.5 rounded text-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }} />
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <input type="number" placeholder="Số tiền" value={form.amount || ''} onChange={e => setForm(f => ({ ...f, amount: Number(e.target.value) }))}
                             className="px-2 py-1.5 rounded text-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                         <input placeholder="Thanh toán cho" value={form.paidTo} onChange={e => setForm(f => ({ ...f, paidTo: e.target.value }))}
@@ -264,7 +264,7 @@ function CustomsSection({ customs, shipmentId, onRefresh }: {
                         ))}
                         {customs.totalTax != null && (
                             <div className="col-span-2 p-3 rounded-lg" style={{ background: 'rgba(180,83,9,0.1)', border: '1px solid rgba(180,83,9,0.2)' }}>
-                                <div className="grid grid-cols-4 gap-3 text-center">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                                     {[
                                         { label: 'Thuế NK', value: customs.importTaxAmount, rate: customs.importTaxRate },
                                         { label: 'TTĐB', value: customs.sctAmount, rate: customs.sctRate },
@@ -299,7 +299,7 @@ function CustomsSection({ customs, shipmentId, onRefresh }: {
     return (
         <div className="space-y-3">
             <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#B45309' }}>── Nhập Dữ Liệu Hải Quan</p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div><label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Số tờ khai</label><input className={inputCls} style={inputStyle} value={form.declarationNo ?? ''} onChange={e => set('declarationNo', e.target.value)} placeholder="305xxxxx/NKD/HQ" /></div>
                 <div><label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Loại hình</label><select className={inputCls} style={inputStyle} value={form.declarationType ?? ''} onChange={e => set('declarationType', e.target.value)}>
                     <option value="">Chọn...</option><option value="C31">C31 — Kinh doanh</option><option value="A11">A11 — Gia công</option><option value="A12">A12 — Tạm nhập</option><option value="E31">E31 — GC xuất khẩu</option>
@@ -312,7 +312,7 @@ function CustomsSection({ customs, shipmentId, onRefresh }: {
                 <div><label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Số C/O</label><input className={inputCls} style={inputStyle} value={form.coNumber ?? ''} onChange={e => set('coNumber', e.target.value)} /></div>
             </div>
             <p className="text-[10px] uppercase tracking-wide font-bold pt-1" style={{ color: '#B45309' }}>Thuế</p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div><label className="text-[10px] block mb-1" style={{ color: '#64748B' }}>Thuế NK %</label><input type="number" className={inputCls} style={inputStyle} value={form.importTaxRate ?? ''} onChange={e => set('importTaxRate', Number(e.target.value))} /></div>
                 <div><label className="text-[10px] block mb-1" style={{ color: '#64748B' }}>Tiền NK</label><input type="number" className={inputCls} style={inputStyle} value={form.importTaxAmount ?? ''} onChange={e => set('importTaxAmount', Number(e.target.value))} /></div>
                 <div><label className="text-[10px] block mb-1" style={{ color: '#64748B' }}>TTĐB %</label><input type="number" className={inputCls} style={inputStyle} value={form.sctRate ?? ''} onChange={e => set('sctRate', Number(e.target.value))} /></div>
@@ -322,7 +322,7 @@ function CustomsSection({ customs, shipmentId, onRefresh }: {
             </div>
             <div><label className="text-[10px] block mb-1" style={{ color: '#64748B' }}>Tổng thuế</label><input type="number" className={inputCls} style={inputStyle} value={form.totalTax ?? ''} onChange={e => set('totalTax', Number(e.target.value))} /></div>
             <p className="text-[10px] uppercase tracking-wide font-bold pt-1" style={{ color: '#B45309' }}>Giám Định</p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div><label className="text-[10px] block mb-1" style={{ color: '#64748B' }}>Đơn vị</label><select className={inputCls} style={inputStyle} value={form.inspectionBody ?? ''} onChange={e => set('inspectionBody', e.target.value)}>
                     <option value="">Chưa chọn</option><option value="VNATEST">VNATEST</option><option value="Quatest 3">Quatest 3</option><option value="Vinacontrol">Vinacontrol</option><option value="SGS">SGS</option>
                 </select></div>
@@ -401,7 +401,7 @@ function InsuranceSection({ insurance, shipmentId, onRefresh }: {
     return (
         <div className="space-y-3">
             <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#1D4ED8' }}>── Nhập Bảo Hiểm</p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div><label className="text-[10px] block mb-1" style={{ color: '#64748B' }}>Số HĐ</label><input className={inputCls} style={inputStyle} value={form.policyNo ?? ''} onChange={e => set('policyNo', e.target.value)} /></div>
                 <div><label className="text-[10px] block mb-1" style={{ color: '#64748B' }}>Công ty BH</label><select className={inputCls} style={inputStyle} value={form.insurer ?? ''} onChange={e => set('insurer', e.target.value)}>
                     <option value="">Chọn...</option><option value="Bảo Việt">Bảo Việt</option><option value="PVI">PVI</option><option value="Bảo Minh">Bảo Minh</option><option value="Liberty">Liberty</option><option value="Khác">Khác</option>
@@ -524,7 +524,7 @@ function DocChecklistSection({ shipmentId }: { shipmentId: string }) {
                             {/* Inline edit form when DRAFT */}
                             {isEditing && (
                                 <div className="px-3 pb-3 space-y-2" style={{ borderTop: '1px solid #E2E8F0' }}>
-                                    <div className="grid grid-cols-2 gap-2 pt-2">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
                                         <div>
                                             <label className="text-[10px] block mb-1" style={{ color: '#64748B' }}>Tên giấy tờ *</label>
                                             <input className="w-full px-2 py-1.5 rounded text-xs outline-none" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
@@ -654,7 +654,7 @@ export function ShipmentDetailDrawer({ open, shipmentId, onClose }: {
                         {tab === 'overview' && (
                             <>
                                 {/* Shipment info cards */}
-                                <div className="grid grid-cols-3 gap-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                     {[
                                         { icon: Ship, label: 'Tàu', value: data.vesselName ?? '—' },
                                         { icon: Package, label: 'Container', value: data.containerNo ? `${data.containerNo} (${data.containerType ?? ''})` : '—' },
@@ -667,7 +667,7 @@ export function ShipmentDetailDrawer({ open, shipmentId, onClose }: {
                                         </div>
                                     ))}
                                 </div>
-                                <div className="grid grid-cols-4 gap-2">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                     {[
                                         { label: 'Cảng xuất', value: data.portOfLoading ?? '—' },
                                         { label: 'Cảng đến', value: data.portOfDischarge ?? '—' },
@@ -680,7 +680,7 @@ export function ShipmentDetailDrawer({ open, shipmentId, onClose }: {
                                         </div>
                                     ))}
                                 </div>
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div className="p-3 rounded-lg" style={{ background: '#FFFFFF' }}>
                                         <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Giá trị CIF</p>
                                         <p className="text-lg font-bold" style={{ color: '#0F172A' }}>{data.cifCurrency} {fmtNum(data.cifAmount)}</p>

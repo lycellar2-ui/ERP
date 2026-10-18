@@ -86,7 +86,7 @@ export function TastingEventsPanel() {
                         <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#0891B2' }}>Tạo Sự Kiện Mới</p>
                         <button onClick={() => setShowCreate(false)} className="p-1" style={{ color: '#64748B' }}><X size={14} /></button>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <input className={inputCls} style={inputStyle} placeholder="Tên sự kiện"
                             value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
                         <input type="date" className={inputCls} style={inputStyle}
@@ -138,7 +138,7 @@ export function TastingEventsPanel() {
                                 {ev.description && (
                                     <p className="text-xs mb-3" style={{ color: '#64748B' }}>{ev.description}</p>
                                 )}
-                                <div className="grid grid-cols-4 gap-2">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                     {[
                                         { label: 'Max', value: ev.maxGuests, color: '#1D4ED8' },
                                         { label: 'RSVP', value: ev.rsvpCount, color: '#0891B2' },

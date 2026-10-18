@@ -1160,7 +1160,7 @@ export function CreatePaymentRequestDrawer({
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block font-medium text-slate-700 mb-1">Mã NCC (Để trống sẽ tự sinh)</label>
                                     <input
@@ -1189,7 +1189,7 @@ export function CreatePaymentRequestDrawer({
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block font-medium text-slate-700 mb-1">Mã số thuế (MST)</label>
                                     <input

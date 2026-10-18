@@ -404,11 +404,11 @@ export function WeeklyVisitPlannerPanel() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-12 gap-5">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
                 {/* Lộ trình đi thăm */}
-                <div className="col-span-12 lg:col-span-8 space-y-4">
-                    <div className="p-5 rounded-lg space-y-4" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <div className="flex items-center justify-between">
+                <div className="lg:col-span-8 space-y-4">
+                    <div className="p-4 sm:p-5 rounded-lg space-y-4" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
                             <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#0891B2' }}>
                                 Lộ trình đi thăm dự kiến ({visits.length})
                             </span>

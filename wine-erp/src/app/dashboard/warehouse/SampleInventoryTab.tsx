@@ -474,7 +474,7 @@ export function SampleInventoryTab() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="text-xs font-bold block mb-1 text-slate-700">Mã SKU (Nếu có)</label>
                                     <input
@@ -493,7 +493,7 @@ export function SampleInventoryTab() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="text-xs font-bold block mb-1 text-slate-700">Số Lượng Ban Đầu *</label>
                                     <input
@@ -585,7 +585,7 @@ export function SampleInventoryTab() {
                                 )}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="text-xs font-bold block mb-1 text-slate-700">Lý Do Xuất *</label>
                                     <select value={outboundReason} onChange={e => setOutboundReason(e.target.value)} className={inputCls}>

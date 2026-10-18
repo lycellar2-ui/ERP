@@ -87,9 +87,9 @@ export function CostingClient({ products }: Props) {
                         <StatCard label="SKU Bán Dưới Giá Vốn" value={lossCount} icon={AlertCircle} />
                     </StatGrid>
 
-                    <div className="grid grid-cols-12 gap-5">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
                         {/* Left — SKU list */}
-                        <div className="col-span-12 lg:col-span-7 space-y-3">
+                        <div className="lg:col-span-7 space-y-3">
                             <input type="text" placeholder="Tìm SKU hoặc tên sản phẩm..."
                                 value={search} onChange={e => setSearch(e.target.value)}
                                 className="w-full px-3 py-2 text-sm outline-none"
@@ -171,7 +171,7 @@ export function CostingClient({ products }: Props) {
                         </div>
 
                         {/* Right — Price suggestion panel */}
-                        <div className="col-span-12 lg:col-span-5">
+                        <div className="lg:col-span-5">
                             {selected ? (
                                 <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                     <div className="flex items-center gap-2 mb-4">

@@ -480,7 +480,7 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                             </Select>
                         )}
                     </Field>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <Field label="Ngày Hiệu Lực">
                             {id => <Input id={id} type="date" value={formEffective} onChange={e => setFormEffective(e.target.value)} />}
                         </Field>

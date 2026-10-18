@@ -554,7 +554,7 @@ export function ProcurementCashFlowModal({
                     
                     {/* VIEW 1: MA TRẬN ĐƠN HÀNG VÀ BẬT/TẮT PO ─────────────── */}
                     {viewMode === 'MATRIX' && (
-                        <div className="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden">
+                        <div className="bg-white border border-slate-200 rounded-lg shadow-xs overflow-x-auto">
                             <table className="w-full text-left text-xs border-collapse">
                                 <thead>
                                     <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
@@ -762,7 +762,7 @@ export function ProcurementCashFlowModal({
                                 </h4>
                                 <div className="divide-y divide-slate-100">
                                     {calculatedItems.filter(i => i.isSelected).map(item => (
-                                        <div key={item.po.id} className="py-2.5 flex items-center justify-between text-xs">
+                                        <div key={item.po.id} className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                                             <div className="flex items-center gap-3">
                                                 <span className="font-mono font-bold text-teal-800 w-24">
                                                     {item.po.poNo}
@@ -772,7 +772,7 @@ export function ProcurementCashFlowModal({
                                                 </span>
                                             </div>
 
-                                            <div className="grid grid-cols-4 gap-4 text-right font-mono text-[11px]">
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-right font-mono text-[11px]">
                                                 <div>
                                                     <span className="text-[10px] text-slate-400 block font-sans">1. Cọc (30%)</span>
                                                     <span className="text-blue-800 font-semibold">{formatVND(item.milestones.depositVND)}</span>
@@ -812,137 +812,139 @@ export function ProcurementCashFlowModal({
                                 </p>
                             </div>
 
-                            <table className="w-full text-left text-xs border-collapse font-mono">
-                                <thead>
-                                    <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
-                                        <th className="p-2.5 font-sans">Mã PO</th>
-                                        <th className="p-2.5 font-sans">Giá Tính Thuế (CIF)</th>
-                                        <th className="p-2.5 text-center font-sans">Thuế NK (%)</th>
-                                        <th className="p-2.5 text-center font-sans">Thuế TTĐB (%)</th>
-                                        <th className="p-2.5 text-center font-sans">Thuế VAT (%)</th>
-                                        <th className="p-2.5 text-right font-bold text-amber-900 font-sans">Tổng Thuế Phải Nộp</th>
-                                        <th className="p-2.5 text-right font-sans">Tỷ Trọng / CIF</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {calculatedItems.filter(i => i.isSelected).map(item => {
-                                        const taxRatio = item.cifVND > 0 ? Math.round((item.totalTaxVND / item.cifVND) * 100) : 0
-                                        const hasCustomTax = !!poTaxOverrides[item.po.id]
-                                        return (
-                                            <tr key={item.po.id} className="hover:bg-slate-50 transition-colors">
-                                                <td className="p-2.5 font-bold text-slate-800">
-                                                    <div>{item.po.poNo}</div>
-                                                    {hasCustomTax && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setPoTaxOverrides(prev => {
-                                                                    const next = { ...prev }
-                                                                    delete next[item.po.id]
-                                                                    return next
-                                                                })
-                                                            }}
-                                                            className="text-[10px] font-normal text-teal-700 hover:underline"
-                                                            title="Xoá thuế riêng, quay lại dùng % thuế chung"
-                                                        >
-                                                            ↩ Dùng % chung
-                                                        </button>
-                                                    )}
-                                                </td>
-                                                <td className="p-2.5 text-slate-700">
-                                                    {formatVND(item.cifVND)}
-                                                </td>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-xs border-collapse font-mono">
+                                    <thead>
+                                        <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                                            <th className="p-2.5 font-sans">Mã PO</th>
+                                            <th className="p-2.5 font-sans">Giá Tính Thuế (CIF)</th>
+                                            <th className="p-2.5 text-center font-sans">Thuế NK (%)</th>
+                                            <th className="p-2.5 text-center font-sans">Thuế TTĐB (%)</th>
+                                            <th className="p-2.5 text-center font-sans">Thuế VAT (%)</th>
+                                            <th className="p-2.5 text-right font-bold text-amber-900 font-sans">Tổng Thuế Phải Nộp</th>
+                                            <th className="p-2.5 text-right font-sans">Tỷ Trọng / CIF</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {calculatedItems.filter(i => i.isSelected).map(item => {
+                                            const taxRatio = item.cifVND > 0 ? Math.round((item.totalTaxVND / item.cifVND) * 100) : 0
+                                            const hasCustomTax = !!poTaxOverrides[item.po.id]
+                                            return (
+                                                <tr key={item.po.id} className="hover:bg-slate-50 transition-colors">
+                                                    <td className="p-2.5 font-bold text-slate-800">
+                                                        <div>{item.po.poNo}</div>
+                                                        {hasCustomTax && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setPoTaxOverrides(prev => {
+                                                                        const next = { ...prev }
+                                                                        delete next[item.po.id]
+                                                                        return next
+                                                                    })
+                                                                }}
+                                                                className="text-[10px] font-normal text-teal-700 hover:underline"
+                                                                title="Xoá thuế riêng, quay lại dùng % thuế chung"
+                                                            >
+                                                                ↩ Dùng % chung
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                    <td className="p-2.5 text-slate-700">
+                                                        {formatVND(item.cifVND)}
+                                                    </td>
 
-                                                {/* Thuế NK có thể tự do chỉnh % */}
-                                                <td className="p-2.5 text-center">
-                                                    <div className="inline-flex items-center bg-white border border-slate-300 rounded px-1.5 py-0.5 shadow-xs">
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            max="100"
-                                                            step="any"
-                                                            value={item.importTaxPct}
-                                                            onChange={e => {
-                                                                const val = e.target.value === '' ? 0 : Number(e.target.value)
-                                                                updatePoTax(item.po.id, 'importTax', isNaN(val) ? 0 : val)
-                                                            }}
-                                                            className="w-11 text-right font-bold font-mono text-slate-800 text-xs focus:outline-none"
-                                                        />
-                                                        <span className="text-[10px] text-slate-400 ml-0.5">%</span>
-                                                    </div>
-                                                    <div className="text-[10px] text-slate-500 mt-0.5">
-                                                        {formatVND(item.importTaxVND)}
-                                                    </div>
-                                                </td>
+                                                    {/* Thuế NK có thể tự do chỉnh % */}
+                                                    <td className="p-2.5 text-center">
+                                                        <div className="inline-flex items-center bg-white border border-slate-300 rounded px-1.5 py-0.5 shadow-xs">
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                max="100"
+                                                                step="any"
+                                                                value={item.importTaxPct}
+                                                                onChange={e => {
+                                                                    const val = e.target.value === '' ? 0 : Number(e.target.value)
+                                                                    updatePoTax(item.po.id, 'importTax', isNaN(val) ? 0 : val)
+                                                                }}
+                                                                className="w-11 text-right font-bold font-mono text-slate-800 text-xs focus:outline-none"
+                                                            />
+                                                            <span className="text-[10px] text-slate-400 ml-0.5">%</span>
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-500 mt-0.5">
+                                                            {formatVND(item.importTaxVND)}
+                                                        </div>
+                                                    </td>
 
-                                                {/* Thuế TTĐB có thể tự do chỉnh % */}
-                                                <td className="p-2.5 text-center">
-                                                    <div className="inline-flex items-center bg-amber-50 border border-amber-300 rounded px-1.5 py-0.5 shadow-xs">
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            max="100"
-                                                            step="any"
-                                                            value={item.sctPct}
-                                                            onChange={e => {
-                                                                const val = e.target.value === '' ? 0 : Number(e.target.value)
-                                                                updatePoTax(item.po.id, 'sct', isNaN(val) ? 0 : val)
-                                                            }}
-                                                            className="w-11 text-right font-bold font-mono text-amber-950 text-xs focus:outline-none"
-                                                        />
-                                                        <span className="text-[10px] text-amber-700 ml-0.5">%</span>
-                                                    </div>
-                                                    <div className="text-[10px] text-amber-800 mt-0.5 font-semibold">
-                                                        {formatVND(item.sctVND)}
-                                                    </div>
-                                                </td>
+                                                    {/* Thuế TTĐB có thể tự do chỉnh % */}
+                                                    <td className="p-2.5 text-center">
+                                                        <div className="inline-flex items-center bg-amber-50 border border-amber-300 rounded px-1.5 py-0.5 shadow-xs">
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                max="100"
+                                                                step="any"
+                                                                value={item.sctPct}
+                                                                onChange={e => {
+                                                                    const val = e.target.value === '' ? 0 : Number(e.target.value)
+                                                                    updatePoTax(item.po.id, 'sct', isNaN(val) ? 0 : val)
+                                                                }}
+                                                                className="w-11 text-right font-bold font-mono text-amber-950 text-xs focus:outline-none"
+                                                            />
+                                                            <span className="text-[10px] text-amber-700 ml-0.5">%</span>
+                                                        </div>
+                                                        <div className="text-[10px] text-amber-800 mt-0.5 font-semibold">
+                                                            {formatVND(item.sctVND)}
+                                                        </div>
+                                                    </td>
 
-                                                {/* Thuế VAT có thể tự do chỉnh % */}
-                                                <td className="p-2.5 text-center">
-                                                    <div className="inline-flex items-center bg-white border border-slate-300 rounded px-1.5 py-0.5 shadow-xs">
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            max="100"
-                                                            step="any"
-                                                            value={item.vatPct}
-                                                            onChange={e => {
-                                                                const val = e.target.value === '' ? 0 : Number(e.target.value)
-                                                                updatePoTax(item.po.id, 'vat', isNaN(val) ? 0 : val)
-                                                            }}
-                                                            className="w-11 text-right font-bold font-mono text-slate-800 text-xs focus:outline-none"
-                                                        />
-                                                        <span className="text-[10px] text-slate-400 ml-0.5">%</span>
-                                                    </div>
-                                                    <div className="text-[10px] text-slate-500 mt-0.5">
-                                                        {formatVND(item.vatVND)}
-                                                    </div>
-                                                </td>
+                                                    {/* Thuế VAT có thể tự do chỉnh % */}
+                                                    <td className="p-2.5 text-center">
+                                                        <div className="inline-flex items-center bg-white border border-slate-300 rounded px-1.5 py-0.5 shadow-xs">
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                max="100"
+                                                                step="any"
+                                                                value={item.vatPct}
+                                                                onChange={e => {
+                                                                    const val = e.target.value === '' ? 0 : Number(e.target.value)
+                                                                    updatePoTax(item.po.id, 'vat', isNaN(val) ? 0 : val)
+                                                                }}
+                                                                className="w-11 text-right font-bold font-mono text-slate-800 text-xs focus:outline-none"
+                                                            />
+                                                            <span className="text-[10px] text-slate-400 ml-0.5">%</span>
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-500 mt-0.5">
+                                                            {formatVND(item.vatVND)}
+                                                        </div>
+                                                    </td>
 
-                                                <td className="p-2.5 text-right font-bold text-amber-950 text-sm">
-                                                    {formatVND(item.totalTaxVND)}
-                                                </td>
-                                                <td className="p-2.5 text-right font-bold text-slate-600">
-                                                    +{taxRatio}%
-                                                </td>
-                                            </tr>
-                                        )
-                                    })}
-                                </tbody>
-                                <tfoot>
-                                    <tr className="bg-slate-100 font-bold border-t-2 border-slate-300">
-                                        <td className="p-2.5 font-sans uppercase">Tổng Cộng:</td>
-                                        <td className="p-2.5 text-slate-900">{formatVND(totals.totalGoodsVND + totals.totalFreightVND)}</td>
-                                        <td className="p-2.5 text-right text-slate-900">{formatVND(totals.totalImportTaxVND)}</td>
-                                        <td className="p-2.5 text-right text-amber-900">{formatVND(totals.totalSctVND)}</td>
-                                        <td className="p-2.5 text-right text-slate-900">{formatVND(totals.totalVatVND)}</td>
-                                        <td className="p-2.5 text-right text-amber-950 text-sm">{formatVND(totals.totalTaxVND)}</td>
-                                        <td className="p-2.5 text-right text-slate-700">
-                                            +{totals.totalGoodsVND + totals.totalFreightVND > 0 ? Math.round((totals.totalTaxVND / (totals.totalGoodsVND + totals.totalFreightVND)) * 100) : 0}%
-                                        </td>
-                                    </tr>
-                                </tfoot>
-                            </table>
+                                                    <td className="p-2.5 text-right font-bold text-amber-950 text-sm">
+                                                        {formatVND(item.totalTaxVND)}
+                                                    </td>
+                                                    <td className="p-2.5 text-right font-bold text-slate-600">
+                                                        +{taxRatio}%
+                                                    </td>
+                                                </tr>
+                                            )
+                                        })}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr className="bg-slate-100 font-bold border-t-2 border-slate-300">
+                                            <td className="p-2.5 font-sans uppercase">Tổng Cộng:</td>
+                                            <td className="p-2.5 text-slate-900">{formatVND(totals.totalGoodsVND + totals.totalFreightVND)}</td>
+                                            <td className="p-2.5 text-right text-slate-900">{formatVND(totals.totalImportTaxVND)}</td>
+                                            <td className="p-2.5 text-right text-amber-900">{formatVND(totals.totalSctVND)}</td>
+                                            <td className="p-2.5 text-right text-slate-900">{formatVND(totals.totalVatVND)}</td>
+                                            <td className="p-2.5 text-right text-amber-950 text-sm">{formatVND(totals.totalTaxVND)}</td>
+                                            <td className="p-2.5 text-right text-slate-700">
+                                                +{totals.totalGoodsVND + totals.totalFreightVND > 0 ? Math.round((totals.totalTaxVND / (totals.totalGoodsVND + totals.totalFreightVND)) * 100) : 0}%
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
                         </div>
                     )}
 

@@ -739,7 +739,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                 </div>
 
                                                 {/* Vintage Selector & Qty Input */}
-                                                <div className="grid grid-cols-2 gap-2.5">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                                     <div>
                                                         <label className="text-[10px] font-bold uppercase tracking-wider text-slate-600 block mb-1">
                                                             Niên Vụ (Vintage) *

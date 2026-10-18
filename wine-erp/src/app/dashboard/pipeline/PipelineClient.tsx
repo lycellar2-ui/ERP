@@ -651,7 +651,7 @@ export function PipelineClient({ initialRows, stats }: Props) {
                             )}
                         </Field>
 
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <Field label="Assigned To" required>
                                 {id => (
                                     <Select

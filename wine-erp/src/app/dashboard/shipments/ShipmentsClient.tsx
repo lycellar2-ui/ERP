@@ -101,8 +101,8 @@ function CreateShipmentDrawer({ open, onClose, onCreated }: {
 
                 <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
                     <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>── Thông Tin Cơ Bản</p>
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="col-span-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="sm:col-span-2">
                             <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Purchase Order *</label>
                             <select className={inputCls} style={inputStyle} value={form.poId} onChange={e => set('poId', e.target.value)}>
                                 <option value="">— Chọn PO —</option>
@@ -124,7 +124,7 @@ function CreateShipmentDrawer({ open, onClose, onCreated }: {
                     </div>
 
                     <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Thông Tin Vận Chuyển</p>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div><label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Tên Tàu</label>
                             <input className={inputCls} style={inputStyle} value={form.vesselName} onChange={e => set('vesselName', e.target.value)} placeholder="VD: MSC ROMA" /></div>
                         <div><label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Voyage No</label>
@@ -148,7 +148,7 @@ function CreateShipmentDrawer({ open, onClose, onCreated }: {
                     </div>
 
                     <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Giá Trị & Đối Tác</p>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div><label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Giá trị CIF *</label>
                             <input type="number" className={inputCls} style={inputStyle} value={form.cifAmount || ''} onChange={e => set('cifAmount', Number(e.target.value))} /></div>
                         <div><label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Tiền tệ</label>
@@ -159,13 +159,13 @@ function CreateShipmentDrawer({ open, onClose, onCreated }: {
                                 <option value="NZD">NZD</option>
                                 <option value="AUD">AUD</option>
                             </select></div>
-                        <div />
+                        <div className="hidden sm:block" />
                         <div><label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Forwarder</label>
                             <select className={inputCls} style={inputStyle} value={form.forwarderId} onChange={e => set('forwarderId', e.target.value)}>
                                 <option value="">— Chọn —</option>
                                 {fwBk.forwarders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                             </select></div>
-                        <div className="col-span-2"><label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Customs Broker</label>
+                        <div className="sm:col-span-2"><label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Customs Broker</label>
                             <select className={inputCls} style={inputStyle} value={form.customsBrokerId} onChange={e => set('customsBrokerId', e.target.value)}>
                                 <option value="">— Chọn —</option>
                                 {fwBk.brokers.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -215,7 +215,7 @@ function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose:
                 ) : (
                     <div className="space-y-5">
                         {/* Summary bar */}
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             {[
                                 { label: 'Giá trị CIF (VND)', value: fmtNum(data.cifVND), color: '#0891B2' },
                                 { label: 'Tổng Chi Phí', value: fmtNum(data.totalCosts), color: '#B45309' },
@@ -244,7 +244,7 @@ function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose:
                         {/* Tax breakdown */}
                         <div>
                             <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: '#B45309' }}>Thuế</p>
-                            <div className="grid grid-cols-4 gap-2 text-center">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
                                 {[
                                     { label: 'Thuế NK', value: data.taxBreakdown.importTax },
                                     { label: 'TTĐB', value: data.taxBreakdown.sct },
@@ -495,7 +495,7 @@ export function ShipmentsClient({ initialRows, initialTotal, stats }: Props) {
             </div>
 
             {/* Table - Desktop */}
-            <div className="hidden md:block rounded-lg overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+            <div className="hidden md:block rounded-lg overflow-x-auto" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>

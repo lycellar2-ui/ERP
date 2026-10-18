@@ -459,7 +459,9 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                     fetchData()
                     loadCycleProgress()
                 }}
-                onRefreshed={() => {
+                onRefreshed={async () => {
+                    const updated = await getStockCountDetail(mobileViewDetail.id)
+                    if (updated) setMobileViewDetail(updated)
                     fetchData()
                     loadCycleProgress()
                 }}
@@ -1056,7 +1058,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
             {/* Sessions Table — Matched with Sales Order Table UI */}
             <div className="hidden md:block bg-white border border-slate-200 rounded-lg overflow-hidden shadow-2xs">
-                <div className="w-full">
+                <div className="w-full overflow-x-auto">
                     <table className="w-full text-left border-collapse text-xs">
                         <thead>
                             <tr className="bg-slate-50 text-slate-500 font-extrabold uppercase text-[10px] tracking-wider border-b border-slate-200">

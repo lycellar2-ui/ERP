@@ -4157,3 +4157,42 @@ Qua đợt kiểm tra chuyên sâu toàn bộ 38 routes và tất cả component
 
 ### Bài học
 > ⚠️ **RULE 141: (1) Trong các form Drawer trên thiết bị di động, TUYỆT ĐỐI KHÔNG dùng `grid-cols-2` cố định dưới breakpoint `sm:` cho các ô `<input type="date">` hoặc các cặp trường có nhãn tiếng Việt dài ngắn khác nhau — phải dùng `grid-cols-1 sm:grid-cols-2` kết hợp `flex flex-col justify-end` trên mỗi cột để các ô input luôn thẳng hàng ngang; (2) Với các thẻ dòng sản phẩm (line-item cards) có nhiều ô nhập phụ (`Số lượng`, `Đơn giá`, `Giá gốc`, nút `Xóa`), trên mobile phải dùng CSS Grid tỷ lệ (`grid-cols-[72px_1fr_auto_auto] items-end`) thay vì cộng dồn các `w-20` + `w-28` cố định gây tràn viền; (3) Không đặt `minWidth` cứng bằng pixel trên dropdown combobox con hoặc `fontSize: '14px'` cứng trong inline style làm vô hiệu hóa `text-base sm:text-sm` chống auto-zoom trên iOS.**
+
+---
+
+## BUG-142: Tổng Rà Soát & Khắc Phục Toàn Hệ Thống Lỗi Giao Diện Điện Thoại (< 640px) Trên 65+ Component Toàn ERP
+
+**Ngày:** 2026-10-18
+**Severity:** 🔴 High — Trải nghiệm hiển thị và thao tác trên điện thoại thông minh (`360px–430px`) trên toàn bộ 38 phân hệ Dashboard & Public Views
+
+### Triệu chứng
+1. **Shared UI (`Modal.tsx`, `Drawer.tsx`, `ExcelImportDialog.tsx`, Loading Skeletons):**
+   - `Modal.tsx` không giới hạn chiều cao `max-h-[90vh]` và thiếu `overflow-y-auto` ở phần thân (`body`), khiến các modal dài (như Chi tiết đề nghị thanh toán, Dòng tiền mua hàng, Kiểm kê...) bị tràn khỏi màn hình điện thoại và mất nút bấm ở đáy.
+   - `Drawer.tsx` dùng `px-5` cố định và thiếu `overflow-x-hidden` ở vùng cuộn nội dung.
+   - Các trang skeleton (`loading.tsx`, `(subpage-loading).tsx`, `sop/loading.tsx`, `DashboardShell.tsx`) dùng `grid-cols-3` / `grid-cols-4` cố định gây tràn ngang khi đang tải trang trên điện thoại.
+2. **Bố cục `grid-cols-12` cố định không xuống dòng trên điện thoại:**
+   - Các màn hình phân tích 2 cột lớn như `AllocationClient.tsx`, `CostingClient.tsx`, `StockMovementTab.tsx`, `PipelineClient.tsx`, `ReportsClient.tsx`, `VaultUI.tsx` đặt cứng `grid-cols-12` với `col-span-4` / `col-span-8` mà thiếu prefix `lg:`, khiến giao diện trên màn hình 375px bị ép thành 2 cột siêu hẹp (~100px và ~220px), không thể đọc hoặc thao tác.
+3. **Form nhập liệu `grid-cols-2` / `grid-cols-3` / `grid-cols-4` không thu gọn trên màn hình hẹp:**
+   - Hàng loạt Drawer và Modal nhập liệu (`ProductDrawer`, `SupplierDetailDrawer`, `RegDocsTab`, `AgencyClient`, `SalesVisitsClient`, `QuotationClient`, `PriceListClient`, `ConsignmentClient`, `ShipmentDetailDrawer`, `ProcurementClient`, `ShipmentsClient`, `InspectionTab`, `DeliveryOrderTab`, `GoodsReceiptTab`, `PosmInventoryTab`, `SampleInventoryTab`, `CreateTransferDrawer`, `AddUnlistedModal`, `FinanceTabs`, `CreatePaymentRequestDrawer`, `CRMClient`, `EmployeeDetailDrawer`, `AuditLogClient`...) đặt `grid-cols-2` hoặc `grid-cols-3` cứng cho các ô `<input>`, `<select>`, `<input type="date">`, làm chữ và giá trị ngày tháng bị cắt cụt trên điện thoại.
+4. **Dropdown Autocomplete cố định chiều rộng `w-[520px]` và bảng dữ liệu thiếu `overflow-x-auto`:**
+   - Dropdown tìm kiếm sản phẩm trong `CreateSODrawer.tsx` và `EditSODrawer.tsx` đặt cứng `w-[520px]`, tràn hoàn toàn khỏi cạnh phải màn hình 375px.
+   - Nhiều bảng `<table>` chi tiết trong Drawer/Modal (`ProductDetailDrawer`, `CustomerRulesTab`, `ConsignmentClient`, `ProcurementCashFlowModal`, `LandedCostTab`, `DeliveryOrderTab`, `GoodsReceiptTab`, `TransferDetailDrawer`, `StockCountClient`, `StockCountTableModal`, `FinanceClient`, `BankReconciliationTab`, `InvoiceReconciliationTab`, `StockVelocityReport`, `MediaClient`, `partner-login`) thiếu wrapper `<div className="overflow-x-auto">`.
+   - Trang xem báo giá & xác thực công khai (`QuotationPublicView.tsx`, `verify/[code]/page.tsx`) dùng inline style `gridTemplateColumns: 'repeat(4, 1fr)'` / `'1fr 1fr'` cứng làm vỡ khung trên trình duyệt điện thoại của khách hàng.
+
+### Nguyên nhân gốc rễ
+- Thiết kế nhiều phân hệ ban đầu ưu tiên màn hình Desktop (`>= 1024px`) mà thiếu breakpoint `grid-cols-1 sm:grid-cols-*` hoặc `grid-cols-1 lg:grid-cols-12` cho viewport `< 640px`.
+- Các container bảng dữ liệu phát sinh trong Modal/Drawer chưa được bọc đồng bộ bằng `overflow-x-auto`.
+
+### Cách khắc phục
+1. **Chuẩn hóa Shared UI Primitives (`Modal.tsx`, `Drawer.tsx`, `ExcelImportDialog.tsx`, Loading Skeletons):**
+   - Bổ sung `max-h-[90vh] flex flex-col overflow-hidden` cho khung `Modal` và `flex-1 overflow-y-auto px-4 sm:px-5` cho phần thân, đảm bảo mọi Modal trên toàn hệ thống tự động cuộn mượt trong phạm vi màn hình điện thoại.
+   - Thêm `overflow-x-hidden px-4 sm:px-5` cho thân `Drawer` và `flex-wrap` cho header/footer.
+2. **Chuyển đổi toàn bộ bố cục `grid-cols-12` sang `grid-cols-1 lg:grid-cols-12`:**
+   - Cập nhật tại `AllocationClient.tsx`, `CostingClient.tsx`, `StockMovementTab.tsx`, `PipelineClient.tsx`, `ReportsClient.tsx`, `VaultUI.tsx` để cột danh sách và cột chi tiết tự động xếp chồng dọc trên mobile.
+3. **Chuẩn hóa Responsive Grid (`grid-cols-1 sm:grid-cols-2/3`, `grid-cols-2 sm:grid-cols-4/5`) và bọc `overflow-x-auto` cho toàn bộ bảng trên 65+ files:**
+   - Sửa toàn bộ form input/select/date grids, thanh tìm kiếm cố định (`w-64`/`w-72` -> `w-full sm:w-64`/`sm:w-72`), dropdown sản phẩm (`w-[calc(100vw-2.5rem)] sm:w-[520px]`), và inline grid trên trang Public (`repeat(auto-fit, minmax(..., 1fr))`).
+   - Kiểm chứng toàn bộ dự án bằng `npx tsc --noEmit` đạt **0 lỗi TypeScript**.
+
+### Bài học
+> ⚠️ **RULE 142: (1) Mọi bố cục chia cột 12 phần (`grid-cols-12`) BẮT BUỘC phải khai báo `grid-cols-1 lg:grid-cols-12` và dùng prefix `lg:col-span-*` cho các cột con để tự động xếp chồng trên điện thoại; (2) Mọi bảng `<table>` trong Page, Tab, Drawer hoặc Modal (trừ mẫu in ẩn `hidden print:block`) BẮT BUỘC phải đặt trong `<div className="overflow-x-auto">`; (3) Mọi popup/dropdown có chiều rộng lớn (`w-[520px]`, `w-80`, `w-72`) BẮT BUỘC phải giới hạn `w-[calc(100vw-2.5rem)]` hoặc `max-w-[calc(100vw-2rem)]` trên màn hình `< 640px`.**
+

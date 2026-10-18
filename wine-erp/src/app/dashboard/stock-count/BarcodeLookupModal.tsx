@@ -228,7 +228,7 @@ export function BarcodeLookupModal({ isOpen, onClose }: BarcodeLookupModalProps)
                                                 Hiện chưa có lô hàng tồn khả dụng cho niên vụ/mặt hàng này.
                                             </div>
                                         ) : (
-                                            <div className="border border-slate-200 rounded-lg overflow-hidden bg-white">
+                                            <div className="border border-slate-200 rounded-lg overflow-x-auto overflow-hidden bg-white">
                                                 <table className="w-full text-xs text-left">
                                                     <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-bold uppercase tracking-wider">
                                                         <tr>

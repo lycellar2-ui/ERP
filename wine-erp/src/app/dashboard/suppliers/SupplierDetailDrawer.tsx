@@ -644,7 +644,7 @@ export function SupplierDetailDrawer({ open, supplierId, onClose }: {
                             {/* ── FINANCE ── */}
                             {tab === 'finance' && (
                                 <div className="space-y-4">
-                                    <div className="grid grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         <MiniCard label="Tổng hoá đơn" value={detail.apSummary.totalInvoices} accent="#1D4ED8" />
                                         <MiniCard label="Tổng giá trị" value={fmtCurrency(detail.apSummary.totalAmount, detail.supplier.defaultCurrency)} accent="#0E7490" />
                                         <MiniCard label="Chưa thanh toán" value={fmtCurrency(detail.apSummary.unpaidAmount, detail.supplier.defaultCurrency)} accent={detail.apSummary.unpaidAmount > 0 ? '#B45309' : '#15803D'} />

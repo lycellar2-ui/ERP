@@ -171,7 +171,7 @@ export function MarketPriceClient({ initialRows, stats }: {
                                     {products.map(p => <option key={p.id} value={p.id}>{p.skuCode} — {p.productName}</option>)}
                                 </select>
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-semibold mb-1 text-slate-700">Giá *</label>
                                     <input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
@@ -188,7 +188,7 @@ export function MarketPriceClient({ initialRows, stats }: {
                                     </select>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-semibold mb-1 text-slate-700">Nguồn</label>
                                     <select value={form.source} onChange={e => setForm(f => ({ ...f, source: e.target.value }))}

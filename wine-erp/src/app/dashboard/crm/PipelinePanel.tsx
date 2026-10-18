@@ -590,7 +590,7 @@ export function PipelinePanel() {
                                 <option value="">Chọn khách hàng...</option>
                                 {customers.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </select>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <select value={formAssignee} onChange={e => setFormAssignee(e.target.value)}
                                     className="px-3 py-2 text-sm outline-none" style={inputStyle}>
                                     <option value="">Assigned To...</option>

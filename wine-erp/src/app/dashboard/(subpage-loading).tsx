@@ -2,10 +2,10 @@ export default function SubPageLoading() {
     return (
         <div className="space-y-6 max-w-screen-2xl animate-pulse">
             {/* Title skeleton */}
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                    <div className="h-7 w-56 rounded bg-slate-200/80" />
-                    <div className="h-4 w-80 rounded mt-2 bg-slate-200/60" />
+                    <div className="h-7 w-48 sm:w-56 rounded bg-slate-200/80" />
+                    <div className="h-4 w-56 sm:w-80 rounded mt-2 bg-slate-200/60" />
                 </div>
                 <div className="h-9 w-32 rounded-md bg-slate-200/80" />
             </div>

@@ -94,9 +94,9 @@ export function AllocationClient({ initialCampaigns, stats }: {
             </StatGrid>
 
             {/* Main layout */}
-            <div className="grid grid-cols-12 gap-5">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
                 {/* Left: Campaign list */}
-                <div className="col-span-12 lg:col-span-5 space-y-2">
+                <div className="lg:col-span-5 space-y-2">
                     <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#64748B' }}>Campaigns</p>
                     <div className="space-y-2 max-h-[500px] overflow-y-auto">
                         {campaigns.length === 0 ? (
@@ -139,7 +139,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
                 </div>
 
                 {/* Right: Quota matrix */}
-                <div className="col-span-12 lg:col-span-7 space-y-4">
+                <div className="lg:col-span-7 space-y-4">
                     {!selected ? (
                         <div className="flex flex-col items-center justify-center py-20 rounded-md" style={{ border: '1px dashed #E2E8F0' }}>
                             <Target size={36} style={{ color: '#E2E8F0' }} />

@@ -479,7 +479,7 @@ export function ContractsClient({ initialRows, initialTotal: _initialTotal, stat
             <Toolbar
                 left={
                     <div className="flex items-center gap-2 flex-wrap">
-                        <div className="relative w-64">
+                        <div className="relative w-full sm:w-64">
                             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-lys-muted" />
                             <input
                                 type="text"

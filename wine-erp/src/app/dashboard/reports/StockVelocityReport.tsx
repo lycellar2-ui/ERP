@@ -257,9 +257,9 @@ export function StockVelocityReport({ isEn = false, initialData }: Props) {
             {/* 1. EXCEL TOOLBAR / RIBBON */}
             <div className="flex flex-wrap items-center justify-between gap-2.5 p-2.5 rounded-lg border border-slate-300 bg-[#F1F5F9] shadow-xs">
                 {/* Left controls */}
-                <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[320px]">
+                <div className="flex flex-wrap items-center gap-2 flex-1 w-full sm:w-auto">
                     {/* Search */}
-                    <div className="relative min-w-[200px] max-w-[260px]">
+                    <div className="relative w-full sm:w-auto sm:min-w-[200px] sm:max-w-[260px]">
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                         <input
                             type="text"

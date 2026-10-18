@@ -494,7 +494,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
             </div>
 
             {/* Table (Desktop View) */}
-            <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
+            <div className="hidden md:block rounded-md overflow-hidden overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
@@ -689,7 +689,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                             <p className="text-center py-8" style={{ color: '#64748B' }}>Không tìm thấy</p>
                         ) : (
                             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-                                <div className="grid grid-cols-3 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     {[
                                         { label: 'Tổng Tiền', value: formatVND(Number(detail.totalAmount)), color: '#0891B2' },
                                         { 
@@ -739,7 +739,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                 )}
                                 <div>
                                     <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>Sản Phẩm ({detail.lines.length} dòng)</p>
-                                    <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
+                                    <div className="rounded-md overflow-hidden overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
                                         <table className="w-full text-xs" style={{ borderCollapse: 'collapse' }}>
                                             <thead>
                                                 <tr style={{ background: '#FFFFFF' }}>
@@ -938,7 +938,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                     </div>
                                 )}
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Sales Rep</label>
                                     <select value={formData.salesRepId} onChange={e => setFormData({ ...formData, salesRepId: e.target.value })}
@@ -1040,7 +1040,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                                 {/* Numeric controls and indicators if product is selected */}
                                                 {line.productId && prod && (
                                                     <div className="space-y-2">
-                                                        <div className="grid grid-cols-4 gap-2">
+                                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                                             <div>
                                                                 <label className="text-xs uppercase tracking-wider block mb-0.5" style={{ color: '#64748B' }}>SL</label>
                                                                 <input type="number" value={line.qty} onChange={e => updateLine(i, 'qty', Number(e.target.value))} placeholder="SL"

@@ -552,7 +552,7 @@ export function GoodsReceiptTab({ warehouses }: {
                 {/* Search + Dropdowns + Date Presets Toolbar */}
                 <div className="flex flex-wrap items-center gap-2.5">
                     {/* Search Input */}
-                    <div className="relative flex-1 min-w-[220px]">
+                    <div className="relative flex-1 w-full sm:w-auto sm:min-w-[220px]">
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
                         <input
                             type="text"
@@ -659,7 +659,7 @@ export function GoodsReceiptTab({ warehouses }: {
             </div>
 
             {/* ── 4. Desktop Table View (Sales/Procurement Matching Style) ── */}
-            <div className="rounded-lg overflow-hidden hidden md:block border shadow-sm"
+            <div className="rounded-lg overflow-x-auto overflow-hidden hidden md:block border shadow-sm"
                 style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
                 <table className="w-full text-left border-collapse">
                     <thead>
@@ -1014,7 +1014,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                     <p className="text-[10px] uppercase font-bold tracking-wider mb-2.5" style={{ color: '#475569' }}>
                                         Tiến Trình Nhập Kho
                                     </p>
-                                    <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center text-xs">
                                         <div className="p-2 rounded-lg" style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)' }}>
                                             <p className="font-bold">1. Tạo GR</p>
                                             <p className="text-[10px] opacity-80">{formatDate(detailData.createdAt)}</p>

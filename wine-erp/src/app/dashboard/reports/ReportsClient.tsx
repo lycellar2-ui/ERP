@@ -250,10 +250,10 @@ export function ReportsClient({
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-12 gap-5">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
                         {/* Monthly revenue bar chart */}
                         <div
-                            className="col-span-12 lg:col-span-8 p-5 rounded-md"
+                            className="lg:col-span-8 p-4 sm:p-5 rounded-md"
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
                         >
                             <div className="flex items-center gap-2 mb-5">
@@ -262,7 +262,7 @@ export function ReportsClient({
                                     {t.analytics.monthlyRevTitle}
                                 </h3>
                             </div>
-                            <div className="flex items-end gap-3 h-48">
+                            <div className="flex items-end gap-1.5 sm:gap-3 h-48 overflow-x-auto pb-1">
                                 {monthlyRevenue.map((m) => {
                                     const pct = maxRevenue > 0 ? (m.revenue / maxRevenue) * 100 : 0
                                     const monthLabel = isEn ? m.label.replace(/^T/, 'M') : m.label
@@ -304,7 +304,7 @@ export function ReportsClient({
 
                         {/* Channel breakdown */}
                         <div
-                            className="col-span-12 lg:col-span-4 p-5 rounded-md"
+                            className="lg:col-span-4 p-4 sm:p-5 rounded-md"
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
                         >
                             <div className="flex items-center gap-2 mb-5">
@@ -353,10 +353,10 @@ export function ReportsClient({
                     </div>
 
                     {/* Top SKUs & Brand Breakdown Grid */}
-                    <div className="grid grid-cols-12 gap-5">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
                         {/* Top SKUs */}
                         <div
-                            className="col-span-12 lg:col-span-7 p-5 rounded-md"
+                            className="lg:col-span-7 p-4 sm:p-5 rounded-md"
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
                         >
                             <div className="flex items-center gap-2 mb-5">
@@ -437,7 +437,7 @@ export function ReportsClient({
 
                         {/* Brand Breakdown */}
                         <div
-                            className="col-span-12 lg:col-span-5 p-5 rounded-md"
+                            className="lg:col-span-5 p-4 sm:p-5 rounded-md"
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
                         >
                             <div className="flex items-center gap-2 mb-5">
@@ -502,10 +502,10 @@ export function ReportsClient({
                     </div>
 
                     {/* Low Stock & Sales Rep & Top Customers */}
-                    <div className="grid grid-cols-12 gap-5">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
                         {/* Top Customers */}
                         <div
-                            className="col-span-12 lg:col-span-5 p-5 rounded-md"
+                            className="lg:col-span-5 p-4 sm:p-5 rounded-md"
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
                         >
                             <div className="flex items-center gap-2 mb-5">

@@ -441,7 +441,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                             <label className="block text-[10px] font-bold text-slate-400 uppercase leading-none">Chọn mã sản phẩm</label>
                             <div className="relative group leading-none flex items-center">
                                 <HelpCircle size={13} className="text-slate-600 hover:text-[#B45309] cursor-pointer transition-colors" />
-                                <div className="absolute left-0 sm:left-auto sm:right-0 top-5 hidden group-hover:block w-72 p-3 bg-slate-50/95 border border-slate-200 rounded-lg shadow-2xl text-[10px] text-slate-700 space-y-1.5 z-50 leading-relaxed backdrop-blur-md font-normal normal-case">
+                                <div className="absolute left-0 sm:left-auto sm:right-0 top-5 hidden group-hover:block w-64 sm:w-72 max-w-[calc(100vw-2rem)] p-3 bg-slate-50/95 border border-slate-200 rounded-lg shadow-2xl text-[10px] text-slate-700 space-y-1.5 z-50 leading-relaxed backdrop-blur-md font-normal normal-case">
                                     <p className="font-bold text-[#B45309] flex items-center gap-1">
                                         <Lightbulb size={12} /> Hướng dẫn nhanh:
                                     </p>
@@ -583,7 +583,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                         {/* Inputs & Outputs Column */}
                         <div className="md:col-span-8 flex flex-col justify-between space-y-4">
                             {/* Base Reference Values */}
-                            <div className="grid grid-cols-3 gap-3 bg-white/40 p-3.5 rounded-lg border border-slate-200/30 text-center font-sans">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 bg-white/40 p-3.5 rounded-lg border border-slate-200/30 text-center font-sans">
                                 <div>
                                     <div className="text-xs uppercase font-extrabold tracking-wider text-slate-400">Cost</div>
                                     <div className="text-lg sm:text-xl font-black text-[#0891B2] mt-1">{formatNumberOnly(activeProduct.costPrice)}</div>

@@ -853,7 +853,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
 
                                 {/* Financial Summary */}
                                 <div className="flex justify-end pt-2">
-                                    <div className="w-72 space-y-1.5 text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-lys-border">
+                                    <div className="w-full sm:w-72 space-y-1.5 text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-lys-border">
                                         <div className="flex justify-between">
                                             <span>Tiền hàng trước thuế:</span>
                                             <span className="font-semibold text-slate-800">{formatVND(itemsTotal)}</span>

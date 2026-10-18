@@ -1665,7 +1665,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
                                 <label className="block font-semibold text-slate-700 mb-1">
                                     Nhiệt độ tại 3 vị trí kho (°C)
                                 </label>
-                                <div className="grid grid-cols-3 gap-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                     <div>
                                         <span className="text-[11px] text-slate-500">VT #1 (Cửa)</span>
                                         <input
@@ -1743,7 +1743,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
                                         <p className="text-[10px] text-slate-400 mt-0.5">Tự động gắn Watermark thời gian, tọa độ GPS và tên kho</p>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-3 gap-2">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                         {dailyForm.photos.map((p, idx) => (
                                             <div key={idx} className="relative rounded-lg overflow-hidden border border-slate-200 group">
                                                 <img src={p.thumbnailBase64 || p.photoBase64} alt={p.caption} className="w-full h-20 object-cover" />
@@ -1961,7 +1961,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
                                         <span className="text-xs text-slate-600 font-medium">Bấm để chụp ảnh hiện trường có Watermark</span>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-4 gap-2">
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                         {periodicForm.photos.map((p, idx) => (
                                             <div key={idx} className="relative rounded-lg overflow-hidden border border-slate-200 group">
                                                 <img src={p.thumbnailBase64 || p.photoBase64} alt={p.caption} className="w-full h-16 object-cover" />
@@ -2061,7 +2061,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
                                 <div className="py-12 text-center text-slate-400">Đang tải chi tiết...</div>
                             ) : selectedDetail ? (
                                 <>
-                                    <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-lg">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-slate-50 rounded-lg">
                                         <div>
                                             <span className="text-slate-500">Kho:</span>{' '}
                                             <span className="font-semibold text-slate-800">{selectedDetail.warehouse?.name}</span>
@@ -2098,7 +2098,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
 
                                     {/* Temperatures */}
                                     {selectedDetail.type === 'DAILY_TEMP_HUMIDITY' && (
-                                        <div className="grid grid-cols-4 gap-2 text-center p-3 border border-slate-200 rounded-lg">
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center p-3 border border-slate-200 rounded-lg">
                                             <div>
                                                 <div className="text-[10px] text-slate-500">VT #1 (Cửa)</div>
                                                 <div className="font-mono font-bold text-slate-900 mt-0.5">{selectedDetail.temp1 ? `${selectedDetail.temp1}°C` : '-'}</div>
@@ -2142,7 +2142,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
                                     {selectedDetail.photos && selectedDetail.photos.length > 0 && (
                                         <div>
                                             <div className="font-bold text-slate-700 mb-1.5">Ảnh chụp hiện trường ({selectedDetail.photos.length} ảnh)</div>
-                                            <div className="grid grid-cols-3 gap-2">
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                                 {selectedDetail.photos.map((p: any) => (
                                                     <div
                                                         key={p.id}
@@ -2272,7 +2272,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
 
                         <form onSubmit={handleConfirmAssign} className="p-5 space-y-4 text-xs">
                             {/* Warehouse & Type */}
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block font-semibold text-slate-700 mb-1">Kho kiểm tra</label>
                                     <select
@@ -2304,7 +2304,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
                             </div>
 
                             {/* Inspection Date & Shift */}
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block font-semibold text-slate-700 mb-1">Ngày kiểm tra</label>
                                     <input

@@ -182,7 +182,7 @@ export function PricingWidget() {
 
             {result && (
                 <div className="space-y-3">
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         {[
                             { label: 'Giá vốn', value: formatVND(result.unitLandedCost), color: '#B91C1C' },
                             { label: 'Giá thị trường', value: formatVND(result.latestMarketPrice), color: '#B45309' },

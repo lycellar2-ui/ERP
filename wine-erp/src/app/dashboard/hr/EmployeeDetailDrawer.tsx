@@ -250,7 +250,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                 {/* Identity Document */}
                                 <div className="p-4 rounded-lg bg-white/50 border border-slate-200 space-y-3">
                                     <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">Căn Cước Công Dân / Hộ Chiếu</p>
-                                    <div className="grid grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Số CCCD</p>
                                             <p className="font-mono font-bold text-slate-900 mt-0.5">{employee.nationalId || '—'}</p>
@@ -287,7 +287,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
                                 {/* Emergency Contact */}
                                 <div className="p-4 rounded-lg bg-white/50 border border-slate-200 space-y-3">
                                     <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">Người Liên Hệ Khẩn Cấp</p>
-                                    <div className="grid grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         <div>
                                             <p className="text-slate-600 text-[11px]">Họ tên người liên hệ</p>
                                             <p className="font-semibold text-slate-900 mt-0.5">{employee.emergencyContact || '—'}</p>

@@ -4209,7 +4209,7 @@ export function SalesVisitsClient({
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 <div>
                                     <label className="block font-bold text-slate-700 mb-1">
                                         {locale === 'en' ? 'Business channel:' : 'Kênh kinh doanh:'}

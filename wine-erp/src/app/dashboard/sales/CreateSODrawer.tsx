@@ -1409,7 +1409,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                                         />
                                                                         
                                                                         {activeDropdownIndex === i && (
-                                                                            <div className="absolute left-0 mt-1 max-h-60 overflow-y-auto z-50 rounded bg-white border border-slate-200 w-[520px] shadow-xl animate-dropdown origin-top-left">
+                                                                            <div className="absolute left-0 mt-1 max-h-60 overflow-y-auto z-50 rounded bg-white border border-slate-200 w-[calc(100vw-2.5rem)] sm:w-[520px] max-w-[520px] shadow-xl animate-dropdown origin-top-left">
                                                                                 {getFilteredProducts(searchQueries[i] ?? '').length === 0 ? (
                                                                                     <div className="px-3 py-2 text-xs text-slate-500">
                                                                                         {t.noProductFound}
@@ -1956,7 +1956,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
 
                                 {/* Totals Section */}
                                 <div className="flex justify-end mb-3 break-inside-avoid print:break-inside-avoid">
-                                    <table className="w-80 text-[11px] border-collapse">
+                                    <table className="w-full sm:w-80 text-[11px] border-collapse">
                                         <tbody>
                                             <tr className="border-b border-slate-200 font-semibold">
                                                 <td className="py-1 text-slate-700">Tổng số lượng hàng hóa:</td>

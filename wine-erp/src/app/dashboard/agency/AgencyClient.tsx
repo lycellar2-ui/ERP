@@ -363,7 +363,7 @@ export function AgencyClient() {
                             {shipmentsLoading ? (
                                 <div className="flex justify-center py-4"><Loader2 size={18} className="animate-spin" style={{ color: '#0891B2' }} /></div>
                             ) : (
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
                                         <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>
                                             Đối tác <span style={{ color: '#B91C1C' }}>*</span>
@@ -443,7 +443,7 @@ export function AgencyClient() {
                     )}
 
                     {/* Submissions table (Desktop) */}
-                    <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
+                    <div className="hidden md:block rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
                         <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>

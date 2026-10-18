@@ -934,92 +934,94 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                 </div>
                             ) : (
                                 <div className="rounded-lg border border-slate-200 overflow-hidden bg-white shadow-xs">
-                                    <table className="w-full text-xs text-left border-collapse">
-                                        <thead>
-                                            <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
-                                                <th className="p-3 font-semibold">Sản Phẩm & SKU</th>
-                                                <th className="p-3 font-semibold text-right">Giá Niêm Yết</th>
-                                                <th className="p-3 font-semibold text-right">Giá Thỏa Thuận</th>
-                                                <th className="p-3 font-semibold text-center">Chênh Lệch</th>
-                                                <th className="p-3 font-semibold">Thời Hạn</th>
-                                                <th className="p-3 text-center font-semibold">Trạng Thái</th>
-                                                <th className="p-3 text-right font-semibold">Thao Tác</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-200">
-                                            {filteredDrawerRules.map(rule => {
-                                                const statusCfg = STATUS_CFG[rule.status] ?? { label: rule.status, color: '#0F172A', bg: 'rgba(100,116,139,0.1)' }
-                                                return (
-                                                    <tr key={rule.id} className="hover:bg-slate-50 transition">
-                                                        <td className="p-3">
-                                                            <div className="font-semibold text-slate-900">{rule.productName}</div>
-                                                            <div className="font-mono text-[11px] text-slate-500">{rule.skuCode}</div>
-                                                        </td>
-                                                        <td className="p-3 text-right font-mono text-slate-500">
-                                                            {rule.basePrice ? formatVND(rule.basePrice) : '—'}
-                                                        </td>
-                                                        <td className="p-3 text-right font-mono font-bold text-emerald-700">
-                                                            {formatVND(rule.effectivePrice)}
-                                                        </td>
-                                                        <td className="p-3 text-center">
-                                                            {rule.savingsPct > 0 ? (
-                                                                <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
-                                                                    -{rule.savingsPct}%
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-xs text-left border-collapse">
+                                            <thead>
+                                                <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
+                                                    <th className="p-3 font-semibold">Sản Phẩm & SKU</th>
+                                                    <th className="p-3 font-semibold text-right">Giá Niêm Yết</th>
+                                                    <th className="p-3 font-semibold text-right">Giá Thỏa Thuận</th>
+                                                    <th className="p-3 font-semibold text-center">Chênh Lệch</th>
+                                                    <th className="p-3 font-semibold">Thời Hạn</th>
+                                                    <th className="p-3 text-center font-semibold">Trạng Thái</th>
+                                                    <th className="p-3 text-right font-semibold">Thao Tác</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-200">
+                                                {filteredDrawerRules.map(rule => {
+                                                    const statusCfg = STATUS_CFG[rule.status] ?? { label: rule.status, color: '#0F172A', bg: 'rgba(100,116,139,0.1)' }
+                                                    return (
+                                                        <tr key={rule.id} className="hover:bg-slate-50 transition">
+                                                            <td className="p-3">
+                                                                <div className="font-semibold text-slate-900">{rule.productName}</div>
+                                                                <div className="font-mono text-[11px] text-slate-500">{rule.skuCode}</div>
+                                                            </td>
+                                                            <td className="p-3 text-right font-mono text-slate-500">
+                                                                {rule.basePrice ? formatVND(rule.basePrice) : '—'}
+                                                            </td>
+                                                            <td className="p-3 text-right font-mono font-bold text-emerald-700">
+                                                                {formatVND(rule.effectivePrice)}
+                                                            </td>
+                                                            <td className="p-3 text-center">
+                                                                {rule.savingsPct > 0 ? (
+                                                                    <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+                                                                        -{rule.savingsPct}%
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-slate-400">—</span>
+                                                                )}
+                                                            </td>
+                                                            <td className="p-3 text-[11px] text-slate-600">
+                                                                <div className="font-medium text-slate-800">{new Date(rule.startDate).toLocaleDateString('vi-VN')}</div>
+                                                                <div className="text-slate-500">
+                                                                    {rule.endDate ? `Đến ${new Date(rule.endDate).toLocaleDateString('vi-VN')}` : 'Không thời hạn'}
+                                                                </div>
+                                                            </td>
+                                                            <td className="p-3 text-center">
+                                                                <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap" style={{ color: statusCfg.color, background: statusCfg.bg }}>
+                                                                    {statusCfg.label}
                                                                 </span>
-                                                            ) : (
-                                                                <span className="text-slate-400">—</span>
-                                                            )}
-                                                        </td>
-                                                        <td className="p-3 text-[11px] text-slate-600">
-                                                            <div className="font-medium text-slate-800">{new Date(rule.startDate).toLocaleDateString('vi-VN')}</div>
-                                                            <div className="text-slate-500">
-                                                                {rule.endDate ? `Đến ${new Date(rule.endDate).toLocaleDateString('vi-VN')}` : 'Không thời hạn'}
-                                                            </div>
-                                                        </td>
-                                                        <td className="p-3 text-center">
-                                                            <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap" style={{ color: statusCfg.color, background: statusCfg.bg }}>
-                                                                {statusCfg.label}
-                                                            </span>
-                                                        </td>
-                                                        <td className="p-3 text-right">
-                                                            <div className="flex items-center justify-end gap-1.5">
-                                                                {rule.status === 'PENDING_APPROVAL' && canApprove && (
-                                                                    <>
+                                                            </td>
+                                                            <td className="p-3 text-right">
+                                                                <div className="flex items-center justify-end gap-1.5">
+                                                                    {rule.status === 'PENDING_APPROVAL' && canApprove && (
+                                                                        <>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => handleApprove(rule.id)}
+                                                                                className="p-1.5 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition"
+                                                                                title="Duyệt giá"
+                                                                            >
+                                                                                <Check size={14} />
+                                                                            </button>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => handleReject(rule.id)}
+                                                                                className="p-1.5 rounded bg-rose-50 text-rose-600 hover:bg-rose-100 transition"
+                                                                                title="Từ chối"
+                                                                            >
+                                                                                <Ban size={14} />
+                                                                            </button>
+                                                                        </>
+                                                                    )}
+                                                                    {canCreate && (
                                                                         <button
                                                                             type="button"
-                                                                            onClick={() => handleApprove(rule.id)}
-                                                                            className="p-1.5 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition"
-                                                                            title="Duyệt giá"
+                                                                            onClick={() => handleDelete(rule.id)}
+                                                                            className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                                                                            title="Xóa dòng giá riêng"
                                                                         >
-                                                                            <Check size={14} />
+                                                                            <Trash2 size={14} />
                                                                         </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => handleReject(rule.id)}
-                                                                            className="p-1.5 rounded bg-rose-50 text-rose-600 hover:bg-rose-100 transition"
-                                                                            title="Từ chối"
-                                                                        >
-                                                                            <Ban size={14} />
-                                                                        </button>
-                                                                    </>
-                                                                )}
-                                                                {canCreate && (
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => handleDelete(rule.id)}
-                                                                        className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
-                                                                        title="Xóa dòng giá riêng"
-                                                                    >
-                                                                        <Trash2 size={14} />
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                )
-                                            })}
-                                        </tbody>
-                                    </table>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    )
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             )}
                         </div>

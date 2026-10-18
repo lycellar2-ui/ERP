@@ -360,9 +360,9 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
 
             {/* Tab: Customers (default) */}
             {crmTab === 'customers' && (<>
-                <div className="grid grid-cols-12 gap-5">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
                     {/* Left: customer list */}
-                    <div className="col-span-12 lg:col-span-5 space-y-3">
+                    <div className="lg:col-span-5 space-y-3">
                         {/* Filters */}
                         <div className="flex gap-2">
                             <div className="relative flex-1">
@@ -420,7 +420,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                     </div>
 
                     {/* Right: 360° profile */}
-                    <div className="col-span-12 lg:col-span-7 space-y-4">
+                    <div className="lg:col-span-7 space-y-4">
                         {!selectedCustomer ? (
                             <div className="space-y-4">
                                 {/* CRM Summary Dashboard */}
@@ -447,12 +447,12 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                     {/* Tier Distribution */}
                                     <div className="mb-4">
                                         <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>Phân Bổ Tier</p>
-                                        <div className="flex gap-2">
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                             {(['PLATINUM', 'GOLD', 'SILVER', 'BRONZE'] as const).map(tier => {
                                                 const cfg = TIER_CFG[tier]
                                                 const count = tierDist[tier] || 0
                                                 return (
-                                                    <div key={tier} className="flex-1 text-center p-2 rounded" style={{ background: `${cfg.color}08` }}>
+                                                    <div key={tier} className="text-center p-2 rounded" style={{ background: `${cfg.color}08` }}>
                                                         <Award size={14} className="mx-auto" style={{ color: cfg.color }} />
                                                         <p className="text-sm font-bold mt-1" style={{ color: cfg.color }}>{count}</p>
                                                         <p className="text-xs" style={{ color: '#64748B' }}>{cfg.label}</p>
@@ -519,7 +519,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                     </div>
 
                                     {/* KPIs */}
-                                    <div className="grid grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         {[
                                             { label: 'Tổng Doanh Số', value: selectedCustomer.totalRevenue >= 1e9 ? `${(selectedCustomer.totalRevenue / 1e9).toFixed(2)} tỷ ₫` : formatVND(selectedCustomer.totalRevenue), color: '#0891B2' },
                                             { label: 'Số Đơn Hàng', value: selectedCustomer.totalOrders, color: '#15803D' },
@@ -590,7 +590,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                         {txOpen && txHistory && (
                                             <div className="space-y-3">
                                                 {/* Summary Stats */}
-                                                <div className="grid grid-cols-4 gap-2">
+                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                                     {[
                                                         { label: 'All-time Revenue', value: txHistory.allTimeRevenue >= 1e9 ? `${(txHistory.allTimeRevenue / 1e9).toFixed(2)} tỷ ₫` : formatVND(txHistory.allTimeRevenue), color: '#0891B2' },
                                                         { label: 'Tổng Đơn', value: txHistory.totalOrders, color: '#1D4ED8' },

@@ -532,7 +532,7 @@ export function BankReconciliationTab() {
                 </div>
 
                 {/* Search */}
-                <div className="relative min-w-[240px]">
+                <div className="relative w-full sm:w-auto sm:min-w-[240px]">
                     <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                         type="text"

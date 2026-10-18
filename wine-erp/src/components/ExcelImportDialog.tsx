@@ -228,7 +228,7 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
                         {step === 'result' && result && (
                             <div className="space-y-4">
                                 {/* Summary */}
-                                <div className="grid grid-cols-3 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div className="p-3 rounded-lg text-center" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                         <p className="text-xl font-bold font-mono" style={{ color: '#0F172A' }}>{result.total}</p>
                                         <p className="text-[10px] uppercase tracking-wider mt-1" style={{ color: '#64748B' }}>Tổng dòng</p>

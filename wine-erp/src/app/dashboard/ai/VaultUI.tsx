@@ -79,7 +79,7 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
             {/* Add Form */}
             {showAdd && (
                 <div className="p-4 rounded-md mb-4 space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Provider</label>
                             <select value={form.provider} onChange={e => setForm({ ...form, provider: e.target.value })}
@@ -281,7 +281,7 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
             {/* Create Form */}
             {showCreate && (
                 <div className="p-4 rounded-md mb-4 space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Slug *</label>
                             <input value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })}
@@ -311,7 +311,7 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
                             className="w-full px-3 py-2 text-xs rounded outline-none resize-none font-mono"
                             style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                     </div>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
                             <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Biến (phẩy cách)</label>
                             <input value={form.variables} onChange={e => setForm({ ...form, variables: e.target.value })}

@@ -183,7 +183,7 @@ export function ComplaintTicketsPanel() {
 
                                 {isExpanded && (
                                     <div className="px-4 pb-4 space-y-3" style={{ borderTop: '1px solid #E2E8F0' }}>
-                                        <div className="grid grid-cols-3 gap-3 pt-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3">
                                             <div>
                                                 <p className="text-xs" style={{ color: '#64748B' }}>Khách hàng</p>
                                                 <p className="text-sm font-medium" style={{ color: '#0F172A' }}>{t.customerName}</p>

@@ -1121,7 +1121,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
 
                                         {/* Totals Section */}
                                         <div className="flex justify-end mb-3 break-inside-avoid print:break-inside-avoid">
-                                            <table className="w-80 text-[11px] border-collapse">
+                                            <table className="w-full sm:w-80 text-[11px] border-collapse">
                                                 <tbody>
                                                     <tr className="border-b border-slate-200 font-semibold">
                                                         <td className="py-1 text-slate-700">Tổng số lượng rượu chuyển:</td>
@@ -1222,7 +1222,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                             <div className="text-xs font-bold">
                                                 Tổng số mặt hàng: {detail.lines.length} SKU &nbsp;|&nbsp; Tổng số lượng nhặt: {detail.totalQty} chai
                                             </div>
-                                            <div className="grid grid-cols-2 gap-8 text-center text-xs w-80">
+                                            <div className="grid grid-cols-2 gap-8 text-center text-xs w-full sm:w-80">
                                                 <div className="pb-12">
                                                     <p className="font-bold text-slate-800 uppercase text-[10px]">Thủ Kho Xuất Hàng</p>
                                                     <p className="text-slate-400 italic text-[9px]">(Ký & ghi rõ họ tên)</p>
@@ -1303,7 +1303,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                         )}
 
                         {/* Items Table */}
-                        <div className="flex-1 overflow-y-auto p-6">
+                        <div className="flex-1 overflow-x-auto overflow-y-auto p-6">
                             <table className="w-full text-left text-xs border-collapse">
                                 <thead>
                                     <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">

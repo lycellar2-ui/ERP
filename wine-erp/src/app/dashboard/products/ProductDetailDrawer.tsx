@@ -176,7 +176,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
 
                                 return (
                                     <div className="pt-2 space-y-1.5">
-                                        <div className="grid grid-cols-3 gap-1.5 text-center">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 text-center">
                                             <div className="p-1.5 rounded-lg bg-white border border-slate-200/60">
                                                 <span className="text-[10px] uppercase font-bold text-slate-500 block">Tồn Sổ</span>
                                                 <span className="text-xs font-bold font-mono text-slate-900">{totalBookQty.toLocaleString()}</span>
@@ -209,7 +209,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                         <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#0891B2' }}>
                             <Layers size={13} /> Thông Số Kỹ Thuật
                         </h4>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-3 p-4 rounded-lg text-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 p-4 rounded-lg text-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             {[
                                 { label: 'Xuất xứ', value: countryName || '—' },
                                 { label: 'Vùng trồng (Appellation)', value: activeProduct.appellationName ?? '—' },
@@ -236,7 +236,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                         <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#0891B2' }}>
                             <DollarSign size={13} /> Giá Bán Theo Kênh (VND)
                         </h4>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="p-3.5 rounded-lg flex flex-col justify-between" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                 <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: '#64748B' }}>Giá Bán Lẻ Niêm Yết</span>
                                 <span className="text-lg font-bold mt-1 font-sans tabular-nums" style={{ color: '#0891B2' }}>
@@ -319,7 +319,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                 <Tag size={13} /> Đặc Tính Sản Phẩm (Wine Profile)
                             </h4>
                             <div className="p-4 rounded-lg space-y-3 text-xs leading-relaxed" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {effectiveProfile.grapes && (
                                         <div>
                                             <span style={{ color: '#64748B' }} className="block uppercase text-[10px] font-bold">Giống nho</span>
@@ -394,7 +394,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                             <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#0891B2' }}>
                                 <Award size={13} /> Giải Thưởng & Điểm Số
                             </h4>
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {[1, 2].map(i => (
                                     <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg animate-pulse" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                         <div className="w-8 h-8 rounded-lg bg-[#E2E8F0]/20 flex-shrink-0" />
@@ -412,7 +412,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                             <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#0891B2' }}>
                                 <Award size={13} /> Giải Thưởng & Điểm Số
                             </h4>
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {data.awards.map(a => (
                                     <div key={a.id} className="flex items-center gap-3 p-2.5 rounded-lg text-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                         <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(180,83,9,0.1)' }}>
@@ -439,7 +439,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                         </h4>
                         
                         {loading && !data ? (
-                            <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+                            <div className="rounded-lg overflow-x-auto" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
                                 <table className="w-full text-left text-xs" style={{ borderCollapse: 'collapse' }}>
                                     <thead>
                                         <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
@@ -470,7 +470,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                     </div>
                                 ) : (
                                     <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
-                                        <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
+                                        <div className="overflow-x-auto" style={{ maxHeight: '280px', overflowY: 'auto' }}>
                                             <table className="w-full text-left text-xs" style={{ borderCollapse: 'collapse' }}>
                                                 <thead>
                                                     <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0, zIndex: 10 }}>

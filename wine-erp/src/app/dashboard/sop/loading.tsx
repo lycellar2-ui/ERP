@@ -3,9 +3,9 @@ export default function SopLoading() {
         <div className="space-y-6 max-w-screen-2xl animate-pulse p-4 md:p-6">
             {/* Header skeleton */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
-                <div className="space-y-2">
-                    <div className="h-8 w-72 bg-slate-200 rounded" />
-                    <div className="h-4 w-96 bg-slate-100 rounded" />
+                <div className="space-y-2 w-full sm:w-auto">
+                    <div className="h-8 w-56 sm:w-72 bg-slate-200 rounded" />
+                    <div className="h-4 w-64 sm:w-96 bg-slate-100 rounded" />
                 </div>
                 <div className="h-10 w-44 bg-slate-200 rounded-md" />
             </div>

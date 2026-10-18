@@ -632,7 +632,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                     </div>
 
                                     {/* 4 Metric Pills Grid */}
-                                    <div className="grid grid-cols-4 gap-1.5 bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-center font-mono">
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-center font-mono">
                                         <div>
                                             <span className="text-[9px] uppercase text-slate-500 font-bold block">Đầu kỳ</span>
                                             <span className="text-xs font-bold text-amber-700">{item.openingQty}</span>
@@ -727,9 +727,9 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                     )}
 
                     {/* Timeline Table & Current Stock Locations */}
-                    <div className="grid grid-cols-12 gap-5">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
                         {/* Main Ledger Table */}
-                        <div className="col-span-12 lg:col-span-8 space-y-3">
+                        <div className="lg:col-span-8 space-y-3">
                             <div className="flex items-center justify-between">
                                 <h4 className="text-xs uppercase tracking-widest font-extrabold text-slate-500">
                                     Sổ Chi Tiết Chứng Từ ({movements.length} giao dịch)
@@ -748,7 +748,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                 </div>
                             ) : (
                                 <div className="rounded-lg overflow-hidden bg-white border border-slate-200 shadow-sm">
-                                    <div style={{ maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
+                                    <div className="overflow-x-auto" style={{ maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
                                         <table className="w-full text-left border-collapse">
                                             <thead>
                                                 <tr className="bg-slate-100/80 border-b border-slate-200 text-slate-700 sticky top-0 z-10">
@@ -817,7 +817,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                         </div>
 
                         {/* Right Column: Stock Breakdown by Location */}
-                        <div className="col-span-12 lg:col-span-4 space-y-3">
+                        <div className="lg:col-span-4 space-y-3">
                             <h4 className="text-xs uppercase tracking-widest font-extrabold text-slate-500">
                                 Phân Bổ Tồn Kho Thực Tế Theo Vị Trí
                             </h4>

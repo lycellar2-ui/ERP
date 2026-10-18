@@ -741,7 +741,7 @@ export function InvoiceReconciliationTab() {
                             </select>
                         )}
 
-                        <div className="relative flex-1 min-w-[220px]">
+                        <div className="relative flex-1 w-full sm:w-auto sm:min-w-[220px]">
                             <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
                             <input
                                 type="text"
@@ -757,7 +757,7 @@ export function InvoiceReconciliationTab() {
 
                 {/* Custom Date Range Picker */}
                 {period === 'custom' && (
-                    <div className="flex items-center gap-2 pt-2 border-t border-slate-200 text-xs">
+                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200 text-xs">
                         <span style={{ color: '#475569' }}>Từ ngày:</span>
                         <input
                             type="date"

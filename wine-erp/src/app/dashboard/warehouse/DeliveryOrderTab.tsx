@@ -547,7 +547,7 @@ export function DeliveryOrderTab({ warehouses }: {
                             <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin" style={{ color: '#B45309' }} /></div>
                         ) : detailData && (
                             <div className="p-5 space-y-4 flex-1 overflow-y-auto">
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <InfoCard label="Trạng thái" value={(DO_STATUS[detailData.status] ?? DO_STATUS.DRAFT).label} />
                                     <InfoCard label="Ngày xuất ban đầu" value={formatDate(detailData.createdAt)} />
                                 </div>
@@ -616,7 +616,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                 </div>
 
                                 {/* Detail Lines — Desktop Table */}
-                                <div className="rounded-lg overflow-hidden hidden sm:block shadow-sm" style={{ border: '1px solid #E2E8F0' }}>
+                                <div className="rounded-lg overflow-x-auto overflow-hidden hidden sm:block shadow-sm" style={{ border: '1px solid #E2E8F0' }}>
                                     <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                                         <thead>
                                             <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
@@ -1263,7 +1263,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                 </div>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 {renderSOSelect()}
                                 {renderWarehouseSelect()}
                                 {renderDateSelect()}

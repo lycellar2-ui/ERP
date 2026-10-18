@@ -93,15 +93,15 @@ export function Drawer({ open, onClose, title, description, headerExtra, actions
                     className,
                 )}
             >
-                <header className="flex items-start justify-between gap-3 px-5 py-4 border-b border-lys-border">
-                    <div className="min-w-0">
+                <header className="flex items-start justify-between gap-2 sm:gap-3 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-lys-border shrink-0">
+                    <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                            <h2 className="type-section-title text-lys-primary truncate">{title}</h2>
+                            <h2 className="type-section-title text-lys-primary truncate max-w-full">{title}</h2>
                             {headerExtra}
                         </div>
                         {description && <p className="type-caption text-lys-muted mt-1">{description}</p>}
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap justify-end">
                         {actions}
                         <button
                             type="button"
@@ -113,9 +113,9 @@ export function Drawer({ open, onClose, title, description, headerExtra, actions
                         </button>
                     </div>
                 </header>
-                <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
+                <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-5 py-4">{children}</div>
                 {footer && (
-                    <footer className="flex items-center justify-end gap-2 px-5 py-3 border-t border-lys-border bg-lys-subtle/50">
+                    <footer className="flex flex-wrap items-center justify-end gap-2 px-4 sm:px-5 py-3 border-t border-lys-border bg-lys-subtle/50 shrink-0">
                         {footer}
                     </footer>
                 )}

@@ -736,7 +736,7 @@ export function PosmInventoryTab() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-700 mb-1">
                                         Nhóm phân loại
@@ -767,7 +767,7 @@ export function PosmInventoryTab() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-700 mb-1">
                                         Hãng / Thương hiệu tài trợ
@@ -794,7 +794,7 @@ export function PosmInventoryTab() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-700 mb-1">
                                         Đơn giá vốn ước tính (VNĐ)
@@ -916,7 +916,7 @@ export function PosmInventoryTab() {
                                 </select>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-700 mb-1">
                                         Lý do nhập kho
@@ -1032,7 +1032,7 @@ export function PosmInventoryTab() {
                                 </select>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-700 mb-1">
                                         Mục đích xuất kho

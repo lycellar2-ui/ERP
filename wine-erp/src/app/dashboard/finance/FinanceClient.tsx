@@ -689,8 +689,8 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
 
             {/* AR Payment modal */}
             {paymentModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(15, 23, 42, 0.45)' }}>
-                    <div className="w-full max-w-sm p-6 rounded-md"
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15, 23, 42, 0.45)' }}>
+                    <div className="w-full max-w-sm max-h-[90vh] overflow-y-auto p-5 sm:p-6 rounded-md"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 24px 64px rgba(15, 23, 42, 0.45)' }}>
                         <h3 className="text-lg font-bold mb-4" style={{ color: '#0F172A' }}>Ghi Nhận Thanh Toán AR</h3>
                         <div className="space-y-3">
@@ -703,7 +703,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                     onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Phương Thức</label>
                                     <select value={payMethod} onChange={e => setPayMethod(e.target.value)}
@@ -746,8 +746,8 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
 
             {/* AP Payment modal */}
             {apPaymentModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(15, 23, 42, 0.45)' }}>
-                    <div className="w-full max-w-sm p-6 rounded-md"
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15, 23, 42, 0.45)' }}>
+                    <div className="w-full max-w-sm max-h-[90vh] overflow-y-auto p-5 sm:p-6 rounded-md"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 24px 64px rgba(15, 23, 42, 0.45)' }}>
                         <h3 className="text-lg font-bold mb-4" style={{ color: '#0F172A' }}>Ghi Nhận Thanh Toán AP</h3>
                         <div className="space-y-3">

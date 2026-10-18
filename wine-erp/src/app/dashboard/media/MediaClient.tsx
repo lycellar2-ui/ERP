@@ -140,7 +140,7 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
 
             {/* Filters */}
             <div className="flex items-center gap-3 flex-wrap">
-                <div className="flex-1 min-w-[250px] relative">
+                <div className="flex-1 w-full sm:w-auto sm:min-w-[250px] relative">
                     <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
                     <input
                         value={search}

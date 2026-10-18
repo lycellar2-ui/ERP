@@ -442,8 +442,8 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                 </div>
 
                 {/* EDITABLE SPREADSHEET TABLE GRID FOR LEAD */}
-                <div className="flex-1 overflow-y-auto p-4 bg-slate-50/50">
-                    <div className="bg-white border border-slate-200 rounded-lg shadow-2xs overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-3 sm:p-4 bg-slate-50/50">
+                    <div className="bg-white border border-slate-200 rounded-lg shadow-2xs overflow-x-auto">
                         <table className="w-full text-left border-collapse text-xs">
                             <thead>
                                 <tr className="bg-slate-100 text-slate-700 font-extrabold uppercase text-[10px] tracking-wider border-b border-slate-200">
@@ -585,8 +585,8 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                 </div>
 
                 {/* FOOTER STATS SUMMARY BAR */}
-                <div className="p-4 bg-slate-100 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-bold text-slate-700 shrink-0">
-                    <div className="flex items-center gap-4">
+                <div className="p-3 sm:p-4 bg-slate-100 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-bold text-slate-700 shrink-0">
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 sm:gap-4">
                         <span>Hiển thị: <strong className="text-slate-900 font-mono">{filteredLines.length}/{totalLinesCount} dòng</strong></span>
                         <span>Đã đếm: <strong className="text-emerald-700 font-mono">{countedLinesCount}</strong></span>
                         <span>Khớp 100%: <strong className="text-emerald-800 font-mono">{matchedLinesCount}</strong></span>
@@ -595,7 +595,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
 
                     <button
                         onClick={onClose}
-                        className="px-5 py-2 bg-[#0E7490] hover:bg-[#0E7490] active:scale-95 text-white font-black text-xs rounded-lg shadow-xs cursor-pointer transition-all"
+                        className="w-full sm:w-auto px-5 py-2 bg-[#0E7490] hover:bg-[#0E7490] active:scale-95 text-white font-black text-xs rounded-lg shadow-xs cursor-pointer transition-all"
                     >
                         Hoàn Tất & Đóng Bảng
                     </button>
@@ -607,6 +607,8 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                 <AddUnlistedModal
                     sessionId={detail.id}
                     sessionNo={detail.sessionNo}
+                    warehouseId={detail.warehouseId}
+                    defaultZone={selectedZone !== 'ALL' ? selectedZone : undefined}
                     zones={zones}
                     onClose={() => setShowAddUnlistedModal(false)}
                     onSuccess={() => {
@@ -632,7 +634,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                             </button>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center text-xs">
                             <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-lg">
                                 <span className="text-[10px] font-bold uppercase text-emerald-700 block">Khớp số liệu</span>
                                 <strong className="text-xl font-bold text-emerald-800">{zoneReport.matchedCount} mã</strong>

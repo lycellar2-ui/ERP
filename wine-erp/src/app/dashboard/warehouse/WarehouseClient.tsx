@@ -176,7 +176,7 @@ function StockTable({ lots, sortConfig, onSort, canSeeCost = true }: {
     return (
         <div className="rounded-lg overflow-hidden shadow-xs border border-slate-200" style={{ background: '#FFFFFF' }}>
             {/* Desktop Table View (Compact Row Height for Maximum Row Density) */}
-            <div className="hidden md:block overflow-y-auto" style={{ maxHeight: 'calc(100vh - 290px)' }}>
+            <div className="hidden md:block overflow-x-auto overflow-y-auto" style={{ maxHeight: 'calc(100vh - 290px)' }}>
                 <table className="w-full text-left border-collapse text-xs">
                     <thead>
                         <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0, zIndex: 10 }}>
@@ -1467,7 +1467,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
 
                                     {selectedWH && (
                                         <div className="flex flex-col sm:flex-row gap-2">
-                                            <div className="relative flex-1 min-w-[200px]">
+                                            <div className="relative flex-1 w-full sm:w-auto sm:min-w-[200px]">
                                                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
                                                 <input placeholder={t.table.searchPlaceholder} value={search}
                                                     onChange={e => setSearch(e.target.value)}

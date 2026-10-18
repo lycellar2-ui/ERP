@@ -24,7 +24,7 @@ export function Modal({ open, onClose, title, footer, children, className }: Mod
     if (!open || typeof document === 'undefined') return null
 
     return createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
             <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] animate-fade-in" onClick={onClose} aria-hidden />
             <div
                 ref={panelRef}
@@ -32,24 +32,24 @@ export function Modal({ open, onClose, title, footer, children, className }: Mod
                 aria-modal="true"
                 tabIndex={-1}
                 className={cn(
-                    'relative w-full max-w-md bg-lys-surface border border-lys-border rounded-lg shadow-xl outline-none',
+                    'relative flex flex-col w-full max-w-md max-h-[90vh] bg-lys-surface border border-lys-border rounded-lg shadow-xl outline-none overflow-hidden',
                     'animate-modal-in',
                     className,
                 )}
             >
-                <header className="flex items-center justify-between gap-3 px-5 py-4 border-b border-lys-border">
-                    <h2 className="type-section-title text-lys-primary">{title}</h2>
+                <header className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-lys-border shrink-0">
+                    <h2 className="type-section-title text-lys-primary min-w-0 truncate">{title}</h2>
                     <button
                         type="button"
                         onClick={onClose}
                         aria-label="Đóng"
-                        className="flex items-center justify-center w-8 h-8 rounded-md text-lys-muted hover:bg-lys-subtle hover:text-lys-primary active:scale-90 transition-all duration-100 cursor-pointer"
+                        className="flex items-center justify-center w-8 h-8 rounded-md text-lys-muted hover:bg-lys-subtle hover:text-lys-primary active:scale-90 transition-all duration-100 cursor-pointer shrink-0"
                     >
                         <X size={18} />
                     </button>
                 </header>
-                <div className="px-5 py-4 type-body text-lys-secondary">{children}</div>
-                {footer && <footer className="flex justify-end gap-2 px-5 py-3 border-t border-lys-border">{footer}</footer>}
+                <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-4 type-body text-lys-secondary">{children}</div>
+                {footer && <footer className="flex flex-wrap justify-end gap-2 px-4 sm:px-5 py-3 border-t border-lys-border shrink-0">{footer}</footer>}
             </div>
         </div>,
         document.body,

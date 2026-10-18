@@ -57,7 +57,7 @@ export default async function VerifyPage({ params }: { params: Promise<{ code: s
                         {product.name}
                     </h2>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
                         {[
                             { label: 'Mã SKU', value: product.sku },
                             { label: 'Vintage', value: product.vintage },

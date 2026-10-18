@@ -772,7 +772,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                     marginBottom: 32,
                     boxShadow: '0 2px 8px rgba(15,23,42,0.03)'
                 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, textAlign: 'center' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, textAlign: 'center' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
                             <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#F0FDF4', color: '#15803D', border: '1.5px solid #15803D', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
                                 <Check size={14} strokeWidth={2.5} />
@@ -1260,7 +1260,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                     padding: '28px 32px 36px', 
                     marginBottom: 36,
                     display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
                     gap: 36,
                     textAlign: 'center'
                 }}>
@@ -1545,7 +1545,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                 {/* Technical Specs Block */}
                                 <div style={{ 
                                     display: 'grid', 
-                                    gridTemplateColumns: 'repeat(2, 1fr)', 
+                                    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', 
                                     gap: '8px 16px',
                                     marginBottom: 16,
                                     background: '#F9F8F5',
@@ -1572,7 +1572,7 @@ export function QuotationPublicView({ data, token }: { data: QuotationData; toke
                                         Nồng Độ Cồn: <strong style={{ color: '#0F172A' }}>{activeModalLine.abvPercent}% ABV</strong>
                                     </span>
                                     {activeModalLine.profile?.foodPairings && (
-                                        <div style={{ gridColumn: 'span 2', color: '#64748B', fontSize: 12, borderTop: '1px solid #EAE7E0', paddingTop: 6, marginTop: 2 }}>
+                                        <div style={{ gridColumn: '1 / -1', color: '#64748B', fontSize: 12, borderTop: '1px solid #EAE7E0', paddingTop: 6, marginTop: 2 }}>
                                             Ẩm Thực Đề Xuất: <strong style={{ color: '#0F172A' }}>{activeModalLine.profile.foodPairings}</strong>
                                         </div>
                                     )}

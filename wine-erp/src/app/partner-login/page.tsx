@@ -101,7 +101,7 @@ export default function PartnerLoginPage() {
                                         <p className="text-sm" style={{ color: '#64748B' }}>Chưa có lô hàng nào được phân công</p>
                                     </div>
                                 ) : (
-                                    <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
+                                    <div className="rounded-lg overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
                                         <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                                             <thead>
                                                 <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
@@ -146,7 +146,7 @@ export default function PartnerLoginPage() {
                                         <p className="text-sm" style={{ color: '#64748B' }}>Chưa có hồ sơ nào</p>
                                     </div>
                                 ) : (
-                                    <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
+                                    <div className="rounded-lg overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
                                         <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                                             <thead>
                                                 <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>

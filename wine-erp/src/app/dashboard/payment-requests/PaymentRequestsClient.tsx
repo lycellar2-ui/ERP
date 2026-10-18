@@ -1300,7 +1300,7 @@ export function PaymentRequestsClient({
                     </div>
 
                     {/* Categories Table */}
-                    <div className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-2xs">
+                    <div className="overflow-x-auto rounded-md border border-slate-200 bg-white shadow-2xs">
                         <table className="w-full text-left text-xs">
                             <thead className="border-b border-slate-200 bg-slate-50 font-semibold text-slate-600">
                                 <tr>
@@ -1517,7 +1517,7 @@ export function PaymentRequestsClient({
             {/* ═══ Modal Cấu Hình Hạng Mục Chi Phí ═══ */}
             {categoryModalData.open && (
                 <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-lg rounded-md bg-white p-6 shadow-xl border border-slate-200">
+                    <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-md bg-white p-5 sm:p-6 shadow-xl border border-slate-200">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-base font-bold text-slate-900">
                                 {categoryModalData.isEdit ? 'Chỉnh Sửa Hạng Mục Chi Phí' : 'Thêm Hạng Mục Chi Phí Mới'}
@@ -1531,7 +1531,7 @@ export function PaymentRequestsClient({
                         </div>
 
                         <form onSubmit={handleSaveCategory} className="space-y-4 text-xs">
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block font-medium text-slate-700 mb-1">Mã Hạng Mục *</label>
                                     <input
@@ -1616,7 +1616,7 @@ export function PaymentRequestsClient({
             {/* ═══ Modal Thiết Lập Ngân Sách ═══ */}
             {budgetModalData.open && (
                 <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-md rounded-md bg-white p-6 shadow-xl border border-slate-200">
+                    <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-md bg-white p-5 sm:p-6 shadow-xl border border-slate-200">
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <h3 className="text-base font-bold text-slate-900">Thiết Lập Hạn Mức Ngân Sách</h3>
@@ -1693,7 +1693,7 @@ export function PaymentRequestsClient({
             {/* ═══ Modal Chỉnh Sửa Thông Tin Thanh Toán NCC ═══ */}
             {editSupplierModal.open && editSupplierModal.supplier && (
                 <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150">
+                    <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg bg-white p-5 sm:p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                             <div>
                                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -1712,7 +1712,7 @@ export function PaymentRequestsClient({
                         </div>
 
                         <form onSubmit={handleSaveEditSupplier} className="space-y-3.5 text-xs">
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block font-medium text-slate-700 mb-1">Mã Số Thuế (MST)</label>
                                     <input
@@ -1758,7 +1758,7 @@ export function PaymentRequestsClient({
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <div>
                                         <label className="block text-[11px] text-slate-600 mb-0.5">Số Tài Khoản (STK)</label>
                                         <input
@@ -1818,7 +1818,7 @@ export function PaymentRequestsClient({
             {/* ═══ Modal Thêm NCC Mới Từ Tab Master ═══ */}
             {showQuickAddSupplierModal && (
                 <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 p-4">
-                    <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150">
+                    <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg bg-white p-5 sm:p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                             <div>
                                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -1847,7 +1847,7 @@ export function PaymentRequestsClient({
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block font-medium text-slate-700 mb-1">Mã NCC (Để trống sẽ tự sinh)</label>
                                     <input
@@ -1876,7 +1876,7 @@ export function PaymentRequestsClient({
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block font-medium text-slate-700 mb-1">Mã số thuế (MST)</label>
                                     <input

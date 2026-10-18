@@ -207,7 +207,7 @@ function CreateRegDocDrawer({ open, onClose, onCreated, renewFrom }: {
 
                     {!isRenew && (
                         <>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <Row label="Nhóm">
                                     <select className={inputCls} style={baseStyle} value={form.category}
                                         onChange={e => {
@@ -287,7 +287,7 @@ function CreateRegDocDrawer({ open, onClose, onCreated, renewFrom }: {
                         </>
                     )}
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <Row label="Ngày Cấp *">
                             <input type="date" className={inputCls} style={baseStyle} value={form.issueDate}
                                 onChange={e => setForm(f => ({ ...f, issueDate: e.target.value }))} />
@@ -587,7 +587,7 @@ export function RegDocsTab({ initialRows, initialTotal, stats }: Props) {
             </div>
 
             {/* Table */}
-            <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
+            <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>

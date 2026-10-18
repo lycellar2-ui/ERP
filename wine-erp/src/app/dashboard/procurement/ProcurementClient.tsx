@@ -858,7 +858,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
                             <label className="text-[11px] font-bold uppercase block mb-1 text-slate-600">Incoterms</label>
                             <select className={inputCls} style={inputStyle} value={incoterms} onChange={e => setIncoterms(e.target.value)}>
@@ -1025,7 +1025,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                     </div>
 
                                     {/* Row Controls: Quy cách đóng gói, Chế độ giá, Số lượng, Đơn giá */}
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
                                         {/* Pack Type / UOM */}
                                         <div>
                                             <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Quy cách đóng gói</label>
@@ -1515,7 +1515,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div>
                                     <label className="text-xs font-semibold text-slate-600 block mb-1">Incoterms</label>
                                     <select
@@ -1696,7 +1696,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                             </div>
 
                                             {/* Row Controls: Quy cách đóng gói, Chế độ giá, Số lượng, Đơn giá */}
-                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
                                                 <div>
                                                     <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Quy cách đóng gói</label>
                                                     <select
@@ -2403,7 +2403,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
             {/* Collapsible Advanced Filters */}
             {showFilters && (
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3 p-3 rounded-lg animate-in slide-in-from-top-2 duration-150"
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3 p-3 rounded-lg animate-in slide-in-from-top-2 duration-150"
                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <div>
                         <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#64748B' }}>Pháp Nhân Nhập Khẩu</label>
@@ -2808,7 +2808,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                         ) : poDetail ? (
                             <>
                                 {/* Quick Meta Bar */}
-                                <div className="grid grid-cols-3 gap-2 p-4 bg-white border-b border-slate-200 text-xs">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-4 bg-white border-b border-slate-200 text-xs">
                                     <div>
                                         <span className="text-[10px] text-slate-500 block font-bold uppercase">Tổng Số Lượng</span>
                                         <span className="font-mono font-bold text-slate-900">{poDetail.totalQty.toLocaleString()} chai</span>
@@ -2826,7 +2826,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             </span>
                                         )}
                                     </div>
-                                    <div className="text-right">
+                                    <div className="sm:text-right">
                                         <span className="text-[10px] text-slate-500 block font-bold uppercase">Quy Đổi VNĐ</span>
                                         <span className="font-mono font-bold text-[#0891B2]">{formatVND(poDetail.totalAmount * poDetail.exchangeRate)}</span>
                                     </div>

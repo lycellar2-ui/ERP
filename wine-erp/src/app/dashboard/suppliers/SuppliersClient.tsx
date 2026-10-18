@@ -358,7 +358,7 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
                             <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Địa chỉ</label>
                             <input className={inputCls} style={inputStyle} value={form.address ?? ''} onChange={e => set('address', e.target.value || null)} placeholder="33 Rue du Commerce, Bordeaux" />
                         </div>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                             <div>
                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Thành phố</label>
                                 <input className={inputCls} style={inputStyle} value={form.city ?? ''} onChange={e => set('city', e.target.value || null)} placeholder="Bordeaux" />
@@ -718,7 +718,7 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                     </div>
 
                     <div className="flex flex-wrap gap-3">
-                        <div className="relative flex-1 min-w-[200px]">
+                        <div className="relative flex-1 w-full sm:w-auto sm:min-w-[200px]">
                             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input type="text" placeholder="Tìm NCC (tên, mã, MST, TK ngân hàng, email)..."
                                 value={search} onChange={e => { setSearch(e.target.value); setPage(1); reload(e.target.value, undefined, undefined, 1) }}

@@ -185,7 +185,7 @@ export function JournalEntryTab() {
                     {/* Stats preview */}
                     {exportStats && (
                         <div className="space-y-3">
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div className="p-3 rounded" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                     <p className="text-xs uppercase font-semibold" style={{ color: '#64748B' }}>Số bút toán</p>
                                     <p className="text-xl font-bold" style={{ color: '#0F172A' }}>
@@ -228,7 +228,7 @@ export function JournalEntryTab() {
                             )}
 
                             {/* Export buttons */}
-                            <div className="flex gap-3 pt-2">
+                            <div className="flex flex-wrap gap-3 pt-2">
                                 <button onClick={handleExportExcel} disabled={exporting || exportStats.count === 0}
                                     className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-md transition-all"
                                     style={{
@@ -349,7 +349,7 @@ export function ProfitLossTab() {
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-3">
                     <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>
                         Báo Cáo Lãi / Lỗ (P&L)
@@ -358,7 +358,7 @@ export function ProfitLossTab() {
                         ước tính vận hành
                     </span>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     <select value={month} onChange={e => { setMonth(Number(e.target.value)); setData(null) }}
                         className="text-xs px-3 py-1.5 rounded"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
@@ -423,7 +423,7 @@ export function ProfitLossTab() {
                     </div>
 
                     {/* P&L Table */}
-                    <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
+                    <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
                         <table className="w-full" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
@@ -455,7 +455,7 @@ export function ProfitLossTab() {
 
                     {/* Comparison Section */}
                     {comparison && (
-                        <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
+                        <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
                             <div className="px-4 py-3" style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
                                 <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#B45309' }}>So Sánh</p>
                             </div>
@@ -598,7 +598,7 @@ export function ExpenseTab({ userId }: { userId: string }) {
 
             {showCreate && (
                 <div className="p-4 rounded-md space-y-3" style={card}>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
                             <label className="text-xs font-semibold uppercase block mb-1" style={{ color: '#64748B' }}>Danh mục</label>
                             <select value={cat} onChange={e => setCat(e.target.value)}
@@ -753,9 +753,9 @@ export function PeriodCloseTab({ userId }: { userId: string }) {
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>Đóng Kỳ Kế Toán</h3>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     <select value={month} onChange={e => { setMonth(Number(e.target.value)); setChecklist(null) }}
                         className="text-xs px-3 py-1.5 rounded" style={{ ...input, width: 'auto' }}>
                         {Array.from({ length: 12 }, (_, i) => (
@@ -860,7 +860,7 @@ export function BalanceSheetTab() {
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-3">
                     <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>
                         Bảng Cân Đối Kế Toán (VAS)
@@ -869,7 +869,7 @@ export function BalanceSheetTab() {
                         ước tính vận hành
                     </span>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     <select value={month} onChange={e => { setMonth(Number(e.target.value)); setData(null) }}
                         className="text-xs px-3 py-1.5 rounded"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
@@ -927,7 +927,7 @@ export function BalanceSheetTab() {
                     </div>
 
                     {/* Summary cards */}
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {[
                             { label: 'Tài Sản', value: data.totalAssets, color: '#0891B2', prefix: 'A' },
                             { label: 'Nợ Phải Trả', value: data.totalLiabilities, color: '#B45309', prefix: 'L' },
@@ -943,7 +943,7 @@ export function BalanceSheetTab() {
                     </div>
 
                     {/* Detail table */}
-                    <div className="rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
+                    <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
                         <table className="w-full" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>

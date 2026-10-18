@@ -245,7 +245,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
             {mainTab === 'warehouses' && (
                 <div className="space-y-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="relative w-72">
+                        <div className="relative w-full sm:w-72">
                             <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
                             <input
                                 type="text"
@@ -511,7 +511,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
 
             {/* TAB 5: HỢP ĐỒNG KÝ GỬI (AGREEMENTS) */}
             {mainTab === 'agreements' && (
-                <div className="rounded-lg overflow-x-auto shadow-xs" style={{ border: '1px solid #E2E8F0' }}>
+                <div className="rounded-lg overflow-hidden shadow-xs" style={{ border: '1px solid #E2E8F0' }}>
                     <div className="p-3.5 bg-white border-b flex justify-between items-center" style={{ borderColor: '#E2E8F0' }}>
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-700">Danh sách hợp đồng thỏa thuận ký gửi</span>
                         <button
@@ -522,55 +522,57 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                             <Plus size={14} /> Thêm Hợp Đồng Ký Gửi
                         </button>
                     </div>
-                    <table className="w-full text-left min-w-[700px]" style={{ borderCollapse: 'collapse' }}>
-                        <thead>
-                            <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                {['Mã HĐ', 'Khách Hàng', 'Trạng Thái', 'Tần Suất BC', 'SKU Gửi', 'Tổng Chai', 'Thời Hạn', ''].map(h => (
-                                    <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#475569' }}>{h}</th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {agreements.length === 0 ? (
-                                <tr><td colSpan={8} className="text-center py-16 text-sm text-slate-400">Chưa có hợp đồng ký gửi nào.</td></tr>
-                            ) : agreements.map(row => {
-                                const st = STATUS_MAP[row.status] ?? STATUS_MAP.ACTIVE
-                                return (
-                                    <tr
-                                        key={row.id}
-                                        className="cursor-pointer hover:bg-slate-100"
-                                        style={{ borderBottom: '1px solid #E2E8F0' }}
-                                        onClick={() => setSelectedAgreement(row)}
-                                    >
-                                        <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: '#0891B2' }}>
-                                            CSG-{row.id.slice(-6).toUpperCase()}
-                                        </td>
-                                        <td className="px-3 py-2.5 text-xs font-semibold" style={{ color: '#0F172A' }}>{row.customerName}</td>
-                                        <td className="px-3 py-2.5">
-                                            <span className="inline-block text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: st.bg, color: st.color }}>
-                                                {st.label}
-                                            </span>
-                                        </td>
-                                        <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>
-                                            {FREQ_LABEL[row.reportFrequency] ?? row.reportFrequency}
-                                        </td>
-                                        <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: '#B45309' }}>
-                                            {row.stockCount}
-                                        </td>
-                                        <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: '#0F172A' }}>
-                                            {row.totalQty.toLocaleString('vi-VN')}
-                                        </td>
-                                        <td className="px-3 py-2.5 text-xs text-slate-400">
-                                            {new Date(row.startDate).toLocaleDateString('vi-VN')} — {new Date(row.endDate).toLocaleDateString('vi-VN')}
-                                        </td>
-                                        <td className="px-3 py-2.5">
-                                            <ChevronRight size={14} style={{ color: '#64748B' }} />
-                                        </td>
-                                    </tr>
-                                )
-                            })}
-                        </tbody>
-                    </table>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left min-w-[700px]" style={{ borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
+                                    {['Mã HĐ', 'Khách Hàng', 'Trạng Thái', 'Tần Suất BC', 'SKU Gửi', 'Tổng Chai', 'Thời Hạn', ''].map(h => (
+                                        <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#475569' }}>{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {agreements.length === 0 ? (
+                                    <tr><td colSpan={8} className="text-center py-16 text-sm text-slate-400">Chưa có hợp đồng ký gửi nào.</td></tr>
+                                ) : agreements.map(row => {
+                                    const st = STATUS_MAP[row.status] ?? STATUS_MAP.ACTIVE
+                                    return (
+                                        <tr
+                                            key={row.id}
+                                            className="cursor-pointer hover:bg-slate-100"
+                                            style={{ borderBottom: '1px solid #E2E8F0' }}
+                                            onClick={() => setSelectedAgreement(row)}
+                                        >
+                                            <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: '#0891B2' }}>
+                                                CSG-{row.id.slice(-6).toUpperCase()}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-xs font-semibold" style={{ color: '#0F172A' }}>{row.customerName}</td>
+                                            <td className="px-3 py-2.5">
+                                                <span className="inline-block text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: st.bg, color: st.color }}>
+                                                    {st.label}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>
+                                                {FREQ_LABEL[row.reportFrequency] ?? row.reportFrequency}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: '#B45309' }}>
+                                                {row.stockCount}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: '#0F172A' }}>
+                                                {row.totalQty.toLocaleString('vi-VN')}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-xs text-slate-400">
+                                                {new Date(row.startDate).toLocaleDateString('vi-VN')} — {new Date(row.endDate).toLocaleDateString('vi-VN')}
+                                            </td>
+                                            <td className="px-3 py-2.5">
+                                                <ChevronRight size={14} style={{ color: '#64748B' }} />
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 
@@ -1396,7 +1398,7 @@ function CreateDrawer({ open, onClose, onCreated }: {
                             {Object.entries(FREQ_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                         </select>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className="block font-semibold mb-1 text-slate-700">Ngày Bắt Đầu *</label>
                             <input
