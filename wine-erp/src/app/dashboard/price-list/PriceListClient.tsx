@@ -3,32 +3,24 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { Plus, Tag, Search, Trash2, DollarSign, Package, Settings, Pencil, Check, X } from 'lucide-react'
 import { PriceListRow, getPriceLists, getPriceListDetail, createPriceList, upsertPriceListLine, removePriceListLine, getProductsForPriceList, deletePriceList } from './actions'
-import { formatVND, cn } from '@/lib/utils'
+import { cn } from '@/lib/utils'
+import { useAppLocale } from '@/lib/i18n'
+import { getPriceListI18n } from './i18n'
 import type { Tone } from '@/lib/ui/status'
 import {
     Badge, Button, PageHeader, StatusTabs, Drawer, Modal, EmptyState, Skeleton,
-    Field, Input, Select, Table, THead, TBody, Tr, Th, Td, TableMessageRow, useConfirmDialog,
+    Field, Input, Select, SearchInput, Table, THead, TBody, Tr, Th, Td, TableMessageRow, useConfirmDialog,
 } from '@/components/ui'
 import { toast } from 'sonner'
 import { CustomerRulesTab } from './CustomerRulesTab'
 import { ChannelMappingTab } from './ChannelMappingTab'
 
-const CHANNEL_CFG: Record<string, { label: string; tone: Tone }> = {
-    HORECA: { label: 'HORECA', tone: 'warning' },
-    WHOLESALE_DISTRIBUTOR: { label: 'Đại Lý', tone: 'brand' },
-    VIP_RETAIL: { label: 'VIP Retail', tone: 'info' },
-    DIRECT_INDIVIDUAL: { label: 'Trực Tiếp', tone: 'neutral' },
+const CHANNEL_TONES: Record<string, Tone> = {
+    HORECA: 'warning',
+    WHOLESALE_DISTRIBUTOR: 'brand',
+    VIP_RETAIL: 'info',
+    DIRECT_INDIVIDUAL: 'neutral',
 }
-
-function ChannelBadge({ channel }: { channel: string }) {
-    const cfg = CHANNEL_CFG[channel] ?? { label: channel, tone: 'neutral' as Tone }
-    return <Badge tone={cfg.tone}>{cfg.label}</Badge>
-}
-
-const TAB_DESCRIPTION = {
-    general: 'Quản lý bảng giá niêm yết theo kênh bán hàng (HORECA, Đại Lý, VIP, Trực Tiếp)',
-    customer: 'Quản lý chiết khấu mặc định toàn kho và danh mục giá thỏa thuận riêng của từng khách hàng',
-} as const
 
 interface Props {
     initialLists: PriceListRow[]
@@ -42,6 +34,9 @@ interface Props {
 }
 
 export function PriceListClient({ initialLists, currentUser }: Props) {
+    const { locale, formatCurrency, formatDate } = useAppLocale()
+    const i18n = getPriceListI18n(locale)
+
     const [activeTab, setActiveTab] = useState<'general' | 'customer'>('general')
     const [lists, setLists] = useState(initialLists)
     const { confirm, dialog: confirmDialog } = useConfirmDialog()
@@ -71,6 +66,19 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
     const [addPrice, setAddPrice] = useState('')
     const [addSearch, setAddSearch] = useState('')
 
+    const channelOptions = useMemo(() => ([
+        { key: 'HORECA', label: i18n.channels.HORECA, tone: CHANNEL_TONES.HORECA },
+        { key: 'WHOLESALE_DISTRIBUTOR', label: i18n.channels.WHOLESALE_DISTRIBUTOR, tone: CHANNEL_TONES.WHOLESALE_DISTRIBUTOR },
+        { key: 'VIP_RETAIL', label: i18n.channels.VIP_RETAIL, tone: CHANNEL_TONES.VIP_RETAIL },
+        { key: 'DIRECT_INDIVIDUAL', label: i18n.channels.DIRECT_INDIVIDUAL, tone: CHANNEL_TONES.DIRECT_INDIVIDUAL },
+    ]), [i18n])
+
+    const renderChannelBadge = (channel: string) => {
+        const label = (i18n.channels as Record<string, string>)[channel] ?? channel
+        const tone = CHANNEL_TONES[channel] ?? 'neutral'
+        return <Badge tone={tone}>{label}</Badge>
+    }
+
     const reload = useCallback(async () => {
         const data = await getPriceLists()
         setLists(data)
@@ -85,7 +93,6 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
         setDetailLoading(false)
     }, [])
 
-    // Auto-select first price list on initial load so right panel is immediately useful
     useEffect(() => {
         if (initialLists.length > 0 && !selectedId) {
             loadDetail(initialLists[0].id)
@@ -105,11 +112,11 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
             setCreateOpen(false)
             setFormName('')
             setFormExpiry('')
-            toast.success('Đã tạo bảng giá mới')
+            toast.success(i18n.general.toastCreated)
             await reload()
             if (res.id) loadDetail(res.id)
         } else {
-            toast.error('Lỗi: ' + res.error)
+            toast.error(i18n.general.errorPrefix + res.error)
         }
         setSaving(false)
     }
@@ -123,7 +130,7 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
             unitPrice: Number(addPrice),
         })
         if (res.success) {
-            toast.success('Đã cập nhật giá sản phẩm')
+            toast.success(i18n.general.toastUpdatedProduct)
             setAddProductId('')
             setAddPrice('')
             setAddSearch('')
@@ -131,7 +138,7 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
             await loadDetail(selectedId)
             await reload()
         } else {
-            toast.error('Lỗi: ' + res.error)
+            toast.error(i18n.general.errorPrefix + res.error)
         }
         setSaving(false)
     }
@@ -145,11 +152,11 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
             unitPrice: Number(editingPrice),
         })
         if (res.success) {
-            toast.success('Đã lưu giá bán mới')
+            toast.success(i18n.general.toastSavedInline)
             setEditingLineId(null)
             await loadDetail(selectedId)
         } else {
-            toast.error('Lỗi cập nhật giá: ' + res.error)
+            toast.error(i18n.general.errorUpdatePrice + res.error)
         }
         setInlineSaving(false)
     }
@@ -157,10 +164,10 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
     const handleRemoveLine = (lineId: string) => {
         if (!selectedId) return
         confirm({
-            title: 'Xóa Dòng Giá',
-            message: 'Bạn có chắc chắn muốn xóa dòng giá sản phẩm này khỏi bảng giá không?',
-            confirmLabel: 'Xóa Dòng',
-            cancelLabel: 'Bỏ qua',
+            title: i18n.general.deleteLineTitle,
+            message: i18n.general.deleteLineMsg,
+            confirmLabel: i18n.general.deleteLineConfirm,
+            cancelLabel: i18n.general.cancel,
             danger: true,
             onConfirm: async () => {
                 await removePriceListLine(lineId)
@@ -172,10 +179,10 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
 
     const handleDelete = (id: string) => {
         confirm({
-            title: 'Xóa Bảng Giá',
-            message: 'Bạn có chắc chắn muốn xóa bảng giá này và tất cả các dòng giá bên trong? Thao tác không thể hoàn tác.',
-            confirmLabel: 'Xóa Bảng Giá',
-            cancelLabel: 'Bỏ qua',
+            title: i18n.general.deletePriceListTitle,
+            message: i18n.general.deletePriceListMsg,
+            confirmLabel: i18n.general.deletePriceListConfirm,
+            cancelLabel: i18n.general.cancel,
             danger: true,
             onConfirm: async () => {
                 await deletePriceList(id)
@@ -215,14 +222,14 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
     return (
         <div className="flex flex-col gap-4 max-w-screen-2xl">
             <PageHeader
-                description={TAB_DESCRIPTION[activeTab]}
+                description={activeTab === 'general' ? i18n.tabs.descGeneral : i18n.tabs.descCustomer}
                 actions={activeTab === 'general' && (
                     <div className="flex items-center gap-2">
                         <Button variant="secondary" onClick={() => setMappingOpen(true)}>
-                            <Settings size={15} aria-hidden /> Cấu Hình Kênh Giá
+                            <Settings size={15} aria-hidden /> {i18n.general.configureChannels}
                         </Button>
                         <Button onClick={() => setCreateOpen(true)}>
-                            <Plus size={16} aria-hidden /> Tạo Bảng Giá
+                            <Plus size={16} aria-hidden /> {i18n.general.createPriceList}
                         </Button>
                     </div>
                 )}
@@ -232,8 +239,8 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                 value={activeTab}
                 onChange={setActiveTab}
                 items={[
-                    { value: 'general', label: 'Bảng Giá Niêm Yết (Theo Kênh)', count: lists.length },
-                    { value: 'customer', label: 'Giá & Chiết Khấu Theo Khách Hàng' },
+                    { value: 'general', label: i18n.tabs.general, count: lists.length },
+                    { value: 'customer', label: i18n.tabs.customer },
                 ]}
             />
 
@@ -245,11 +252,11 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                     <section className="lg:col-span-4 flex flex-col gap-2">
                         <div className="flex items-center justify-between px-1">
                             <h3 className="text-xs font-bold uppercase tracking-wider text-lys-secondary">
-                                Danh sách bảng giá ({lists.length})
+                                {i18n.general.listTitle} ({lists.length})
                             </h3>
                         </div>
                         {lists.length === 0 ? (
-                            <EmptyState icon={Tag} title="Chưa có bảng giá nào" className="bg-white border border-lys-border rounded-md" />
+                            <EmptyState icon={Tag} title={i18n.general.emptyLists} className="bg-white border border-lys-border rounded-md" />
                         ) : lists.map(pl => {
                             const isSelected = selectedId === pl.id
                             return (
@@ -270,19 +277,19 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                         <p className={cn('text-sm font-semibold', isSelected ? 'text-lys-teal-strong' : 'text-lys-primary')}>
                                             {pl.name}
                                         </p>
-                                        <ChannelBadge channel={pl.channel} />
+                                        {renderChannelBadge(pl.channel)}
                                     </div>
                                     <div className="flex items-center justify-between type-caption">
                                         <span>
-                                            <strong className="text-lys-primary">{pl.itemCount}</strong> SKU · Từ {new Date(pl.effectiveDate).toLocaleDateString('vi-VN')}
+                                            <strong className="text-lys-primary">{pl.itemCount}</strong> {i18n.general.skuFrom} {formatDate(pl.effectiveDate)}
                                         </span>
                                         <Button
                                             variant="ghost"
                                             size="sm"
                                             className="h-7 w-7 p-0 text-tone-danger-fg hover:bg-tone-danger-bg hover:text-tone-danger-fg"
                                             onClick={e => { e.stopPropagation(); handleDelete(pl.id) }}
-                                            aria-label="Xóa bảng giá"
-                                            title="Xóa bảng giá"
+                                            aria-label={i18n.general.deletePriceListTitle}
+                                            title={i18n.general.deletePriceListTitle}
                                         >
                                             <Trash2 size={13} aria-hidden />
                                         </Button>
@@ -300,7 +307,7 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                 <Skeleton className="h-72" />
                             </div>
                         ) : !selectedId ? (
-                            <EmptyState icon={DollarSign} title="Chọn bảng giá bên trái để xem chi tiết" className="bg-white border border-lys-border rounded-lg py-20" />
+                            <EmptyState icon={DollarSign} title={i18n.general.selectPrompt} className="bg-white border border-lys-border rounded-lg py-20" />
                         ) : detail ? (
                             <div className="flex flex-col gap-3 bg-white border border-lys-border rounded-lg overflow-hidden shadow-xs">
                                 {/* Detail Header & Toolbar */}
@@ -308,41 +315,38 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                     <div>
                                         <div className="flex items-center gap-2.5 flex-wrap">
                                             <h3 className="text-base font-bold text-lys-primary">{detail.name}</h3>
-                                            <ChannelBadge channel={detail.channel} />
+                                            {renderChannelBadge(detail.channel)}
                                         </div>
                                         <p className="type-caption mt-1">
-                                            Hiệu lực: {new Date(detail.effectiveDate).toLocaleDateString('vi-VN')}
-                                            {detail.expiryDate ? ` → ${new Date(detail.expiryDate).toLocaleDateString('vi-VN')}` : ' (Không thời hạn)'}
-                                            {' · '}Tổng cộng <strong>{detail.lines.length}</strong> sản phẩm
+                                            {i18n.general.effectiveLabel} {formatDate(detail.effectiveDate)}
+                                            {detail.expiryDate ? ` → ${formatDate(detail.expiryDate)}` : ` ${i18n.general.noExpiry}`}
+                                            {' · '}{i18n.general.totalProducts} <strong>{detail.lines.length}</strong> {i18n.general.productsUnit}
                                         </p>
                                     </div>
 
                                     <div className="flex items-center gap-2">
-                                        <div className="relative w-full sm:w-56">
-                                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-lys-muted" aria-hidden />
-                                            <Input
-                                                value={lineSearch}
-                                                onChange={e => setLineSearch(e.target.value)}
-                                                placeholder="Tìm SKU hoặc tên rượu..."
-                                                className="pl-8 h-8 text-xs"
-                                                aria-label="Tìm sản phẩm trong bảng giá"
-                                            />
-                                        </div>
+                                        <SearchInput
+                                            value={lineSearch}
+                                            onChange={e => setLineSearch(e.target.value)}
+                                            placeholder={i18n.general.searchSkuPlaceholder}
+                                            aria-label={i18n.general.searchSkuAria}
+                                            className="w-full sm:w-56"
+                                        />
                                         <Button size="sm" onClick={openAddProduct} className="shrink-0">
-                                            <Plus size={14} aria-hidden /> Thêm SKU
+                                            <Plus size={14} aria-hidden /> {i18n.general.addSkuBtn}
                                         </Button>
                                     </div>
                                 </div>
 
-                                {/* SKU Table */}
-                                <div className="overflow-x-auto">
+                                {/* Desktop SKU Table */}
+                                <div className="hidden md:block overflow-x-auto">
                                     <Table>
                                         <THead>
                                             <tr>
-                                                <Th className="w-36">Mã SKU</Th>
-                                                <Th>Tên Sản Phẩm</Th>
-                                                <Th align="right" className="w-48">Giá Niêm Yết (VND)</Th>
-                                                <Th align="right" className="w-24">Thao Tác</Th>
+                                                <Th className="w-36">{i18n.general.colSku}</Th>
+                                                <Th>{i18n.general.colProductName}</Th>
+                                                <Th align="right" className="w-48">{i18n.general.colListPrice}</Th>
+                                                <Th align="right" className="w-24">{i18n.general.colActions}</Th>
                                             </tr>
                                         </THead>
                                         <TBody>
@@ -350,8 +354,8 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                                 <TableMessageRow colSpan={4}>
                                                     <EmptyState
                                                         icon={Package}
-                                                        title={lineSearch ? 'Không tìm thấy sản phẩm phù hợp' : 'Chưa có sản phẩm trong bảng giá'}
-                                                        description={lineSearch ? 'Thử từ khóa SKU hoặc tên rượu khác.' : 'Bấm "Thêm SKU" ở góc phải để thêm sản phẩm vào bảng giá.'}
+                                                        title={lineSearch ? i18n.general.emptySearchTitle : i18n.general.emptyLinesTitle}
+                                                        description={lineSearch ? i18n.general.emptySearchDesc : i18n.general.emptyLinesDesc}
                                                     />
                                                 </TableMessageRow>
                                             ) : filteredDetailLines.map(line => {
@@ -379,7 +383,7 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                                                         disabled={inlineSaving}
                                                                         onClick={() => handleSaveInlinePrice(line.productId)}
                                                                         className="p-1 rounded bg-emerald-600 text-white hover:bg-emerald-700"
-                                                                        title="Lưu giá"
+                                                                        title={i18n.general.savePrice}
                                                                     >
                                                                         <Check size={13} />
                                                                     </button>
@@ -387,7 +391,7 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                                                         type="button"
                                                                         onClick={() => setEditingLineId(null)}
                                                                         className="p-1 rounded bg-slate-100 text-slate-600 hover:bg-slate-200"
-                                                                        title="Hủy"
+                                                                        title={i18n.general.cancelBtn}
                                                                     >
                                                                         <X size={13} />
                                                                     </button>
@@ -400,9 +404,9 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                                                         setEditingPrice(String(line.unitPrice))
                                                                     }}
                                                                     className="inline-flex items-center gap-1.5 type-number font-bold text-lys-primary hover:text-[#0891B2] transition-colors"
-                                                                    title="Bấm để sửa nhanh giá bán"
+                                                                    title={i18n.general.clickToQuickEdit}
                                                                 >
-                                                                    <span>{formatVND(line.unitPrice)}</span>
+                                                                    <span>{formatCurrency(line.unitPrice)}</span>
                                                                     <Pencil size={12} className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-[#0891B2] transition-opacity" />
                                                                 </button>
                                                             )}
@@ -418,8 +422,8 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                                                             setEditingLineId(line.id)
                                                                             setEditingPrice(String(line.unitPrice))
                                                                         }}
-                                                                        aria-label="Sửa giá"
-                                                                        title="Sửa giá"
+                                                                        aria-label={i18n.general.editPrice}
+                                                                        title={i18n.general.editPrice}
                                                                     >
                                                                         <Pencil size={13} aria-hidden />
                                                                     </Button>
@@ -429,8 +433,8 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                                                     size="sm"
                                                                     className="h-7 w-7 p-0 text-tone-danger-fg hover:bg-tone-danger-bg hover:text-tone-danger-fg"
                                                                     onClick={() => handleRemoveLine(line.id)}
-                                                                    aria-label="Xóa dòng giá"
-                                                                    title="Xóa khỏi bảng giá"
+                                                                    aria-label={i18n.general.deleteLineTitle}
+                                                                    title={i18n.general.removeFromList}
                                                                 >
                                                                     <Trash2 size={13} aria-hidden />
                                                                 </Button>
@@ -442,17 +446,112 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                         </TBody>
                                     </Table>
                                 </div>
+
+                                {/* Mobile Card View (<768px) */}
+                                <div className="block md:hidden divide-y divide-slate-200">
+                                    {filteredDetailLines.length === 0 ? (
+                                        <div className="p-6">
+                                            <EmptyState
+                                                icon={Package}
+                                                title={lineSearch ? i18n.general.emptySearchTitle : i18n.general.emptyLinesTitle}
+                                                description={lineSearch ? i18n.general.emptySearchDesc : i18n.general.emptyLinesDesc}
+                                            />
+                                        </div>
+                                    ) : filteredDetailLines.map(line => {
+                                        const isEditing = editingLineId === line.id
+                                        return (
+                                            <div key={line.id} className="p-3.5 flex flex-col gap-2 bg-white">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="min-w-0">
+                                                        <span className="font-mono text-xs font-bold text-lys-teal-strong block">{line.skuCode}</span>
+                                                        <p className="text-sm font-medium text-slate-900 leading-snug">{line.productName}</p>
+                                                    </div>
+                                                    <div className="flex items-center gap-1 shrink-0">
+                                                        {!isEditing && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-7 w-7 p-0 text-slate-500 hover:text-[#0891B2]"
+                                                                onClick={() => {
+                                                                    setEditingLineId(line.id)
+                                                                    setEditingPrice(String(line.unitPrice))
+                                                                }}
+                                                                aria-label={i18n.general.editPrice}
+                                                            >
+                                                                <Pencil size={13} aria-hidden />
+                                                            </Button>
+                                                        )}
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-7 w-7 p-0 text-tone-danger-fg hover:bg-tone-danger-bg"
+                                                            onClick={() => handleRemoveLine(line.id)}
+                                                            aria-label={i18n.general.deleteLineTitle}
+                                                        >
+                                                            <Trash2 size={13} aria-hidden />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center justify-between pt-1.5 border-t border-slate-100">
+                                                    <span className="text-xs text-slate-500">{i18n.general.colListPrice}</span>
+                                                    {isEditing ? (
+                                                        <div className="flex items-center gap-1">
+                                                            <input
+                                                                type="number"
+                                                                value={editingPrice}
+                                                                onChange={e => setEditingPrice(e.target.value)}
+                                                                onKeyDown={e => {
+                                                                    if (e.key === 'Enter') handleSaveInlinePrice(line.productId)
+                                                                    if (e.key === 'Escape') setEditingLineId(null)
+                                                                }}
+                                                                autoFocus
+                                                                className="w-28 px-2 py-1 text-right text-xs font-mono font-bold border border-[#0891B2] rounded bg-white text-slate-900 outline-none"
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                disabled={inlineSaving}
+                                                                onClick={() => handleSaveInlinePrice(line.productId)}
+                                                                className="p-1 rounded bg-emerald-600 text-white hover:bg-emerald-700"
+                                                            >
+                                                                <Check size={13} />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setEditingLineId(null)}
+                                                                className="p-1 rounded bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                                            >
+                                                                <X size={13} />
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setEditingLineId(line.id)
+                                                                setEditingPrice(String(line.unitPrice))
+                                                            }}
+                                                            className="type-number font-bold text-sm text-slate-900 hover:text-[#0891B2]"
+                                                        >
+                                                            {formatCurrency(line.unitPrice)}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
                             </div>
                         ) : null}
                     </section>
                 </div>
             )}
 
-            {/* Modal: Cấu Hình Ánh Xạ Kênh Giá Mặc Định */}
+            {/* Modal: Default Channel Price List Mapping */}
             <Modal
                 open={mappingOpen}
                 onClose={() => setMappingOpen(false)}
-                title="Cấu Hình Ánh Xạ Kênh Giá Mặc Định"
+                title={i18n.mapping.modalTitle}
             >
                 <ChannelMappingTab currentUser={currentUser} onSaved={() => setMappingOpen(false)} />
             </Modal>
@@ -460,31 +559,31 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
             <Drawer
                 open={createOpen}
                 onClose={() => setCreateOpen(false)}
-                title="Tạo Bảng Giá Mới"
+                title={i18n.general.createModalTitle}
                 size="sm"
                 footer={
                     <>
-                        <Button variant="secondary" onClick={() => setCreateOpen(false)}>Hủy</Button>
-                        <Button onClick={handleCreate} loading={saving} disabled={saving || !formName.trim()}>Tạo Bảng Giá</Button>
+                        <Button variant="secondary" onClick={() => setCreateOpen(false)}>{i18n.general.cancelBtn}</Button>
+                        <Button onClick={handleCreate} loading={saving} disabled={saving || !formName.trim()}>{i18n.general.createPriceList}</Button>
                     </>
                 }
             >
                 <div className="flex flex-col gap-4">
-                    <Field label="Tên Bảng Giá" required>
-                        {id => <Input id={id} value={formName} onChange={e => setFormName(e.target.value)} placeholder="VD: Bảng giá HORECA Q1/2026" />}
+                    <Field label={i18n.general.fieldListName} required>
+                        {id => <Input id={id} value={formName} onChange={e => setFormName(e.target.value)} placeholder={i18n.general.placeholderListName} />}
                     </Field>
-                    <Field label="Kênh Bán Hàng">
+                    <Field label={i18n.general.fieldSalesChannel}>
                         {id => (
                             <Select id={id} value={formChannel} onChange={e => setFormChannel(e.target.value)}>
-                                {Object.entries(CHANNEL_CFG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                                {channelOptions.map(opt => <option key={opt.key} value={opt.key}>{opt.label}</option>)}
                             </Select>
                         )}
                     </Field>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <Field label="Ngày Hiệu Lực">
+                        <Field label={i18n.general.fieldEffectiveDate}>
                             {id => <Input id={id} type="date" value={formEffective} onChange={e => setFormEffective(e.target.value)} />}
                         </Field>
-                        <Field label="Ngày Hết Hạn">
+                        <Field label={i18n.general.fieldExpiryDate}>
                             {id => <Input id={id} type="date" value={formExpiry} onChange={e => setFormExpiry(e.target.value)} />}
                         </Field>
                     </div>
@@ -494,18 +593,18 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
             <Modal
                 open={addProductOpen}
                 onClose={() => setAddProductOpen(false)}
-                title="Thêm Sản Phẩm vào Bảng Giá"
+                title={i18n.general.addProductModalTitle}
                 footer={
                     <>
-                        <Button variant="secondary" onClick={() => setAddProductOpen(false)}>Hủy</Button>
-                        <Button onClick={handleAddProduct} loading={saving} disabled={saving || !addProductId || !addPrice}>Lưu Giá</Button>
+                        <Button variant="secondary" onClick={() => setAddProductOpen(false)}>{i18n.general.cancelBtn}</Button>
+                        <Button onClick={handleAddProduct} loading={saving} disabled={saving || !addProductId || !addPrice}>{i18n.general.savePriceBtn}</Button>
                     </>
                 }
             >
                 <div className="flex flex-col gap-3">
                     <div className="relative">
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-lys-muted" aria-hidden />
-                        <Input value={addSearch} onChange={e => setAddSearch(e.target.value)} placeholder="Tìm SKU hoặc tên sản phẩm..." className="pl-9" aria-label="Tìm sản phẩm" />
+                        <Input value={addSearch} onChange={e => setAddSearch(e.target.value)} placeholder={i18n.general.searchProductPlaceholder} className="pl-9" aria-label={i18n.general.searchProductPlaceholder} />
                     </div>
                     <div className="max-h-48 overflow-y-auto rounded-md p-1 bg-white border border-lys-border">
                         {filteredProducts.slice(0, 20).map(p => (
@@ -523,11 +622,11 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                             </button>
                         ))}
                         {filteredProducts.length === 0 && (
-                            <p className="text-center py-4 type-caption">Không tìm thấy sản phẩm</p>
+                            <p className="text-center py-4 type-caption">{i18n.general.noProductsFound}</p>
                         )}
                     </div>
-                    <Field label="Giá Bán (VND)" required>
-                        {id => <Input id={id} type="number" value={addPrice} onChange={e => setAddPrice(e.target.value)} placeholder="VD: 1500000" className="type-number" />}
+                    <Field label={i18n.general.fieldUnitPrice} required>
+                        {id => <Input id={id} type="number" value={addPrice} onChange={e => setAddPrice(e.target.value)} placeholder={i18n.general.placeholderUnitPrice} className="type-number" />}
                     </Field>
                 </div>
             </Modal>
@@ -535,4 +634,3 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
         </div>
     )
 }
-

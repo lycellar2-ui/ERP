@@ -687,5 +687,15 @@ Triển khai hoàn tất Phase 2 theo kế hoạch chuẩn hóa song ngữ toàn
 | **Tìm Kiếm Nhanh & Sửa Giá Trực Tiếp Trên Dòng (Inline Price Edit)** | `PriceListClient.tsx` | Loại bỏ 4 thẻ đếm số lượng bảng giá dư thừa ở đầu trang; tự động mở bảng giá đầu tiên khi vào trang; bổ sung ô tìm kiếm SKU/Tên rượu ngay trong bảng chi tiết giá và cho phép bấm trực tiếp vào đơn giá để sửa nhanh trên dòng (`Enter` để lưu). |
 | **Thanh Lọc Tích Hợp KPI & All-in-One Customer Pricing Drawer** | `CustomerRulesTab.tsx` | Loại bỏ tab con lồng trong tab cha và hợp nhất 4 thẻ KPI vào các nút lọc nhanh (`Tất cả khách hàng`, `Có giá riêng theo chai`, `Chiết khấu mặc định`, `Chờ duyệt`). Làm sạch các nút chồng chéo trên từng dòng khách hàng (`Đổi`, `Xem Giá Riêng`, `+ Deal`), gom toàn bộ thao tác đổi cơ chế mặc định toàn kho và thêm/sao chép giá riêng theo chai vào chung một Drawer cấu hình duy nhất. |
 
-*Last updated: 2026-10-18 16:45 | Wine ERP v11.4*
+#### Session 19 — Kiến Trúc Thang Giá 4 Tầng (4-Level Pricing Hierarchy) & Tách Biệt Luồng Duyệt Cơ Chế Giá Toàn Kho (Level 2) (18/10/2026)
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **Thang Ưu Tiên Giá 4 Tầng (`Level 4 -> 3 -> 2 -> 1`)** | `customer-rules-actions.ts:resolveCustomerProductPrice`, `getCustomerResolvedPrices` | Định chuẩn thứ tự ưu tiên giải quyết giá tự động:<br>• **Level 4 (Cao nhất)**: CTKM Chiến dịch (`PROMOTION_CAMPAIGN`).<br>• **Level 3**: Giá đặc biệt theo từng SKU (`CustomerPriceRule`: `SPECIAL_PRICE`, `FIXED_PRICE`, `FIXED_DISCOUNT`).<br>• **Level 2**: Cơ chế giá toàn kho của khách hàng (giảm `%` toàn bộ mã hàng + bảng giá gốc `basePriceType`).<br>• **Level 1 (Nền)**: Giá niêm yết theo kênh (`CHANNEL_BASE` / `RETAIL_FALLBACK`). |
+| **Tách Biệt Luồng Duyệt 3 Cấp Cho Cơ Chế Giá Toàn Kho (Level 2)** | `customer-rules-actions.ts:submitCustomerPricingPolicyL2`, `approveCustomerPricingPolicyL2`, `rejectCustomerPricingPolicyL2`, `proposals/actions.ts:syncProposalToCustomerPriceRules` | Tách hoàn toàn Cơ chế giá giảm % toàn kho (Level 2) khỏi Giá đặc biệt theo SKU (Level 3). Mọi đề xuất thay đổi Cơ chế giá Level 2 tự động khởi tạo Tờ trình `PRICE_ADJUSTMENT` đi qua đúng 3 cấp phê duyệt bắt buộc (`TP.KD -> Kế toán -> CEO`) và không còn nhân bản hàng trăm dòng `FIXED_DISCOUNT` vào bảng Level 3. |
+| **Thời Hạn Hiệu Lực (`startDate` - `endDate`) & Kế Thừa Công Ty Mẹ -> Chi Nhánh Con** | `customer-rules-actions.ts:resolveEffectiveLevel2Policy`, `proposals/actions.ts` | Lưu trữ cấu hình Level 2 kèm thời hạn hiệu lực tại `ApprovalConfig` (`pricing.policy_l2.<customerId>`). Khi hết hạn `endDate`, hệ thống tự động hạ về Level 1 (Giá theo kênh). Nếu chi nhánh con (`parentId`) chưa có cơ chế Level 2 riêng đang hiệu lực, hệ thống tự động kế thừa cơ chế Level 2 đang hiệu lực từ Công ty mẹ. |
+| **Zero-Downtime Active Policy (Bảo Toàn Giá Cũ Khi Chờ Duyệt)** | `customer-rules-actions.ts`, `CustomerRulesTab.tsx` | Khi khách hàng đang có cơ chế Level 2 đã duyệt (VD: giảm 5%) và Sales trình đề xuất mới (VD: giảm 10%), hệ thống giữ nguyên mức 5% đang hiệu lực cho mọi đơn hàng/báo giá cho đến khi tờ trình mới hoàn tất đủ 3 bước duyệt của CEO. |
+
+*Last updated: 2026-10-18 21:40 | Wine ERP v11.5*
+
 

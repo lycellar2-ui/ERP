@@ -218,7 +218,8 @@ Hệ thống hỗ trợ **cấu hình hoàn toàn động** tại trang **Ma Tr�
 | Tờ trình song ngữ (Form + Mẫu in Tasting & Cơ chế giá + Bộ chọn ngôn ngữ) | ✅ Hoàn thành (03/10/2026) |
 | Chuyển đổi ngôn ngữ giao diện VI / EN (Sidebar + Proposals List + Form + Detail + Title Splitting) | ✅ Hoàn thành (04/10/2026) |
 | Tờ trình CTKM 1 mã (Mua X tặng Y, Kênh bán buôn/DN/bán lẻ/Horeca, Quota, Gợi ý quà tặng SO) | ✅ Hoàn thành (09/10/2026) |
+| Đồng bộ Tờ trình Cơ chế giá (`PRICE_ADJUSTMENT`) chuẩn Thang Giá 4 Tầng: Tách biệt Level 2 (Giảm % toàn kho + Thời hạn hiệu lực + Kế thừa Công ty mẹ -> Chi nhánh con qua `ApprovalConfig`) và Level 3 (Giá đặc biệt theo từng SKU qua `CustomerPriceRule`) | ✅ Hoàn thành (18/10/2026) |
 
 ---
 
-*Last updated: 2026-10-09 22:30 | Wine ERP v10.9*
+*Last updated: 2026-10-18 21:40 | Wine ERP v11.5*

@@ -3,7 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { logAudit } from '@/lib/audit'
-import { requireAuth, requirePermission, getCurrentUser } from '@/lib/session'
+import { requireAuth, requirePermission, getCurrentUser, hasRole, hasPermission } from '@/lib/session'
 import { cached, revalidateCache } from '@/lib/cache'
 
 export type PriceRuleRow = {
@@ -342,13 +342,186 @@ export async function deleteCustomerPriceRule(id: string): Promise<{ success: bo
     }
 }
 
-// ─── CORE PRICE RESOLUTION ENGINE ────────────────
+// ─── LEVEL 2 POLICY CONFIGURATION & RESOLUTION ───
+export type Level2PolicyConfig = {
+    customerId: string
+    basePriceType: string // 'BY_CHANNEL' | 'WHOLESALE' | 'RETAIL' | 'HORECA'
+    discountPct: number
+    startDate: string | null
+    endDate: string | null
+    proposalId?: string | null
+    proposalNo?: string | null
+    title?: string | null
+    approvedBy?: string | null
+    approvedAt?: string | null
+}
+
+export type EffectiveLevel2Policy = {
+    isActive: boolean
+    isExpired: boolean
+    isInherited: boolean
+    inheritedFromCode: string | null
+    inheritedFromName: string | null
+    basePriceType: string
+    discountPct: number
+    startDate: Date | null
+    endDate: Date | null
+    proposalNo: string | null
+}
+
+export async function getLevel2PolicyMap(): Promise<Record<string, Level2PolicyConfig>> {
+    const configs = await prisma.approvalConfig.findMany({
+        where: { configKey: { startsWith: 'pricing.policy_l2.' } },
+    })
+    const map: Record<string, Level2PolicyConfig> = {}
+    for (const c of configs) {
+        const custId = c.configKey.replace('pricing.policy_l2.', '')
+        if (c.value && typeof c.value === 'object') {
+            const val = c.value as any
+            map[custId] = {
+                customerId: custId,
+                basePriceType: val.basePriceType || 'BY_CHANNEL',
+                discountPct: Number(val.discountPct ?? 0),
+                startDate: val.startDate ?? null,
+                endDate: val.endDate ?? null,
+                proposalId: val.proposalId ?? null,
+                proposalNo: val.proposalNo ?? null,
+                title: val.title ?? null,
+                approvedBy: val.approvedBy ?? null,
+                approvedAt: val.approvedAt ?? null,
+            }
+        }
+    }
+    return map
+}
+
+function evaluateSingleCustomerL2(
+    custId: string,
+    dbBasePriceType: string | null | undefined,
+    dbDiscountPct: any,
+    policyMap: Record<string, Level2PolicyConfig>,
+    now: Date
+): Omit<EffectiveLevel2Policy, 'isInherited' | 'inheritedFromCode' | 'inheritedFromName'> {
+    const cfg = policyMap[custId]
+    if (cfg) {
+        const start = cfg.startDate ? new Date(cfg.startDate) : null
+        const end = cfg.endDate ? new Date(cfg.endDate) : null
+        if (end) end.setHours(23, 59, 59, 999)
+
+        const notStarted = Boolean(start && now < start)
+        const isExpired = Boolean(end && now > end)
+
+        if (notStarted || isExpired) {
+            return {
+                isActive: false,
+                isExpired,
+                basePriceType: 'BY_CHANNEL',
+                discountPct: 0,
+                startDate: start,
+                endDate: end,
+                proposalNo: cfg.proposalNo ?? null,
+            }
+        }
+
+        const disc = Number(cfg.discountPct || 0)
+        const base = cfg.basePriceType || 'BY_CHANNEL'
+        return {
+            isActive: disc > 0 || base !== 'BY_CHANNEL',
+            isExpired: false,
+            basePriceType: base,
+            discountPct: disc,
+            startDate: start,
+            endDate: end,
+            proposalNo: cfg.proposalNo ?? null,
+        }
+    }
+
+    // Legacy fallback if customer has defaultDiscountPct/basePriceType in DB without ApprovalConfig entry
+    const disc = Number(dbDiscountPct || 0)
+    const base = dbBasePriceType || 'BY_CHANNEL'
+    return {
+        isActive: disc > 0 || base !== 'BY_CHANNEL',
+        isExpired: false,
+        basePriceType: base,
+        discountPct: disc,
+        startDate: null,
+        endDate: null,
+        proposalNo: null,
+    }
+}
+
+export function resolveEffectiveLevel2Policy(
+    customer: {
+        id: string
+        basePriceType?: string | null
+        defaultDiscountPct?: any
+        parentId?: string | null
+        parent?: {
+            id: string
+            code: string
+            name: string
+            basePriceType?: string | null
+            defaultDiscountPct?: any
+        } | null
+    },
+    policyMap: Record<string, Level2PolicyConfig>,
+    now: Date
+): EffectiveLevel2Policy {
+    const selfEval = evaluateSingleCustomerL2(
+        customer.id,
+        customer.basePriceType,
+        customer.defaultDiscountPct,
+        policyMap,
+        now
+    )
+
+    if (selfEval.isActive) {
+        return {
+            ...selfEval,
+            isInherited: false,
+            inheritedFromCode: null,
+            inheritedFromName: null,
+        }
+    }
+
+    // Inherit from Parent Company if child has no active Level 2 policy
+    if (customer.parent) {
+        const parentEval = evaluateSingleCustomerL2(
+            customer.parent.id,
+            customer.parent.basePriceType,
+            customer.parent.defaultDiscountPct,
+            policyMap,
+            now
+        )
+        if (parentEval.isActive) {
+            return {
+                ...parentEval,
+                isInherited: true,
+                inheritedFromCode: customer.parent.code,
+                inheritedFromName: customer.parent.name,
+            }
+        }
+    }
+
+    return {
+        ...selfEval,
+        isInherited: false,
+        inheritedFromCode: null,
+        inheritedFromName: null,
+    }
+}
+
+// ─── CORE 4-LEVEL PRICE RESOLUTION ENGINE ────────
+// Priority Order: Level 4 (CTKM) > Level 3 (Special SKU Price) > Level 2 (Customer Portfolio Policy) > Level 1 (Channel Base)
+export type PricingLevel = 1 | 2 | 3 | 4
 export type ResolvedPrice = {
     price: number
-    source: 'SPECIAL_PRICE' | 'FIXED_PRICE' | 'FIXED_DISCOUNT' | 'CUSTOMER_DEFAULT_DISCOUNT' | 'CHANNEL_BASE' | 'RETAIL_FALLBACK' | 'DEFAULT_ZERO'
+    level?: PricingLevel
+    source: 'PROMOTION_PRICE' | 'SPECIAL_PRICE' | 'FIXED_PRICE' | 'FIXED_DISCOUNT' | 'CUSTOMER_DEFAULT_DISCOUNT' | 'CHANNEL_BASE' | 'RETAIL_FALLBACK' | 'DEFAULT_ZERO'
     ruleId?: string
     discountPct?: number
     basePrice?: number
+    isInheritedL2?: boolean
 }
 
 export async function resolveCustomerProductPrice(
@@ -357,40 +530,72 @@ export async function resolveCustomerProductPrice(
 ): Promise<ResolvedPrice> {
     const now = new Date()
 
-    // 1. Fallback if no customer (retail mode)
+    // 1. Fallback if no customer (retail mode — Level 1)
     if (!customerId) {
         const retailPrice = await getChannelBasePrice(productId, 'DIRECT_INDIVIDUAL', now)
         if (retailPrice !== null) {
-            return { price: retailPrice, source: 'RETAIL_FALLBACK' }
+            return { price: retailPrice, level: 1, source: 'RETAIL_FALLBACK' }
         }
-        return { price: 0, source: 'DEFAULT_ZERO' }
+        return { price: 0, level: 1, source: 'DEFAULT_ZERO' }
     }
 
-    // 2. Fetch Customer Info
-    const customer = await prisma.customer.findUnique({
-        where: { id: customerId },
-        select: { channel: true, parentId: true, basePriceType: true, defaultDiscountPct: true },
-    })
-    const channel = customer?.channel ?? 'DIRECT_INDIVIDUAL'
-    const defaultDiscountPct = Number(customer?.defaultDiscountPct ?? 0)
+    // 2. Fetch Customer + Parent Info & Level 2 Policy Map
+    const [customer, policyMap] = await Promise.all([
+        prisma.customer.findUnique({
+            where: { id: customerId },
+            select: {
+                id: true,
+                channel: true,
+                parentId: true,
+                basePriceType: true,
+                defaultDiscountPct: true,
+                parent: {
+                    select: {
+                        id: true,
+                        code: true,
+                        name: true,
+                        basePriceType: true,
+                        defaultDiscountPct: true,
+                    },
+                },
+            },
+        }),
+        getLevel2PolicyMap(),
+    ])
 
-    // 3. Load active mappings or customer basePriceType
+    const channel = customer?.channel ?? 'DIRECT_INDIVIDUAL'
+    const effectiveL2 = customer
+        ? resolveEffectiveLevel2Policy(customer, policyMap, now)
+        : {
+              isActive: false,
+              isExpired: false,
+              isInherited: false,
+              inheritedFromCode: null,
+              inheritedFromName: null,
+              basePriceType: 'BY_CHANNEL',
+              discountPct: 0,
+              startDate: null,
+              endDate: null,
+              proposalNo: null,
+          }
+
+    // 3. Determine target base price channel (Level 1 / Level 2 base)
     let targetChannel = 'DIRECT_INDIVIDUAL'
-    if (customer?.basePriceType === 'WHOLESALE') {
+    if (effectiveL2.basePriceType === 'WHOLESALE') {
         targetChannel = 'WHOLESALE_DISTRIBUTOR'
-    } else if (customer?.basePriceType === 'RETAIL') {
+    } else if (effectiveL2.basePriceType === 'RETAIL') {
         targetChannel = 'DIRECT_INDIVIDUAL'
-    } else if (customer?.basePriceType === 'HORECA') {
+    } else if (effectiveL2.basePriceType === 'HORECA') {
         targetChannel = 'HORECA'
     } else {
         const mapping = await getChannelPriceMapping()
         targetChannel = mapping[channel] ?? 'DIRECT_INDIVIDUAL'
     }
 
-    // 4. Fetch base price from price lists
+    // 4. Fetch Level 1 Base Price
     const basePrice = await getChannelBasePrice(productId, targetChannel, now)
 
-    // 5. Look up active approved price rules
+    // 5. Look up Level 3 — Active approved per-SKU price rules (Child overrides Parent)
     const customerWhere = customer?.parentId
         ? { in: [customerId, customer.parentId] }
         : customerId
@@ -409,18 +614,18 @@ export async function resolveCustomerProductPrice(
         orderBy: { createdAt: 'desc' },
     })
 
-    // Filter rules: if the child has any rules, use them. Otherwise, if the parent has rules, use them.
     let rules = allRules
     if (customer?.parentId) {
         const childRules = allRules.filter(r => r.customerId === customerId)
         rules = childRules.length > 0 ? childRules : allRules.filter(r => r.customerId === customer.parentId)
     }
 
-    // Priority 1: SPECIAL_PRICE (Campaign pricing with expiry date)
+    // ── LEVEL 3: Per-Product Special Price (CustomerPriceRule) ──
     const specialRule = rules.find(r => r.ruleType === 'SPECIAL_PRICE')
     if (specialRule) {
         return {
             price: Number(specialRule.value),
+            level: 3,
             source: 'SPECIAL_PRICE',
             ruleId: specialRule.id,
             basePrice: basePrice ?? undefined,
@@ -428,11 +633,11 @@ export async function resolveCustomerProductPrice(
         }
     }
 
-    // Priority 2: FIXED_PRICE
     const fixedPriceRule = rules.find(r => r.ruleType === 'FIXED_PRICE')
     if (fixedPriceRule) {
         return {
             price: Number(fixedPriceRule.value),
+            level: 3,
             source: 'FIXED_PRICE',
             ruleId: fixedPriceRule.id,
             basePrice: basePrice ?? undefined,
@@ -440,13 +645,13 @@ export async function resolveCustomerProductPrice(
         }
     }
 
-    // Priority 3: FIXED_DISCOUNT (Value is percentage discount off basePrice)
     const fixedDiscountRule = rules.find(r => r.ruleType === 'FIXED_DISCOUNT')
     if (fixedDiscountRule && basePrice !== null) {
         const discPct = Number(fixedDiscountRule.value)
         const price = Math.round(basePrice * (1 - discPct / 100))
         return {
             price,
+            level: 3,
             source: 'FIXED_DISCOUNT',
             ruleId: fixedDiscountRule.id,
             discountPct: discPct,
@@ -454,66 +659,73 @@ export async function resolveCustomerProductPrice(
         }
     }
 
-    // Priority 4: Dynamic Customer Default Discount (e.g. Wholesale -10%)
-    if (defaultDiscountPct > 0) {
-        if (basePrice !== null) {
-            const price = Math.round(basePrice * (1 - defaultDiscountPct / 100))
-            return {
-                price,
-                source: 'CUSTOMER_DEFAULT_DISCOUNT',
-                discountPct: defaultDiscountPct,
-                basePrice,
-            }
+    // ── LEVEL 2: Customer Portfolio Pricing Mechanism (Cơ chế giảm % toàn kho) ──
+    if (effectiveL2.isActive && effectiveL2.discountPct > 0 && basePrice !== null) {
+        const price = Math.round(basePrice * (1 - effectiveL2.discountPct / 100))
+        return {
+            price,
+            level: 2,
+            source: 'CUSTOMER_DEFAULT_DISCOUNT',
+            discountPct: effectiveL2.discountPct,
+            basePrice,
+            isInheritedL2: effectiveL2.isInherited,
         }
     }
 
-    // Priority 5: Channel Base
+    // ── LEVEL 1: Channel Base Price ──
     if (basePrice !== null) {
         return {
             price: basePrice,
+            level: 1,
             source: 'CHANNEL_BASE',
         }
     }
 
-    // Priority 5.5: Wholesale Margin Fallback for HORECA/Wholesale customers
+    // Level 1.5: Wholesale Margin Fallback for HORECA/Wholesale channels
     const isWholesaleChannel = targetChannel === 'WHOLESALE_DISTRIBUTOR' || channel === 'HORECA' || channel === 'WHOLESALE_DISTRIBUTOR'
     if (isWholesaleChannel) {
         const margin = await prisma.productMarginPrice.findFirst({ where: { productId } })
         if (margin && Number(margin.wholesalePrice) > 0) {
             const rawWholesale = Number(margin.wholesalePrice)
-            if (defaultDiscountPct > 0) {
+            if (effectiveL2.isActive && effectiveL2.discountPct > 0) {
                 return {
-                    price: Math.round(rawWholesale * (1 - defaultDiscountPct / 100)),
+                    price: Math.round(rawWholesale * (1 - effectiveL2.discountPct / 100)),
+                    level: 2,
                     source: 'CUSTOMER_DEFAULT_DISCOUNT',
-                    discountPct: defaultDiscountPct,
+                    discountPct: effectiveL2.discountPct,
                     basePrice: rawWholesale,
+                    isInheritedL2: effectiveL2.isInherited,
                 }
             }
             return {
                 price: rawWholesale,
+                level: 1,
                 source: 'CHANNEL_BASE',
             }
         }
     }
 
-    // Priority 6: Retail Fallback
+    // Level 1 Retail Fallback
     const retailPrice = await getChannelBasePrice(productId, 'DIRECT_INDIVIDUAL', now)
     if (retailPrice !== null) {
-        if (defaultDiscountPct > 0) {
+        if (effectiveL2.isActive && effectiveL2.discountPct > 0) {
             return {
-                price: Math.round(retailPrice * (1 - defaultDiscountPct / 100)),
+                price: Math.round(retailPrice * (1 - effectiveL2.discountPct / 100)),
+                level: 2,
                 source: 'CUSTOMER_DEFAULT_DISCOUNT',
-                discountPct: defaultDiscountPct,
+                discountPct: effectiveL2.discountPct,
                 basePrice: retailPrice,
+                isInheritedL2: effectiveL2.isInherited,
             }
         }
         return {
             price: retailPrice,
+            level: 1,
             source: 'RETAIL_FALLBACK',
         }
     }
 
-    return { price: 0, source: 'DEFAULT_ZERO' }
+    return { price: 0, level: 1, source: 'DEFAULT_ZERO' }
 }
 
 // Helper to fetch price list line
@@ -544,7 +756,7 @@ async function getChannelBasePrice(
     return Number(priceList.lines[0].unitPrice)
 }
 
-// ─── Resolve prices for all products for a customer (Optimized Batch) ───
+// ─── Resolve prices for all products for a customer (Optimized Batch: Level 1 -> Level 2 -> Level 3 -> Level 4) ───
 export async function getCustomerResolvedPrices(
     customerId: string | null | undefined
 ): Promise<Record<string, ResolvedPrice>> {
@@ -558,7 +770,7 @@ export async function getCustomerResolvedPrices(
 
     const results: Record<string, ResolvedPrice> = {}
     for (const p of products) {
-        results[p.id] = { price: 0, source: 'DEFAULT_ZERO' }
+        results[p.id] = { price: 0, level: 1, source: 'DEFAULT_ZERO' }
     }
 
     // 2. Fetch retail fallback price list lines
@@ -600,30 +812,62 @@ export async function getCustomerResolvedPrices(
     if (!customerId) {
         for (const pId of Object.keys(results)) {
             if (retailPrices[pId] !== undefined && retailPrices[pId] > 0) {
-                results[pId] = { price: retailPrices[pId], source: 'RETAIL_FALLBACK' }
+                results[pId] = { price: retailPrices[pId], level: 1, source: 'RETAIL_FALLBACK' }
             } else if (marginRetailMap[pId] !== undefined && marginRetailMap[pId] > 0) {
-                results[pId] = { price: marginRetailMap[pId], source: 'RETAIL_FALLBACK' }
+                results[pId] = { price: marginRetailMap[pId], level: 1, source: 'RETAIL_FALLBACK' }
             } else if (marginWholesaleMap[pId] !== undefined && marginWholesaleMap[pId] > 0) {
-                results[pId] = { price: marginWholesaleMap[pId], source: 'RETAIL_FALLBACK' }
+                results[pId] = { price: marginWholesaleMap[pId], level: 1, source: 'RETAIL_FALLBACK' }
             }
         }
         return results
     }
 
-    // 3. Get customer channel and target price list
-    const customer = await prisma.customer.findUnique({
-        where: { id: customerId },
-        select: { channel: true, parentId: true, basePriceType: true, defaultDiscountPct: true }
-    })
+    // 3. Get customer + parent and evaluate Level 2 policy (with expiry & Parent->Child inheritance)
+    const [customer, policyMap] = await Promise.all([
+        prisma.customer.findUnique({
+            where: { id: customerId },
+            select: {
+                id: true,
+                channel: true,
+                parentId: true,
+                basePriceType: true,
+                defaultDiscountPct: true,
+                parent: {
+                    select: {
+                        id: true,
+                        code: true,
+                        name: true,
+                        basePriceType: true,
+                        defaultDiscountPct: true,
+                    },
+                },
+            },
+        }),
+        getLevel2PolicyMap(),
+    ])
+
     const channel = customer?.channel ?? 'DIRECT_INDIVIDUAL'
-    const defaultDiscountPct = Number(customer?.defaultDiscountPct ?? 0)
+    const effectiveL2 = customer
+        ? resolveEffectiveLevel2Policy(customer, policyMap, now)
+        : {
+              isActive: false,
+              isExpired: false,
+              isInherited: false,
+              inheritedFromCode: null,
+              inheritedFromName: null,
+              basePriceType: 'BY_CHANNEL',
+              discountPct: 0,
+              startDate: null,
+              endDate: null,
+              proposalNo: null,
+          }
 
     let targetChannel = 'DIRECT_INDIVIDUAL'
-    if (customer?.basePriceType === 'WHOLESALE') {
+    if (effectiveL2.basePriceType === 'WHOLESALE') {
         targetChannel = 'WHOLESALE_DISTRIBUTOR'
-    } else if (customer?.basePriceType === 'RETAIL') {
+    } else if (effectiveL2.basePriceType === 'RETAIL') {
         targetChannel = 'DIRECT_INDIVIDUAL'
-    } else if (customer?.basePriceType === 'HORECA') {
+    } else if (effectiveL2.basePriceType === 'HORECA') {
         targetChannel = 'HORECA'
     } else {
         const mapping = await getChannelPriceMapping()
@@ -631,7 +875,7 @@ export async function getCustomerResolvedPrices(
     }
     const isWholesaleChannel = targetChannel === 'WHOLESALE_DISTRIBUTOR' || channel === 'HORECA' || channel === 'WHOLESALE_DISTRIBUTOR'
 
-    // 4. Fetch target channel base price list lines
+    // 4. LEVEL 1 — Fetch target channel base price list lines
     const basePrices: Record<string, number> = {}
     if (targetChannel === 'DIRECT_INDIVIDUAL') {
         Object.assign(basePrices, retailPrices)
@@ -659,37 +903,37 @@ export async function getCustomerResolvedPrices(
         }
     }
 
-    // Set channel base prices or wholesale margin fallback
     for (const pId of Object.keys(results)) {
         if (basePrices[pId] !== undefined) {
-            results[pId] = { price: basePrices[pId], source: 'CHANNEL_BASE' }
+            results[pId] = { price: basePrices[pId], level: 1, source: 'CHANNEL_BASE' }
         } else if (isWholesaleChannel && marginWholesaleMap[pId] !== undefined) {
-            // Priority fallback for HORECA & Wholesale channels: Wholesale margin price
-            results[pId] = { price: marginWholesaleMap[pId], source: 'CHANNEL_BASE' }
+            results[pId] = { price: marginWholesaleMap[pId], level: 1, source: 'CHANNEL_BASE' }
             basePrices[pId] = marginWholesaleMap[pId]
         } else if (retailPrices[pId] !== undefined && retailPrices[pId] > 0) {
-            results[pId] = { price: retailPrices[pId], source: 'RETAIL_FALLBACK' }
+            results[pId] = { price: retailPrices[pId], level: 1, source: 'RETAIL_FALLBACK' }
         } else if (marginRetailMap[pId] !== undefined && marginRetailMap[pId] > 0) {
-            results[pId] = { price: marginRetailMap[pId], source: 'RETAIL_FALLBACK' }
+            results[pId] = { price: marginRetailMap[pId], level: 1, source: 'RETAIL_FALLBACK' }
         }
     }
 
-    // 4.5 Apply dynamic customer default discount across all base prices
-    if (defaultDiscountPct > 0) {
+    // 5. LEVEL 2 — Apply approved Customer Portfolio Pricing Policy across all SKUs (overwrites Level 1)
+    if (effectiveL2.isActive && effectiveL2.discountPct > 0) {
         for (const pId of Object.keys(results)) {
             const current = results[pId]
             if ((current.source === 'CHANNEL_BASE' || current.source === 'RETAIL_FALLBACK') && current.price > 0) {
                 results[pId] = {
-                    price: Math.round(current.price * (1 - defaultDiscountPct / 100)),
+                    price: Math.round(current.price * (1 - effectiveL2.discountPct / 100)),
+                    level: 2,
                     source: 'CUSTOMER_DEFAULT_DISCOUNT',
-                    discountPct: defaultDiscountPct,
+                    discountPct: effectiveL2.discountPct,
                     basePrice: current.price,
+                    isInheritedL2: effectiveL2.isInherited,
                 }
             }
         }
     }
 
-    // 5. Fetch approved customer price rules for both customer and its parent
+    // 6. LEVEL 3 — Apply approved per-SKU Special Price Rules (overwrites Level 2 & Level 1)
     const customerWhere = customer?.parentId
         ? { in: [customerId, customer.parentId] }
         : customerId
@@ -707,7 +951,6 @@ export async function getCustomerResolvedPrices(
         orderBy: { createdAt: 'desc' }
     })
 
-    // Filter rules so child rules override parent rules on a per-product basis
     let rules = allRules
     if (customer?.parentId) {
         const childRules = allRules.filter(r => r.customerId === customerId)
@@ -719,8 +962,6 @@ export async function getCustomerResolvedPrices(
         ]
     }
 
-    // Apply rules in reverse precedence order so higher priority rules overwrite lower ones
-    // 5.1. Apply FIXED_DISCOUNT rules
     const discountRules = rules.filter(r => r.ruleType === 'FIXED_DISCOUNT')
     for (const rule of [...discountRules].reverse()) {
         const pId = rule.productId
@@ -729,6 +970,7 @@ export async function getCustomerResolvedPrices(
             const discPct = Number(rule.value)
             results[pId] = {
                 price: Math.round(basePrice * (1 - discPct / 100)),
+                level: 3,
                 source: 'FIXED_DISCOUNT',
                 ruleId: rule.id,
                 discountPct: discPct,
@@ -737,21 +979,21 @@ export async function getCustomerResolvedPrices(
         }
     }
 
-    // 5.2. Apply FIXED_PRICE rules
     const fixedPriceRules = rules.filter(r => r.ruleType === 'FIXED_PRICE')
     for (const rule of [...fixedPriceRules].reverse()) {
         results[rule.productId] = {
             price: Number(rule.value),
+            level: 3,
             source: 'FIXED_PRICE',
             ruleId: rule.id
         }
     }
 
-    // 5.3. Apply SPECIAL_PRICE rules (highest priority)
     const specialRules = rules.filter(r => r.ruleType === 'SPECIAL_PRICE')
     for (const rule of [...specialRules].reverse()) {
         results[rule.productId] = {
             price: Number(rule.value),
+            level: 3,
             source: 'SPECIAL_PRICE',
             ruleId: rule.id
         }
@@ -924,6 +1166,29 @@ export async function cloneCustomerPriceRules(input: {
 
 // ─── CUSTOMER PRICING MASTER OVERVIEW & MANAGEMENT (CENTRAL HUB) ───
 
+export type PendingLevel2ProposalSummary = {
+    proposalId: string
+    proposalNo: string
+    title: string
+    proposedBasePriceType: string
+    proposedDiscountPct: number
+    startDate: string | null
+    endDate: string | null
+    status: string // 'SUBMITTED' | 'REVIEWING' | 'APPROVED_L1' | 'APPROVED_L2'
+    currentLevel: number // 1 (SALES_MGR) | 2 (KE_TOAN) | 3 (CEO)
+    creatorName: string
+    createdAt: Date
+    justification: string
+    branchCount: number
+    approvalLogs: {
+        level: number
+        action: string
+        approverName: string
+        comment: string | null
+        approvedAt: Date
+    }[]
+}
+
 export type CustomerPricingMasterRow = {
     id: string
     code: string
@@ -931,8 +1196,24 @@ export type CustomerPricingMasterRow = {
     shortName: string | null
     channel: string
     brandGroup: string | null
-    basePriceType: string // 'BY_CHANNEL' | 'WHOLESALE' | 'RETAIL' | 'HORECA'
-    defaultDiscountPct: number
+    parentId: string | null
+    parentName: string | null
+    basePriceType: string // Effective active basePriceType ('BY_CHANNEL' | 'WHOLESALE' | 'RETAIL' | 'HORECA')
+    defaultDiscountPct: number // Effective active discountPct
+    effectiveL2: {
+        isActive: boolean
+        isExpired: boolean
+        isInherited: boolean
+        inheritedFromCustomerId: string | null
+        inheritedFromName: string | null
+        inheritedFromCode: string | null
+        startDate: string | null
+        endDate: string | null
+        proposalNo: string | null
+        rawBasePriceType: string
+        rawDiscountPct: number
+    }
+    pendingL2Proposal: PendingLevel2ProposalSummary | null
     specialRuleCount: number
     pendingRuleCount: number
     activeRulesSummary: {
@@ -955,6 +1236,44 @@ export type CustomerPricingMasterResult = {
         customPolicyCount: number
         hasSpecialPriceCount: number
         pendingRulesCount: number
+        pendingL2Count: number
+    }
+}
+
+function parsePendingL2Proposal(p: any, fallbackBaseType: string): PendingLevel2ProposalSummary {
+    let proposedBasePriceType = fallbackBaseType || 'BY_CHANNEL'
+    let branchCount = 0
+    if (p.scope) {
+        const baseMatch = p.scope.match(/BASE_TYPE:([A-Z_]+)/)
+        if (baseMatch && baseMatch[1]) {
+            proposedBasePriceType = baseMatch[1]
+        }
+        const branchMatch = p.scope.match(/BRANCHES:([a-zA-Z0-9_,-]+)/)
+        if (branchMatch && branchMatch[1]) {
+            branchCount = branchMatch[1].split(',').filter(Boolean).length
+        }
+    }
+    return {
+        proposalId: p.id,
+        proposalNo: p.proposalNo,
+        title: p.title,
+        proposedBasePriceType,
+        proposedDiscountPct: p.discountPct !== null && p.discountPct !== undefined ? Number(p.discountPct) : 0,
+        startDate: p.startDate ? p.startDate.toISOString() : null,
+        endDate: p.endDate ? p.endDate.toISOString() : null,
+        status: p.status,
+        currentLevel: p.currentLevel,
+        creatorName: p.creator?.name ?? p.creator?.email ?? 'Sales',
+        createdAt: p.createdAt,
+        justification: p.justification || '',
+        branchCount,
+        approvalLogs: (p.approvalLogs || []).map((log: any) => ({
+            level: log.level,
+            action: log.action,
+            approverName: log.approver?.name ?? log.approver?.email ?? 'Leader',
+            comment: log.comment,
+            approvedAt: log.createdAt,
+        })),
     }
 }
 
@@ -976,40 +1295,79 @@ export async function getCustomerPricingMasterOverview(filters?: {
         ]
     }
 
-    const customers = await prisma.customer.findMany({
-        where,
-        select: {
-            id: true,
-            code: true,
-            name: true,
-            shortName: true,
-            channel: true,
-            brandGroup: true,
-            basePriceType: true,
-            defaultDiscountPct: true,
-            updatedAt: true,
-            priceRules: {
-                select: {
-                    id: true,
-                    ruleType: true,
-                    value: true,
-                    status: true,
-                    startDate: true,
-                    endDate: true,
-                    product: { select: { productName: true, skuCode: true } }
+    const [customers, policyMap, pendingProposals] = await Promise.all([
+        prisma.customer.findMany({
+            where,
+            select: {
+                id: true,
+                code: true,
+                name: true,
+                shortName: true,
+                channel: true,
+                brandGroup: true,
+                parentId: true,
+                parent: {
+                    select: {
+                        id: true,
+                        code: true,
+                        name: true,
+                        basePriceType: true,
+                        defaultDiscountPct: true,
+                    }
                 },
-                orderBy: { createdAt: 'desc' }
-            }
-        },
-        orderBy: [{ channel: 'asc' }, { name: 'asc' }]
-    })
+                basePriceType: true,
+                defaultDiscountPct: true,
+                updatedAt: true,
+                priceRules: {
+                    select: {
+                        id: true,
+                        ruleType: true,
+                        value: true,
+                        status: true,
+                        startDate: true,
+                        endDate: true,
+                        product: { select: { productName: true, skuCode: true } }
+                    },
+                    orderBy: { createdAt: 'desc' }
+                }
+            },
+            orderBy: [{ channel: 'asc' }, { name: 'asc' }]
+        }),
+        getLevel2PolicyMap(),
+        prisma.proposal.findMany({
+            where: {
+                category: 'PRICE_ADJUSTMENT',
+                status: { in: ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'] },
+                customerId: { not: null },
+            },
+            include: {
+                creator: { select: { name: true, email: true } },
+                approvalLogs: {
+                    include: { approver: { select: { name: true, email: true } } },
+                    orderBy: { createdAt: 'asc' },
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        })
+    ])
+
+    // Map latest pending Level 2 proposal per customer
+    const pendingL2ByCustomer = new Map<string, any>()
+    for (const p of pendingProposals) {
+        const isL2Proposal = p.discountPct !== null || (p.scope && p.scope.includes('BASE_TYPE:'))
+        if (!isL2Proposal || !p.customerId) continue
+        if (!pendingL2ByCustomer.has(p.customerId)) {
+            pendingL2ByCustomer.set(p.customerId, p)
+        }
+    }
 
     const now = new Date()
 
-    let totalCustomers = customers.length
+    const totalCustomers = customers.length
     let customPolicyCount = 0
     let hasSpecialPriceCount = 0
     let pendingRulesCount = 0
+    const pendingL2Count = pendingL2ByCustomer.size
 
     const rows: CustomerPricingMasterRow[] = []
 
@@ -1017,11 +1375,14 @@ export async function getCustomerPricingMasterOverview(filters?: {
         const approvedRules = c.priceRules.filter(r => r.status === 'APPROVED' && r.startDate <= now && (!r.endDate || r.endDate >= now))
         const pendingRules = c.priceRules.filter(r => r.status === 'PENDING_APPROVAL')
 
-        const basePriceType = c.basePriceType || 'BY_CHANNEL'
-        const defaultDiscountPct = Number(c.defaultDiscountPct || 0)
+        const effL2 = resolveEffectiveLevel2Policy(c, policyMap, now)
+        const rawBasePriceType = c.basePriceType || 'BY_CHANNEL'
+        const rawDiscountPct = Number(c.defaultDiscountPct || 0)
 
-        const isCustomPolicy = defaultDiscountPct > 0 || (basePriceType !== 'BY_CHANNEL')
+        const isCustomPolicy = effL2.isActive
         const hasSpecialPrice = approvedRules.length > 0
+        const pendingL2Raw = pendingL2ByCustomer.get(c.id)
+        const pendingL2Proposal = pendingL2Raw ? parsePendingL2Proposal(pendingL2Raw, rawBasePriceType) : null
 
         if (isCustomPolicy) customPolicyCount++
         if (hasSpecialPrice) hasSpecialPriceCount++
@@ -1029,8 +1390,8 @@ export async function getCustomerPricingMasterOverview(filters?: {
 
         // Filter by filterType if selected
         if (filters?.filterType === 'HAS_SPECIAL' && !hasSpecialPrice) continue
-        if (filters?.filterType === 'HAS_CUSTOM_DISCOUNT' && !isCustomPolicy) continue
-        if (filters?.filterType === 'PENDING' && pendingRules.length === 0) continue
+        if (filters?.filterType === 'HAS_CUSTOM_DISCOUNT' && !isCustomPolicy && !effL2.isExpired) continue
+        if (filters?.filterType === 'PENDING' && pendingRules.length === 0 && !pendingL2Proposal) continue
 
         rows.push({
             id: c.id,
@@ -1039,8 +1400,24 @@ export async function getCustomerPricingMasterOverview(filters?: {
             shortName: c.shortName,
             channel: c.channel,
             brandGroup: c.brandGroup,
-            basePriceType,
-            defaultDiscountPct,
+            parentId: c.parentId,
+            parentName: c.parent?.name ?? null,
+            basePriceType: effL2.basePriceType,
+            defaultDiscountPct: effL2.discountPct,
+            effectiveL2: {
+                isActive: effL2.isActive,
+                isExpired: effL2.isExpired,
+                isInherited: effL2.isInherited,
+                inheritedFromCustomerId: c.parentId ?? null,
+                inheritedFromName: effL2.inheritedFromName,
+                inheritedFromCode: effL2.inheritedFromCode,
+                startDate: effL2.startDate ? effL2.startDate.toISOString() : null,
+                endDate: effL2.endDate ? effL2.endDate.toISOString() : null,
+                proposalNo: effL2.proposalNo,
+                rawBasePriceType,
+                rawDiscountPct,
+            },
+            pendingL2Proposal,
             specialRuleCount: approvedRules.length,
             pendingRuleCount: pendingRules.length,
             activeRulesSummary: c.priceRules.slice(0, 5).map(r => ({
@@ -1064,21 +1441,220 @@ export async function getCustomerPricingMasterOverview(filters?: {
             customPolicyCount,
             hasSpecialPriceCount,
             pendingRulesCount,
+            pendingL2Count,
         }
     }
 }
 
-export async function updateCustomerDefaultPricing(
+// ─── LEVEL 2: CUSTOMER PRICING MECHANISM APPROVAL FLOW (TP.KD -> KE_TOAN -> CEO) ───
+
+export type PendingPricingPolicyL2Row = {
+    proposalId: string
+    proposalNo: string
+    title: string
+    customerId: string
+    customerCode: string
+    customerName: string
+    customerChannel: string
+    currentActiveBasePriceType: string
+    currentActiveDiscountPct: number
+    proposedBasePriceType: string
+    proposedDiscountPct: number
+    startDate: string | null
+    endDate: string | null
+    status: string
+    currentLevel: number
+    requiredRole: string
+    creatorName: string
+    createdAt: Date
+    justification: string
+    branchIds: string[]
+    approvalLogs: {
+        level: number
+        action: string
+        approverName: string
+        comment: string | null
+        approvedAt: Date
+    }[]
+}
+
+async function getPriceAdjustmentApprovalConfig(): Promise<{
+    creatorRoles: string[]
+    steps: { level: number; role: string }[]
+}> {
+    const config = await prisma.approvalConfig.findUnique({
+        where: { configKey: 'proposal.PRICE_ADJUSTMENT' },
+    })
+    let steps: { level: number; role: string }[] = [
+        { level: 1, role: 'SALES_MGR' },
+        { level: 2, role: 'KE_TOAN' },
+        { level: 3, role: 'CEO' },
+    ]
+    let creatorRoles: string[] = ['SALES_REP', 'SALES_ADMIN', 'SALES_MGR', 'CBO', 'CEO', 'ADMIN']
+
+    if (config?.value && typeof config.value === 'object') {
+        const val = config.value as any
+        if (Array.isArray(val.steps) && val.steps.length > 0) {
+            steps = val.steps
+        } else if (Array.isArray(val.levels) && val.levels.length > 0) {
+            steps = (val.levels as number[]).map(l => ({
+                level: l,
+                role: l === 1 ? 'SALES_MGR' : l === 2 ? 'KE_TOAN' : 'CEO',
+            }))
+        }
+        if (Array.isArray(val.creatorRoles) && val.creatorRoles.length > 0) {
+            creatorRoles = val.creatorRoles
+        }
+    }
+    return { creatorRoles, steps }
+}
+
+export async function getPendingPricingPoliciesL2(): Promise<PendingPricingPolicyL2Row[]> {
+    const [proposals, policyMap, approvalCfg] = await Promise.all([
+        prisma.proposal.findMany({
+            where: {
+                category: 'PRICE_ADJUSTMENT',
+                status: { in: ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'] },
+                customerId: { not: null },
+            },
+            include: {
+                customer: {
+                    select: {
+                        id: true,
+                        code: true,
+                        name: true,
+                        channel: true,
+                        basePriceType: true,
+                        defaultDiscountPct: true,
+                        parentId: true,
+                        parent: {
+                            select: {
+                                id: true,
+                                code: true,
+                                name: true,
+                                basePriceType: true,
+                                defaultDiscountPct: true,
+                            }
+                        }
+                    }
+                },
+                creator: { select: { name: true, email: true } },
+                approvalLogs: {
+                    include: { approver: { select: { name: true, email: true } } },
+                    orderBy: { createdAt: 'asc' },
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        }),
+        getLevel2PolicyMap(),
+        getPriceAdjustmentApprovalConfig(),
+    ])
+
+    const now = new Date()
+    const rows: PendingPricingPolicyL2Row[] = []
+
+    for (const p of proposals) {
+        const isL2Proposal = p.discountPct !== null || (p.scope && p.scope.includes('BASE_TYPE:'))
+        if (!isL2Proposal || !p.customer) continue
+
+        const effL2 = resolveEffectiveLevel2Policy(p.customer, policyMap, now)
+        const parsed = parsePendingL2Proposal(p, p.customer.basePriceType || 'BY_CHANNEL')
+
+        let branchIds: string[] = []
+        if (p.scope) {
+            const branchMatch = p.scope.match(/BRANCHES:([a-zA-Z0-9_,-]+)/)
+            if (branchMatch && branchMatch[1]) {
+                branchIds = branchMatch[1].split(',').filter(Boolean)
+            }
+        }
+
+        const matchedStep = approvalCfg.steps.find(s => s.level === p.currentLevel)
+        const requiredRole = matchedStep?.role ?? (p.currentLevel === 1 ? 'SALES_MGR' : p.currentLevel === 2 ? 'KE_TOAN' : 'CEO')
+
+        rows.push({
+            proposalId: p.id,
+            proposalNo: p.proposalNo,
+            title: p.title,
+            customerId: p.customer.id,
+            customerCode: p.customer.code,
+            customerName: p.customer.name,
+            customerChannel: p.customer.channel,
+            currentActiveBasePriceType: effL2.basePriceType,
+            currentActiveDiscountPct: effL2.discountPct,
+            proposedBasePriceType: parsed.proposedBasePriceType,
+            proposedDiscountPct: parsed.proposedDiscountPct,
+            startDate: parsed.startDate,
+            endDate: parsed.endDate,
+            status: p.status,
+            currentLevel: p.currentLevel,
+            requiredRole,
+            creatorName: parsed.creatorName,
+            createdAt: p.createdAt,
+            justification: parsed.justification,
+            branchIds,
+            approvalLogs: parsed.approvalLogs,
+        })
+    }
+
+    return rows
+}
+
+async function generateLevel2ProposalNo(): Promise<string> {
+    const year = new Date().getFullYear()
+    const prefix = `TT-${year}-`
+    const proposals = await prisma.proposal.findMany({
+        where: { proposalNo: { startsWith: prefix } },
+        select: { proposalNo: true },
+    })
+
+    let maxSeq = 0
+    for (const p of proposals) {
+        const match = p.proposalNo.match(new RegExp(`^TT-${year}-(\\d+)$`))
+        if (match && match[1]) {
+            const num = parseInt(match[1], 10)
+            if (!isNaN(num) && num > maxSeq) maxSeq = num
+        }
+    }
+
+    let nextSeq = maxSeq + 1
+    let proposalNo = `${prefix}${String(nextSeq).padStart(3, '0')}`
+    while (await prisma.proposal.findUnique({ where: { proposalNo } })) {
+        nextSeq++
+        proposalNo = `${prefix}${String(nextSeq).padStart(3, '0')}`
+    }
+    return proposalNo
+}
+
+export async function submitCustomerPricingPolicyL2(
     customerId: string,
     input: {
         basePriceType: string
         defaultDiscountPct: number
+        startDate?: string
+        endDate?: string
+        justification?: string
+        applyToBranchIds?: string[]
     }
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; proposalNo?: string; error?: string }> {
     try {
-        const user = await requirePermission('SLS', 'CREATE')
+        const user = await requireAuth()
+        const approvalCfg = await getPriceAdjustmentApprovalConfig()
+
+        // RBAC Guard: Only authorized creator roles or users with SLS:CREATE / PRC:WRITE may submit Level 2 pricing proposals
+        const canSubmit =
+            hasRole(user, 'CEO', 'ADMIN', ...approvalCfg.creatorRoles) ||
+            hasPermission(user, 'SLS', 'CREATE') ||
+            hasPermission(user, 'PRC', 'WRITE')
+
+        if (!canSubmit) {
+            return {
+                success: false,
+                error: 'Bạn không có quyền trình đề xuất Cơ chế giá khách hàng (Yêu cầu quyền Sales / Quản lý kinh doanh / Ban Giám Đốc)',
+            }
+        }
+
         if (input.defaultDiscountPct < 0 || input.defaultDiscountPct > 100) {
-            return { success: false, error: 'Mức chiết khấu mặc định phải từ 0% đến 100%' }
+            return { success: false, error: 'Mức chiết khấu toàn kho phải từ 0% đến 100%' }
         }
 
         const validTypes = ['BY_CHANNEL', 'WHOLESALE', 'RETAIL', 'HORECA']
@@ -1086,56 +1662,212 @@ export async function updateCustomerDefaultPricing(
             return { success: false, error: 'Loại bảng giá gốc không hợp lệ' }
         }
 
-        const oldCustomer = await prisma.customer.findUnique({
+        const customer = await prisma.customer.findUnique({
             where: { id: customerId },
-            select: { name: true, code: true, basePriceType: true, defaultDiscountPct: true }
+            select: { id: true, name: true, code: true, basePriceType: true, defaultDiscountPct: true }
         })
-
-        if (!oldCustomer) {
+        if (!customer) {
             return { success: false, error: 'Không tìm thấy khách hàng' }
         }
 
-        await prisma.customer.update({
-            where: { id: customerId },
-            data: {
-                basePriceType: input.basePriceType,
-                defaultDiscountPct: input.defaultDiscountPct,
+        // Check if there is already a pending Level 2 proposal for this customer
+        const existingPending = await prisma.proposal.findFirst({
+            where: {
+                customerId,
+                category: 'PRICE_ADJUSTMENT',
+                status: { in: ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'] },
             }
+        })
+        if (existingPending && (existingPending.discountPct !== null || existingPending.scope?.includes('BASE_TYPE:'))) {
+            return {
+                success: false,
+                error: `Khách hàng này đang có Tờ trình cơ chế giá ${existingPending.proposalNo} chờ duyệt (Cấp ${existingPending.currentLevel}). Vui lòng xử lý tờ trình hiện tại trước.`
+            }
+        }
+
+        const proposalNo = await generateLevel2ProposalNo()
+        const startDate = input.startDate ? new Date(input.startDate) : new Date()
+        const endDate = input.endDate ? new Date(input.endDate) : null
+
+        const scopeTokens = [`BASE_TYPE:${input.basePriceType}`]
+        if (input.applyToBranchIds && input.applyToBranchIds.length > 0) {
+            scopeTokens.push(`BRANCHES:${input.applyToBranchIds.join(',')}`)
+        }
+        const scope = scopeTokens.join(' | ')
+
+        const baseLabel = input.basePriceType === 'WHOLESALE' ? 'Giá Bán Buôn'
+            : input.basePriceType === 'RETAIL' ? 'Giá Bán Lẻ'
+            : input.basePriceType === 'HORECA' ? 'Giá HORECA'
+            : 'Theo Kênh Mặc Định'
+
+        const title = `[Level 2] Cơ chế giá KH ${customer.code} - ${customer.name}: Giảm ${input.defaultDiscountPct}% toàn kho (${baseLabel})`
+        const justification = input.justification?.trim() ||
+            `Đề xuất áp dụng Cơ chế giá Level 2 cho khách hàng ${customer.name} (${customer.code}): Bảng giá gốc ${baseLabel}, chiết khấu toàn bộ mã sản phẩm ${input.defaultDiscountPct}%.`
+
+        const firstStep = approvalCfg.steps[0] ?? { level: 1, role: 'SALES_MGR' }
+
+        const proposal = await prisma.proposal.create({
+            data: {
+                proposalNo,
+                category: 'PRICE_ADJUSTMENT',
+                priority: 'HIGH',
+                status: 'SUBMITTED',
+                currentLevel: firstStep.level,
+                title,
+                content: `Cơ chế đang hiệu lực: Bảng giá ${customer.basePriceType || 'BY_CHANNEL'}, chiết khấu toàn kho ${Number(customer.defaultDiscountPct || 0)}%. (Vẫn giữ nguyên hiệu lực cho tới khi tờ trình mới được duyệt hoàn tất).`,
+                justification,
+                expectedOutcome: `Áp dụng bảng giá ${baseLabel}, giảm ${input.defaultDiscountPct}% trên toàn bộ mã hàng từ ngày ${startDate.toLocaleDateString('vi-VN')}${endDate ? ` đến ${endDate.toLocaleDateString('vi-VN')}` : ' (vô thời hạn)'}.`,
+                scope,
+                customerId: customer.id,
+                discountPct: input.defaultDiscountPct,
+                startDate,
+                endDate,
+                createdBy: user.id,
+                submittedAt: new Date(),
+            }
+        })
+
+        // Notify first-step approver role
+        const { triggerNotificationForRole } = await import('@/lib/notifications')
+        await triggerNotificationForRole(firstStep.role, {
+            title: `Trình duyệt Cơ chế giá Level 2 (${proposalNo})`,
+            content: `${user.name || user.email} trình duyệt cơ chế giá giảm ${input.defaultDiscountPct}% toàn kho cho KH ${customer.name}. Chờ duyệt Cấp ${firstStep.level}.`,
+            type: 'info',
+            link: `/dashboard/price-list`
         })
 
         logAudit({
             userId: user.id,
             userName: user.name,
-            action: 'UPDATE',
-            entityType: 'CustomerPricingPolicy',
-            entityId: customerId,
-            oldValue: { basePriceType: oldCustomer.basePriceType, defaultDiscountPct: Number(oldCustomer.defaultDiscountPct) },
-            newValue: { basePriceType: input.basePriceType, defaultDiscountPct: input.defaultDiscountPct },
+            action: 'CREATE',
+            entityType: 'CustomerPricingPolicyL2Proposal',
+            entityId: proposal.id,
+            newValue: {
+                proposalNo,
+                customerId,
+                basePriceType: input.basePriceType,
+                defaultDiscountPct: input.defaultDiscountPct,
+                startDate: input.startDate ?? null,
+                endDate: input.endDate ?? null,
+            },
         })
 
         revalidateCache('pricing')
+        revalidateCache('proposals')
         revalidatePath('/dashboard/price-list')
+        revalidatePath('/dashboard/proposals')
         revalidatePath('/dashboard/customers')
-        revalidatePath('/dashboard/sales')
 
-        return { success: true }
+        return { success: true, proposalNo }
     } catch (err: any) {
         return { success: false, error: err.message }
     }
 }
 
-export async function getCustomerSpecialPriceDetail(customerId: string) {
-    const customer = await prisma.customer.findUnique({
-        where: { id: customerId },
-        select: {
-            id: true,
-            code: true,
-            name: true,
-            channel: true,
-            basePriceType: true,
-            defaultDiscountPct: true,
-        }
+// Keep backward-compatible signature that routes to 3-step Level 2 approval flow
+export async function updateCustomerDefaultPricing(
+    customerId: string,
+    input: {
+        basePriceType: string
+        defaultDiscountPct: number
+        startDate?: string
+        endDate?: string
+        justification?: string
+        applyToBranchIds?: string[]
+    }
+): Promise<{ success: boolean; proposalNo?: string; error?: string }> {
+    return submitCustomerPricingPolicyL2(customerId, input)
+}
+
+export async function approveCustomerPricingPolicyL2(
+    proposalId: string,
+    comment?: string
+): Promise<{ success: boolean; newStatus?: string; error?: string }> {
+    const { processProposalApproval } = await import('@/app/dashboard/proposals/actions')
+    const user = await requireAuth()
+    const res = await processProposalApproval({
+        proposalId,
+        action: 'APPROVE',
+        approverId: user.id,
+        comment: comment || 'Đồng ý phê duyệt cơ chế giá Level 2',
     })
+    if (res.success) {
+        revalidateCache('pricing')
+        revalidatePath('/dashboard/price-list')
+        revalidatePath('/dashboard/customers')
+        revalidatePath('/dashboard/sales')
+    }
+    return res
+}
+
+export async function rejectCustomerPricingPolicyL2(
+    proposalId: string,
+    comment?: string
+): Promise<{ success: boolean; newStatus?: string; error?: string }> {
+    const { processProposalApproval } = await import('@/app/dashboard/proposals/actions')
+    const user = await requireAuth()
+    const res = await processProposalApproval({
+        proposalId,
+        action: 'REJECT',
+        approverId: user.id,
+        comment: comment || 'Từ chối tờ trình cơ chế giá Level 2',
+    })
+    if (res.success) {
+        revalidateCache('pricing')
+        revalidatePath('/dashboard/price-list')
+    }
+    return res
+}
+
+export async function getCustomerSpecialPriceDetail(customerId: string) {
+    const [customer, childBranches, policyMap, pendingProposals] = await Promise.all([
+        prisma.customer.findUnique({
+            where: { id: customerId },
+            select: {
+                id: true,
+                code: true,
+                name: true,
+                channel: true,
+                parentId: true,
+                parent: {
+                    select: {
+                        id: true,
+                        code: true,
+                        name: true,
+                        basePriceType: true,
+                        defaultDiscountPct: true,
+                    }
+                },
+                basePriceType: true,
+                defaultDiscountPct: true,
+            }
+        }),
+        prisma.customer.findMany({
+            where: { parentId: customerId, deletedAt: null },
+            select: {
+                id: true,
+                code: true,
+                name: true,
+                channel: true,
+            }
+        }),
+        getLevel2PolicyMap(),
+        prisma.proposal.findMany({
+            where: {
+                customerId,
+                category: 'PRICE_ADJUSTMENT',
+                status: { in: ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'] },
+            },
+            include: {
+                creator: { select: { name: true, email: true } },
+                approvalLogs: {
+                    include: { approver: { select: { name: true, email: true } } },
+                    orderBy: { createdAt: 'asc' },
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        })
+    ])
     if (!customer) return null
 
     const rules = await prisma.customerPriceRule.findMany({
@@ -1149,10 +1881,14 @@ export async function getCustomerSpecialPriceDetail(customerId: string) {
     })
 
     const now = new Date()
+    const effL2 = resolveEffectiveLevel2Policy(customer, policyMap, now)
+    const pendingL2Raw = pendingProposals.find(p => p.discountPct !== null || (p.scope && p.scope.includes('BASE_TYPE:')))
+    const pendingL2Proposal = pendingL2Raw ? parsePendingL2Proposal(pendingL2Raw, customer.basePriceType || 'BY_CHANNEL') : null
+
     const mapping = await getChannelPriceMapping()
-    const targetChannel = customer.basePriceType === 'WHOLESALE' ? 'WHOLESALE_DISTRIBUTOR'
-        : customer.basePriceType === 'RETAIL' ? 'DIRECT_INDIVIDUAL'
-        : customer.basePriceType === 'HORECA' ? 'HORECA'
+    const targetChannel = effL2.basePriceType === 'WHOLESALE' ? 'WHOLESALE_DISTRIBUTOR'
+        : effL2.basePriceType === 'RETAIL' ? 'DIRECT_INDIVIDUAL'
+        : effL2.basePriceType === 'HORECA' ? 'HORECA'
         : mapping[customer.channel] ?? 'DIRECT_INDIVIDUAL'
 
     const detailedRules = await Promise.all(rules.map(async r => {
@@ -1189,11 +1925,38 @@ export async function getCustomerSpecialPriceDetail(customerId: string) {
 
     return {
         customer: {
-            ...customer,
-            defaultDiscountPct: Number(customer.defaultDiscountPct || 0),
-            basePriceType: customer.basePriceType || 'BY_CHANNEL'
+            id: customer.id,
+            code: customer.code,
+            name: customer.name,
+            channel: customer.channel,
+            parentId: customer.parentId,
+            parentName: customer.parent?.name ?? null,
+            parentCode: customer.parent?.code ?? null,
+            defaultDiscountPct: effL2.discountPct,
+            basePriceType: effL2.basePriceType,
+            effectiveL2: {
+                isActive: effL2.isActive,
+                isExpired: effL2.isExpired,
+                isInherited: effL2.isInherited,
+                inheritedFromCustomerId: customer.parentId ?? null,
+                inheritedFromName: effL2.inheritedFromName,
+                inheritedFromCode: effL2.inheritedFromCode,
+                startDate: effL2.startDate ? effL2.startDate.toISOString() : null,
+                endDate: effL2.endDate ? effL2.endDate.toISOString() : null,
+                proposalNo: effL2.proposalNo,
+                rawBasePriceType: customer.basePriceType || 'BY_CHANNEL',
+                rawDiscountPct: Number(customer.defaultDiscountPct || 0),
+            },
+            pendingL2Proposal,
+            branches: childBranches.map(b => ({
+                id: b.id,
+                code: b.code,
+                name: b.name,
+                channel: b.channel,
+            })),
         },
         rules: detailedRules
     }
 }
+
 

@@ -69,47 +69,50 @@ export async function getProposals(filters?: {
     priority?: string
     createdBy?: string
 }) {
-    const where: any = {}
-    if (filters?.status) where.status = filters.status
-    if (filters?.category) where.category = filters.category
-    if (filters?.priority) where.priority = filters.priority
-    if (filters?.createdBy) where.createdBy = filters.createdBy
+    const cacheKey = `proposals:list:${filters?.status ?? 'all'}:${filters?.category ?? 'all'}:${filters?.priority ?? 'all'}:${filters?.createdBy ?? 'all'}`
+    return cached(cacheKey, async () => {
+        const where: any = {}
+        if (filters?.status) where.status = filters.status
+        if (filters?.category) where.category = filters.category
+        if (filters?.priority) where.priority = filters.priority
+        if (filters?.createdBy) where.createdBy = filters.createdBy
 
-    const proposals = await prisma.proposal.findMany({
-        where,
-        include: {
-            creator: { select: { name: true, email: true } },
-            department: { select: { name: true } },
-            customer: { select: { name: true } },
-            _count: { select: { attachments: true, comments: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-    })
+        const proposals = await prisma.proposal.findMany({
+            where,
+            include: {
+                creator: { select: { name: true, email: true } },
+                department: { select: { name: true } },
+                customer: { select: { name: true } },
+                _count: { select: { attachments: true, comments: true } },
+            },
+            orderBy: { createdAt: 'desc' },
+        })
 
-    return proposals.map(p => ({
-        id: p.id,
-        proposalNo: p.proposalNo,
-        category: p.category,
-        priority: p.priority,
-        title: p.title,
-        estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : null,
-        currency: p.currency,
-        deadline: p.deadline,
-        startDate: p.startDate,
-        endDate: p.endDate,
-        status: p.status,
-        currentLevel: p.currentLevel,
-        creatorName: p.creator.name ?? p.creator.email,
-        departmentName: p.department?.name ?? null,
-        customerName: p.customer?.name ?? null,
-        scope: p.scope,
-        discountPct: p.discountPct ? Number(p.discountPct) : null,
-        attachmentCount: p._count.attachments,
-        commentCount: p._count.comments,
-        submittedAt: p.submittedAt,
-        resolvedAt: p.resolvedAt,
-        createdAt: p.createdAt,
-    }))
+        return proposals.map(p => ({
+            id: p.id,
+            proposalNo: p.proposalNo,
+            category: p.category,
+            priority: p.priority,
+            title: p.title,
+            estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : null,
+            currency: p.currency,
+            deadline: p.deadline,
+            startDate: p.startDate,
+            endDate: p.endDate,
+            status: p.status,
+            currentLevel: p.currentLevel,
+            creatorName: p.creator.name ?? p.creator.email,
+            departmentName: p.department?.name ?? null,
+            customerName: p.customer?.name ?? null,
+            scope: p.scope,
+            discountPct: p.discountPct ? Number(p.discountPct) : null,
+            attachmentCount: p._count.attachments,
+            commentCount: p._count.comments,
+            submittedAt: p.submittedAt,
+            resolvedAt: p.resolvedAt,
+            createdAt: p.createdAt,
+        }))
+    }, 30_000)
 }
 
 // ─── Get proposal detail ─────────────────────────
@@ -582,61 +585,65 @@ export async function addProposalComment(input: {
 
 // ─── Stats for proposals page ────────────────────
 export async function getProposalStats() {
-    const [total, pending, approved, rejected, draft] = await Promise.all([
-        prisma.proposal.count(),
-        prisma.proposal.count({ where: { status: { in: ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'] } } }),
-        prisma.proposal.count({ where: { status: 'APPROVED' } }),
-        prisma.proposal.count({ where: { status: 'REJECTED' } }),
-        prisma.proposal.count({ where: { status: 'DRAFT' } }),
-    ])
-    return { total, pending, approved, rejected, draft }
+    return cached('proposals:stats', async () => {
+        const [total, pending, approved, rejected, draft] = await Promise.all([
+            prisma.proposal.count(),
+            prisma.proposal.count({ where: { status: { in: ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'] } } }),
+            prisma.proposal.count({ where: { status: 'APPROVED' } }),
+            prisma.proposal.count({ where: { status: 'REJECTED' } }),
+            prisma.proposal.count({ where: { status: 'DRAFT' } }),
+        ])
+        return { total, pending, approved, rejected, draft }
+    }, 30_000)
 }
 
 // ─── Pending proposals for CEO dashboard ─────────
 export async function getPendingProposalsForCEO() {
-    const proposals = await prisma.proposal.findMany({
-        where: {
-            status: { in: ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'] },
-        },
-        include: {
-            creator: { select: { name: true, email: true } },
-            department: { select: { name: true } },
-            _count: { select: { attachments: true, comments: true } },
-            approvalLogs: {
-                orderBy: { createdAt: 'desc' },
-                take: 3,
-                include: { approver: { select: { name: true } } },
+    return cached('proposals:pending-ceo', async () => {
+        const proposals = await prisma.proposal.findMany({
+            where: {
+                status: { in: ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'] },
             },
-        },
-        orderBy: [
-            { priority: 'desc' },
-            { submittedAt: 'asc' },
-        ],
-    })
+            include: {
+                creator: { select: { name: true, email: true } },
+                department: { select: { name: true } },
+                _count: { select: { attachments: true, comments: true } },
+                approvalLogs: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 3,
+                    include: { approver: { select: { name: true } } },
+                },
+            },
+            orderBy: [
+                { priority: 'desc' },
+                { submittedAt: 'asc' },
+            ],
+        })
 
-    return proposals.map(p => ({
-        id: p.id,
-        proposalNo: p.proposalNo,
-        category: p.category,
-        priority: p.priority,
-        title: p.title,
-        estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : null,
-        currency: p.currency,
-        deadline: p.deadline,
-        status: p.status,
-        currentLevel: p.currentLevel,
-        creatorName: p.creator.name ?? p.creator.email,
-        departmentName: p.department?.name ?? null,
-        attachmentCount: p._count.attachments,
-        commentCount: p._count.comments,
-        submittedAt: p.submittedAt,
-        previousApprovals: p.approvalLogs.map(l => ({
-            level: l.level,
-            action: l.action,
-            approverName: l.approver.name,
-            createdAt: l.createdAt,
-        })),
-    }))
+        return proposals.map(p => ({
+            id: p.id,
+            proposalNo: p.proposalNo,
+            category: p.category,
+            priority: p.priority,
+            title: p.title,
+            estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : null,
+            currency: p.currency,
+            deadline: p.deadline,
+            status: p.status,
+            currentLevel: p.currentLevel,
+            creatorName: p.creator.name ?? p.creator.email,
+            departmentName: p.department?.name ?? null,
+            attachmentCount: p._count.attachments,
+            commentCount: p._count.comments,
+            submittedAt: p.submittedAt,
+            previousApprovals: p.approvalLogs.map(l => ({
+                level: l.level,
+                action: l.action,
+                approverName: l.approver.name,
+                createdAt: l.createdAt,
+            })),
+        }))
+    }, 15_000)
 }
 
 // ─── Mark as in-progress / closed ────────────────
@@ -675,13 +682,18 @@ export async function updateProposalStatus(
     }
 }
 
-// ─── Auto Sync Proposal Price Items to CustomerPriceRules ────────
+// ─── Auto Sync Proposal Price Items to Level 2 Policy & Level 3 Rules ────────
 export async function syncProposalToCustomerPriceRules(proposalId: string) {
     const proposal = await prisma.proposal.findUnique({
         where: { id: proposalId },
         include: {
             priceItems: true,
             customer: true,
+            approvalLogs: {
+                where: { action: 'APPROVE' },
+                orderBy: { createdAt: 'desc' },
+                take: 1,
+            },
         },
     })
 
@@ -689,15 +701,25 @@ export async function syncProposalToCustomerPriceRules(proposalId: string) {
         return { count: 0 }
     }
 
-    const userId = proposal.createdBy ?? 'system'
+    const userId = proposal.approvalLogs[0]?.approvedBy ?? proposal.createdBy ?? 'system'
     const startDate = proposal.startDate ?? proposal.resolvedAt ?? proposal.submittedAt ?? new Date()
-    const endDate = proposal.endDate ?? new Date('2026-12-31T23:59:59.999Z')
+    const endDate = proposal.endDate ?? null
     let createdCount = 0
+
+    // Parse optional BASE_TYPE from scope (e.g. "ENTIRE_PORTFOLIO | BASE_TYPE:WHOLESALE | BRANCHES:...")
+    let requestedBasePriceType: string | null = null
+    if (proposal.scope && proposal.scope.includes('BASE_TYPE:')) {
+        const match = proposal.scope.match(/BASE_TYPE:([A-Z_]+)/)
+        if (match && match[1]) {
+            requestedBasePriceType = match[1]
+        }
+    }
 
     // Resolve all target customer IDs (main customer + any additional branches specified in scope + parent customer)
     const targetCustomerIds = new Set<string>([proposal.customerId])
     if (proposal.scope && proposal.scope.includes('BRANCHES:')) {
-        const branchIds = proposal.scope.split('BRANCHES:')[1]?.split(',').filter(Boolean) || []
+        const branchPart = proposal.scope.split('BRANCHES:')[1]?.split('|')[0] || ''
+        const branchIds = branchPart.split(',').filter(Boolean)
         branchIds.forEach(id => targetCustomerIds.add(id.trim()))
     }
     if (proposal.customer?.parentId) {
@@ -705,7 +727,7 @@ export async function syncProposalToCustomerPriceRules(proposalId: string) {
     }
 
     for (const targetCustId of targetCustomerIds) {
-        // 1. Specific product prices
+        // 1. Level 3 — Specific product prices (CustomerPriceRule)
         for (const item of proposal.priceItems) {
             const proposedPrice = Number(item.proposedPrice)
             if (!proposedPrice || proposedPrice <= 0) continue
@@ -727,7 +749,7 @@ export async function syncProposalToCustomerPriceRules(proposalId: string) {
                         ruleType: 'SPECIAL_PRICE',
                         value: proposedPrice,
                         startDate,
-                        endDate,
+                        endDate: endDate ?? new Date('2026-12-31T23:59:59.999Z'),
                         approvedBy: userId,
                         approvedAt: new Date(),
                         notes: noteText,
@@ -741,9 +763,9 @@ export async function syncProposalToCustomerPriceRules(proposalId: string) {
                         ruleType: 'SPECIAL_PRICE',
                         value: proposedPrice,
                         startDate,
-                        endDate,
+                        endDate: endDate ?? new Date('2026-12-31T23:59:59.999Z'),
                         status: 'APPROVED',
-                        requestedBy: userId,
+                        requestedBy: proposal.createdBy ?? userId,
                         approvedBy: userId,
                         approvedAt: new Date(),
                         notes: noteText,
@@ -753,67 +775,74 @@ export async function syncProposalToCustomerPriceRules(proposalId: string) {
             createdCount++
         }
 
-        // 2. Portfolio discount percentage
-        if (proposal.discountPct && Number(proposal.discountPct) > 0) {
-            const discountVal = Number(proposal.discountPct)
-            const products = await prisma.product.findMany({
-                where: { status: 'ACTIVE', deletedAt: null },
-                select: { id: true },
+        // 2. Level 2 — Portfolio Pricing Mechanism (Cơ chế giá giảm % toàn kho)
+        if ((proposal.discountPct !== null && proposal.discountPct !== undefined) || requestedBasePriceType) {
+            const targetCust = await prisma.customer.findUnique({
+                where: { id: targetCustId },
+                select: { basePriceType: true, defaultDiscountPct: true },
+            })
+            const discountVal = proposal.discountPct !== null && proposal.discountPct !== undefined
+                ? Number(proposal.discountPct)
+                : Number(targetCust?.defaultDiscountPct ?? 0)
+            const resolvedBaseType = requestedBasePriceType || targetCust?.basePriceType || 'BY_CHANNEL'
+
+            // Update Customer default pricing fields
+            await prisma.customer.update({
+                where: { id: targetCustId },
+                data: {
+                    defaultDiscountPct: discountVal,
+                    basePriceType: resolvedBaseType,
+                },
             })
 
-            const explicitProductIds = new Set(proposal.priceItems.map(i => i.productId))
-            const remainingProducts = products.filter(p => !explicitProductIds.has(p.id))
-
-            for (const prod of remainingProducts) {
-                const existing = await prisma.customerPriceRule.findFirst({
-                    where: {
-                        customerId: targetCustId,
-                        productId: prod.id,
-                        status: 'APPROVED',
-                    },
-                })
-
-                const noteText = `Áp dụng chiết khấu ${discountVal}% từ Tờ trình ${proposal.proposalNo}: ${proposal.title}`
-
-                if (existing) {
-                    if (existing.ruleType === 'FIXED_DISCOUNT') {
-                        await prisma.customerPriceRule.update({
-                            where: { id: existing.id },
-                            data: {
-                                ruleType: 'FIXED_DISCOUNT',
-                                value: discountVal,
-                                startDate,
-                                endDate,
-                                approvedBy: userId,
-                                approvedAt: new Date(),
-                                notes: noteText,
-                            },
-                        })
-                    }
-                } else {
-                    await prisma.customerPriceRule.create({
-                        data: {
-                            customerId: targetCustId,
-                            productId: prod.id,
-                            ruleType: 'FIXED_DISCOUNT',
-                            value: discountVal,
-                            startDate,
-                            endDate,
-                            status: 'APPROVED',
-                            requestedBy: userId,
-                            approvedBy: userId,
-                            approvedAt: new Date(),
-                            notes: noteText,
-                        },
-                    })
-                    createdCount++
-                }
+            // Store active Level 2 policy metadata (including validity dates & proposal reference)
+            const policyKey = `pricing.policy_l2.${targetCustId}`
+            const policyPayload = {
+                customerId: targetCustId,
+                basePriceType: resolvedBaseType,
+                discountPct: discountVal,
+                startDate: startDate.toISOString(),
+                endDate: endDate ? endDate.toISOString() : null,
+                proposalId: proposal.id,
+                proposalNo: proposal.proposalNo,
+                title: proposal.title,
+                approvedBy: userId,
+                approvedAt: new Date().toISOString(),
             }
+
+            await prisma.approvalConfig.upsert({
+                where: { configKey: policyKey },
+                update: {
+                    value: policyPayload,
+                    updatedBy: userId,
+                    updatedAt: new Date(),
+                },
+                create: {
+                    configKey: policyKey,
+                    value: policyPayload,
+                    label: `Cơ chế giá Level 2 đã duyệt cho KH ${targetCustId}`,
+                    updatedBy: userId,
+                },
+            })
+
+            // Clean up any legacy auto-generated portfolio FIXED_DISCOUNT rules in Level 3 table
+            await prisma.customerPriceRule.deleteMany({
+                where: {
+                    customerId: targetCustId,
+                    ruleType: 'FIXED_DISCOUNT',
+                    notes: { startsWith: 'Áp dụng chiết khấu ' },
+                },
+            })
+
+            createdCount++
         }
     }
 
     revalidatePath('/dashboard/price-list')
+    revalidatePath('/dashboard/customers')
+    revalidatePath('/dashboard/sales')
     revalidateCache('pricing')
+    revalidateCache('proposals')
     return { count: createdCount }
 }
 
