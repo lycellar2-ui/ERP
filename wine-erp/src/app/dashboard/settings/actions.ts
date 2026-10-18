@@ -859,3 +859,102 @@ export async function updatePersonalProfile(name: string, passwordPlain?: string
     }
 }
 
+export type SystemInfrastructureStatus = {
+    checkedAt: string
+    r2: Awaited<ReturnType<typeof import('@/lib/storage-r2').getR2StorageOverview>>
+    database: {
+        connected: boolean
+        latencyMs: number
+        sizeBytes: number
+        freeTierLimitBytes: number // 500 MB standard Supabase PostgreSQL Free Tier
+        usagePercent: number
+        counts: {
+            products: number
+            regulatedDocs: number
+            customers: number
+            salesOrders: number
+            stockLots: number
+            auditLogs: number
+        }
+        error?: string
+    }
+}
+
+export async function getSystemInfrastructureStatus(): Promise<SystemInfrastructureStatus> {
+    await requireAuth()
+    const { getR2StorageOverview } = await import('@/lib/storage-r2')
+
+    const dbStart = Date.now()
+    const dbFreeLimitBytes = 500 * 1024 * 1024 // 500 MB
+
+    const [r2, dbStats] = await Promise.all([
+        getR2StorageOverview(),
+        (async () => {
+            try {
+                const [
+                    sizeRes,
+                    products,
+                    regulatedDocs,
+                    customers,
+                    salesOrders,
+                    stockLots,
+                    auditLogs,
+                ] = await Promise.all([
+                    prisma.$queryRawUnsafe<{ size_bytes: bigint | number }[]>(
+                        `SELECT pg_database_size(current_database()) AS size_bytes`
+                    ),
+                    prisma.product.count({ where: { deletedAt: null } }),
+                    prisma.regulatedDocument.count(),
+                    prisma.customer.count({ where: { deletedAt: null } }),
+                    prisma.salesOrder.count(),
+                    prisma.stockLot.count(),
+                    prisma.auditLog.count(),
+                ])
+
+                const sizeBytes = Number(sizeRes?.[0]?.size_bytes || 0)
+                const usagePercent = Number(((sizeBytes / dbFreeLimitBytes) * 100).toFixed(2))
+
+                return {
+                    connected: true,
+                    latencyMs: Date.now() - dbStart,
+                    sizeBytes,
+                    freeTierLimitBytes: dbFreeLimitBytes,
+                    usagePercent,
+                    counts: {
+                        products,
+                        regulatedDocs,
+                        customers,
+                        salesOrders,
+                        stockLots,
+                        auditLogs,
+                    },
+                }
+            } catch (err: any) {
+                return {
+                    connected: false,
+                    latencyMs: Date.now() - dbStart,
+                    sizeBytes: 0,
+                    freeTierLimitBytes: dbFreeLimitBytes,
+                    usagePercent: 0,
+                    counts: {
+                        products: 0,
+                        regulatedDocs: 0,
+                        customers: 0,
+                        salesOrders: 0,
+                        stockLots: 0,
+                        auditLogs: 0,
+                    },
+                    error: err.message || 'Lỗi kết nối PostgreSQL',
+                }
+            }
+        })(),
+    ])
+
+    return {
+        checkedAt: new Date().toISOString(),
+        r2,
+        database: dbStats,
+    }
+}
+
+

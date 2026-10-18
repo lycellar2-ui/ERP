@@ -1087,6 +1087,388 @@ export async function deleteProductTastingNote(
     }
 }
 
+/**
+ * Upload Self-Declaration (TCB) document directly to Cloudflare R2 and update Product + RegulatedDocument
+ */
+export async function uploadProductSelfDeclaration(
+    productId: string,
+    formData: FormData
+): Promise<{ success: boolean; url?: string; error?: string }> {
+    try {
+        await requirePermission('MDM', 'WRITE')
+        const file = formData.get('file') as File
+        if (!file || file.size === 0) return { success: false, error: 'Không tìm thấy file tải lên' }
+
+        const uploadRes = await uploadProductAsset(formData, 'documents')
+        if (!uploadRes.success || !uploadRes.url) {
+            return { success: false, error: uploadRes.error || 'Upload Bản Tự Công Bố lên Cloudflare R2 thất bại' }
+        }
+
+        const product = await prisma.product.update({
+            where: { id: productId },
+            data: { selfDeclarationUrl: uploadRes.url },
+            select: { id: true, skuCode: true, productName: true },
+        })
+
+        // Also record in RegulatedDocument history
+        const docNo = `TCB-${product.skuCode}-${Date.now().toString().slice(-6)}`
+        await prisma.regulatedDocument.create({
+            data: {
+                docNo,
+                type: 'QUALITY_DECLARATION',
+                category: 'PRODUCT_CERTIFICATION',
+                scope: 'PRODUCT',
+                name: `Bản Tự Công Bố — ${product.skuCode} (${file.name})`,
+                description: `Hồ sơ Tự công bố tải lên ngày ${new Date().toLocaleDateString('vi-VN')}`,
+                productId: product.id,
+                issueDate: new Date(),
+                issuingAuthority: 'Tự công bố ATTP',
+                referenceNo: 'TCB',
+                status: 'ACTIVE',
+                version: 1,
+                files: {
+                    create: {
+                        name: file.name,
+                        fileUrl: uploadRes.url,
+                        version: 1,
+                    },
+                },
+            },
+        })
+
+        revalidateCache('products')
+        revalidatePath('/dashboard/products')
+        return { success: true, url: uploadRes.url }
+    } catch (err: any) {
+        console.error('[uploadProductSelfDeclaration] Error:', err)
+        return { success: false, error: err.message || 'Lỗi khi upload Bản Tự Công Bố' }
+    }
+}
+
+export type ProductLegalDocGroup = 'TCB' | 'AMENDMENT' | 'TESTING'
+
+export type ProductLegalDocItem = {
+    id: string
+    docNo: string
+    group: ProductLegalDocGroup
+    name: string
+    description: string | null
+    issueDate: string
+    issuingAuthority: string | null
+    version: number
+    fileUrl: string
+    fileName: string
+}
+
+/**
+ * Upload a Product Legal Document (TCB / Thông báo thay đổi / Phiếu kiểm định) to Cloudflare R2
+ * and link it to Product via RegulatedDocument + RegDocFile.
+ */
+export async function uploadProductLegalDoc(
+    productId: string,
+    formData: FormData
+): Promise<{ success: boolean; doc?: ProductLegalDocItem; error?: string }> {
+    try {
+        await requirePermission('MDM', 'WRITE')
+        const file = formData.get('file') as File
+        if (!file || file.size === 0) {
+            return { success: false, error: 'Vui lòng chọn file hồ sơ để tải lên' }
+        }
+
+        const groupRaw = String(formData.get('group') || 'TCB').toUpperCase()
+        const group: ProductLegalDocGroup =
+            groupRaw === 'AMENDMENT' || groupRaw === 'TESTING' ? groupRaw : 'TCB'
+        const customTitle = String(formData.get('name') || '').trim()
+        const customDocNo = String(formData.get('docNo') || '').trim()
+        const description = String(formData.get('description') || '').trim() || null
+        const issuingAuthority = String(formData.get('issuingAuthority') || '').trim() || null
+        const issueDateStr = String(formData.get('issueDate') || '').trim()
+        const issueDate = issueDateStr ? new Date(issueDateStr) : new Date()
+
+        const product = await prisma.product.findUnique({
+            where: { id: productId },
+            select: { id: true, skuCode: true, productName: true },
+        })
+        if (!product) {
+            return { success: false, error: 'Không tìm thấy sản phẩm' }
+        }
+
+        const uploadRes = await uploadProductAsset(formData, 'documents')
+        if (!uploadRes.success || !uploadRes.url) {
+            return { success: false, error: uploadRes.error || 'Tải file lên Cloudflare R2 thất bại' }
+        }
+
+        const existingCount = await prisma.regulatedDocument.count({
+            where: { productId, referenceNo: group },
+        })
+        const nextVersion = existingCount + 1
+
+        const docType =
+            group === 'TCB'
+                ? 'QUALITY_DECLARATION'
+                : group === 'AMENDMENT'
+                ? 'STANDARDS_COMPLIANCE'
+                : 'QUALITY_TEST_REPORT'
+
+        const defaultTitle =
+            group === 'TCB'
+                ? `Bản Tự Công Bố — ${product.skuCode}`
+                : group === 'AMENDMENT'
+                ? `Thông báo thay đổi sau TCB — ${product.skuCode}`
+                : `Phiếu kết quả Kiểm nghiệm ATTP — ${product.skuCode}`
+
+        const docNo = customDocNo
+            ? `${group}-${product.skuCode}-${customDocNo.replace(/[^a-zA-Z0-9-_/.]/g, '-')}-${Date.now().toString().slice(-4)}`
+            : `${group}-${product.skuCode}-V${nextVersion}-${Date.now().toString().slice(-5)}`
+
+        const created = await prisma.regulatedDocument.create({
+            data: {
+                docNo,
+                type: docType as any,
+                category: 'PRODUCT_CERTIFICATION',
+                scope: 'PRODUCT',
+                name: customTitle || defaultTitle,
+                description,
+                productId: product.id,
+                issueDate,
+                issuingAuthority:
+                    issuingAuthority ||
+                    (group === 'TCB'
+                        ? 'Tự công bố ATTP'
+                        : group === 'AMENDMENT'
+                        ? 'Ban Quản lý ATTP / Chi cục ATTP'
+                        : 'Trung tâm Kiểm nghiệm'),
+                referenceNo: group,
+                status: 'ACTIVE',
+                version: nextVersion,
+                files: {
+                    create: {
+                        name: file.name,
+                        fileUrl: uploadRes.url,
+                        version: nextVersion,
+                    },
+                },
+            },
+            include: { files: true },
+        })
+
+        // If group is TCB, also sync latest selfDeclarationUrl on Product
+        if (group === 'TCB') {
+            await prisma.product.update({
+                where: { id: product.id },
+                data: { selfDeclarationUrl: uploadRes.url },
+            })
+        }
+
+        revalidateCache('products')
+        revalidatePath('/dashboard/products')
+
+        return {
+            success: true,
+            doc: {
+                id: created.id,
+                docNo: created.docNo,
+                group,
+                name: created.name,
+                description: created.description,
+                issueDate: created.issueDate.toISOString(),
+                issuingAuthority: created.issuingAuthority,
+                version: created.version,
+                fileUrl: uploadRes.url,
+                fileName: file.name,
+            },
+        }
+    } catch (err: any) {
+        console.error('[uploadProductLegalDoc] Error:', err)
+        return { success: false, error: err.message || 'Lỗi khi tải lên hồ sơ pháp lý' }
+    }
+}
+
+/**
+ * Delete a Product Legal Document (TCB / Amendment / Testing)
+ */
+export async function deleteProductLegalDoc(
+    docId: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        await requirePermission('MDM', 'WRITE')
+        const doc = await prisma.regulatedDocument.findUnique({
+            where: { id: docId },
+            include: { files: true },
+        })
+        if (!doc) {
+            return { success: false, error: 'Không tìm thấy hồ sơ' }
+        }
+
+        await prisma.regDocFile.deleteMany({ where: { regDocId: docId } })
+        await prisma.regulatedDocument.delete({ where: { id: docId } })
+
+        // If it was a TCB doc and linked to a product, sync Product.selfDeclarationUrl to remaining latest TCB
+        if (doc.productId && (doc.referenceNo === 'TCB' || doc.type === 'QUALITY_DECLARATION')) {
+            const latestRemaining = await prisma.regulatedDocument.findFirst({
+                where: {
+                    productId: doc.productId,
+                    OR: [{ referenceNo: 'TCB' }, { type: 'QUALITY_DECLARATION' }],
+                },
+                orderBy: [{ issueDate: 'desc' }, { version: 'desc' }],
+                include: { files: { orderBy: { uploadedAt: 'desc' }, take: 1 } },
+            })
+            await prisma.product.update({
+                where: { id: doc.productId },
+                data: {
+                    selfDeclarationUrl: latestRemaining?.files[0]?.fileUrl ?? null,
+                },
+            })
+        }
+
+        revalidateCache('products')
+        revalidatePath('/dashboard/products')
+        return { success: true }
+    } catch (err: any) {
+        console.error('[deleteProductLegalDoc] Error:', err)
+        return { success: false, error: err.message || 'Lỗi khi xoá hồ sơ pháp lý' }
+    }
+}
+
+export type TastingNoteCatalogItem = {
+    id: string
+    skuCode: string
+    productName: string
+    wineType: string
+    country: string
+    abvPercent: number | null
+    producerName: string
+    primaryImageUrl: string | null
+    tastingNoteUrl: string | null
+    selfDeclarationUrl: string | null
+    tcbDocs: ProductLegalDocItem[]
+    amendmentDocs: ProductLegalDocItem[]
+    testingDocs: ProductLegalDocItem[]
+    profile: {
+        grapes: string | null
+        color: string | null
+        aromas: string | null
+        palate: string | null
+        style: string | null
+        servingTemp: string | null
+        foodPairings: string | null
+        originDetail: string | null
+    } | null
+}
+
+/**
+ * Fetch complete catalog of products, Tasting Notes, TCB, Amendments, and Lab Testing reports
+ */
+export async function getTastingNoteCatalog(): Promise<TastingNoteCatalogItem[]> {
+    await requirePermission('MDM', 'READ')
+    return cached('products:tasting-note-catalog:v2', async () => {
+        const products = await prisma.product.findMany({
+            where: {
+                deletedAt: null,
+                NOT: { skuCode: { startsWith: 'E2E-' } },
+            },
+            orderBy: { skuCode: 'asc' },
+            include: {
+                producer: { select: { name: true } },
+                profile: true,
+                media: {
+                    orderBy: [{ isPrimary: 'desc' }, { uploadedAt: 'asc' }],
+                    take: 1,
+                    select: { url: true, thumbnailUrl: true },
+                },
+                regulatedDocs: {
+                    where: { status: { not: 'REVOKED' } },
+                    orderBy: [{ issueDate: 'desc' }, { version: 'desc' }],
+                    include: {
+                        files: {
+                            orderBy: { uploadedAt: 'desc' },
+                        },
+                    },
+                },
+            },
+        })
+
+        return products.map(p => {
+            const tcbDocs: ProductLegalDocItem[] = []
+            const amendmentDocs: ProductLegalDocItem[] = []
+            const testingDocs: ProductLegalDocItem[] = []
+
+            for (const rd of p.regulatedDocs) {
+                const file = rd.files[0]
+                if (!file?.fileUrl) continue
+
+                let group: ProductLegalDocGroup = 'TCB'
+                if (rd.referenceNo === 'AMENDMENT' || rd.type === 'STANDARDS_COMPLIANCE') {
+                    group = 'AMENDMENT'
+                } else if (rd.referenceNo === 'TESTING' || rd.type === 'QUALITY_TEST_REPORT') {
+                    group = 'TESTING'
+                }
+
+                const mapped: ProductLegalDocItem = {
+                    id: rd.id,
+                    docNo: rd.docNo,
+                    group,
+                    name: rd.name,
+                    description: rd.description ?? null,
+                    issueDate: rd.issueDate.toISOString(),
+                    issuingAuthority: rd.issuingAuthority ?? null,
+                    version: rd.version,
+                    fileUrl: file.fileUrl,
+                    fileName: file.name,
+                }
+
+                if (group === 'TCB') tcbDocs.push(mapped)
+                else if (group === 'AMENDMENT') amendmentDocs.push(mapped)
+                else testingDocs.push(mapped)
+            }
+
+            // Fallback if product has selfDeclarationUrl but no RegulatedDocument record yet
+            if (p.selfDeclarationUrl && tcbDocs.length === 0) {
+                tcbDocs.push({
+                    id: `legacy-tcb-${p.id}`,
+                    docNo: `TCB-${p.skuCode}`,
+                    group: 'TCB',
+                    name: `Bản Tự Công Bố — ${p.skuCode}`,
+                    description: null,
+                    issueDate: p.updatedAt.toISOString(),
+                    issuingAuthority: 'Tự công bố ATTP',
+                    version: 1,
+                    fileUrl: p.selfDeclarationUrl,
+                    fileName: decodeURIComponent(p.selfDeclarationUrl.split('/').pop() || 'TCB.pdf'),
+                })
+            }
+
+            return {
+                id: p.id,
+                skuCode: p.skuCode,
+                productName: p.productName.replace(/\r?\n/g, ' ').trim(),
+                wineType: p.wineType,
+                country: p.country,
+                abvPercent: p.abvPercent ? Number(p.abvPercent) : null,
+                producerName: p.producer.name,
+                primaryImageUrl: p.media[0]?.thumbnailUrl || p.media[0]?.url || null,
+                tastingNoteUrl: p.tastingNoteUrl ?? null,
+                selfDeclarationUrl: p.selfDeclarationUrl ?? tcbDocs[0]?.fileUrl ?? null,
+                tcbDocs,
+                amendmentDocs,
+                testingDocs,
+                profile: p.profile
+                    ? {
+                          grapes: p.profile.grapes ?? null,
+                          color: p.profile.color ?? null,
+                          aromas: p.profile.aromas ?? null,
+                          palate: p.profile.palate ?? null,
+                          style: p.profile.style ?? null,
+                          servingTemp: p.profile.servingTemp ?? null,
+                          foodPairings: p.profile.foodPairings ?? null,
+                          originDetail: p.profile.originDetail ?? null,
+                      }
+                    : null,
+            }
+        })
+    }, 30_000)
+}
+
 export async function setPrimaryMedia(
     mediaId: string,
     productId: string

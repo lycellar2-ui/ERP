@@ -59,6 +59,7 @@ Trên màn hình của CEO và các Trưởng phòng sẽ xuất hiện một Kh
 | **Data Scoping cho Sales Reps** | `quotations/actions.ts`, `pipeline/actions.ts` | Phân vùng dữ liệu báo giá & cơ hội pipeline theo nhân viên phụ trách |
 | **RBAC Đầy Đủ 31 Phân Hệ (107 Quyền)** | `prisma/seed-rbac.ts`, `SettingsClient.tsx`, `middleware.ts` | Định nghĩa 100% 31 modules, 107 permissions độc lập, Việt hóa giao diện Drawer và phân tách Route Guards 1-1 |
 | **Gom Nhóm Phân Hệ & Thứ Tự Vai Trò** | `SettingsClient.tsx`, `settings/actions.ts` | Gom nhóm 31 phân hệ thành 7 khối nghiệp vụ ERP, thanh tìm kiếm quyền, nút chọn cả nhóm và sắp xếp vai trò theo cấp bậc tổ chức (CEO -> CBO -> Manager -> NV) |
+| **Giám Sát Dung Lượng Lưu Trữ Cloudflare R2 & Database** | `SettingsClient.tsx`, `settings/actions.ts:getSystemInfrastructureStatus`, `lib/storage-r2.ts:getR2StorageOverview` | Tab `Hạ Tầng & Lưu Trữ (R2 / DB)` tại `/dashboard/settings` quét trực tiếp Bucket `wine-erp-documents` trên Cloudflare R2 (tổng dung lượng, % hạn mức 10 GB Free, dung lượng còn trống, phân bổ theo thư mục Tasting Note / Tự công bố / Thông báo thay đổi / Kiểm định / Hình ảnh / Chứng từ thanh toán, danh sách tệp tải lên gần nhất) và dung lượng vật lý PostgreSQL (`pg_database_size` / 500 MB) |
 
-*Last updated: 2026-10-11 10:51 | Wine ERP v12.11 - System Settings UI Reorganization & 7-Group Domain RBAC*
+*Last updated: 2026-10-18 | Wine ERP v12.15 - Cloudflare R2 & PostgreSQL Storage Infrastructure Monitor*
 

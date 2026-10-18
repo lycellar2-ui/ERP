@@ -1,6 +1,6 @@
 'use server'
 
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { uploadFile as uploadSupabaseFile, deleteFile as deleteSupabaseFile } from './storage'
 
@@ -461,4 +461,198 @@ export async function deleteProductAsset(storagePath: string): Promise<boolean> 
         return false
     }
 }
+
+export type R2FolderStat = {
+    prefix: string
+    label: string
+    fileCount: number
+    totalBytes: number
+    latestModified: string | null
+}
+
+export type R2StorageOverview = {
+    connected: boolean
+    bucketName: string
+    accountIdMasked: string
+    freeTierLimitBytes: number // 10 GB standard free tier on Cloudflare R2
+    totalFiles: number
+    totalBytes: number
+    remainingFreeBytes: number
+    usagePercent: number
+    latencyMs: number
+    folders: R2FolderStat[]
+    recentFiles: {
+        key: string
+        size: number
+        lastModified: string
+        url: string
+    }[]
+    error?: string
+}
+
+/**
+ * Inspect Cloudflare R2 Bucket live objects, total size, free tier quota (10 GB/month), and folder breakdown
+ */
+export async function getR2StorageOverview(): Promise<R2StorageOverview> {
+    const start = Date.now()
+    const config = getR2Config()
+    const freeTierLimitBytes = 10 * 1024 * 1024 * 1024 // 10 GB
+    const accountIdMasked = config.accountId
+        ? `${config.accountId.slice(0, 6)}...${config.accountId.slice(-4)}`
+        : 'N/A'
+
+    const r2 = getR2Client()
+    if (!r2) {
+        return {
+            connected: false,
+            bucketName: config.bucketName,
+            accountIdMasked,
+            freeTierLimitBytes,
+            totalFiles: 0,
+            totalBytes: 0,
+            remainingFreeBytes: freeTierLimitBytes,
+            usagePercent: 0,
+            latencyMs: Date.now() - start,
+            folders: [],
+            recentFiles: [],
+            error: 'Chưa cấu hình thông tin xác thực Cloudflare R2',
+        }
+    }
+
+    try {
+        let continuationToken: string | undefined = undefined
+        let totalFiles = 0
+        let totalBytes = 0
+
+        const folderMap = new Map<
+            string,
+            { label: string; fileCount: number; totalBytes: number; latestModified: Date | null }
+        >([
+            [
+                'products/tasting-notes/',
+                { label: 'Tasting Note & Tech Sheet Sản phẩm', fileCount: 0, totalBytes: 0, latestModified: null },
+            ],
+            [
+                'products/legal-docs/tcb/',
+                { label: 'Bản Tự Công Bố Sản Phẩm (TCB)', fileCount: 0, totalBytes: 0, latestModified: null },
+            ],
+            [
+                'products/legal-docs/amendment/',
+                { label: 'Thông Báo Thay Đổi Sau TCB', fileCount: 0, totalBytes: 0, latestModified: null },
+            ],
+            [
+                'products/legal-docs/testing/',
+                { label: 'Phiếu Kiểm Định / Kiểm Nghiệm ATTP', fileCount: 0, totalBytes: 0, latestModified: null },
+            ],
+            [
+                'products/documents/',
+                { label: 'Tài Liệu Sản Phẩm Khác', fileCount: 0, totalBytes: 0, latestModified: null },
+            ],
+            [
+                'products/images/',
+                { label: 'Hình Ảnh Chai Rượu & Media (Product Media)', fileCount: 0, totalBytes: 0, latestModified: null },
+            ],
+            [
+                'payment-requests/',
+                { label: 'Chứng Từ Thanh Toán / Hóa Đơn / UNC', fileCount: 0, totalBytes: 0, latestModified: null },
+            ],
+            [
+                'other',
+                { label: 'Tệp Lưu Trữ Khác', fileCount: 0, totalBytes: 0, latestModified: null },
+            ],
+        ])
+
+        const allObjects: { key: string; size: number; lastModified: Date }[] = []
+
+        do {
+            const res: any = await r2.client.send(
+                new ListObjectsV2Command({
+                    Bucket: r2.bucketName,
+                    ContinuationToken: continuationToken,
+                    MaxKeys: 1000,
+                })
+            )
+
+            const contents = res.Contents || []
+            for (const obj of contents) {
+                if (!obj.Key) continue
+                const size = Number(obj.Size || 0)
+                const mod: Date = obj.LastModified ? new Date(obj.LastModified) : new Date(0)
+
+                totalFiles += 1
+                totalBytes += size
+                allObjects.push({ key: obj.Key, size, lastModified: mod })
+
+                let matchedPrefix = 'other'
+                for (const prefix of folderMap.keys()) {
+                    if (prefix !== 'other' && obj.Key.startsWith(prefix)) {
+                        matchedPrefix = prefix
+                        break
+                    }
+                }
+
+                const stat = folderMap.get(matchedPrefix)!
+                stat.fileCount += 1
+                stat.totalBytes += size
+                if (!stat.latestModified || mod > stat.latestModified) {
+                    stat.latestModified = mod
+                }
+            }
+
+            continuationToken = res.IsTruncated ? res.NextContinuationToken : undefined
+        } while (continuationToken)
+
+        allObjects.sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime())
+        const recentFiles = allObjects.slice(0, 12).map(o => ({
+            key: o.key,
+            size: o.size,
+            lastModified: o.lastModified.toISOString(),
+            url: getProductAssetUrl(o.key),
+        }))
+
+        const folders: R2FolderStat[] = Array.from(folderMap.entries())
+            .map(([prefix, v]) => ({
+                prefix,
+                label: v.label,
+                fileCount: v.fileCount,
+                totalBytes: v.totalBytes,
+                latestModified: v.latestModified ? v.latestModified.toISOString() : null,
+            }))
+            .filter(f => f.fileCount > 0 || f.prefix !== 'other')
+
+        const remainingFreeBytes = Math.max(0, freeTierLimitBytes - totalBytes)
+        const usagePercent = Number(((totalBytes / freeTierLimitBytes) * 100).toFixed(3))
+
+        return {
+            connected: true,
+            bucketName: r2.bucketName,
+            accountIdMasked,
+            freeTierLimitBytes,
+            totalFiles,
+            totalBytes,
+            remainingFreeBytes,
+            usagePercent,
+            latencyMs: Date.now() - start,
+            folders,
+            recentFiles,
+        }
+    } catch (err: any) {
+        console.error('[Storage R2] getR2StorageOverview error:', err)
+        return {
+            connected: false,
+            bucketName: r2.bucketName,
+            accountIdMasked,
+            freeTierLimitBytes,
+            totalFiles: 0,
+            totalBytes: 0,
+            remainingFreeBytes: freeTierLimitBytes,
+            usagePercent: 0,
+            latencyMs: Date.now() - start,
+            folders: [],
+            recentFiles: [],
+            error: err.message || 'Không thể truy vấn thống kê Cloudflare R2',
+        }
+    }
+}
+
 

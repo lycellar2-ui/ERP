@@ -2,10 +2,11 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
-import { Plus, Upload, Download, SlidersHorizontal, X } from 'lucide-react'
+import { Plus, Upload, Download, SlidersHorizontal, X, Package, FileText } from 'lucide-react'
 import { Button, PageHeader, SearchInput, Select, StatusBadge, Toolbar, useConfirmDialog } from '@/components/ui'
 import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts, getProductViewDetails, getProductsPageData, getProductStats, getProductCountries, getProducers, getProductEditDetails, getAppellations, getSuppliers } from './actions'
 import { ProductTable } from './ProductTable'
+import { TastingNotesCatalog } from './TastingNotesCatalog'
 import dynamic from 'next/dynamic'
 const ProductDrawer = dynamic(() => import('./ProductDrawer').then(m => m.ProductDrawer), { loading: () => null, ssr: false })
 const ProductDetailDrawer = dynamic(() => import('./ProductDetailDrawer').then(m => m.ProductDetailDrawer), { loading: () => null, ssr: false })
@@ -42,6 +43,7 @@ export function ProductsClient({
     initialData,
 }: ProductsClientProps) {
     const qc = useQueryClient()
+    const [activeTab, setActiveTab] = useState<'CATALOG' | 'TASTING_NOTES'>('CATALOG')
     const [filters, setFilters] = useState<ProductFilters>({ page: 1, pageSize: 20 })
     const [drawerOpen, setDrawerOpen] = useState(false)
     const [editingId, setEditingId] = useState<string | null>(null)
@@ -75,16 +77,10 @@ export function ProductsClient({
     const countries = queryData?.countries ?? []
     const producers = queryData?.producers ?? []
 
-    // Warm reference data cache for drawers
-    useEffect(() => {
-        getAppellations().catch(() => [])
-        getSuppliers().catch(() => [])
-    }, [])
-
     const debounceRef = useRef<NodeJS.Timeout | null>(null)
     const detailCache = useRef<Record<string, any>>({})
 
-    const prefetchProductDetails = useCallback((id: string, isEager = false) => {
+    const prefetchProductDetails = useCallback((id: string) => {
         if (detailCache.current[id]) return
         const promise = getProductViewDetails(id)
             .then(data => {
@@ -93,42 +89,12 @@ export function ProductsClient({
                 }
                 return data
             })
-            .catch(err => {
+            .catch(() => {
                 delete detailCache.current[id]
                 return null
             })
         detailCache.current[id] = promise
-
-        // Warm server cache for edit details ONLY on active hover (not during eager page-load prefetch)
-        if (!isEager) {
-            getProductEditDetails(id).catch(() => {})
-        }
     }, [])
-
-    // Eager prefetch: batch-load details for all visible rows on page render
-    useEffect(() => {
-        if (rows.length === 0) return
-        const uncachedIds = rows
-            .map(r => r.id)
-            .filter(id => !detailCache.current[id])
-        if (uncachedIds.length === 0) return
-
-        // Stagger prefetch in small batches to avoid overwhelming the server
-        const BATCH_SIZE = 5
-        let cancelled = false
-        const runBatches = async () => {
-            for (let i = 0; i < uncachedIds.length; i += BATCH_SIZE) {
-                if (cancelled) break
-                const batch = uncachedIds.slice(i, i + BATCH_SIZE)
-                batch.forEach(id => prefetchProductDetails(id, true))
-                if (i + BATCH_SIZE < uncachedIds.length) {
-                    await new Promise(r => setTimeout(r, 100))
-                }
-            }
-        }
-        runBatches()
-        return () => { cancelled = true }
-    }, [rows, prefetchProductDetails])
 
     const handleSearchChange = (value: string) => {
         setSearch(value)
@@ -158,6 +124,7 @@ export function ProductsClient({
 
     const reloadPageData = useCallback(() => {
         qc.invalidateQueries({ queryKey: ['products'] })
+        qc.invalidateQueries({ queryKey: ['products-tasting-note-catalog'] })
     }, [qc])
 
     const handleDelete = (id: string, name: string) => {
@@ -278,104 +245,142 @@ export function ProductsClient({
                 }
             />
 
-            <Toolbar
-                left={
-                    <div className="flex gap-2">
-                        <SearchInput
-                            placeholder="Tìm theo tên, SKU, nhà SX..."
-                            value={search}
-                            onChange={e => handleSearchChange(e.target.value)}
-                            className="sm:w-72"
-                        />
-                        <Button
-                            variant="secondary"
-                            className="md:hidden"
-                            aria-expanded={showMobileFilters}
-                            onClick={() => setShowMobileFilters(!showMobileFilters)}
-                        >
-                            <SlidersHorizontal size={14} aria-hidden />
-                            Lọc{activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ''}
-                        </Button>
-                    </div>
-                }
-                right={
-                    <div className={`${showMobileFilters ? 'grid grid-cols-2' : 'hidden'} md:flex md:flex-wrap items-center gap-2 w-full md:w-auto`}>
-                        <Select
-                            aria-label="Loại vang"
-                            value={typeFilter}
-                            onChange={e => { setTypeFilter(e.target.value); applyFilter({ wineType: e.target.value || undefined }) }}
-                            className="md:w-36"
-                        >
-                            <option value="">Tất cả loại</option>
-                            <option value="WHITE">Vang trắng</option>
-                            <option value="RED">Vang đỏ</option>
-                            <option value="SPARKLING">Vang nổ</option>
-                            <option value="ROSE">Vang hồng</option>
-                        </Select>
-                        <Select
-                            aria-label="Trạng thái"
-                            value={statusFilter}
-                            onChange={e => { setStatusFilter(e.target.value); applyFilter({ status: e.target.value || undefined }) }}
-                            className="md:w-40"
-                        >
-                            <option value="">Tất cả trạng thái</option>
-                            <option value="ACTIVE">Đang bán</option>
-                            <option value="DISCONTINUED">Ngừng KD</option>
-                            <option value="ALLOCATION_ONLY">Allocation</option>
-                        </Select>
-                        <Select
-                            aria-label="Quốc gia"
-                            value={countryFilter}
-                            onChange={e => { setCountryFilter(e.target.value); applyFilter({ country: e.target.value || undefined }) }}
-                            className="md:w-40"
-                        >
-                            <option value="">Tất cả quốc gia</option>
-                            {countries.map(c => (
-                                <option key={c.code} value={c.code}>
-                                    {COUNTRY_NAMES[c.code] ?? c.code} [{c.code}] ({c.count})
-                                </option>
-                            ))}
-                        </Select>
-                        <Select
-                            aria-label="NCC / Nhà SX"
-                            value={producerFilter}
-                            onChange={e => { setProducerFilter(e.target.value); applyFilter({ producerId: e.target.value || undefined }) }}
-                            className="md:w-44"
-                        >
-                            <option value="">Tất cả NCC / Nhà SX</option>
-                            {producers.map(p => (
-                                <option key={p.id} value={p.id}>{p.name}</option>
-                            ))}
-                        </Select>
-                        {hasFilters && (
-                            <Button
-                                variant="ghost"
-                                onClick={() => {
-                                    setSearch(''); setTypeFilter(''); setStatusFilter(''); setCountryFilter(''); setProducerFilter('')
-                                    applyFilter({ search: undefined, wineType: undefined, status: undefined, country: undefined, producerId: undefined })
-                                }}
-                            >
-                                <X size={14} aria-hidden /> Xóa bộ lọc
-                            </Button>
-                        )}
-                    </div>
-                }
-            />
+            {/* Clean View Switcher Tabs */}
+            <div className="flex items-center gap-1 border-b border-lys-border">
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('CATALOG')}
+                    className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
+                        activeTab === 'CATALOG'
+                            ? 'border-lys-teal-strong text-lys-teal-strong bg-white rounded-t-md'
+                            : 'border-transparent text-slate-500 hover:text-slate-800'
+                    }`}
+                >
+                    <Package size={14} />
+                    Danh mục Sản phẩm
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('TASTING_NOTES')}
+                    className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
+                        activeTab === 'TASTING_NOTES'
+                            ? 'border-lys-teal-strong text-lys-teal-strong bg-white rounded-t-md'
+                            : 'border-transparent text-slate-500 hover:text-slate-800'
+                    }`}
+                >
+                    <FileText size={14} />
+                    Quản lý Tasting Note & Hồ sơ
+                </button>
+            </div>
 
-            <ProductTable
-                rows={rows} total={total} loading={loading}
-                page={filters.page ?? 1} pageSize={filters.pageSize ?? 20}
-                sortBy={filters.sortBy} sortDir={filters.sortDir}
-                onPageChange={p => applyFilter({ page: p })}
-                onSort={handleSort}
-                onEdit={id => { setEditingId(id); setDrawerOpen(true) }}
-                onDelete={handleDelete}
-                onView={id => { setViewId(id); setViewOpen(true) }}
-                onPrefetchDetails={prefetchProductDetails}
-                canEdit={canEdit}
-                onRefresh={reloadPageData}
-                onPrefetch={prefetchPage}
-            />
+            {activeTab === 'CATALOG' ? (
+                <>
+                    <Toolbar
+                        left={
+                            <div className="flex gap-2">
+                                <SearchInput
+                                    placeholder="Tìm theo tên, SKU, nhà SX..."
+                                    value={search}
+                                    onChange={e => handleSearchChange(e.target.value)}
+                                    className="sm:w-72"
+                                />
+                                <Button
+                                    variant="secondary"
+                                    className="md:hidden"
+                                    aria-expanded={showMobileFilters}
+                                    onClick={() => setShowMobileFilters(!showMobileFilters)}
+                                >
+                                    <SlidersHorizontal size={14} aria-hidden />
+                                    Lọc{activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ''}
+                                </Button>
+                            </div>
+                        }
+                        right={
+                            <div className={`${showMobileFilters ? 'grid grid-cols-2' : 'hidden'} md:flex md:flex-wrap items-center gap-2 w-full md:w-auto`}>
+                                <Select
+                                    aria-label="Loại vang"
+                                    value={typeFilter}
+                                    onChange={e => { setTypeFilter(e.target.value); applyFilter({ wineType: e.target.value || undefined }) }}
+                                    className="md:w-36"
+                                >
+                                    <option value="">Tất cả loại</option>
+                                    <option value="WHITE">Vang trắng</option>
+                                    <option value="RED">Vang đỏ</option>
+                                    <option value="SPARKLING">Vang nổ</option>
+                                    <option value="ROSE">Vang hồng</option>
+                                </Select>
+                                <Select
+                                    aria-label="Trạng thái"
+                                    value={statusFilter}
+                                    onChange={e => { setStatusFilter(e.target.value); applyFilter({ status: e.target.value || undefined }) }}
+                                    className="md:w-40"
+                                >
+                                    <option value="">Tất cả trạng thái</option>
+                                    <option value="ACTIVE">Đang bán</option>
+                                    <option value="DISCONTINUED">Ngừng KD</option>
+                                    <option value="ALLOCATION_ONLY">Allocation</option>
+                                </Select>
+                                <Select
+                                    aria-label="Quốc gia"
+                                    value={countryFilter}
+                                    onChange={e => { setCountryFilter(e.target.value); applyFilter({ country: e.target.value || undefined }) }}
+                                    className="md:w-40"
+                                >
+                                    <option value="">Tất cả quốc gia</option>
+                                    {countries.map(c => (
+                                        <option key={c.code} value={c.code}>
+                                            {COUNTRY_NAMES[c.code] ?? c.code} [{c.code}] ({c.count})
+                                        </option>
+                                    ))}
+                                </Select>
+                                <Select
+                                    aria-label="NCC / Nhà SX"
+                                    value={producerFilter}
+                                    onChange={e => { setProducerFilter(e.target.value); applyFilter({ producerId: e.target.value || undefined }) }}
+                                    className="md:w-44"
+                                >
+                                    <option value="">Tất cả NCC / Nhà SX</option>
+                                    {producers.map(p => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                </Select>
+                                {hasFilters && (
+                                    <Button
+                                        variant="ghost"
+                                        onClick={() => {
+                                            setSearch(''); setTypeFilter(''); setStatusFilter(''); setCountryFilter(''); setProducerFilter('')
+                                            applyFilter({ search: undefined, wineType: undefined, status: undefined, country: undefined, producerId: undefined })
+                                        }}
+                                    >
+                                        <X size={14} aria-hidden /> Xóa bộ lọc
+                                    </Button>
+                                )}
+                            </div>
+                        }
+                    />
+
+                    <ProductTable
+                        rows={rows} total={total} loading={loading}
+                        page={filters.page ?? 1} pageSize={filters.pageSize ?? 20}
+                        sortBy={filters.sortBy} sortDir={filters.sortDir}
+                        onPageChange={p => applyFilter({ page: p })}
+                        onSort={handleSort}
+                        onEdit={id => { setEditingId(id); setDrawerOpen(true) }}
+                        onDelete={handleDelete}
+                        onView={id => { setViewId(id); setViewOpen(true) }}
+                        onPrefetchDetails={prefetchProductDetails}
+                        canEdit={canEdit}
+                        onRefresh={reloadPageData}
+                        onPrefetch={prefetchPage}
+                    />
+                </>
+            ) : (
+                <TastingNotesCatalog
+                    canEdit={canEdit}
+                    onViewProduct={id => { setViewId(id); setViewOpen(true) }}
+                    onEditProduct={id => { setEditingId(id); setDrawerOpen(true) }}
+                />
+            )}
 
             <ProductDrawer
                 open={drawerOpen} editingId={editingId}

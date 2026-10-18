@@ -4,7 +4,8 @@ import React, { useState, useCallback } from 'react'
 import {
     Shield, Users, Settings, Bell, Plus, X, Save, Loader2,
     User, ChevronDown, CheckCircle2, AlertCircle, Search, Eye,
-    ClipboardCheck, Check, XCircle, Building2, CreditCard
+    ClipboardCheck, Check, XCircle, Building2, CreditCard,
+    HardDrive, Database, RefreshCw, ExternalLink, FolderOpen
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -12,7 +13,7 @@ import {
     createRole, updateRolePermissions, getRolePermissions, getUsers, getRoles,
     getApprovalTemplates, getPendingApprovals, processApproval, createApprovalTemplate,
     getLegalEntitiesList, updateLegalEntity, getSystemWarehouses, updateWarehouseConfig, updateWarehouseLegalEntity,
-    adminResetPassword
+    adminResetPassword, getSystemInfrastructureStatus, SystemInfrastructureStatus
 } from './actions'
 import { getAuditLogs, getFieldChanges } from '@/lib/audit'
 import { type SessionUser } from '@/lib/session'
@@ -82,7 +83,15 @@ const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> =
     SUSPENDED: { label: 'Khoá', color: '#B91C1C', bg: 'rgba(185,28,28,0.15)' },
 }
 
-type Tab = 'users' | 'roles' | 'approvals' | 'audit' | 'entities'
+type Tab = 'users' | 'roles' | 'approvals' | 'audit' | 'entities' | 'storage'
+
+function formatBytes(bytes: number): string {
+    if (!bytes || bytes <= 0) return '0 B'
+    const units = ['B', 'KB', 'MB', 'GB', 'TB']
+    const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1)
+    const val = bytes / Math.pow(1024, i)
+    return `${val.toFixed(i >= 2 ? 2 : 1)} ${units[i]}`
+}
 
 type PermissionRow = { id: string; code: string; module: string; action: string }
 
@@ -790,6 +799,22 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
     const [editingEntity, setEditingEntity] = useState<any | null>(null)
     const [savingEntity, setSavingEntity] = useState(false)
 
+    // Infrastructure & Cloudflare R2 Storage States
+    const [infraStatus, setInfraStatus] = useState<SystemInfrastructureStatus | null>(null)
+    const [infraLoading, setInfraLoading] = useState(false)
+
+    const loadInfrastructure = useCallback(async () => {
+        setInfraLoading(true)
+        try {
+            const res = await getSystemInfrastructureStatus()
+            setInfraStatus(res)
+        } catch (err: any) {
+            toast.error('Lỗi khi kiểm tra dung lượng Cloudflare R2 & DB: ' + err.message)
+        } finally {
+            setInfraLoading(false)
+        }
+    }, [])
+
     const loadEntities = useCallback(async () => {
         try {
             const [ents, whs] = await Promise.all([
@@ -858,7 +883,8 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
         if (tab === 'audit' && !auditLoaded) loadAudit()
         if (tab === 'approvals' && !approvalsLoaded) loadApprovals()
         if (tab === 'entities' && !entitiesLoaded) loadEntities()
-    }, [tab, auditLoaded, approvalsLoaded, entitiesLoaded, loadAudit, loadApprovals, loadEntities])
+        if (tab === 'storage' && !infraStatus && !infraLoading) loadInfrastructure()
+    }, [tab, auditLoaded, approvalsLoaded, entitiesLoaded, infraStatus, infraLoading, loadAudit, loadApprovals, loadEntities, loadInfrastructure])
 
     const handleApproval = async (requestId: string, action: 'APPROVE' | 'REJECT') => {
         setProcessingId(requestId)
@@ -888,6 +914,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
         { key: 'roles', label: 'Vai Trò & Phân Quyền', icon: Shield },
         { key: 'approvals', label: 'Quy Trình Duyệt', icon: ClipboardCheck },
         { key: 'entities', label: 'Pháp Nhân & Kho', icon: Building2 },
+        { key: 'storage', label: 'Hạ Tầng & Lưu Trữ (R2 / DB)', icon: HardDrive },
         { key: 'audit', label: 'Nhật Ký Hệ Thống', icon: Eye },
     ]
 
@@ -895,9 +922,19 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
         <div className="space-y-6 max-w-screen-2xl">
             <PageHeader
                 title="Cài Đặt & Phân Quyền (SYS/RBAC)"
-                description="Quản lý tài khoản, vai trò, quyền hạn — Dữ liệu thực từ DB"
+                description="Quản lý tài khoản, vai trò, quyền hạn, dung lượng Cloudflare R2 & Database"
                 actions={
                     <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setTab('storage')
+                                if (!infraStatus && !infraLoading) loadInfrastructure()
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all border border-cyan-200 bg-cyan-50 text-cyan-800 hover:bg-cyan-100 cursor-pointer"
+                        >
+                            <HardDrive size={13} /> Kiểm Tra Dung Lượng R2 & DB
+                        </button>
                         <a href="/dashboard/settings/approval-matrix"
                             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                             style={{ textDecoration: 'none' }}>
@@ -927,7 +964,13 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                     const active = tab === t.key
                     return (
                         <button key={t.key}
-                            onClick={() => { setTab(t.key); if (t.key === 'audit' && !auditLoaded) loadAudit(); if (t.key === 'approvals' && !approvalsLoaded) loadApprovals(); if (t.key === 'entities' && !entitiesLoaded) loadEntities() }}
+                            onClick={() => {
+                                setTab(t.key)
+                                if (t.key === 'audit' && !auditLoaded) loadAudit()
+                                if (t.key === 'approvals' && !approvalsLoaded) loadApprovals()
+                                if (t.key === 'entities' && !entitiesLoaded) loadEntities()
+                                if (t.key === 'storage' && !infraStatus && !infraLoading) loadInfrastructure()
+                            }}
                             className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all flex-1 justify-center cursor-pointer whitespace-nowrap shrink-0"
                             style={{
                                 background: active ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
@@ -1385,6 +1428,370 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                             </div>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* ── Infrastructure & Cloudflare R2 Storage Tab ────────────────────────── */}
+            {tab === 'storage' && (
+                <div className="space-y-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-lg border border-slate-200">
+                        <div>
+                            <h3 className="text-base font-bold text-slate-900">
+                                Giám Sát Dung Lượng Lưu Trữ Cloudflare R2 & Cơ Sở Dữ Liệu PostgreSQL
+                            </h3>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                {infraStatus?.checkedAt
+                                    ? `Dữ liệu thực tế từ Bucket "${infraStatus.r2.bucketName}" — Cập nhật lúc ${new Date(infraStatus.checkedAt).toLocaleString('vi-VN')}`
+                                    : 'Đang truy vấn trực tiếp từ máy chủ lưu trữ Cloudflare R2...'}
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            disabled={infraLoading}
+                            onClick={loadInfrastructure}
+                            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-semibold bg-cyan-700 text-white hover:bg-cyan-800 disabled:opacity-50 cursor-pointer shrink-0"
+                        >
+                            {infraLoading ? (
+                                <Loader2 size={14} className="animate-spin" />
+                            ) : (
+                                <RefreshCw size={14} />
+                            )}
+                            Làm mới dung lượng thực tế
+                        </button>
+                    </div>
+
+                    {infraLoading && !infraStatus ? (
+                        <div className="bg-white rounded-lg border border-slate-200 p-12 flex flex-col items-center justify-center gap-3 text-slate-500">
+                            <Loader2 size={24} className="animate-spin text-cyan-700" />
+                            <p className="text-xs font-medium">
+                                Đang quét toàn bộ tệp trên Cloudflare R2 và kiểm tra dung lượng PostgreSQL...
+                            </p>
+                        </div>
+                    ) : infraStatus ? (
+                        <>
+                            {/* Top 2 Summary Cards: Cloudflare R2 Quota & PostgreSQL DB Quota */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                {/* Card 1: Cloudflare R2 Storage */}
+                                <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-4">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-10 h-10 rounded-lg bg-cyan-50 border border-cyan-200 flex items-center justify-center text-cyan-700">
+                                                <HardDrive size={20} />
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="text-sm font-bold text-slate-900">
+                                                        Cloudflare R2 Object Storage
+                                                    </h4>
+                                                    <span
+                                                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                                            infraStatus.r2.connected
+                                                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                                                : 'bg-rose-50 text-rose-700 border border-rose-200'
+                                                        }`}
+                                                    >
+                                                        {infraStatus.r2.connected
+                                                            ? `ONLINE · ${infraStatus.r2.latencyMs}ms`
+                                                            : 'MẤT KẾT NỐI'}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-slate-500">
+                                                    Bucket:{' '}
+                                                    <span className="font-mono font-semibold text-slate-700">
+                                                        {infraStatus.r2.bucketName}
+                                                    </span>{' '}
+                                                    · Account: {infraStatus.r2.accountIdMasked}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-lg font-bold text-slate-900 font-mono">
+                                                {formatBytes(infraStatus.r2.totalBytes)}
+                                            </p>
+                                            <p className="text-[11px] text-slate-500">
+                                                / {formatBytes(infraStatus.r2.freeTierLimitBytes)} (Gói Free)
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Quota Progress Bar */}
+                                    <div className="space-y-1.5">
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className="text-slate-600 font-medium">
+                                                Đã dùng:{' '}
+                                                <strong className="text-slate-900">
+                                                    {infraStatus.r2.usagePercent}%
+                                                </strong>{' '}
+                                                ({infraStatus.r2.totalFiles.toLocaleString('vi-VN')} tệp)
+                                            </span>
+                                            <span className="text-emerald-700 font-semibold">
+                                                Còn trống miễn phí:{' '}
+                                                {formatBytes(infraStatus.r2.remainingFreeBytes)}
+                                            </span>
+                                        </div>
+                                        <div className="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden border border-slate-200">
+                                            <div
+                                                className="h-full bg-cyan-600 transition-all"
+                                                style={{
+                                                    width: `${Math.min(
+                                                        100,
+                                                        Math.max(1.5, infraStatus.r2.usagePercent)
+                                                    )}%`,
+                                                }}
+                                            />
+                                        </div>
+                                        <p className="text-[11px] text-slate-500">
+                                            Hạn mức miễn phí tiêu chuẩn Cloudflare R2: 10 GB lưu trữ/tháng · Phí băng thông tải xuống (Egress): 0 đ.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Card 2: PostgreSQL Database */}
+                                <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-4">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-700">
+                                                <Database size={20} />
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="text-sm font-bold text-slate-900">
+                                                        PostgreSQL Database (Supabase)
+                                                    </h4>
+                                                    <span
+                                                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                                            infraStatus.database.connected
+                                                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                                                : 'bg-rose-50 text-rose-700 border border-rose-200'
+                                                        }`}
+                                                    >
+                                                        {infraStatus.database.connected
+                                                            ? `ONLINE · ${infraStatus.database.latencyMs}ms`
+                                                            : 'LỖI KẾT NỐI'}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-slate-500">
+                                                    Dung lượng vật lý toàn bộ bảng & chỉ mục (Indexes)
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-lg font-bold text-slate-900 font-mono">
+                                                {formatBytes(infraStatus.database.sizeBytes)}
+                                            </p>
+                                            <p className="text-[11px] text-slate-500">
+                                                / {formatBytes(infraStatus.database.freeTierLimitBytes)} (500 MB)
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className="text-slate-600 font-medium">
+                                                Đã dùng:{' '}
+                                                <strong className="text-slate-900">
+                                                    {infraStatus.database.usagePercent}%
+                                                </strong>
+                                            </span>
+                                            <span className="text-emerald-700 font-semibold">
+                                                Còn trống:{' '}
+                                                {formatBytes(
+                                                    Math.max(
+                                                        0,
+                                                        infraStatus.database.freeTierLimitBytes -
+                                                            infraStatus.database.sizeBytes
+                                                    )
+                                                )}
+                                            </span>
+                                        </div>
+                                        <div className="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden border border-slate-200">
+                                            <div
+                                                className="h-full bg-indigo-600 transition-all"
+                                                style={{
+                                                    width: `${Math.min(
+                                                        100,
+                                                        Math.max(1.5, infraStatus.database.usagePercent)
+                                                    )}%`,
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Record Counts */}
+                                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 pt-1">
+                                        {[
+                                            {
+                                                label: 'Sản phẩm',
+                                                val: infraStatus.database.counts.products,
+                                            },
+                                            {
+                                                label: 'Hồ sơ pháp lý',
+                                                val: infraStatus.database.counts.regulatedDocs,
+                                            },
+                                            {
+                                                label: 'Khách hàng',
+                                                val: infraStatus.database.counts.customers,
+                                            },
+                                            {
+                                                label: 'Đơn bán (SO)',
+                                                val: infraStatus.database.counts.salesOrders,
+                                            },
+                                            {
+                                                label: 'Lô tồn kho',
+                                                val: infraStatus.database.counts.stockLots,
+                                            },
+                                            {
+                                                label: 'Nhật ký Audit',
+                                                val: infraStatus.database.counts.auditLogs,
+                                            },
+                                        ].map(item => (
+                                            <div
+                                                key={item.label}
+                                                className="p-2 rounded bg-slate-50 border border-slate-200/80 text-center"
+                                            >
+                                                <p className="text-xs font-bold font-mono text-slate-900">
+                                                    {item.val.toLocaleString('vi-VN')}
+                                                </p>
+                                                <p className="text-[10px] text-slate-500 truncate">
+                                                    {item.label}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Breakdown by R2 Folder & Recent Uploaded Files */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                                {/* Folder Breakdown Table */}
+                                <div className="lg:col-span-2 bg-white rounded-lg border border-slate-200 overflow-hidden">
+                                    <div className="px-4 py-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <FolderOpen size={15} className="text-cyan-700" />
+                                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                                                Phân Bổ Dung Lượng R2 Theo Phân Hệ / Thư Mục
+                                            </h4>
+                                        </div>
+                                        <span className="text-xs text-slate-500">
+                                            Tổng: {infraStatus.r2.totalFiles} tệp ·{' '}
+                                            {formatBytes(infraStatus.r2.totalBytes)}
+                                        </span>
+                                    </div>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left border-collapse">
+                                            <thead>
+                                                <tr className="border-b border-slate-200 bg-white text-[11px] uppercase text-slate-500">
+                                                    <th className="px-4 py-2.5 font-semibold">
+                                                        Hạng mục lưu trữ
+                                                    </th>
+                                                    <th className="px-3 py-2.5 font-semibold">
+                                                        Đường dẫn R2 Prefix
+                                                    </th>
+                                                    <th className="px-3 py-2.5 font-semibold text-right">
+                                                        Số lượng tệp
+                                                    </th>
+                                                    <th className="px-3 py-2.5 font-semibold text-right">
+                                                        Dung lượng
+                                                    </th>
+                                                    <th className="px-4 py-2.5 font-semibold text-right">
+                                                        Cập nhật gần nhất
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100 text-xs">
+                                                {infraStatus.r2.folders.map(f => {
+                                                    const sharePct =
+                                                        infraStatus.r2.totalBytes > 0
+                                                            ? Math.round(
+                                                                  (f.totalBytes /
+                                                                      infraStatus.r2.totalBytes) *
+                                                                      100
+                                                              )
+                                                            : 0
+                                                    return (
+                                                        <tr
+                                                            key={f.prefix}
+                                                            className="hover:bg-slate-50/80"
+                                                        >
+                                                            <td className="px-4 py-2.5 font-semibold text-slate-800">
+                                                                {f.label}
+                                                            </td>
+                                                            <td className="px-3 py-2.5 font-mono text-[11px] text-slate-500">
+                                                                {f.prefix}
+                                                            </td>
+                                                            <td className="px-3 py-2.5 text-right font-mono font-semibold text-slate-700">
+                                                                {f.fileCount.toLocaleString('vi-VN')}
+                                                            </td>
+                                                            <td className="px-3 py-2.5 text-right font-mono text-slate-900">
+                                                                {formatBytes(f.totalBytes)}{' '}
+                                                                <span className="text-[10px] text-slate-400">
+                                                                    ({sharePct}%)
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-4 py-2.5 text-right text-slate-500">
+                                                                {f.latestModified
+                                                                    ? new Date(
+                                                                          f.latestModified
+                                                                      ).toLocaleDateString('vi-VN')
+                                                                    : '—'}
+                                                            </td>
+                                                        </tr>
+                                                    )
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                {/* Recent Uploaded Files on R2 */}
+                                <div className="bg-white rounded-lg border border-slate-200 overflow-hidden flex flex-col">
+                                    <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                                            Tệp Vừa Tải Lên Cloudflare R2 Gần Nhất
+                                        </h4>
+                                    </div>
+                                    <div className="divide-y divide-slate-100 max-h-[360px] overflow-y-auto">
+                                        {infraStatus.r2.recentFiles.length === 0 ? (
+                                            <div className="p-6 text-center text-xs text-slate-400">
+                                                Chưa có tệp nào trên R2
+                                            </div>
+                                        ) : (
+                                            infraStatus.r2.recentFiles.map(file => (
+                                                <div
+                                                    key={file.key}
+                                                    className="px-3.5 py-2.5 flex items-center justify-between gap-2 hover:bg-slate-50"
+                                                >
+                                                    <div className="min-w-0">
+                                                        <p
+                                                            className="text-xs font-medium text-slate-800 truncate"
+                                                            title={file.key}
+                                                        >
+                                                            {file.key.split('/').pop()}
+                                                        </p>
+                                                        <p className="text-[10px] text-slate-500 font-mono truncate">
+                                                            {formatBytes(file.size)} ·{' '}
+                                                            {new Date(
+                                                                file.lastModified
+                                                            ).toLocaleString('vi-VN')}
+                                                        </p>
+                                                    </div>
+                                                    <a
+                                                        href={file.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center justify-center w-7 h-7 rounded border border-slate-200 text-slate-600 hover:bg-slate-100 shrink-0"
+                                                        title="Mở tệp"
+                                                    >
+                                                        <ExternalLink size={12} />
+                                                    </a>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    ) : null}
                 </div>
             )}
 

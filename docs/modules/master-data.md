@@ -101,13 +101,19 @@ Rượu vang cao cấp cần hình ảnh chuyên nghiệp cho Sales đem chào K
 - Ghi nhận kèm Vintage áp dụng (Điểm 95pt cho Vintage 2018, không phải tất cả Vintages)
 - Hiển thị Badge điểm số trên Catalog/báo giá để thuyết phục KH
 
-**Lưu Trữ & Phân Phối (Cloudflare R2 Storage):**
-- **Toàn bộ hình ảnh sản phẩm (Product Media) và tài liệu Tasting Note / Tự Công Bố** được lưu trữ trực tiếp trên Cloudflare R2 bucket (`wine-erp-documents`).
+**Lưu Trữ & Phân Phối (Cloudflare R2 Storage & Tab Quản Lý Tasting Note & Hồ Sơ Pháp Lý):**
+- **Toàn bộ hình ảnh sản phẩm (`ProductMedia`), tài liệu Tasting Note và Hồ sơ Pháp lý ATTP (`RegulatedDocument` + `RegDocFile`)** được lưu trữ trực tiếp trên Cloudflare R2 bucket (`wine-erp-documents` trong `products/tasting-notes/` và `products/legal-docs/`).
+- **Tab Quản lý Tasting Note & Hồ sơ (`TastingNotesCatalog.tsx`)**: Tách riêng thành một tab chuyên biệt ngay trên trang `/dashboard/products` (không làm chật bảng sản phẩm chính), quản lý trọn bộ **4 nhóm hồ sơ kỹ thuật & pháp lý** cho từng SKU:
+  1. **Tasting Note & Hồ sơ Hương vị (`Product.tastingNoteUrl` + `ProductProfile`)**: Tài liệu Tech Sheet từ nhà sản xuất kèm tóm tắt giống nho, hương vị, nhiệt độ phục vụ.
+  2. **Bản Tự Công Bố Sản Phẩm — TCB (`QUALITY_DECLARATION`, `referenceNo = 'TCB'`)**: Lưu trữ nhiều phiên bản TCB theo thời gian cho từng SKU, tự động đồng bộ bản mới nhất vào `Product.selfDeclarationUrl`.
+  3. **Thông Báo Thay Đổi / Công Văn Cập Nhật Sau TCB (`STANDARDS_COMPLIANCE`, `referenceNo = 'AMENDMENT'`)**: Lưu lịch sử các lần gửi công văn thông báo thay đổi mẫu nhãn chính/phụ, cập nhật niên vụ, nồng độ cồn hoặc chỉ tiêu an toàn gửi Chi cục ATTP.
+  4. **Phiếu Kiểm Định / Kết Quả Kiểm Nghiệm ATTP (`QUALITY_TEST_REPORT`, `referenceNo = 'TESTING'`)**: Lưu trữ phiếu kết quả thử nghiệm (`AR-242-...`, NIFC, Eurofins Sắc Ký Hải Đăng, Quatest 1, Laboratoire Excell...) phục vụ hậu kiểm và làm TCB.
+- **Product Dossier Drawer (Ngăn kéo Bộ Hồ sơ SKU)**: Bấm vào dòng SKU hoặc nút `Hồ sơ (N)` mở Drawer xem toàn bộ lịch sử đa phiên bản của cả 4 hạng mục, cho phép thêm mới văn bản kèm siêu dữ liệu (`Số hiệu`, `Ngày ban hành`, `Cơ quan tiếp nhận / Đơn vị kiểm nghiệm`, `Nội dung thay đổi`) hoặc xoá văn bản (`uploadProductLegalDoc`, `deleteProductLegalDoc`).
 - **Tốc độ cao & Egress miễn phí**: Cloudflare R2 không tính phí băng thông truyền tải ra ngoài (0 egress fee), tích hợp CDN toàn cầu.
-- **Xem trực tiếp nhúng ngay trên giao diện (Inline Document Preview Modal)**: Bấm `Xem Tasting Note` hoặc `Xem bản Tự Công Bố` trong `ProductDetailDrawer` / `ProductDrawer` sẽ mở khung đọc PDF/Ảnh trực tiếp ngay bên trong màn hình ERP (`ResponseContentDisposition: inline`), kèm nút `Mở tab mới` và `Tải về`.
-- **Đường dẫn vĩnh viễn**: Phân giải qua route `/api/r2-file/[...path]` tự động sinh presigned URL 1 giờ hoặc chuyển hướng trực tiếp qua Custom Domain CDN (`R2_PUBLIC_DOMAIN`).
-- **Bulk Import tự động**: Đã chạy công cụ import hàng loạt (`scripts/bulk_import_tasting_notes_r2.ts`) đồng bộ 215 tài liệu PDF Tasting Note và bóc tách tự động Wine Profile (aromas, palate, grapes, food pairings) vào database.
-- DB PostgreSQL chỉ lưu URL và đường dẫn định danh `storagePath`, đảm bảo cơ sở dữ liệu luôn nhẹ và tối ưu kết nối.
+- **Xem trực tiếp nhúng ngay trên giao diện (Inline Document Preview Modal)**: Bấm `Xem` mở khung đọc trực tiếp PDF, Ảnh và cả file Word/Excel (`.docx`/`.xlsx` qua Office Online Viewer) ngay bên trong màn hình ERP, kèm nút `Mở tab mới` và `Tải về`.
+- **Đường dẫn vĩnh viễn**: Phân giải qua route `/api/r2-file/[...path]` stream trực tiếp nội dung từ Cloudflare R2 hoặc qua Custom Domain CDN (`R2_PUBLIC_DOMAIN`).
+- **Bulk Import & Đồng bộ R2**: Đồng bộ 100% Tasting Note (157/157 SKU) và toàn bộ kho hồ sơ pháp lý Tự công bố, Công văn thay đổi sau TCB (2025–2026) và Phiếu kiểm định (2021–2026) từ kho lưu trữ nội bộ lên Cloudflare R2 (`scripts/sync_all_product_legal_dossiers.ts`).
+- DB PostgreSQL chỉ lưu URL và đường dẫn định danh, đảm bảo cơ sở dữ liệu luôn nhẹ và tối ưu kết nối.
 
 ---
 
