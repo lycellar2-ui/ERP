@@ -688,18 +688,21 @@ export async function getNotifications(limit = 10, offset = 0) {
         const user = await getCurrentUser()
         if (!user) return { success: false, error: 'Chưa đăng nhập' }
 
-        const items = await prisma.notification.findMany({
-            where: { userId: user.id },
-            orderBy: { createdAt: 'desc' },
-            take: limit,
-            skip: offset,
-        })
+        const { cached } = await import('@/lib/cache')
+        const serialized = await cached(`notifications:list:${user.id}:${limit}:${offset}`, async () => {
+            const items = await prisma.notification.findMany({
+                where: { userId: user.id },
+                orderBy: { createdAt: 'desc' },
+                take: limit,
+                skip: offset,
+            })
 
-        const serialized = items.map((item: any) => ({
-            ...item,
-            createdAt: item.createdAt.toISOString(),
-            updatedAt: item.updatedAt.toISOString(),
-        }))
+            return items.map((item: any) => ({
+                ...item,
+                createdAt: item.createdAt.toISOString(),
+                updatedAt: item.updatedAt.toISOString(),
+            }))
+        }, 15_000)
 
         return { success: true, notifications: serialized }
     } catch (err: any) {
@@ -713,12 +716,15 @@ export async function getUnreadCount() {
         const user = await getCurrentUser()
         if (!user) return { success: false, error: 'Chưa đăng nhập', count: 0 }
 
-        const count = await prisma.notification.count({
-            where: {
-                userId: user.id,
-                isRead: false,
-            },
-        })
+        const { cached } = await import('@/lib/cache')
+        const count = await cached(`notifications:unread:${user.id}`, async () => {
+            return prisma.notification.count({
+                where: {
+                    userId: user.id,
+                    isRead: false,
+                },
+            })
+        }, 15_000)
 
         return { success: true, count }
     } catch (err: any) {
@@ -742,6 +748,9 @@ export async function markAsRead(notificationId: string) {
             },
         })
 
+        const { revalidateCache } = await import('@/lib/cache')
+        revalidateCache(`notifications:list:${user.id}`)
+        revalidateCache(`notifications:unread:${user.id}`)
         return { success: true }
     } catch (err: any) {
         console.error('Lỗi markAsRead:', err)
@@ -764,6 +773,9 @@ export async function markAllAsRead() {
             },
         })
 
+        const { revalidateCache } = await import('@/lib/cache')
+        revalidateCache(`notifications:list:${user.id}`)
+        revalidateCache(`notifications:unread:${user.id}`)
         return { success: true }
     } catch (err: any) {
         console.error('Lỗi markAllAsRead:', err)

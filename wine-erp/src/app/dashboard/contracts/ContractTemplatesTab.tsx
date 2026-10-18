@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react'
 import {
-    FileText,
     Download,
     Plus,
     Copy,
@@ -12,14 +11,15 @@ import {
     FileSpreadsheet,
     Info,
     ArrowRight,
-    Search,
     BookOpen,
 } from 'lucide-react'
 import {
     CONTRACT_TEMPLATES,
     ContractTemplateDefinition,
 } from './template-actions'
-import { Button, Badge, Card, CardHeader, CardBody } from '@/components/ui'
+import { Button, Badge } from '@/components/ui'
+import { useAppLocale } from '@/lib/i18n'
+import { getContractsDict } from './i18n'
 import { toast } from 'sonner'
 
 interface Props {
@@ -27,22 +27,32 @@ interface Props {
 }
 
 export function ContractTemplatesTab({ onSelectTemplateToCreate }: Props) {
+    const { locale } = useAppLocale()
+    const t = getContractsDict(locale)
+
     const [copiedTag, setCopiedTag] = useState<string | null>(null)
     const [selectedDetailTemplate, setSelectedDetailTemplate] = useState<ContractTemplateDefinition>(CONTRACT_TEMPLATES[0])
-    const [searchQuery, setSearchQuery] = useState('')
+    const [searchQuery] = useState('')
 
     const copyToClipboard = (tag: string) => {
         navigator.clipboard.writeText(tag)
         setCopiedTag(tag)
-        toast.success(`Đã sao chép tag: ${tag}`)
+        toast.success(t.templates.copiedToast(tag))
         setTimeout(() => setCopiedTag(null), 2000)
     }
 
-    const filteredTemplates = CONTRACT_TEMPLATES.filter(
-        t => t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             t.code.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    const filteredTemplates = CONTRACT_TEMPLATES.filter(tpl => {
+        const localized = t.templates.items[tpl.code]
+        const name = localized?.name ?? tpl.name
+        const desc = localized?.description ?? tpl.description
+        return (
+            name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            desc.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            tpl.code.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+    })
+
+    const selectedLocalized = t.templates.items[selectedDetailTemplate.code]
 
     return (
         <div className="space-y-6">
@@ -53,10 +63,10 @@ export function ContractTemplatesTab({ onSelectTemplateToCreate }: Props) {
                         <span className="p-1.5 rounded-lg bg-lys-primary/10 text-lys-primary">
                             <BookOpen className="w-5 h-5" />
                         </span>
-                        <h2 className="text-base font-bold text-slate-800">Kho Biểu Mẫu Hợp Đồng Ngành Rượu (.docx)</h2>
+                        <h2 className="text-base font-bold text-slate-800">{t.templates.bannerTitle}</h2>
                     </div>
                     <p className="text-xs text-slate-500 max-w-2xl leading-relaxed">
-                        Hệ thống cung cấp sẵn các biểu mẫu chuẩn hóa cho hoạt động kinh doanh rượu nhập khẩu (Bán buôn, Ký gửi, Hợp đồng từng đơn). Bạn có thể tải mẫu Word về chỉnh sửa câu chữ hoặc tạo ngay hợp đồng tự động.
+                        {t.templates.bannerDesc}
                     </p>
                 </div>
 
@@ -67,7 +77,7 @@ export function ContractTemplatesTab({ onSelectTemplateToCreate }: Props) {
                         onClick={() => onSelectTemplateToCreate('HD_NGUYEN_TAC')}
                     >
                         <Plus className="w-4 h-4 mr-1.5" />
-                        Tạo HĐ Từ Mẫu
+                        {t.templates.createFromTemplateBtn}
                     </Button>
                 </div>
             </div>
@@ -77,6 +87,7 @@ export function ContractTemplatesTab({ onSelectTemplateToCreate }: Props) {
                 {filteredTemplates.map((tpl) => {
                     const isSelected = selectedDetailTemplate.code === tpl.code
                     const Icon = tpl.code === 'HD_NGUYEN_TAC' ? Building2 : tpl.code === 'HD_KY_GUI' ? Layers : FileSpreadsheet
+                    const localized = t.templates.items[tpl.code]
 
                     return (
                         <div
@@ -93,17 +104,17 @@ export function ContractTemplatesTab({ onSelectTemplateToCreate }: Props) {
                                         <Icon className="w-5 h-5" />
                                     </div>
                                     <Badge tone={tpl.code === 'HD_NGUYEN_TAC' ? 'brand' : tpl.code === 'HD_KY_GUI' ? 'warning' : 'success'}>
-                                        {tpl.badgeText}
+                                        {localized?.badgeText ?? tpl.badgeText}
                                     </Badge>
                                 </div>
 
                                 <div>
-                                    <h3 className="font-bold text-slate-800 text-sm">{tpl.name}</h3>
-                                    <div className="text-[11px] font-mono text-slate-400 mt-0.5">Mã: {tpl.code}</div>
+                                    <h3 className="font-bold text-slate-800 text-sm">{localized?.name ?? tpl.name}</h3>
+                                    <div className="text-[11px] font-mono text-slate-400 mt-0.5">{t.templates.codePrefix} {tpl.code}</div>
                                 </div>
 
                                 <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
-                                    {tpl.description}
+                                    {localized?.description ?? tpl.description}
                                 </p>
                             </div>
 
@@ -115,7 +126,7 @@ export function ContractTemplatesTab({ onSelectTemplateToCreate }: Props) {
                                         className="flex-1 inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md border border-lys-border bg-white hover:bg-slate-50 text-slate-700 transition-colors"
                                     >
                                         <Download className="w-3.5 h-3.5 mr-1.5 text-slate-500" />
-                                        Tải Mẫu .docx
+                                        {t.templates.downloadDocx}
                                     </a>
 
                                     <Button
@@ -124,7 +135,7 @@ export function ContractTemplatesTab({ onSelectTemplateToCreate }: Props) {
                                         onClick={() => onSelectTemplateToCreate(tpl.code)}
                                         className="flex-1 text-xs"
                                     >
-                                        Tạo HĐ Ngay
+                                        {t.templates.createNow}
                                         <ArrowRight className="w-3.5 h-3.5 ml-1" />
                                     </Button>
                                 </div>
@@ -134,7 +145,7 @@ export function ContractTemplatesTab({ onSelectTemplateToCreate }: Props) {
                                     onClick={() => setSelectedDetailTemplate(tpl)}
                                     className="w-full text-center text-[11px] text-lys-primary hover:underline pt-1"
                                 >
-                                    Xem bảng biến thay thế ({tpl.placeholders.length} biến)
+                                    {t.templates.viewPlaceholders(tpl.placeholders.length)}
                                 </button>
                             </div>
                         </div>
@@ -148,15 +159,15 @@ export function ContractTemplatesTab({ onSelectTemplateToCreate }: Props) {
                     <div>
                         <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
                             <Info className="w-4 h-4 text-lys-primary" />
-                            Bảng Tra Cứu Biến Thay Thế (Placeholder Merge Tags)
+                            {t.templates.placeholderTableTitle}
                         </h3>
                         <p className="text-xs text-slate-500 mt-0.5">
-                            Đang xem danh mục biến của mẫu: <strong className="text-slate-700">{selectedDetailTemplate.name}</strong>
+                            {t.templates.viewingVarsOf} <strong className="text-slate-700">{selectedLocalized?.name ?? selectedDetailTemplate.name}</strong>
                         </p>
                     </div>
 
                     <div className="text-xs text-slate-400 italic">
-                        Bấm vào tag bất kỳ để sao chép vào clipboard
+                        {t.templates.clickToCopyHint}
                     </div>
                 </div>
 
@@ -164,10 +175,10 @@ export function ContractTemplatesTab({ onSelectTemplateToCreate }: Props) {
                     <table className="w-full text-xs text-left">
                         <thead className="bg-slate-50 text-slate-600 border-b border-lys-border">
                             <tr>
-                                <th className="p-2.5 font-semibold w-56">Mã Thẻ (Placeholder Tag)</th>
-                                <th className="p-2.5 font-semibold">Tên Trường Dữ Liệu</th>
-                                <th className="p-2.5 font-semibold">Ví Dụ Dữ Liệu Sau Khi Merge</th>
-                                <th className="p-2.5 font-semibold text-center w-20">Thao Tác</th>
+                                <th className="p-2.5 font-semibold w-56">{t.templates.thTag}</th>
+                                <th className="p-2.5 font-semibold">{t.templates.thFieldName}</th>
+                                <th className="p-2.5 font-semibold">{t.templates.thExample}</th>
+                                <th className="p-2.5 font-semibold text-center w-20">{t.templates.thAction}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -183,7 +194,7 @@ export function ContractTemplatesTab({ onSelectTemplateToCreate }: Props) {
                                             type="button"
                                             onClick={() => copyToClipboard(p.tag)}
                                             className="p-1 rounded hover:bg-slate-200 text-slate-500 transition-colors"
-                                            title="Sao chép tag"
+                                            title={t.templates.copyTagTitle}
                                         >
                                             {copiedTag === p.tag ? (
                                                 <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -200,11 +211,13 @@ export function ContractTemplatesTab({ onSelectTemplateToCreate }: Props) {
 
                 {/* Guide for custom docx templates */}
                 <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-1.5 leading-relaxed">
-                    <div className="font-semibold text-slate-800 flex items-center gap-1.5"><Info size={14} className="text-cyan-700 shrink-0" /> Hướng dẫn tạo & chỉnh sửa biểu mẫu Word riêng của công ty:</div>
+                    <div className="font-semibold text-slate-800 flex items-center gap-1.5">
+                        <Info size={14} className="text-cyan-700 shrink-0" /> {t.templates.guideTitle}
+                    </div>
                     <ul className="list-disc pl-5 space-y-1 text-slate-500">
-                        <li>Bạn tải file mẫu <code>.docx</code> ở trên về máy, mở bằng Microsoft Word.</li>
-                        <li>Chèn các biến <code>{`{ten_ben_b}`}</code>, <code>{`{so_hop_dong}`}</code>, <code>{`{tong_tien}`}</code> vào vị trí mong muốn trong văn bản.</li>
-                        <li>Với danh sách sản phẩm lặp lại trong bảng, đặt <code>{`{#san_pham}{stt}`}</code> ở ô đầu tiên và <code>{`{thanh_tien}{/san_pham}`}</code> ở ô cuối cùng của hàng bảng. Hệ thống sẽ tự động nhân bản số dòng tương ứng với danh mục sản phẩm bạn đã chọn.</li>
+                        <li>{t.templates.guideItem1}</li>
+                        <li>{t.templates.guideItem2}</li>
+                        <li>{t.templates.guideItem3}</li>
                     </ul>
                 </div>
             </div>

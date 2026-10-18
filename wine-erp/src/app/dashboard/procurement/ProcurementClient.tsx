@@ -29,6 +29,8 @@ import { getSuppliers } from '@/app/dashboard/suppliers/actions'
 import { getProducts } from '@/app/dashboard/products/actions'
 import { useConfirmDialog } from '@/components/ui'
 import Link from 'next/link'
+import { useAppLocale } from '@/lib/i18n'
+import { getProcurementDict } from './i18n'
 
 // ── Incoterms Config ───────────────────────────────
 const INCOTERMS_CFG: Record<string, { label: string; bg: string; color: string; border: string }> = {
@@ -181,6 +183,8 @@ const TAB_LABELS: Record<string, string> = {
 }
 
 function FilterTabs({ active, counts, onChange }: { active: string; counts: Record<string, number>; onChange: (s: string) => void }) {
+    const { locale } = useAppLocale()
+    const dict = getProcurementDict(locale)
     const visibleTabs = TAB_ORDER.filter(tab => tab === 'ALL' || tab === active || (counts[tab] ?? 0) > 0)
 
     return (
@@ -193,7 +197,7 @@ function FilterTabs({ active, counts, onChange }: { active: string; counts: Reco
                         className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap transition-all flex-shrink-0 ${
                             isActive ? 'bg-[#0891B2]/8 text-[#0E7490] border border-[#0891B2]/25' : 'bg-transparent text-[#64748B] border border-transparent hover:bg-[#0891B2]/6'
                         }`}>
-                        {TAB_LABELS[tab]}
+                        {(dict.statusTabs as Record<string, string>)[tab] ?? TAB_LABELS[tab]}
                         <span className="inline-block px-1.5 py-0.5 text-[10px] rounded-full font-bold whitespace-nowrap shrink-0"
                             style={{ background: isActive ? 'rgba(8, 145, 178, 0.15)' : 'rgba(100,116,139,0.15)', color: isActive ? '#0E7490' : '#64748B' }}>
                             {count}
@@ -220,12 +224,14 @@ function SortHeader({ label, field, current, dir, onSort, style }: { label: stri
 }
 
 function POStatusBadge({ status }: { status: string }) {
+    const { locale } = useAppLocale()
+    const dict = getProcurementDict(locale)
     const cfg = PO_STATUS[status] ?? { label: status, color: '#475569', bg: 'rgba(168,152,128,0.15)', icon: FileText }
     const Icon = cfg.icon
     return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap"
             style={{ color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.color}30` }}>
-            <Icon size={11} />{cfg.label}
+            <Icon size={11} />{dict.status[status] ?? cfg.label}
         </span>
     )
 }
@@ -1907,6 +1913,8 @@ interface Props {
 }
 
 export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
+    const { locale } = useAppLocale()
+    const dict = getProcurementDict(locale)
     const [rows, setRows] = useState(initialRows)
     const [total, setTotal] = useState(initialTotal)
     const { confirm, dialog: confirmDialog } = useConfirmDialog()
@@ -2224,40 +2232,40 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                     {/* Inline Quick Stats matching SalesClient */}
                     <div className="hidden lg:flex items-center gap-x-4 text-xs">
                         <span style={{ color: '#475569' }}>
-                            Tổng PO: <strong className="font-mono text-sm ml-1" style={{ color: '#0891B2' }}>{stats.total}</strong>
+                            {dict.stats.totalPO}: <strong className="font-mono text-sm ml-1" style={{ color: '#0891B2' }}>{stats.total}</strong>
                         </span>
                         <span style={{ color: '#475569' }}>
-                            Bản nháp: <strong className="font-mono text-sm ml-1" style={{ color: '#B45309' }}>{statusCounts.DRAFT ?? stats.draft ?? 0}</strong>
+                            {dict.status.DRAFT}: <strong className="font-mono text-sm ml-1" style={{ color: '#B45309' }}>{statusCounts.DRAFT ?? stats.draft ?? 0}</strong>
                         </span>
                         <span style={{ color: '#475569' }}>
-                            Chờ duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#E5A93C' }}>{statusCounts.PENDING_APPROVAL ?? 0}</strong>
+                            {dict.status.PENDING_APPROVAL}: <strong className="font-mono text-sm ml-1" style={{ color: '#E5A93C' }}>{statusCounts.PENDING_APPROVAL ?? 0}</strong>
                         </span>
                         <span style={{ color: '#475569' }}>
-                            Đã duyệt: <strong className="font-mono text-sm ml-1" style={{ color: '#15803D' }}>{stats.approved}</strong>
+                            {dict.status.APPROVED}: <strong className="font-mono text-sm ml-1" style={{ color: '#15803D' }}>{stats.approved}</strong>
                         </span>
                         <span style={{ color: '#475569' }}>
-                            Đang trên tàu: <strong className="font-mono text-sm ml-1" style={{ color: '#1D4ED8' }}>{stats.inTransit}</strong>
+                            {dict.status.IN_TRANSIT}: <strong className="font-mono text-sm ml-1" style={{ color: '#1D4ED8' }}>{stats.inTransit}</strong>
                         </span>
                         <span style={{ color: '#475569' }}>
-                            Đã nhập đủ: <strong className="font-mono text-sm ml-1" style={{ color: '#0891B2' }}>{statusCounts.RECEIVED ?? 0}</strong>
+                            {dict.status.RECEIVED}: <strong className="font-mono text-sm ml-1" style={{ color: '#0891B2' }}>{statusCounts.RECEIVED ?? 0}</strong>
                         </span>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                     <button onClick={() => setShowStats(!showStats)}
                         className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md border ${
                             showStats
                                 ? 'bg-[#0891B2]/8 text-[#0E7490] border-[#0891B2]/25'
                                 : 'bg-[#64748B]/10 hover:bg-[#64748B]/20 text-[#475569] border-[#64748B]/25'
                         }`}>
-                        Thống kê
+                        {locale === 'en' ? 'KPIs' : 'Thống kê'}
                     </button>
 
                     <button onClick={() => setCashFlowModalOpen(true)}
                         className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-bold transition-all rounded-md shadow-xs bg-[#0D9488]/10 hover:bg-[#0D9488]/20 text-[#0F766E] border border-[#0D9488]/30"
-                        title="Kế hoạch dự trù chi phí & dòng tiền theo thời điểm">
-                        <DollarSign size={14} /> Dòng Tiền Lô Hàng
+                        title={dict.cashFlowModal.title}>
+                        <DollarSign size={14} /> {dict.actions.cashFlow}
                     </button>
 
                     <button onClick={async () => { 
@@ -2270,17 +2278,17 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                         } 
                     }}
                         className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md bg-[#B45309]/10 hover:bg-[#B45309]/20 text-[#B45309] border border-[#B45309]/25">
-                        <Globe size={14} /> Tỷ Giá Ngoại Tệ
+                        <Globe size={14} /> {dict.actions.fxPanel}
                     </button>
 
                     <button onClick={handleExportExcel}
                         className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md bg-[#64748B]/10 hover:bg-[#64748B]/20 text-[#475569] border border-[#64748B]/25">
-                        <Download size={14} /> Excel
+                        <Download size={14} /> {dict.actions.exportExcel}
                     </button>
 
                     <button onClick={() => setDrawerOpen(true)}
                         className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-md transition-all duration-150 bg-[#0E7490] hover:bg-[#155E75] text-white">
-                        <Plus size={16} /> Tạo PO Mới
+                        <Plus size={16} /> {dict.actions.createPO}
                     </button>
                 </div>
             </div>
@@ -2289,16 +2297,18 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
             {showStats && (
                 <div className="space-y-2 animate-in slide-in-from-top-2 duration-150">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#64748B' }}>Thống Kê Chi Tiết Đơn Mua Hàng</span>
+                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#64748B' }}>
+                            {locale === 'en' ? 'Purchase Order KPIs' : 'Thống Kê Chi Tiết Đơn Mua Hàng'}
+                        </span>
                         <button onClick={() => setShowStats(false)} className="text-xs font-semibold hover:underline flex items-center gap-1" style={{ color: '#0891B2' }}>
-                            Thu gọn chỉ số
+                            {locale === 'en' ? 'Hide KPIs' : 'Thu gọn chỉ số'}
                         </button>
                     </div>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        <POStatCard label="Tổng Số PO" value={stats.total} accent="#0E7490" />
-                        <POStatCard label="Nháp & Chờ Duyệt" value={stats.draft + (statusCounts.PENDING_APPROVAL || 0)} accent="#B45309" />
-                        <POStatCard label="Đã Phê Duyệt" value={stats.approved} accent="#15803D" />
-                        <POStatCard label="Đang Vận Chuyển" value={stats.inTransit} accent="#1D4ED8" />
+                        <POStatCard label={dict.stats.totalPO} value={stats.total} accent="#0E7490" />
+                        <POStatCard label={dict.stats.pendingApproval} value={stats.draft + (statusCounts.PENDING_APPROVAL || 0)} accent="#B45309" />
+                        <POStatCard label={dict.status.APPROVED} value={stats.approved} accent="#15803D" />
+                        <POStatCard label={dict.stats.inTransit} value={stats.inTransit} accent="#1D4ED8" />
                     </div>
                 </div>
             )}
@@ -2315,7 +2325,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                     {/* Search input */}
                     <div className="relative w-full sm:w-48 xl:w-64">
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
-                        <input type="text" placeholder="Tìm số PO, nhà cung cấp, B/L..."
+                        <input type="text" placeholder={dict.filters.searchPlaceholder}
                             value={search}
                             onChange={e => {
                                 const val = e.target.value
@@ -2339,7 +2349,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                         >
                             {DATE_PRESET_OPTIONS.map(opt => (
                                 <option key={opt.key} value={opt.key} className="bg-slate-50 text-slate-900">
-                                    {opt.label}
+                                    {(dict.datePresets as Record<string, string>)[opt.key] ?? opt.label}
                                 </option>
                             ))}
                         </select>
@@ -2373,7 +2383,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                         }}
                     >
                         <Plus size={12} style={{ transform: showFilters ? 'rotate(45deg)' : 'none', transition: 'transform 0.15s ease' }} />
-                        Bộ lọc
+                        {locale === 'en' ? 'Filters' : 'Bộ lọc'}
                         {hasActiveFilters && (
                             <span className="w-1.5 h-1.5 rounded-full bg-[#0E7490]" />
                         )}
@@ -2386,12 +2396,12 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3 p-3 rounded-lg animate-in slide-in-from-top-2 duration-150"
                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#64748B' }}>Pháp Nhân Nhập Khẩu</label>
+                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#64748B' }}>{dict.table.legalEntity}</label>
                         <select value={legalEntityFilter}
                             onChange={e => { setLegalEntityFilter(e.target.value); refresh({ legalEntityId: e.target.value }) }}
                             className="w-full px-2 py-1.5 text-xs outline-none font-semibold rounded"
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
-                            <option value="">Tất cả pháp nhân</option>
+                            <option value="">{dict.filters.legalEntityAll}</option>
                             {legalEntities.map(e => (
                                 <option key={e.id} value={e.id}>{e.code} — {e.name}</option>
                             ))}
@@ -2404,21 +2414,21 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                             onChange={e => { setIncotermsFilter(e.target.value); refresh({ incoterms: e.target.value }) }}
                             className="w-full px-2 py-1.5 text-xs outline-none font-semibold rounded"
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
-                            <option value="">Tất cả Incoterms</option>
-                            <option value="EXW">EXW (Tại xưởng)</option>
-                            <option value="FOB">FOB (Giao lên tàu)</option>
-                            <option value="CIF">CIF (Cước + BH + Hàng)</option>
-                            <option value="DDP">DDP (Giao tại kho)</option>
+                            <option value="">{dict.filters.incotermsAll}</option>
+                            <option value="EXW">EXW</option>
+                            <option value="FOB">FOB</option>
+                            <option value="CIF">CIF</option>
+                            <option value="DDP">DDP</option>
                         </select>
                     </div>
 
                     <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#64748B' }}>Tiền Tệ</label>
+                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#64748B' }}>{dict.shipmentDrawer.costs.currency}</label>
                         <select value={currencyFilter}
                             onChange={e => { setCurrencyFilter(e.target.value); refresh({ currency: e.target.value }) }}
                             className="w-full px-2 py-1.5 text-xs outline-none font-semibold rounded"
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
-                            <option value="">Tất cả tiền tệ</option>
+                            <option value="">{dict.filters.currencyAll}</option>
                             <option value="USD">USD ($)</option>
                             <option value="EUR">EUR (€)</option>
                             <option value="GBP">GBP (£)</option>
@@ -2432,7 +2442,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                             <button onClick={handleClearFilters}
                                 className="w-full py-1.5 text-xs font-semibold rounded transition-all border"
                                 style={{ background: 'rgba(232,93,93,0.1)', color: '#B91C1C', borderColor: 'rgba(232,93,93,0.25)' }}>
-                                Xoá Bộ Lọc
+                                {dict.actions.clearFilters}
                             </button>
                         )}
                     </div>
@@ -2446,15 +2456,15 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                <SortHeader label="Mã PO & Vận Tải (Shipment)" field="poNo" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '20%' }} />
-                                <SortHeader label="Nhà Cung Cấp & Pháp Nhân" field="supplier" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '20%' }} />
-                                <SortHeader label="Quy Mô & Nhập Kho" field="totalQty" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '15%' }} />
-                                <SortHeader label="Giá Trị & Quy Đổi" field="totalAmount" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '15%' }} />
+                                <SortHeader label={dict.table.poNo} field="poNo" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '20%' }} />
+                                <SortHeader label={dict.table.supplier} field="supplier" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '20%' }} />
+                                <SortHeader label={dict.table.skuCount} field="totalQty" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '15%' }} />
+                                <SortHeader label={dict.table.totalAmount} field="totalAmount" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '15%' }} />
                                 <th className="px-4 py-2.5 text-xs uppercase tracking-wider font-semibold text-slate-600" style={{ width: '14%' }}>
-                                    Trạng Thái & Hồ Sơ
+                                    {dict.table.status}
                                 </th>
                                 <th className="px-4 py-2.5 text-xs uppercase tracking-wider font-semibold text-slate-600 text-right" style={{ width: '16%' }}>
-                                    Thao Tác
+                                    {dict.table.actions}
                                 </th>
                             </tr>
                         </thead>
@@ -2475,12 +2485,12 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                     <td colSpan={6} className="text-center py-16 text-slate-500">
                                         <FileText size={32} className="mx-auto mb-2 opacity-40 text-slate-600" />
                                         <p className="text-sm font-semibold">
-                                            {hasActiveFilters ? 'Không tìm thấy đơn mua hàng phù hợp bộ lọc' : 'Hệ thống chưa có đơn mua hàng nào'}
+                                            {dict.table.emptyTitle}
                                         </p>
                                         {hasActiveFilters && (
                                             <button onClick={handleClearFilters}
-                                                className="mt-2.5 px-3 py-1 text-xs font-bold rounded-lg text-slate-900 bg-[#0E7490]">
-                                                Xoá Bộ Lọc
+                                                className="mt-2.5 px-3 py-1 text-xs font-bold rounded-lg text-white bg-[#0E7490]">
+                                                {dict.actions.clearFilters}
                                             </button>
                                         )}
                                     </td>
@@ -2513,7 +2523,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                     <div className="flex items-center gap-1.5 text-xs text-slate-900">
                                                         <Ship size={11} className="text-[#1D4ED8] shrink-0" />
                                                         <span className="font-mono font-bold text-[#1D4ED8] text-[11px] truncate max-w-[170px]"
-                                                            title={`Vận đơn B/L: ${row.latestShipment.billOfLading}`}>
+                                                            title={`B/L: ${row.latestShipment.billOfLading}`}>
                                                             {row.latestShipment.billOfLading}
                                                         </span>
                                                         {row.latestShipment.vesselName && (
@@ -2529,7 +2539,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                     )}
                                                 </div>
                                             ) : (
-                                                <p className="text-[10px] mt-1 text-slate-500 italic">Chưa có lô vận chuyển B/L</p>
+                                                <p className="text-[10px] mt-1 text-slate-500 italic">{dict.detailDrawer.shipments.empty}</p>
                                             )}
                                         </td>
 
@@ -2560,18 +2570,18 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                         {/* Col 3: Quantity & Goods Receipt */}
                                         <td className="px-4 py-3">
                                             <div className="text-xs font-bold text-slate-900">
-                                                <span className="text-slate-600 font-mono">{row.lineCount} SKU</span> · <span className="font-mono text-slate-900">{row.totalQty.toLocaleString()}</span> chai
+                                                <span className="text-slate-600 font-mono">{row.lineCount} SKU</span> · <span className="font-mono text-slate-900">{row.totalQty.toLocaleString()}</span> {dict.table.bottleUnit}
                                             </div>
                                             {row.hasFoc && (
                                                 <div className="mt-0.5">
                                                     <span className="inline-block text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300 whitespace-nowrap shrink-0">
-                                                        FOC: {(row.totalFocQty ?? 0).toLocaleString()} chai
+                                                        FOC: {(row.totalFocQty ?? 0).toLocaleString()} {dict.table.bottleUnit}
                                                     </span>
                                                 </div>
                                             )}
                                             <div className="mt-1 space-y-0.5">
                                                 <div className="flex justify-between items-center text-[10px]">
-                                                    <span className="text-slate-500">Đã nhập kho:</span>
+                                                    <span className="text-slate-500">{dict.detailDrawer.receivedQty}:</span>
                                                     <span className="font-mono font-bold text-[#0891B2]">
                                                         {row.totalQtyReceived.toLocaleString()}/{row.totalQty.toLocaleString()}
                                                     </span>
@@ -2600,7 +2610,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                 ≈ {formatVND(row.totalAmount * row.exchangeRate)}
                                             </p>
                                             <p className="text-[10px] text-slate-500 font-mono">
-                                                Tỷ giá: {row.exchangeRate.toLocaleString()}
+                                                {dict.detailDrawer.exchangeRate}: {row.exchangeRate.toLocaleString()}
                                             </p>
                                         </td>
 
@@ -2617,7 +2627,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                 )}
                                                 {row.docCount && row.docCount > 0 ? (
                                                     <span className="text-[#0891B2] flex items-center gap-0.5 font-mono">
-                                                        {row.docCount} tệp đính kèm
+                                                        {row.docCount} docs
                                                     </span>
                                                 ) : null}
                                             </div>
@@ -2632,19 +2642,17 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             <div className="flex items-center justify-end gap-1.5 flex-nowrap whitespace-nowrap">
                                                 <button onClick={() => showDetail(row.id)}
                                                     className="p-1.5 rounded-lg text-[#0891B2] hover:bg-white border border-emerald-500/20 flex-shrink-0"
-                                                    title="Xem chi tiết PO">
+                                                    title={dict.detailDrawer.title}>
                                                     <Eye size={13} />
                                                 </button>
 
-                                                {/* Status Stepper handles Sửa, Gửi Duyệt, Xoá for DRAFT */}
                                                 <StatusStepper current={row.status} poId={row.id} onUpdate={refresh} onEdit={(id) => { setEditPoId(id); setEditDrawerOpen(true); }} />
 
-                                                {/* Direct Warehouse Receipt shortcut */}
                                                 {isReadyForGR && (
                                                     <Link href="/dashboard/warehouse"
                                                         className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold text-[#0891B2] bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 flex-shrink-0"
-                                                        title="Nhập kho hàng cho PO này">
-                                                        <Box size={11} /> Nhập Kho
+                                                        title={dict.detailDrawer.tabs.GR}>
+                                                        <Box size={11} /> {dict.detailDrawer.tabs.GR}
                                                     </Link>
                                                 )}
                                             </div>
@@ -2661,11 +2669,11 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
             <div className="block md:hidden space-y-3">
                 {loading ? (
                     <div className="text-center py-12 text-xs text-slate-600">
-                        <Loader2 size={20} className="animate-spin inline text-[#0891B2] mr-2" /> Đang tải PO...
+                        <Loader2 size={20} className="animate-spin inline text-[#0891B2] mr-2" /> {dict.table.loading}
                     </div>
                 ) : rows.length === 0 ? (
                     <div className="text-center py-12 text-xs text-slate-500 rounded-lg border border-slate-200 bg-slate-50">
-                        Chưa có đơn mua hàng nào
+                        {dict.table.emptyTitle}
                     </div>
                 ) : rows.map(row => {
                     const incoCfg = INCOTERMS_CFG[row.incoterms || 'EXW'] || INCOTERMS_CFG.EXW
@@ -2701,19 +2709,19 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
                             <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/40 text-xs">
                                 <div>
-                                    <span className="text-[10px] text-slate-500 block">Số lượng & Tiến độ:</span>
-                                    <span className="font-mono text-slate-900 font-bold">{row.totalQty.toLocaleString()} chai</span>
+                                    <span className="text-[10px] text-slate-500 block">{dict.detailDrawer.totalQty}:</span>
+                                    <span className="font-mono text-slate-900 font-bold">{row.totalQty.toLocaleString()} {dict.table.bottleUnit}</span>
                                     {row.hasFoc && (
                                         <span className="text-[10px] text-amber-700 font-bold ml-1">({(row.totalFocQty ?? 0).toLocaleString()} FOC)</span>
                                     )}
-                                    <span className="text-[10px] text-[#0891B2] ml-1">({row.receivedPercentage}% kho)</span>
+                                    <span className="text-[10px] text-[#0891B2] ml-1">({row.receivedPercentage}%)</span>
                                 </div>
                                 <div className="text-right">
-                                    <span className="text-[10px] text-slate-500 block">Giá trị:</span>
+                                    <span className="text-[10px] text-slate-500 block">{dict.table.vndEquiv}:</span>
                                     <span className="font-mono text-[#0891B2] font-bold">{formatVND(row.totalAmount * row.exchangeRate)}</span>
                                     {row.discountAmount && row.discountAmount > 0 && (
                                         <span className="text-[10px] text-amber-700 block font-mono">
-                                            Giảm {row.discountAmount.toLocaleString()} {row.currency}
+                                            -{row.discountAmount.toLocaleString()} {row.currency}
                                         </span>
                                     )}
                                 </div>
@@ -2725,7 +2733,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 </div>
                                 <button onClick={() => showDetail(row.id)}
                                     className="px-2.5 py-1 text-xs font-bold rounded-lg text-[#0891B2] bg-white border border-emerald-500/20">
-                                    Chi Tiết
+                                    {dict.detailDrawer.title}
                                 </button>
                             </div>
                         </div>
@@ -2745,13 +2753,13 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                             <div>
                                 <div className="flex items-center gap-2">
                                     <h3 className="text-base font-extrabold text-slate-900">
-                                        {poDetail?.poNo ?? 'Chi Tiết Đơn Mua Hàng'}
+                                        {poDetail?.poNo ?? dict.detailDrawer.title}
                                     </h3>
                                     {poDetail && <POStatusBadge status={poDetail.status} />}
                                 </div>
                                 {poDetail && (
                                     <p className="text-xs text-slate-600 mt-0.5">
-                                        {poDetail.supplierName} · {poDetail.currency} (Tỷ giá: {poDetail.exchangeRate.toLocaleString()})
+                                        {poDetail.supplierName} · {poDetail.currency} ({dict.detailDrawer.exchangeRate}: {poDetail.exchangeRate.toLocaleString()})
                                     </p>
                                 )}
                             </div>
@@ -2760,16 +2768,16 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                     <button onClick={() => { setEditPoId(selectedId); setEditDrawerOpen(true); }}
                                         className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-all hover:bg-amber-500/25"
                                         style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}
-                                        title="Chỉnh sửa PO Nháp">
-                                        <Pencil size={13} /> Sửa Đơn Nháp
+                                        title={dict.actions.editDraft}>
+                                        <Pencil size={13} /> {dict.actions.editDraft}
                                     </button>
                                 )}
                                 {poDetail && poDetail.status === 'PENDING_APPROVAL' && (
                                     <button onClick={() => handleDrawerRevertToDraft(selectedId!)}
                                         className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-all hover:bg-amber-500/25"
                                         style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}
-                                        title="Thu hồi về trạng thái Nháp để chỉnh sửa">
-                                        <RotateCcw size={12} /> Thu Hồi Về Nháp
+                                        title={dict.actions.revertDraft}>
+                                        <RotateCcw size={12} /> {dict.actions.revertDraft}
                                     </button>
                                 )}
                                 <button onClick={() => setSelectedId(null)} className="p-1.5 rounded-lg text-slate-600 hover:bg-white">
@@ -2780,46 +2788,46 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
                         {detailLoading ? (
                             <div className="flex-1 flex items-center justify-center py-16 text-[#0891B2]">
-                                <Loader2 size={24} className="animate-spin mr-2" /> Đang tải chi tiết PO...
+                                <Loader2 size={24} className="animate-spin mr-2" /> {dict.table.loading}
                             </div>
                         ) : poDetail ? (
                             <>
                                 {/* Quick Meta Bar */}
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-4 bg-white border-b border-slate-200 text-xs">
                                     <div>
-                                        <span className="text-[10px] text-slate-500 block font-bold uppercase">Tổng Số Lượng</span>
-                                        <span className="font-mono font-bold text-slate-900">{poDetail.totalQty.toLocaleString()} chai</span>
+                                        <span className="text-[10px] text-slate-500 block font-bold uppercase">{dict.detailDrawer.totalQty}</span>
+                                        <span className="font-mono font-bold text-slate-900">{poDetail.totalQty.toLocaleString()} {dict.table.bottleUnit}</span>
                                         {Boolean(poDetail.totalFocQty && poDetail.totalFocQty > 0) && (
                                             <span className="text-[10px] text-amber-700 font-bold ml-1">({poDetail.totalFocQty} FOC)</span>
                                         )}
-                                        <span className="text-[10px] text-[#0891B2] ml-1">({poDetail.totalQtyReceived} đã nhận)</span>
+                                        <span className="text-[10px] text-[#0891B2] ml-1">({poDetail.totalQtyReceived} {dict.detailDrawer.receivedQty})</span>
                                     </div>
                                     <div>
-                                        <span className="text-[10px] text-slate-500 block font-bold uppercase">Giá Ngoại Tệ</span>
+                                        <span className="text-[10px] text-slate-500 block font-bold uppercase">{dict.detailDrawer.foreignAmount}</span>
                                         <span className="font-mono font-bold text-slate-900">{poDetail.totalAmount.toLocaleString()} {poDetail.currency}</span>
                                         {Boolean(poDetail.discountAmount && poDetail.discountAmount > 0) && (
                                             <span className="text-[10px] text-amber-700 block font-mono">
-                                                (Đã giảm {poDetail.discountAmount?.toLocaleString()} {poDetail.currency})
+                                                ({dict.detailDrawer.discounted} {poDetail.discountAmount?.toLocaleString()} {poDetail.currency})
                                             </span>
                                         )}
                                     </div>
                                     <div className="sm:text-right">
-                                        <span className="text-[10px] text-slate-500 block font-bold uppercase">Quy Đổi VNĐ</span>
+                                        <span className="text-[10px] text-slate-500 block font-bold uppercase">{dict.detailDrawer.vndAmount}</span>
                                         <span className="font-mono font-bold text-[#0891B2]">{formatVND(poDetail.totalAmount * poDetail.exchangeRate)}</span>
                                     </div>
                                 </div>
 
                                 {/* Drawer Tabs */}
-                                <div className="flex border-b border-slate-200 bg-white px-4 gap-1">
+                                <div className="flex border-b border-slate-200 bg-white px-4 gap-1 overflow-x-auto">
                                     {[
-                                        { key: 'LINES', label: `Sản Phẩm (${poDetail.lines.length})` },
-                                        { key: 'FINANCE', label: `Tài Chính & Dòng Tiền` },
-                                        { key: 'SHIPMENTS', label: `Lô Vận Tải (${poDetail.shipments.length})` },
-                                        { key: 'DOCS', label: `Chứng Từ (${poDetail.documents?.length || 0})` },
-                                        { key: 'APPROVAL', label: `Luồng Duyệt (${poDetail.approvalHistory?.length || 0})` },
+                                        { key: 'LINES', label: `${dict.detailDrawer.tabs.LINES} (${poDetail.lines.length})` },
+                                        { key: 'FINANCE', label: dict.detailDrawer.tabs.FINANCIAL },
+                                        { key: 'SHIPMENTS', label: `${dict.detailDrawer.tabs.SHIPMENTS} (${poDetail.shipments.length})` },
+                                        { key: 'DOCS', label: `${dict.detailDrawer.tabs.DOCS} (${poDetail.documents?.length || 0})` },
+                                        { key: 'APPROVAL', label: `${dict.detailDrawer.tabs.APPROVAL} (${poDetail.approvalHistory?.length || 0})` },
                                     ].map(t => (
                                         <button key={t.key} onClick={() => setDetailTab(t.key as any)}
-                                            className="px-3 py-2.5 text-xs font-bold border-b-2 transition-all"
+                                            className="px-3 py-2.5 text-xs font-bold border-b-2 transition-all whitespace-nowrap"
                                             style={{
                                                 borderColor: detailTab === t.key ? '#0E7490' : 'transparent',
                                                 color: detailTab === t.key ? '#0E7490' : '#64748B',

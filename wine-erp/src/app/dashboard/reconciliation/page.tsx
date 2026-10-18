@@ -1,7 +1,7 @@
 import { InvoiceReconciliationTab } from '@/app/dashboard/finance/InvoiceReconciliationTab'
 
 export const metadata = {
-    title: 'Đối Chiếu Hóa Đơn | Wine ERP',
+    title: 'Đối Chiếu Hóa Đơn (Invoice Reconciliation) | Wine ERP',
 }
 
 export default function ReconciliationPage() {

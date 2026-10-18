@@ -7,6 +7,7 @@ import {
     Crown, Gem, UserX, CreditCard, Save, CheckCircle, Clock
 } from 'lucide-react'
 import { useAiStatus } from '@/lib/useAiStatus'
+import { useAppLocale } from '@/lib/i18n'
 
 interface CRMStats {
     totalCustomers: number
@@ -25,6 +26,7 @@ interface CRMStats {
 }
 
 export function AICRMAnalysis() {
+    const { isEn } = useAppLocale()
     const aiStatus = useAiStatus('crm')
     const [analysis, setAnalysis] = useState<string | null>(null)
     const [stats, setStats] = useState<CRMStats | null>(null)
@@ -41,7 +43,7 @@ export function AICRMAnalysis() {
         const res = await fetch('/api/ai/reports', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ module: 'crm', title: `CRM Analysis — ${new Date().toLocaleDateString('vi-VN')}`, analysis, stats }),
+            body: JSON.stringify({ module: 'crm', title: `CRM Analysis — ${new Date().toLocaleDateString(isEn ? 'en-US' : 'vi-VN')}`, analysis, stats }),
         })
         const data = await res.json()
         if (data.success) { setSaved(true); setTimeout(() => setSaved(false), 3000) }
@@ -58,16 +60,16 @@ export function AICRMAnalysis() {
                 setAnalysis(data.analysis)
                 setStats(data.stats)
             } else {
-                setError(data.error || 'Không thể phân tích CRM')
+                setError(data.error || (isEn ? 'Unable to analyze CRM' : 'Không thể phân tích CRM'))
             }
         } catch {
-            setError('Lỗi kết nối đến AI service')
+            setError(isEn ? 'Connection error to AI service' : 'Lỗi kết nối đến AI service')
         } finally {
             setLoading(false)
         }
     }
 
-    const fmtVND = (v: number) => v >= 1e9 ? `${(v / 1e9).toFixed(1)}T` : v >= 1e6 ? `${(v / 1e6).toFixed(0)}M` : `${v.toLocaleString()}`
+    const fmtVND = (v: number) => v >= 1e9 ? `${(v / 1e9).toFixed(1)}B` : v >= 1e6 ? `${(v / 1e6).toFixed(0)}M` : `${v.toLocaleString()}`
 
     const TIER_COLORS: Record<string, string> = { PLATINUM: '#0F172A', GOLD: '#B45309', SILVER: '#475569', BRONZE: '#87685A' }
 
@@ -82,7 +84,9 @@ export function AICRMAnalysis() {
                     </div>
                     <div>
                         <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>AI CRM Analysis</h3>
-                        <p className="text-[10px]" style={{ color: '#64748B' }}>Phân tích CRO — sức khỏe KH, churning, AR, chiến lược</p>
+                        <p className="text-[10px]" style={{ color: '#64748B' }}>
+                            {isEn ? 'CRO Analysis — customer health, churning, AR, strategy' : 'Phân tích CRO — sức khỏe KH, churning, AR, chiến lược'}
+                        </p>
                     </div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -97,11 +101,11 @@ export function AICRMAnalysis() {
                         }}
                     >
                         {loading ? (
-                            <><Loader2 size={13} className="animate-spin" /> Đang phân tích...</>
+                            <><Loader2 size={13} className="animate-spin" /> {isEn ? 'Analyzing...' : 'Đang phân tích...'}</>
                         ) : analysis ? (
-                            <><RefreshCw size={13} /> Phân tích lại</>
+                            <><RefreshCw size={13} /> {isEn ? 'Re-analyze' : 'Phân tích lại'}</>
                         ) : (
-                            <><Sparkles size={13} /> Phân Tích CRM</>
+                            <><Sparkles size={13} /> {isEn ? 'Analyze CRM' : 'Phân Tích CRM'}</>
                         )}
                     </button>
                     <button onClick={() => setCollapsed(!collapsed)} className="p-2 rounded-md transition-all" style={{ color: '#64748B' }}>
@@ -119,12 +123,12 @@ export function AICRMAnalysis() {
                             <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><Users size={11} style={{ color: '#0891B2' }} /></div>
                                 <p className="text-lg font-bold" style={{ color: '#0891B2' }}>{stats.totalCustomers}</p>
-                                <p className="text-xs" style={{ color: '#64748B' }}>Khách Hàng</p>
+                                <p className="text-xs" style={{ color: '#64748B' }}>{isEn ? 'Customers' : 'Khách Hàng'}</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><DollarSign size={11} style={{ color: '#B45309' }} /></div>
                                 <p className="text-lg font-bold" style={{ color: '#B45309' }}>{fmtVND(stats.totalRevenue)}</p>
-                                <p className="text-xs" style={{ color: '#64748B' }}>Tổng Doanh Thu</p>
+                                <p className="text-xs" style={{ color: '#64748B' }}>{isEn ? 'Total Revenue' : 'Tổng Doanh Thu'}</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <p className="text-lg font-bold font-mono" style={{ color: stats.revenueGrowth >= 0 ? '#15803D' : '#B91C1C' }}>
@@ -135,7 +139,7 @@ export function AICRMAnalysis() {
                             <div className="text-center p-2 rounded" style={{ background: stats.totalOverdue > 0 ? 'rgba(185,28,28,0.06)' : '#FFFFFF' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><CreditCard size={11} style={{ color: stats.totalOverdue > 0 ? '#B91C1C' : '#64748B' }} /></div>
                                 <p className="text-lg font-bold" style={{ color: stats.totalOverdue > 0 ? '#B91C1C' : '#475569' }}>{fmtVND(stats.totalOverdue)}</p>
-                                <p className="text-xs" style={{ color: '#64748B' }}>AR Quá Hạn</p>
+                                <p className="text-xs" style={{ color: '#64748B' }}>{isEn ? 'Overdue AR' : 'AR Quá Hạn'}</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: stats.churningCount > 0 ? 'rgba(185,28,28,0.06)' : '#FFFFFF' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><UserX size={11} style={{ color: stats.churningCount > 0 ? '#B91C1C' : '#64748B' }} /></div>
@@ -161,10 +165,10 @@ export function AICRMAnalysis() {
                             </div>
                             <div className="flex items-center justify-between p-2.5 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
-                                    Tháng này: <span style={{ color: '#B45309' }}>{fmtVND(stats.monthRevenue)}</span>
+                                    {isEn ? 'This Month: ' : 'Tháng này: '}<span style={{ color: '#B45309' }}>{fmtVND(stats.monthRevenue)}</span>
                                 </span>
                                 <span className="text-[10px] font-semibold" style={{ color: '#64748B' }}>
-                                    vs trước: <span style={{ color: '#475569' }}>{fmtVND(stats.prevMonthRevenue)}</span>
+                                    {isEn ? 'vs Prev: ' : 'vs trước: '}<span style={{ color: '#475569' }}>{fmtVND(stats.prevMonthRevenue)}</span>
                                 </span>
                             </div>
                         </div>
@@ -177,7 +181,9 @@ export function AICRMAnalysis() {
                         <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin"
                             style={{ borderColor: '#E2E8F0', borderTopColor: '#0891B2' }} />
                         <p className="text-xs animate-pulse" style={{ color: '#64748B' }}>
-                            AI đang phân tích {'{'}khách hàng, churning, AR, wine preferences, chiến lược...{'}'}
+                            {isEn
+                                ? 'AI is analyzing {customers, churning, AR, wine preferences, strategy...}'
+                                : 'AI đang phân tích {khách hàng, churning, AR, wine preferences, chiến lược...}'}
                         </p>
                     </div>
                 )}
@@ -230,12 +236,14 @@ export function AICRMAnalysis() {
                         </div>
                         <p className="text-[10px] mt-3 text-right flex items-center justify-end gap-1" style={{ color: '#64748B' }}>
                             <Clock size={10} className="shrink-0" />
-                            <span>Phân tích lúc {new Date().toLocaleString('vi-VN')} · Gemini 3.1 Pro · CRM Director AI</span>
+                            <span>
+                                {isEn ? 'Analyzed at ' : 'Phân tích lúc '}{new Date().toLocaleString(isEn ? 'en-US' : 'vi-VN')} · Gemini 3.1 Pro · CRM Director AI
+                            </span>
                         </p>
                         <button onClick={handleSaveReport} disabled={saved}
                             className="flex items-center gap-1 px-3 py-1.5 text-[10px] font-semibold rounded transition-all mt-1 ml-auto"
                             style={{ background: saved ? 'rgba(21,128,61,0.1)' : 'rgba(100,116,139,0.08)', color: saved ? '#15803D' : '#475569', border: `1px solid ${saved ? 'rgba(21,128,61,0.3)' : 'rgba(100,116,139,0.15)'}` }}>
-                            {saved ? <><CheckCircle size={10} /> Đã lưu</> : <><Save size={10} /> Lưu Báo Cáo</>}
+                            {saved ? <><CheckCircle size={10} /> {isEn ? 'Saved' : 'Đã lưu'}</> : <><Save size={10} /> {isEn ? 'Save Report' : 'Lưu Báo Cáo'}</>}
                         </button>
                     </div>
                 )}
@@ -245,8 +253,11 @@ export function AICRMAnalysis() {
                     <div className="px-5 py-4 flex flex-col items-center gap-2">
                         <Users size={20} style={{ color: '#E2E8F0' }} />
                         <p className="text-xs text-center" style={{ color: '#64748B' }}>
-                            Nhấn <strong>&quot;Phân Tích CRM&quot;</strong> để nhận<br />
-                            báo cáo sức khỏe KH, churning, AR, chiến lược CEO
+                            {isEn ? (
+                                <>Click <strong>&quot;Analyze CRM&quot;</strong> to generate<br />customer health, churning, AR, and CEO strategy report</>
+                            ) : (
+                                <>Nhấn <strong>&quot;Phân Tích CRM&quot;</strong> để nhận<br />báo cáo sức khỏe KH, churning, AR, chiến lược CEO</>
+                            )}
                         </p>
                     </div>
                 )}

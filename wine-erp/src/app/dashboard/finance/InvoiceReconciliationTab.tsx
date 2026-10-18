@@ -18,34 +18,40 @@ import {
 import { syncVnptInvoiceForOrder, deleteDraftInvoiceFromVnpt } from '../sales/actions-vnpt'
 import { formatVND } from '@/lib/utils'
 import { useConfirmDialog, Pagination } from '@/components/ui'
+import { useAppLocale } from '@/lib/i18n'
 
-const STATUS_CONFIG: Record<ReconciliationStatus, { label: string; badgeBg: string; badgeText: string; border: string }> = {
+const STATUS_CONFIG: Record<ReconciliationStatus, { label: string; labelEn: string; badgeBg: string; badgeText: string; border: string }> = {
     MATCHED: {
         label: 'Đã Khớp',
+        labelEn: 'Matched',
         badgeBg: 'rgba(21,128,61,0.15)',
         badgeText: '#15803D',
         border: '1px solid rgba(21,128,61,0.4)',
     },
     MISSING_INVOICE: {
         label: 'Thiếu HĐ',
+        labelEn: 'Missing Inv',
         badgeBg: 'rgba(185,28,28,0.15)',
         badgeText: '#B91C1C',
         border: '1px solid rgba(185,28,28,0.4)',
     },
     PENDING_SIGN: {
         label: 'Chờ Ký Số',
+        labelEn: 'Pending Sign',
         badgeBg: 'rgba(180,83,9,0.15)',
         badgeText: '#B45309',
         border: '1px solid rgba(180,83,9,0.4)',
     },
     DISCREPANCY: {
         label: 'Lệch Tiền',
+        labelEn: 'Discrepancy',
         badgeBg: 'rgba(249,115,22,0.15)',
         badgeText: '#F97316',
         border: '1px solid rgba(249,115,22,0.4)',
     },
     EXEMPT: {
         label: 'Miễn HĐ',
+        labelEn: 'Exempt',
         badgeBg: 'rgba(100,116,139,0.15)',
         badgeText: '#94A3B8',
         border: '1px solid rgba(100,116,139,0.3)',
@@ -53,6 +59,7 @@ const STATUS_CONFIG: Record<ReconciliationStatus, { label: string; badgeBg: stri
 }
 
 export function InvoiceReconciliationTab() {
+    const { isEn } = useAppLocale()
     const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [period, setPeriod] = useState<ReconciliationFilters['period']>('this_month')
     const [customFrom, setCustomFrom] = useState('')
@@ -506,9 +513,9 @@ export function InvoiceReconciliationTab() {
                     }}
                 >
                     <FileText size={14} />
-                    <span>Đối Chiếu Theo Đơn Hàng (ERP → VNPT)</span>
+                    <span>{isEn ? 'Order Reconciliation (ERP → VNPT)' : 'Đối Chiếu Theo Đơn Hàng (ERP → VNPT)'}</span>
                     <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white text-slate-600 whitespace-nowrap shrink-0">
-                        {kpis.totalOrders} đơn
+                        {kpis.totalOrders} {isEn ? 'orders' : 'đơn'}
                     </span>
                 </button>
 
@@ -522,14 +529,14 @@ export function InvoiceReconciliationTab() {
                     }}
                 >
                     <Building2 size={14} />
-                    <span>Danh Sách Hóa Đơn VNPT (VNPT → ERP)</span>
+                    <span>{isEn ? 'VNPT Invoices (VNPT → ERP)' : 'Danh Sách Hóa Đơn VNPT (VNPT → ERP)'}</span>
                     {vnptKpis.unassignedCount > 0 ? (
                         <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-300 animate-pulse whitespace-nowrap shrink-0">
-                            {vnptKpis.unassignedCount} chưa gán
+                            {vnptKpis.unassignedCount} {isEn ? 'unlinked' : 'chưa gán'}
                         </span>
                     ) : (
                         <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white text-slate-600 whitespace-nowrap shrink-0">
-                            {vnptKpis.totalInvoices} HĐ
+                            {vnptKpis.totalInvoices} {isEn ? 'inv' : 'HĐ'}
                         </span>
                     )}
                 </button>
@@ -541,13 +548,15 @@ export function InvoiceReconciliationTab() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: '#0F172A' }}>
-                        <span>Kiểm Soát & Đối Chiếu Hóa Đơn VAT</span>
+                        <span>{isEn ? 'VAT Invoice Control & Reconciliation' : 'Kiểm Soát & Đối Chiếu Hóa Đơn VAT'}</span>
                         <span className="inline-block text-xs px-2.5 py-0.5 rounded-full font-bold bg-blue-500/10 text-blue-700 border border-blue-500/30 whitespace-nowrap shrink-0">
                             VNPT e-Invoice TT78
                         </span>
                     </h3>
                     <p className="text-xs mt-1" style={{ color: '#475569' }}>
-                        Đối chiếu trạng thái xuất hóa đơn của các đơn bán hàng ERP so với cổng hóa đơn điện tử VNPT
+                        {isEn
+                            ? 'Reconcile ERP sales order invoicing status against VNPT e-Invoice portal'
+                            : 'Đối chiếu trạng thái xuất hóa đơn của các đơn bán hàng ERP so với cổng hóa đơn điện tử VNPT'}
                     </p>
                 </div>
 
@@ -555,12 +564,12 @@ export function InvoiceReconciliationTab() {
                     <button
                         onClick={handleBatchSync}
                         disabled={batchSyncing || loading}
-                        className="px-3.5 py-2 rounded-md text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 text-slate-900"
+                        className="px-3.5 py-2 rounded-md text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 text-white"
                         style={{ background: '#0E7490' }}
                         title="Rà soát toàn bộ các đơn hàng đang có bản nháp trên VNPT để tự động kéo số HĐ và link PDF đã ký"
                     >
                         {batchSyncing ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
-                        Đồng Bộ Hàng Loạt VNPT
+                        {isEn ? 'Batch Sync VNPT' : 'Đồng Bộ Hàng Loạt VNPT'}
                     </button>
 
                     <button
@@ -570,7 +579,7 @@ export function InvoiceReconciliationTab() {
                         title="Xuất file Excel đối chiếu 2 sheet gồm Tổng hợp và Chi tiết"
                     >
                         {exporting ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
-                        Xuất Excel Đối Chiếu
+                        {isEn ? 'Export Reconciliation Excel' : 'Xuất Excel Đối Chiếu'}
                     </button>
                 </div>
             </div>
@@ -588,7 +597,7 @@ export function InvoiceReconciliationTab() {
                 >
                     <div className="flex items-center justify-between mb-1">
                         <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#475569' }}>
-                            Độ Phủ Hóa Đơn
+                            {isEn ? 'Invoice Coverage' : 'Độ Phủ Hóa Đơn'}
                         </span>
                         <CheckCircle2 size={16} style={{ color: '#0891B2' }} />
                     </div>
@@ -596,7 +605,7 @@ export function InvoiceReconciliationTab() {
                         {kpis.coveragePct}%
                     </p>
                     <p className="text-[11px] mt-1" style={{ color: '#64748B' }}>
-                        {kpis.matchedOrders} / {kpis.totalOrders - kpis.exemptOrders} đơn bắt buộc
+                        {kpis.matchedOrders} / {kpis.totalOrders - kpis.exemptOrders} {isEn ? 'required orders' : 'đơn bắt buộc'}
                     </p>
                 </div>
 
@@ -611,12 +620,12 @@ export function InvoiceReconciliationTab() {
                 >
                     <div className="flex items-center justify-between mb-1">
                         <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#B91C1C' }}>
-                            Cần Xuất HĐ
+                            {isEn ? 'Missing Invoice' : 'Cần Xuất HĐ'}
                         </span>
                         <AlertCircle size={16} style={{ color: '#B91C1C' }} />
                     </div>
                     <p className="text-2xl font-bold font-mono" style={{ color: '#B91C1C' }}>
-                        {kpis.missingOrders} <span className="text-xs font-normal">đơn</span>
+                        {kpis.missingOrders} <span className="text-xs font-normal">{isEn ? 'orders' : 'đơn'}</span>
                     </p>
                     <p className="text-[11px] mt-1 font-mono" style={{ color: '#B91C1C' }}>
                         {formatVND(kpis.missingAmount)}
@@ -634,14 +643,14 @@ export function InvoiceReconciliationTab() {
                 >
                     <div className="flex items-center justify-between mb-1">
                         <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#B45309' }}>
-                            Chờ Ký Số VNPT
+                            {isEn ? 'Pending VNPT Sign' : 'Chờ Ký Số VNPT'}
                         </span>
                         <Clock size={16} style={{ color: '#B45309' }} />
                     </div>
                     <p className="text-2xl font-bold font-mono" style={{ color: '#B45309' }}>
-                        {kpis.pendingSignOrders} <span className="text-xs font-normal">đơn</span>
+                        {kpis.pendingSignOrders} <span className="text-xs font-normal">{isEn ? 'orders' : 'đơn'}</span>
                     </p>
-                    <p className="text-[11px] mt-1 font-mono" style={{ color: '#FDE68A' }}>
+                    <p className="text-[11px] mt-1 font-mono" style={{ color: '#B45309' }}>
                         {formatVND(kpis.pendingSignAmount)}
                     </p>
                 </div>
@@ -657,14 +666,14 @@ export function InvoiceReconciliationTab() {
                 >
                     <div className="flex items-center justify-between mb-1">
                         <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#F97316' }}>
-                            Lệch Tiền / Thuế
+                            {isEn ? 'Amount / VAT Diff' : 'Lệch Tiền / Thuế'}
                         </span>
                         <AlertTriangle size={16} style={{ color: '#F97316' }} />
                     </div>
                     <p className="text-2xl font-bold font-mono" style={{ color: '#F97316' }}>
-                        {kpis.discrepancyOrders} <span className="text-xs font-normal">đơn</span>
+                        {kpis.discrepancyOrders} <span className="text-xs font-normal">{isEn ? 'orders' : 'đơn'}</span>
                     </p>
-                    <p className="text-[11px] mt-1 font-mono" style={{ color: '#FDBA74' }}>
+                    <p className="text-[11px] mt-1 font-mono" style={{ color: '#F97316' }}>
                         {formatVND(kpis.discrepancyAmount)}
                     </p>
                 </div>
@@ -680,12 +689,12 @@ export function InvoiceReconciliationTab() {
                 >
                     <div className="flex items-center justify-between mb-1">
                         <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#94A3B8' }}>
-                            Miễn Xuất HĐ
+                            {isEn ? 'Exempt Orders' : 'Miễn Xuất HĐ'}
                         </span>
                         <FileX2 size={16} style={{ color: '#94A3B8' }} />
                     </div>
                     <p className="text-2xl font-bold font-mono" style={{ color: '#94A3B8' }}>
-                        {kpis.exemptOrders} <span className="text-xs font-normal">đơn</span>
+                        {kpis.exemptOrders} <span className="text-xs font-normal">{isEn ? 'orders' : 'đơn'}</span>
                     </p>
                     <p className="text-[11px] mt-1 font-mono" style={{ color: '#64748B' }}>
                         {formatVND(kpis.exemptAmount)}
@@ -699,7 +708,14 @@ export function InvoiceReconciliationTab() {
                     {/* Period Tabs */}
                     <div className="flex items-center gap-1.5 flex-wrap">
                         {(['this_month', 'last_month', 'this_quarter', 'this_year', 'all', 'custom'] as const).map(p => {
-                            const labels: Record<string, string> = {
+                            const labels: Record<string, string> = isEn ? {
+                                this_month: 'This Month',
+                                last_month: 'Last Month',
+                                this_quarter: 'This Quarter',
+                                this_year: 'This Year',
+                                all: 'All Time',
+                                custom: 'Custom',
+                            } : {
                                 this_month: 'Tháng Này',
                                 last_month: 'Tháng Trước',
                                 this_quarter: 'Quý Này',
@@ -734,7 +750,7 @@ export function InvoiceReconciliationTab() {
                                 className="text-xs px-3 py-1.5 rounded outline-none cursor-pointer"
                                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                             >
-                                <option value="">Tất cả pháp nhân</option>
+                                <option value="">{isEn ? 'All Legal Entities' : 'Tất cả pháp nhân'}</option>
                                 {legalEntities.map(le => (
                                     <option key={le.id} value={le.id}>{le.code} - {le.name}</option>
                                 ))}
@@ -747,7 +763,7 @@ export function InvoiceReconciliationTab() {
                                 type="text"
                                 value={search}
                                 onChange={e => { setSearch(e.target.value); setPage(1) }}
-                                placeholder="Tìm SO, Khách hàng, MST, Số HĐ..."
+                                placeholder={isEn ? 'Search SO, Customer, Tax ID, Inv No...' : 'Tìm SO, Khách hàng, MST, Số HĐ...'}
                                 className="w-full text-xs pl-8 pr-3 py-1.5 rounded outline-none"
                                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                             />
@@ -758,7 +774,7 @@ export function InvoiceReconciliationTab() {
                 {/* Custom Date Range Picker */}
                 {period === 'custom' && (
                     <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200 text-xs">
-                        <span style={{ color: '#475569' }}>Từ ngày:</span>
+                        <span style={{ color: '#475569' }}>{isEn ? 'From:' : 'Từ ngày:'}</span>
                         <input
                             type="date"
                             value={customFrom}
@@ -766,7 +782,7 @@ export function InvoiceReconciliationTab() {
                             className="px-2 py-1 rounded text-xs outline-none"
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                         />
-                        <span style={{ color: '#475569' }}>Đến ngày:</span>
+                        <span style={{ color: '#475569' }}>{isEn ? 'To:' : 'Đến ngày:'}</span>
                         <input
                             type="date"
                             value={customTo}
@@ -780,16 +796,16 @@ export function InvoiceReconciliationTab() {
                 {/* Status Filter Tabs / Pills */}
                 <div className="flex items-center gap-1.5 pt-2.5 border-t border-slate-200 flex-wrap">
                     <span className="text-[11px] font-bold mr-1 flex items-center gap-1 uppercase tracking-wider" style={{ color: '#475569' }}>
-                        <Filter size={11} /> Lọc Trạng Thái:
+                        <Filter size={11} /> {isEn ? 'Filter Status:' : 'Lọc Trạng Thái:'}
                     </span>
 
                     {[
-                        { key: 'ALL' as const, label: 'Tất Cả', count: kpis.totalOrders, color: '#475569', activecolor: '#0891B2', activeBg: '#FFFFFF' },
-                        { key: 'MISSING_INVOICE' as const, label: 'Thiếu HĐ', count: kpis.missingOrders, color: '#B91C1C', activeColor: '#B91C1C', activeBg: 'rgba(185,28,28,0.15)' },
-                        { key: 'DISCREPANCY' as const, label: 'Lệch Tiền', count: kpis.discrepancyOrders, color: '#F97316', activeColor: '#F97316', activeBg: 'rgba(249,115,22,0.15)' },
-                        { key: 'PENDING_SIGN' as const, label: 'Chờ Ký Số', count: kpis.pendingSignOrders, color: '#B45309', activeColor: '#B45309', activeBg: 'rgba(180,83,9,0.15)' },
-                        { key: 'MATCHED' as const, label: 'Đã Khớp', count: kpis.matchedOrders, color: '#15803D', activeColor: '#15803D', activeBg: 'rgba(21,128,61,0.15)' },
-                        { key: 'EXEMPT' as const, label: 'Miễn HĐ', count: kpis.exemptOrders, color: '#94A3B8', activeColor: '#94A3B8', activeBg: 'rgba(100,116,139,0.15)' },
+                        { key: 'ALL' as const, label: isEn ? 'All' : 'Tất Cả', count: kpis.totalOrders, color: '#475569', activeColor: '#0891B2', activeBg: 'rgba(8,145,178,0.12)' },
+                        { key: 'MISSING_INVOICE' as const, label: isEn ? 'Missing Inv' : 'Thiếu HĐ', count: kpis.missingOrders, color: '#B91C1C', activeColor: '#B91C1C', activeBg: 'rgba(185,28,28,0.15)' },
+                        { key: 'DISCREPANCY' as const, label: isEn ? 'Discrepancy' : 'Lệch Tiền', count: kpis.discrepancyOrders, color: '#F97316', activeColor: '#F97316', activeBg: 'rgba(249,115,22,0.15)' },
+                        { key: 'PENDING_SIGN' as const, label: isEn ? 'Pending Sign' : 'Chờ Ký Số', count: kpis.pendingSignOrders, color: '#B45309', activeColor: '#B45309', activeBg: 'rgba(180,83,9,0.15)' },
+                        { key: 'MATCHED' as const, label: isEn ? 'Matched' : 'Đã Khớp', count: kpis.matchedOrders, color: '#15803D', activeColor: '#15803D', activeBg: 'rgba(21,128,61,0.15)' },
+                        { key: 'EXEMPT' as const, label: isEn ? 'Exempt' : 'Miễn HĐ', count: kpis.exemptOrders, color: '#94A3B8', activeColor: '#94A3B8', activeBg: 'rgba(100,116,139,0.15)' },
                     ].map(tab => {
                         const active = statusFilter === tab.key
                         return (
@@ -798,7 +814,7 @@ export function InvoiceReconciliationTab() {
                                 onClick={() => { setStatusFilter(tab.key); setPage(1) }}
                                 className="px-2.5 py-1 rounded-full text-xs transition-all cursor-pointer flex items-center gap-1.5 hover:opacity-90"
                                 style={{
-                                    background: active ? tab.activeBg : '#111F2D',
+                                    background: active ? tab.activeBg : '#F8FAFC',
                                     color: active ? tab.activeColor : '#475569',
                                     border: active ? `1.5px solid ${tab.activeColor}` : '1px solid #E2E8F0',
                                     fontWeight: active ? 700 : 500,
@@ -808,7 +824,7 @@ export function InvoiceReconciliationTab() {
                                 <span
                                     className="text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold leading-none"
                                     style={{
-                                        background: active ? tab.activeColor : '#1E3547',
+                                        background: active ? tab.activeColor : '#F1F5F9',
                                         color: active ? '#F8FAFC' : tab.color,
                                     }}
                                 >
@@ -821,9 +837,9 @@ export function InvoiceReconciliationTab() {
                     {statusFilter !== 'ALL' && (
                         <button
                             onClick={() => { setStatusFilter('ALL'); setPage(1) }}
-                            className="text-[11px] ml-auto px-2 py-0.5 rounded text-slate-400 hover:text-white underline cursor-pointer"
+                            className="text-[11px] ml-auto px-2 py-0.5 rounded text-slate-500 hover:text-slate-900 underline cursor-pointer"
                         >
-                            Xóa bộ lọc
+                            {isEn ? 'Clear filter' : 'Xóa bộ lọc'}
                         </button>
                     )}
                 </div>
@@ -831,18 +847,18 @@ export function InvoiceReconciliationTab() {
 
             {/* Reconciliation Data Table */}
             <div className="rounded-md overflow-hidden" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                <div className="overflow-x-auto">
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full min-w-[850px] text-left text-xs" style={{ borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', color: '#475569' }}>
-                                <th className="py-3 px-3.5 font-semibold">Mã Đơn (SO)</th>
-                                <th className="py-3 px-3 font-semibold">Khách Hàng / MST</th>
-                                <th className="py-3 px-2 font-semibold">Pháp Nhân</th>
-                                <th className="py-3 px-3 text-right font-semibold">Tổng Tiền SO</th>
-                                <th className="py-3 px-3 text-right font-semibold">Hóa Đơn VAT</th>
-                                <th className="py-3 px-3 text-center font-semibold">Trạng Thái Đối Chiếu</th>
-                                <th className="py-3 px-3 font-semibold">Số HĐ / Mã CQT</th>
-                                <th className="py-3 px-3 text-right font-semibold">Thao Tác</th>
+                                <th className="py-3 px-3.5 font-semibold">{isEn ? 'Order No (SO)' : 'Mã Đơn (SO)'}</th>
+                                <th className="py-3 px-3 font-semibold">{isEn ? 'Customer / Tax ID' : 'Khách Hàng / MST'}</th>
+                                <th className="py-3 px-2 font-semibold">{isEn ? 'Entity' : 'Pháp Nhân'}</th>
+                                <th className="py-3 px-3 text-right font-semibold">{isEn ? 'SO Total' : 'Tổng Tiền SO'}</th>
+                                <th className="py-3 px-3 text-right font-semibold">{isEn ? 'VAT Invoice' : 'Hóa Đơn VAT'}</th>
+                                <th className="py-3 px-3 text-center font-semibold">{isEn ? 'Reconciliation Status' : 'Trạng Thái Đối Chiếu'}</th>
+                                <th className="py-3 px-3 font-semibold">{isEn ? 'Inv No / Tax Code' : 'Số HĐ / Mã CQT'}</th>
+                                <th className="py-3 px-3 text-right font-semibold">{isEn ? 'Actions' : 'Thao Tác'}</th>
                             </tr>
                         </thead>
 
@@ -852,14 +868,14 @@ export function InvoiceReconciliationTab() {
                                     <td colSpan={8} className="py-12 text-center" style={{ color: '#475569' }}>
                                         <div className="flex items-center justify-center gap-2">
                                             <Loader2 size={16} className="animate-spin" />
-                                            <span>Đang tải dữ liệu đối chiếu...</span>
+                                            <span>{isEn ? 'Loading reconciliation data...' : 'Đang tải dữ liệu đối chiếu...'}</span>
                                         </div>
                                     </td>
                                 </tr>
                             ) : rows.length === 0 ? (
                                 <tr>
                                     <td colSpan={8} className="py-12 text-center" style={{ color: '#64748B' }}>
-                                        Không tìm thấy đơn hàng nào phù hợp với bộ lọc.
+                                        {isEn ? 'No matching orders found.' : 'Không tìm thấy đơn hàng nào phù hợp với bộ lọc.'}
                                     </td>
                                 </tr>
                             ) : (
@@ -882,7 +898,7 @@ export function InvoiceReconciliationTab() {
                                                             className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded font-bold bg-amber-100 text-amber-800 border border-amber-300 shrink-0 cursor-help" 
                                                             title={r.dateWarning.message}
                                                         >
-                                                            <AlertTriangle size={10} /> Lệch kỳ thuế
+                                                            <AlertTriangle size={10} /> {isEn ? 'Period diff' : 'Lệch kỳ thuế'}
                                                         </span>
                                                     )}
                                                 </div>
@@ -930,17 +946,17 @@ export function InvoiceReconciliationTab() {
                                                                 className="text-[10px] font-bold text-orange-700 cursor-help"
                                                                 title={r.discrepancyReason || `Lệch tổng tiền ${formatVND(r.variance)}`}
                                                             >
-                                                                Lệch: {formatVND(r.variance)}
+                                                                {isEn ? 'Diff:' : 'Lệch:'} {formatVND(r.variance)}
                                                             </div>
                                                         ) : r.vatVariance && Math.abs(r.vatVariance) > 1000 ? (
                                                             <div 
                                                                 className="text-[10px] font-bold text-orange-700 cursor-help"
                                                                 title={r.discrepancyReason || `Lệch thuế VAT ${formatVND(r.vatVariance)}`}
                                                             >
-                                                                Lệch VAT: {formatVND(r.vatVariance)}
+                                                                {isEn ? 'VAT Diff:' : 'Lệch VAT:'} {formatVND(r.vatVariance)}
                                                             </div>
                                                         ) : (
-                                                            <div className="text-[10px] text-emerald-700">Khớp 100%</div>
+                                                            <div className="text-[10px] text-emerald-700">{isEn ? '100% Match' : 'Khớp 100%'}</div>
                                                         )}
                                                     </div>
                                                 ) : (
@@ -958,7 +974,7 @@ export function InvoiceReconciliationTab() {
                                                         border: stCfg.border,
                                                     }}
                                                 >
-                                                    {stCfg.label}
+                                                    {isEn ? stCfg.labelEn : stCfg.label}
                                                 </span>
                                             </td>
 
@@ -976,7 +992,7 @@ export function InvoiceReconciliationTab() {
                                                         )}
                                                     </div>
                                                 ) : (
-                                                    <span className="text-[11px]" style={{ color: '#64748B' }}>Chưa cấp</span>
+                                                    <span className="text-[11px]" style={{ color: '#64748B' }}>{isEn ? 'Unissued' : 'Chưa cấp'}</span>
                                                 )}
                                             </td>
 
@@ -992,7 +1008,7 @@ export function InvoiceReconciliationTab() {
                                                             title="Kiểm tra trạng thái ký số và kéo số HĐ chính thức từ VNPT"
                                                         >
                                                             {isSyncingThis ? <Loader2 size={10} className="animate-spin" /> : <RefreshCw size={10} />}
-                                                            Kéo Số
+                                                            {isEn ? 'Sync No' : 'Kéo Số'}
                                                         </button>
                                                     )}
 
@@ -1005,7 +1021,7 @@ export function InvoiceReconciliationTab() {
                                                             title="Hủy bản nháp hóa đơn này để đưa đơn hàng về trạng thái chưa xuất HĐ"
                                                         >
                                                             {deletingSoId === r.soId ? <Loader2 size={10} className="animate-spin" /> : <Trash2 size={10} />}
-                                                            Hủy Nháp
+                                                            {isEn ? 'Void Draft' : 'Hủy Nháp'}
                                                         </button>
                                                     )}
 
@@ -1021,7 +1037,7 @@ export function InvoiceReconciliationTab() {
                                                         title="Gán thủ công số hóa đơn VAT cho đơn hàng này"
                                                     >
                                                         <Link2 size={10} />
-                                                        Gán HĐ
+                                                        {isEn ? 'Link Inv' : 'Gán HĐ'}
                                                     </button>
 
                                                     {/* PDF Download */}
@@ -1060,6 +1076,54 @@ export function InvoiceReconciliationTab() {
                     </table>
                 </div>
 
+                {/* Mobile Card View for SO_VIEW */}
+                <div className="block md:hidden divide-y divide-slate-200">
+                    {loading ? (
+                        <div className="py-12 text-center text-xs text-slate-500">{isEn ? 'Loading reconciliation data...' : 'Đang tải dữ liệu đối chiếu...'}</div>
+                    ) : rows.length === 0 ? (
+                        <div className="py-12 text-center text-xs text-slate-500">{isEn ? 'No matching orders found.' : 'Không tìm thấy đơn hàng nào phù hợp với bộ lọc.'}</div>
+                    ) : (
+                        rows.map(r => {
+                            const stCfg = STATUS_CONFIG[r.reconciliationStatus]
+                            return (
+                                <div key={r.soId} className="p-3.5 space-y-2">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div>
+                                            <span className="font-mono font-bold text-xs text-[#0891B2]">{r.soNo}</span>
+                                            <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded font-bold border border-slate-200 text-amber-800">{r.legalEntityCode || 'TA'}</span>
+                                            <p className="text-sm font-medium text-slate-900 mt-0.5">{r.customerName}</p>
+                                            <p className="text-[11px] font-mono text-slate-500">MST: {r.taxId}</p>
+                                        </div>
+                                        <span className="text-[10px] px-2.5 py-1 rounded-full font-bold shrink-0" style={{ background: stCfg.badgeBg, color: stCfg.badgeText, border: stCfg.border }}>
+                                            {isEn ? stCfg.labelEn : stCfg.label}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+                                        <div>
+                                            <span className="text-slate-500">{isEn ? 'SO Total: ' : 'Tổng SO: '}</span>
+                                            <span className="font-mono font-bold text-slate-900">{formatVND(r.orderTotal)}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="font-mono text-xs text-slate-700">{r.invoiceNo || '—'}</span>
+                                            <button
+                                                onClick={() => {
+                                                    setLinkTargetRow(r)
+                                                    setLinkInvoiceNo(r.invoiceNo && !r.invoiceNo.startsWith('NHAP-') ? r.invoiceNo : '')
+                                                    setLinkNotes('')
+                                                    setLinkModalOpen(true)
+                                                }}
+                                                className="text-[10px] px-2 py-1 rounded font-medium border border-slate-200 text-slate-600"
+                                            >
+                                                {isEn ? 'Link Inv' : 'Gán HĐ'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        })
+                    )}
+                </div>
+
                 <Pagination
                     page={page}
                     pageSize={pageSize}
@@ -1074,13 +1138,15 @@ export function InvoiceReconciliationTab() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: '#0F172A' }}>
-                        <span>Danh Sách Hóa Đơn Điện Tử VNPT</span>
+                        <span>{isEn ? 'VNPT E-Invoice Registry' : 'Danh Sách Hóa Đơn Điện Tử VNPT'}</span>
                         <span className="inline-block text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/10 text-emerald-700 border border-emerald-500/30 whitespace-nowrap shrink-0">
                             Thắng Ân (TA) & Ly's Cellar (LC)
                         </span>
                     </h3>
                     <p className="text-xs mt-1" style={{ color: '#475569' }}>
-                        Liệt kê toàn bộ hóa đơn phát hành từ portal VNPT và phát hiện hóa đơn nào chưa được gán vào đơn hàng ERP
+                        {isEn
+                            ? 'List all invoices issued from VNPT portal and detect unlinked ERP sales orders'
+                            : 'Liệt kê toàn bộ hóa đơn phát hành từ portal VNPT và phát hiện hóa đơn nào chưa được gán vào đơn hàng ERP'}
                     </p>
                 </div>
 
@@ -1088,12 +1154,12 @@ export function InvoiceReconciliationTab() {
                     <button
                         onClick={() => fileInputRef.current?.click()}
                         disabled={vnptUploading || vnptLoading}
-                        className="px-3.5 py-2 rounded-md text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 text-slate-900"
+                        className="px-3.5 py-2 rounded-md text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 text-white"
                         style={{ background: '#0E7490' }}
                         title="Tải lên file bảng kê chi tiết (.xlsx) xuất từ portal VNPT"
                     >
                         {vnptUploading ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
-                        Tải File Excel VNPT
+                        {isEn ? 'Upload VNPT Excel' : 'Tải File Excel VNPT'}
                     </button>
 
                     <button
@@ -1103,14 +1169,14 @@ export function InvoiceReconciliationTab() {
                         title="Xuất file Excel danh sách hóa đơn VNPT và trạng thái gán đơn"
                     >
                         {vnptExporting ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
-                        Xuất Excel Bảng Kê
+                        {isEn ? 'Export Registry Excel' : 'Xuất Excel Bảng Kê'}
                     </button>
 
                     <button
                         onClick={loadVnptData}
                         disabled={vnptLoading}
                         className="p-2 rounded-md border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-white cursor-pointer"
-                        title="Tải lại dữ liệu"
+                        title={isEn ? 'Reload data' : 'Tải lại dữ liệu'}
                     >
                         <RefreshCw size={14} className={vnptLoading ? "animate-spin" : ""} />
                     </button>
@@ -1130,12 +1196,12 @@ export function InvoiceReconciliationTab() {
                 >
                     <div className="flex items-center justify-between mb-1">
                         <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#475569' }}>
-                            Tổng HĐ Phát Hành
+                            {isEn ? 'Total Issued Invoices' : 'Tổng HĐ Phát Hành'}
                         </span>
                         <Building2 size={16} style={{ color: '#0891B2' }} />
                     </div>
                     <p className="text-2xl font-bold font-mono" style={{ color: '#0891B2' }}>
-                        {vnptKpis.totalInvoices} <span className="text-xs font-normal">hóa đơn</span>
+                        {vnptKpis.totalInvoices} <span className="text-xs font-normal">{isEn ? 'invoices' : 'hóa đơn'}</span>
                     </p>
                     <p className="text-[11px] mt-1 font-mono" style={{ color: '#64748B' }}>
                         {formatVND(vnptKpis.totalAmount)}
@@ -1153,12 +1219,12 @@ export function InvoiceReconciliationTab() {
                 >
                     <div className="flex items-center justify-between mb-1">
                         <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#15803D' }}>
-                            Đã Gán Vào Đơn ERP
+                            {isEn ? 'Linked to ERP Orders' : 'Đã Gán Vào Đơn ERP'}
                         </span>
                         <CheckCircle2 size={16} style={{ color: '#15803D' }} />
                     </div>
                     <p className="text-2xl font-bold font-mono" style={{ color: '#15803D' }}>
-                        {vnptKpis.assignedCount} <span className="text-xs font-normal">hóa đơn</span>
+                        {vnptKpis.assignedCount} <span className="text-xs font-normal">{isEn ? 'invoices' : 'hóa đơn'}</span>
                     </p>
                     <p className="text-[11px] mt-1 font-mono text-emerald-700/80">
                         {formatVND(vnptKpis.assignedAmount)}
@@ -1176,12 +1242,12 @@ export function InvoiceReconciliationTab() {
                 >
                     <div className="flex items-center justify-between mb-1">
                         <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#B91C1C' }}>
-                            Chưa Gán Đơn (Cần Gán)
+                            {isEn ? 'Unlinked (Action Req)' : 'Chưa Gán Đơn (Cần Gán)'}
                         </span>
                         <AlertCircle size={16} style={{ color: '#B91C1C' }} />
                     </div>
                     <p className="text-2xl font-bold font-mono" style={{ color: '#B91C1C' }}>
-                        {vnptKpis.unassignedCount} <span className="text-xs font-normal">hóa đơn</span>
+                        {vnptKpis.unassignedCount} <span className="text-xs font-normal">{isEn ? 'invoices' : 'hóa đơn'}</span>
                     </p>
                     <p className="text-[11px] mt-1 font-mono text-rose-700">
                         {formatVND(vnptKpis.unassignedAmount)}
@@ -1199,12 +1265,12 @@ export function InvoiceReconciliationTab() {
                 >
                     <div className="flex items-center justify-between mb-1">
                         <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#94A3B8' }}>
-                            HĐ Điều Chỉnh & Nội Bộ
+                            {isEn ? 'Adjustment & Internal' : 'HĐ Điều Chỉnh & Nội Bộ'}
                         </span>
                         <FileX2 size={16} style={{ color: '#94A3B8' }} />
                     </div>
                     <p className="text-2xl font-bold font-mono" style={{ color: '#94A3B8' }}>
-                        {vnptKpis.specialCount} <span className="text-xs font-normal">hóa đơn</span>
+                        {vnptKpis.specialCount} <span className="text-xs font-normal">{isEn ? 'invoices' : 'hóa đơn'}</span>
                     </p>
                     <p className="text-[11px] mt-1 font-mono text-slate-400">
                         {formatVND(vnptKpis.specialAmount)}
@@ -1222,7 +1288,7 @@ export function InvoiceReconciliationTab() {
                             className="text-xs px-3 py-1.5 rounded outline-none cursor-pointer"
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                         >
-                            <option value="ALL">Tất cả pháp nhân (TA & LC)</option>
+                            <option value="ALL">{isEn ? 'All Legal Entities (TA & LC)' : 'Tất cả pháp nhân (TA & LC)'}</option>
                             <option value="TA">Thắng Ân (TA - C26TTA)</option>
                             <option value="LC">Ly's Cellar (LC - C26TLY)</option>
                         </select>
@@ -1234,7 +1300,7 @@ export function InvoiceReconciliationTab() {
                             type="text"
                             value={vnptSearch}
                             onChange={e => { setVnptSearch(e.target.value); setVnptPage(1) }}
-                            placeholder="Tìm số HĐ, MST, Tên đơn vị mua, Mã SO..."
+                            placeholder={isEn ? 'Search Inv No, Tax ID, Buyer Name, SO...' : 'Tìm số HĐ, MST, Tên đơn vị mua, Mã SO...'}
                             className="w-full text-xs pl-8 pr-3 py-1.5 rounded outline-none"
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                         />
@@ -1244,14 +1310,14 @@ export function InvoiceReconciliationTab() {
                 {/* Status Filter Pills */}
                 <div className="flex items-center gap-1.5 pt-2.5 border-t border-slate-200 flex-wrap">
                     <span className="text-[11px] font-bold mr-1 flex items-center gap-1 uppercase tracking-wider" style={{ color: '#475569' }}>
-                        <Filter size={11} /> Lọc Trạng Thái:
+                        <Filter size={11} /> {isEn ? 'Filter Status:' : 'Lọc Trạng Thái:'}
                     </span>
 
                     {[
-                        { key: 'ALL' as const, label: 'Tất Cả', count: vnptKpis.totalInvoices, color: '#475569', activecolor: '#0891B2', activeBg: '#FFFFFF' },
-                        { key: 'UNASSIGNED' as const, label: 'Chưa Gán Đơn', count: vnptKpis.unassignedCount, color: '#B91C1C', activeColor: '#B91C1C', activeBg: 'rgba(185,28,28,0.15)' },
-                        { key: 'ASSIGNED' as const, label: 'Đã Gán Đơn', count: vnptKpis.assignedCount, color: '#15803D', activeColor: '#15803D', activeBg: 'rgba(21,128,61,0.15)' },
-                        { key: 'SPECIAL' as const, label: 'Điều Chỉnh / Nội Bộ', count: vnptKpis.specialCount, color: '#94A3B8', activeColor: '#94A3B8', activeBg: 'rgba(100,116,139,0.15)' },
+                        { key: 'ALL' as const, label: isEn ? 'All' : 'Tất Cả', count: vnptKpis.totalInvoices, color: '#475569', activeColor: '#0891B2', activeBg: 'rgba(8,145,178,0.12)' },
+                        { key: 'UNASSIGNED' as const, label: isEn ? 'Unlinked' : 'Chưa Gán Đơn', count: vnptKpis.unassignedCount, color: '#B91C1C', activeColor: '#B91C1C', activeBg: 'rgba(185,28,28,0.15)' },
+                        { key: 'ASSIGNED' as const, label: isEn ? 'Linked' : 'Đã Gán Đơn', count: vnptKpis.assignedCount, color: '#15803D', activeColor: '#15803D', activeBg: 'rgba(21,128,61,0.15)' },
+                        { key: 'SPECIAL' as const, label: isEn ? 'Adjust / Internal' : 'Điều Chỉnh / Nội Bộ', count: vnptKpis.specialCount, color: '#94A3B8', activeColor: '#94A3B8', activeBg: 'rgba(100,116,139,0.15)' },
                     ].map(tab => {
                         const active = vnptStatus === tab.key
                         return (
@@ -1260,7 +1326,7 @@ export function InvoiceReconciliationTab() {
                                 onClick={() => { setVnptStatus(tab.key); setVnptPage(1) }}
                                 className="px-2.5 py-1 rounded-full text-xs transition-all cursor-pointer flex items-center gap-1.5 hover:opacity-90"
                                 style={{
-                                    background: active ? tab.activeBg : '#111F2D',
+                                    background: active ? tab.activeBg : '#F8FAFC',
                                     color: active ? tab.activeColor : '#475569',
                                     border: active ? `1.5px solid ${tab.activeColor}` : '1px solid #E2E8F0',
                                     fontWeight: active ? 700 : 500,
@@ -1270,7 +1336,7 @@ export function InvoiceReconciliationTab() {
                                 <span
                                     className="text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold leading-none"
                                     style={{
-                                        background: active ? tab.activeColor : '#1E3547',
+                                        background: active ? tab.activeColor : '#F1F5F9',
                                         color: active ? '#F8FAFC' : tab.color,
                                     }}
                                 >
@@ -1283,9 +1349,9 @@ export function InvoiceReconciliationTab() {
                     {vnptStatus !== 'ALL' && (
                         <button
                             onClick={() => { setVnptStatus('ALL'); setVnptPage(1) }}
-                            className="text-[11px] ml-auto px-2 py-0.5 rounded text-slate-400 hover:text-white underline cursor-pointer"
+                            className="text-[11px] ml-auto px-2 py-0.5 rounded text-slate-500 hover:text-slate-900 underline cursor-pointer"
                         >
-                            Xóa bộ lọc
+                            {isEn ? 'Clear filter' : 'Xóa bộ lọc'}
                         </button>
                     )}
                 </div>
@@ -1293,18 +1359,18 @@ export function InvoiceReconciliationTab() {
 
             {/* VNPT Table */}
             <div className="rounded-md overflow-hidden" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                <div className="overflow-x-auto">
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full min-w-[850px] text-left text-xs" style={{ borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', color: '#475569' }}>
-                                <th className="py-3 px-3.5 font-semibold">Số HĐ / Ký Hiệu</th>
-                                <th className="py-3 px-3 font-semibold">Ngày Lập</th>
-                                <th className="py-3 px-2 font-semibold">Pháp Nhân</th>
-                                <th className="py-3 px-3 font-semibold">Đơn Vị Mua / MST</th>
-                                <th className="py-3 px-3 text-right font-semibold">Tổng Thanh Toán</th>
-                                <th className="py-3 px-3 text-center font-semibold">Trạng Thái Gán</th>
-                                <th className="py-3 px-3 font-semibold">Đơn Hàng ERP Liên Kết</th>
-                                <th className="py-3 px-3 text-right font-semibold">Thao Tác</th>
+                                <th className="py-3 px-3.5 font-semibold">{isEn ? 'Inv No / Serial' : 'Số HĐ / Ký Hiệu'}</th>
+                                <th className="py-3 px-3 font-semibold">{isEn ? 'Issue Date' : 'Ngày Lập'}</th>
+                                <th className="py-3 px-2 font-semibold">{isEn ? 'Entity' : 'Pháp Nhân'}</th>
+                                <th className="py-3 px-3 font-semibold">{isEn ? 'Buyer / Tax ID' : 'Đơn Vị Mua / MST'}</th>
+                                <th className="py-3 px-3 text-right font-semibold">{isEn ? 'Total Amount' : 'Tổng Thanh Toán'}</th>
+                                <th className="py-3 px-3 text-center font-semibold">{isEn ? 'Link Status' : 'Trạng Thái Gán'}</th>
+                                <th className="py-3 px-3 font-semibold">{isEn ? 'Linked ERP Order' : 'Đơn Hàng ERP Liên Kết'}</th>
+                                <th className="py-3 px-3 text-right font-semibold">{isEn ? 'Actions' : 'Thao Tác'}</th>
                             </tr>
                         </thead>
 
@@ -1314,14 +1380,14 @@ export function InvoiceReconciliationTab() {
                                     <td colSpan={8} className="py-12 text-center" style={{ color: '#475569' }}>
                                         <div className="flex items-center justify-center gap-2">
                                             <Loader2 size={16} className="animate-spin" />
-                                            <span>Đang tải danh sách hóa đơn VNPT...</span>
+                                            <span>{isEn ? 'Loading VNPT invoices...' : 'Đang tải danh sách hóa đơn VNPT...'}</span>
                                         </div>
                                     </td>
                                 </tr>
                             ) : vnptItems.length === 0 ? (
                                 <tr>
                                     <td colSpan={8} className="py-12 text-center" style={{ color: '#64748B' }}>
-                                        Không tìm thấy hóa đơn nào phù hợp với bộ lọc.
+                                        {isEn ? 'No matching invoices found.' : 'Không tìm thấy hóa đơn nào phù hợp với bộ lọc.'}
                                     </td>
                                 </tr>
                             ) : (
@@ -1346,7 +1412,7 @@ export function InvoiceReconciliationTab() {
                                             {/* 2. Issue Date */}
                                             <td className="py-3 px-3">
                                                 <div className="font-medium text-slate-900">{item.issueDate}</div>
-                                                <div className="text-[10px]" style={{ color: '#64748B' }}>{item.itemCount} dòng SP</div>
+                                                <div className="text-[10px]" style={{ color: '#64748B' }}>{item.itemCount} {isEn ? 'lines' : 'dòng SP'}</div>
                                             </td>
 
                                             {/* 3. Legal Entity */}
@@ -1355,7 +1421,7 @@ export function InvoiceReconciliationTab() {
                                                     className="px-2 py-0.5 rounded text-[10px] font-bold"
                                                     style={{
                                                         background: item.entityCode === 'LC' ? 'rgba(56,189,248,0.15)' : 'rgba(180,83,9,0.15)',
-                                                        color: item.entityCode === 'LC' ? '#38BDF8' : '#B45309',
+                                                        color: item.entityCode === 'LC' ? '#0284C7' : '#B45309',
                                                         border: item.entityCode === 'LC' ? '1px solid rgba(56,189,248,0.3)' : '1px solid rgba(180,83,9,0.3)',
                                                     }}
                                                 >
@@ -1369,7 +1435,7 @@ export function InvoiceReconciliationTab() {
                                                     {item.buyerName}
                                                 </div>
                                                 <div className="text-[11px] font-mono text-slate-600">
-                                                    MST: {item.buyerTaxId || 'Khách lẻ'}
+                                                    MST: {item.buyerTaxId || (isEn ? 'Retail' : 'Khách lẻ')}
                                                 </div>
                                                 {item.note && (
                                                     <div className="text-[10px] italic text-amber-700/80 truncate mt-0.5 flex items-center gap-1" title={item.note}>
@@ -1400,7 +1466,7 @@ export function InvoiceReconciliationTab() {
                                                             border: '1px solid rgba(21,128,61,0.4)',
                                                         }}
                                                     >
-                                                        <Check size={12} /> Đã Gán Đơn
+                                                        <Check size={12} /> {isEn ? 'Linked' : 'Đã Gán Đơn'}
                                                     </span>
                                                 ) : item.specialType === 'ADJUSTMENT' ? (
                                                     <span
@@ -1411,18 +1477,18 @@ export function InvoiceReconciliationTab() {
                                                             border: '1px solid rgba(100,116,139,0.3)',
                                                         }}
                                                     >
-                                                        HĐ Điều Chỉnh Giảm
+                                                        {isEn ? 'Credit Note' : 'HĐ Điều Chỉnh Giảm'}
                                                     </span>
                                                 ) : item.specialType === 'INTERNAL_TRANSFER' ? (
                                                     <span
                                                         className="px-2.5 py-1 rounded-full text-[11px] font-bold inline-flex items-center gap-1"
                                                         style={{
                                                             background: 'rgba(100,116,139,0.15)',
-                                                            color: '#38BDF8',
+                                                            color: '#0284C7',
                                                             border: '1px solid rgba(56,189,248,0.3)',
                                                         }}
                                                     >
-                                                        Điều Chuyển Nội Bộ
+                                                        {isEn ? 'Internal Transfer' : 'Điều Chuyển Nội Bộ'}
                                                     </span>
                                                 ) : (
                                                     <span
@@ -1433,7 +1499,7 @@ export function InvoiceReconciliationTab() {
                                                             border: '1px solid rgba(185,28,28,0.4)',
                                                         }}
                                                     >
-                                                        <AlertCircle size={12} /> Chưa Gán Đơn
+                                                        <AlertCircle size={12} /> {isEn ? 'Unlinked' : 'Chưa Gán Đơn'}
                                                     </span>
                                                 )}
                                             </td>
@@ -1449,7 +1515,7 @@ export function InvoiceReconciliationTab() {
                                                                     className="text-[10px] px-1 py-0.2 rounded font-mono font-bold bg-amber-100 text-amber-800 border border-amber-300"
                                                                     title={`Lệch ${formatVND(item.variance)}`}
                                                                 >
-                                                                    Lệch {formatVND(Math.abs(item.variance))}
+                                                                    {isEn ? 'Diff' : 'Lệch'} {formatVND(Math.abs(item.variance))}
                                                                 </span>
                                                             )}
                                                         </div>
@@ -1458,12 +1524,12 @@ export function InvoiceReconciliationTab() {
                                                         </div>
                                                         {item.linkedSoGross && (
                                                             <div className="text-[10px] font-mono" style={{ color: '#64748B' }}>
-                                                                Đơn: {formatVND(item.linkedSoGross)}
+                                                                {isEn ? 'Order:' : 'Đơn:'} {formatVND(item.linkedSoGross)}
                                                             </div>
                                                         )}
                                                     </div>
                                                 ) : (
-                                                    <span className="text-slate-500 italic text-[11px]">Chưa liên kết</span>
+                                                    <span className="text-slate-500 italic text-[11px]">{isEn ? 'Not linked' : 'Chưa liên kết'}</span>
                                                 )}
                                             </td>
 
@@ -1477,16 +1543,16 @@ export function InvoiceReconciliationTab() {
                                                         title="Hủy gán số hóa đơn này khỏi đơn hàng ERP"
                                                     >
                                                         {isUnlinking ? <Loader2 size={11} className="animate-spin" /> : <Unlink size={11} />}
-                                                        Bỏ Gán
+                                                        {isEn ? 'Unlink' : 'Bỏ Gán'}
                                                     </button>
                                                 ) : (
                                                     <button
                                                         onClick={() => handleOpenVnptLinkModal(item)}
-                                                        className="px-2.5 py-1 rounded text-[11px] font-bold transition-all shadow-sm cursor-pointer inline-flex items-center gap-1 text-slate-900"
+                                                        className="px-2.5 py-1 rounded text-[11px] font-bold transition-all shadow-sm cursor-pointer inline-flex items-center gap-1 text-white"
                                                         style={{ background: '#0E7490' }}
                                                         title="Tìm đơn hàng ERP để gán số hóa đơn này"
                                                     >
-                                                        <Link2 size={11} /> Gán Đơn
+                                                        <Link2 size={11} /> {isEn ? 'Link Order' : 'Gán Đơn'}
                                                     </button>
                                                 )}
                                             </td>
@@ -1496,6 +1562,40 @@ export function InvoiceReconciliationTab() {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card View for VNPT_VIEW */}
+                <div className="block md:hidden divide-y divide-slate-200">
+                    {vnptLoading ? (
+                        <div className="py-12 text-center text-xs text-slate-500">{isEn ? 'Loading VNPT invoices...' : 'Đang tải danh sách hóa đơn VNPT...'}</div>
+                    ) : vnptItems.length === 0 ? (
+                        <div className="py-12 text-center text-xs text-slate-500">{isEn ? 'No matching invoices found.' : 'Không tìm thấy hóa đơn nào phù hợp với bộ lọc.'}</div>
+                    ) : (
+                        vnptItems.map(item => (
+                            <div key={`${item.entityCode}_${item.invNo}`} className="p-3.5 space-y-2">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div>
+                                        <span className="font-mono font-bold text-xs text-[#0891B2]">#{item.invNo}</span>
+                                        <span className="ml-2 text-[10px] font-mono text-slate-500">{item.serial} • {item.issueDate}</span>
+                                        <p className="text-sm font-medium text-slate-900 mt-0.5">{item.buyerName}</p>
+                                    </div>
+                                    <span className="text-xs font-mono font-bold text-slate-900">{formatVND(item.totalGross)}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+                                    <span className="text-slate-600 font-mono">{item.isAssigned ? item.linkedSoNo : (isEn ? 'Not linked' : 'Chưa gán đơn')}</span>
+                                    {item.isAssigned ? (
+                                        <button onClick={() => handleUnlinkVnpt(item)} className="px-2.5 py-1 rounded text-[11px] font-semibold border border-slate-200 text-slate-600">
+                                            {isEn ? 'Unlink' : 'Bỏ Gán'}
+                                        </button>
+                                    ) : (
+                                        <button onClick={() => handleOpenVnptLinkModal(item)} className="px-2.5 py-1 rounded text-[11px] font-bold text-white" style={{ background: '#0E7490' }}>
+                                            {isEn ? 'Link Order' : 'Gán Đơn'}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
 
                 {/* VNPT Pagination */}
@@ -1521,7 +1621,7 @@ export function InvoiceReconciliationTab() {
                 <div className="flex items-center justify-between">
                     <h4 className="font-bold text-base text-slate-900 flex items-center gap-2">
                         <Link2 size={16} className="text-[#0891B2]" />
-                        Gán Số Hóa Đơn VAT
+                        {isEn ? 'Link VAT Invoice Number' : 'Gán Số Hóa Đơn VAT'}
                     </h4>
                     <button
                         onClick={() => setLinkModalOpen(false)}
@@ -1533,15 +1633,15 @@ export function InvoiceReconciliationTab() {
 
                 <div className="p-3 rounded text-xs space-y-1" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <div className="flex justify-between">
-                        <span style={{ color: '#475569' }}>Mã Đơn Hàng:</span>
+                        <span style={{ color: '#475569' }}>{isEn ? 'Order No:' : 'Mã Đơn Hàng:'}</span>
                         <span className="font-mono font-bold text-[#0891B2]">{linkTargetRow.soNo}</span>
                     </div>
                     <div className="flex justify-between">
-                        <span style={{ color: '#475569' }}>Khách Hàng:</span>
+                        <span style={{ color: '#475569' }}>{isEn ? 'Customer:' : 'Khách Hàng:'}</span>
                         <span className="font-medium text-slate-900 truncate max-w-[200px]">{linkTargetRow.customerName}</span>
                     </div>
                     <div className="flex justify-between">
-                        <span style={{ color: '#475569' }}>Tổng Tiền:</span>
+                        <span style={{ color: '#475569' }}>{isEn ? 'Order Total:' : 'Tổng Tiền:'}</span>
                         <span className="font-mono font-bold text-slate-900">{formatVND(linkTargetRow.orderTotal)}</span>
                     </div>
                 </div>
@@ -1549,7 +1649,7 @@ export function InvoiceReconciliationTab() {
                 <form onSubmit={handleManualLinkSubmit} className="space-y-3 text-xs">
                     <div>
                         <label className="block font-semibold mb-1" style={{ color: '#475569' }}>
-                            Số Hóa Đơn Điện Tử VAT *
+                            {isEn ? 'VAT E-Invoice Number *' : 'Số Hóa Đơn Điện Tử VAT *'}
                         </label>
                         <input
                             type="text"
@@ -1561,19 +1661,19 @@ export function InvoiceReconciliationTab() {
                             style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }}
                         />
                         <p className="text-[10px] mt-1" style={{ color: '#64748B' }}>
-                            Nhập số hóa đơn đã xuất trên cổng VNPT / Viettel / MISA để gắn vào đơn hàng.
+                            {isEn ? 'Enter the issued invoice number from VNPT / Viettel / MISA.' : 'Nhập số hóa đơn đã xuất trên cổng VNPT / Viettel / MISA để gắn vào đơn hàng.'}
                         </p>
                     </div>
 
                     <div>
                         <label className="block font-semibold mb-1" style={{ color: '#475569' }}>
-                            Ghi Chú Kế Toán (Tùy chọn)
+                            {isEn ? 'Accounting Notes (Optional)' : 'Ghi Chú Kế Toán (Tùy chọn)'}
                         </label>
                         <textarea
                             rows={2}
                             value={linkNotes}
                             onChange={e => setLinkNotes(e.target.value)}
-                            placeholder="Lý do gán thủ công / Ngày phát hành thực tế..."
+                            placeholder={isEn ? 'Reason for manual linking...' : 'Lý do gán thủ công / Ngày phát hành thực tế...'}
                             className="w-full px-3 py-1.5 rounded text-xs outline-none"
                             style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }}
                         />
@@ -1583,18 +1683,18 @@ export function InvoiceReconciliationTab() {
                         <button
                             type="button"
                             onClick={() => setLinkModalOpen(false)}
-                            className="px-4 py-2 rounded font-semibold text-xs border border-slate-200 text-slate-600 hover:text-white"
+                            className="px-4 py-2 rounded font-semibold text-xs border border-slate-200 text-slate-600 hover:bg-slate-50"
                         >
-                            Hủy
+                            {isEn ? 'Cancel' : 'Hủy'}
                         </button>
                         <button
                             type="submit"
                             disabled={linking || !linkInvoiceNo.trim()}
-                            className="px-4 py-2 rounded font-bold text-xs text-slate-900 transition-all disabled:opacity-50 flex items-center gap-1.5"
+                            className="px-4 py-2 rounded font-bold text-xs text-white transition-all disabled:opacity-50 flex items-center gap-1.5"
                             style={{ background: '#0E7490' }}
                         >
                             {linking && <Loader2 size={12} className="animate-spin" />}
-                            Lưu Gán Hóa Đơn
+                            {isEn ? 'Save Invoice Link' : 'Lưu Gán Hóa Đơn'}
                         </button>
                     </div>
                 </form>
@@ -1612,11 +1712,11 @@ export function InvoiceReconciliationTab() {
                 <div className="flex items-center justify-between border-b border-slate-200 pb-3 shrink-0">
                     <h4 className="text-base font-bold text-slate-900 flex items-center gap-2">
                         <Link2 size={18} style={{ color: '#0891B2' }} />
-                        Gán Hóa Đơn VNPT Vào Đơn Hàng ERP
+                        {isEn ? 'Link VNPT Invoice to ERP Order' : 'Gán Hóa Đơn VNPT Vào Đơn Hàng ERP'}
                     </h4>
                     <button
                         onClick={() => setVnptLinkModalOpen(false)}
-                        className="text-slate-400 hover:text-white cursor-pointer"
+                        className="text-slate-400 hover:text-slate-700 cursor-pointer"
                     >
                         <X size={18} />
                     </button>
@@ -1626,27 +1726,27 @@ export function InvoiceReconciliationTab() {
                 <div className="p-3 rounded text-xs space-y-1.5 shrink-0" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <div className="grid grid-cols-2 gap-2">
                         <div>
-                            <span style={{ color: '#475569' }}>Số Hóa Đơn: </span>
+                            <span style={{ color: '#475569' }}>{isEn ? 'Invoice No: ' : 'Số Hóa Đơn: '}</span>
                             <span className="font-mono font-bold text-[#0891B2]">#{selectedVnptItem.invNo}</span>
                             <span className="text-[10px] text-slate-600 ml-1">({selectedVnptItem.serial})</span>
                         </div>
                         <div>
-                            <span style={{ color: '#475569' }}>Ngày Phát Hành: </span>
+                            <span style={{ color: '#475569' }}>{isEn ? 'Issue Date: ' : 'Ngày Phát Hành: '}</span>
                             <span className="font-medium text-slate-900">{selectedVnptItem.issueDate}</span>
                         </div>
                         <div className="col-span-2">
-                            <span style={{ color: '#475569' }}>Đơn Vị Mua: </span>
+                            <span style={{ color: '#475569' }}>{isEn ? 'Buyer: ' : 'Đơn Vị Mua: '}</span>
                             <span className="font-semibold text-slate-900">{selectedVnptItem.buyerName}</span>
                             {selectedVnptItem.buyerTaxId && (
                                 <span className="text-[11px] font-mono text-slate-600 ml-2">MST: {selectedVnptItem.buyerTaxId}</span>
                             )}
                         </div>
                         <div>
-                            <span style={{ color: '#475569' }}>Tổng Thanh Toán: </span>
+                            <span style={{ color: '#475569' }}>{isEn ? 'Total Amount: ' : 'Tổng Thanh Toán: '}</span>
                             <span className="font-mono font-bold text-emerald-700 text-sm">{formatVND(selectedVnptItem.totalGross)}</span>
                         </div>
                         <div>
-                            <span style={{ color: '#475569' }}>Pháp Nhân Bán: </span>
+                            <span style={{ color: '#475569' }}>{isEn ? 'Legal Entity: ' : 'Pháp Nhân Bán: '}</span>
                             <span className="font-bold text-amber-800">{selectedVnptItem.entityCode === 'TA' ? 'Thắng Ân (TA)' : "Ly's Cellar (LC)"}</span>
                         </div>
                     </div>
@@ -1655,7 +1755,7 @@ export function InvoiceReconciliationTab() {
                 {/* Order Search Box */}
                 <div className="space-y-2 shrink-0">
                     <label className="block text-xs font-semibold text-slate-600">
-                        Tìm Đơn Bán Hàng (SO) Trong ERP Để Gán:
+                        {isEn ? 'Search Sales Order (SO) in ERP to Link:' : 'Tìm Đơn Bán Hàng (SO) Trong ERP Để Gán:'}
                     </label>
                     <div className="relative">
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -1663,7 +1763,7 @@ export function InvoiceReconciliationTab() {
                             type="text"
                             value={soSearchQuery}
                             onChange={e => handleSearchSos(e.target.value)}
-                            placeholder="Gõ mã đơn SO (vd: SO-2608-0045) hoặc tên khách hàng..."
+                            placeholder={isEn ? 'Type SO code (e.g. SO-2608-0045) or customer name...' : 'Gõ mã đơn SO (vd: SO-2608-0045) hoặc tên khách hàng...'}
                             className="w-full text-xs pl-9 pr-3 py-2 rounded outline-none"
                             style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }}
                             autoFocus
@@ -1676,11 +1776,11 @@ export function InvoiceReconciliationTab() {
                     {soSearching ? (
                         <div className="py-8 text-center text-xs text-slate-600 flex items-center justify-center gap-2">
                             <Loader2 size={14} className="animate-spin" />
-                            <span>Đang tìm kiếm đơn hàng...</span>
+                            <span>{isEn ? 'Searching orders...' : 'Đang tìm kiếm đơn hàng...'}</span>
                         </div>
                     ) : soCandidates.length === 0 ? (
                         <div className="py-8 text-center text-xs text-slate-500">
-                            Không tìm thấy đơn hàng nào phù hợp với từ khóa "{soSearchQuery}".
+                            {isEn ? `No orders found matching "${soSearchQuery}".` : `Không tìm thấy đơn hàng nào phù hợp với từ khóa "${soSearchQuery}".`}
                         </div>
                     ) : (
                         <div className="divide-y divide-slate-200">
@@ -1702,7 +1802,7 @@ export function InvoiceReconciliationTab() {
                                                 </span>
                                                 {order.currentInvoiceNo && (
                                                     <span className="inline-block text-[9px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300 whitespace-nowrap shrink-0">
-                                                        HĐ hiện tại: #{order.currentInvoiceNo}
+                                                        {isEn ? 'Current Inv:' : 'HĐ hiện tại:'} #{order.currentInvoiceNo}
                                                     </span>
                                                 )}
                                             </div>
@@ -1711,13 +1811,13 @@ export function InvoiceReconciliationTab() {
                                                 {order.customerTaxId && <span className="text-slate-600 ml-1">({order.customerTaxId})</span>}
                                             </div>
                                             <div className="flex items-center gap-2 font-mono text-[11px]">
-                                                <span className="text-slate-900">Tiền đơn: {formatVND(order.grossAmount)}</span>
+                                                <span className="text-slate-900">{isEn ? 'Order Total:' : 'Tiền đơn:'} {formatVND(order.grossAmount)}</span>
                                                 <span
                                                     className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
                                                         isExact ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-800 border border-amber-300'
                                                     }`}
                                                 >
-                                                    {isExact ? 'Khớp 100%' : `Lệch ${formatVND(Math.abs(variance))}`}
+                                                    {isExact ? (isEn ? '100% Match' : 'Khớp 100%') : `${isEn ? 'Diff' : 'Lệch'} ${formatVND(Math.abs(variance))}`}
                                                 </span>
                                             </div>
                                         </div>
@@ -1725,11 +1825,11 @@ export function InvoiceReconciliationTab() {
                                         <button
                                             onClick={() => handlePerformLinkVnpt(order.id, order.soNo)}
                                             disabled={isLinkingThis}
-                                            className="px-3 py-1.5 rounded text-xs font-bold transition-all shrink-0 cursor-pointer disabled:opacity-50 text-slate-900 flex items-center gap-1.5"
+                                            className="px-3 py-1.5 rounded text-xs font-bold transition-all shrink-0 cursor-pointer disabled:opacity-50 text-white flex items-center gap-1.5"
                                             style={{ background: '#0E7490' }}
                                         >
                                             {isLinkingThis ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-                                            Chọn & Gán
+                                            {isEn ? 'Select & Link' : 'Chọn & Gán'}
                                         </button>
                                     </div>
                                 )
@@ -1741,13 +1841,13 @@ export function InvoiceReconciliationTab() {
                 {/* Optional Notes */}
                 <div className="shrink-0 text-xs space-y-1">
                     <label className="block text-slate-600 font-semibold">
-                        Ghi Chú Gán (Tùy chọn):
+                        {isEn ? 'Link Notes (Optional):' : 'Ghi Chú Gán (Tùy chọn):'}
                     </label>
                     <input
                         type="text"
                         value={vnptLinkNotes}
                         onChange={e => setVnptLinkNotes(e.target.value)}
-                        placeholder="Ghi chú kế toán..."
+                        placeholder={isEn ? 'Accounting notes...' : 'Ghi chú kế toán...'}
                         className="w-full text-xs px-3 py-1.5 rounded outline-none"
                         style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }}
                     />
@@ -1757,9 +1857,9 @@ export function InvoiceReconciliationTab() {
                     <button
                         type="button"
                         onClick={() => setVnptLinkModalOpen(false)}
-                        className="px-4 py-1.5 rounded font-semibold text-xs border border-slate-200 text-slate-600 hover:text-white"
+                        className="px-4 py-1.5 rounded font-semibold text-xs border border-slate-200 text-slate-600 hover:bg-slate-50"
                     >
-                        Đóng
+                        {isEn ? 'Close' : 'Đóng'}
                     </button>
                 </div>
             </div>

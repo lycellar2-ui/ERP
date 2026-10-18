@@ -9,19 +9,15 @@ import {
     getFailedDeliveries, FailedDeliveryRow
 } from './actions'
 import { SignaturePad } from '@/components/SignaturePad'
-import { formatVND, formatDate, cn } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import {
     Badge, Button, Card, PageHeader, StatCard, StatGrid, StatusBadge, Drawer, EmptyState, Skeleton,
     Field, Input, Select, Textarea, Toolbar,
     Table, THead, TBody, Tr, Th, Td, TableMessageRow, TableSkeleton,
 } from '@/components/ui'
+import { useAppLocale } from '@/lib/i18n'
+import { DELIVERY_I18N } from './i18n'
 
-const STATUS_LABEL: Record<string, string> = {
-    PLANNED: 'Đã Lập Kế Hoạch',
-    IN_PROGRESS: 'Đang Giao',
-    COMPLETED: 'Hoàn Thành',
-    CANCELLED: 'Huỷ',
-}
 const ROUTE_TONES = { PLANNED: 'neutral', IN_PROGRESS: 'warning' } as const
 
 const NEXT_STATUS: Record<string, string> = {
@@ -29,31 +25,12 @@ const NEXT_STATUS: Record<string, string> = {
     IN_PROGRESS: 'COMPLETED',
 }
 
-const VEHICLE_LABEL: Record<string, string> = {
-    MOTORCYCLE: 'Xe Máy',
-    VAN: 'Xe Van',
-    TRUCK_1T: 'Tải 1T',
-    TRUCK_2T: 'Tải 2T',
-    REFRIGERATED: 'Xe Đông Lạnh',
-}
-
-const STOP_LABEL: Record<string, string> = {
-    PENDING: 'Chờ Giao',
-    DELIVERED: 'Đã Giao',
-    FAILED: 'Thất Bại',
-}
-
-const FAILURE_LABEL: Record<string, string> = {
-    CUSTOMER_ABSENT: 'Vắng Nhà',
-    WRONG_ADDRESS: 'Sai Địa Chỉ',
-    REFUSED: 'Từ Chối Nhận',
-    DAMAGED: 'Hàng Hỏng',
-}
-
-// ── E-POD Drawer — Confirm delivery at each stop ──────────
 function EPODDrawer({ open, routeId, onClose }: {
     open: boolean; routeId: string | null; onClose: () => void
 }) {
+    const { locale, formatCurrency, formatDate } = useAppLocale()
+    const i18n = DELIVERY_I18N[locale]
+
     const [stops, setStops] = useState<RouteStopRow[]>([])
     const [loading, setLoading] = useState(false)
     const [confirmingId, setConfirmingId] = useState<string | null>(null)
@@ -82,7 +59,6 @@ function EPODDrawer({ open, routeId, onClose }: {
         if (!confirmName.trim()) return
         setConfirmingId(stopId)
 
-        // Upload photo if selected
         let photoUrl: string | undefined
         if (photoFile) {
             setUploadingPhoto(true)
@@ -120,12 +96,12 @@ function EPODDrawer({ open, routeId, onClose }: {
         <Drawer
             open
             onClose={onClose}
-            title="E-POD — Xác Nhận Giao Hàng"
-            description="Xác nhận từng điểm dừng — Tên người nhận, ghi chú"
+            title={i18n.epodTitle}
+            description={i18n.epodDesc}
             size="sm"
             footer={stops.length > 0 ? (
                 <div className="flex items-center gap-4 w-full">
-                    <span className="type-caption whitespace-nowrap">{deliveredCount}/{stops.length} điểm đã giao</span>
+                    <span className="type-caption whitespace-nowrap">{deliveredCount}/{stops.length} {i18n.stopsDeliveredSuffix}</span>
                     <div className="flex-1 h-1.5 rounded-full bg-lys-subtle overflow-hidden">
                         <div className="h-full rounded-full bg-tone-success-fg transition-all duration-500"
                             style={{ width: `${(deliveredCount / stops.length) * 100}%` }} />
@@ -140,7 +116,7 @@ function EPODDrawer({ open, routeId, onClose }: {
                         <Skeleton className="h-24" />
                     </>
                 ) : stops.length === 0 ? (
-                    <EmptyState icon={MapPin} title="Lộ trình chưa có điểm dừng nào" />
+                    <EmptyState icon={MapPin} title={i18n.emptyStops} />
                 ) : stops.map(stop => {
                     const isActive = activeStopId === stop.id
                     const isSuccess = successId === stop.id
@@ -171,17 +147,20 @@ function EPODDrawer({ open, routeId, onClose }: {
                                                 <span className="text-[11px] text-lys-secondary">({stop.receiverName})</span>
                                             )}
                                         </div>
-                                        <p className="type-caption">{stop.customerAddress || 'Không có địa chỉ'}</p>
+                                        <p className="type-caption">{stop.customerAddress || i18n.noAddress}</p>
                                     </div>
                                 </div>
-                                <StatusBadge status={stop.status} label={STOP_LABEL[stop.status] ?? STOP_LABEL.PENDING} />
+                                <StatusBadge
+                                    status={stop.status}
+                                    label={(i18n.stopStatus as Record<string, string>)[stop.status] ?? stop.status}
+                                />
                             </div>
 
                             <div className="flex items-center gap-4 mb-2 text-xs">
                                 <span className="text-lys-secondary">SO: {stop.soNo}</span>
-                                <span className="text-lys-muted">{stop.itemCount} dòng SP</span>
+                                <span className="text-lys-muted">{stop.itemCount} {i18n.itemsSuffix}</span>
                                 {stop.codAmount > 0 && (
-                                    <span className="type-number font-semibold text-tone-warning-fg">COD: {formatVND(stop.codAmount)}</span>
+                                    <span className="type-number font-semibold text-tone-warning-fg">COD: {formatCurrency(stop.codAmount)}</span>
                                 )}
                             </div>
 
@@ -190,7 +169,7 @@ function EPODDrawer({ open, routeId, onClose }: {
                                     <div className="flex items-center gap-2 p-2 rounded bg-tone-success-bg text-tone-success-fg text-xs">
                                         <CheckCircle2 size={12} aria-hidden />
                                         <span>
-                                            Đã xác nhận lúc {new Date(stop.podSignedAt).toLocaleString('vi-VN')}
+                                            {i18n.confirmedAtPrefix} {formatDate(stop.podSignedAt)}
                                             {stop.notes && ` — ${stop.notes}`}
                                         </span>
                                     </div>
@@ -200,13 +179,13 @@ function EPODDrawer({ open, routeId, onClose }: {
                                                 <div className="relative rounded overflow-hidden border border-lys-border">
                                                     <img src={(stop as any).photoUrl} alt="POD" className="w-20 h-20 object-cover" />
                                                     <div className="absolute bottom-0 inset-x-0 text-center py-0.5 text-[10px] bg-slate-900/60 text-white">
-                                                        <Camera size={8} className="inline mr-0.5" aria-hidden /> Ảnh GH
+                                                        <Camera size={8} className="inline mr-0.5" aria-hidden /> {i18n.podPhotoBadge}
                                                     </div>
                                                 </div>
                                             )}
                                             {stop.signatureUrl && (
                                                 <div className="rounded overflow-hidden border border-lys-border bg-lys-subtle">
-                                                    <img src={stop.signatureUrl} alt="Chữ ký" className="w-24 h-20 object-contain" />
+                                                    <img src={stop.signatureUrl} alt="Signature" className="w-24 h-20 object-contain" />
                                                 </div>
                                             )}
                                         </div>
@@ -217,25 +196,25 @@ function EPODDrawer({ open, routeId, onClose }: {
                             {!isDelivered && !isActive && (
                                 <Button size="sm" variant="secondary" className="mt-1"
                                     onClick={() => { setActiveStopId(stop.id); setConfirmName(''); setConfirmNotes(''); setSignatureUrl(''); setPhotoFile(null); setPhotoPreview(null) }}>
-                                    <CheckCircle2 size={12} aria-hidden /> Xác Nhận Giao
+                                    <CheckCircle2 size={12} aria-hidden /> {i18n.confirmDeliveryBtn}
                                 </Button>
                             )}
 
                             {isActive && (
                                 <div className="mt-3 p-3 rounded-md border border-lys-border bg-lys-subtle flex flex-col gap-3">
-                                    <Field label="Người Nhận" required>
-                                        {id => <Input id={id} type="text" value={confirmName} onChange={e => setConfirmName(e.target.value)} placeholder="Tên người nhận hàng" />}
+                                    <Field label={i18n.receiverLabel} required>
+                                        {id => <Input id={id} type="text" value={confirmName} onChange={e => setConfirmName(e.target.value)} placeholder={i18n.receiverPlaceholder} />}
                                     </Field>
-                                    <Field label="Ghi Chú (Tùy chọn)">
+                                    <Field label={i18n.notesLabel}>
                                         {id => (
                                             <Textarea id={id} value={confirmNotes} onChange={e => setConfirmNotes(e.target.value)}
-                                                placeholder="VD: Giao tại quầy bar, bàn giao cho anh Minh" rows={2} className="resize-none" />
+                                                placeholder={i18n.notesPlaceholder} rows={2} className="resize-none" />
                                         )}
                                     </Field>
-                                    <Field label="Chữ Ký Điện Tử" required>
+                                    <Field label={i18n.signatureLabel} required>
                                         {() => <SignaturePad onEnd={url => setSignatureUrl(url)} />}
                                     </Field>
-                                    <Field label="Ảnh Bằng Chứng Giao Hàng">
+                                    <Field label={i18n.photoLabel}>
                                         {() => (
                                             <>
                                                 <input
@@ -260,8 +239,7 @@ function EPODDrawer({ open, routeId, onClose }: {
                                                         <button
                                                             type="button"
                                                             onClick={() => { setPhotoFile(null); setPhotoPreview(null) }}
-                                                            className="absolute top-1 right-1 p-1 rounded-full bg-white/90 text-lys-primary hover:bg-white"
-                                                            aria-label="Xóa ảnh">
+                                                            className="absolute top-1 right-1 p-1 rounded-full bg-white/90 text-lys-primary hover:bg-white">
                                                             <X size={12} aria-hidden />
                                                         </button>
                                                     </div>
@@ -270,20 +248,20 @@ function EPODDrawer({ open, routeId, onClose }: {
                                                         type="button"
                                                         onClick={() => fileInputRef.current?.click()}
                                                         className="flex items-center gap-2 w-full px-3 py-3 rounded-md text-sm bg-white border border-dashed border-lys-border-strong text-lys-muted hover:bg-lys-subtle">
-                                                        <Camera size={16} aria-hidden /> Chụp ảnh / Chọn từ thư viện
+                                                        <Camera size={16} aria-hidden /> {i18n.takeOrSelectPhoto}
                                                     </button>
                                                 )}
                                             </>
                                         )}
                                     </Field>
                                     <div className="flex gap-2 justify-end">
-                                        <Button size="sm" variant="secondary" onClick={() => setActiveStopId(null)}>Huỷ</Button>
+                                        <Button size="sm" variant="secondary" onClick={() => setActiveStopId(null)}>{i18n.cancelBtn}</Button>
                                         <Button size="sm" onClick={() => handleConfirm(stop.id)}
                                             loading={confirmingId === stop.id || uploadingPhoto}
                                             disabled={!confirmName.trim() || !signatureUrl || !!confirmingId || uploadingPhoto}>
                                             {confirmingId === stop.id || uploadingPhoto
-                                                ? (uploadingPhoto ? 'Đang tải ảnh...' : 'Đang lưu...')
-                                                : <><CheckCircle2 size={12} aria-hidden /> Xác Nhận</>}
+                                                ? (uploadingPhoto ? i18n.uploadingPhoto : i18n.saving)
+                                                : <><CheckCircle2 size={12} aria-hidden /> {i18n.confirmBtn}</>}
                                         </Button>
                                     </div>
                                 </div>
@@ -296,16 +274,17 @@ function EPODDrawer({ open, routeId, onClose }: {
     )
 }
 
-// ── Create Route Drawer ────────────────────────────────────
 function CreateRouteDrawer({ open, onClose, onCreated }: {
     open: boolean; onClose: () => void; onCreated: () => void
 }) {
+    const { locale } = useAppLocale()
+    const i18n = DELIVERY_I18N[locale]
+
     const [form, setForm] = useState({ routeDate: new Date().toISOString().slice(0, 10), driverId: '', vehicleId: '' })
     const [options, setOptions] = useState<{ drivers: DriverOption[]; vehicles: VehicleOption[] } | null>(null)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
 
-    // Load drivers & vehicles when drawer opens
     const handleOpen = useCallback(async () => {
         if (!options) {
             const data = await getDriversAndVehicles()
@@ -314,32 +293,30 @@ function CreateRouteDrawer({ open, onClose, onCreated }: {
     }, [options])
 
     if (!open) return null
-
-    // Trigger load once mounted
-    if (!options) { handleOpen(); }
+    if (!options) { handleOpen() }
 
     const handleSave = async () => {
-        if (!form.driverId || !form.vehicleId) return setError('Chọn tài xế và phương tiện')
+        if (!form.driverId || !form.vehicleId) return setError(i18n.selectDriverAndVehicleErr)
         setSaving(true)
         const result = await createDeliveryRoute(form)
         setSaving(false)
         if (result.success) { onCreated(); onClose() }
-        else setError(result.error ?? 'Lỗi tạo lộ trình')
+        else setError(result.error ?? 'Error')
     }
 
     return (
         <Drawer
             open
             onClose={onClose}
-            title="Tạo Lộ Trình Mới"
-            description="Chỉ định tài xế và phương tiện"
+            title={i18n.createModalTitle}
+            description={i18n.createModalDesc}
             size="sm"
             footer={
                 <>
-                    <Button variant="secondary" onClick={onClose}>Hủy</Button>
+                    <Button variant="secondary" onClick={onClose}>{i18n.cancelBtn}</Button>
                     <Button onClick={handleSave} loading={saving} disabled={saving}>
                         {!saving && <Save size={14} aria-hidden />}
-                        {saving ? 'Đang tạo...' : 'Tạo Lộ Trình'}
+                        {saving ? i18n.creating : i18n.createRouteBtn}
                     </Button>
                 </>
             }
@@ -351,16 +328,16 @@ function CreateRouteDrawer({ open, onClose, onCreated }: {
                     </div>
                 )}
 
-                <Field label="Ngày Giao" required>
+                <Field label={i18n.deliveryDateLabel} required>
                     {id => <Input id={id} type="date" value={form.routeDate} onChange={e => setForm(f => ({ ...f, routeDate: e.target.value }))} />}
                 </Field>
 
-                <Field label="Tài Xế" required>
+                <Field label={i18n.driverLabel} required>
                     {id => !options ? (
                         <Skeleton className="h-9" />
                     ) : (
                         <Select id={id} value={form.driverId} onChange={e => setForm(f => ({ ...f, driverId: e.target.value }))}>
-                            <option value="">— Chọn tài xế —</option>
+                            <option value="">{i18n.selectDriver}</option>
                             {options.drivers.map(d => (
                                 <option key={d.id} value={d.id}>{d.name} ({d.phone})</option>
                             ))}
@@ -368,14 +345,14 @@ function CreateRouteDrawer({ open, onClose, onCreated }: {
                     )}
                 </Field>
 
-                <Field label="Phương Tiện" required>
+                <Field label={i18n.vehicleLabel} required>
                     {id => !options ? (
                         <Skeleton className="h-9" />
                     ) : (
                         <Select id={id} value={form.vehicleId} onChange={e => setForm(f => ({ ...f, vehicleId: e.target.value }))}>
-                            <option value="">— Chọn phương tiện —</option>
+                            <option value="">{i18n.selectVehicle}</option>
                             {options.vehicles.map(v => (
-                                <option key={v.id} value={v.id}>{VEHICLE_LABEL[v.type] ?? v.type} • {v.plateNo}</option>
+                                <option key={v.id} value={v.id}>{(i18n.vehicles as Record<string, string>)[v.type] ?? v.type} • {v.plateNo}</option>
                             ))}
                         </Select>
                     )}
@@ -389,12 +366,18 @@ function DeliveryMobileCard({
     row,
     onSelect,
     onAdvance,
-    isUpdating
+    isUpdating,
+    i18n,
+    formatDate,
+    formatCurrency,
 }: {
     row: DeliveryRouteRow
     onSelect: (id: string) => void
     onAdvance: (id: string, nextStatus: string) => void
     isUpdating: boolean
+    i18n: typeof DELIVERY_I18N['vi']
+    formatDate: (d: string | Date) => string
+    formatCurrency: (n: number) => string
 }) {
     const pct = row.stopCount > 0 ? Math.round((row.deliveredCount / row.stopCount) * 100) : 0
     const nextStatus = NEXT_STATUS[row.status]
@@ -402,50 +385,52 @@ function DeliveryMobileCard({
     return (
         <div
             onClick={() => onSelect(row.id)}
-            className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs space-y-2.5 cursor-pointer hover:border-[#0E7490] transition-colors"
+            className="p-3.5 rounded-lg border border-lys-border bg-white shadow-2xs space-y-2.5 cursor-pointer hover:border-lys-teal-strong transition-colors"
         >
             <div className="flex items-start justify-between gap-2">
                 <div>
                     <div className="flex items-center gap-2">
-                        <span className="font-semibold text-xs text-slate-900">{formatDate(row.routeDate)}</span>
-                        <span className="text-[11px] text-slate-400">•</span>
-                        <span className="text-xs text-slate-700 font-medium">{row.driverName}</span>
+                        <span className="font-semibold text-xs text-lys-primary">{formatDate(row.routeDate)}</span>
+                        <span className="text-[11px] text-lys-muted">•</span>
+                        <span className="text-xs text-lys-secondary font-medium">{row.driverName}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-slate-500">
-                        <span>{VEHICLE_LABEL[row.vehicleType] ?? row.vehicleType}</span>
+                    <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-lys-muted">
+                        <span>{(i18n.vehicles as Record<string, string>)[row.vehicleType] ?? row.vehicleType}</span>
                         <span>•</span>
-                        <span className="font-mono text-[10px] px-1 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                        <span className="font-mono text-[10px] px-1 py-0.2 rounded bg-lys-subtle text-lys-secondary border border-lys-border">
                             {row.vehiclePlate}
                         </span>
                     </div>
                 </div>
-                <StatusBadge status={row.status} label={STATUS_LABEL[row.status] ?? row.status} toneOverrides={ROUTE_TONES} />
+                <StatusBadge
+                    status={row.status}
+                    label={(i18n.status as Record<string, string>)[row.status] ?? row.status}
+                    toneOverrides={ROUTE_TONES}
+                />
             </div>
 
-            {/* Progress Bar & Stops */}
-            <div className="space-y-1 pt-1 border-t border-slate-100">
+            <div className="space-y-1 pt-1 border-t border-lys-border">
                 <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-600 font-medium">Tiến độ giao</span>
-                    <span className="font-semibold text-slate-900">{row.deliveredCount}/{row.stopCount} điểm ({pct}%)</span>
+                    <span className="text-lys-secondary font-medium">{i18n.deliveryProgress}</span>
+                    <span className="font-semibold text-lys-primary">{row.deliveredCount}/{row.stopCount} {i18n.stopsSuffix} ({pct}%)</span>
                 </div>
-                <div className="h-1.5 rounded-full overflow-hidden bg-slate-100">
+                <div className="h-1.5 rounded-full overflow-hidden bg-lys-subtle">
                     <div
-                        className={cn('h-full rounded-full transition-all duration-300', pct === 100 ? 'bg-emerald-600' : 'bg-amber-500')}
+                        className={cn('h-full rounded-full transition-all duration-300', pct === 100 ? 'bg-tone-success-fg' : 'bg-tone-warning-fg')}
                         style={{ width: `${pct}%` }}
                     />
                 </div>
             </div>
 
-            {/* Footer: COD & Action */}
-            <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
+            <div className="flex items-center justify-between pt-1 border-t border-lys-border text-xs">
                 <div>
                     {row.totalCod > 0 ? (
                         <div className="flex items-center gap-1 text-[11px]">
-                            <span className="text-slate-500">COD:</span>
-                            <span className="font-bold text-amber-700">{formatVND(row.totalCod)}</span>
+                            <span className="text-lys-muted">COD:</span>
+                            <span className="font-bold text-tone-warning-fg">{formatCurrency(row.totalCod)}</span>
                         </div>
                     ) : (
-                        <span className="text-slate-400 text-[11px]">Không có COD</span>
+                        <span className="text-lys-muted text-[11px]">{i18n.noCod}</span>
                     )}
                 </div>
 
@@ -459,7 +444,7 @@ function DeliveryMobileCard({
                             disabled={isUpdating}
                         >
                             {!isUpdating && <ChevronDown size={11} aria-hidden />}
-                            {STATUS_LABEL[nextStatus] ?? nextStatus}
+                            {(i18n.status as Record<string, string>)[nextStatus] ?? nextStatus}
                         </Button>
                     )}
                     <Button
@@ -481,7 +466,10 @@ interface Props {
     stats: { todayRoutes: number; pending: number; delivered: number; inProgress: number }
 }
 
-export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: Props) {
+export function DeliveryClient({ initialRows, stats: initStats }: Props) {
+    const { locale, formatDate, formatCurrency } = useAppLocale()
+    const i18n = DELIVERY_I18N[locale]
+
     const [rows, setRows] = useState(initialRows)
     const [loading, setLoading] = useState(false)
     const [statusFilter, setStatusFilter] = useState('')
@@ -516,19 +504,19 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
     return (
         <div className="flex flex-col gap-4 max-w-screen-2xl">
             <PageHeader
-                description="Lộ trình giao hàng, E-POD, COD collection"
+                description={i18n.description}
                 actions={
                     <Button onClick={() => setDrawerOpen(true)}>
-                        <Plus size={16} aria-hidden /> Tạo Lộ Trình
+                        <Plus size={16} aria-hidden /> {i18n.createRouteBtn}
                     </Button>
                 }
             />
 
             <StatGrid className="grid-cols-2 lg:grid-cols-4">
-                <StatCard icon={Truck} tone="brand" label="Lộ Trình Hôm Nay" value={initStats.todayRoutes} />
-                <StatCard icon={MapPin} tone="warning" label="Đang Giao" value={initStats.inProgress} />
-                <StatCard icon={Clock} tone="info" label="Điểm Dừng Chờ Giao" value={initStats.pending} />
-                <StatCard icon={CheckCircle2} tone="success" label="Đã Giao Thành Công" value={initStats.delivered} />
+                <StatCard icon={Truck} tone="brand" label={i18n.stats.todayRoutes} value={initStats.todayRoutes} />
+                <StatCard icon={MapPin} tone="warning" label={i18n.stats.inProgress} value={initStats.inProgress} />
+                <StatCard icon={Clock} tone="info" label={i18n.stats.pendingStops} value={initStats.pending} />
+                <StatCard icon={CheckCircle2} tone="success" label={i18n.stats.delivered} value={initStats.delivered} />
             </StatGrid>
 
             <Toolbar
@@ -537,10 +525,9 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                         value={statusFilter}
                         onChange={e => { setStatusFilter(e.target.value); reload(e.target.value) }}
                         className="w-full sm:w-auto sm:min-w-[200px]"
-                        aria-label="Lọc trạng thái"
                     >
-                        <option value="">Tất cả trạng thái</option>
-                        {Object.entries(STATUS_LABEL).map(([k, v]) => (
+                        <option value="">{i18n.allStatuses}</option>
+                        {Object.entries(i18n.status).map(([k, v]) => (
                             <option key={k} value={k}>{v}</option>
                         ))}
                     </Select>
@@ -556,7 +543,7 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                         <Skeleton className="h-28" />
                     </div>
                 ) : rows.length === 0 ? (
-                    <EmptyState icon={Truck} title="Chưa có lộ trình giao hàng nào" />
+                    <EmptyState icon={Truck} title={i18n.emptyRoutes} />
                 ) : (
                     rows.map(row => (
                         <DeliveryMobileCard
@@ -565,6 +552,9 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                             onSelect={id => setEpodRouteId(id)}
                             onAdvance={(id, nextStatus) => handleStatusAdvance(id, nextStatus)}
                             isUpdating={updatingId === row.id}
+                            i18n={i18n as any}
+                            formatDate={formatDate}
+                            formatCurrency={formatCurrency}
                         />
                     ))
                 )}
@@ -575,14 +565,14 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                 <Table>
                     <THead>
                         <tr>
-                            <Th>Ngày</Th>
-                            <Th>Tài Xế</Th>
-                            <Th>Phương Tiện</Th>
-                            <Th align="right">Điểm Dừng</Th>
-                            <Th>Tiến Độ</Th>
-                            <Th align="right">COD</Th>
-                            <Th>Trạng Thái</Th>
-                            <Th aria-label="Thao tác" />
+                            <Th>{i18n.columns.date}</Th>
+                            <Th>{i18n.columns.driver}</Th>
+                            <Th>{i18n.columns.vehicle}</Th>
+                            <Th align="right">{i18n.columns.stops}</Th>
+                            <Th>{i18n.columns.progress}</Th>
+                            <Th align="right">{i18n.columns.cod}</Th>
+                            <Th>{i18n.columns.status}</Th>
+                            <Th aria-label="Actions" />
                         </tr>
                     </THead>
                     <TBody>
@@ -590,7 +580,7 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                             <TableMessageRow colSpan={8}><TableSkeleton rows={5} cols={7} /></TableMessageRow>
                         ) : rows.length === 0 ? (
                             <TableMessageRow colSpan={8}>
-                                <EmptyState icon={Truck} title="Chưa có lộ trình giao hàng nào" />
+                                <EmptyState icon={Truck} title={i18n.emptyRoutes} />
                             </TableMessageRow>
                         ) : rows.map(row => {
                             const pct = row.stopCount > 0 ? Math.round((row.deliveredCount / row.stopCount) * 100) : 0
@@ -601,10 +591,10 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                                     <Td className="text-lys-primary">{formatDate(row.routeDate)}</Td>
                                     <Td className="text-lys-primary">{row.driverName}</Td>
                                     <Td className="text-xs text-lys-secondary">
-                                        {VEHICLE_LABEL[row.vehicleType] ?? row.vehicleType}<br />
+                                        {(i18n.vehicles as Record<string, string>)[row.vehicleType] ?? row.vehicleType}<br />
                                         <span className="type-number">{row.vehiclePlate}</span>
                                     </Td>
-                                    <Td align="right" className="type-number font-semibold text-lys-primary">{row.stopCount} điểm</Td>
+                                    <Td align="right" className="type-number font-semibold text-lys-primary">{row.stopCount} {i18n.stopsSuffix}</Td>
                                     <Td>
                                         <div className="flex items-center gap-2">
                                             <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-lys-subtle min-w-[60px]">
@@ -614,10 +604,14 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                                         </div>
                                     </Td>
                                     <Td align="right" className="type-number font-semibold text-lys-primary">
-                                        {row.totalCod > 0 ? formatVND(row.totalCod) : '—'}
+                                        {row.totalCod > 0 ? formatCurrency(row.totalCod) : '—'}
                                     </Td>
                                     <Td>
-                                        <StatusBadge status={row.status} label={STATUS_LABEL[row.status] ?? row.status} toneOverrides={ROUTE_TONES} />
+                                        <StatusBadge
+                                            status={row.status}
+                                            label={(i18n.status as Record<string, string>)[row.status] ?? row.status}
+                                            toneOverrides={ROUTE_TONES}
+                                        />
                                     </Td>
                                     <Td align="right">
                                         {nextStatus && (
@@ -629,7 +623,7 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                                                 disabled={isUpdating}
                                             >
                                                 {!isUpdating && <ChevronDown size={11} aria-hidden />}
-                                                {STATUS_LABEL[nextStatus] ?? nextStatus}
+                                                {(i18n.status as Record<string, string>)[nextStatus] ?? nextStatus}
                                             </Button>
                                         )}
                                     </Td>
@@ -652,25 +646,24 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                 onClose={() => { setEpodRouteId(null); reload() }}
             />
 
-            {/* Failed Deliveries Section */}
             <Card className="p-4">
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                         <AlertTriangle size={16} className="text-tone-warning-fg" aria-hidden />
-                        <h3 className="type-section-title text-lys-primary">Giao Hàng Thất Bại</h3>
+                        <h3 className="type-section-title text-lys-primary">{i18n.failedDeliveriesTitle}</h3>
                         {failedLoaded && (
                             <Badge tone={failedDeliveries.length > 0 ? 'danger' : 'success'}>{failedDeliveries.length}</Badge>
                         )}
                     </div>
                     <Button size="sm" variant="secondary" onClick={loadFailed} loading={failedLoading} disabled={failedLoading}>
-                        {failedLoading ? 'Đang tải...' : failedLoaded ? 'Làm Mới' : 'Tải Danh Sách'}
+                        {failedLoading ? i18n.loading : failedLoaded ? i18n.refreshBtn : i18n.loadListBtn}
                     </Button>
                 </div>
 
                 {!failedLoaded ? (
-                    <p className="type-caption text-center py-6">Nhấn &quot;Tải Danh Sách&quot; để xem các đơn giao thất bại</p>
+                    <p className="type-caption text-center py-6">{i18n.loadFailedHint}</p>
                 ) : failedDeliveries.length === 0 ? (
-                    <EmptyState icon={CheckCircle2} title="Không có đơn giao thất bại nào" />
+                    <EmptyState icon={CheckCircle2} title={i18n.emptyFailed} />
                 ) : (
                     <div className="flex flex-col gap-2">
                         {failedDeliveries.map(fd => (
@@ -680,19 +673,19 @@ export function DeliveryClient({ initialRows, initialTotal, stats: initStats }: 
                                     <div>
                                         <p className="text-sm font-semibold text-lys-primary">{fd.customerName}</p>
                                         <p className="type-caption">
-                                            SO: {fd.soNo} • Tài xế: {fd.driverName} • {new Date(fd.failedAt).toLocaleDateString('vi-VN')}
+                                            SO: {fd.soNo} • {i18n.driverPrefix} {fd.driverName} • {formatDate(fd.failedAt)}
                                         </p>
                                     </div>
                                 </div>
-                                <div className="flex items-center flex-wrap gap-2 sm:gap-3 justify-between sm:justify-end w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                                <div className="flex items-center flex-wrap gap-2 sm:gap-3 justify-between sm:justify-end w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-lys-border">
                                     <div className="flex items-center gap-2">
-                                        <Badge tone="danger">{FAILURE_LABEL[fd.failureReason] ?? fd.failureReason}</Badge>
+                                        <Badge tone="danger">{(i18n.failureReason as Record<string, string>)[fd.failureReason] ?? fd.failureReason}</Badge>
                                         {fd.codAmount > 0 && (
-                                            <span className="type-number text-xs font-semibold text-tone-warning-fg">COD: {formatVND(fd.codAmount)}</span>
+                                            <span className="type-number text-xs font-semibold text-tone-warning-fg">COD: {formatCurrency(fd.codAmount)}</span>
                                         )}
                                     </div>
                                     <Button size="sm" variant="secondary">
-                                        <RotateCcw size={11} aria-hidden /> Giao Lại
+                                        <RotateCcw size={11} aria-hidden /> {i18n.redeliverBtn}
                                     </Button>
                                 </div>
                             </div>

@@ -5,29 +5,31 @@ import { cached, revalidateCache } from '@/lib/cache'
 import { serialize } from '@/lib/serialize'
 
 export async function getStampPurchases() {
-    const raw = await prisma.wineStampPurchase.findMany({
-        include: {
-            usages: {
-                select: {
-                    id: true,
-                    serialStart: true,
-                    serialEnd: true,
-                    qtyUsed: true,
-                    qtyDamaged: true,
-                    usedAt: true,
-                    shipmentId: true,
-                    lotId: true,
-                    notes: true,
-                    shipment: { select: { id: true, billOfLading: true } },
-                    lot: { select: { id: true, lotNo: true, product: { select: { skuCode: true, productName: true } } } },
-                    reporter: { select: { id: true, name: true } },
+    return cached('stamps:purchases', async () => {
+        const raw = await prisma.wineStampPurchase.findMany({
+            include: {
+                usages: {
+                    select: {
+                        id: true,
+                        serialStart: true,
+                        serialEnd: true,
+                        qtyUsed: true,
+                        qtyDamaged: true,
+                        usedAt: true,
+                        shipmentId: true,
+                        lotId: true,
+                        notes: true,
+                        shipment: { select: { id: true, billOfLading: true } },
+                        lot: { select: { id: true, lotNo: true, product: { select: { skuCode: true, productName: true } } } },
+                        reporter: { select: { id: true, name: true } },
+                    },
+                    orderBy: { usedAt: 'desc' },
                 },
-                orderBy: { usedAt: 'desc' },
             },
-        },
-        orderBy: { purchaseDate: 'desc' },
-    })
-    return serialize(raw)
+            orderBy: { purchaseDate: 'desc' },
+        })
+        return serialize(raw)
+    }, 30_000)
 }
 
 export async function createStampPurchase(data: {
@@ -41,7 +43,7 @@ export async function createStampPurchase(data: {
     if (data.totalQty <= 0) {
         throw new Error('Tổng số lượng tem mua phải lớn hơn 0')
     }
-    return prisma.wineStampPurchase.create({
+    const created = await prisma.wineStampPurchase.create({
         data: {
             purchaseDate: new Date(data.purchaseDate),
             stampType: data.stampType,
@@ -53,6 +55,8 @@ export async function createStampPurchase(data: {
             status: 'ACTIVE',
         },
     })
+    revalidateCache('stamps')
+    return created
 }
 
 export async function recordStampUsage(data: {
@@ -75,7 +79,7 @@ export async function recordStampUsage(data: {
     }
 
     // Transaction: tạo usage + cập nhật usedQty (atomic - tránh race condition)
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
         const purchase = await tx.wineStampPurchase.findUnique({
             where: { id: data.purchaseId },
         })
@@ -122,6 +126,8 @@ export async function recordStampUsage(data: {
 
         return usage
     })
+    revalidateCache('stamps')
+    return result
 }
 
 export async function getStampSummary() {
@@ -829,112 +835,114 @@ export type POStampAllocationRecord = {
 }
 
 export async function getReceivedPOsForStamps(): Promise<ReceivedPOForStamps[]> {
-    const pos = await prisma.purchaseOrder.findMany({
-        where: {
-            status: { in: ['RECEIVED', 'PARTIALLY_RECEIVED'] },
-        },
-        include: {
-            supplier: { select: { id: true, name: true } },
-            goodsReceipts: {
-                where: { status: 'CONFIRMED' },
-                include: {
-                    lines: {
-                        include: {
-                            product: {
-                                select: { id: true, skuCode: true, productName: true, abvPercent: true }
-                            },
-                            lot: {
-                                select: { id: true, lotNo: true, qtyAvailable: true }
+    return cached('stamps:received-pos', async () => {
+        const pos = await prisma.purchaseOrder.findMany({
+            where: {
+                status: { in: ['RECEIVED', 'PARTIALLY_RECEIVED'] },
+            },
+            include: {
+                supplier: { select: { id: true, name: true } },
+                goodsReceipts: {
+                    where: { status: 'CONFIRMED' },
+                    include: {
+                        lines: {
+                            include: {
+                                product: {
+                                    select: { id: true, skuCode: true, productName: true, abvPercent: true }
+                                },
+                                lot: {
+                                    select: { id: true, lotNo: true, qtyAvailable: true }
+                                }
                             }
+                        }
+                    }
+                },
+                lines: {
+                    include: {
+                        product: {
+                            select: { id: true, skuCode: true, productName: true, abvPercent: true }
                         }
                     }
                 }
             },
-            lines: {
-                include: {
-                    product: {
-                        select: { id: true, skuCode: true, productName: true, abvPercent: true }
-                    }
-                }
-            }
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 50,
-    })
+            orderBy: { createdAt: 'desc' },
+            take: 50,
+        })
 
-    const result: ReceivedPOForStamps[] = []
+        const result: ReceivedPOForStamps[] = []
 
-    for (const po of pos) {
-        const itemsMap = new Map<string, {
-            productId: string
-            skuCode: string
-            productName: string
-            abvPercent: number
-            qty: number
-            lotId?: string | null
-            lotNo?: string | null
-        }>()
+        for (const po of pos) {
+            const itemsMap = new Map<string, {
+                productId: string
+                skuCode: string
+                productName: string
+                abvPercent: number
+                qty: number
+                lotId?: string | null
+                lotNo?: string | null
+            }>()
 
-        if (po.goodsReceipts.length > 0) {
-            for (const gr of po.goodsReceipts) {
-                for (const grLine of gr.lines) {
-                    const existing = itemsMap.get(grLine.productId)
-                    const qty = Number(grLine.qtyReceived)
-                    if (existing) {
-                        existing.qty += qty
-                        if (!existing.lotId && grLine.lotId) {
-                            existing.lotId = grLine.lotId
-                            existing.lotNo = grLine.lot?.lotNo || null
+            if (po.goodsReceipts.length > 0) {
+                for (const gr of po.goodsReceipts) {
+                    for (const grLine of gr.lines) {
+                        const existing = itemsMap.get(grLine.productId)
+                        const qty = Number(grLine.qtyReceived)
+                        if (existing) {
+                            existing.qty += qty
+                            if (!existing.lotId && grLine.lotId) {
+                                existing.lotId = grLine.lotId
+                                existing.lotNo = grLine.lot?.lotNo || null
+                            }
+                        } else {
+                            itemsMap.set(grLine.productId, {
+                                productId: grLine.productId,
+                                skuCode: grLine.product.skuCode,
+                                productName: grLine.product.productName,
+                                abvPercent: Number(grLine.product.abvPercent),
+                                qty,
+                                lotId: grLine.lotId || null,
+                                lotNo: grLine.lot?.lotNo || null,
+                            })
                         }
-                    } else {
-                        itemsMap.set(grLine.productId, {
-                            productId: grLine.productId,
-                            skuCode: grLine.product.skuCode,
-                            productName: grLine.product.productName,
-                            abvPercent: Number(grLine.product.abvPercent),
-                            qty,
-                            lotId: grLine.lotId || null,
-                            lotNo: grLine.lot?.lotNo || null,
-                        })
                     }
                 }
+            } else {
+                for (const line of po.lines) {
+                    itemsMap.set(line.productId, {
+                        productId: line.productId,
+                        skuCode: line.product.skuCode,
+                        productName: line.product.productName,
+                        abvPercent: Number(line.product.abvPercent),
+                        qty: Number(line.qtyOrdered),
+                        lotId: null,
+                        lotNo: null,
+                    })
+                }
             }
-        } else {
-            for (const line of po.lines) {
-                itemsMap.set(line.productId, {
-                    productId: line.productId,
-                    skuCode: line.product.skuCode,
-                    productName: line.product.productName,
-                    abvPercent: Number(line.product.abvPercent),
-                    qty: Number(line.qtyOrdered),
-                    lotId: null,
-                    lotNo: null,
-                })
-            }
+
+            const items = Array.from(itemsMap.values()).filter(it => it.qty > 0)
+            if (items.length === 0) continue
+
+            const totalBottles = items.reduce((s, it) => s + it.qty, 0)
+            const hasUnder = items.some(it => it.abvPercent < 20)
+            const hasOver = items.some(it => it.abvPercent >= 20)
+            const recommendedStampType: 'UNDER_20_ABV' | 'OVER_20_ABV' | 'MIXED' =
+                hasUnder && hasOver ? 'MIXED' : hasOver ? 'OVER_20_ABV' : 'UNDER_20_ABV'
+
+            result.push({
+                id: po.id,
+                poNo: po.poNo,
+                status: po.status,
+                createdAt: po.createdAt.toISOString(),
+                supplierName: po.supplier?.name || 'Nhà cung cấp',
+                totalBottles,
+                recommendedStampType,
+                items,
+            })
         }
 
-        const items = Array.from(itemsMap.values()).filter(it => it.qty > 0)
-        if (items.length === 0) continue
-
-        const totalBottles = items.reduce((s, it) => s + it.qty, 0)
-        const hasUnder = items.some(it => it.abvPercent < 20)
-        const hasOver = items.some(it => it.abvPercent >= 20)
-        const recommendedStampType: 'UNDER_20_ABV' | 'OVER_20_ABV' | 'MIXED' =
-            hasUnder && hasOver ? 'MIXED' : hasOver ? 'OVER_20_ABV' : 'UNDER_20_ABV'
-
-        result.push({
-            id: po.id,
-            poNo: po.poNo,
-            status: po.status,
-            createdAt: po.createdAt.toISOString(),
-            supplierName: po.supplier?.name || 'Nhà cung cấp',
-            totalBottles,
-            recommendedStampType,
-            items,
-        })
-    }
-
-    return serialize(result)
+        return serialize(result)
+    }, 30_000)
 }
 
 export async function allocateStampsToPO(data: {
@@ -1070,120 +1078,122 @@ export async function allocateStampsToPO(data: {
 }
 
 export async function getPOStampAllocations(): Promise<POStampAllocationRecord[]> {
-    const usages = await prisma.wineStampUsage.findMany({
-        where: {
-            notes: { startsWith: '[PO ' },
-        },
-        include: {
-            purchase: { select: { id: true, symbol: true, stampType: true } },
-            lot: { select: { lotNo: true, product: { select: { skuCode: true, productName: true } } } },
-            reporter: { select: { name: true } },
-        },
-        orderBy: { usedAt: 'desc' },
-    })
-
-    const groups = new Map<string, POStampAllocationRecord>()
-
-    for (const u of usages) {
-        const poMatch = u.notes?.match(/^\[PO\s+([\w-]+)\]/)
-        const poNo = poMatch ? poMatch[1] : 'PO-KHAC'
-        const dateKey = new Date(u.usedAt).toISOString().split('T')[0]
-        const groupKey = `${poNo}-${u.purchaseId}-${dateKey}`
-
-        let group = groups.get(groupKey)
-        if (!group) {
-            group = {
-                poNo,
-                allocatedDate: u.usedAt.toISOString(),
-                purchaseId: u.purchaseId,
-                purchaseSymbol: u.purchase.symbol,
-                stampType: u.purchase.stampType,
-                serialStart: u.serialStart || '',
-                serialEnd: u.serialEnd || '',
-                totalQty: 0,
-                totalDamaged: 0,
-                reporterName: u.reporter?.name || u.reportedBy || 'Thủ kho',
-                notes: u.notes,
-                items: [],
-            }
-            groups.set(groupKey, group)
-        }
-
-        group.totalQty += u.qtyUsed
-        group.totalDamaged += u.qtyDamaged
-
-        if (!group.serialStart || (u.serialStart && u.serialStart < group.serialStart)) {
-            group.serialStart = u.serialStart || group.serialStart
-        }
-        if (!group.serialEnd || (u.serialEnd && u.serialEnd > group.serialEnd)) {
-            group.serialEnd = u.serialEnd || group.serialEnd
-        }
-
-        let skuCode = u.lot?.product.skuCode || ''
-        let productName = u.lot?.product.productName || ''
-
-        if (!productName && u.notes) {
-            const match = u.notes.match(/^\[PO\s+[\w-]+\]\s+(.*?)\s+-\s+(.*?)\s+\|/)
-            if (match) {
-                skuCode = match[1]
-                productName = match[2]
-            }
-        }
-
-        let qtyMain = u.qtyUsed
-        let mainSerialStart = u.serialStart || '—'
-        let mainSerialEnd = u.serialEnd || '—'
-        let qtySR = 0
-        let srSerialStart = ''
-        let srSerialEnd = ''
-
-        if (u.notes) {
-            const splitMatch = u.notes.match(/\[Kho:\s*(\d+)\s*\((.*?)\s*-\s*(.*?)\)\s*\|\s*SR:\s*(\d+)\s*\((.*?)\s*-\s*(.*?)\)\]/)
-            if (splitMatch) {
-                qtyMain = parseInt(splitMatch[1], 10)
-                mainSerialStart = splitMatch[2].trim()
-                mainSerialEnd = splitMatch[3].trim()
-                qtySR = parseInt(splitMatch[4], 10)
-                srSerialStart = splitMatch[5].trim()
-                srSerialEnd = splitMatch[6].trim()
-            }
-        }
-
-        group.items.push({
-            id: u.id,
-            productName: productName || 'Sản phẩm rượu',
-            skuCode: skuCode || '—',
-            lotNo: u.lot?.lotNo || null,
-            qtyUsed: u.qtyUsed,
-            qtyDamaged: u.qtyDamaged,
-            serialStart: u.serialStart || '—',
-            serialEnd: u.serialEnd || '—',
-            qtyMain,
-            mainSerialStart,
-            mainSerialEnd,
-            qtySR,
-            srSerialStart,
-            srSerialEnd,
+    return cached('stamps:po-allocations', async () => {
+        const usages = await prisma.wineStampUsage.findMany({
+            where: {
+                notes: { startsWith: '[PO ' },
+            },
+            include: {
+                purchase: { select: { id: true, symbol: true, stampType: true } },
+                lot: { select: { lotNo: true, product: { select: { skuCode: true, productName: true } } } },
+                reporter: { select: { name: true } },
+            },
+            orderBy: { usedAt: 'desc' },
         })
-    }
 
-    const groupList = Array.from(groups.values())
-    const poNos = Array.from(new Set(groupList.map(g => g.poNo).filter(no => no !== 'PO-KHAC')))
-    if (poNos.length > 0) {
-        const pos = await prisma.purchaseOrder.findMany({
-            where: { poNo: { in: poNos } },
-            select: { id: true, poNo: true, supplier: { select: { name: true } } },
-        })
-        const poMap = new Map(pos.map(p => [p.poNo, { id: p.id, supplierName: p.supplier?.name }]))
-        for (const g of groupList) {
-            const pInfo = poMap.get(g.poNo)
-            if (pInfo) {
-                g.poId = pInfo.id
-                g.supplierName = pInfo.supplierName
+        const groups = new Map<string, POStampAllocationRecord>()
+
+        for (const u of usages) {
+            const poMatch = u.notes?.match(/^\[PO\s+([\w-]+)\]/)
+            const poNo = poMatch ? poMatch[1] : 'PO-KHAC'
+            const dateKey = new Date(u.usedAt).toISOString().split('T')[0]
+            const groupKey = `${poNo}-${u.purchaseId}-${dateKey}`
+
+            let group = groups.get(groupKey)
+            if (!group) {
+                group = {
+                    poNo,
+                    allocatedDate: u.usedAt.toISOString(),
+                    purchaseId: u.purchaseId,
+                    purchaseSymbol: u.purchase.symbol,
+                    stampType: u.purchase.stampType,
+                    serialStart: u.serialStart || '',
+                    serialEnd: u.serialEnd || '',
+                    totalQty: 0,
+                    totalDamaged: 0,
+                    reporterName: u.reporter?.name || u.reportedBy || 'Thủ kho',
+                    notes: u.notes,
+                    items: [],
+                }
+                groups.set(groupKey, group)
+            }
+
+            group.totalQty += u.qtyUsed
+            group.totalDamaged += u.qtyDamaged
+
+            if (!group.serialStart || (u.serialStart && u.serialStart < group.serialStart)) {
+                group.serialStart = u.serialStart || group.serialStart
+            }
+            if (!group.serialEnd || (u.serialEnd && u.serialEnd > group.serialEnd)) {
+                group.serialEnd = u.serialEnd || group.serialEnd
+            }
+
+            let skuCode = u.lot?.product.skuCode || ''
+            let productName = u.lot?.product.productName || ''
+
+            if (!productName && u.notes) {
+                const match = u.notes.match(/^\[PO\s+[\w-]+\]\s+(.*?)\s+-\s+(.*?)\s+\|/)
+                if (match) {
+                    skuCode = match[1]
+                    productName = match[2]
+                }
+            }
+
+            let qtyMain = u.qtyUsed
+            let mainSerialStart = u.serialStart || '—'
+            let mainSerialEnd = u.serialEnd || '—'
+            let qtySR = 0
+            let srSerialStart = ''
+            let srSerialEnd = ''
+
+            if (u.notes) {
+                const splitMatch = u.notes.match(/\[Kho:\s*(\d+)\s*\((.*?)\s*-\s*(.*?)\)\s*\|\s*SR:\s*(\d+)\s*\((.*?)\s*-\s*(.*?)\)\]/)
+                if (splitMatch) {
+                    qtyMain = parseInt(splitMatch[1], 10)
+                    mainSerialStart = splitMatch[2].trim()
+                    mainSerialEnd = splitMatch[3].trim()
+                    qtySR = parseInt(splitMatch[4], 10)
+                    srSerialStart = splitMatch[5].trim()
+                    srSerialEnd = splitMatch[6].trim()
+                }
+            }
+
+            group.items.push({
+                id: u.id,
+                productName: productName || 'Sản phẩm rượu',
+                skuCode: skuCode || '—',
+                lotNo: u.lot?.lotNo || null,
+                qtyUsed: u.qtyUsed,
+                qtyDamaged: u.qtyDamaged,
+                serialStart: u.serialStart || '—',
+                serialEnd: u.serialEnd || '—',
+                qtyMain,
+                mainSerialStart,
+                mainSerialEnd,
+                qtySR,
+                srSerialStart,
+                srSerialEnd,
+            })
+        }
+
+        const groupList = Array.from(groups.values())
+        const poNos = Array.from(new Set(groupList.map(g => g.poNo).filter(no => no !== 'PO-KHAC')))
+        if (poNos.length > 0) {
+            const pos = await prisma.purchaseOrder.findMany({
+                where: { poNo: { in: poNos } },
+                select: { id: true, poNo: true, supplier: { select: { name: true } } },
+            })
+            const poMap = new Map(pos.map(p => [p.poNo, { id: p.id, supplierName: p.supplier?.name }]))
+            for (const g of groupList) {
+                const pInfo = poMap.get(g.poNo)
+                if (pInfo) {
+                    g.poId = pInfo.id
+                    g.supplierName = pInfo.supplierName
+                }
             }
         }
-    }
 
-    return serialize(groupList)
+        return serialize(groupList)
+    }, 30_000)
 }
 

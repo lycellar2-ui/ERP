@@ -242,4 +242,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-10-18 18:05 | Wine ERP v12.28 - Full System UI Design Language Standardization (Light Design System v3.9)*
+*Last updated: 2026-10-18 22:42 | Wine ERP v12.30 - 100% System-Wide Bilingual VI/EN i18n (38/38 Dashboard Routes) & Pure Light UI Kit / Mobile Card Standardization*

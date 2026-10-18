@@ -23,7 +23,9 @@ import {
     allocateStampsToPO,
     getPOStampAllocations,
 } from './actions'
-import { PageHeader, Button } from '@/components/ui'
+import { PageHeader, Button, SearchInput, StatusTabs, Table, THead, TBody, Tr, Th, Td } from '@/components/ui'
+import { useAppLocale } from '@/lib/i18n'
+import { getStampsI18n } from './i18n'
 import type {
     StampAlert,
     StampDestructionRecord,
@@ -138,6 +140,8 @@ export default function StampsClient({
 }: Props) {
     const router = useRouter()
     const [isPending, startTransition] = useTransition()
+    const { locale, formatDate, formatNumber } = useAppLocale()
+    const t = getStampsI18n(locale)
 
     // Navigation Tabs
     const [activeTab, setActiveTab] = useState<'po_allocations' | 'logbook' | 'batches' | 'destructions'>('po_allocations')
@@ -463,11 +467,11 @@ export default function StampsClient({
     const handleSubmitPOAllocation = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!selectedPOId || !selectedPO) {
-            toast.error('Vui lòng chọn đơn PO')
+            toast.error(t.toasts.selectPO)
             return
         }
         if (!selectedStampPurchaseId || !selectedPurchase) {
-            toast.error('Vui lòng chọn lô tem cấp phát')
+            toast.error(t.toasts.selectBatch)
             return
         }
 
@@ -490,13 +494,13 @@ export default function StampsClient({
         }).filter(it => it.qty > 0 || it.qtyDamaged > 0)
 
         if (itemsToSubmit.length === 0) {
-            toast.error('Chưa có sản phẩm nào có số lượng tem dán > 0')
+            toast.error(t.toasts.noValidItems)
             return
         }
 
         for (const it of itemsToSubmit) {
             if (it.qty > 0 && (!it.serialStart || !it.serialEnd)) {
-                toast.error('Tất cả sản phẩm phải có số seri đầu và số seri cuối')
+                toast.error(t.toasts.missingSerials)
                 return
             }
         }
@@ -504,7 +508,7 @@ export default function StampsClient({
         const totalQty = itemsToSubmit.reduce((sum, it) => sum + it.qty + it.qtyDamaged, 0)
         const remaining = selectedPurchase.totalQty - selectedPurchase.usedQty
         if (totalQty > remaining) {
-            toast.error(`Vượt quá tồn kho tem khả dụng (${remaining.toLocaleString('vi-VN')} tem)`)
+            toast.error(t.toasts.exceedStock(formatNumber(remaining)))
             return
         }
 
@@ -518,10 +522,10 @@ export default function StampsClient({
             })
 
             if (!res.success) {
-                throw new Error(res.error || 'Lỗi khi phân tem cho PO')
+                throw new Error(res.error || t.toasts.allocError)
             }
 
-            toast.success(`Đã phân bổ tem thành công cho đơn PO ${selectedPO.poNo}`)
+            toast.success(t.toasts.allocSuccess(selectedPO.poNo))
             setShowPOAllocModal(false)
             setSelectedPOId('')
             setPOBaseSerialStart('')
@@ -535,7 +539,7 @@ export default function StampsClient({
                 router.refresh()
             })
         } catch (err: any) {
-            toast.error(err.message || 'Lỗi không xác định khi phân tem')
+            toast.error(err.message || t.toasts.allocError)
         } finally {
             setPOAllocSubmitting(false)
         }
@@ -553,7 +557,7 @@ export default function StampsClient({
             })
             setLogbookEntries(data)
         } catch (err: any) {
-            toast.error(`Lỗi tải sổ tem: ${err.message}`)
+            toast.error(t.toasts.logbookError(err.message))
         } finally {
             setLogbookLoading(false)
         }
@@ -593,13 +597,13 @@ export default function StampsClient({
     async function handleAddPurchase(e: React.FormEvent) {
         e.preventDefault()
         if (formData.totalQty <= 0) {
-            toast.error('Số lượng tem phải lớn hơn 0')
+            toast.error(t.toasts.qtyMustBePositive)
             return
         }
         setLoading(true)
         try {
             await createStampPurchase(formData)
-            toast.success('Đã lưu lô tem thành công')
+            toast.success(t.toasts.batchSaved)
             setShowAddForm(false)
             setFormData({
                 purchaseDate: new Date().toISOString().split('T')[0],
@@ -614,7 +618,7 @@ export default function StampsClient({
             })
             fetchLogbook()
         } catch (err: any) {
-            toast.error(`Lỗi lưu lô tem: ${err.message}`)
+            toast.error(t.toasts.batchError(err.message))
         } finally {
             setLoading(false)
         }
@@ -624,13 +628,13 @@ export default function StampsClient({
         e.preventDefault()
         if (!usageTargetPurchase) return
         if (usageData.qtyUsed <= 0 && usageData.qtyDamaged <= 0) {
-            toast.error('Vui lòng nhập số lượng tem dán hoặc số lượng tem hỏng > 0')
+            toast.error(t.toasts.usageQtyRequired)
             return
         }
 
         const remaining = usageTargetPurchase.totalQty - usageTargetPurchase.usedQty
         if (usageData.qtyUsed + usageData.qtyDamaged > remaining) {
-            toast.error(`Vượt quá tồn kho tem khả dụng (${remaining.toLocaleString()} tem)`)
+            toast.error(t.toasts.exceedStock(formatNumber(remaining)))
             return
         }
 
@@ -648,10 +652,10 @@ export default function StampsClient({
             })
 
             if (!res.success) {
-                throw new Error(res.error || 'Lỗi khi ghi nhận sử dụng tem')
+                throw new Error(res.error || t.toasts.usageError)
             }
 
-            toast.success('Đã ghi nhận cấp phát và dán tem thành công')
+            toast.success(t.toasts.usageSuccess)
             setUsageTargetPurchase(null)
             setUsageData({
                 targetType: 'NONE',
@@ -678,15 +682,15 @@ export default function StampsClient({
         e.preventDefault()
         if (!destroyTargetPurchase) return
         if (!destroyData.reason.trim()) {
-            toast.error('Vui lòng nhập lý do hủy tem')
+            toast.error(t.toasts.destroyReasonRequired)
             return
         }
         if (!destroyData.witnessName.trim()) {
-            toast.error('Vui lòng nhập tên người chứng kiến')
+            toast.error(t.toasts.destroyWitnessRequired)
             return
         }
         if (destroyData.qtyDestroyed <= 0) {
-            toast.error('Số lượng hủy phải lớn hơn 0')
+            toast.error(t.toasts.destroyQtyRequired)
             return
         }
 
@@ -698,10 +702,10 @@ export default function StampsClient({
             })
 
             if (!res.success) {
-                throw new Error(res.error || 'Lỗi khi lập biên bản hủy tem')
+                throw new Error(res.error || t.toasts.destroyError)
             }
 
-            toast.success('Đã tạo biên bản hủy tem thành công')
+            toast.success(t.toasts.destroySuccess)
             setDestroyTargetPurchase(null)
             setDestroyData({
                 qtyDestroyed: 0,
@@ -734,16 +738,16 @@ export default function StampsClient({
             })
 
             if (!res.success || !res.base64 || !res.filename) {
-                throw new Error(res.error || 'Lỗi tạo file Excel')
+                throw new Error(res.error || t.toasts.exportError)
             }
 
             const link = document.createElement('a')
             link.href = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${res.base64}`
             link.download = res.filename
             link.click()
-            toast.success('Đã xuất file Sổ Theo Dõi Tem thành công')
+            toast.success(t.toasts.exportSuccess)
         } catch (err: any) {
-            toast.error(`Xuất Excel thất bại: ${err.message}`)
+            toast.error(t.toasts.exportFailed(err.message))
         } finally {
             setExportingLogbook(false)
         }
@@ -781,10 +785,10 @@ export default function StampsClient({
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
                 <div>
                     <h1 className="text-lg sm:text-2xl font-bold text-lys-primary tracking-tight">
-                        Quản Lý &amp; Phân Bổ Tem Rượu
+                        {t.header.title}
                     </h1>
                     <p className="hidden sm:block text-xs sm:text-sm text-lys-muted mt-0.5">
-                        Quản lý phôi tem, dải số seri, sổ theo dõi tem điện tử theo Nghị định 105/2017 &amp; Thông tư 23/2021
+                        {t.header.subtitle}
                     </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -793,7 +797,7 @@ export default function StampsClient({
                         size="sm"
                         onClick={() => {
                             if (receivedPOs.length === 0) {
-                                toast.info('Hiện chưa có đơn PO nào ở trạng thái nhận hàng về kho')
+                                toast.info(t.toasts.noReceivedPO)
                                 return
                             }
                             setShowPOAllocModal(true)
@@ -804,16 +808,19 @@ export default function StampsClient({
                         className="flex-1 sm:flex-none justify-center"
                     >
                         <Stamp size={14} className="mr-1.5" />
-                        Phân Tem Cho PO
+                        {t.header.allocatePO}
                     </Button>
                     <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => setShowAddForm(!showAddForm)}
+                        onClick={() => {
+                            setActiveTab('batches')
+                            setShowAddForm(!showAddForm)
+                        }}
                         className="flex-1 sm:flex-none justify-center"
                     >
                         <Plus size={14} className="mr-1.5" />
-                        Nhập Lô Tem Mới
+                        {t.header.addBatch}
                     </Button>
                     <Button
                         variant="secondary"
@@ -823,42 +830,27 @@ export default function StampsClient({
                         className="flex-1 sm:flex-none justify-center"
                     >
                         <FileSpreadsheet size={14} className="mr-1.5" />
-                        <span className="hidden sm:inline">Xuất Excel Sổ Tem</span>
-                        <span className="sm:hidden">Xuất Excel</span>
+                        <span className="hidden sm:inline">{t.header.exportLogbookFull}</span>
+                        <span className="sm:hidden">{t.header.exportLogbookShort}</span>
                     </Button>
                 </div>
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex items-center gap-1 sm:gap-2 border-b border-lys-border mb-4 sm:mb-6 overflow-x-auto no-scrollbar py-0.5">
-                {[
-                    { id: 'po_allocations', label: `Phân & Dán Tem PO (${poAllocations.length})`, icon: Stamp },
-                    { id: 'logbook', label: 'Sổ Tem Điện Tử', icon: BookOpen },
-                    { id: 'batches', label: `Lô Phôi Tem (${purchases.length})`, icon: Package },
-                    { id: 'destructions', label: `Hủy & Hao Hụt (${destructions.length})`, icon: Trash2 },
-                ].map(tab => {
-                    const Icon = tab.icon
-                    const active = activeTab === tab.id
-                    return (
-                        <button
-                            key={tab.id}
-                            type="button"
-                            onClick={() => {
-                                setActiveTab(tab.id as any)
-                                if (tab.id === 'logbook' && logbookEntries.length === 0) fetchLogbook()
-                            }}
-                            className={cn(
-                                '-mb-px flex items-center gap-1.5 py-2.5 px-3 text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors border-b-2 cursor-pointer select-none',
-                                active
-                                    ? 'border-lys-teal text-lys-teal-strong'
-                                    : 'border-transparent text-lys-muted hover:text-lys-primary hover:border-lys-border-strong'
-                            )}
-                        >
-                            <Icon size={14} />
-                            <span>{tab.label}</span>
-                        </button>
-                    )
-                })}
+            <div className="mb-4 sm:mb-6">
+                <StatusTabs
+                    items={[
+                        { value: 'po_allocations', label: t.tabs.poAllocations, count: poAllocations.length },
+                        { value: 'logbook', label: t.tabs.logbook, count: logbookEntries.length },
+                        { value: 'batches', label: t.tabs.batches, count: purchases.length },
+                        { value: 'destructions', label: t.tabs.destructions, count: destructions.length },
+                    ]}
+                    value={activeTab}
+                    onChange={val => {
+                        setActiveTab(val as any)
+                        if (val === 'logbook' && logbookEntries.length === 0) fetchLogbook()
+                    }}
+                />
             </div>
 
             {/* TAB 1: BATCHES & ALLOCATION */}
@@ -867,9 +859,9 @@ export default function StampsClient({
                     {/* Summary KPI Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-4 sm:mb-6">
                         {[
-                            { label: 'Tem Dưới 20° ABV (Vang)', data: summary.under20, color: '#0891B2' },
-                            { label: 'Tem Từ 20° ABV Trở Lên (Mạnh)', data: summary.over20, color: '#D97706' },
-                            { label: 'Tổng Cộng Tất Cả Phôi Tem', data: summary.all, color: '#0F172A' },
+                            { label: t.batches.kpiUnder20, data: summary.under20, color: '#0891B2' },
+                            { label: t.batches.kpiOver20, data: summary.over20, color: '#D97706' },
+                            { label: t.batches.kpiAll, data: summary.all, color: '#0F172A' },
                         ].map(({ label, data, color }) => (
                             <div key={label} className="bg-white border border-lys-border rounded-lg p-3.5 sm:p-4 shadow-xs">
                                 <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-lys-muted truncate mb-1">
@@ -877,10 +869,10 @@ export default function StampsClient({
                                 </p>
                                 <div className="flex items-baseline justify-between mb-2">
                                     <span className="text-xl sm:text-2xl font-bold font-mono tracking-tight" style={{ color }}>
-                                        {data.remaining.toLocaleString('vi-VN')}
+                                        {formatNumber(data.remaining)}
                                     </span>
                                     <span className="text-xs text-lys-muted font-medium">
-                                        / {data.total.toLocaleString('vi-VN')} tem
+                                        / {formatNumber(data.total)} {t.batches.unitStamp}
                                     </span>
                                 </div>
                                 <div className="bg-slate-100 rounded-full h-1.5 overflow-hidden mb-2">
@@ -893,8 +885,8 @@ export default function StampsClient({
                                     />
                                 </div>
                                 <div className="flex items-center justify-between text-[11px] sm:text-xs text-lys-muted">
-                                    <span>Đã dùng: {data.used.toLocaleString('vi-VN')}</span>
-                                    <span>{data.activeBatches} lô hoạt động</span>
+                                    <span>{t.batches.used} {formatNumber(data.used)}</span>
+                                    <span>{data.activeBatches} {t.batches.activeBatches}</span>
                                 </div>
                             </div>
                         ))}
@@ -912,7 +904,7 @@ export default function StampsClient({
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
                                 <ShieldAlert size={18} style={{ color: alerts.some(a => a.severity === 'CRITICAL') ? '#B91C1C' : '#D97706' }} />
                                 <h4 style={{ color: '#0F172A', margin: 0, fontSize: '14px', fontWeight: 600 }}>
-                                    Cảnh Báo Tồn Kho Tem ({alerts.length})
+                                    {t.batches.alertsTitle} ({alerts.length})
                                 </h4>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -931,7 +923,7 @@ export default function StampsClient({
                                             background: a.severity === 'CRITICAL' ? '#FEE2E2' : '#FEF3C7',
                                             color: a.severity === 'CRITICAL' ? '#991B1B' : '#92400E',
                                         }}>
-                                            {a.severity === 'CRITICAL' ? 'Nghiêm trọng' : 'Cảnh báo'}
+                                            {a.severity === 'CRITICAL' ? t.batches.severityCritical : t.batches.severityWarning}
                                         </span>
                                     </div>
                                 ))}
@@ -945,18 +937,18 @@ export default function StampsClient({
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
                                 <h3 style={{ color: '#0F172A', margin: 0, fontSize: '15px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <Stamp size={16} style={{ color: '#0891B2' }} />
-                                    Khai Báo Lô Tem Mua Từ Cơ Quan Thuế / Hải Quan
+                                    {t.batches.addTitle}
                                 </h3>
                                 <button
                                     onClick={() => setShowAddForm(false)}
                                     style={{ border: 'none', background: 'transparent', color: '#64748B', cursor: 'pointer', fontSize: '13px' }}
                                 >
-                                    Đóng
+                                    {t.batches.close}
                                 </button>
                             </div>
                             <form onSubmit={handleAddPurchase} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <div>
-                                    <label style={labelStyle}>Ngày Mua Chứng Từ *</label>
+                                    <label style={labelStyle}>{t.batches.purchaseDate}</label>
                                     <input
                                         type="date"
                                         value={formData.purchaseDate}
@@ -966,20 +958,20 @@ export default function StampsClient({
                                     />
                                 </div>
                                 <div>
-                                    <label style={labelStyle}>Phân Loại Nồng Độ Cồn *</label>
+                                    <label style={labelStyle}>{t.batches.stampType}</label>
                                     <select
                                         value={formData.stampType}
                                         onChange={e => setFormData({ ...formData, stampType: e.target.value as any })}
                                         style={inputStyle}
                                     >
-                                        <option value="UNDER_20_ABV">Rượu dưới 20° ABV (Vang nổ, vang chát thông thường)</option>
-                                        <option value="OVER_20_ABV">Rượu từ 20° ABV trở lên (Rượu mạnh, vang cường hóa)</option>
+                                        <option value="UNDER_20_ABV">{t.batches.typeUnder20Option}</option>
+                                        <option value="OVER_20_ABV">{t.batches.typeOver20Option}</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label style={labelStyle}>Ký Hiệu Tem (Symbol) *</label>
+                                    <label style={labelStyle}>{t.batches.symbol}</label>
                                     <input
-                                        placeholder="Ví dụ: AA/20P hoặc NK/24"
+                                        placeholder={t.batches.symbolPlaceholder}
                                         value={formData.symbol}
                                         onChange={e => setFormData({ ...formData, symbol: e.target.value })}
                                         required
@@ -987,9 +979,9 @@ export default function StampsClient({
                                     />
                                 </div>
                                 <div>
-                                    <label style={labelStyle}>Seri Bắt Đầu *</label>
+                                    <label style={labelStyle}>{t.batches.serialStart}</label>
                                     <input
-                                        placeholder="Ví dụ: 000001"
+                                        placeholder={t.batches.serialStartPlaceholder}
                                         value={formData.serialStart}
                                         onChange={e => setFormData({ ...formData, serialStart: e.target.value })}
                                         required
@@ -997,9 +989,9 @@ export default function StampsClient({
                                     />
                                 </div>
                                 <div>
-                                    <label style={labelStyle}>Seri Kết Thúc *</label>
+                                    <label style={labelStyle}>{t.batches.serialEnd}</label>
                                     <input
-                                        placeholder="Ví dụ: 005000"
+                                        placeholder={t.batches.serialEndPlaceholder}
                                         value={formData.serialEnd}
                                         onChange={e => setFormData({ ...formData, serialEnd: e.target.value })}
                                         required
@@ -1007,7 +999,7 @@ export default function StampsClient({
                                     />
                                 </div>
                                 <div>
-                                    <label style={labelStyle}>Tổng Số Lượng Tem *</label>
+                                    <label style={labelStyle}>{t.batches.totalQty}</label>
                                     <input
                                         type="number"
                                         min={1}
@@ -1019,10 +1011,10 @@ export default function StampsClient({
                                 </div>
                                 <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex gap-2 justify-end mt-2">
                                     <Button type="button" variant="secondary" size="sm" onClick={() => setShowAddForm(false)}>
-                                        Hủy
+                                        {t.batches.cancel}
                                     </Button>
                                     <Button type="submit" variant="primary" size="sm" disabled={loading}>
-                                        {loading ? 'Đang lưu...' : 'Lưu Lô Tem Vào Kho'}
+                                        {loading ? t.batches.saving : t.batches.saveBatch}
                                     </Button>
                                 </div>
                             </form>
@@ -1033,151 +1025,257 @@ export default function StampsClient({
                     <div style={cardStyle}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                             <h3 style={{ color: '#0F172A', margin: 0, fontSize: '15px', fontWeight: 600 }}>
-                                Danh Sách Lô Tem Đang Quản Lý
+                                {t.batches.tableTitle}
                             </h3>
                             <span style={{ fontSize: '12px', color: '#64748B' }}>
-                                Tổng: {purchases.length} đợt cấp phát
+                                {t.batches.totalBatches(purchases.length)}
                             </span>
                         </div>
 
                         {purchases.length === 0 ? (
                             <div style={{ textAlign: 'center', padding: '48px 0', color: '#64748B' }}>
                                 <Package size={40} style={{ opacity: 0.3, marginBottom: '8px' }} />
-                                <p>Chưa có dữ liệu lô tem nào. Nhấn &quot;Nhập Lô Tem Mới&quot; để thêm.</p>
+                                <p>{t.batches.emptyBatches}</p>
                             </div>
                         ) : (
-                            <div className="overflow-x-auto rounded-md border border-lys-border">
-                                <table className="w-full text-xs sm:text-sm min-w-[750px]" style={{ borderCollapse: 'collapse' }}>
-                                    <thead>
-                                        <tr style={{ borderBottom: '1px solid #CBD5E1' }}>
-                                            <th style={thStyle}>Ngày Mua</th>
-                                            <th style={thStyle}>Phân Loại</th>
-                                            <th style={thStyle}>Ký Hiệu</th>
-                                            <th style={thStyle}>Dải Seri Khai Báo</th>
-                                            <th style={{ ...thStyle, textAlign: 'right' }}>Tổng Số</th>
-                                            <th style={{ ...thStyle, textAlign: 'right' }}>Đã Dán</th>
-                                            <th style={{ ...thStyle, textAlign: 'right' }}>Còn Lại</th>
-                                            <th style={thStyle}>Trạng Thái</th>
-                                            <th style={{ ...thStyle, textAlign: 'center' }}>Thao Tác</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {purchases.map(p => {
-                                            const remaining = p.totalQty - p.usedQty
-                                            const isExhaust = remaining <= 0
-                                            const isLow = remaining > 0 && remaining < p.totalQty * 0.15
+                            <>
+                                {/* Mobile Cards (<768px) */}
+                                <div className="block md:hidden space-y-3">
+                                    {purchases.map(p => {
+                                        const remaining = p.totalQty - p.usedQty
+                                        const isExhaust = remaining <= 0
+                                        const isLow = remaining > 0 && remaining < p.totalQty * 0.15
 
-                                            return (
-                                                <tr key={p.id} style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                                    <td style={tdStyle}>
-                                                        {new Date(p.purchaseDate).toLocaleDateString('vi-VN')}
-                                                    </td>
-                                                    <td style={tdStyle}>
-                                                        <span style={{
-                                                            padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 500,
-                                                            background: p.stampType === 'UNDER_20_ABV' ? '#E0F2FE' : '#FEF3C7',
-                                                            color: p.stampType === 'UNDER_20_ABV' ? '#0369A1' : '#B45309',
-                                                        }}>
-                                                            {p.stampType === 'UNDER_20_ABV' ? '< 20° ABV' : '≥ 20° ABV'}
-                                                        </span>
-                                                    </td>
-                                                    <td style={{ ...tdStyle, fontWeight: 600, color: '#0F172A' }}>
-                                                        {p.symbol}
-                                                    </td>
-                                                    <td className="font-mono" style={{ ...tdStyle, color: '#475569' }}>
-                                                        {p.serialStart} → {p.serialEnd}
-                                                    </td>
-                                                    <td style={{ ...tdStyle, textAlign: 'right' }}>
-                                                        {p.totalQty.toLocaleString('vi-VN')}
-                                                    </td>
-                                                    <td style={{ ...tdStyle, textAlign: 'right', color: '#64748B' }}>
-                                                        {p.usedQty.toLocaleString('vi-VN')}
-                                                    </td>
-                                                    <td style={{
-                                                        ...tdStyle, textAlign: 'right', fontWeight: 600,
-                                                        color: isExhaust ? '#B91C1C' : isLow ? '#D97706' : '#0891B2'
-                                                    }}>
-                                                        {remaining.toLocaleString('vi-VN')}
-                                                    </td>
-                                                    <td style={tdStyle}>
+                                        return (
+                                            <div key={p.id} className="bg-white border border-lys-border rounded-lg p-3.5 shadow-2xs space-y-2.5">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-bold text-sm text-lys-primary">{p.symbol}</span>
+                                                            <span className={cn(
+                                                                'px-2 py-0.5 rounded text-[11px] font-semibold',
+                                                                p.stampType === 'UNDER_20_ABV' ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800'
+                                                            )}>
+                                                                {p.stampType === 'UNDER_20_ABV' ? '< 20° ABV' : '≥ 20° ABV'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="text-xs text-lys-muted mt-0.5">
+                                                            {formatDate(p.purchaseDate)}
+                                                        </div>
+                                                    </div>
+                                                    <div>
                                                         {isExhaust ? (
-                                                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#B91C1C', fontSize: '12px' }}>
-                                                                <AlertTriangle size={13} /> Đã hết tem
+                                                            <span className="inline-flex items-center gap-1 text-rose-700 text-xs font-semibold">
+                                                                <AlertTriangle size={13} /> {t.batches.statusExhausted}
                                                             </span>
                                                         ) : isLow ? (
-                                                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#D97706', fontSize: '12px' }}>
-                                                                <AlertTriangle size={13} /> Sắp hết
+                                                            <span className="inline-flex items-center gap-1 text-amber-700 text-xs font-semibold">
+                                                                <AlertTriangle size={13} /> {t.batches.statusLow}
                                                             </span>
                                                         ) : (
-                                                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#0891B2', fontSize: '12px' }}>
-                                                                <CheckCircle size={13} /> Khả dụng
+                                                            <span className="inline-flex items-center gap-1 text-lys-teal-strong text-xs font-semibold">
+                                                                <CheckCircle size={13} /> {t.batches.statusAvailable}
                                                             </span>
                                                         )}
-                                                    </td>
-                                                    <td style={{ ...tdStyle, textAlign: 'center' }}>
-                                                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
-                                                            {!isExhaust && (
-                                                                <button
-                                                                    onClick={() => {
-                                                                        setUsageTargetPurchase(p)
-                                                                        setUsageData({
-                                                                            targetType: 'NONE',
-                                                                            shipmentId: '',
-                                                                            lotId: '',
-                                                                            serialStart: '',
-                                                                            serialEnd: '',
-                                                                            qtyUsed: 0,
-                                                                            qtyDamaged: 0,
-                                                                            notes: '',
-                                                                        })
-                                                                    }}
-                                                                    style={{
-                                                                        padding: '4px 10px',
-                                                                        borderRadius: '4px',
-                                                                        border: '1px solid #0891B2',
-                                                                        background: '#F0FDFA',
-                                                                        color: '#0891B2',
-                                                                        fontSize: '12px',
-                                                                        fontWeight: 500,
-                                                                        cursor: 'pointer',
-                                                                    }}
-                                                                >
-                                                                    Phân & Dán Tem
-                                                                </button>
+                                                    </div>
+                                                </div>
+
+                                                <div className="font-mono text-xs bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-slate-700">
+                                                    {p.serialStart} → {p.serialEnd}
+                                                </div>
+
+                                                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 text-xs">
+                                                    <div>
+                                                        <span className="text-[11px] text-lys-muted block">{t.batches.colTotal}</span>
+                                                        <span className="font-mono font-semibold text-lys-primary">{formatNumber(p.totalQty)}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-[11px] text-lys-muted block">{t.batches.colUsed}</span>
+                                                        <span className="font-mono text-slate-600">{formatNumber(p.usedQty)}</span>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="text-[11px] text-lys-muted block">{t.batches.colRemaining}</span>
+                                                        <span className={cn(
+                                                            'font-mono font-bold',
+                                                            isExhaust ? 'text-rose-700' : isLow ? 'text-amber-600' : 'text-lys-teal-strong'
+                                                        )}>
+                                                            {formatNumber(remaining)}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {!isExhaust && (
+                                                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                                                        <Button
+                                                            type="button"
+                                                            variant="secondary"
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                setUsageTargetPurchase(p)
+                                                                setUsageData({
+                                                                    targetType: 'NONE',
+                                                                    shipmentId: '',
+                                                                    lotId: '',
+                                                                    serialStart: '',
+                                                                    serialEnd: '',
+                                                                    qtyUsed: 0,
+                                                                    qtyDamaged: 0,
+                                                                    notes: '',
+                                                                })
+                                                            }}
+                                                        >
+                                                            {t.batches.btnAllocateAndStick}
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            variant="danger"
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                setDestroyTargetPurchase(p)
+                                                                setDestroyData({
+                                                                    qtyDestroyed: 0,
+                                                                    reason: '',
+                                                                    witnessName: '',
+                                                                    destructionDate: new Date().toISOString().split('T')[0],
+                                                                    notes: '',
+                                                                })
+                                                            }}
+                                                        >
+                                                            {t.batches.btnDestroy}
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+
+                                {/* Desktop Table (>=768px) */}
+                                <div className="hidden md:block">
+                                    <Table>
+                                        <THead>
+                                            <Tr>
+                                                <Th>{t.batches.colPurchaseDate}</Th>
+                                                <Th>{t.batches.colType}</Th>
+                                                <Th>{t.batches.colSymbol}</Th>
+                                                <Th>{t.batches.colSerialRange}</Th>
+                                                <Th className="text-right">{t.batches.colTotal}</Th>
+                                                <Th className="text-right">{t.batches.colUsed}</Th>
+                                                <Th className="text-right">{t.batches.colRemaining}</Th>
+                                                <Th>{t.batches.colStatus}</Th>
+                                                <Th className="text-center">{t.batches.colActions}</Th>
+                                            </Tr>
+                                        </THead>
+                                        <TBody>
+                                            {purchases.map(p => {
+                                                const remaining = p.totalQty - p.usedQty
+                                                const isExhaust = remaining <= 0
+                                                const isLow = remaining > 0 && remaining < p.totalQty * 0.15
+
+                                                return (
+                                                    <Tr key={p.id}>
+                                                        <Td>{formatDate(p.purchaseDate)}</Td>
+                                                        <Td>
+                                                            <span style={{
+                                                                padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 500,
+                                                                background: p.stampType === 'UNDER_20_ABV' ? '#E0F2FE' : '#FEF3C7',
+                                                                color: p.stampType === 'UNDER_20_ABV' ? '#0369A1' : '#B45309',
+                                                            }}>
+                                                                {p.stampType === 'UNDER_20_ABV' ? '< 20° ABV' : '≥ 20° ABV'}
+                                                            </span>
+                                                        </Td>
+                                                        <Td className="font-semibold text-lys-primary">{p.symbol}</Td>
+                                                        <Td className="font-mono text-slate-600">
+                                                            {p.serialStart} → {p.serialEnd}
+                                                        </Td>
+                                                        <Td className="text-right font-mono">{formatNumber(p.totalQty)}</Td>
+                                                        <Td className="text-right font-mono text-slate-500">{formatNumber(p.usedQty)}</Td>
+                                                        <Td className={cn(
+                                                            'text-right font-mono font-semibold',
+                                                            isExhaust ? 'text-rose-700' : isLow ? 'text-amber-600' : 'text-lys-teal-strong'
+                                                        )}>
+                                                            {formatNumber(remaining)}
+                                                        </Td>
+                                                        <Td>
+                                                            {isExhaust ? (
+                                                                <span className="inline-flex items-center gap-1 text-rose-700 text-xs">
+                                                                    <AlertTriangle size={13} /> {t.batches.statusExhausted}
+                                                                </span>
+                                                            ) : isLow ? (
+                                                                <span className="inline-flex items-center gap-1 text-amber-600 text-xs">
+                                                                    <AlertTriangle size={13} /> {t.batches.statusLow}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="inline-flex items-center gap-1 text-lys-teal-strong text-xs">
+                                                                    <CheckCircle size={13} /> {t.batches.statusAvailable}
+                                                                </span>
                                                             )}
-                                                            {!isExhaust && (
-                                                                <button
-                                                                    onClick={() => {
-                                                                        setDestroyTargetPurchase(p)
-                                                                        setDestroyData({
-                                                                            qtyDestroyed: 0,
-                                                                            reason: '',
-                                                                            witnessName: '',
-                                                                            destructionDate: new Date().toISOString().split('T')[0],
-                                                                            notes: '',
-                                                                        })
-                                                                    }}
-                                                                    style={{
-                                                                        padding: '4px 10px',
-                                                                        borderRadius: '4px',
-                                                                        border: '1px solid #FCA5A5',
-                                                                        background: '#FEF2F2',
-                                                                        color: '#B91C1C',
-                                                                        fontSize: '12px',
-                                                                        cursor: 'pointer',
-                                                                    }}
-                                                                >
-                                                                    Hủy Tem
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            )
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
+                                                        </Td>
+                                                        <Td className="text-center">
+                                                            <div className="flex gap-1.5 justify-center">
+                                                                {!isExhaust && (
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setUsageTargetPurchase(p)
+                                                                            setUsageData({
+                                                                                targetType: 'NONE',
+                                                                                shipmentId: '',
+                                                                                lotId: '',
+                                                                                serialStart: '',
+                                                                                serialEnd: '',
+                                                                                qtyUsed: 0,
+                                                                                qtyDamaged: 0,
+                                                                                notes: '',
+                                                                            })
+                                                                        }}
+                                                                        style={{
+                                                                            padding: '4px 10px',
+                                                                            borderRadius: '4px',
+                                                                            border: '1px solid #0891B2',
+                                                                            background: '#F0FDFA',
+                                                                            color: '#0891B2',
+                                                                            fontSize: '12px',
+                                                                            fontWeight: 500,
+                                                                            cursor: 'pointer',
+                                                                        }}
+                                                                    >
+                                                                        {t.batches.btnAllocateAndStick}
+                                                                    </button>
+                                                                )}
+                                                                {!isExhaust && (
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setDestroyTargetPurchase(p)
+                                                                            setDestroyData({
+                                                                                qtyDestroyed: 0,
+                                                                                reason: '',
+                                                                                witnessName: '',
+                                                                                destructionDate: new Date().toISOString().split('T')[0],
+                                                                                notes: '',
+                                                                            })
+                                                                        }}
+                                                                        style={{
+                                                                            padding: '4px 10px',
+                                                                            borderRadius: '4px',
+                                                                            border: '1px solid #FCA5A5',
+                                                                            background: '#FEF2F2',
+                                                                            color: '#B91C1C',
+                                                                            fontSize: '12px',
+                                                                            cursor: 'pointer',
+                                                                        }}
+                                                                    >
+                                                                        {t.batches.btnDestroy}
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </Td>
+                                                    </Tr>
+                                                )
+                                            })}
+                                        </TBody>
+                                    </Table>
+                                </div>
+                            </>
                         )}
                     </div>
                 </div>
@@ -1190,21 +1288,18 @@ export default function StampsClient({
                         <div>
                             <h3 className="text-sm sm:text-base font-semibold text-lys-primary flex items-center gap-2 m-0">
                                 <Stamp size={16} className="text-lys-teal" />
-                                Phân Tem &amp; Bảng Chỉ Dẫn Dán Tem Theo PO
+                                {t.poAlloc.title}
                             </h3>
                             <p className="text-xs text-lys-muted mt-1 m-0">
-                                Nơi nhân viên kho tra cứu dải số seri theo từng đơn PO để dán tem chuẩn xác (Kho Thanh Trì &amp; Showroom)
+                                {t.poAlloc.subtitle}
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="relative w-full sm:w-60">
-                                <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Tìm mã PO, lô tem, seri..."
+                            <div className="w-full sm:w-60">
+                                <SearchInput
+                                    placeholder={t.poAlloc.searchPlaceholder}
                                     value={poAllocSearch}
                                     onChange={e => setPOAllocSearch(e.target.value)}
-                                    style={{ ...inputStyle, paddingLeft: '30px' }}
                                 />
                             </div>
                             <Button
@@ -1212,7 +1307,7 @@ export default function StampsClient({
                                 size="sm"
                                 onClick={() => {
                                     if (receivedPOs.length === 0) {
-                                        toast.info('Hiện chưa có đơn PO nào ở trạng thái nhận hàng về kho')
+                                        toast.info(t.toasts.noReceivedPO)
                                         return
                                     }
                                     setShowPOAllocModal(true)
@@ -1222,7 +1317,7 @@ export default function StampsClient({
                                 }}
                             >
                                 <Plus size={14} className="mr-1.5" />
-                                Phân Tem PO Mới
+                                {t.poAlloc.btnNewPOAlloc}
                             </Button>
                         </div>
                     </div>
@@ -1231,13 +1326,13 @@ export default function StampsClient({
                     {filteredPOAllocations.length === 0 ? (
                         <div className="text-center py-12 text-lys-muted">
                             <Stamp size={40} className="opacity-30 mx-auto mb-2" />
-                            <p className="text-sm">Chưa có đơn hàng PO nào được phân bổ dải số tem rượu.</p>
+                            <p className="text-sm">{t.poAlloc.emptyTitle}</p>
                             <Button
                                 variant="secondary"
                                 size="sm"
                                 onClick={() => {
                                     if (receivedPOs.length === 0) {
-                                        toast.info('Hiện chưa có đơn PO nào ở trạng thái nhận hàng về kho')
+                                        toast.info(t.toasts.noReceivedPO)
                                         return
                                     }
                                     setShowPOAllocModal(true)
@@ -1248,7 +1343,7 @@ export default function StampsClient({
                                 className="mt-2"
                             >
                                 <Plus size={13} className="mr-1" />
-                                Phân Tem Cho Đơn PO Nhận Về
+                                {t.poAlloc.btnEmptyAction}
                             </Button>
                         </div>
                     ) : (
@@ -1288,15 +1383,15 @@ export default function StampsClient({
                                                             {alloc.stampType === 'UNDER_20_ABV' ? '< 20° ABV' : '≥ 20° ABV'}
                                                         </span>
                                                         <span className="text-xs text-lys-muted font-medium">
-                                                            Lô tem: <strong className="text-slate-700">{alloc.purchaseSymbol}</strong>
+                                                            {t.poAlloc.stampBatch} <strong className="text-slate-700">{alloc.purchaseSymbol}</strong>
                                                         </span>
                                                     </div>
                                                     <div className="flex items-center gap-3 text-xs text-lys-muted mt-1">
-                                                        <span>Ngày phân: {new Date(alloc.allocatedDate).toLocaleDateString('vi-VN')}</span>
+                                                        <span>{t.poAlloc.allocatedDate} {formatDate(alloc.allocatedDate)}</span>
                                                         <span>•</span>
-                                                        <span>Người TH: {alloc.reporterName}</span>
+                                                        <span>{t.poAlloc.reporter} {alloc.reporterName}</span>
                                                         <span>•</span>
-                                                        <span>{alloc.items.length} sản phẩm</span>
+                                                        <span>{t.poAlloc.productsCount(alloc.items.length)}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1305,7 +1400,7 @@ export default function StampsClient({
                                             <div className="flex flex-wrap items-center gap-3 pl-10 md:pl-0">
                                                 <div className="text-right">
                                                     <div className="text-[11px] uppercase tracking-wider text-lys-muted font-semibold">
-                                                        Dải Seri PO (Số Đầu → Số Cuối)
+                                                        {t.poAlloc.serialRangeLabel}
                                                     </div>
                                                     <div className="font-mono font-bold text-slate-800 bg-slate-100 px-2.5 py-1 rounded inline-block mt-0.5">
                                                         {alloc.serialStart} → {alloc.serialEnd}
@@ -1313,10 +1408,10 @@ export default function StampsClient({
                                                 </div>
                                                 <div className="text-right border-l pl-3 border-slate-200">
                                                     <div className="text-[11px] uppercase tracking-wider text-lys-muted font-semibold">
-                                                        Tổng Tem Dán
+                                                        {t.poAlloc.totalStampsLabel}
                                                     </div>
                                                     <div className="font-bold text-lys-teal-strong text-base">
-                                                        {alloc.totalQty.toLocaleString('vi-VN')} <span className="text-xs font-normal text-slate-500">chai</span>
+                                                        {formatNumber(alloc.totalQty)} <span className="text-xs font-normal text-slate-500">{t.poAlloc.unitBottles}</span>
                                                     </div>
                                                 </div>
                                                 <div className="border-l pl-3 border-slate-200">
@@ -1331,7 +1426,7 @@ export default function StampsClient({
                                                         className="bg-lys-teal hover:bg-lys-teal-strong text-white font-medium shadow-xs"
                                                     >
                                                         <FileText size={14} className="mr-1.5" />
-                                                        Xem Phiếu Dán Tem
+                                                        {t.poAlloc.btnViewGuide}
                                                     </Button>
                                                 </div>
                                             </div>
@@ -1343,10 +1438,10 @@ export default function StampsClient({
                                                 <div className="flex items-center justify-between mb-2">
                                                     <h4 className="text-xs font-semibold uppercase tracking-wider text-lys-muted m-0 flex items-center gap-1.5">
                                                         <Layers size={13} className="text-lys-teal" />
-                                                        Phân chia dải tem cho các sản phẩm trong đơn {alloc.poNo}:
+                                                        {t.poAlloc.breakdownTitle(alloc.poNo)}
                                                     </h4>
                                                     <span className="text-xs text-lys-muted">
-                                                        Tổng {alloc.items.length} mặt hàng
+                                                        {t.poAlloc.totalItems(alloc.items.length)}
                                                     </span>
                                                 </div>
 
@@ -1354,20 +1449,20 @@ export default function StampsClient({
                                                     <table className="w-full text-xs sm:text-sm" style={{ borderCollapse: 'collapse' }}>
                                                         <thead>
                                                             <tr className="border-b border-slate-200 bg-slate-50 text-slate-600">
-                                                                <th style={{ ...thStyle, width: '40px', textAlign: 'center' }}>STT</th>
-                                                                <th style={thStyle}>Tên Sản Phẩm Rượu &amp; SKU</th>
-                                                                <th style={{ ...thStyle, width: '90px' }}>Lô Kho</th>
-                                                                <th style={{ ...thStyle, width: '80px', textAlign: 'right' }}>Tổng SL</th>
+                                                                <th style={{ ...thStyle, width: '40px', textAlign: 'center' }}>{t.poAlloc.colNo}</th>
+                                                                <th style={thStyle}>{t.poAlloc.colProductSku}</th>
+                                                                <th style={{ ...thStyle, width: '90px' }}>{t.poAlloc.colLot}</th>
+                                                                <th style={{ ...thStyle, width: '80px', textAlign: 'right' }}>{t.poAlloc.colTotalQty}</th>
                                                                 <th style={{ ...thStyle, background: '#F0FDFA', color: '#0F766E', textAlign: 'center' }}>
-                                                                    Kho Thanh Trì (SL &amp; Dải Seri)
+                                                                    {t.poAlloc.colMainWh}
                                                                 </th>
                                                                 <th style={{ ...thStyle, background: '#FFFBEB', color: '#B45309', textAlign: 'center' }}>
-                                                                    Showroom (SL &amp; Dải Seri)
+                                                                    {t.poAlloc.colShowroom}
                                                                 </th>
                                                                 <th style={{ ...thStyle, background: '#ECFEFF', color: '#0891B2', textAlign: 'center' }}>
-                                                                    Dải Seri Tổng
+                                                                    {t.poAlloc.colTotalRange}
                                                                 </th>
-                                                                <th style={{ ...thStyle, width: '50px', textAlign: 'right' }}>Hỏng</th>
+                                                                <th style={{ ...thStyle, width: '50px', textAlign: 'right' }}>{t.poAlloc.colDamaged}</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
@@ -1382,14 +1477,14 @@ export default function StampsClient({
                                                                         </td>
                                                                         <td style={{ ...tdStyle, color: '#475569' }}>{it.lotNo || '—'}</td>
                                                                         <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 700, color: '#0F172A' }}>
-                                                                            {it.qtyUsed.toLocaleString('vi-VN')}
+                                                                            {formatNumber(it.qtyUsed)}
                                                                         </td>
                                                                         <td style={{ ...tdStyle, textAlign: 'center', background: '#F0FDFA' }}>
                                                                             <div className="font-mono font-bold text-teal-800">
                                                                                 {it.mainSerialStart || it.serialStart} → {it.mainSerialEnd || it.serialEnd}
                                                                             </div>
                                                                             <div className="text-[10px] text-teal-600 font-semibold">
-                                                                                SL: {it.qtyMain ?? (it.qtyUsed - (it.qtySR || 0))} chai
+                                                                                {t.poAlloc.qtyPrefix} {formatNumber(it.qtyMain ?? (it.qtyUsed - (it.qtySR || 0)))} {t.poAlloc.unitBottles}
                                                                             </div>
                                                                         </td>
                                                                         <td style={{ ...tdStyle, textAlign: 'center', background: '#FFFBEB' }}>
@@ -1399,18 +1494,18 @@ export default function StampsClient({
                                                                                         {it.srSerialStart} → {it.srSerialEnd}
                                                                                     </div>
                                                                                     <div className="text-[10px] text-amber-600 font-semibold">
-                                                                                        SL: {it.qtySR} chai
+                                                                                        {t.poAlloc.qtyPrefix} {formatNumber(it.qtySR || 0)} {t.poAlloc.unitBottles}
                                                                                     </div>
                                                                                 </>
                                                                             ) : (
-                                                                                <span className="text-slate-400 text-xs italic">Không tách SR</span>
+                                                                                <span className="text-slate-400 text-xs italic">{t.poAlloc.noSplitSR}</span>
                                                                             )}
                                                                         </td>
                                                                         <td className="font-mono" style={{ ...tdStyle, textAlign: 'center', fontWeight: 700, color: '#0891B2', background: '#F8FAFC' }}>
                                                                             {it.serialStart} → {it.serialEnd}
                                                                         </td>
                                                                         <td style={{ ...tdStyle, textAlign: 'right', color: it.qtyDamaged > 0 ? '#B91C1C' : '#94A3B8' }}>
-                                                                            {it.qtyDamaged > 0 ? it.qtyDamaged : '0'}
+                                                                            {it.qtyDamaged > 0 ? formatNumber(it.qtyDamaged) : '0'}
                                                                         </td>
                                                                     </tr>
                                                                 )
@@ -1445,7 +1540,7 @@ export default function StampsClient({
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <Filter size={14} style={{ color: '#64748B' }} />
-                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#475569' }}>Bộ lọc:</span>
+                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#475569' }}>{t.logbook.filterLabel}</span>
                             </div>
 
                             {/* Year select */}
@@ -1455,7 +1550,7 @@ export default function StampsClient({
                                 style={{ ...inputStyle, width: '110px' }}
                             >
                                 {[currentYear + 1, currentYear, currentYear - 1, currentYear - 2].map(y => (
-                                    <option key={y} value={y}>Năm {y}</option>
+                                    <option key={y} value={y}>{t.logbook.yearOption(y)}</option>
                                 ))}
                             </select>
 
@@ -1465,11 +1560,11 @@ export default function StampsClient({
                                 onChange={e => setLogQuarter(parseInt(e.target.value))}
                                 style={{ ...inputStyle, width: '130px' }}
                             >
-                                <option value={0}>Cả năm</option>
-                                <option value={1}>Quý 1 (T1 - T3)</option>
-                                <option value={2}>Quý 2 (T4 - T6)</option>
-                                <option value={3}>Quý 3 (T7 - T9)</option>
-                                <option value={4}>Quý 4 (T10 - T12)</option>
+                                <option value={0}>{t.logbook.allYear}</option>
+                                <option value={1}>{t.logbook.q1}</option>
+                                <option value={2}>{t.logbook.q2}</option>
+                                <option value={3}>{t.logbook.q3}</option>
+                                <option value={4}>{t.logbook.q4}</option>
                             </select>
 
                             {/* Stamp Type select */}
@@ -1478,26 +1573,23 @@ export default function StampsClient({
                                 onChange={e => setLogStampType(e.target.value as any)}
                                 style={{ ...inputStyle, width: '160px' }}
                             >
-                                <option value="ALL">Tất cả nồng độ cồn</option>
-                                <option value="UNDER_20_ABV">Tem &lt; 20° ABV</option>
-                                <option value="OVER_20_ABV">Tem ≥ 20° ABV</option>
+                                <option value="ALL">{t.logbook.allAbv}</option>
+                                <option value="UNDER_20_ABV">{t.logbook.under20}</option>
+                                <option value="OVER_20_ABV">{t.logbook.over20}</option>
                             </select>
 
                             {/* Search input */}
-                            <div style={{ position: 'relative', width: '240px' }}>
-                                <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
-                                <input
-                                    type="text"
-                                    placeholder="Tìm ký hiệu, seri, vận đơn..."
+                            <div className="w-60">
+                                <SearchInput
+                                    placeholder={t.logbook.searchPlaceholder}
                                     value={logSearch}
                                     onChange={e => setLogSearch(e.target.value)}
-                                    style={{ ...inputStyle, paddingLeft: '32px' }}
                                 />
                             </div>
 
                             <Button variant="secondary" size="sm" onClick={fetchLogbook} disabled={logbookLoading}>
                                 <RefreshCw size={13} style={{ marginRight: '4px' }} className={logbookLoading ? 'animate-spin' : ''} />
-                                Lọc
+                                {t.logbook.btnFilter}
                             </Button>
                         </div>
 
@@ -1509,7 +1601,7 @@ export default function StampsClient({
                                 disabled={exportingLogbook}
                             >
                                 <FileSpreadsheet size={14} style={{ marginRight: '6px' }} />
-                                {exportingLogbook ? 'Đang xuất...' : 'Tải File Excel Sổ Tem'}
+                                {exportingLogbook ? t.logbook.exporting : t.logbook.btnDownloadExcel}
                             </Button>
                         </div>
                     </div>
@@ -1519,159 +1611,256 @@ export default function StampsClient({
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                             <div>
                                 <h3 style={{ color: '#0F172A', margin: 0, fontSize: '15px', fontWeight: 600 }}>
-                                    Sổ Theo Dõi Sử Dụng Tem Rượu Nhập Khẩu
+                                    {t.logbook.title}
                                 </h3>
                                 <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#64748B' }}>
-                                    Theo dõi lưu vết nhập, xuất dán, hủy hỏng và dải số seri theo Thông tư 23/2021/TT-BTC
+                                    {t.logbook.subtitle}
                                 </p>
                             </div>
                             <span style={{ fontSize: '12px', color: '#64748B' }}>
-                                Hiển thị {logbookEntries.length} giao dịch ghi sổ
+                                {t.logbook.showingCount(logbookEntries.length)}
                             </span>
                         </div>
 
                         {logbookEntries.length === 0 ? (
                             <div style={{ textAlign: 'center', padding: '48px 0', color: '#64748B' }}>
                                 <BookOpen size={40} style={{ opacity: 0.3, marginBottom: '8px' }} />
-                                <p>Chưa có giao dịch ghi sổ nào phù hợp với bộ lọc.</p>
+                                <p>{t.logbook.empty}</p>
                             </div>
                         ) : (
-                            <div className="overflow-x-auto rounded-md border border-lys-border">
-                                <table className="w-full text-xs min-w-[980px]" style={{ borderCollapse: 'collapse' }}>
-                                    <thead>
-                                        <tr style={{ borderBottom: '1px solid #CBD5E1' }}>
-                                            <th style={thStyle}>STT</th>
-                                            <th style={thStyle}>Ngày CT</th>
-                                            <th style={thStyle}>Nghiệp Vụ</th>
-                                            <th style={thStyle}>Ký Hiệu</th>
-                                            <th style={thStyle}>Loại Tem</th>
-                                            <th style={thStyle}>Dải Seri Bắt Đầu</th>
-                                            <th style={thStyle}>Dải Seri Kết Thúc</th>
-                                            <th style={{ ...thStyle, textAlign: 'right' }}>SL Nhập</th>
-                                            <th style={{ ...thStyle, textAlign: 'right' }}>SL Dán</th>
-                                            <th style={{ ...thStyle, textAlign: 'right' }}>SL Hỏng</th>
-                                            <th style={{ ...thStyle, textAlign: 'right' }}>Tồn Cuối Lô</th>
-                                            <th style={thStyle}>Lô Hàng / Chứng Từ</th>
-                                            <th style={thStyle}>Người TH</th>
-                                            <th style={thStyle}>Ghi Chú</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {logbookEntries.map((e, idx) => (
-                                            <tr key={e.id} style={{
-                                                borderBottom: '1px solid #E2E8F0',
-                                                background: e.txType === 'NHAP_KHO' ? '#F8FAFC' : e.txType === 'HUY_TEM' ? '#FEF2F2' : '#FFFFFF',
-                                            }}>
-                                                <td style={{ ...tdStyle, color: '#94A3B8', textAlign: 'center' }}>
-                                                    {idx + 1}
-                                                </td>
-                                                <td style={tdStyle}>
-                                                    {new Date(e.date).toLocaleDateString('vi-VN')}
-                                                </td>
-                                                <td style={tdStyle}>
-                                                    <span style={{
-                                                        padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600,
-                                                        background: e.txType === 'NHAP_KHO' ? '#E0F2FE' : e.txType === 'HUY_TEM' ? '#FEE2E2' : '#F1F5F9',
-                                                        color: e.txType === 'NHAP_KHO' ? '#0369A1' : e.txType === 'HUY_TEM' ? '#991B1B' : '#334155',
-                                                    }}>
-                                                        {e.txLabel}
+                            <>
+                                {/* Mobile Cards (<768px) */}
+                                <div className="block md:hidden space-y-3">
+                                    {logbookEntries.map((e, idx) => (
+                                        <div
+                                            key={e.id}
+                                            className={cn(
+                                                'border rounded-lg p-3.5 shadow-2xs space-y-2',
+                                                e.txType === 'NHAP_KHO'
+                                                    ? 'bg-slate-50/70 border-slate-200'
+                                                    : e.txType === 'HUY_TEM'
+                                                        ? 'bg-rose-50/40 border-rose-200'
+                                                        : 'bg-white border-lys-border'
+                                            )}
+                                        >
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[11px] font-mono text-slate-400">#{idx + 1}</span>
+                                                        <span className="font-bold text-sm text-lys-primary">{e.symbol}</span>
+                                                        <span className="text-xs text-lys-muted">{e.stampTypeLabel}</span>
+                                                    </div>
+                                                    <div className="text-xs text-lys-muted mt-0.5">
+                                                        {formatDate(e.date)} • {e.reporterName}
+                                                    </div>
+                                                </div>
+                                                <span style={{
+                                                    padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600,
+                                                    background: e.txType === 'NHAP_KHO' ? '#E0F2FE' : e.txType === 'HUY_TEM' ? '#FEE2E2' : '#F1F5F9',
+                                                    color: e.txType === 'NHAP_KHO' ? '#0369A1' : e.txType === 'HUY_TEM' ? '#991B1B' : '#334155',
+                                                }}>
+                                                    {e.txLabel}
+                                                </span>
+                                            </div>
+
+                                            <div className="font-mono text-xs bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-slate-700">
+                                                {e.serialStart} → {e.serialEnd}
+                                            </div>
+
+                                            <div className="grid grid-cols-4 gap-2 pt-2 border-t border-slate-100 text-xs">
+                                                <div>
+                                                    <span className="text-[10px] text-lys-muted block">{t.logbook.colQtyIn}</span>
+                                                    <span className="font-mono font-semibold text-lys-teal-strong">
+                                                        {e.qtyIn > 0 ? formatNumber(e.qtyIn) : '—'}
                                                     </span>
-                                                </td>
-                                                <td style={{ ...tdStyle, fontWeight: 600, color: '#0F172A' }}>
-                                                    {e.symbol}
-                                                </td>
-                                                <td style={tdStyle}>
-                                                    {e.stampTypeLabel}
-                                                </td>
-                                                <td className="font-mono" style={tdStyle}>
-                                                    {e.serialStart}
-                                                </td>
-                                                <td className="font-mono" style={tdStyle}>
-                                                    {e.serialEnd}
-                                                </td>
-                                                <td style={{ ...tdStyle, textAlign: 'right', fontWeight: e.qtyIn > 0 ? 600 : 400, color: e.qtyIn > 0 ? '#0891B2' : '#94A3B8' }}>
-                                                    {e.qtyIn > 0 ? e.qtyIn.toLocaleString('vi-VN') : '—'}
-                                                </td>
-                                                <td style={{ ...tdStyle, textAlign: 'right', fontWeight: e.qtyUsed > 0 ? 600 : 400, color: e.qtyUsed > 0 ? '#0F172A' : '#94A3B8' }}>
-                                                    {e.qtyUsed > 0 ? e.qtyUsed.toLocaleString('vi-VN') : '—'}
-                                                </td>
-                                                <td style={{ ...tdStyle, textAlign: 'right', color: e.qtyDamaged > 0 ? '#B91C1C' : '#94A3B8', fontWeight: e.qtyDamaged > 0 ? 600 : 400 }}>
-                                                    {e.qtyDamaged > 0 ? e.qtyDamaged.toLocaleString('vi-VN') : '—'}
-                                                </td>
-                                                <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 600, color: '#0E7490' }}>
-                                                    {e.balanceAfter.toLocaleString('vi-VN')}
-                                                </td>
-                                                <td style={{ ...tdStyle, maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={e.referenceTitle}>
-                                                    {e.referenceTitle}
-                                                </td>
-                                                <td style={tdStyle}>
-                                                    {e.reporterName}
-                                                </td>
-                                                <td style={{ ...tdStyle, color: '#64748B', maxWidth: '180px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={e.notes || ''}>
-                                                    {e.notes || '—'}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] text-lys-muted block">{t.logbook.colQtyUsed}</span>
+                                                    <span className="font-mono font-semibold text-lys-primary">
+                                                        {e.qtyUsed > 0 ? formatNumber(e.qtyUsed) : '—'}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] text-lys-muted block">{t.logbook.colQtyDamaged}</span>
+                                                    <span className="font-mono font-semibold text-rose-700">
+                                                        {e.qtyDamaged > 0 ? formatNumber(e.qtyDamaged) : '—'}
+                                                    </span>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="text-[10px] text-lys-muted block">{t.logbook.colBalanceAfter}</span>
+                                                    <span className="font-mono font-bold text-cyan-800">
+                                                        {formatNumber(e.balanceAfter)}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {(e.referenceTitle || e.notes) && (
+                                                <div className="pt-2 border-t border-slate-100 text-xs text-slate-600 space-y-0.5">
+                                                    {e.referenceTitle && <div className="font-medium truncate">{e.referenceTitle}</div>}
+                                                    {e.notes && <div className="text-lys-muted truncate">{e.notes}</div>}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Desktop Table (>=768px) */}
+                                <div className="hidden md:block">
+                                    <Table>
+                                        <THead>
+                                            <Tr>
+                                                <Th className="text-center">{t.logbook.colNo}</Th>
+                                                <Th>{t.logbook.colDate}</Th>
+                                                <Th>{t.logbook.colTxType}</Th>
+                                                <Th>{t.logbook.colSymbol}</Th>
+                                                <Th>{t.logbook.colStampType}</Th>
+                                                <Th>{t.logbook.colSerialStart}</Th>
+                                                <Th>{t.logbook.colSerialEnd}</Th>
+                                                <Th className="text-right">{t.logbook.colQtyIn}</Th>
+                                                <Th className="text-right">{t.logbook.colQtyUsed}</Th>
+                                                <Th className="text-right">{t.logbook.colQtyDamaged}</Th>
+                                                <Th className="text-right">{t.logbook.colBalanceAfter}</Th>
+                                                <Th>{t.logbook.colRef}</Th>
+                                                <Th>{t.logbook.colReporter}</Th>
+                                                <Th>{t.logbook.colNotes}</Th>
+                                            </Tr>
+                                        </THead>
+                                        <TBody>
+                                            {logbookEntries.map((e, idx) => (
+                                                <Tr key={e.id} className={cn(
+                                                    e.txType === 'NHAP_KHO' && 'bg-slate-50/70',
+                                                    e.txType === 'HUY_TEM' && 'bg-rose-50/40'
+                                                )}>
+                                                    <Td className="text-center text-slate-400">{idx + 1}</Td>
+                                                    <Td>{formatDate(e.date)}</Td>
+                                                    <Td>
+                                                        <span style={{
+                                                            padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600,
+                                                            background: e.txType === 'NHAP_KHO' ? '#E0F2FE' : e.txType === 'HUY_TEM' ? '#FEE2E2' : '#F1F5F9',
+                                                            color: e.txType === 'NHAP_KHO' ? '#0369A1' : e.txType === 'HUY_TEM' ? '#991B1B' : '#334155',
+                                                        }}>
+                                                            {e.txLabel}
+                                                        </span>
+                                                    </Td>
+                                                    <Td className="font-semibold text-lys-primary">{e.symbol}</Td>
+                                                    <Td>{e.stampTypeLabel}</Td>
+                                                    <Td className="font-mono">{e.serialStart}</Td>
+                                                    <Td className="font-mono">{e.serialEnd}</Td>
+                                                    <Td className={cn('text-right font-mono', e.qtyIn > 0 ? 'font-semibold text-lys-teal-strong' : 'text-slate-400')}>
+                                                        {e.qtyIn > 0 ? formatNumber(e.qtyIn) : '—'}
+                                                    </Td>
+                                                    <Td className={cn('text-right font-mono', e.qtyUsed > 0 ? 'font-semibold text-lys-primary' : 'text-slate-400')}>
+                                                        {e.qtyUsed > 0 ? formatNumber(e.qtyUsed) : '—'}
+                                                    </Td>
+                                                    <Td className={cn('text-right font-mono', e.qtyDamaged > 0 ? 'font-semibold text-rose-700' : 'text-slate-400')}>
+                                                        {e.qtyDamaged > 0 ? formatNumber(e.qtyDamaged) : '—'}
+                                                    </Td>
+                                                    <Td className="text-right font-mono font-semibold text-cyan-800">
+                                                        {formatNumber(e.balanceAfter)}
+                                                    </Td>
+                                                    <Td className="max-w-[200px] truncate" title={e.referenceTitle}>
+                                                        {e.referenceTitle}
+                                                    </Td>
+                                                    <Td>{e.reporterName}</Td>
+                                                    <Td className="text-slate-500 max-w-[180px] truncate" title={e.notes || ''}>
+                                                        {e.notes || '—'}
+                                                    </Td>
+                                                </Tr>
+                                            ))}
+                                        </TBody>
+                                    </Table>
+                                </div>
+                            </>
                         )}
                     </div>
                 </div>
             )}
 
-            {/* TAB 3: DESTRUCTION RECORDS */}
+            {/* TAB 4: DESTRUCTION RECORDS */}
             {activeTab === 'destructions' && (
                 <div style={cardStyle}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
                         <div>
                             <h3 style={{ color: '#0F172A', margin: 0, fontSize: '15px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Trash2 size={16} style={{ color: '#B91C1C' }} />
-                                Lịch Sử Biên Bản Hủy Tem Rượu Hỏng / Rách
+                                {t.destructions.title}
                             </h3>
                             <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#64748B' }}>
-                                Lưu giữ hồ sơ hủy tem phục vụ thanh tra hải quan và quyết toán thuế tiêu thụ đặc biệt
+                                {t.destructions.subtitle}
                             </p>
                         </div>
                         <span style={{ fontSize: '12px', color: '#64748B' }}>
-                            Tổng: {destructions.length} biên bản
+                            {t.destructions.totalCount(destructions.length)}
                         </span>
                     </div>
 
                     {destructions.length === 0 ? (
                         <div style={{ textAlign: 'center', padding: '48px 0', color: '#64748B' }}>
                             <Trash2 size={40} style={{ opacity: 0.3, marginBottom: '8px' }} />
-                            <p>Chưa có biên bản hủy tem nào phát sinh.</p>
+                            <p>{t.destructions.empty}</p>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto rounded-md border border-lys-border">
-                            <table className="w-full text-xs sm:text-sm min-w-[650px]" style={{ borderCollapse: 'collapse' }}>
-                                <thead>
-                                    <tr style={{ borderBottom: '1px solid #CBD5E1' }}>
-                                        <th style={thStyle}>Ngày Hủy</th>
-                                        <th style={thStyle}>Lô Tem</th>
-                                        <th style={{ ...thStyle, textAlign: 'right' }}>Số Lượng Hủy</th>
-                                        <th style={thStyle}>Lý Do Hủy Tem</th>
-                                        <th style={thStyle}>Người Chứng Kiến</th>
-                                        <th style={thStyle}>Ghi Chú Chi Tiết</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {destructions.map(d => (
-                                        <tr key={d.id} style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                            <td style={tdStyle}>{new Date(d.destructionDate).toLocaleDateString('vi-VN')}</td>
-                                            <td style={{ ...tdStyle, fontWeight: 600, color: '#0F172A' }}>{d.purchaseSymbol}</td>
-                                            <td style={{ ...tdStyle, textAlign: 'right', color: '#B91C1C', fontWeight: 600 }}>
-                                                {d.qtyDestroyed.toLocaleString('vi-VN')}
-                                            </td>
-                                            <td style={{ ...tdStyle, color: '#334155' }}>{d.reason}</td>
-                                            <td style={tdStyle}>{d.witnessName}</td>
-                                            <td style={{ ...tdStyle, color: '#64748B', maxWidth: '300px' }}>{d.notes || '—'}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        <>
+                            {/* Mobile Cards (<768px) */}
+                            <div className="block md:hidden space-y-3">
+                                {destructions.map(d => (
+                                    <div key={d.id} className="bg-white border border-lys-border rounded-lg p-3.5 shadow-2xs space-y-2">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div>
+                                                <div className="font-bold text-sm text-lys-primary">{d.purchaseSymbol}</div>
+                                                <div className="text-xs text-lys-muted mt-0.5">{formatDate(d.destructionDate)}</div>
+                                            </div>
+                                            <span className="font-mono font-bold text-sm text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded">
+                                                -{formatNumber(d.qtyDestroyed)}
+                                            </span>
+                                        </div>
+                                        <div className="text-xs text-slate-700 pt-2 border-t border-slate-100 space-y-1">
+                                            <div>
+                                                <span className="text-lys-muted">{t.destructions.colReason}:</span>{' '}
+                                                <span className="font-medium">{d.reason}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-lys-muted">{t.destructions.colWitness}:</span>{' '}
+                                                <span className="font-medium">{d.witnessName}</span>
+                                            </div>
+                                            {d.notes && (
+                                                <div className="text-lys-muted">{d.notes}</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Desktop Table (>=768px) */}
+                            <div className="hidden md:block">
+                                <Table>
+                                    <THead>
+                                        <Tr>
+                                            <Th>{t.destructions.colDate}</Th>
+                                            <Th>{t.destructions.colBatch}</Th>
+                                            <Th className="text-right">{t.destructions.colQtyDestroyed}</Th>
+                                            <Th>{t.destructions.colReason}</Th>
+                                            <Th>{t.destructions.colWitness}</Th>
+                                            <Th>{t.destructions.colNotes}</Th>
+                                        </Tr>
+                                    </THead>
+                                    <TBody>
+                                        {destructions.map(d => (
+                                            <Tr key={d.id}>
+                                                <Td>{formatDate(d.destructionDate)}</Td>
+                                                <Td className="font-semibold text-lys-primary">{d.purchaseSymbol}</Td>
+                                                <Td className="text-right font-mono font-semibold text-rose-700">
+                                                    {formatNumber(d.qtyDestroyed)}
+                                                </Td>
+                                                <Td className="text-slate-700">{d.reason}</Td>
+                                                <Td>{d.witnessName}</Td>
+                                                <Td className="text-slate-500 max-w-[300px]">{d.notes || '—'}</Td>
+                                            </Tr>
+                                        ))}
+                                    </TBody>
+                                </Table>
+                            </div>
+                        </>
                     )}
                 </div>
             )}
@@ -1687,46 +1876,46 @@ export default function StampsClient({
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #E2E8F0', paddingBottom: '12px' }}>
                             <div>
                                 <h3 style={{ color: '#0F172A', margin: 0, fontSize: '16px', fontWeight: 600 }}>
-                                    Phân Tem & Ghi Nhận Dán
+                                    {t.usageModal.title}
                                 </h3>
                                 <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#64748B' }}>
-                                    Lô tem: <strong style={{ color: '#0891B2' }}>{usageTargetPurchase.symbol}</strong> ({usageTargetPurchase.stampType === 'UNDER_20_ABV' ? '< 20° ABV' : '≥ 20° ABV'}) — Tồn khả dụng: <strong style={{ color: '#0F172A' }}>{(usageTargetPurchase.totalQty - usageTargetPurchase.usedQty).toLocaleString('vi-VN')}</strong> tem
+                                    {t.poAlloc.stampBatch} <strong style={{ color: '#0891B2' }}>{usageTargetPurchase.symbol}</strong> ({usageTargetPurchase.stampType === 'UNDER_20_ABV' ? '< 20° ABV' : '≥ 20° ABV'}) — {t.usageModal.availableStock} <strong style={{ color: '#0F172A' }}>{formatNumber(usageTargetPurchase.totalQty - usageTargetPurchase.usedQty)}</strong> {t.batches.unitStamp}
                                 </p>
                             </div>
                             <button onClick={() => setUsageTargetPurchase(null)} style={{ border: 'none', background: 'transparent', color: '#64748B', cursor: 'pointer', fontSize: '14px' }}>
-                                Đóng
+                                {t.batches.close}
                             </button>
                         </div>
 
                         <form onSubmit={handleRecordUsage} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             {/* Phân bổ theo Lô hàng NK / Kho */}
                             <div>
-                                <label style={labelStyle}>Mục Đích Cấp Phát / Phân Tem</label>
+                                <label style={labelStyle}>{t.usageModal.targetTypeLabel}</label>
                                 <select
                                     value={usageData.targetType}
                                     onChange={e => setUsageData({ ...usageData, targetType: e.target.value as any, shipmentId: '', lotId: '' })}
                                     style={inputStyle}
                                 >
-                                    <option value="NONE">Dán kho thông thường / Không gắn lô cụ thể</option>
-                                    <option value="SHIPMENT">Dán cho Lô Hàng Nhập Khẩu (Container / Vận đơn B/L)</option>
-                                    <option value="STOCK_LOT">Dán cho Lô Hàng Trong Kho (StockLot)</option>
+                                    <option value="NONE">{t.usageModal.targetNone}</option>
+                                    <option value="SHIPMENT">{t.usageModal.targetShipment}</option>
+                                    <option value="STOCK_LOT">{t.usageModal.targetLot}</option>
                                 </select>
                             </div>
 
                             {/* Dropdown Lô hàng NK */}
                             {usageData.targetType === 'SHIPMENT' && (
                                 <div style={{ background: '#F0FDFA', border: '1px solid #99F6E4', borderRadius: '6px', padding: '12px' }}>
-                                    <label style={{ ...labelStyle, color: '#0D9488' }}>Chọn Lô Hàng Nhập Khẩu (Shipment)</label>
+                                    <label style={{ ...labelStyle, color: '#0D9488' }}>{t.usageModal.selectShipment}</label>
                                     <select
                                         value={usageData.shipmentId}
                                         onChange={e => setUsageData({ ...usageData, shipmentId: e.target.value })}
                                         required
                                         style={inputStyle}
                                     >
-                                        <option value="">-- Chọn vận đơn B/L lô hàng --</option>
+                                        <option value="">{t.usageModal.selectShipmentPlaceholder}</option>
                                         {linkingOptions?.shipments.map(s => (
                                             <option key={s.id} value={s.id}>
-                                                B/L: {s.billOfLading} ({s.status}) {s.vesselName ? `— Tàu: ${s.vesselName}` : ''}
+                                                B/L: {s.billOfLading} ({s.status}) {s.vesselName ? `— ${t.usageModal.vessel} ${s.vesselName}` : ''}
                                             </option>
                                         ))}
                                     </select>
@@ -1736,17 +1925,17 @@ export default function StampsClient({
                             {/* Dropdown Lô Kho */}
                             {usageData.targetType === 'STOCK_LOT' && (
                                 <div style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '6px', padding: '12px' }}>
-                                    <label style={labelStyle}>Chọn Lô Kho (StockLot)</label>
+                                    <label style={labelStyle}>{t.usageModal.selectLot}</label>
                                     <select
                                         value={usageData.lotId}
                                         onChange={e => setUsageData({ ...usageData, lotId: e.target.value })}
                                         required
                                         style={inputStyle}
                                     >
-                                        <option value="">-- Chọn số lô kho --</option>
+                                        <option value="">{t.usageModal.selectLotPlaceholder}</option>
                                         {linkingOptions?.lots.map(l => (
                                             <option key={l.id} value={l.id}>
-                                                Lô: {l.lotNo} — {l.product.productName} (Tồn: {Number(l.qtyAvailable)} chai)
+                                                {t.usageModal.lotPrefix} {l.lotNo} — {l.product.productName} ({t.usageModal.availPrefix} {formatNumber(Number(l.qtyAvailable))} {t.poAlloc.unitBottles})
                                             </option>
                                         ))}
                                     </select>
@@ -1756,18 +1945,18 @@ export default function StampsClient({
                             {/* Dải số seri nhập tay theo yêu cầu */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
-                                    <label style={labelStyle}>Seri Bắt Đầu Bóc Dán</label>
+                                    <label style={labelStyle}>{t.usageModal.serialStart}</label>
                                     <input
-                                        placeholder="VD: 000101"
+                                        placeholder={t.usageModal.serialStartPlaceholder}
                                         value={usageData.serialStart}
                                         onChange={e => setUsageData({ ...usageData, serialStart: e.target.value })}
                                         style={inputStyle}
                                     />
                                 </div>
                                 <div>
-                                    <label style={labelStyle}>Seri Kết Thúc Bóc Dán</label>
+                                    <label style={labelStyle}>{t.usageModal.serialEnd}</label>
                                     <input
-                                        placeholder="VD: 000300"
+                                        placeholder={t.usageModal.serialEndPlaceholder}
                                         value={usageData.serialEnd}
                                         onChange={e => setUsageData({ ...usageData, serialEnd: e.target.value })}
                                         style={inputStyle}
@@ -1778,7 +1967,7 @@ export default function StampsClient({
                             {/* Số lượng dán & hỏng */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
-                                    <label style={labelStyle}>Số Lượng Tem Đã Dán *</label>
+                                    <label style={labelStyle}>{t.usageModal.qtyUsed}</label>
                                     <input
                                         type="number"
                                         min={0}
@@ -1788,7 +1977,7 @@ export default function StampsClient({
                                     />
                                 </div>
                                 <div>
-                                    <label style={labelStyle}>Số Lượng Hỏng / Rách Trong Đợt</label>
+                                    <label style={labelStyle}>{t.usageModal.qtyDamaged}</label>
                                     <input
                                         type="number"
                                         min={0}
@@ -1801,10 +1990,10 @@ export default function StampsClient({
 
                             {/* Ghi chú */}
                             <div>
-                                <label style={labelStyle}>Ghi Chú Đợt Dán Tem</label>
+                                <label style={labelStyle}>{t.usageModal.notes}</label>
                                 <textarea
                                     rows={2}
-                                    placeholder="Ghi chú chi tiết thùng rượu, vị trí dán, hoặc sự cố nếu có..."
+                                    placeholder={t.usageModal.notesPlaceholder}
                                     value={usageData.notes}
                                     onChange={e => setUsageData({ ...usageData, notes: e.target.value })}
                                     style={{ ...inputStyle, resize: 'vertical' }}
@@ -1813,10 +2002,10 @@ export default function StampsClient({
 
                             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '8px', borderTop: '1px solid #E2E8F0' }}>
                                 <Button type="button" variant="secondary" size="sm" onClick={() => setUsageTargetPurchase(null)}>
-                                    Hủy
+                                    {t.batches.cancel}
                                 </Button>
                                 <Button type="submit" variant="primary" size="sm" disabled={loading}>
-                                    {loading ? 'Đang ghi nhận...' : 'Xác Nhận Cấp Phát & Dán'}
+                                    {loading ? t.usageModal.submitting : t.usageModal.submit}
                                 </Button>
                             </div>
                         </form>
@@ -1836,21 +2025,21 @@ export default function StampsClient({
                             <div>
                                 <h3 style={{ color: '#0F172A', margin: 0, fontSize: '16px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
                                     <Trash2 size={16} style={{ color: '#B91C1C' }} />
-                                    Lập Biên Bản Hủy Tem Rách / Hỏng
+                                    {t.destroyModal.title}
                                 </h3>
                                 <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#64748B' }}>
-                                    Lô tem: {destroyTargetPurchase.symbol} — Tồn: {(destroyTargetPurchase.totalQty - destroyTargetPurchase.usedQty).toLocaleString('vi-VN')} tem
+                                    {t.poAlloc.stampBatch} {destroyTargetPurchase.symbol} — {t.usageModal.availPrefix} {formatNumber(destroyTargetPurchase.totalQty - destroyTargetPurchase.usedQty)} {t.batches.unitStamp}
                                 </p>
                             </div>
                             <button onClick={() => setDestroyTargetPurchase(null)} style={{ border: 'none', background: 'transparent', color: '#64748B', cursor: 'pointer', fontSize: '14px' }}>
-                                Đóng
+                                {t.batches.close}
                             </button>
                         </div>
 
                         <form onSubmit={handleDestruction} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
-                                    <label style={labelStyle}>Số Lượng Tem Hủy *</label>
+                                    <label style={labelStyle}>{t.destroyModal.qtyDestroyed}</label>
                                     <input
                                         type="number"
                                         min={1}
@@ -1861,7 +2050,7 @@ export default function StampsClient({
                                     />
                                 </div>
                                 <div>
-                                    <label style={labelStyle}>Ngày Hủy *</label>
+                                    <label style={labelStyle}>{t.destroyModal.destructionDate}</label>
                                     <input
                                         type="date"
                                         value={destroyData.destructionDate}
@@ -1873,9 +2062,9 @@ export default function StampsClient({
                             </div>
 
                             <div>
-                                <label style={labelStyle}>Lý Do Hủy Tem *</label>
+                                <label style={labelStyle}>{t.destroyModal.reason}</label>
                                 <input
-                                    placeholder="VD: Tem bị rách nát do va đập, ngấm nước mưa, lỗi in phôi..."
+                                    placeholder={t.destroyModal.reasonPlaceholder}
                                     value={destroyData.reason}
                                     onChange={e => setDestroyData({ ...destroyData, reason: e.target.value })}
                                     required
@@ -1884,9 +2073,9 @@ export default function StampsClient({
                             </div>
 
                             <div>
-                                <label style={labelStyle}>Người Chứng Kiến Hủy Tem *</label>
+                                <label style={labelStyle}>{t.destroyModal.witness}</label>
                                 <input
-                                    placeholder="Họ tên và chức vụ người chứng kiến"
+                                    placeholder={t.destroyModal.witnessPlaceholder}
                                     value={destroyData.witnessName}
                                     onChange={e => setDestroyData({ ...destroyData, witnessName: e.target.value })}
                                     required
@@ -1895,10 +2084,10 @@ export default function StampsClient({
                             </div>
 
                             <div>
-                                <label style={labelStyle}>Ghi Chú Bổ Sung</label>
+                                <label style={labelStyle}>{t.destroyModal.notes}</label>
                                 <textarea
                                     rows={2}
-                                    placeholder="Ghi chú thêm về phương thức hủy (cắt góc, đốt hủy, lập hội đồng...)"
+                                    placeholder={t.destroyModal.notesPlaceholder}
                                     value={destroyData.notes}
                                     onChange={e => setDestroyData({ ...destroyData, notes: e.target.value })}
                                     style={{ ...inputStyle, resize: 'vertical' }}
@@ -1907,10 +2096,10 @@ export default function StampsClient({
 
                             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '8px', borderTop: '1px solid #E2E8F0' }}>
                                 <Button type="button" variant="secondary" size="sm" onClick={() => setDestroyTargetPurchase(null)}>
-                                    Hủy
+                                    {t.batches.cancel}
                                 </Button>
                                 <Button type="submit" variant="primary" size="sm" disabled={loading} style={{ background: '#B91C1C' }}>
-                                    {loading ? 'Đang xử lý...' : 'Xác Nhận Hủy Tem'}
+                                    {loading ? t.destroyModal.submitting : t.destroyModal.submit}
                                 </Button>
                             </div>
                         </form>
@@ -1937,15 +2126,15 @@ export default function StampsClient({
                             <div>
                                 <h3 className="text-base font-bold text-lys-primary flex items-center gap-2 m-0">
                                     <Stamp size={18} className="text-lys-teal" />
-                                    Phân Bổ Tem Rượu Cho Đơn Hàng PO Nhận Về
+                                    {t.poModal.title}
                                 </h3>
                                 <p className="text-xs text-lys-muted mt-0.5 m-0">
-                                    Tự động chia dải số seri liên tục cho từng sản phẩm trong đơn PO theo số lượng thực nhận
+                                    {t.poModal.subtitle}
                                 </p>
                             </div>
                             <button
                                 type="button"
-                                aria-label="Đóng"
+                                aria-label={t.batches.close}
                                 onClick={() => setShowPOAllocModal(false)}
                                 className="border-none bg-transparent text-slate-400 hover:text-slate-600 cursor-pointer p-1"
                             >
@@ -1957,31 +2146,31 @@ export default function StampsClient({
                             {/* Step 1: Chọn PO */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div>
-                                    <label style={labelStyle}>1. Chọn Đơn Hàng PO Nhận Về *</label>
+                                    <label style={labelStyle}>{t.poModal.step1SelectPO}</label>
                                     <select
                                         value={selectedPOId}
                                         onChange={e => handleSelectPO(e.target.value)}
                                         required
                                         style={inputStyle}
                                     >
-                                        <option value="">-- Chọn đơn hàng PO đã nhận kho --</option>
+                                        <option value="">{t.poModal.selectPOPlaceholder}</option>
                                         {receivedPOs.map(po => (
                                             <option key={po.id} value={po.id}>
-                                                {po.poNo} — {po.supplierName} ({po.items.length} SP, {po.totalBottles.toLocaleString('vi-VN')} chai)
+                                                {po.poNo} — {po.supplierName} ({po.items.length} {t.poModal.itemsShort}, {formatNumber(po.totalBottles)} {t.poAlloc.unitBottles})
                                             </option>
                                         ))}
                                     </select>
                                 </div>
 
                                 <div>
-                                    <label style={labelStyle}>2. Chọn Lô Phôi Tem Khả Dụng *</label>
+                                    <label style={labelStyle}>{t.poModal.step2SelectBatch}</label>
                                     <select
                                         value={selectedStampPurchaseId}
                                         onChange={e => handleSelectPurchase(e.target.value)}
                                         required
                                         style={inputStyle}
                                     >
-                                        <option value="">-- Chọn lô tem cấp phát --</option>
+                                        <option value="">{t.poModal.selectBatchPlaceholder}</option>
                                         {purchases
                                             .filter(p => (p.totalQty - p.usedQty) > 0)
                                             .map(p => {
@@ -1989,7 +2178,7 @@ export default function StampsClient({
                                                 const typeLabel = p.stampType === 'UNDER_20_ABV' ? '< 20° ABV' : '≥ 20° ABV'
                                                 return (
                                                     <option key={p.id} value={p.id}>
-                                                        {p.symbol} ({typeLabel}) — Tồn: {rem.toLocaleString('vi-VN')} tem (Seri: {p.serialStart} → {p.serialEnd})
+                                                        {p.symbol} ({typeLabel}) — {t.usageModal.availPrefix} {formatNumber(rem)} {t.batches.unitStamp} (Seri: {p.serialStart} → {p.serialEnd})
                                                     </option>
                                                 )
                                             })}
@@ -2001,14 +2190,14 @@ export default function StampsClient({
                             {selectedPO && selectedPurchase && (
                                 <div className="p-3 bg-slate-50 border border-lys-border rounded-md text-xs flex flex-wrap items-center justify-between gap-2">
                                     <div>
-                                        <span className="text-lys-muted">Đơn PO:</span> <strong className="text-lys-primary font-mono">{selectedPO.poNo}</strong>
+                                        <span className="text-lys-muted">{t.poModal.poLabel}</span> <strong className="text-lys-primary font-mono">{selectedPO.poNo}</strong>
                                         <span className="mx-2">•</span>
-                                        <span className="text-lys-muted">Nhà cung cấp:</span> <strong>{selectedPO.supplierName}</strong>
+                                        <span className="text-lys-muted">{t.poModal.supplierLabel}</span> <strong>{selectedPO.supplierName}</strong>
                                         <span className="mx-2">•</span>
-                                        <span className="text-lys-muted">Tổng chai nhận:</span> <strong className="text-lys-teal-strong">{selectedPO.totalBottles.toLocaleString('vi-VN')} chai</strong>
+                                        <span className="text-lys-muted">{t.poModal.totalBottlesReceived}</span> <strong className="text-lys-teal-strong">{formatNumber(selectedPO.totalBottles)} {t.poAlloc.unitBottles}</strong>
                                     </div>
                                     <div>
-                                        <span className="text-lys-muted">Tồn tem khả dụng:</span> <strong className="text-emerald-700 font-mono">{(selectedPurchase.totalQty - selectedPurchase.usedQty).toLocaleString('vi-VN')}</strong> tem
+                                        <span className="text-lys-muted">{t.poModal.availableStamps}</span> <strong className="text-emerald-700 font-mono">{formatNumber(selectedPurchase.totalQty - selectedPurchase.usedQty)}</strong> {t.batches.unitStamp}
                                     </div>
                                 </div>
                             )}
@@ -2018,29 +2207,29 @@ export default function StampsClient({
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
                                     <div>
                                         <label style={{ ...labelStyle, color: '#0891B2' }}>
-                                            3. Số Seri Bắt Đầu Của Đơn PO *
+                                            {t.poModal.step3BaseSerial}
                                         </label>
                                         <input
                                             className="font-mono"
-                                            placeholder="Ví dụ: 001001 hoặc 000001"
+                                            placeholder={t.poModal.baseSerialPlaceholder}
                                             value={poBaseSerialStart}
                                             onChange={e => handleBaseSerialChange(e.target.value)}
                                             required
                                             style={{ ...inputStyle, borderColor: '#0891B2', fontWeight: 600 }}
                                         />
                                         <span className="text-[11px] text-cyan-800 mt-1 block">
-                                            Nhập số đầu, hệ thống sẽ tự động gán nối tiếp dải số cho từng sản phẩm bên dưới.
+                                            {t.poModal.baseSerialHint}
                                         </span>
                                     </div>
                                     <div className="text-left sm:text-right">
                                         <div className="text-[11px] uppercase tracking-wider text-cyan-800 font-semibold mb-1">
-                                            Dải Seri Tổng Dự Kiến Của PO
+                                            {t.poModal.estimatedRangeLabel}
                                         </div>
                                         <div className="font-mono text-base font-bold text-lys-primary bg-white border border-cyan-300 rounded px-3 py-1.5 inline-block">
                                             {overallComputedRange.start && overallComputedRange.end ? (
                                                 <span>{overallComputedRange.start} → {overallComputedRange.end}</span>
                                             ) : (
-                                                <span className="text-slate-400 font-normal text-xs">Chờ nhập số đầu...</span>
+                                                <span className="text-slate-400 font-normal text-xs">{t.poModal.waitingBaseSerial}</span>
                                             )}
                                         </div>
                                     </div>
@@ -2052,10 +2241,10 @@ export default function StampsClient({
                                 <div>
                                     <div className="flex items-center justify-between mb-2">
                                         <label style={labelStyle} className="mb-0">
-                                            4. Phân Chia Tem Cho Các Sản Phẩm Trong PO (Số Đầu - Số Cuối) *
+                                            {t.poModal.step4Breakdown}
                                         </label>
                                         <span className="text-[11px] text-lys-muted">
-                                            (Có thể tự do chỉnh sửa số đầu, số cuối hoặc số lượng dán của từng dòng)
+                                            {t.poModal.step4Hint}
                                         </span>
                                     </div>
 
@@ -2063,22 +2252,22 @@ export default function StampsClient({
                                         <table className="w-full text-xs" style={{ borderCollapse: 'collapse' }}>
                                             <thead>
                                                 <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
-                                                    <th style={thStyle}>Sản Phẩm &amp; SKU</th>
-                                                    <th style={{ ...thStyle, width: '55px', textAlign: 'center' }}>Độ Cồn</th>
-                                                    <th style={{ ...thStyle, width: '80px', textAlign: 'right' }}>Tổng SL</th>
+                                                    <th style={thStyle}>{t.poModal.colProductSku}</th>
+                                                    <th style={{ ...thStyle, width: '55px', textAlign: 'center' }}>{t.poModal.colAbv}</th>
+                                                    <th style={{ ...thStyle, width: '80px', textAlign: 'right' }}>{t.poModal.colTotalQty}</th>
                                                     <th style={{ ...thStyle, width: '85px', textAlign: 'right', background: '#FFFBEB', color: '#B45309' }}>
-                                                        Tách SR
+                                                        {t.poModal.colSplitSR}
                                                     </th>
                                                     <th style={{ ...thStyle, width: '150px', textAlign: 'center', background: '#F0FDFA', color: '#0F766E' }}>
-                                                        Kho Thanh Trì (SL &amp; Dải)
+                                                        {t.poModal.colMainWh}
                                                     </th>
                                                     <th style={{ ...thStyle, width: '150px', textAlign: 'center', background: '#FFFBEB', color: '#B45309' }}>
-                                                        Showroom (SL &amp; Dải)
+                                                        {t.poModal.colShowroom}
                                                     </th>
                                                     <th style={{ ...thStyle, width: '140px', textAlign: 'center', background: '#ECFEFF', color: '#0891B2' }}>
-                                                        Dải Seri Tổng
+                                                        {t.poModal.colTotalRange}
                                                     </th>
-                                                    <th style={{ ...thStyle, width: '60px', textAlign: 'right' }}>Hỏng</th>
+                                                    <th style={{ ...thStyle, width: '60px', textAlign: 'right' }}>{t.poModal.colDamaged}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -2102,7 +2291,7 @@ export default function StampsClient({
                                                             <td style={tdStyle}>
                                                                 <div className="font-semibold text-lys-primary">{it.productName}</div>
                                                                 <div className="text-[11px] text-lys-muted font-mono">
-                                                                    SKU: {it.skuCode} {it.lotNo ? `• Lô: ${it.lotNo}` : ''}
+                                                                    SKU: {it.skuCode} {it.lotNo ? `• ${t.usageModal.lotPrefix} ${it.lotNo}` : ''}
                                                                 </div>
                                                             </td>
                                                             <td style={{ ...tdStyle, textAlign: 'center' }}>
@@ -2138,7 +2327,7 @@ export default function StampsClient({
                                                                     {data.mainStart && data.mainEnd ? `${data.mainStart} → ${data.mainEnd}` : '—'}
                                                                 </div>
                                                                 <div className="text-[10px] text-teal-700 font-medium">
-                                                                    SL: {data.qtyMain ?? (data.qty - (data.qtySR || 0))} chai
+                                                                    {t.poAlloc.qtyPrefix} {formatNumber(data.qtyMain ?? (data.qty - (data.qtySR || 0)))} {t.poAlloc.unitBottles}
                                                                 </div>
                                                             </td>
                                                             <td style={{ ...tdStyle, textAlign: 'center', background: '#FFFBEB' }}>
@@ -2148,11 +2337,11 @@ export default function StampsClient({
                                                                             {data.srStart && data.srEnd ? `${data.srStart} → ${data.srEnd}` : '—'}
                                                                         </div>
                                                                         <div className="text-[10px] text-amber-700 font-medium">
-                                                                            SL: {data.qtySR} chai
+                                                                            {t.poAlloc.qtyPrefix} {formatNumber(data.qtySR)} {t.poAlloc.unitBottles}
                                                                         </div>
                                                                     </>
                                                                 ) : (
-                                                                    <span className="text-slate-400 text-[11px] italic">0 chai</span>
+                                                                    <span className="text-slate-400 text-[11px] italic">0 {t.poAlloc.unitBottles}</span>
                                                                 )}
                                                             </td>
                                                             <td style={{ ...tdStyle, textAlign: 'center', background: '#F8FAFC' }}>
@@ -2180,10 +2369,10 @@ export default function StampsClient({
 
                             {/* Summary & Ghi chú */}
                             <div>
-                                <label style={labelStyle}>Ghi Chú Đợt Phân Tem</label>
+                                <label style={labelStyle}>{t.poModal.notesLabel}</label>
                                 <textarea
                                     rows={2}
-                                    placeholder="Ghi chú thêm về đợt dán tem, thùng hàng, kho nhận..."
+                                    placeholder={t.poModal.notesPlaceholder}
                                     value={poAllocNotes}
                                     onChange={e => setPOAllocNotes(e.target.value)}
                                     style={{ ...inputStyle, resize: 'vertical' }}
@@ -2193,13 +2382,13 @@ export default function StampsClient({
                             {/* Modal Footer */}
                             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-lys-border">
                                 <div className="text-xs text-lys-muted">
-                                    Tổng tem yêu cầu: <strong className="text-lys-primary font-mono text-sm">{modalTotalNeeded.toLocaleString('vi-VN')}</strong> tem
+                                    {t.poModal.totalRequired} <strong className="text-lys-primary font-mono text-sm">{formatNumber(modalTotalNeeded)}</strong> {t.batches.unitStamp}
                                     {selectedPurchase && (
                                         <span className={cn(
                                             'ml-2 font-medium',
                                             modalTotalNeeded > (selectedPurchase.totalQty - selectedPurchase.usedQty) ? 'text-rose-600 font-bold' : 'text-emerald-700'
                                         )}>
-                                            (Tồn kho: {(selectedPurchase.totalQty - selectedPurchase.usedQty).toLocaleString('vi-VN')})
+                                            ({t.poModal.inStock} {formatNumber(selectedPurchase.totalQty - selectedPurchase.usedQty)})
                                         </span>
                                     )}
                                 </div>
@@ -2210,7 +2399,7 @@ export default function StampsClient({
                                         size="sm"
                                         onClick={() => setShowPOAllocModal(false)}
                                     >
-                                        Hủy Bỏ
+                                        {t.poModal.cancel}
                                     </Button>
                                     <Button
                                         type="submit"
@@ -2218,7 +2407,7 @@ export default function StampsClient({
                                         size="sm"
                                         disabled={poAllocSubmitting || modalTotalNeeded <= 0}
                                     >
-                                        {poAllocSubmitting ? 'Đang phân tem...' : 'Xác Nhận Phân Tem Cho PO'}
+                                        {poAllocSubmitting ? t.poModal.submitting : t.poModal.submit}
                                     </Button>
                                 </div>
                             </div>
@@ -2248,17 +2437,17 @@ export default function StampsClient({
                                         'text-xs font-semibold px-2 py-0.5 rounded',
                                         stickingGuideAlloc.stampType === 'UNDER_20_ABV' ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800'
                                     )}>
-                                        {stickingGuideAlloc.stampType === 'UNDER_20_ABV' ? '< 20° ABV (Vang)' : '≥ 20° ABV (Mạnh)'}
+                                        {stickingGuideAlloc.stampType === 'UNDER_20_ABV' ? t.guideModal.under20Badge : t.guideModal.over20Badge}
                                     </span>
                                     <span className="text-xs text-slate-500 font-medium">
-                                        Lô tem: <strong className="text-slate-800">{stickingGuideAlloc.purchaseSymbol}</strong>
+                                        {t.poAlloc.stampBatch} <strong className="text-slate-800">{stickingGuideAlloc.purchaseSymbol}</strong>
                                     </span>
                                 </div>
                                 <h2 className="text-lg sm:text-xl font-bold text-slate-900 mt-1 m-0">
-                                    Phiếu Chỉ Dẫn Dán Tem Rượu Nhập Khẩu
+                                    {t.guideModal.title}
                                 </h2>
                                 <p className="text-xs text-slate-500 mt-0.5 m-0">
-                                    Nhà cung cấp: <strong className="text-slate-700">{stickingGuideAlloc.supplierName || '—'}</strong> • Ngày phân: {new Date(stickingGuideAlloc.allocatedDate).toLocaleDateString('vi-VN')} • Người TH: {stickingGuideAlloc.reporterName}
+                                    {t.poModal.supplierLabel} <strong className="text-slate-700">{stickingGuideAlloc.supplierName || '—'}</strong> • {t.poAlloc.allocatedDate} {formatDate(stickingGuideAlloc.allocatedDate)} • {t.poAlloc.reporter} {stickingGuideAlloc.reporterName}
                                 </p>
                             </div>
 
@@ -2273,7 +2462,7 @@ export default function StampsClient({
                                             stickingViewMode === 'cards' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                                         )}
                                     >
-                                        Thẻ Mobile
+                                        {t.guideModal.viewCards}
                                     </button>
                                     <button
                                         type="button"
@@ -2283,7 +2472,7 @@ export default function StampsClient({
                                             stickingViewMode === 'table' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                                         )}
                                     >
-                                        Bảng Chi Tiết
+                                        {t.guideModal.viewTable}
                                     </button>
                                 </div>
 
@@ -2294,11 +2483,11 @@ export default function StampsClient({
                                     className="print:hidden"
                                 >
                                     <Printer size={14} className="mr-1.5" />
-                                    In Phiếu
+                                    {t.guideModal.btnPrint}
                                 </Button>
                                 <button
                                     type="button"
-                                    aria-label="Đóng"
+                                    aria-label={t.batches.close}
                                     onClick={() => setStickingGuideAlloc(null)}
                                     className="text-slate-400 hover:text-slate-700 p-1.5 rounded hover:bg-slate-100 transition-colors cursor-pointer print:hidden"
                                 >
@@ -2318,16 +2507,16 @@ export default function StampsClient({
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-xs">
                                             <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                                                Tổng Chai Cần Dán
+                                                {t.guideModal.kpiTotalBottles}
                                             </div>
                                             <div className="text-xl sm:text-2xl font-bold font-mono text-lys-teal-strong mt-0.5">
-                                                {stickingGuideAlloc.totalQty.toLocaleString('vi-VN')} <span className="text-xs font-normal text-slate-500">chai</span>
+                                                {formatNumber(stickingGuideAlloc.totalQty)} <span className="text-xs font-normal text-slate-500">{t.poAlloc.unitBottles}</span>
                                             </div>
                                         </div>
 
                                         <div className="bg-white border border-cyan-200 rounded-lg p-3.5 shadow-xs bg-cyan-50/40">
                                             <div className="text-[11px] font-semibold uppercase tracking-wider text-cyan-800">
-                                                Dải Seri Tổng Đơn PO
+                                                {t.guideModal.kpiTotalRange}
                                             </div>
                                             <div className="text-base sm:text-lg font-bold font-mono text-slate-900 mt-0.5">
                                                 {stickingGuideAlloc.serialStart} → {stickingGuideAlloc.serialEnd}
@@ -2336,9 +2525,9 @@ export default function StampsClient({
 
                                         <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-xs">
                                             <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
-                                                <span>Tiến Độ Dán Thực Tế</span>
+                                                <span>{t.guideModal.kpiProgress}</span>
                                                 <span className="font-mono text-slate-800 font-bold">
-                                                    {completedCount}/{totalItems} SP
+                                                    {completedCount}/{totalItems} {t.poModal.itemsShort}
                                                 </span>
                                             </div>
                                             <div className="bg-slate-100 rounded-full h-2 overflow-hidden mb-1">
@@ -2350,10 +2539,10 @@ export default function StampsClient({
                                             <div className="text-[11px] text-slate-500">
                                                 {isAllDone ? (
                                                     <span className="text-emerald-700 font-semibold flex items-center gap-1">
-                                                        <CheckCircle2 size={12} /> Đã hoàn tất dán tem toàn bộ
+                                                        <CheckCircle2 size={12} /> {t.guideModal.allDone}
                                                     </span>
                                                 ) : (
-                                                    'Chạm vào từng dòng để tick hoàn tất khi dán xong'
+                                                    t.guideModal.tapHint
                                                 )}
                                             </div>
                                         </div>
@@ -2397,11 +2586,11 @@ export default function StampsClient({
                                                                 SKU: {it.skuCode}
                                                             </span>
                                                             {it.lotNo && (
-                                                                <span>Lô: <strong className="text-slate-700">{it.lotNo}</strong></span>
+                                                                <span>{t.usageModal.lotPrefix} <strong className="text-slate-700">{it.lotNo}</strong></span>
                                                             )}
                                                             <span>•</span>
                                                             <span className="text-slate-800 font-semibold">
-                                                                Tổng dán: {it.qtyUsed} chai
+                                                                {t.guideModal.totalToStick} {formatNumber(it.qtyUsed)} {t.poAlloc.unitBottles}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -2418,7 +2607,7 @@ export default function StampsClient({
                                                     )}
                                                 >
                                                     <CheckCircle2 size={15} />
-                                                    <span>{isDone ? 'Đã Dán Xong' : 'Đánh Dấu Xong'}</span>
+                                                    <span>{isDone ? t.guideModal.btnDone : t.guideModal.btnMarkDone}</span>
                                                 </button>
                                             </div>
 
@@ -2431,13 +2620,13 @@ export default function StampsClient({
                                                             <div className="flex items-center justify-between text-xs font-bold text-teal-900 mb-1">
                                                                 <span className="flex items-center gap-1">
                                                                     <Warehouse size={13} className="text-teal-700" />
-                                                                    Kho Thanh Trì (Kho Chính)
+                                                                    {t.guideModal.mainWhTitle}
                                                                 </span>
                                                                 <span className="font-mono bg-teal-100 text-teal-800 px-2 py-0.5 rounded">
-                                                                    {it.qtyMain ?? (it.qtyUsed - (it.qtySR || 0))} chai
+                                                                    {formatNumber(it.qtyMain ?? (it.qtyUsed - (it.qtySR || 0)))} {t.poAlloc.unitBottles}
                                                                 </span>
                                                             </div>
-                                                            <div className="text-xs text-teal-700 font-medium">Dải số tem:</div>
+                                                            <div className="text-xs text-teal-700 font-medium">{t.guideModal.serialRangeLabel}</div>
                                                             <div className="font-mono text-base sm:text-lg font-extrabold text-teal-950 mt-0.5">
                                                                 {it.mainSerialStart || it.serialStart} → {it.mainSerialEnd || it.serialEnd}
                                                             </div>
@@ -2448,13 +2637,13 @@ export default function StampsClient({
                                                             <div className="flex items-center justify-between text-xs font-bold text-amber-900 mb-1">
                                                                 <span className="flex items-center gap-1">
                                                                     <Store size={13} className="text-amber-700" />
-                                                                    Chuyển Showroom (SR)
+                                                                    {t.guideModal.srTransferTitle}
                                                                 </span>
                                                                 <span className="font-mono bg-amber-100 text-amber-800 px-2 py-0.5 rounded">
-                                                                    {it.qtySR} chai
+                                                                    {formatNumber(it.qtySR || 0)} {t.poAlloc.unitBottles}
                                                                 </span>
                                                             </div>
-                                                            <div className="text-xs text-amber-700 font-medium">Dải số tem:</div>
+                                                            <div className="text-xs text-amber-700 font-medium">{t.guideModal.serialRangeLabel}</div>
                                                             <div className="font-mono text-base sm:text-lg font-extrabold text-amber-950 mt-0.5">
                                                                 {it.srSerialStart} → {it.srSerialEnd}
                                                             </div>
@@ -2463,13 +2652,13 @@ export default function StampsClient({
                                                 ) : (
                                                     <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                                         <div>
-                                                            <div className="text-xs text-slate-500 font-medium">Dải số tem cần dán (Toàn bộ lưu kho chính):</div>
+                                                            <div className="text-xs text-slate-500 font-medium">{t.guideModal.allMainWhRangeLabel}</div>
                                                             <div className="font-mono text-base sm:text-lg font-extrabold text-lys-teal-strong mt-0.5">
                                                                 {it.serialStart} → {it.serialEnd}
                                                             </div>
                                                         </div>
                                                         <div className="text-xs font-semibold text-slate-700 font-mono bg-white px-2.5 py-1 rounded border border-slate-200 inline-block self-start sm:self-auto">
-                                                            Số lượng: {it.qtyUsed} chai
+                                                            {t.guideModal.qtyLabel} {formatNumber(it.qtyUsed)} {t.poAlloc.unitBottles}
                                                         </div>
                                                     </div>
                                                 )}
@@ -2486,19 +2675,19 @@ export default function StampsClient({
                                 <table className="w-full text-xs sm:text-sm" style={{ borderCollapse: 'collapse' }}>
                                     <thead>
                                         <tr className="border-b border-slate-200 bg-slate-50 text-slate-700">
-                                            <th style={{ ...thStyle, width: '40px', textAlign: 'center' }}>STT</th>
-                                            <th style={thStyle}>Tên Sản Phẩm Rượu &amp; SKU</th>
-                                            <th style={{ ...thStyle, width: '80px', textAlign: 'right' }}>Tổng SL</th>
+                                            <th style={{ ...thStyle, width: '40px', textAlign: 'center' }}>{t.poAlloc.colNo}</th>
+                                            <th style={thStyle}>{t.poAlloc.colProductSku}</th>
+                                            <th style={{ ...thStyle, width: '80px', textAlign: 'right' }}>{t.poAlloc.colTotalQty}</th>
                                             <th style={{ ...thStyle, background: '#F0FDFA', color: '#0F766E', textAlign: 'center' }}>
-                                                Kho Thanh Trì (SL &amp; Dải Seri)
+                                                {t.poAlloc.colMainWh}
                                             </th>
                                             <th style={{ ...thStyle, background: '#FFFBEB', color: '#B45309', textAlign: 'center' }}>
-                                                Showroom (SL &amp; Dải Seri)
+                                                {t.poAlloc.colShowroom}
                                             </th>
                                             <th style={{ ...thStyle, background: '#ECFEFF', color: '#0891B2', textAlign: 'center' }}>
-                                                Dải Seri Tổng
+                                                {t.poAlloc.colTotalRange}
                                             </th>
-                                            <th style={{ ...thStyle, width: '90px', textAlign: 'center' }}>Tiến Độ</th>
+                                            <th style={{ ...thStyle, width: '90px', textAlign: 'center' }}>{t.guideModal.colProgress}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -2522,14 +2711,14 @@ export default function StampsClient({
                                                         <div className="text-[11px] text-slate-500 font-mono">SKU: {it.skuCode}</div>
                                                     </td>
                                                     <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 700, color: '#0F172A' }}>
-                                                        {it.qtyUsed.toLocaleString('vi-VN')}
+                                                        {formatNumber(it.qtyUsed)}
                                                     </td>
                                                     <td style={{ ...tdStyle, textAlign: 'center', background: '#F0FDFA' }}>
                                                         <div className="font-mono font-bold text-teal-900">
                                                             {it.mainSerialStart || it.serialStart} → {it.mainSerialEnd || it.serialEnd}
                                                         </div>
                                                         <div className="text-[10px] text-teal-700 font-semibold">
-                                                            SL: {it.qtyMain ?? (it.qtyUsed - (it.qtySR || 0))} chai
+                                                            {t.poAlloc.qtyPrefix} {formatNumber(it.qtyMain ?? (it.qtyUsed - (it.qtySR || 0)))} {t.poAlloc.unitBottles}
                                                         </div>
                                                     </td>
                                                     <td style={{ ...tdStyle, textAlign: 'center', background: '#FFFBEB' }}>
@@ -2539,11 +2728,11 @@ export default function StampsClient({
                                                                     {it.srSerialStart} → {it.srSerialEnd}
                                                                 </div>
                                                                 <div className="text-[10px] text-amber-700 font-semibold">
-                                                                    SL: {it.qtySR} chai
+                                                                    {t.poAlloc.qtyPrefix} {formatNumber(it.qtySR || 0)} {t.poAlloc.unitBottles}
                                                                 </div>
                                                             </>
                                                         ) : (
-                                                            <span className="text-slate-400 text-xs italic">Không tách SR</span>
+                                                            <span className="text-slate-400 text-xs italic">{t.poAlloc.noSplitSR}</span>
                                                         )}
                                                     </td>
                                                     <td className="font-mono" style={{ ...tdStyle, textAlign: 'center', fontWeight: 700, color: '#0891B2', background: '#F8FAFC' }}>
@@ -2555,7 +2744,7 @@ export default function StampsClient({
                                                             isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
                                                         )}>
                                                             <CheckCircle2 size={13} />
-                                                            {isDone ? 'Đã xong' : 'Chưa'}
+                                                            {isDone ? t.guideModal.statusDone : t.guideModal.statusPending}
                                                         </span>
                                                     </td>
                                                 </tr>
@@ -2569,14 +2758,14 @@ export default function StampsClient({
                         {/* Footer */}
                         <div className="p-4 sm:p-6 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-500 print:hidden">
                             <span>
-                                Lưu ý: Kiểm tra kỹ số seri in trên phôi tem vật lý trước khi dán vào chai.
+                                {t.guideModal.footerNote}
                             </span>
                             <Button
                                 variant="secondary"
                                 size="sm"
                                 onClick={() => setStickingGuideAlloc(null)}
                             >
-                                Đóng Phiếu
+                                {t.guideModal.btnCloseSheet}
                             </Button>
                         </div>
                     </div>

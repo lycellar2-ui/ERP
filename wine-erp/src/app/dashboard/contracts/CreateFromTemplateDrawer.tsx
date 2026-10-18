@@ -24,13 +24,6 @@ import {
     Badge,
     Field,
     Input,
-    Select,
-    Table,
-    THead,
-    TBody,
-    Tr,
-    Th,
-    Td,
 } from '@/components/ui'
 import {
     CONTRACT_TEMPLATES,
@@ -41,7 +34,8 @@ import {
     GenerateContractPayload,
 } from './template-actions'
 import { getCounterparties } from './actions'
-import { formatVND, formatDate } from '@/lib/utils'
+import { useAppLocale } from '@/lib/i18n'
+import { getContractsDict } from './i18n'
 import { toast } from 'sonner'
 
 interface Props {
@@ -65,13 +59,16 @@ interface ProductRow {
 }
 
 export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemplateCode }: Props) {
+    const { locale, formatCurrency, formatDate } = useAppLocale()
+    const t = getContractsDict(locale)
+    const w = t.templateWizard
+
     const today = new Date().toISOString().slice(0, 10)
     const nextYear = new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString().slice(0, 10)
 
-    // Wizard Step: 1 = Chọn Mẫu, 2 = Điền Dữ Liệu, 3 = Xem Lại & Xuất
     const [step, setStep] = useState<1 | 2 | 3>(1)
     const [selectedTemplate, setSelectedTemplate] = useState<ContractTemplateDefinition>(
-        CONTRACT_TEMPLATES.find(t => t.code === initialTemplateCode) || CONTRACT_TEMPLATES[0]
+        CONTRACT_TEMPLATES.find(tpl => tpl.code === initialTemplateCode) || CONTRACT_TEMPLATES[0]
     )
 
     // Counterparty & Master Data
@@ -139,7 +136,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                 if (res.success && res.data) setAvailableProducts(res.data)
             })
             if (initialTemplateCode) {
-                const found = CONTRACT_TEMPLATES.find(t => t.code === initialTemplateCode)
+                const found = CONTRACT_TEMPLATES.find(tpl => tpl.code === initialTemplateCode)
                 if (found) {
                     setSelectedTemplate(found)
                     setStep(2)
@@ -248,11 +245,11 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
     // Submit & Download
     const handleGenerate = async () => {
         if (!form.so_hop_dong.trim()) {
-            toast.error('Vui lòng nhập số hợp đồng')
+            toast.error(w.errEnterContractNo)
             return
         }
         if (!form.ten_ben_b.trim()) {
-            toast.error('Vui lòng nhập hoặc chọn đối tác Bên B')
+            toast.error(w.errEnterPartyB)
             return
         }
 
@@ -299,7 +296,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
         setGenerating(false)
 
         if (!res.success || !res.fileBase64) {
-            toast.error(res.error || 'Có lỗi khi sinh file hợp đồng')
+            toast.error(res.error || w.errGenerate)
             return
         }
 
@@ -323,21 +320,23 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
             document.body.removeChild(link)
             URL.revokeObjectURL(downloadUrl)
 
-            toast.success(`Hợp đồng ${res.contractNo} đã được tạo và tải về thành công!`)
+            toast.success(w.toastGenerated(res.contractNo || form.so_hop_dong))
             onSuccess()
             onClose()
         } catch {
-            toast.error('Lỗi khi tải file Word về máy')
+            toast.error(w.errDownload)
         }
     }
+
+    const selectedLocalized = t.templates.items[selectedTemplate.code]
 
     return (
         <Drawer
             open={open}
             onClose={onClose}
             size="xl"
-            title="Tạo Hợp Đồng Từ Biểu Mẫu Word (.docx)"
-            description="Lựa chọn biểu mẫu chuẩn ngành rượu, điền thông tin và xuất file Word hoàn chỉnh"
+            title={w.title}
+            description={w.description}
             footer={
                 <div className="flex items-center justify-between w-full">
                     {step > 1 ? (
@@ -347,7 +346,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                             onClick={() => setStep((s) => (s - 1) as any)}
                         >
                             <ArrowLeft className="w-4 h-4 mr-1.5" />
-                            Quay Lại
+                            {w.back}
                         </Button>
                     ) : (
                         <div />
@@ -360,7 +359,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                                 size="sm"
                                 onClick={() => setStep(2)}
                             >
-                                Tiếp Tục Điền Form
+                                {w.nextToForm}
                                 <ArrowRight className="w-4 h-4 ml-1.5" />
                             </Button>
                         )}
@@ -371,13 +370,13 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                                 size="sm"
                                 onClick={() => {
                                     if (!form.ten_ben_b) {
-                                        toast.error('Vui lòng nhập hoặc chọn đối tác Bên B')
+                                        toast.error(w.errEnterPartyB)
                                         return
                                     }
                                     setStep(3)
                                 }}
                             >
-                                Xem Lại & Xác Nhận
+                                {w.nextToReview}
                                 <ArrowRight className="w-4 h-4 ml-1.5" />
                             </Button>
                         )}
@@ -393,12 +392,12 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                                 {generating ? (
                                     <>
                                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                        Đang Merge & Sinh Word...
+                                        {w.generatingDocx}
                                     </>
                                 ) : (
                                     <>
                                         <Download className="w-4 h-4 mr-1.5" />
-                                        Sinh & Tải File Word (.docx)
+                                        {w.generateAndDownload}
                                     </>
                                 )}
                             </Button>
@@ -411,33 +410,32 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
             <div className="px-6 py-3 bg-slate-50 border-b border-lys-border flex items-center justify-between text-xs">
                 <div className={`flex items-center gap-2 font-medium ${step === 1 ? 'text-lys-primary font-semibold' : 'text-slate-500'}`}>
                     <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step === 1 ? 'bg-lys-primary text-white' : 'bg-slate-200'}`}>1</span>
-                    1. Chọn Biểu Mẫu
+                    {w.step1Title}
                 </div>
                 <div className="w-8 h-[1px] bg-slate-300" />
                 <div className={`flex items-center gap-2 font-medium ${step === 2 ? 'text-lys-primary font-semibold' : 'text-slate-500'}`}>
                     <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step === 2 ? 'bg-lys-primary text-white' : 'bg-slate-200'}`}>2</span>
-                    2. Điền Dữ Liệu Form
+                    {w.step2Title}
                 </div>
                 <div className="w-8 h-[1px] bg-slate-300" />
                 <div className={`flex items-center gap-2 font-medium ${step === 3 ? 'text-lys-primary font-semibold' : 'text-slate-500'}`}>
                     <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step === 3 ? 'bg-lys-primary text-white' : 'bg-slate-200'}`}>3</span>
-                    3. Xem Lại & Xuất DOCX
+                    {w.step3Title}
                 </div>
             </div>
 
             <div className="p-6 space-y-6 overflow-y-auto max-h-[calc(100vh-210px)]">
-                {/* ─────────────────────────────────────────────────────────────
-                    BƯỚC 1: CHỌN MẪU BIỂU
-                ───────────────────────────────────────────────────────────── */}
+                {/* BƯỚC 1: CHỌN MẪU BIỂU */}
                 {step === 1 && (
                     <div className="space-y-4">
                         <div className="text-sm text-slate-600 mb-2">
-                            Chọn một trong các mẫu hợp đồng chuẩn dưới đây để hệ thống nạp khung dữ liệu và mẫu Word tương ứng:
+                            {w.step1Desc}
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {CONTRACT_TEMPLATES.map((tpl) => {
                                 const isSelected = selectedTemplate.code === tpl.code
+                                const localized = t.templates.items[tpl.code]
                                 return (
                                     <div
                                         key={tpl.code}
@@ -457,17 +455,17 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                                         <div>
                                             <div className="flex items-center gap-2 mb-2">
                                                 <Badge tone={tpl.code === 'HD_NGUYEN_TAC' ? 'brand' : tpl.code === 'HD_KY_GUI' ? 'warning' : 'success'}>
-                                                    {tpl.badgeText}
+                                                    {localized?.badgeText ?? tpl.badgeText}
                                                 </Badge>
                                             </div>
-                                            <h3 className="font-semibold text-slate-800 text-sm mb-2">{tpl.name}</h3>
-                                            <p className="text-xs text-slate-500 leading-relaxed">{tpl.description}</p>
+                                            <h3 className="font-semibold text-slate-800 text-sm mb-2">{localized?.name ?? tpl.name}</h3>
+                                            <p className="text-xs text-slate-500 leading-relaxed">{localized?.description ?? tpl.description}</p>
                                         </div>
 
                                         <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                                            <span>Mẫu: {tpl.code}.docx</span>
+                                            <span>{w.templateFilePrefix} {tpl.code}.docx</span>
                                             <span className="text-lys-primary font-medium flex items-center gap-1">
-                                                Chọn mẫu <ArrowRight className="w-3 h-3" />
+                                                {w.selectTemplateBtn} <ArrowRight className="w-3 h-3" />
                                             </span>
                                         </div>
                                     </div>
@@ -477,9 +475,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                     </div>
                 )}
 
-                {/* ─────────────────────────────────────────────────────────────
-                    BƯỚC 2: ĐIỀN FORM DỮ LIỆU
-                ───────────────────────────────────────────────────────────── */}
+                {/* BƯỚC 2: ĐIỀN FORM DỮ LIỆU */}
                 {step === 2 && (
                     <div className="space-y-6">
                         {/* Selected Template Badge Banner */}
@@ -487,39 +483,39 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                             <div className="flex items-center gap-3">
                                 <FileText className="w-5 h-5 text-lys-primary" />
                                 <div>
-                                    <div className="text-xs font-semibold text-lys-primary">Biểu mẫu đang áp dụng:</div>
-                                    <div className="text-sm font-bold text-slate-800">{selectedTemplate.name}</div>
+                                    <div className="text-xs font-semibold text-lys-primary">{w.activeTemplateLabel}</div>
+                                    <div className="text-sm font-bold text-slate-800">{selectedLocalized?.name ?? selectedTemplate.name}</div>
                                 </div>
                             </div>
                             <Button variant="ghost" size="sm" onClick={() => setStep(1)} className="text-xs">
-                                Đổi Mẫu Khác
+                                {w.changeTemplateBtn}
                             </Button>
                         </div>
 
                         {/* SECTION A: ĐỐI TÁC (BÊN B) */}
                         <div className="p-4 rounded-lg border border-lys-border bg-white space-y-4">
-                            <div className="flex items-center justify-between border-b border-lys-border pb-2.5">
+                            <div className="flex items-center justify-between border-b border-lys-border pb-2.5 flex-wrap gap-2">
                                 <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
                                     <Building2 className="w-4 h-4 text-lys-primary" />
-                                    Thông Tin Đối Tác (Bên B)
+                                    {w.secPartnerTitle}
                                 </div>
 
                                 {/* Chọn nhanh từ danh mục */}
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
                                     <div className="flex border border-lys-border rounded-md overflow-hidden text-xs">
                                         <button
                                             type="button"
                                             onClick={() => { setCounterpartyType('customer'); setSelectedCounterpartyId(''); }}
                                             className={`px-2.5 py-1 ${counterpartyType === 'customer' ? 'bg-lys-primary text-white font-medium' : 'bg-white text-slate-600'}`}
                                         >
-                                            Khách Hàng
+                                            {w.customerBtn}
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => { setCounterpartyType('supplier'); setSelectedCounterpartyId(''); }}
                                             className={`px-2.5 py-1 ${counterpartyType === 'supplier' ? 'bg-lys-primary text-white font-medium' : 'bg-white text-slate-600'}`}
                                         >
-                                            Nhà Cung Cấp
+                                            {w.supplierBtn}
                                         </button>
                                     </div>
 
@@ -529,7 +525,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                                             value={selectedCounterpartyId}
                                             onChange={(e) => handleCounterpartyChange(counterpartyType, e.target.value)}
                                         >
-                                            <option value="">-- Chọn để tự điền dữ liệu --</option>
+                                            <option value="">{w.selectAutoFill}</option>
                                             {counterpartyType === 'customer'
                                                 ? counterparties.customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)
                                                 : counterparties.suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)
@@ -542,61 +538,61 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <Field label="Tên đơn vị / Khách hàng / NCC (Bên B) *" description="Tên trên hóa đơn & hợp đồng">
+                                <Field label={w.partnerNameLabel} description={w.partnerNameDesc}>
                                     <Input
                                         value={form.ten_ben_b}
                                         onChange={e => setForm({ ...form, ten_ben_b: e.target.value })}
-                                        placeholder="Ví dụ: CÔNG TY TNHH NHÀ HÀNG LA TABLE"
+                                        placeholder={w.partnerNamePlaceholder}
                                     />
                                 </Field>
 
-                                <Field label="Mã Số Thuế (MST)">
+                                <Field label={w.taxIdLabel}>
                                     <Input
                                         value={form.mst_ben_b}
                                         onChange={e => setForm({ ...form, mst_ben_b: e.target.value })}
-                                        placeholder="Ví dụ: 0312345678"
+                                        placeholder={w.taxIdPlaceholder}
                                     />
                                 </Field>
 
                                 <div className="md:col-span-2">
-                                    <Field label="Địa Chỉ Trụ Sở / Đăng Ký">
+                                    <Field label={w.addressLabel}>
                                         <Input
                                             value={form.dia_chi_ben_b}
                                             onChange={e => setForm({ ...form, dia_chi_ben_b: e.target.value })}
-                                            placeholder="Địa chỉ trụ sở chính hoặc cơ sở nhận hàng"
+                                            placeholder={w.addressPlaceholder}
                                         />
                                     </Field>
                                 </div>
 
-                                <Field label="Người Đại Diện Ký">
+                                <Field label={w.repLabel}>
                                     <Input
                                         value={form.dai_dien_ben_b}
                                         onChange={e => setForm({ ...form, dai_dien_ben_b: e.target.value })}
-                                        placeholder="Ông / Bà..."
+                                        placeholder={w.repPlaceholder}
                                     />
                                 </Field>
 
-                                <Field label="Chức Vụ Đại Diện">
+                                <Field label={w.titleLabel}>
                                     <Input
                                         value={form.chuc_vu_ben_b}
                                         onChange={e => setForm({ ...form, chuc_vu_ben_b: e.target.value })}
-                                        placeholder="Giám Đốc, Tổng Giám Đốc..."
+                                        placeholder={w.titlePlaceholder}
                                     />
                                 </Field>
 
-                                <Field label="Số Điện Thoại">
+                                <Field label={w.phoneLabel}>
                                     <Input
                                         value={form.sdt_ben_b}
                                         onChange={e => setForm({ ...form, sdt_ben_b: e.target.value })}
-                                        placeholder="Số điện thoại liên hệ"
+                                        placeholder={w.phonePlaceholder}
                                     />
                                 </Field>
 
-                                <Field label="Email Liên Hệ">
+                                <Field label={w.emailLabel}>
                                     <Input
                                         value={form.email_ben_b}
                                         onChange={e => setForm({ ...form, email_ben_b: e.target.value })}
-                                        placeholder="email@doitac.vn"
+                                        placeholder="email@partner.com"
                                     />
                                 </Field>
                             </div>
@@ -606,12 +602,12 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                         <div className="p-4 rounded-lg border border-lys-border bg-white space-y-4">
                             <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 border-b border-lys-border pb-2.5">
                                 <Calendar className="w-4 h-4 text-lys-primary" />
-                                Số Hợp Đồng & Thời Hạn Hiệu Lực
+                                {w.secTermsTitle}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <div className="md:col-span-2">
-                                    <Field label="Số Hợp Đồng *">
+                                    <Field label={w.contractNoLabel}>
                                         <Input
                                             value={form.so_hop_dong}
                                             onChange={e => setForm({ ...form, so_hop_dong: e.target.value })}
@@ -619,7 +615,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                                     </Field>
                                 </div>
 
-                                <Field label="Ngày Ký">
+                                <Field label={w.signDateLabel}>
                                     <Input
                                         type="date"
                                         value={form.ngay_ky}
@@ -627,7 +623,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                                     />
                                 </Field>
 
-                                <Field label="Thời Hạn Thanh Toán (Ngày)">
+                                <Field label={w.paymentDaysLabel}>
                                     <Input
                                         type="number"
                                         value={form.thoi_han_thanh_toan}
@@ -636,7 +632,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                                     />
                                 </Field>
 
-                                <Field label="Ngày Hiệu Lực">
+                                <Field label={w.effectiveDateLabel}>
                                     <Input
                                         type="date"
                                         value={form.ngay_hieu_luc}
@@ -644,7 +640,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                                     />
                                 </Field>
 
-                                <Field label="Ngày Hết Hạn">
+                                <Field label={w.expiryDateLabel}>
                                     <Input
                                         type="date"
                                         value={form.ngay_het_han}
@@ -653,7 +649,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                                 </Field>
 
                                 <div className="md:col-span-2">
-                                    <Field label="Địa Điểm Giao Hàng">
+                                    <Field label={w.deliveryAddressLabel}>
                                         <Input
                                             value={form.dia_diem_giao_hang}
                                             onChange={e => setForm({ ...form, dia_diem_giao_hang: e.target.value })}
@@ -668,10 +664,10 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                             <div className="p-4 rounded-lg border border-lys-border bg-white space-y-4">
                                 <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 border-b border-lys-border pb-2.5">
                                     <DollarSign className="w-4 h-4 text-lys-primary" />
-                                    Điều Khoản Hạn Mức Tín Dụng & Công Nợ
+                                    {w.secCreditTitle}
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <Field label="Hạn Mức Công Nợ Tối Đa (VNĐ)">
+                                    <Field label={w.creditLimitLabel}>
                                         <Input
                                             type="number"
                                             value={form.han_muc_cong_no}
@@ -679,9 +675,9 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                                         />
                                     </Field>
                                     <div className="flex flex-col justify-center text-xs text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-200">
-                                        <span className="font-semibold text-slate-700">Giá trị bằng số:</span>
-                                        <span className="text-sm font-bold text-lys-primary">{formatVND(form.han_muc_cong_no)}</span>
-                                        <span className="mt-1 italic">Hệ thống sẽ tự động đọc số tiền thành chữ trong file Word.</span>
+                                        <span className="font-semibold text-slate-700">{w.numericValueLabel}</span>
+                                        <span className="text-sm font-bold text-lys-primary">{formatCurrency(form.han_muc_cong_no)}</span>
+                                        <span className="mt-1 italic">{w.autoWordsHint}</span>
                                     </div>
                                 </div>
                             </div>
@@ -691,24 +687,24 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                             <div className="p-4 rounded-lg border border-lys-border bg-white space-y-4">
                                 <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 border-b border-lys-border pb-2.5">
                                     <ShieldCheck className="w-4 h-4 text-lys-primary" />
-                                    Điều Khoản Ký Gửi & Hoa Hồng
+                                    {w.secConsignTitle}
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <Field label="Số HĐ Nguyên Tắc Gốc">
+                                    <Field label={w.masterContractNoLabel}>
                                         <Input
                                             value={form.so_hd_goc}
                                             onChange={e => setForm({ ...form, so_hd_goc: e.target.value })}
-                                            placeholder="Ví dụ: HĐNT-2026/01-LYS"
+                                            placeholder={w.masterContractPlaceholder}
                                         />
                                     </Field>
-                                    <Field label="Tỷ Lệ Hoa Hồng / Chiết Khấu (%)">
+                                    <Field label={w.commissionPctLabel}>
                                         <Input
                                             type="number"
                                             value={form.ty_le_hoa_hong}
                                             onChange={e => setForm({ ...form, ty_le_hoa_hong: Number(e.target.value) })}
                                         />
                                     </Field>
-                                    <Field label="Ngày Đối Soát Hàng Tháng">
+                                    <Field label={w.reconcileDayLabel}>
                                         <Input
                                             type="number"
                                             value={form.ngay_doi_soat}
@@ -724,17 +720,17 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                             <div className="p-4 rounded-lg border border-lys-border bg-white space-y-4">
                                 <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 border-b border-lys-border pb-2.5">
                                     <DollarSign className="w-4 h-4 text-lys-primary" />
-                                    Điều Khoản Đặt Cọc & Giao Hàng
+                                    {w.secDepositTitle}
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <Field label="Tỷ Lệ Đặt Cọc (%)">
+                                    <Field label={w.depositPctLabel}>
                                         <Input
                                             type="number"
                                             value={form.ty_le_dat_coc}
                                             onChange={e => setForm({ ...form, ty_le_dat_coc: Number(e.target.value) })}
                                         />
                                     </Field>
-                                    <Field label="Ngày Giao Hàng Dự Kiến">
+                                    <Field label={w.expectedDeliveryLabel}>
                                         <Input
                                             type="date"
                                             value={form.ngay_giao_hang}
@@ -742,24 +738,24 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                                         />
                                     </Field>
                                     <div className="flex flex-col justify-center text-xs text-slate-500 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                                        <span>Tiền cọc ước tính:</span>
-                                        <span className="text-sm font-bold text-amber-600">{formatVND(depositAmount)}</span>
+                                        <span>{w.estimatedDepositLabel}</span>
+                                        <span className="text-sm font-bold text-amber-600">{formatCurrency(depositAmount)}</span>
                                     </div>
                                 </div>
                             </div>
                         )}
 
-                        {/* SECTION D: BẢNG SẢN PHẨM RƯỢU CHI TIẾT (Với Ký gửi & Một lần) */}
+                        {/* SECTION D: BẢNG SẢN PHẨM RƯỢU CHI TIẾT */}
                         {selectedTemplate.code !== 'HD_NGUYEN_TAC' && (
                             <div className="p-4 rounded-lg border border-lys-border bg-white space-y-4">
                                 <div className="flex items-center justify-between border-b border-lys-border pb-2.5">
                                     <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
                                         <Package className="w-4 h-4 text-lys-primary" />
-                                        Danh Mục Sản Phẩm Rượu Kèm Theo ({products.length} dòng)
+                                        {w.secProductsTitle(products.length)}
                                     </div>
                                     <Button variant="secondary" size="sm" onClick={addProductRow}>
                                         <Plus className="w-3.5 h-3.5 mr-1" />
-                                        Thêm Dòng
+                                        {w.addRowBtn}
                                     </Button>
                                 </div>
 
@@ -767,13 +763,13 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                                     <table className="w-full text-xs text-left border border-lys-border">
                                         <thead className="bg-slate-50 border-b border-lys-border text-slate-600">
                                             <tr>
-                                                <th className="p-2 w-10 text-center">STT</th>
-                                                <th className="p-2 min-w-[220px]">Tên Rượu / Chọn Từ Kho</th>
-                                                <th className="p-2 w-20">Niên Vụ</th>
-                                                <th className="p-2 w-20">ĐVT</th>
-                                                <th className="p-2 w-20 text-right">SL</th>
-                                                <th className="p-2 w-32 text-right">Đơn Giá (VNĐ)</th>
-                                                <th className="p-2 w-36 text-right">Thành Tiền</th>
+                                                <th className="p-2 w-10 text-center">{w.thNo}</th>
+                                                <th className="p-2 min-w-[220px]">{w.thWineName}</th>
+                                                <th className="p-2 w-20">{w.thVintage}</th>
+                                                <th className="p-2 w-20">{w.thUom}</th>
+                                                <th className="p-2 w-20 text-right">{w.thQty}</th>
+                                                <th className="p-2 w-32 text-right">{w.thUnitPrice}</th>
+                                                <th className="p-2 w-36 text-right">{w.thLineTotal}</th>
                                                 <th className="p-2 w-10 text-center"></th>
                                             </tr>
                                         </thead>
@@ -785,7 +781,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                                                         <Input
                                                             value={row.ten_ruou}
                                                             onChange={e => updateProductRow(idx, 'ten_ruou', e.target.value)}
-                                                            placeholder="Nhập tên rượu..."
+                                                            placeholder={w.wineNamePlaceholder}
                                                             className="text-xs h-7"
                                                         />
                                                         {availableProducts.length > 0 && (
@@ -794,7 +790,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                                                                 onChange={e => selectPresetProduct(idx, e.target.value)}
                                                                 defaultValue=""
                                                             >
-                                                                <option value="" disabled>-- Chọn nhanh từ danh mục kho --</option>
+                                                                <option value="" disabled>{w.quickSelectStock}</option>
                                                                 {availableProducts.map(p => (
                                                                     <option key={p.id} value={p.id}>[{p.sku}] {p.name}</option>
                                                                 ))}
@@ -832,7 +828,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                                                         />
                                                     </td>
                                                     <td className="p-2 text-right font-semibold text-slate-700">
-                                                        {formatVND(row.thanh_tien)}
+                                                        {formatCurrency(row.thanh_tien)}
                                                     </td>
                                                     <td className="p-2 text-center">
                                                         {products.length > 1 && (
@@ -855,18 +851,18 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                                 <div className="flex justify-end pt-2">
                                     <div className="w-full sm:w-72 space-y-1.5 text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-lys-border">
                                         <div className="flex justify-between">
-                                            <span>Tiền hàng trước thuế:</span>
-                                            <span className="font-semibold text-slate-800">{formatVND(itemsTotal)}</span>
+                                            <span>{w.preTaxAmount}</span>
+                                            <span className="font-semibold text-slate-800">{formatCurrency(itemsTotal)}</span>
                                         </div>
                                         {selectedTemplate.code === 'HD_MOT_LAN' && (
                                             <div className="flex justify-between">
-                                                <span>Thuế VAT (10%):</span>
-                                                <span className="font-semibold text-slate-800">{formatVND(vatAmount)}</span>
+                                                <span>{w.vat10Amount}</span>
+                                                <span className="font-semibold text-slate-800">{formatCurrency(vatAmount)}</span>
                                             </div>
                                         )}
                                         <div className="flex justify-between border-t border-slate-200 pt-1.5 text-sm font-bold text-lys-primary">
-                                            <span>TỔNG GIÁ TRỊ:</span>
-                                            <span>{formatVND(grandTotal)}</span>
+                                            <span>{w.grandTotalLabel}</span>
+                                            <span>{formatCurrency(grandTotal)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -875,9 +871,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                     </div>
                 )}
 
-                {/* ─────────────────────────────────────────────────────────────
-                    BƯỚC 3: XEM LẠI & XUẤT FILE DOCX
-                ───────────────────────────────────────────────────────────── */}
+                {/* BƯỚC 3: XEM LẠI & XUẤT FILE DOCX */}
                 {step === 3 && (
                     <div className="space-y-6">
                         <div className="p-5 rounded-lg border border-emerald-200 bg-emerald-50/60 flex items-start gap-4">
@@ -885,47 +879,47 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                                 <Sparkles className="w-5 h-5" />
                             </div>
                             <div>
-                                <h3 className="font-bold text-emerald-900 text-sm">Hợp đồng đã sẵn sàng để sinh văn bản</h3>
+                                <h3 className="font-bold text-emerald-900 text-sm">{w.readyBannerTitle}</h3>
                                 <p className="text-xs text-emerald-700 mt-1">
-                                    Dữ liệu form đã được kiểm tra hợp lệ. Khi bấm nút xuất bên dưới, hệ thống sẽ điền dữ liệu vào mẫu Word chuẩn, tạo bản ghi quản lý trên ERP và tải trực tiếp file .docx về máy của bạn.
+                                    {w.readyBannerDesc}
                                 </p>
                             </div>
                         </div>
 
                         {/* Summary Card */}
                         <div className="p-5 rounded-lg border border-lys-border bg-white space-y-4">
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tóm Tắt Hợp Đồng</h4>
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{w.summaryCardTitle}</h4>
 
-                            <div className="grid grid-cols-2 gap-4 text-xs">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                                 <div>
-                                    <span className="text-slate-500">Mẫu biểu:</span>
-                                    <div className="font-semibold text-slate-800 mt-0.5">{selectedTemplate.name}</div>
+                                    <span className="text-slate-500">{w.summaryTemplate}</span>
+                                    <div className="font-semibold text-slate-800 mt-0.5">{selectedLocalized?.name ?? selectedTemplate.name}</div>
                                 </div>
                                 <div>
-                                    <span className="text-slate-500">Số hợp đồng:</span>
+                                    <span className="text-slate-500">{w.summaryContractNo}</span>
                                     <div className="font-semibold text-slate-800 mt-0.5">{form.so_hop_dong}</div>
                                 </div>
                                 <div>
-                                    <span className="text-slate-500">Bên A (Bán/Cung cấp):</span>
+                                    <span className="text-slate-500">{w.summaryPartyA}</span>
                                     <div className="font-semibold text-slate-800 mt-0.5">CÔNG TY CỔ PHẦN LY&apos;S CELLARS</div>
                                 </div>
                                 <div>
-                                    <span className="text-slate-500">Bên B (Đối tác):</span>
+                                    <span className="text-slate-500">{w.summaryPartyB}</span>
                                     <div className="font-semibold text-slate-800 mt-0.5">{form.ten_ben_b}</div>
                                 </div>
                                 <div>
-                                    <span className="text-slate-500">Thời hạn hợp đồng:</span>
+                                    <span className="text-slate-500">{w.summaryDuration}</span>
                                     <div className="font-semibold text-slate-800 mt-0.5">{formatDate(form.ngay_hieu_luc)} → {formatDate(form.ngay_het_han)}</div>
                                 </div>
                                 <div>
-                                    <span className="text-slate-500">Tổng giá trị hợp đồng:</span>
-                                    <div className="text-base font-bold text-lys-primary mt-0.5">{formatVND(grandTotal)}</div>
+                                    <span className="text-slate-500">{w.summaryTotalValue}</span>
+                                    <div className="text-base font-bold text-lys-primary mt-0.5">{formatCurrency(grandTotal)}</div>
                                 </div>
                             </div>
 
                             {selectedTemplate.code !== 'HD_NGUYEN_TAC' && (
                                 <div className="mt-4 pt-4 border-t border-lys-border text-xs text-slate-500">
-                                    Danh mục hàng hóa đính kèm: <span className="font-semibold text-slate-800">{products.length} mã sản phẩm rượu</span>.
+                                    {w.summaryProductsNote(products.length)}
                                 </div>
                             )}
                         </div>
@@ -933,9 +927,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                         {/* Format Note */}
                         <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg text-xs text-slate-500 border border-slate-200">
                             <AlertCircle className="w-4 h-4 text-slate-400 shrink-0" />
-                            <span>
-                                File xuất ra là định dạng <strong>Microsoft Word (.docx)</strong> chuẩn trang in A4, font Times New Roman, cho phép tùy chỉnh câu chữ tự do trước khi ký tên & đóng dấu.
-                            </span>
+                            <span>{w.formatNote}</span>
                         </div>
                     </div>
                 )}

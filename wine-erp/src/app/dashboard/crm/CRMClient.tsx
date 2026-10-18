@@ -19,12 +19,13 @@ import { PipelinePanel } from './PipelinePanel'
 import { TelesalesProspectingPanel } from './TelesalesProspectingPanel'
 import { formatVND, formatDate } from '@/lib/utils'
 import { PageHeader, StatGrid, StatCard, Button } from '@/components/ui'
+import { useAppLocale } from '@/lib/i18n'
 
-const TYPE_CFG: Record<string, { label: string; color: string; bg: string }> = {
-    HORECA: { label: 'HORECA', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-    WHOLESALE: { label: 'Đại Lý', color: '#1D4ED8', bg: 'rgba(29,78,216,0.12)' },
-    VIP_RETAIL: { label: 'VIP', color: '#B45309', bg: 'rgba(180,83,9,0.12)' },
-    DISTRIBUTOR: { label: 'NPP', color: '#0891B2', bg: 'rgba(8,145,178,0.1)' },
+const TYPE_CFG: Record<string, { label: string; labelEn: string; color: string; bg: string }> = {
+    HORECA: { label: 'HORECA', labelEn: 'HORECA', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
+    WHOLESALE: { label: 'Đại Lý', labelEn: 'Wholesale', color: '#1D4ED8', bg: 'rgba(29,78,216,0.12)' },
+    VIP_RETAIL: { label: 'VIP', labelEn: 'VIP', color: '#B45309', bg: 'rgba(180,83,9,0.12)' },
+    DISTRIBUTOR: { label: 'NPP', labelEn: 'Distributor', color: '#0891B2', bg: 'rgba(8,145,178,0.1)' },
 }
 
 const ACTIVITY_ICONS: Record<ActivityType, React.FC<any>> = {
@@ -52,7 +53,8 @@ function getTierFromRevenue(revenue: number): string {
 }
 
 function CustomerCard({ row, onSelect, isSelected }: { row: CustomerCRMRow; onSelect: () => void; isSelected: boolean }) {
-    const typeCfg = TYPE_CFG[row.channel ?? ''] ?? { label: row.customerType, color: '#475569', bg: 'rgba(100,116,139,0.1)' }
+    const { isEn } = useAppLocale()
+    const typeCfg = TYPE_CFG[row.channel ?? ''] ?? { label: row.customerType, labelEn: row.customerType, color: '#475569', bg: 'rgba(100,116,139,0.1)' }
     const tier = getTierFromRevenue(row.totalRevenue)
     const tierCfg = TIER_CFG[tier]
 
@@ -70,7 +72,7 @@ function CustomerCard({ row, onSelect, isSelected }: { row: CustomerCRMRow; onSe
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
                         <span className="inline-block text-xs px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0"
-                            style={{ color: typeCfg.color, background: typeCfg.bg }}>{typeCfg.label}</span>
+                            style={{ color: typeCfg.color, background: typeCfg.bg }}>{isEn ? typeCfg.labelEn : typeCfg.label}</span>
                         {tier !== 'BRONZE' && (
                             <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0"
                                 style={{ color: tierCfg.color, background: `${tierCfg.color}15` }}>
@@ -82,7 +84,7 @@ function CustomerCard({ row, onSelect, isSelected }: { row: CustomerCRMRow; onSe
                             <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0"
                                 style={{ color: '#B91C1C', background: 'rgba(185,28,28,0.15)' }}>
                                 <AlertTriangle size={11} className="shrink-0" />
-                                <span>{row.openComplaints} KN</span>
+                                <span>{row.openComplaints} {isEn ? 'Tickets' : 'KN'}</span>
                             </span>
                         )}
                     </div>
@@ -95,13 +97,13 @@ function CustomerCard({ row, onSelect, isSelected }: { row: CustomerCRMRow; onSe
             <div className="grid grid-cols-2 gap-2">
                 <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                     <p className="text-xs font-bold" style={{ color: '#0891B2' }}>
-                        {row.totalRevenue >= 1e9 ? `${(row.totalRevenue / 1e9).toFixed(2)} tỷ` : row.totalRevenue >= 1e6 ? `${(row.totalRevenue / 1e6).toFixed(0)} tr` : formatVND(row.totalRevenue)}
+                        {row.totalRevenue >= 1e9 ? `${(row.totalRevenue / 1e9).toFixed(2)} ${isEn ? 'B' : 'tỷ'}` : row.totalRevenue >= 1e6 ? `${(row.totalRevenue / 1e6).toFixed(0)} ${isEn ? 'M' : 'tr'}` : formatVND(row.totalRevenue)}
                     </p>
-                    <p className="text-xs" style={{ color: '#64748B' }}>Doanh số</p>
+                    <p className="text-xs" style={{ color: '#64748B' }}>{isEn ? 'Revenue' : 'Doanh số'}</p>
                 </div>
                 <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                     <p className="text-xs font-bold" style={{ color: '#15803D' }}>{row.totalOrders}</p>
-                    <p className="text-xs" style={{ color: '#64748B' }}>Đơn hàng</p>
+                    <p className="text-xs" style={{ color: '#64748B' }}>{isEn ? 'Orders' : 'Đơn hàng'}</p>
                 </div>
             </div>
 
@@ -117,6 +119,7 @@ function CustomerCard({ row, onSelect, isSelected }: { row: CustomerCRMRow; onSe
 
 // Quick log activity panel
 function QuickLogPanel({ customerId, onLogged }: { customerId: string; onLogged: () => void }) {
+    const { isEn } = useAppLocale()
     const [type, setType] = useState<ActivityType>('CALL')
     const [desc, setDesc] = useState('')
     const [saving, setSaving] = useState(false)
@@ -131,9 +134,9 @@ function QuickLogPanel({ customerId, onLogged }: { customerId: string; onLogged:
                 return res
             }),
             {
-                loading: 'Đang lưu tương tác...',
-                success: 'Đã lưu tương tác!',
-                error: 'Lỗi lưu tương tác',
+                loading: isEn ? 'Saving activity...' : 'Đang lưu tương tác...',
+                success: isEn ? 'Activity logged!' : 'Đã lưu tương tác!',
+                error: isEn ? 'Failed to log activity' : 'Lỗi lưu tương tác',
                 finally: () => setSaving(false)
             }
         )
@@ -142,7 +145,7 @@ function QuickLogPanel({ customerId, onLogged }: { customerId: string; onLogged:
     return (
         <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#64748B' }}>
-                Ghi Chép Tương Tác
+                {isEn ? 'Log Activity' : 'Ghi Chép Tương Tác'}
             </p>
             <div className="flex flex-wrap gap-1.5 mb-3">
                 {(['CALL', 'EMAIL', 'MEETING', 'TASTING', 'OTHER'] as ActivityType[]).map(t => {
@@ -165,7 +168,7 @@ function QuickLogPanel({ customerId, onLogged }: { customerId: string; onLogged:
                 value={desc}
                 onChange={e => setDesc(e.target.value)}
                 rows={2}
-                placeholder="Nội dung tương tác..."
+                placeholder={isEn ? 'Activity details...' : 'Nội dung tương tác...'}
                 className="w-full px-3 py-2 text-sm outline-none resize-none"
                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
@@ -179,7 +182,7 @@ function QuickLogPanel({ customerId, onLogged }: { customerId: string; onLogged:
                     borderRadius: '4px',
                     opacity: saving ? 0.7 : 1,
                 }}>
-                {saving ? 'Đang lưu...' : 'Lưu Tương Tác'}
+                {saving ? (isEn ? 'Saving...' : 'Đang lưu...') : (isEn ? 'Save Activity' : 'Lưu Tương Tác')}
             </button>
         </div>
     )
@@ -192,6 +195,7 @@ interface Props {
 }
 
 export function CRMClient({ initialRows, initialTotal, stats }: Props) {
+    const { isEn } = useAppLocale()
     const [rows, setRows] = useState(initialRows)
     const [total, setTotal] = useState(initialTotal)
     const [loading, setLoading] = useState(false)
@@ -261,8 +265,8 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
         <div className="space-y-4 max-w-screen-2xl">
             {/* Header */}
             <PageHeader
-                title="CRM – Quan Hệ Khách Hàng"
-                description="360° Customer View – Lịch sử giao dịch, tương tác, cơ hội bán hàng & chăm sóc khách hàng"
+                title={isEn ? 'CRM – Customer Relationship Management' : 'CRM – Quan Hệ Khách Hàng'}
+                description={isEn ? '360° Customer View – Transaction history, interactions, sales pipeline & customer care' : '360° Customer View – Lịch sử giao dịch, tương tác, cơ hội bán hàng & chăm sóc khách hàng'}
                 actions={
                     <Button
                         variant="secondary"
@@ -271,13 +275,13 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                             setTierRecalcing(true)
                             toast.promise(
                                 recalcAllCustomerTiers().then((res: any) => {
-                                    if (!res.success) throw new Error('Có lỗi xảy ra')
+                                    if (!res.success) throw new Error(isEn ? 'Error occurred' : 'Có lỗi xảy ra')
                                     return res
                                 }),
                                 {
-                                    loading: 'Đang tính toán tier...',
-                                    success: (res: any) => `Đã cập nhật ${res.updated} khách hàng`,
-                                    error: 'Lỗi tính toán',
+                                    loading: isEn ? 'Recalculating tiers...' : 'Đang tính toán tier...',
+                                    success: (res: any) => isEn ? `Updated ${res.updated} customers` : `Đã cập nhật ${res.updated} khách hàng`,
+                                    error: isEn ? 'Calculation error' : 'Lỗi tính toán',
                                     finally: () => setTierRecalcing(false)
                                 }
                             )
@@ -286,7 +290,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                         loading={tierRecalcing}
                     >
                         <Crown size={14} className="text-amber-600" />
-                        Recalc Tiers
+                        {isEn ? 'Recalc Tiers' : 'Tính lại Tier'}
                     </Button>
                 }
             />
@@ -294,7 +298,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
             {/* Stats */}
             <StatGrid>
                 <StatCard
-                    label="Khách Hàng Đang Hoạt Động"
+                    label={isEn ? 'Active Customers' : 'Khách Hàng Đang Hoạt Động'}
                     value={stats.total}
                     icon={Users}
                     tone="brand"
@@ -306,13 +310,13 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                     tone="success"
                 />
                 <StatCard
-                    label="Cơ Hội Đang Theo Dõi"
+                    label={isEn ? 'Open Opportunities' : 'Cơ Hội Đang Theo Dõi'}
                     value={stats.openOpps}
                     icon={TrendingUp}
                     tone="warning"
                 />
                 <StatCard
-                    label="Khiếu Nại Chưa Xử Lý"
+                    label={isEn ? 'Open Complaints' : 'Khiếu Nại Chưa Xử Lý'}
                     value={stats.openTickets}
                     icon={AlertCircle}
                     tone="danger"
@@ -322,12 +326,12 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
             {/* CRM Tabs */}
             <div className="flex gap-1 p-1 bg-white rounded-lg border border-lys-border w-fit overflow-x-auto max-w-full">
                 {([
-                    { key: 'customers' as const, label: 'Khách Hàng', icon: Users },
-                    { key: 'calls' as const, label: 'Mục Tiêu & Cuộc Gọi', icon: PhoneCall },
-                    { key: 'pipeline' as const, label: 'Cơ hội bán hàng (Pipeline)', icon: Target },
-                    { key: 'visits' as const, label: 'Kế hoạch tuần', icon: Calendar },
-                    { key: 'events' as const, label: 'Sự Kiện Thử Rượu', icon: Wine },
-                    { key: 'complaints' as const, label: 'Phiếu Khiếu Nại', icon: AlertTriangle },
+                    { key: 'customers' as const, label: isEn ? 'Customers' : 'Khách Hàng', icon: Users },
+                    { key: 'calls' as const, label: isEn ? 'Targets & Calls' : 'Mục Tiêu & Cuộc Gọi', icon: PhoneCall },
+                    { key: 'pipeline' as const, label: isEn ? 'Sales Pipeline' : 'Cơ hội bán hàng (Pipeline)', icon: Target },
+                    { key: 'visits' as const, label: isEn ? 'Weekly Planner' : 'Kế hoạch tuần', icon: Calendar },
+                    { key: 'events' as const, label: isEn ? 'Tasting Events' : 'Sự Kiện Thử Rượu', icon: Wine },
+                    { key: 'complaints' as const, label: isEn ? 'Complaint Tickets' : 'Phiếu Khiếu Nại', icon: AlertTriangle },
                 ]).map(tab => (
                     <button
                         key={tab.key}
@@ -369,7 +373,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
                                 <input
                                     type="text"
-                                    placeholder="Tìm khách hàng..."
+                                    placeholder={isEn ? 'Search customers...' : 'Tìm khách hàng...'}
                                     value={search}
                                     onChange={e => { setSearch(e.target.value); reload(e.target.value) }}
                                     className="w-full pl-9 pr-3 py-2 text-sm outline-none"
@@ -382,19 +386,19 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                 onChange={e => { setTypeFilter(e.target.value); reload(undefined, e.target.value) }}
                                 className="px-3 py-2 text-sm outline-none"
                                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: typeFilter ? '#0F172A' : '#64748B', borderRadius: '6px' }}>
-                                <option value="">Tất cả</option>
+                                <option value="">{isEn ? 'All' : 'Tất cả'}</option>
                                 <option value="HORECA">HORECA</option>
-                                <option value="WHOLESALE">Đại Lý</option>
+                                <option value="WHOLESALE">{isEn ? 'Wholesale' : 'Đại Lý'}</option>
                                 <option value="VIP_RETAIL">VIP</option>
                             </select>
                         </div>
 
                         <div className="flex items-center justify-between">
                             <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#64748B' }}>
-                                {total} Khách Hàng
+                                {total} {isEn ? 'Customers' : 'Khách Hàng'}
                             </p>
                             <div className="flex gap-1">
-                                {([['revenue', 'Revenue'], ['orders', 'Đơn'], ['name', 'Tên']] as const).map(([key, label]) => (
+                                {([['revenue', isEn ? 'Revenue' : 'Doanh số'], ['orders', isEn ? 'Orders' : 'Đơn'], ['name', isEn ? 'Name' : 'Tên']] as const).map(([key, label]) => (
                                     <button key={key} onClick={() => toggleSort(key)}
                                         className="flex items-center gap-0.5 px-2 py-1 text-[10px] font-semibold rounded transition-all"
                                         style={{
@@ -412,7 +416,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                         {/* Customer cards */}
                         <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
                             {loading ? (
-                                <div className="text-center py-8" style={{ color: '#64748B' }}>Đang tải...</div>
+                                <div className="text-center py-8" style={{ color: '#64748B' }}>{isEn ? 'Loading...' : 'Đang tải...'}</div>
                             ) : sortedRows.map(row => (
                                 <CustomerCard key={row.id} row={row} isSelected={selectedId === row.id} onSelect={() => setSelectedId(row.id)} />
                             ))}
@@ -427,26 +431,26 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                 <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                     <h3 className="text-sm font-semibold mb-4 flex items-center gap-2" style={{ color: '#0F172A' }}>
                                         <TrendingUp size={15} style={{ color: '#0891B2' }} />
-                                        Tổng Quan CRM
+                                        {isEn ? 'CRM Overview' : 'Tổng Quan CRM'}
                                     </h3>
                                     <div className="grid grid-cols-2 gap-3 mb-4">
                                         <div className="p-3 rounded-md text-center" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                             <p className="text-lg font-bold" style={{ color: '#0891B2' }}>
-                                                {totalRevAll >= 1e9 ? `${(totalRevAll / 1e9).toFixed(1)}T` : formatVND(totalRevAll)}
+                                                {totalRevAll >= 1e9 ? `${(totalRevAll / 1e9).toFixed(1)}${isEn ? 'B' : 'T'}` : formatVND(totalRevAll)}
                                             </p>
-                                            <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>Tổng Doanh Số</p>
+                                            <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>{isEn ? 'Total Revenue' : 'Tổng Doanh Số'}</p>
                                         </div>
                                         <div className="p-3 rounded-md text-center" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                             <p className="text-lg font-bold" style={{ color: '#B45309' }}>
                                                 {rows.reduce((s, r) => s + r.totalOrders, 0)}
                                             </p>
-                                            <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>Tổng Đơn Hàng</p>
+                                            <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>{isEn ? 'Total Orders' : 'Tổng Đơn Hàng'}</p>
                                         </div>
                                     </div>
 
                                     {/* Tier Distribution */}
                                     <div className="mb-4">
-                                        <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>Phân Bổ Tier</p>
+                                        <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>{isEn ? 'Tier Distribution' : 'Phân Bổ Tier'}</p>
                                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                             {(['PLATINUM', 'GOLD', 'SILVER', 'BRONZE'] as const).map(tier => {
                                                 const cfg = TIER_CFG[tier]
@@ -466,7 +470,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                     <div>
                                         <p className="text-xs font-semibold uppercase tracking-wide mb-2 flex items-center gap-1.5" style={{ color: '#64748B' }}>
                                             <Award size={13} className="text-amber-600 shrink-0" />
-                                            <span>Top 5 Khách Hàng</span>
+                                            <span>{isEn ? 'Top 5 Customers' : 'Top 5 Khách Hàng'}</span>
                                         </p>
                                         <div className="space-y-1">
                                             {topCustomers.map((c, i) => {
@@ -481,12 +485,12 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                             <div className="text-left">
                                                                 <p className="text-xs font-semibold" style={{ color: '#0F172A' }}>{c.name}</p>
                                                                 <p className="text-[10px] flex items-center gap-1" style={{ color: cfg.color }}>
-                                                                    <Award size={10} /> {cfg.label} · {c.totalOrders} đơn
+                                                                    <Award size={10} /> {cfg.label} · {c.totalOrders} {isEn ? 'orders' : 'đơn'}
                                                                 </p>
                                                             </div>
                                                         </div>
                                                         <span className="text-xs font-bold" style={{ color: '#0891B2' }}>
-                                                            {c.totalRevenue >= 1e9 ? `${(c.totalRevenue / 1e9).toFixed(2)} tỷ` : formatVND(c.totalRevenue)}
+                                                            {c.totalRevenue >= 1e9 ? `${(c.totalRevenue / 1e9).toFixed(2)} ${isEn ? 'B' : 'tỷ'}` : formatVND(c.totalRevenue)}
                                                         </span>
                                                     </button>
                                                 )
@@ -496,7 +500,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                 </div>
 
                                 <p className="text-xs text-center" style={{ color: '#64748B' }}>
-                                    ← Chọn một khách hàng để xem hồ sơ 360°
+                                    {isEn ? '← Select a customer to view 360° profile' : '← Chọn một khách hàng để xem hồ sơ 360°'}
                                 </p>
                             </div>
                         ) : (
@@ -521,9 +525,9 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                     {/* KPIs */}
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         {[
-                                            { label: 'Tổng Doanh Số', value: selectedCustomer.totalRevenue >= 1e9 ? `${(selectedCustomer.totalRevenue / 1e9).toFixed(2)} tỷ ₫` : formatVND(selectedCustomer.totalRevenue), color: '#0891B2' },
-                                            { label: 'Số Đơn Hàng', value: selectedCustomer.totalOrders, color: '#15803D' },
-                                            { label: 'Credit Limit', value: formatVND(selectedCustomer.creditLimit), color: '#B45309' },
+                                            { label: isEn ? 'Total Revenue' : 'Tổng Doanh Số', value: selectedCustomer.totalRevenue >= 1e9 ? `${(selectedCustomer.totalRevenue / 1e9).toFixed(2)} ${isEn ? 'B ₫' : 'tỷ ₫'}` : formatVND(selectedCustomer.totalRevenue), color: '#0891B2' },
+                                            { label: isEn ? 'Total Orders' : 'Số Đơn Hàng', value: selectedCustomer.totalOrders, color: '#15803D' },
+                                            { label: isEn ? 'Credit Limit' : 'Hạn Mức Tín Dụng', value: formatVND(selectedCustomer.creditLimit), color: '#B45309' },
                                         ].map(kpi => (
                                             <div key={kpi.label} className="text-center p-3 rounded-md" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                                 <p className="text-lg font-bold" style={{ color: kpi.color }}>{kpi.value}</p>
@@ -551,20 +555,20 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
 
                                 {/* 360 data from profile */}
                                 {profileLoading ? (
-                                    <div className="p-4 text-center text-xs" style={{ color: '#64748B' }}>Loading...</div>
+                                    <div className="p-4 text-center text-xs" style={{ color: '#64748B' }}>{isEn ? 'Loading...' : 'Đang tải...'}</div>
                                 ) : profile && (
                                     <>
                                         {profile.arBalance > 0 && (
                                             <div className="p-3 rounded-md flex items-center justify-between"
                                                 style={{ background: 'rgba(180,83,9,0.08)', border: '1px solid rgba(180,83,9,0.2)' }}>
-                                                <span className="text-xs" style={{ color: '#B45309' }}>Công nợ chưa thu</span>
+                                                <span className="text-xs" style={{ color: '#B45309' }}>{isEn ? 'Outstanding AR Balance' : 'Công nợ chưa thu'}</span>
                                                 <span className="text-sm font-bold" style={{ color: '#B45309' }}>{formatVND(profile.arBalance)}</span>
                                             </div>
                                         )}
                                         <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                            <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#64748B' }}>Đơn Hàng Gần Đây</p>
+                                            <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#64748B' }}>{isEn ? 'Recent Orders' : 'Đơn Hàng Gần Đây'}</p>
                                             {profile.recentOrders.length === 0 ? (
-                                                <p className="text-xs py-3 text-center" style={{ color: '#64748B' }}>Chưa có đơn hàng</p>
+                                                <p className="text-xs py-3 text-center" style={{ color: '#64748B' }}>{isEn ? 'No orders yet' : 'Chưa có đơn hàng'}</p>
                                             ) : (
                                                 <div className="space-y-1.5">
                                                     {profile.recentOrders.slice(0, 5).map(o => (
@@ -582,7 +586,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                             <button onClick={loadTxHistory} className="w-full py-2 text-xs font-semibold rounded transition-all flex items-center justify-center gap-1.5"
                                                 style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
                                                 <BarChart3 size={13} className="shrink-0" />
-                                                <span>Xem Toàn Bộ Lịch Sử Giao Dịch</span>
+                                                <span>{isEn ? 'View Full Transaction History' : 'Xem Toàn Bộ Lịch Sử Giao Dịch'}</span>
                                             </button>
                                         )}
 
@@ -592,10 +596,10 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                 {/* Summary Stats */}
                                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                                     {[
-                                                        { label: 'All-time Revenue', value: txHistory.allTimeRevenue >= 1e9 ? `${(txHistory.allTimeRevenue / 1e9).toFixed(2)} tỷ ₫` : formatVND(txHistory.allTimeRevenue), color: '#0891B2' },
-                                                        { label: 'Tổng Đơn', value: txHistory.totalOrders, color: '#1D4ED8' },
-                                                        { label: 'Đã Xác Nhận', value: txHistory.confirmedOrders, color: '#15803D' },
-                                                        { label: 'TB/Đơn', value: formatVND(txHistory.avgOrderValue), color: '#B45309' },
+                                                        { label: isEn ? 'All-time Revenue' : 'Tổng Doanh Số', value: txHistory.allTimeRevenue >= 1e9 ? `${(txHistory.allTimeRevenue / 1e9).toFixed(2)} ${isEn ? 'B ₫' : 'tỷ ₫'}` : formatVND(txHistory.allTimeRevenue), color: '#0891B2' },
+                                                        { label: isEn ? 'Total Orders' : 'Tổng Đơn', value: txHistory.totalOrders, color: '#1D4ED8' },
+                                                        { label: isEn ? 'Confirmed' : 'Đã Xác Nhận', value: txHistory.confirmedOrders, color: '#15803D' },
+                                                        { label: isEn ? 'Avg/Order' : 'TB/Đơn', value: formatVND(txHistory.avgOrderValue), color: '#B45309' },
                                                     ].map(s => (
                                                         <div key={s.label} className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                                             <p className="text-sm font-bold" style={{ color: s.color }}>{s.value}</p>
@@ -609,7 +613,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                     <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                                         <p className="text-xs font-semibold uppercase tracking-wide mb-2 flex items-center gap-1.5" style={{ color: '#B45309' }}>
                                                             <Award size={13} className="shrink-0" />
-                                                            <span>Top SKU Hay Mua</span>
+                                                            <span>{isEn ? 'Top Purchased SKUs' : 'Top SKU Hay Mua'}</span>
                                                         </p>
                                                         <div className="space-y-1">
                                                             {txHistory.topSkus.slice(0, 5).map((sku, i) => (
@@ -622,8 +626,8 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                                         </div>
                                                                     </div>
                                                                     <div className="text-right">
-                                                                        <span className="text-xs font-bold" style={{ color: '#0F172A' }}>{sku.totalQty} chai</span>
-                                                                        <span className="text-xs ml-2" style={{ color: '#15803D' }}>{sku.totalValue >= 1e9 ? `${(sku.totalValue / 1e9).toFixed(1)} tỷ` : formatVND(sku.totalValue)}</span>
+                                                                        <span className="text-xs font-bold" style={{ color: '#0F172A' }}>{sku.totalQty} {isEn ? 'btl' : 'chai'}</span>
+                                                                        <span className="text-xs ml-2" style={{ color: '#15803D' }}>{sku.totalValue >= 1e9 ? `${(sku.totalValue / 1e9).toFixed(1)} ${isEn ? 'B' : 'tỷ'}` : formatVND(sku.totalValue)}</span>
                                                                     </div>
                                                                 </div>
                                                             ))}
@@ -634,7 +638,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                 {/* All Orders */}
                                                 <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                                     <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>
-                                                        Toàn Bộ Đơn Hàng ({txHistory.orders.length})
+                                                        {isEn ? `All Orders (${txHistory.orders.length})` : `Toàn Bộ Đơn Hàng (${txHistory.orders.length})`}
                                                     </p>
                                                     <div className="space-y-1 max-h-[250px] overflow-y-auto">
                                                         {txHistory.orders.map(o => (
@@ -655,7 +659,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                 {txHistory.invoices.length > 0 && (
                                                     <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                                         <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>
-                                                            Công Nợ / Hóa Đơn ({txHistory.invoices.length})
+                                                            {isEn ? `AR / Invoices (${txHistory.invoices.length})` : `Công Nợ / Hóa Đơn (${txHistory.invoices.length})`}
                                                         </p>
                                                         <div className="space-y-1 max-h-[200px] overflow-y-auto">
                                                             {txHistory.invoices.map(inv => (
@@ -670,7 +674,7 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                                     }}>{inv.status}</span>
                                                                     <div className="text-right">
                                                                         <span className="text-xs font-bold" style={{ color: '#0F172A' }}>{formatVND(inv.amount)}</span>
-                                                                        <span className="text-[10px] block" style={{ color: '#15803D' }}>Đã thu: {formatVND(inv.paidAmount)}</span>
+                                                                        <span className="text-[10px] block" style={{ color: '#15803D' }}>{isEn ? 'Paid:' : 'Đã thu:'} {formatVND(inv.paidAmount)}</span>
                                                                     </div>
                                                                 </div>
                                                             ))}
@@ -679,12 +683,12 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
                                                 )}
 
                                                 <button onClick={() => setTxOpen(false)} className="w-full py-1.5 text-xs rounded"
-                                                    style={{ background: '#E2E8F0', color: '#475569' }}>Thu Gọn</button>
+                                                    style={{ background: '#E2E8F0', color: '#475569' }}>{isEn ? 'Collapse' : 'Thu Gọn'}</button>
                                             </div>
                                         )}
                                         {profile.recentActivities.length > 0 && (
                                             <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                                <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#64748B' }}>Lịch Sử Tương Tác</p>
+                                                <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#64748B' }}>{isEn ? 'Activity History' : 'Lịch Sử Tương Tác'}</p>
                                                 <div className="space-y-2">
                                                     {profile.recentActivities.slice(0, 5).map(a => {
                                                         const Icon = ACTIVITY_ICONS[a.type as ActivityType] ?? MessageSquarePlus

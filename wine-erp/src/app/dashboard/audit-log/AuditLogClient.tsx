@@ -2,75 +2,67 @@
 
 import { useState, useTransition } from 'react'
 import {
-    ScrollText, Search, Filter, ChevronLeft, ChevronRight,
-    Calendar, User, Shield, Clock, Activity, AlertTriangle,
+    ScrollText, Filter, Calendar, User, Shield, Clock, Activity, AlertTriangle,
     Plus, Edit, Trash2, CheckCircle2, XCircle, RefreshCw,
-    Eye, Send, ArrowRight, FileSignature, BarChart3
+    ArrowRight, FileSignature
 } from 'lucide-react'
 import { getAuditLogsDashboard, type AuditLogRow, type AuditStats, type AuditFilters } from './actions'
+import {
+    PageHeader, StatGrid, StatCard, Toolbar, SearchInput,
+    Button, Select, Input, Field, Pagination, Badge, EmptyState
+} from '@/components/ui'
+import type { Tone } from '@/lib/ui/status'
+import { useAppLocale } from '@/lib/i18n'
+import { AUDIT_LOG_I18N } from './i18n'
+import { cn } from '@/lib/utils'
 
-// ═══════════════════════════════════════════════════
-// ACTION DISPLAY CONFIG
-// ═══════════════════════════════════════════════════
-
-const ACTION_CONFIG: Record<string, { icon: typeof Plus; color: string; bgColor: string; label: string }> = {
-    CREATE: { icon: Plus, color: '#22C55E', bgColor: 'rgba(34,197,94,0.12)', label: 'Tạo mới' },
-    UPDATE: { icon: Edit, color: '#F59E0B', bgColor: 'rgba(245,158,11,0.12)', label: 'Cập nhật' },
-    DELETE: { icon: Trash2, color: '#B91C1C', bgColor: 'rgba(185,28,28,0.12)', label: 'Xóa' },
-    APPROVE: { icon: CheckCircle2, color: '#22C55E', bgColor: 'rgba(34,197,94,0.12)', label: 'Duyệt' },
-    REJECT: { icon: XCircle, color: '#B91C1C', bgColor: 'rgba(185,28,28,0.12)', label: 'Từ chối' },
-    STATUS_CHANGE: { icon: RefreshCw, color: '#0891B2', bgColor: 'rgba(8,145,178,0.12)', label: 'Đổi trạng thái' },
-    CONFIRM: { icon: CheckCircle2, color: '#06B6D4', bgColor: 'rgba(6,182,212,0.12)', label: 'Xác nhận' },
-    LOGIN: { icon: User, color: '#64748B', bgColor: 'rgba(100,116,139,0.12)', label: 'Đăng nhập' },
-    EXPORT: { icon: ArrowRight, color: '#64748B', bgColor: 'rgba(100,116,139,0.12)', label: 'Xuất dữ liệu' },
-    SIGN: { icon: FileSignature, color: '#0891B2', bgColor: 'rgba(8, 145, 178, 0.08)', label: 'Ký duyệt' },
-    RETURN: { icon: RefreshCw, color: '#F59E0B', bgColor: 'rgba(245,158,11,0.12)', label: 'Trả lại' },
+const ACTION_CONFIG: Record<string, { icon: typeof Plus; color: string; tone: Tone }> = {
+    CREATE: { icon: Plus, color: '#22C55E', tone: 'success' },
+    UPDATE: { icon: Edit, color: '#F59E0B', tone: 'warning' },
+    DELETE: { icon: Trash2, color: '#B91C1C', tone: 'danger' },
+    APPROVE: { icon: CheckCircle2, color: '#22C55E', tone: 'success' },
+    REJECT: { icon: XCircle, color: '#B91C1C', tone: 'danger' },
+    STATUS_CHANGE: { icon: RefreshCw, color: '#0891B2', tone: 'brand' },
+    CONFIRM: { icon: CheckCircle2, color: '#06B6D4', tone: 'info' },
+    LOGIN: { icon: User, color: '#64748B', tone: 'neutral' },
+    EXPORT: { icon: ArrowRight, color: '#64748B', tone: 'neutral' },
+    SIGN: { icon: FileSignature, color: '#0891B2', tone: 'brand' },
+    RETURN: { icon: RefreshCw, color: '#F59E0B', tone: 'warning' },
 }
 
-const ENTITY_LABELS: Record<string, string> = {
-    Product: 'Sản phẩm', Customer: 'Khách hàng', Supplier: 'Nhà cung cấp',
-    SalesOrder: 'Đơn bán hàng', PurchaseOrder: 'Đơn mua hàng',
-    PriceList: 'Bảng giá', PriceListLine: 'Dòng bảng giá', PriceList_BulkUpdate: 'Điều chỉnh giá hàng loạt',
-    GoodsReceipt: 'Nhập kho', DeliveryOrder: 'Xuất kho',
-    Quotation: 'Báo giá', StockLot: 'Lô hàng', Contract: 'Hợp đồng',
-    User: 'Người dùng', Role: 'Vai trò', UserRole: 'Gán vai trò', RolePermission: 'Phân quyền',
-    Proposal: 'Tờ trình', ApprovalRequest: 'Yêu cầu duyệt',
-    POSOrder: 'Đơn POS', Transfer: 'Chuyển kho',
+function getActionConfig(action: string, i18n: typeof AUDIT_LOG_I18N['vi']) {
+    const cfg = ACTION_CONFIG[action] ?? { icon: Activity, color: '#64748B', tone: 'neutral' as Tone }
+    const label = (i18n.actions as Record<string, string>)[action] ?? action
+    return { ...cfg, label }
 }
 
-function getActionConfig(action: string) {
-    return ACTION_CONFIG[action] ?? { icon: Activity, color: '#64748B', bgColor: 'rgba(100,116,139,0.12)', label: action }
+function formatEntityType(type: string, i18n: typeof AUDIT_LOG_I18N['vi']) {
+    return (i18n.entities as Record<string, string>)[type] ?? type.replace(/_/g, ' ')
 }
 
-function formatEntityType(type: string) {
-    return ENTITY_LABELS[type] ?? type.replace(/_/g, ' ')
-}
+function FieldDiffViewer({
+    oldValue,
+    newValue,
+    action,
+    i18n,
+    formatNumber,
+}: {
+    oldValue: any
+    newValue: any
+    action: string
+    i18n: typeof AUDIT_LOG_I18N['vi']
+    formatNumber: (v: number) => string
+}) {
+    const formatFieldValue = (val: unknown): string => {
+        if (val === null || val === undefined) return i18n.emptyVal
+        if (typeof val === 'boolean') return val ? i18n.yes : i18n.no
+        if (typeof val === 'number') return formatNumber(val)
+        if (Array.isArray(val)) return val.join(', ')
+        if (typeof val === 'object') return JSON.stringify(val).slice(0, 60)
+        const str = String(val)
+        return str.length > 60 ? str.slice(0, 57) + '...' : str
+    }
 
-function formatTimeAgo(date: Date): string {
-    const now = new Date()
-    const diff = now.getTime() - new Date(date).getTime()
-    const mins = Math.floor(diff / 60000)
-    if (mins < 1) return 'Vừa xong'
-    if (mins < 60) return `${mins} phút trước`
-    const hours = Math.floor(mins / 60)
-    if (hours < 24) return `${hours} giờ trước`
-    const days = Math.floor(hours / 24)
-    if (days < 7) return `${days} ngày trước`
-    return new Date(date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
-}
-
-function formatDateTime(date: Date): string {
-    return new Date(date).toLocaleString('vi-VN', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit', second: '2-digit',
-    })
-}
-
-// ═══════════════════════════════════════════════════
-// FIELD DIFF VIEWER
-// ═══════════════════════════════════════════════════
-
-function FieldDiffViewer({ oldValue, newValue, action }: { oldValue: any; newValue: any; action: string }) {
     if (action === 'CREATE' && newValue) {
         const entries = Object.entries(newValue).filter(([k]) => !k.startsWith('_'))
         if (entries.length === 0) return null
@@ -78,11 +70,13 @@ function FieldDiffViewer({ oldValue, newValue, action }: { oldValue: any; newVal
             <div className="mt-2 space-y-1">
                 {entries.slice(0, 6).map(([key, val]) => (
                     <div key={key} className="flex items-center gap-2 text-xs">
-                        <span style={{ color: '#64748B' }}>{key}:</span>
-                        <span style={{ color: '#22C55E' }}>{formatFieldValue(val)}</span>
+                        <span className="text-lys-muted">{key}:</span>
+                        <span className="text-tone-success-fg font-medium">{formatFieldValue(val)}</span>
                     </div>
                 ))}
-                {entries.length > 6 && <span className="text-xs" style={{ color: '#64748B' }}>+{entries.length - 6} trường khác</span>}
+                {entries.length > 6 && (
+                    <span className="text-xs text-lys-muted">+{entries.length - 6} {i18n.moreFields}</span>
+                )}
             </div>
         )
     }
@@ -94,15 +88,14 @@ function FieldDiffViewer({ oldValue, newValue, action }: { oldValue: any; newVal
             <div className="mt-2 space-y-1">
                 {entries.slice(0, 4).map(([key, val]) => (
                     <div key={key} className="flex items-center gap-2 text-xs">
-                        <span style={{ color: '#64748B' }}>{key}:</span>
-                        <span style={{ color: '#B91C1C', textDecoration: 'line-through' }}>{formatFieldValue(val)}</span>
+                        <span className="text-lys-muted">{key}:</span>
+                        <span className="text-tone-danger-fg line-through">{formatFieldValue(val)}</span>
                     </div>
                 ))}
             </div>
         )
     }
 
-    // UPDATE — show field changes
     if ((action === 'UPDATE' || action === 'STATUS_CHANGE') && oldValue) {
         const fieldChanges = (oldValue as any)?._fieldChanges
         if (Array.isArray(fieldChanges) && fieldChanges.length > 0) {
@@ -110,20 +103,20 @@ function FieldDiffViewer({ oldValue, newValue, action }: { oldValue: any; newVal
                 <div className="mt-2 space-y-1.5">
                     {fieldChanges.slice(0, 5).map((fc: any, i: number) => (
                         <div key={i} className="flex items-center gap-1.5 text-xs flex-wrap">
-                            <span className="font-medium" style={{ color: '#475569' }}>{fc.field}:</span>
-                            <span style={{ color: '#B91C1C' }}>{formatFieldValue(fc.from)}</span>
-                            <ArrowRight size={10} style={{ color: '#64748B' }} />
-                            <span style={{ color: '#22C55E' }}>{formatFieldValue(fc.to)}</span>
+                            <span className="font-medium text-lys-secondary">{fc.field}:</span>
+                            <span className="text-tone-danger-fg">{formatFieldValue(fc.from)}</span>
+                            <ArrowRight size={10} className="text-lys-muted" />
+                            <span className="text-tone-success-fg font-medium">{formatFieldValue(fc.to)}</span>
                         </div>
                     ))}
-                    {fieldChanges.length > 5 && <span className="text-xs" style={{ color: '#64748B' }}>+{fieldChanges.length - 5} trường khác</span>}
+                    {fieldChanges.length > 5 && (
+                        <span className="text-xs text-lys-muted">+{fieldChanges.length - 5} {i18n.moreFields}</span>
+                    )}
                 </div>
             )
         }
 
-        // Fallback: show old vs new summary
         if (newValue && oldValue) {
-            const oldEntries = Object.entries(oldValue).filter(([k]) => !k.startsWith('_'))
             const newEntries = Object.entries(newValue).filter(([k]) => !k.startsWith('_'))
             const changes = newEntries.filter(([k, v]) => {
                 const oldV = (oldValue as any)[k]
@@ -134,10 +127,10 @@ function FieldDiffViewer({ oldValue, newValue, action }: { oldValue: any; newVal
                 <div className="mt-2 space-y-1.5">
                     {changes.slice(0, 5).map(([key, val]) => (
                         <div key={key} className="flex items-center gap-1.5 text-xs flex-wrap">
-                            <span className="font-medium" style={{ color: '#475569' }}>{key}:</span>
-                            <span style={{ color: '#B91C1C' }}>{formatFieldValue((oldValue as any)[key])}</span>
-                            <ArrowRight size={10} style={{ color: '#64748B' }} />
-                            <span style={{ color: '#22C55E' }}>{formatFieldValue(val)}</span>
+                            <span className="font-medium text-lys-secondary">{key}:</span>
+                            <span className="text-tone-danger-fg">{formatFieldValue((oldValue as any)[key])}</span>
+                            <ArrowRight size={10} className="text-lys-muted" />
+                            <span className="text-tone-success-fg font-medium">{formatFieldValue(val)}</span>
                         </div>
                     ))}
                 </div>
@@ -145,7 +138,6 @@ function FieldDiffViewer({ oldValue, newValue, action }: { oldValue: any; newVal
         }
     }
 
-    // For STATUS_CHANGE with newValue only
     if (newValue && !oldValue) {
         const entries = Object.entries(newValue).filter(([k]) => !k.startsWith('_'))
         if (entries.length === 0) return null
@@ -153,8 +145,8 @@ function FieldDiffViewer({ oldValue, newValue, action }: { oldValue: any; newVal
             <div className="mt-2 space-y-1">
                 {entries.slice(0, 4).map(([key, val]) => (
                     <div key={key} className="flex items-center gap-2 text-xs">
-                        <span style={{ color: '#64748B' }}>{key}:</span>
-                        <span style={{ color: '#0891B2' }}>{formatFieldValue(val)}</span>
+                        <span className="text-lys-muted">{key}:</span>
+                        <span className="text-lys-teal-strong font-medium">{formatFieldValue(val)}</span>
                     </div>
                 ))}
             </div>
@@ -164,22 +156,6 @@ function FieldDiffViewer({ oldValue, newValue, action }: { oldValue: any; newVal
     return null
 }
 
-function formatFieldValue(val: unknown): string {
-    if (val === null || val === undefined) return '(trống)'
-    if (typeof val === 'boolean') return val ? 'Có' : 'Không'
-    if (typeof val === 'number') return val.toLocaleString('vi-VN')
-    if (Array.isArray(val)) return val.join(', ')
-    if (typeof val === 'object') return JSON.stringify(val).slice(0, 60)
-    const str = String(val)
-    return str.length > 60 ? str.slice(0, 57) + '...' : str
-}
-
-import { PageHeader, StatGrid, StatCard } from '@/components/ui'
-
-// ═══════════════════════════════════════════════════
-// MAIN COMPONENT
-// ═══════════════════════════════════════════════════
-
 interface AuditLogClientProps {
     initialRows: AuditLogRow[]
     initialTotal: number
@@ -188,6 +164,9 @@ interface AuditLogClientProps {
 }
 
 export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions }: AuditLogClientProps) {
+    const { locale, formatDate, formatNumber } = useAppLocale()
+    const i18n = AUDIT_LOG_I18N[locale]
+
     const [rows, setRows] = useState(initialRows)
     const [total, setTotal] = useState(initialTotal)
     const [page, setPage] = useState(1)
@@ -198,6 +177,19 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
     const [isPending, startTransition] = useTransition()
     const pageSize = 30
     const totalPages = Math.ceil(total / pageSize)
+
+    const formatTimeAgo = (date: Date): string => {
+        const now = new Date()
+        const diff = now.getTime() - new Date(date).getTime()
+        const mins = Math.floor(diff / 60000)
+        if (mins < 1) return i18n.justNow
+        if (mins < 60) return `${mins} ${i18n.minsAgo}`
+        const hours = Math.floor(mins / 60)
+        if (hours < 24) return `${hours} ${i18n.hoursAgo}`
+        const days = Math.floor(hours / 24)
+        if (days < 7) return `${days} ${i18n.daysAgo}`
+        return formatDate(date)
+    }
 
     async function fetchLogs(newFilters: AuditFilters, newPage: number) {
         startTransition(async () => {
@@ -236,61 +228,58 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
     const hasActiveFilters = Object.values(filters).some(v => v)
 
     return (
-        <div className="space-y-5 max-w-screen-2xl" style={{ opacity: isPending ? 0.7 : 1, transition: 'opacity 150ms' }}>
+        <div className={cn('space-y-5 max-w-screen-2xl transition-opacity duration-150', isPending && 'opacity-70')}>
             {/* Header */}
             <PageHeader
-                title="Nhật Ký Hệ Thống"
-                description="Theo dõi mọi thay đổi quan trọng trong hệ thống ERP"
+                description={i18n.description}
                 actions={
                     <div className="text-right">
-                        <p className="text-xs text-slate-500 font-medium">Tổng sự kiện</p>
-                        <p className="text-lg font-bold text-[#0891B2] font-mono">{stats.total.toLocaleString('vi-VN')}</p>
+                        <p className="type-caption text-lys-muted font-medium">{i18n.totalEvents}</p>
+                        <p className="text-lg font-bold text-lys-teal-strong font-mono">{formatNumber(stats.total)}</p>
                     </div>
                 }
             />
 
             {/* Stats Cards */}
             <StatGrid>
-                <StatCard label="Hôm nay" value={stats.today} icon={Calendar} tone="success" />
-                <StatCard label="7 ngày qua" value={stats.thisWeek} icon={Activity} />
-                <StatCard label="Users hoạt động" value={stats.uniqueUsers} icon={User} />
-                <StatCard label="Tổng sự kiện" value={stats.total} icon={Shield} />
+                <StatCard label={i18n.today} value={formatNumber(stats.today)} icon={Calendar} tone="success" />
+                <StatCard label={i18n.last7Days} value={formatNumber(stats.thisWeek)} icon={Activity} tone="info" />
+                <StatCard label={i18n.activeUsers} value={formatNumber(stats.uniqueUsers)} icon={User} />
+                <StatCard label={i18n.totalEvents} value={formatNumber(stats.total)} icon={Shield} tone="brand" />
             </StatGrid>
 
             {/* Top Actions & Modules Mini Charts */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {/* Top Actions */}
-                <div className="p-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#64748B' }}>
-                        Loại Hành Động
+                <div className="p-4 rounded-lg bg-white border border-lys-border shadow-2xs">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-lys-muted mb-3">
+                        {i18n.actionTypes}
                     </p>
                     <div className="space-y-2">
                         {stats.topActions.slice(0, 6).map(a => {
-                            const config = getActionConfig(a.action)
+                            const config = getActionConfig(a.action, i18n as any)
                             const pct = stats.total > 0 ? (a.count / stats.total * 100) : 0
                             return (
                                 <div key={a.action} className="flex items-center gap-3">
-                                    <div className="flex items-center gap-2 w-28">
+                                    <div className="flex items-center gap-2 w-32 shrink-0">
                                         <config.icon size={12} style={{ color: config.color }} />
-                                        <span className="text-xs truncate" style={{ color: '#475569' }}>{config.label}</span>
+                                        <span className="text-xs truncate text-lys-secondary">{config.label}</span>
                                     </div>
-                                    <div className="flex-1 h-1.5 rounded-full" style={{ background: '#E2E8F0' }}>
+                                    <div className="flex-1 h-1.5 rounded-full bg-lys-subtle">
                                         <div
                                             className="h-full rounded-full transition-all duration-500"
                                             style={{ width: `${Math.max(pct, 2)}%`, background: config.color }}
                                         />
                                     </div>
-                                    <span className="text-xs w-12 text-right tabular-nums" style={{ color: '#64748B' }}>{a.count}</span>
+                                    <span className="text-xs w-12 text-right font-mono text-lys-muted">{formatNumber(a.count)}</span>
                                 </div>
                             )
                         })}
                     </div>
                 </div>
 
-                {/* Top Modules */}
-                <div className="p-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#64748B' }}>
-                        Module Hoạt Động
+                <div className="p-4 rounded-lg bg-white border border-lys-border shadow-2xs">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-lys-muted mb-3">
+                        {i18n.activeModules}
                     </p>
                     <div className="space-y-2">
                         {stats.topModules.slice(0, 6).map(m => {
@@ -298,14 +287,16 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                             const pct = (m.count / maxCount * 100)
                             return (
                                 <div key={m.entityType} className="flex items-center gap-3">
-                                    <span className="text-xs w-32 truncate" style={{ color: '#475569' }}>{formatEntityType(m.entityType)}</span>
-                                    <div className="flex-1 h-1.5 rounded-full" style={{ background: '#E2E8F0' }}>
+                                    <span className="text-xs w-36 truncate text-lys-secondary shrink-0">
+                                        {formatEntityType(m.entityType, i18n as any)}
+                                    </span>
+                                    <div className="flex-1 h-1.5 rounded-full bg-lys-subtle">
                                         <div
-                                            className="h-full rounded-full transition-all duration-500"
-                                            style={{ width: `${Math.max(pct, 2)}%`, background: '#0E7490' }}
+                                            className="h-full rounded-full transition-all duration-500 bg-lys-teal-strong"
+                                            style={{ width: `${Math.max(pct, 2)}%` }}
                                         />
                                     </div>
-                                    <span className="text-xs w-12 text-right tabular-nums" style={{ color: '#64748B' }}>{m.count}</span>
+                                    <span className="text-xs w-12 text-right font-mono text-lys-muted">{formatNumber(m.count)}</span>
                                 </div>
                             )
                         })}
@@ -314,134 +305,115 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
             </div>
 
             {/* Search & Filters */}
-            <div className="p-4 rounded-lg space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                <div className="flex items-center gap-3 flex-wrap">
-                    {/* Search */}
-                    <div className="flex items-center flex-1 min-w-[200px] gap-2 px-3 py-2 rounded-md" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                        <Search size={14} style={{ color: '#64748B' }} />
-                        <input
-                            type="text"
-                            placeholder="Tìm theo user, module, entity ID..."
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                            className="flex-1 bg-transparent text-sm outline-none"
-                            style={{ color: '#0F172A' }}
-                        />
-                    </div>
+            <div className="p-4 rounded-lg bg-white border border-lys-border shadow-2xs space-y-3">
+                <Toolbar
+                    left={
+                        <div className="flex items-center gap-2 flex-1 min-w-[240px]">
+                            <SearchInput
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                                placeholder={i18n.searchPlaceholder}
+                                className="flex-1"
+                            />
+                            <Button onClick={handleSearch}>
+                                {i18n.searchBtn}
+                            </Button>
+                        </div>
+                    }
+                    right={
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="secondary"
+                                onClick={() => setShowFilters(!showFilters)}
+                                className={showFilters || hasActiveFilters ? 'border-lys-teal text-lys-teal-strong bg-lys-teal-soft' : undefined}
+                            >
+                                <Filter size={14} aria-hidden />
+                                {i18n.advancedFilters}
+                                {hasActiveFilters && <span className="w-2 h-2 rounded-full bg-lys-teal-strong" />}
+                            </Button>
+                            {hasActiveFilters && (
+                                <Button variant="danger-outline" size="sm" onClick={handleClearFilters}>
+                                    {i18n.clearFilters}
+                                </Button>
+                            )}
+                        </div>
+                    }
+                />
 
-                    <button
-                        onClick={handleSearch}
-                        className="px-4 py-2 text-sm font-medium rounded-md transition-all"
-                        style={{ background: '#0E7490', color: '#FFFFFF' }}
-                    >
-                        Tìm kiếm
-                    </button>
-
-                    <button
-                        onClick={() => setShowFilters(!showFilters)}
-                        className="px-3 py-2 text-sm rounded-md flex items-center gap-2 transition-all"
-                        style={{
-                            background: showFilters ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
-                            border: '1px solid #E2E8F0',
-                            color: showFilters ? '#0E7490' : '#475569',
-                        }}
-                    >
-                        <Filter size={14} />
-                        Lọc nâng cao
-                        {hasActiveFilters && (
-                            <span className="w-2 h-2 rounded-full" style={{ background: '#0E7490' }} />
-                        )}
-                    </button>
-
-                    {hasActiveFilters && (
-                        <button
-                            onClick={handleClearFilters}
-                            className="px-3 py-2 text-xs rounded-md transition-all"
-                            style={{ border: '1px solid #E2E8F0', color: '#B91C1C' }}
-                        >
-                            Xóa bộ lọc
-                        </button>
-                    )}
-                </div>
-
-                {/* Filter Row */}
                 {showFilters && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2" style={{ borderTop: '1px solid #E2E8F0' }}>
-                        <div>
-                            <label className="block text-xs mb-1" style={{ color: '#64748B' }}>Module</label>
-                            <select
-                                value={filters.entityType ?? ''}
-                                onChange={e => handleFilterChange('entityType', e.target.value)}
-                                className="w-full px-2 py-1.5 rounded text-sm"
-                                style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }}
-                            >
-                                <option value="">Tất cả</option>
-                                {filterOptions.entityTypes.map(t => (
-                                    <option key={t} value={t}>{formatEntityType(t)}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-xs mb-1" style={{ color: '#64748B' }}>Hành động</label>
-                            <select
-                                value={filters.action ?? ''}
-                                onChange={e => handleFilterChange('action', e.target.value)}
-                                className="w-full px-2 py-1.5 rounded text-sm"
-                                style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }}
-                            >
-                                <option value="">Tất cả</option>
-                                {filterOptions.actions.map(a => (
-                                    <option key={a} value={a}>{getActionConfig(a).label}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-xs mb-1" style={{ color: '#64748B' }}>Từ ngày</label>
-                            <input
-                                type="date"
-                                value={filters.dateFrom ?? ''}
-                                onChange={e => handleFilterChange('dateFrom', e.target.value)}
-                                className="w-full px-2 py-1.5 rounded text-sm"
-                                style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs mb-1" style={{ color: '#64748B' }}>Đến ngày</label>
-                            <input
-                                type="date"
-                                value={filters.dateTo ?? ''}
-                                onChange={e => handleFilterChange('dateTo', e.target.value)}
-                                className="w-full px-2 py-1.5 rounded text-sm"
-                                style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }}
-                            />
-                        </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-lys-border">
+                        <Field label={i18n.module}>
+                            {id => (
+                                <Select
+                                    id={id}
+                                    value={filters.entityType ?? ''}
+                                    onChange={e => handleFilterChange('entityType', e.target.value)}
+                                >
+                                    <option value="">{i18n.all}</option>
+                                    {filterOptions.entityTypes.map(t => (
+                                        <option key={t} value={t}>{formatEntityType(t, i18n as any)}</option>
+                                    ))}
+                                </Select>
+                            )}
+                        </Field>
+                        <Field label={i18n.action}>
+                            {id => (
+                                <Select
+                                    id={id}
+                                    value={filters.action ?? ''}
+                                    onChange={e => handleFilterChange('action', e.target.value)}
+                                >
+                                    <option value="">{i18n.all}</option>
+                                    {filterOptions.actions.map(a => (
+                                        <option key={a} value={a}>{getActionConfig(a, i18n as any).label}</option>
+                                    ))}
+                                </Select>
+                            )}
+                        </Field>
+                        <Field label={i18n.fromDate}>
+                            {id => (
+                                <Input
+                                    id={id}
+                                    type="date"
+                                    value={filters.dateFrom ?? ''}
+                                    onChange={e => handleFilterChange('dateFrom', e.target.value)}
+                                />
+                            )}
+                        </Field>
+                        <Field label={i18n.toDate}>
+                            {id => (
+                                <Input
+                                    id={id}
+                                    type="date"
+                                    value={filters.dateTo ?? ''}
+                                    onChange={e => handleFilterChange('dateTo', e.target.value)}
+                                />
+                            )}
+                        </Field>
                     </div>
                 )}
             </div>
 
             {/* Timeline */}
-            <div className="rounded-lg overflow-hidden" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                {/* Header */}
-                <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                    <span className="text-sm font-medium" style={{ color: '#475569' }}>
-                        {total.toLocaleString('vi-VN')} sự kiện
+            <div className="rounded-lg overflow-hidden bg-white border border-lys-border shadow-2xs">
+                <div className="px-4 py-3 flex items-center justify-between border-b border-lys-border bg-lys-subtle/50">
+                    <span className="text-sm font-semibold text-lys-secondary">
+                        {formatNumber(total)} {i18n.eventsSuffix}
                     </span>
-                    <span className="text-xs" style={{ color: '#64748B' }}>
-                        Trang {page}/{totalPages || 1}
+                    <span className="type-caption text-lys-muted">
+                        {i18n.pagePrefix} {page}/{totalPages || 1}
                     </span>
                 </div>
 
-                {/* Timeline Entries */}
                 {rows.length === 0 ? (
-                    <div className="py-16 text-center">
-                        <ScrollText size={40} style={{ color: '#E2E8F0', margin: '0 auto 12px' }} />
-                        <p className="text-sm" style={{ color: '#64748B' }}>Chưa có sự kiện nào</p>
+                    <div className="p-8">
+                        <EmptyState icon={ScrollText} title={i18n.emptyEvents} />
                     </div>
                 ) : (
-                    <div className="divide-y divide-slate-200" style={{ borderColor: '#E2E8F0' }}>
-                        {rows.map((row) => {
-                            const config = getActionConfig(row.action)
+                    <div className="divide-y divide-lys-border">
+                        {rows.map(row => {
+                            const config = getActionConfig(row.action, i18n as any)
                             const Icon = config.icon
                             const isExpanded = expandedRow === row.id
                             const isDangerous = row.action === 'DELETE' || row.entityType === 'PriceList_BulkUpdate'
@@ -449,65 +421,60 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                             return (
                                 <div
                                     key={row.id}
-                                    className="px-4 py-3 transition-all duration-150 cursor-pointer"
-                                    style={{
-                                        background: isExpanded ? '#FFFFFF' : 'transparent',
-                                        borderLeft: isDangerous ? '3px solid #B91C1C' : '3px solid transparent',
-                                    }}
+                                    className={cn(
+                                        'px-4 py-3 transition-colors cursor-pointer border-l-[3px] hover:bg-lys-subtle/50',
+                                        isDangerous ? 'border-l-tone-danger-fg' : 'border-l-transparent',
+                                        isExpanded && 'bg-lys-subtle/30'
+                                    )}
                                     onClick={() => setExpandedRow(isExpanded ? null : row.id)}
                                 >
                                     <div className="flex items-start gap-3">
-                                        {/* Action Icon */}
                                         <div
                                             className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center mt-0.5"
-                                            style={{ background: config.bgColor }}
+                                            style={{ background: `${config.color}18` }}
                                         >
                                             <Icon size={14} style={{ color: config.color }} />
                                         </div>
 
-                                        {/* Content */}
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <span
-                                                    className="text-xs font-semibold px-1.5 py-0.5 rounded"
-                                                    style={{ background: config.bgColor, color: config.color }}
-                                                >
+                                                <Badge tone={config.tone}>
                                                     {config.label}
-                                                </span>
-                                                <span className="font-medium text-sm" style={{ color: '#0F172A' }}>
-                                                    {formatEntityType(row.entityType)}
+                                                </Badge>
+                                                <span className="font-semibold text-sm text-lys-primary">
+                                                    {formatEntityType(row.entityType, i18n as any)}
                                                 </span>
                                                 {row.entityId && (
-                                                    <span className="inline-block text-xs font-mono px-1.5 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: '#F8FAFC', color: '#64748B' }}>
+                                                    <span className="inline-block text-xs font-mono px-1.5 py-0.5 rounded bg-lys-subtle text-lys-muted border border-lys-border whitespace-nowrap shrink-0">
                                                         {row.entityId.length > 12 ? `...${row.entityId.slice(-8)}` : row.entityId}
                                                     </span>
                                                 )}
                                                 {isDangerous && (
-                                                    <AlertTriangle size={12} style={{ color: '#B91C1C' }} />
+                                                    <AlertTriangle size={12} className="text-tone-danger-fg" />
                                                 )}
                                             </div>
 
-                                            {/* Field Diff — shown when expanded */}
                                             {isExpanded && (
                                                 <FieldDiffViewer
                                                     oldValue={row.oldValue}
                                                     newValue={row.newValue}
                                                     action={row.action}
+                                                    i18n={i18n as any}
+                                                    formatNumber={formatNumber}
                                                 />
                                             )}
                                         </div>
 
-                                        {/* Meta */}
                                         <div className="flex-shrink-0 text-right">
-                                            <div className="flex items-center gap-1.5">
-                                                <User size={10} style={{ color: '#64748B' }} />
-                                                <span className="text-xs" style={{ color: '#475569' }}>
-                                                    {row.userName ?? 'Hệ thống'}
+                                            <div className="flex items-center gap-1.5 justify-end">
+                                                <User size={11} className="text-lys-muted" />
+                                                <span className="text-xs font-medium text-lys-secondary">
+                                                    {row.userName ?? i18n.systemUser}
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-1.5 mt-1 justify-end">
-                                                <Clock size={10} style={{ color: '#64748B' }} />
-                                                <span className="text-xs" style={{ color: '#64748B' }} title={formatDateTime(row.createdAt)}>
+                                                <Clock size={11} className="text-lys-muted" />
+                                                <span className="text-xs text-lys-muted">
                                                     {formatTimeAgo(row.createdAt)}
                                                 </span>
                                             </div>
@@ -519,55 +486,14 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
                     </div>
                 )}
 
-                {/* Pagination */}
                 {totalPages > 1 && (
-                    <div className="px-4 py-3 flex items-center justify-between" style={{ borderTop: '1px solid #E2E8F0' }}>
-                        <button
-                            onClick={() => handlePageChange(page - 1)}
-                            disabled={page <= 1}
-                            className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-md transition-all disabled:opacity-30"
-                            style={{ border: '1px solid #E2E8F0', color: '#475569' }}
-                        >
-                            <ChevronLeft size={12} /> Trước
-                        </button>
-
-                        <div className="flex items-center gap-1">
-                            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
-                                let pageNum: number
-                                if (totalPages <= 7) {
-                                    pageNum = i + 1
-                                } else if (page <= 4) {
-                                    pageNum = i + 1
-                                } else if (page >= totalPages - 3) {
-                                    pageNum = totalPages - 6 + i
-                                } else {
-                                    pageNum = page - 3 + i
-                                }
-                                return (
-                                    <button
-                                        key={pageNum}
-                                        onClick={() => handlePageChange(pageNum)}
-                                        className="w-8 h-8 text-xs rounded-md transition-all"
-                                        style={{
-                                            background: page === pageNum ? '#0E7490' : 'transparent',
-                                            color: page === pageNum ? '#F8FAFC' : '#64748B',
-                                            fontWeight: page === pageNum ? 600 : 400,
-                                        }}
-                                    >
-                                        {pageNum}
-                                    </button>
-                                )
-                            })}
-                        </div>
-
-                        <button
-                            onClick={() => handlePageChange(page + 1)}
-                            disabled={page >= totalPages}
-                            className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-md transition-all disabled:opacity-30"
-                            style={{ border: '1px solid #E2E8F0', color: '#475569' }}
-                        >
-                            Sau <ChevronRight size={12} />
-                        </button>
+                    <div className="px-4 py-3 border-t border-lys-border bg-lys-subtle/30">
+                        <Pagination
+                            page={page}
+                            pageSize={pageSize}
+                            total={total}
+                            onPageChange={handlePageChange}
+                        />
                     </div>
                 )}
             </div>

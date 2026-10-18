@@ -5,6 +5,12 @@ import { cached, revalidateCache } from '@/lib/cache'
 import { startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, startOfQuarter, endOfQuarter } from 'date-fns'
 import { revalidatePath } from 'next/cache'
 import { serialize } from '@/lib/serialize'
+import { requireAuth, hasRole } from '@/lib/session'
+import { logAudit } from '@/lib/audit'
+import { approveRequest, rejectRequest } from '@/lib/approval'
+import { approveSalesOrder } from './sales/actions'
+import { processProposalApproval } from './proposals/actions'
+import { processPaymentApproval } from './payment-requests/actions'
 
 export type DateRange = 'month' | 'quarter' | 'year'
 
@@ -134,7 +140,7 @@ export async function getDailyRevenueChart(options?: DashboardFilterOptions): Pr
             startDate: formatVN(from),
             endDate: formatVN(to),
         }
-    }, 5_000)
+    }, 30_000)
 }
 
 // ─── Dashboard aggregate data ─────────────────────────────
@@ -220,16 +226,39 @@ export async function getDashboardStats(range: DateRange = 'month', options?: Da
                 take: 5,
             }),
             prisma.salesOrder.findMany({
-                where: { status: { in: ['PENDING_APPROVAL', 'DRAFT'] } },
+                where: { status: 'PENDING_APPROVAL' },
                 select: {
-                    id: true, soNo: true, totalAmount: true, status: true,
-                    customer: { select: { name: true } },
+                    id: true,
+                    soNo: true,
+                    totalAmount: true,
+                    orderDiscount: true,
+                    paymentTerm: true,
+                    status: true,
+                    createdAt: true,
+                    customer: { select: { id: true, name: true, code: true } },
+                    salesRep: { select: { name: true } },
+                    lines: {
+                        select: {
+                            qtyOrdered: true,
+                            unitPrice: true,
+                            lineDiscountPct: true,
+                            product: {
+                                select: {
+                                    marginPrice: { select: { costPrice: true } }
+                                }
+                            }
+                        }
+                    }
                 },
                 orderBy: { createdAt: 'desc' },
-                take: 8,
+                take: 10,
             }),
             prisma.salesOrder.count({
-                where: { createdAt: { gte: from, lte: to } },
+                where: {
+                    status: { not: 'CANCELLED' },
+                    createdAt: { gte: from, lte: to },
+                    ...entityFilter,
+                },
             }),
         ])
 
@@ -268,15 +297,44 @@ export async function getDashboardStats(range: DateRange = 'month', options?: Da
                 status: s.status,
                 vesselName: s.vesselName,
             })),
-            pendingSOs: pendingSOs.map(so => ({
-                id: so.id,
-                soNo: so.soNo,
-                amount: Number(so.totalAmount),
-                customerName: so.customer?.name ?? 'Khách Lẻ',
-                status: so.status,
-            })),
+            pendingSOs: pendingSOs.map(so => {
+                const amount = Number(so.totalAmount)
+                const orderDiscount = Number((so as any).orderDiscount ?? 0)
+                let totalBottles = 0
+                let estCogs = 0
+                let maxLineDisc = 0
+
+                for (const l of so.lines ?? []) {
+                    const qty = Number(l.qtyOrdered)
+                    const lineDisc = Number(l.lineDiscountPct ?? 0)
+                    if (lineDisc > maxLineDisc) maxLineDisc = lineDisc
+                    const unitCost = Number(l.product?.marginPrice?.costPrice ?? 0)
+                    totalBottles += qty
+                    estCogs += qty * unitCost
+                }
+
+                const estGrossProfit = amount - estCogs
+                const estimatedMarginPct = amount > 0 && estCogs > 0 ? Math.round((estGrossProfit / amount) * 1000) / 10 : null
+                const effectiveDiscountPct = Math.max(orderDiscount, maxLineDisc)
+
+                return {
+                    id: so.id,
+                    soNo: so.soNo,
+                    amount,
+                    customerId: so.customer?.id ?? null,
+                    customerName: so.customer?.name ?? 'Khách Lẻ',
+                    customerCode: so.customer?.code ?? '',
+                    salesRepName: so.salesRep?.name ?? '—',
+                    paymentTerm: so.paymentTerm,
+                    bottleCount: totalBottles,
+                    estimatedMarginPct,
+                    effectiveDiscountPct,
+                    status: so.status,
+                    createdAt: so.createdAt.toISOString(),
+                }
+            }),
         }
-    }, 5_000) // Cache 5s
+    }, 30_000) // Cache 30s
 }
 
 // ─── Monthly revenue chart (last 6 months) ───────────────
@@ -324,22 +382,224 @@ export async function getMonthlyRevenue() {
     }, 60_000) // Cache 60s — chart data changes slowly
 }
 
-// ─── Approve/Reject SO (quick action from dashboard) ──────
-export async function approveSO(id: string) {
-    await prisma.salesOrder.update({
-        where: { id },
-        data: { status: 'CONFIRMED' },
-    })
-    revalidateCache('dashboard')
+// ─── Approve/Reject SO (quick action from dashboard via DDD Sales Flow) ──────
+export async function approveSO(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const res = await approveSalesOrder(id)
+        if (!res.success) {
+            // Fallback if SO had no ApprovalRequest record created yet
+            const user = await requireAuth()
+            if (!hasRole(user, 'CEO', 'ADMIN', 'Sales Admin', 'SALES_ADMIN', 'Sales Manager', 'SALES_MGR')) {
+                return { success: false, error: 'Bạn không có quyền phê duyệt đơn hàng này' }
+            }
+            const so = await prisma.salesOrder.findUnique({ where: { id }, select: { status: true, soNo: true } })
+            if (!so || so.status !== 'PENDING_APPROVAL') {
+                return { success: false, error: res.error || 'Đơn hàng không ở trạng thái chờ duyệt' }
+            }
+            await prisma.salesOrder.update({ where: { id }, data: { status: 'PENDING_ACCOUNTING' } })
+            await logAudit({
+                userId: user.id,
+                action: 'APPROVE',
+                entityType: 'SalesOrder',
+                entityId: id,
+                newValue: { status: 'PENDING_ACCOUNTING', source: 'CEO_DASHBOARD' },
+            }).catch(() => {})
+        }
+        revalidateCache('dashboard')
+        revalidateCache('sales')
+        revalidatePath('/dashboard')
+        revalidatePath('/dashboard/sales')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message || 'Lỗi khi phê duyệt đơn hàng' }
+    }
 }
 
-export async function rejectSO(id: string) {
-    await prisma.salesOrder.update({
-        where: { id },
-        data: { status: 'CANCELLED' },
+export async function rejectSO(id: string, reason?: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const user = await requireAuth()
+        if (!hasRole(user, 'CEO', 'ADMIN', 'Sales Admin', 'SALES_ADMIN', 'Sales Manager', 'SALES_MGR')) {
+            return { success: false, error: 'Bạn không có quyền từ chối đơn hàng này' }
+        }
+
+        const so = await prisma.salesOrder.findUnique({
+            where: { id },
+            select: { status: true, soNo: true, totalAmount: true },
+        })
+        if (!so) return { success: false, error: 'Không tìm thấy đơn hàng' }
+        if (so.status !== 'PENDING_APPROVAL') {
+            return { success: false, error: `Đơn hàng không ở trạng thái Chờ Duyệt (hiện: ${so.status})` }
+        }
+
+        const cleanReason = reason?.trim() || 'Ban Giám Đốc từ chối phê duyệt từ Dashboard'
+
+        const approvalReq = await prisma.approvalRequest.findFirst({
+            where: { docType: 'SALES_ORDER', docId: id, status: 'PENDING' },
+        })
+
+        if (approvalReq) {
+            await prisma.approvalLog.create({
+                data: {
+                    requestId: approvalReq.id,
+                    step: approvalReq.currentStep,
+                    action: 'REJECT',
+                    approvedBy: user.id,
+                    comment: cleanReason,
+                },
+            })
+            await prisma.approvalRequest.update({
+                where: { id: approvalReq.id },
+                data: { status: 'REJECTED' },
+            })
+        }
+
+        await prisma.salesOrder.update({
+            where: { id },
+            data: { status: 'CANCELLED' },
+        })
+
+        await logAudit({
+            userId: user.id,
+            action: 'REJECT',
+            entityType: 'SalesOrder',
+            entityId: id,
+            newValue: { status: 'CANCELLED', soNo: so.soNo, amount: Number(so.totalAmount), reason: cleanReason },
+        }).catch(() => {})
+
+        revalidateCache('dashboard')
+        revalidateCache('sales')
+        revalidatePath('/dashboard')
+        revalidatePath('/dashboard/sales')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message || 'Lỗi khi từ chối đơn hàng' }
+    }
+}
+
+// ─── Direct CEO Actions for Proposals, Payment Requests & Approval Engine ───
+export async function approveProposalFromDashboard(proposalId: string, comment?: string): Promise<{ success: boolean; error?: string }> {
+    const res = await processProposalApproval({
+        proposalId,
+        action: 'APPROVE',
+        comment: comment || 'CEO phê duyệt nhanh từ Dashboard',
     })
-    revalidateCache('dashboard')
-    revalidatePath('/dashboard')
+    if (res.success) {
+        revalidateCache('dashboard')
+        revalidatePath('/dashboard')
+    }
+    return { success: res.success, error: res.error }
+}
+
+export async function rejectProposalFromDashboard(proposalId: string, reason: string): Promise<{ success: boolean; error?: string }> {
+    const res = await processProposalApproval({
+        proposalId,
+        action: 'REJECT',
+        comment: reason?.trim() || 'CEO từ chối từ Dashboard',
+    })
+    if (res.success) {
+        revalidateCache('dashboard')
+        revalidatePath('/dashboard')
+    }
+    return { success: res.success, error: res.error }
+}
+
+export async function getPendingPaymentRequestsForCEO() {
+    return cached('dashboard:pending-payment-requests', async () => {
+        const requests = await prisma.paymentRequest.findMany({
+            where: {
+                status: { in: ['SUBMITTED', 'REVIEWING_L1', 'REVIEWING_L2'] },
+            },
+            include: {
+                creator: { select: { name: true, email: true } },
+                department: { select: { name: true } },
+            },
+            orderBy: [
+                { priority: 'desc' },
+                { createdAt: 'asc' },
+            ],
+            take: 10,
+        })
+
+        return requests.map(r => ({
+            id: r.id,
+            requestNo: r.requestNo,
+            title: r.title,
+            category: r.category,
+            priority: r.priority,
+            status: r.status,
+            currentLevel: r.currentLevel,
+            totalAmountVND: Number(r.totalAmountVND),
+            beneficiaryName: r.beneficiaryName,
+            creatorName: r.creator?.name || r.creator?.email || '—',
+            departmentName: r.department?.name || null,
+            dueDate: r.dueDate ? r.dueDate.toISOString() : null,
+            createdAt: r.createdAt.toISOString(),
+        }))
+    }, 10_000)
+}
+
+export async function approvePaymentRequestFromDashboard(requestId: string, comment?: string): Promise<{ success: boolean; error?: string }> {
+    const res = await processPaymentApproval({
+        requestId,
+        action: 'APPROVE',
+        comment: comment || 'CEO phê duyệt từ Dashboard',
+    })
+    if (res.success) {
+        revalidateCache('dashboard')
+        revalidatePath('/dashboard')
+    }
+    return { success: res.success, error: res.error }
+}
+
+export async function rejectPaymentRequestFromDashboard(requestId: string, reason: string): Promise<{ success: boolean; error?: string }> {
+    const res = await processPaymentApproval({
+        requestId,
+        action: 'REJECT',
+        comment: reason?.trim() || 'CEO từ chối từ Dashboard',
+    })
+    if (res.success) {
+        revalidateCache('dashboard')
+        revalidatePath('/dashboard')
+    }
+    return { success: res.success, error: res.error }
+}
+
+export async function approveEngineRequestFromDashboard(requestId: string, comment?: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const user = await requireAuth()
+        const res = await approveRequest({
+            requestId,
+            approvedBy: user.id,
+            approverName: user.name,
+            comment: comment || 'Phê duyệt từ Dashboard CEO',
+        })
+        if (res.success) {
+            revalidateCache('dashboard')
+            revalidatePath('/dashboard')
+        }
+        return res
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
+}
+
+export async function rejectEngineRequestFromDashboard(requestId: string, reason: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const user = await requireAuth()
+        const res = await rejectRequest({
+            requestId,
+            rejectedBy: user.id,
+            rejectorName: user.name,
+            reason: reason?.trim() || 'Từ chối từ Dashboard CEO',
+        })
+        if (res.success) {
+            revalidateCache('dashboard')
+            revalidatePath('/dashboard')
+        }
+        return res
+    } catch (err: any) {
+        return { success: false, error: err.message }
+    }
 }
 
 // ─── Pending Approval Requests (Approval Engine) ──────────
@@ -367,38 +627,42 @@ export async function getPendingApprovalDetails() {
     }, 15_000) // 15s — approvals need fresher data
 }
 
-// ─── Slow-moving / Dead stock alert ──────────────────────
+// ─── Slow-moving / Dead stock alert (Single-query, zero N+1) ──────────────────────
 export async function getSlowMovingStock() {
     return cached('dashboard:slow-stock', async () => {
         const now = new Date()
         const d90 = new Date(now.getTime() - 90 * 86400000)
         const d180 = new Date(now.getTime() - 180 * 86400000)
 
-        // Get all products with available stock
-        const products = await prisma.product.findMany({
-            where: { deletedAt: null, status: 'ACTIVE' },
-            include: {
-                stockLots: {
-                    where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
-                    select: { qtyAvailable: true, unitLandedCost: true },
+        const [products, salesLines] = await Promise.all([
+            prisma.product.findMany({
+                where: { deletedAt: null, status: 'ACTIVE' },
+                include: {
+                    marginPrice: { select: { costPrice: true, wholesalePrice: true } },
+                    stockLots: {
+                        where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
+                        select: { qtyAvailable: true, unitLandedCost: true },
+                    },
                 },
-            },
-        })
-
-        // Get last sales date per product
-        const soLines = await prisma.salesOrderLine.groupBy({
-            by: ['productId'],
-            _max: { soId: true },
-        })
+            }),
+            prisma.salesOrderLine.findMany({
+                where: {
+                    so: { status: { not: 'CANCELLED' } },
+                },
+                select: {
+                    productId: true,
+                    so: { select: { createdAt: true } },
+                },
+            }),
+        ])
 
         const lastSaleMap = new Map<string, Date>()
-        for (const sol of soLines) {
-            if (sol._max.soId) {
-                const so = await prisma.salesOrder.findUnique({
-                    where: { id: sol._max.soId },
-                    select: { createdAt: true },
-                })
-                if (so) lastSaleMap.set(sol.productId, so.createdAt)
+        for (const sol of salesLines) {
+            const dt = sol.so?.createdAt
+            if (!dt) continue
+            const prev = lastSaleMap.get(sol.productId)
+            if (!prev || dt > prev) {
+                lastSaleMap.set(sol.productId, dt)
             }
         }
 
@@ -408,7 +672,7 @@ export async function getSlowMovingStock() {
             productName: string
             qtyAvailable: number
             stockValue: number
-            lastSaleDate: Date | null
+            lastSaleDate: string | null
             daysSinceLastSale: number | null
             severity: 'slow' | 'dead'
         }[] = []
@@ -417,16 +681,17 @@ export async function getSlowMovingStock() {
             const totalQty = p.stockLots.reduce((s: number, l: any) => s + Number(l.qtyAvailable), 0)
             if (totalQty === 0) continue
 
-            const stockValue = p.stockLots.reduce(
-                (s: number, l: any) => s + Number(l.qtyAvailable) * Number(l.unitLandedCost), 0
-            )
+            const fallbackCost = Number(p.marginPrice?.costPrice ?? p.marginPrice?.wholesalePrice ?? 350000)
+            const stockValue = p.stockLots.reduce((s: number, l: any) => {
+                const uc = Number(l.unitLandedCost) > 0 ? Number(l.unitLandedCost) : fallbackCost
+                return s + Number(l.qtyAvailable) * uc
+            }, 0)
 
             const lastSale = lastSaleMap.get(p.id)
             const daysSinceLastSale = lastSale
                 ? Math.floor((now.getTime() - lastSale.getTime()) / 86400000)
                 : null
 
-            // Dead: no sale in 180+ days or never sold
             if (!lastSale || lastSale < d180) {
                 alerts.push({
                     productId: p.id,
@@ -434,27 +699,24 @@ export async function getSlowMovingStock() {
                     productName: p.productName,
                     qtyAvailable: totalQty,
                     stockValue,
-                    lastSaleDate: lastSale ?? null,
+                    lastSaleDate: lastSale ? lastSale.toISOString() : null,
                     daysSinceLastSale,
                     severity: 'dead',
                 })
-            }
-            // Slow: no sale in 90-180 days
-            else if (lastSale < d90) {
+            } else if (lastSale < d90) {
                 alerts.push({
                     productId: p.id,
                     skuCode: p.skuCode,
                     productName: p.productName,
                     qtyAvailable: totalQty,
                     stockValue,
-                    lastSaleDate: lastSale,
+                    lastSaleDate: lastSale.toISOString(),
                     daysSinceLastSale,
                     severity: 'slow',
                 })
             }
         }
 
-        // Sort by severity then stock value
         alerts.sort((a, b) => {
             if (a.severity !== b.severity) return a.severity === 'dead' ? -1 : 1
             return b.stockValue - a.stockValue
@@ -529,11 +791,13 @@ export async function getPLSummary(options?: DashboardFilterOptions) {
         let soRevenue = 0
         let soCOGS = 0
         for (const so of (monthOrders || [])) {
+            const orderDiscPct = Number((so as any).orderDiscount ?? 0)
+            const orderDiscFactor = Math.max(0, 1 - orderDiscPct / 100)
             for (const line of so.lines || []) {
                 const qty = Number(line.qtyOrdered)
                 const price = Number(line.unitPrice)
                 const discPct = Number(line.lineDiscountPct)
-                const rev = qty * price * (1 - discPct / 100)
+                const rev = qty * price * (1 - discPct / 100) * orderDiscFactor
                 const cost = line.product?.marginPrice ? Number(line.product.marginPrice.costPrice) : 0
                 soRevenue += rev
                 soCOGS += qty * cost
@@ -551,7 +815,7 @@ export async function getPLSummary(options?: DashboardFilterOptions) {
         const grossMargin = revenue > 0 ? (grossProfit / revenue) * 100 : 0
 
         return { revenue, cogs, grossProfit, netProfit, expenses, grossMargin }
-    }, 5_000)
+    }, 30_000)
 }
 
 // ─── Cash Position for Dashboard ─────────────────────────
@@ -560,6 +824,7 @@ export async function getCashPosition(options?: DashboardFilterOptions) {
     const from = options?.from ?? startOfMonth(now)
     const to = options?.to ?? endOfMonth(now)
     const entityId = options?.legalEntityId
+    const in30Days = new Date(now.getTime() + 30 * 86400000)
 
     const cacheKey = `dashboard:cash-position:${from.getTime()}-${to.getTime()}-${entityId ?? 'all'}`
 
@@ -568,7 +833,7 @@ export async function getCashPosition(options?: DashboardFilterOptions) {
         const apEntityFilter = entityId ? { invoice: { legalEntityId: entityId } } : {}
         const invEntityFilter = entityId ? { legalEntityId: entityId } : {}
 
-        const [arPayments, apPayments, approvedExpenses, unpaidInvoices, unpaidAPInvoices] = await Promise.all([
+        const [arPayments, apPayments, approvedExpenses, unpaidInvoices, unpaidAPInvoices, approvedPendingPRs] = await Promise.all([
             // AR Payments received in this period (cash in)
             prisma.aRPayment.aggregate({
                 where: {
@@ -605,7 +870,7 @@ export async function getCashPosition(options?: DashboardFilterOptions) {
                 select: { totalAmount: true, paidAmount: true },
             }),
 
-            // Total outstanding AP
+            // Total outstanding AP + due dates for 30-day obligation projection
             prisma.aPInvoice.findMany({
                 where: {
                     status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] },
@@ -614,8 +879,18 @@ export async function getCashPosition(options?: DashboardFilterOptions) {
                 select: {
                     amount: true,
                     exchangeRate: true,
+                    dueDate: true,
                     payments: { select: { amount: true } },
                 },
+            }),
+
+            // Approved payment requests awaiting disbursement
+            prisma.paymentRequest.aggregate({
+                where: {
+                    status: 'APPROVED',
+                    ...(entityId ? { legalEntityId: entityId } : {}),
+                },
+                _sum: { totalAmountVND: true },
             }),
         ])
 
@@ -630,12 +905,20 @@ export async function getCashPosition(options?: DashboardFilterOptions) {
             return sum + remaining
         }, 0)
 
-        const apOutstanding = unpaidAPInvoices.reduce((sum, inv) => {
+        let apOutstanding = 0
+        let apDueWithin30d = 0
+        for (const inv of unpaidAPInvoices) {
             const rate = Number(inv.exchangeRate ?? 1)
             const totalVnd = Number(inv.amount) * rate
             const paidVnd = inv.payments.reduce((pSum, p) => pSum + Number(p.amount) * rate, 0)
-            return sum + Math.max(0, totalVnd - paidVnd)
-        }, 0)
+            const rem = Math.max(0, totalVnd - paidVnd)
+            apOutstanding += rem
+            if (rem > 0 && inv.dueDate && new Date(inv.dueDate) <= in30Days) {
+                apDueWithin30d += rem
+            }
+        }
+
+        const pendingDisbursementPR = Number(approvedPendingPRs._sum.totalAmountVND ?? 0)
 
         return {
             cashIn,
@@ -645,6 +928,8 @@ export async function getCashPosition(options?: DashboardFilterOptions) {
             netCashFlow,
             arOutstanding,
             apOutstanding,
+            apDueWithin30d,
+            pendingDisbursementPR,
         }
     }, 15_000) // 15s
 }
@@ -712,36 +997,55 @@ export async function getARAgingChart(options?: DashboardFilterOptions) {
 }
 
 // ── Export Dashboard Data to Excel ─────────────────
-export async function exportDashboardExcel(): Promise<string> {
+export async function exportDashboardExcel(options?: DashboardFilterOptions): Promise<string> {
     const { generateExcelBuffer } = await import('@/lib/excel')
-    const [stats, monthlyRevenue, plSummary, cashPosition, arAging] = await Promise.all([
-        getDashboardStats('month'),
-        getMonthlyRevenue(),
-        getPLSummary(),
-        getCashPosition(),
-        getARAgingChart(),
+    const [stats, plSummary, cashPosition, arAging, topCust, topProd] = await Promise.all([
+        getDashboardStats('month', options),
+        getPLSummary(options),
+        getCashPosition(options),
+        getARAgingChart(options),
+        getTopCustomers(5, options),
+        getTopProducts(5, options),
     ])
 
-    // Sheet 1: KPI Summary
-    const kpiRows = [
-        { metric: 'Doanh Thu Tháng', value: stats.revenue, unit: 'VND' },
-        { metric: 'Số Đơn Hàng', value: stats.monthOrders, unit: '' },
-        { metric: 'Tồn Kho (chai)', value: stats.stockQty, unit: 'chai' },
-        { metric: 'Tổng Giá Trị Tồn Kho', value: stats.stockTotalValue, unit: 'VND' },
-        { metric: 'Công Nợ Phải Thu', value: arAging.totalOutstanding, unit: 'VND' },
-        { metric: 'Chờ Duyệt', value: stats.pendingApprovals, unit: '' },
-        { metric: 'Lãi Gộp (P&L)', value: plSummary.grossProfit, unit: 'VND' },
-        { metric: 'Lãi Ròng (P&L)', value: plSummary.netProfit, unit: 'VND' },
-        { metric: 'Net Cash Flow', value: cashPosition.netCashFlow, unit: 'VND' },
+    const primaryRev = plSummary.revenue > 0 ? plSummary.revenue : stats.revenue
+
+    // Sheet 1: KPI & Financial Summary
+    const kpiRows: Array<{ metric: string; value: number | string; unit: string }> = [
+        { metric: 'Doanh Thu Kỳ Lọc', value: Math.round(primaryRev), unit: 'VND' },
+        { metric: 'Tăng Trưởng vs Kỳ Trước (%)', value: Number(stats.revenueGrowth.toFixed(1)), unit: '%' },
+        { metric: 'Số Đơn Hàng Phát Sinh', value: stats.monthOrders, unit: 'đơn' },
+        { metric: 'Giá Vốn Hàng Bán (COGS)', value: Math.round(plSummary.cogs), unit: 'VND' },
+        { metric: 'Lợi Nhuận Gộp (Gross Profit)', value: Math.round(plSummary.grossProfit), unit: 'VND' },
+        { metric: 'Biên Lợi Nhuận Gộp (%)', value: Number(plSummary.grossMargin.toFixed(1)), unit: '%' },
+        { metric: 'Chi Phí Vận Hành (OPEX)', value: Math.round(plSummary.expenses), unit: 'VND' },
+        { metric: 'Lợi Nhuận Ròng (Net Profit)', value: Math.round(plSummary.netProfit), unit: 'VND' },
+        { metric: 'Dòng Tiền Ròng (Net Cash Flow)', value: Math.round(cashPosition.netCashFlow), unit: 'VND' },
+        { metric: 'Thu Nợ Khách Hàng (AR Inflow)', value: Math.round(cashPosition.cashIn), unit: 'VND' },
+        { metric: 'Chi Trả Nhà Cung Cấp (AP Outflow)', value: Math.round(cashPosition.cashOutAP), unit: 'VND' },
+        { metric: 'Tổng Công Nợ Phải Thu (AR)', value: Math.round(arAging.totalOutstanding), unit: 'VND' },
+        { metric: 'Tổng Công Nợ Phải Trả (AP)', value: Math.round(cashPosition.apOutstanding), unit: 'VND' },
+        { metric: 'Tồn Kho Khả Dụng (Chai)', value: stats.stockQty, unit: 'chai' },
+        { metric: 'Tổng Giá Trị Tồn Kho', value: Math.round(stats.stockTotalValue), unit: 'VND' },
+        ...topCust.map((c, idx) => ({
+            metric: `Top KH #${idx + 1}: ${c.name}`,
+            value: Math.round(c.revenue),
+            unit: `VND (${c.orders} đơn)`,
+        })),
+        ...topProd.map((p, idx) => ({
+            metric: `Top SP #${idx + 1}: ${p.name}`,
+            value: Math.round(p.revenue),
+            unit: `VND (${p.qty} chai)`,
+        })),
     ]
 
     const buffer = await generateExcelBuffer({
-        sheetName: 'KPI Summary',
+        sheetName: 'CEO Executive Summary',
         title: `CEO Dashboard — ${new Date().toLocaleDateString('vi-VN')}`,
         columns: [
-            { header: 'Chỉ số', key: 'metric', width: 30 },
-            { header: 'Giá trị', key: 'value', width: 20, numFmt: '#,##0' },
-            { header: 'Đơn vị', key: 'unit', width: 10 },
+            { header: 'Chỉ số / Hạng mục', key: 'metric', width: 42 },
+            { header: 'Giá trị', key: 'value', width: 22, numFmt: '#,##0' },
+            { header: 'Đơn vị / Ghi chú', key: 'unit', width: 18 },
         ],
         rows: kpiRows,
     })
@@ -824,11 +1128,13 @@ export async function getCostWaterfall(options?: DashboardFilterOptions) {
             ])
 
             for (const so of orders) {
+                const orderDiscPct = Number((so as any).orderDiscount ?? 0)
+                const orderDiscFactor = Math.max(0, 1 - orderDiscPct / 100)
                 for (const l of so.lines) {
                     const qty = Number(l.qtyOrdered)
                     const price = Number(l.unitPrice)
                     const discPct = Number(l.lineDiscountPct)
-                    const rev = qty * price * (1 - discPct / 100)
+                    const rev = qty * price * (1 - discPct / 100) * orderDiscFactor
                     const cost = l.product?.marginPrice ? Number(l.product.marginPrice.costPrice) : 0
                     revenue += rev
                     cogs += qty * cost
@@ -871,12 +1177,16 @@ export async function getCostWaterfall(options?: DashboardFilterOptions) {
     }, 15_000)
 }
 
-// ─── Revenue YoY Comparison (12 months) ──────────────
-export async function getRevenueYoY() {
-    return cached('dashboard:revenue-yoy', async () => {
+// ─── Revenue YoY Comparison (12 months, Entity-aware) ──────────────
+export async function getRevenueYoY(options?: DashboardFilterOptions) {
+    const entityId = options?.legalEntityId
+    const cacheKey = `dashboard:revenue-yoy:${entityId ?? 'all'}`
+
+    return cached(cacheKey, async () => {
         const now = new Date()
         const thisYear = now.getFullYear()
         const lastYear = thisYear - 1
+        const entityFilter = entityId ? { legalEntityId: entityId } : {}
 
         // Fetch all matching orders for both years in a single query
         const orders = await prisma.salesOrder.findMany({
@@ -886,6 +1196,7 @@ export async function getRevenueYoY() {
                     gte: new Date(lastYear, 0, 1),
                     lte: new Date(thisYear, 11, 31, 23, 59, 59, 999),
                 },
+                ...entityFilter,
             },
             select: { createdAt: true, totalAmount: true },
         })
@@ -939,7 +1250,7 @@ export type DashboardSection =
     | 'kpi_cards' | 'revenue_chart' | 'pending_approvals' | 'pl_summary'
     | 'cash_position' | 'ar_aging' | 'cost_waterfall' | 'revenue_yoy'
     | 'shipment_tracker' | 'kpi_targets' | 'stock_alerts' | 'recent_orders'
-    | 'my_sales' | 'warehouse_summary' | 'legal_compliance'
+    | 'my_sales' | 'warehouse_summary' | 'legal_compliance' | 'top_products'
 
 export type DashboardConfig = {
     greeting: string
@@ -953,11 +1264,11 @@ const ROLE_DASHBOARD: Record<string, DashboardConfig> = {
         sections: [
             'kpi_cards', 'revenue_chart', 'pl_summary', 'cash_position',
             'ar_aging', 'cost_waterfall', 'revenue_yoy', 'pending_approvals',
-            'shipment_tracker', 'kpi_targets', 'legal_compliance',
+            'shipment_tracker', 'kpi_targets', 'legal_compliance', 'top_products', 'stock_alerts',
         ],
         quickLinks: [
             { label: 'Báo cáo', href: '/dashboard/reports', icon: 'BarChart3' },
-            { label: 'Phê duyệt', href: '/dashboard/settings?tab=approvals', icon: 'ClipboardCheck' },
+            { label: 'Đề nghị TT', href: '/dashboard/payment-requests', icon: 'ClipboardCheck' },
             { label: 'Tài chính', href: '/dashboard/finance', icon: 'DollarSign' },
             { label: 'Pháp lý', href: '/dashboard/contracts', icon: 'Shield' },
         ],
@@ -966,7 +1277,7 @@ const ROLE_DASHBOARD: Record<string, DashboardConfig> = {
         greeting: 'Quản Lý Bán Hàng',
         sections: [
             'kpi_cards', 'revenue_chart', 'recent_orders', 'my_sales',
-            'ar_aging', 'kpi_targets', 'pending_approvals',
+            'ar_aging', 'kpi_targets', 'pending_approvals', 'top_products',
         ],
         quickLinks: [
             { label: 'Đơn hàng', href: '/dashboard/sales', icon: 'Package' },
@@ -987,7 +1298,7 @@ const ROLE_DASHBOARD: Record<string, DashboardConfig> = {
         greeting: 'Kế Toán — Tài Chính',
         sections: [
             'kpi_cards', 'revenue_chart', 'pl_summary', 'cash_position', 'ar_aging',
-            'pending_approvals', 'cost_waterfall', 'revenue_yoy',
+            'pending_approvals', 'cost_waterfall', 'revenue_yoy', 'top_products',
         ],
         quickLinks: [
             { label: 'Công nợ', href: '/dashboard/finance', icon: 'DollarSign' },
@@ -1017,7 +1328,7 @@ const ROLE_DASHBOARD: Record<string, DashboardConfig> = {
         greeting: 'Điều Hành Kinh Doanh (Sales Admin)',
         sections: [
             'kpi_cards', 'recent_orders', 'pending_approvals', 'revenue_chart',
-            'kpi_targets',
+            'kpi_targets', 'top_products',
         ],
         quickLinks: [
             { label: 'Đơn hàng', href: '/dashboard/sales', icon: 'Package' },
@@ -1249,29 +1560,56 @@ export async function getTopProducts(limit = 5, options?: DashboardFilterOptions
             select: {
                 qtyOrdered: true,
                 unitPrice: true,
-                product: { select: { id: true, skuCode: true, productName: true } },
+                lineDiscountPct: true,
+                so: { select: { orderDiscount: true } },
+                product: {
+                    select: {
+                        id: true,
+                        skuCode: true,
+                        productName: true,
+                        marginPrice: { select: { costPrice: true } },
+                    },
+                },
             },
         })
 
-        const map = new Map<string, { sku: string; name: string; qty: number; revenue: number }>()
+        const map = new Map<string, { sku: string; name: string; qty: number; revenue: number; cogs: number }>()
         for (const l of lines) {
             const pid = l.product?.id ?? 'unknown'
             const existing = map.get(pid)
-            const lineRevenue = Number(l.qtyOrdered) * Number(l.unitPrice)
+            const qty = Number(l.qtyOrdered)
+            const price = Number(l.unitPrice)
+            const lineDisc = Number(l.lineDiscountPct ?? 0)
+            const orderDisc = Number((l.so as any)?.orderDiscount ?? 0)
+            const lineRevenue = qty * price * (1 - lineDisc / 100) * Math.max(0, 1 - orderDisc / 100)
+            const unitCost = Number(l.product?.marginPrice?.costPrice ?? 0)
+            const lineCogs = qty * unitCost
+
             if (existing) {
-                existing.qty += Number(l.qtyOrdered)
+                existing.qty += qty
                 existing.revenue += lineRevenue
+                existing.cogs += lineCogs
             } else {
                 map.set(pid, {
                     sku: l.product?.skuCode ?? '?',
                     name: l.product?.productName ?? 'Unknown',
-                    qty: Number(l.qtyOrdered),
+                    qty,
                     revenue: lineRevenue,
+                    cogs: lineCogs,
                 })
             }
         }
 
         return Array.from(map.values())
+            .map(item => ({
+                sku: item.sku,
+                name: item.name,
+                qty: item.qty,
+                revenue: item.revenue,
+                marginPct: item.revenue > 0 && item.cogs > 0
+                    ? Math.round(((item.revenue - item.cogs) / item.revenue) * 100)
+                    : null,
+            }))
             .sort((a, b) => b.revenue - a.revenue)
             .slice(0, limit)
     }, 60_000)

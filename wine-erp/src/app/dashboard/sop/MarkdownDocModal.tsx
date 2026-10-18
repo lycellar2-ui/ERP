@@ -15,6 +15,8 @@ import {
 } from 'lucide-react'
 import { MarkdownViewer } from '@/components/ui/MarkdownViewer'
 import { getMarkdownContentAction } from './actions'
+import { useAppLocale } from '@/lib/i18n'
+import { getSopI18n } from './i18n'
 
 interface MarkdownDocModalProps {
     isOpen: boolean
@@ -41,6 +43,9 @@ export function MarkdownDocModal({
     lastUpdated,
     groupLabel
 }: MarkdownDocModalProps) {
+    const { locale } = useAppLocale()
+    const L = getSopI18n(locale).markdownModal
+
     const [content, setContent] = useState<string>(rawContent || '')
     const [loading, setLoading] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null)
@@ -60,7 +65,6 @@ export function MarkdownDocModal({
             setLoading(true)
             setError(null)
 
-            // Try server action first if relativeFilePath is provided
             if (relativeFilePath) {
                 try {
                     const res = await getMarkdownContentAction(relativeFilePath)
@@ -70,35 +74,34 @@ export function MarkdownDocModal({
                         return
                     }
                 } catch (err) {
-                    console.error('Lỗi khi đọc markdown từ server action:', err)
+                    console.error('Error reading markdown from server action:', err)
                 }
             }
 
-            // Fallback to fetch via docUrl
             if (docUrl) {
                 try {
                     const res = await fetch(docUrl, { cache: 'no-store' })
                     if (!res.ok) {
-                        throw new Error(`Mã lỗi HTTP ${res.status}`)
+                        throw new Error(`HTTP ${res.status}`)
                     }
                     const text = await res.text()
                     setContent(text)
                     setLoading(false)
                     return
                 } catch (err: any) {
-                    console.error('Lỗi fetch markdown:', err)
-                    setError('Không thể tải nội dung tài liệu. Vui lòng thử lại.')
+                    console.error('Error fetching markdown:', err)
+                    setError(L.loadError)
                     setLoading(false)
                     return
                 }
             }
 
-            setError('Không xác định được đường dẫn tài liệu.')
+            setError(L.loadError)
             setLoading(false)
         }
 
         loadContent()
-    }, [isOpen, docUrl, rawContent, relativeFilePath])
+    }, [isOpen, docUrl, rawContent, relativeFilePath, L.loadError])
 
     if (!isOpen) return null
 
@@ -135,7 +138,7 @@ export function MarkdownDocModal({
                                 )}
                                 {version && (
                                     <span className="text-[11px] text-slate-500 font-medium">
-                                        Phiên bản {version}
+                                        {L.versionPrefix} {version}
                                     </span>
                                 )}
                                 {lastUpdated && (
@@ -161,18 +164,18 @@ export function MarkdownDocModal({
                         <button
                             onClick={handleCopy}
                             disabled={loading || !content}
-                            title="Sao chép nội dung văn bản"
+                            title={L.copyBtn}
                             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 text-xs font-medium transition disabled:opacity-50"
                         >
                             {copied ? (
                                 <>
                                     <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                    <span className="hidden sm:inline text-emerald-600 font-semibold">Đã chép</span>
+                                    <span className="hidden sm:inline text-emerald-600 font-semibold">{L.copiedBtn}</span>
                                 </>
                             ) : (
                                 <>
                                     <Copy className="w-3.5 h-3.5 text-slate-500" />
-                                    <span className="hidden sm:inline">Sao chép</span>
+                                    <span className="hidden sm:inline">{L.copyBtn}</span>
                                 </>
                             )}
                         </button>
@@ -180,7 +183,6 @@ export function MarkdownDocModal({
                         <button
                             onClick={handlePrint}
                             disabled={loading || !content}
-                            title="In tài liệu này"
                             className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 transition disabled:opacity-50"
                         >
                             <Printer className="w-4 h-4 text-slate-500" />
@@ -189,12 +191,11 @@ export function MarkdownDocModal({
                         {docUrl && (
                             <a
                                 href={docUrl}
-                                download={fileName || 'tai_lieu.md'}
-                                title="Tải về tệp .md gốc"
+                                download={fileName || 'document.md'}
                                 className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#0E7490] hover:bg-[#155E75] text-white text-xs font-semibold shadow-sm transition"
                             >
                                 <Download className="w-3.5 h-3.5" />
-                                <span className="hidden sm:inline">Tải về</span>
+                                <span className="hidden sm:inline">{L.downloadBtn}</span>
                             </a>
                         )}
 
@@ -212,7 +213,7 @@ export function MarkdownDocModal({
                     {loading && (
                         <div className="py-16 flex flex-col items-center justify-center space-y-3 text-slate-500">
                             <RefreshCw className="w-6 h-6 animate-spin text-slate-400" />
-                            <div className="text-xs">Đang tải và định dạng văn bản...</div>
+                            <div className="text-xs">{L.loadingText}</div>
                         </div>
                     )}
 

@@ -7,6 +7,8 @@ import { ProductStatusBadge } from './ProductsClient'
 import { WineTypeBadge } from '@/components/WineTypeBadge'
 import { Button, EmptyState, Pagination, Skeleton, Table, TableMessageRow, TableSkeleton, TBody, Td, Th, THead, Tr } from '@/components/ui'
 import { cn } from '@/lib/utils'
+import { useAppLocale } from '@/lib/i18n'
+import { PRODUCTS_I18N } from './i18n'
 
 const COL_COUNT = 7
 
@@ -17,7 +19,9 @@ function stockClass(stock: number) {
 }
 
 function ProductsEmpty() {
-    return <EmptyState icon={Wine} title="Chưa có sản phẩm nào" description='Bấm "Thêm Sản Phẩm" để bắt đầu danh mục' />
+    const { locale } = useAppLocale()
+    const L = PRODUCTS_I18N[locale].table
+    return <EmptyState icon={Wine} title={L.emptyTitle} description={L.emptyDesc} />
 }
 
 interface RowProps {
@@ -30,6 +34,8 @@ interface RowProps {
 }
 
 function ProductTableRow({ row, onEdit, onDelete, onView, onPrefetchDetails, canEdit }: RowProps) {
+    const { locale, formatNumber } = useAppLocale()
+    const L = PRODUCTS_I18N[locale].table
     const countryCode = row.country ? `[${row.country}]` : ''
     const [isVertical, setIsVertical] = useState(false)
     const imgRef = useRef<HTMLImageElement>(null)
@@ -118,8 +124,8 @@ function ProductTableRow({ row, onEdit, onDelete, onView, onPrefetchDetails, can
             </Td>
 
             <Td align="center" className="whitespace-nowrap">
-                <span className={cn('font-semibold type-number', stockClass(row.totalStock))}>{row.totalStock}</span>
-                <span className="text-[11px] ml-1 text-lys-muted">chai</span>
+                <span className={cn('font-semibold type-number', stockClass(row.totalStock))}>{formatNumber(row.totalStock)}</span>
+                <span className="text-[11px] ml-1 text-lys-muted">{L.bottlesUnit}</span>
             </Td>
 
             <Td className="whitespace-nowrap"><ProductStatusBadge status={row.status} /></Td>
@@ -127,10 +133,10 @@ function ProductTableRow({ row, onEdit, onDelete, onView, onPrefetchDetails, can
             <Td>
                 {canEdit && (
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity whitespace-nowrap">
-                        <Button variant="ghost" size="icon-sm" title="Chỉnh sửa" aria-label="Chỉnh sửa" onClick={e => { e.stopPropagation(); onEdit() }}>
+                        <Button variant="ghost" size="icon-sm" title={L.editBtn} aria-label={L.editBtn} onClick={e => { e.stopPropagation(); onEdit() }}>
                             <Edit2 size={13} />
                         </Button>
-                        <Button variant="ghost" size="icon-sm" title="Xóa" aria-label="Xóa" className="hover:text-tone-danger-fg hover:bg-tone-danger-bg" onClick={e => { e.stopPropagation(); onDelete() }}>
+                        <Button variant="ghost" size="icon-sm" title={L.deleteBtn} aria-label={L.deleteBtn} className="hover:text-tone-danger-fg hover:bg-tone-danger-bg" onClick={e => { e.stopPropagation(); onDelete() }}>
                             <Trash2 size={13} />
                         </Button>
                     </div>
@@ -151,8 +157,10 @@ function formatLabel(fmt: string) {
 }
 
 function ProductMobileCard({ row, onEdit, onDelete, onView, onPrefetchDetails, canEdit }: RowProps) {
+    const { locale, formatNumber } = useAppLocale()
+    const L = PRODUCTS_I18N[locale].table
     const countryCode = row.country ? `[${row.country}]` : ''
-    const pkgLabel = row.packagingType === 'OWC' ? 'Thùng gỗ' : 'Carton'
+    const pkgLabel = row.packagingType === 'OWC' ? L.owcCase : L.cartonCase
 
     return (
         <div className="p-3 flex gap-3 items-center cursor-pointer active:bg-lys-subtle" onClick={onView} onTouchStart={onPrefetchDetails}>
@@ -178,7 +186,7 @@ function ProductMobileCard({ row, onEdit, onDelete, onView, onPrefetchDetails, c
                 <div className="flex items-center gap-1.5 flex-wrap text-[11px] mt-0.5 text-lys-muted">
                     <span>{formatLabel(row.format)}</span>
                     <span>•</span>
-                    <span>{row.unitsPerCase} chai/{pkgLabel}</span>
+                    <span>{row.unitsPerCase} {L.bottlesUnit}/{pkgLabel}</span>
                     {row.classification && (
                         <>
                             <span>•</span>
@@ -190,16 +198,16 @@ function ProductMobileCard({ row, onEdit, onDelete, onView, onPrefetchDetails, c
 
             <div className="flex flex-col items-end justify-center gap-1 shrink-0 min-w-[85px]">
                 <div className="text-[11px] text-lys-secondary">
-                    Tồn: <span className={cn('font-semibold text-xs type-number', stockClass(row.totalStock))}>{row.totalStock}</span>
+                    {L.stockPrefix} <span className={cn('font-semibold text-xs type-number', stockClass(row.totalStock))}>{formatNumber(row.totalStock)}</span>
                 </div>
                 <WineTypeBadge type={row.wineType} />
                 <ProductStatusBadge status={row.status} />
                 {canEdit && (
                     <div className="flex items-center gap-1 mt-0.5">
-                        <Button variant="secondary" size="icon-sm" aria-label="Sửa" onClick={e => { e.stopPropagation(); onEdit() }}>
+                        <Button variant="secondary" size="icon-sm" aria-label={L.editBtn} onClick={e => { e.stopPropagation(); onEdit() }}>
                             <Edit2 size={12} />
                         </Button>
-                        <Button variant="danger-outline" size="icon-sm" aria-label="Xóa" onClick={e => { e.stopPropagation(); onDelete() }}>
+                        <Button variant="danger-outline" size="icon-sm" aria-label={L.deleteBtn} onClick={e => { e.stopPropagation(); onDelete() }}>
                             <Trash2 size={12} />
                         </Button>
                     </div>
@@ -229,6 +237,8 @@ interface ProductTableProps {
 }
 
 export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sortDir, onPageChange, onSort, onEdit, onDelete, onView, onPrefetchDetails, canEdit = false, onPrefetch }: ProductTableProps) {
+    const { locale } = useAppLocale()
+    const L = PRODUCTS_I18N[locale].table
     const refetching = loading && rows.length > 0
     const sortFor = (key: ProductFilters['sortBy']) => (sortBy === key ? sortDir ?? 'asc' : false)
 
@@ -268,13 +278,13 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
                 <Table>
                         <THead>
                             <tr>
-                                <Th className="w-[340px]" sort={sortFor('name')} onSort={() => onSort('name')}>Sản phẩm</Th>
-                                <Th className="w-[90px]">Loại</Th>
-                                <Th className="w-[220px]">Nhà SX / Vùng</Th>
-                                <Th className="w-[70px]" align="center" sort={sortFor('abv')} onSort={() => onSort('abv')}>ABV</Th>
-                                <Th className="w-[90px]" align="center">Tồn kho</Th>
-                                <Th className="w-[125px]">Trạng thái</Th>
-                                <Th className="w-[80px]"><span className="sr-only">Thao tác</span></Th>
+                                <Th className="w-[340px]" sort={sortFor('name')} onSort={() => onSort('name')}>{L.colProduct}</Th>
+                                <Th className="w-[90px]">{L.colType}</Th>
+                                <Th className="w-[220px]">{L.colProducerRegion}</Th>
+                                <Th className="w-[70px]" align="center" sort={sortFor('abv')} onSort={() => onSort('abv')}>{L.colAbv}</Th>
+                                <Th className="w-[90px]" align="center">{L.colStock}</Th>
+                                <Th className="w-[125px]">{L.colStatus}</Th>
+                                <Th className="w-[80px]"><span className="sr-only">{L.colActions}</span></Th>
                             </tr>
                         </THead>
                         <TBody className={cn('transition-opacity duration-200', refetching && 'opacity-50 pointer-events-none')}>
@@ -295,7 +305,7 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
                 total={total}
                 onPageChange={onPageChange}
                 onPageHover={onPrefetch}
-                itemLabel="sản phẩm"
+                itemLabel={L.paginationItem}
             />
         </div>
     )

@@ -12,6 +12,7 @@ import { formatVND, formatDate, formatDateTime } from '@/lib/utils'
 import { processPaymentApproval, settlePaymentRequest } from './actions'
 import { uploadPaymentDoc, getPresignedUploadUrl } from '@/lib/storage-r2'
 import { PrintablePaymentRequest } from './PrintablePaymentRequest'
+import { useAppLocale } from '@/lib/i18n'
 
 interface PaymentRequestDetailModalProps {
     detail: any
@@ -20,15 +21,15 @@ interface PaymentRequestDetailModalProps {
     onRefresh: () => void
 }
 
-const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string; border: string }> = {
-    DRAFT: { label: 'Bản Nháp', bg: '#F1F5F9', color: '#475569', border: '#CBD5E1' },
-    SUBMITTED: { label: 'Chờ TP Duyệt (Cấp 1)', bg: '#EFF6FF', color: '#1D4ED8', border: '#BFDBFE' },
-    REVIEWING_L1: { label: 'Chờ Kế Toán Duyệt (Cấp 2)', bg: '#FEF3C7', color: '#B45309', border: '#FDE68A' },
-    REVIEWING_L2: { label: 'Chờ CEO Phê Chuẩn (Cấp 3)', bg: '#ECFEFF', color: '#0E7490', border: '#A5F3FC' },
-    APPROVED: { label: 'Đã Duyệt — Chờ Chi Tiền', bg: '#ECFDF5', color: '#047857', border: '#A7F3D0' },
-    PAID: { label: 'Đã Giải Ngân / Đã Có UNC', bg: '#F0FDF4', color: '#15803D', border: '#86EFAC' },
-    REJECTED: { label: 'Bị Từ Chối', bg: '#FEF2F2', color: '#B91C1C', border: '#FECACA' },
-    CANCELLED: { label: 'Đã Hủy', bg: '#F8FAFC', color: '#64748B', border: '#E2E8F0' },
+const STATUS_CONFIG: Record<string, { label: string; labelEn: string; bg: string; color: string; border: string }> = {
+    DRAFT: { label: 'Bản Nháp', labelEn: 'Draft', bg: '#F1F5F9', color: '#475569', border: '#CBD5E1' },
+    SUBMITTED: { label: 'Chờ TP Duyệt (Cấp 1)', labelEn: 'Pending Manager (L1)', bg: '#EFF6FF', color: '#1D4ED8', border: '#BFDBFE' },
+    REVIEWING_L1: { label: 'Chờ Kế Toán Duyệt (Cấp 2)', labelEn: 'Pending Accounting (L2)', bg: '#FEF3C7', color: '#B45309', border: '#FDE68A' },
+    REVIEWING_L2: { label: 'Chờ CEO Phê Chuẩn (Cấp 3)', labelEn: 'Pending CEO (L3)', bg: '#ECFEFF', color: '#0E7490', border: '#A5F3FC' },
+    APPROVED: { label: 'Đã Duyệt — Chờ Chi Tiền', labelEn: 'Approved — Pending Payout', bg: '#ECFDF5', color: '#047857', border: '#A7F3D0' },
+    PAID: { label: 'Đã Giải Ngân / Đã Có UNC', labelEn: 'Disbursed / UNC Attached', bg: '#F0FDF4', color: '#15803D', border: '#86EFAC' },
+    REJECTED: { label: 'Bị Từ Chối', labelEn: 'Rejected', bg: '#FEF2F2', color: '#B91C1C', border: '#FECACA' },
+    CANCELLED: { label: 'Đã Hủy', labelEn: 'Cancelled', bg: '#F8FAFC', color: '#64748B', border: '#E2E8F0' },
 }
 
 export function PaymentRequestDetailModal({
@@ -37,6 +38,7 @@ export function PaymentRequestDetailModal({
     onClose,
     onRefresh,
 }: PaymentRequestDetailModalProps) {
+    const { isEn } = useAppLocale()
     const [selectedAttachmentIndex, setSelectedAttachmentIndex] = useState(0)
     const [zoom, setZoom] = useState(100)
     const [rotation, setRotation] = useState(0)
@@ -86,16 +88,19 @@ export function PaymentRequestDetailModal({
 
             if (res.success) {
                 toast.success(
-                    actionType === 'APPROVE' ? 'Phê duyệt thành công' :
-                    actionType === 'REJECT' ? 'Đã từ chối phiếu' : 'Đã trả lại phiếu để chỉnh sửa'
+                    actionType === 'APPROVE'
+                        ? (isEn ? 'Approved successfully' : 'Phê duyệt thành công')
+                        : actionType === 'REJECT'
+                        ? (isEn ? 'Request rejected' : 'Đã từ chối phiếu')
+                        : (isEn ? 'Request returned for revision' : 'Đã trả lại phiếu để chỉnh sửa')
                 )
                 setActionType(null)
                 onRefresh()
             } else {
-                toast.error(res.error || 'Có lỗi xảy ra')
+                toast.error(res.error || (isEn ? 'An error occurred' : 'Có lỗi xảy ra'))
             }
         } catch (err: any) {
-            toast.error(err.message || 'Lỗi xử lý phê duyệt')
+            toast.error(err.message || (isEn ? 'Approval error' : 'Lỗi xử lý phê duyệt'))
         } finally {
             setSubmittingAction(false)
         }
@@ -138,7 +143,7 @@ export function PaymentRequestDetailModal({
                     formData.append('file', uncFile)
                     const uploadRes = await uploadPaymentDoc(formData, 'unc')
                     if (!uploadRes.success) {
-                        toast.error(uploadRes.error || 'Lỗi tải file UNC lên')
+                        toast.error(uploadRes.error || (isEn ? 'Failed to upload UNC file' : 'Lỗi tải file UNC lên'))
                         setSettling(false)
                         return
                     }
@@ -155,14 +160,14 @@ export function PaymentRequestDetailModal({
             })
 
             if (res.success) {
-                toast.success('Đã xác nhận giải ngân thành công!')
+                toast.success(isEn ? 'Disbursement confirmed successfully!' : 'Đã xác nhận giải ngân thành công!')
                 setShowSettleModal(false)
                 onRefresh()
             } else {
-                toast.error(res.error || 'Lỗi khi giải ngân')
+                toast.error(res.error || (isEn ? 'Disbursement error' : 'Lỗi khi giải ngân'))
             }
         } catch (err: any) {
-            toast.error(err.message || 'Lỗi xử lý')
+            toast.error(err.message || (isEn ? 'Processing error' : 'Lỗi xử lý'))
         } finally {
             setSettling(false)
         }
@@ -181,7 +186,7 @@ export function PaymentRequestDetailModal({
                             className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
                             style={{ backgroundColor: statusStyle.bg, color: statusStyle.color, border: `1px solid ${statusStyle.border}` }}
                         >
-                            {statusStyle.label}
+                            {isEn ? statusStyle.labelEn : statusStyle.label}
                         </div>
                         <h2 className="max-w-[280px] sm:max-w-[450px] truncate text-xs sm:text-sm font-semibold text-slate-800" title={detail.title}>
                             {detail.title}
@@ -195,19 +200,19 @@ export function PaymentRequestDetailModal({
                                     onClick={() => setActionType('APPROVE')}
                                     className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-emerald-700 transition"
                                 >
-                                    <CheckCircle2 className="h-3.5 w-3.5" /> Duyệt
+                                    <CheckCircle2 className="h-3.5 w-3.5" /> {isEn ? 'Approve' : 'Duyệt'}
                                 </button>
                                 <button
                                     onClick={() => setActionType('RETURN')}
                                     className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-amber-700 transition"
                                 >
-                                    <RotateCcw className="h-3.5 w-3.5" /> Trả lại
+                                    <RotateCcw className="h-3.5 w-3.5" /> {isEn ? 'Return' : 'Trả lại'}
                                 </button>
                                 <button
                                     onClick={() => setActionType('REJECT')}
                                     className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-red-700 transition"
                                 >
-                                    <XCircle className="h-3.5 w-3.5" /> Từ chối
+                                    <XCircle className="h-3.5 w-3.5" /> {isEn ? 'Reject' : 'Từ chối'}
                                 </button>
                             </>
                         )}
@@ -217,7 +222,7 @@ export function PaymentRequestDetailModal({
                                 onClick={() => setShowSettleModal(true)}
                                 className="inline-flex items-center gap-1.5 rounded-lg bg-[#B91C1C] px-3.5 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-[#721526] transition"
                             >
-                                <DollarSign className="h-3.5 w-3.5" /> Xác Nhận Giải Ngân
+                                <DollarSign className="h-3.5 w-3.5" /> {isEn ? 'Confirm Disbursement' : 'Xác Nhận Giải Ngân'}
                             </button>
                         )}
 
@@ -225,9 +230,9 @@ export function PaymentRequestDetailModal({
                             type="button"
                             onClick={() => setShowPrintModal(true)}
                             className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 hover:text-slate-900 transition"
-                            title="In biểu mẫu tờ trình / đề nghị thanh toán (Mẫu 05-TT)"
+                            title={isEn ? 'Print Payment Request Form (Form 05-TT)' : 'In biểu mẫu tờ trình / đề nghị thanh toán (Mẫu 05-TT)'}
                         >
-                            <Printer className="h-3.5 w-3.5 text-burgundy" /> In
+                            <Printer className="h-3.5 w-3.5 text-burgundy" /> {isEn ? 'Print' : 'In'}
                         </button>
 
                         <button
@@ -250,7 +255,7 @@ export function PaymentRequestDetailModal({
                                 : 'border-transparent text-slate-500 hover:text-slate-800'
                         }`}
                     >
-                        Thông Tin Đề Nghị
+                        {isEn ? 'Request Info' : 'Thông Tin Đề Nghị'}
                     </button>
                     <button
                         type="button"
@@ -261,7 +266,7 @@ export function PaymentRequestDetailModal({
                                 : 'border-transparent text-slate-500 hover:text-slate-800'
                         }`}
                     >
-                        Chứng Từ Scan ({attachments.length})
+                        {isEn ? `Scanned Docs (${attachments.length})` : `Chứng Từ Scan (${attachments.length})`}
                     </button>
                 </div>
 
@@ -294,7 +299,9 @@ export function PaymentRequestDetailModal({
                                         </button>
                                     ))
                                 ) : (
-                                    <span className="text-xs italic text-slate-400">Không có chứng từ scan đính kèm</span>
+                                    <span className="text-xs italic text-slate-400">
+                                        {isEn ? 'No scanned documents attached' : 'Không có chứng từ scan đính kèm'}
+                                    </span>
                                 )}
                             </div>
 
@@ -304,7 +311,7 @@ export function PaymentRequestDetailModal({
                                     <button
                                         onClick={() => setZoom(z => Math.max(50, z - 25))}
                                         className="rounded p-1 hover:bg-slate-200"
-                                        title="Thu nhỏ"
+                                        title={isEn ? 'Zoom Out' : 'Thu nhỏ'}
                                     >
                                         <ZoomOut className="h-3.5 w-3.5" />
                                     </button>
@@ -312,14 +319,14 @@ export function PaymentRequestDetailModal({
                                     <button
                                         onClick={() => setZoom(z => Math.min(250, z + 25))}
                                         className="rounded p-1 hover:bg-slate-200"
-                                        title="Phóng to"
+                                        title={isEn ? 'Zoom In' : 'Phóng to'}
                                     >
                                         <ZoomIn className="h-3.5 w-3.5" />
                                     </button>
                                     <button
                                         onClick={() => setRotation(r => (r + 90) % 360)}
                                         className="rounded p-1 hover:bg-slate-200"
-                                        title="Xoay 90°"
+                                        title={isEn ? 'Rotate 90°' : 'Xoay 90°'}
                                     >
                                         <RotateCw className="h-3.5 w-3.5" />
                                     </button>
@@ -328,7 +335,7 @@ export function PaymentRequestDetailModal({
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="rounded p-1 hover:bg-slate-200"
-                                        title="Mở tab mới"
+                                        title={isEn ? 'Open in new tab' : 'Mở tab mới'}
                                     >
                                         <ExternalLink className="h-3.5 w-3.5" />
                                     </a>
@@ -365,8 +372,14 @@ export function PaymentRequestDetailModal({
                             ) : (
                                 <div className="flex flex-col items-center justify-center gap-2 text-center text-slate-400">
                                     <FileText className="h-12 w-12 stroke-[1.2]" />
-                                    <p className="text-sm font-medium">Chưa có chứng từ scan cho phiếu này</p>
-                                    <p className="text-xs text-slate-500">Người lập có thể tải lên hóa đơn GTGT, biên bản nghiệm thu hoặc UNC scan</p>
+                                    <p className="text-sm font-medium">
+                                        {isEn ? 'No scanned documents for this request' : 'Chưa có chứng từ scan cho phiếu này'}
+                                    </p>
+                                    <p className="text-xs text-slate-500">
+                                        {isEn
+                                            ? 'Requester can upload VAT invoices, delivery notes, or scanned UNC'
+                                            : 'Người lập có thể tải lên hóa đơn GTGT, biên bản nghiệm thu hoặc UNC scan'}
+                                    </p>
                                 </div>
                             )}
                         </div>
@@ -375,14 +388,15 @@ export function PaymentRequestDetailModal({
                         {currentAttachment && (
                             <div className="flex items-center justify-between border-t border-slate-200 bg-white px-4 py-2 text-[11px] text-slate-500">
                                 <div>
-                                    <span className="font-semibold text-slate-700">Loại: </span>
-                                    {currentAttachment.docType === 'VAT_INVOICE' ? 'Hóa đơn GTGT điện tử' :
-                                     currentAttachment.docType === 'DELIVERY_NOTE' ? 'Biên bản giao hàng / nghiệm thu' :
-                                     currentAttachment.docType === 'CONTRACT_DOC' ? 'Hợp đồng / Báo giá' :
-                                     currentAttachment.docType === 'BANK_UNC' ? 'Ủy nhiệm chi ngân hàng' : 'Chứng từ khác'}
+                                    <span className="font-semibold text-slate-700">{isEn ? 'Type: ' : 'Loại: '}</span>
+                                    {currentAttachment.docType === 'VAT_INVOICE' ? (isEn ? 'e-VAT Invoice' : 'Hóa đơn GTGT điện tử') :
+                                     currentAttachment.docType === 'DELIVERY_NOTE' ? (isEn ? 'Delivery / Handover Note' : 'Biên bản giao hàng / nghiệm thu') :
+                                     currentAttachment.docType === 'CONTRACT_DOC' ? (isEn ? 'Contract / Quotation' : 'Hợp đồng / Báo giá') :
+                                     currentAttachment.docType === 'BANK_UNC' ? (isEn ? 'Bank Transfer Slip (UNC)' : 'Ủy nhiệm chi ngân hàng') :
+                                     (isEn ? 'Other Document' : 'Chứng từ khác')}
                                     <span className="ml-3">({(currentAttachment.fileSize / 1024).toFixed(1)} KB)</span>
                                 </div>
-                                <div>Tải lên bởi: <span className="font-medium text-slate-700">{currentAttachment.uploadedByName}</span></div>
+                                <div>{isEn ? 'Uploaded by: ' : 'Tải lên bởi: '}<span className="font-medium text-slate-700">{currentAttachment.uploadedByName}</span></div>
                             </div>
                         )}
                     </div>
@@ -394,23 +408,23 @@ export function PaymentRequestDetailModal({
                         {/* Beneficiary Card */}
                         <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-4">
                             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">
-                                Thông Tin Người Thụ Hưởng & Ngân Hàng
+                                {isEn ? 'Beneficiary & Bank Information' : 'Thông Tin Người Thụ Hưởng & Ngân Hàng'}
                             </h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                                 <div>
-                                    <span className="text-slate-500">Đơn vị / Người nhận:</span>
+                                    <span className="text-slate-500">{isEn ? 'Beneficiary / Payee:' : 'Đơn vị / Người nhận:'}</span>
                                     <p className="font-semibold text-slate-800 text-sm">{detail.beneficiaryName}</p>
                                 </div>
                                 <div>
-                                    <span className="text-slate-500">Số tài khoản ngân hàng:</span>
-                                    <p className="font-mono font-bold text-slate-900 text-sm">{detail.beneficiaryAccount || 'Chưa cập nhật'}</p>
+                                    <span className="text-slate-500">{isEn ? 'Bank Account No:' : 'Số tài khoản ngân hàng:'}</span>
+                                    <p className="font-mono font-bold text-slate-900 text-sm">{detail.beneficiaryAccount || (isEn ? 'Not updated' : 'Chưa cập nhật')}</p>
                                 </div>
                                 <div>
-                                    <span className="text-slate-500">Ngân hàng & Chi nhánh:</span>
-                                    <p className="font-medium text-slate-800">{detail.beneficiaryBank || 'Chuyển khoản'}</p>
+                                    <span className="text-slate-500">{isEn ? 'Bank & Branch:' : 'Ngân hàng & Chi nhánh:'}</span>
+                                    <p className="font-medium text-slate-800">{detail.beneficiaryBank || (isEn ? 'Bank Transfer' : 'Chuyển khoản')}</p>
                                 </div>
                                 <div>
-                                    <span className="text-slate-500">Pháp nhân chi trả:</span>
+                                    <span className="text-slate-500">{isEn ? 'Paying Legal Entity:' : 'Pháp nhân chi trả:'}</span>
                                     <p className="font-medium text-slate-800">{detail.legalEntity?.name || 'LYS CELLARS'}</p>
                                 </div>
                             </div>
@@ -421,20 +435,20 @@ export function PaymentRequestDetailModal({
                                     {detail.supplier && (
                                         <div className="flex items-center gap-1.5 rounded-md bg-white border border-slate-200 px-2 py-1 text-slate-700">
                                             <Building2 className="h-3.5 w-3.5 text-[#B91C1C]" />
-                                            <span>NCC: <strong>[{detail.supplier.code}] {detail.supplier.name}</strong></span>
-                                            {detail.supplier.taxId && <span className="text-slate-400 font-mono">(MST: {detail.supplier.taxId})</span>}
+                                            <span>{isEn ? 'Supplier' : 'NCC'}: <strong>[{detail.supplier.code}] {detail.supplier.name}</strong></span>
+                                            {detail.supplier.taxId && <span className="text-slate-400 font-mono">({isEn ? 'Tax ID' : 'MST'}: {detail.supplier.taxId})</span>}
                                         </div>
                                     )}
                                     {detail.po && (
                                         <div className="flex items-center gap-1.5 rounded-md bg-amber-50 border border-amber-200 px-2 py-1 text-amber-800 font-medium">
                                             <Package className="h-3.5 w-3.5 text-amber-600" />
-                                            <span>Đơn hàng: <strong>{detail.po.poNo}</strong></span>
+                                            <span>{isEn ? 'PO' : 'Đơn hàng'}: <strong>{detail.po.poNo}</strong></span>
                                         </div>
                                     )}
                                     {detail.apInvoice && (
                                         <div className="flex items-center gap-1.5 rounded-md bg-blue-50 border border-blue-200 px-2 py-1 text-blue-800 font-medium">
                                             <Receipt className="h-3.5 w-3.5 text-blue-600" />
-                                            <span>Hóa đơn AP: <strong>{detail.apInvoice.invoiceNo}</strong></span>
+                                            <span>{isEn ? 'AP Invoice' : 'Hóa đơn AP'}: <strong>{detail.apInvoice.invoiceNo}</strong></span>
                                         </div>
                                     )}
                                 </div>
@@ -444,20 +458,22 @@ export function PaymentRequestDetailModal({
                         {/* Amount Banner */}
                         <div className="mt-4 flex items-center justify-between rounded-lg bg-gradient-to-r from-[#B91C1C]/10 via-[#B91C1C]/5 to-transparent p-4 border border-[#B91C1C]/20">
                             <div>
-                                <span className="text-xs font-semibold uppercase text-slate-500">Tổng Số Tiền Đề Nghị</span>
+                                <span className="text-xs font-semibold uppercase text-slate-500">
+                                    {isEn ? 'Total Requested Amount' : 'Tổng Số Tiền Đề Nghị'}
+                                </span>
                                 <div className="text-2xl font-bold text-[#B91C1C]">{formatVND(detail.totalAmountVND)}</div>
                                 {detail.currency !== 'VND' && (
                                     <div className="text-xs text-slate-500">
-                                        Nguyên tệ: {detail.totalAmount.toLocaleString()} {detail.currency} (Tỷ giá: {detail.exchangeRate.toLocaleString()})
+                                        {isEn ? 'Original currency' : 'Nguyên tệ'}: {detail.totalAmount.toLocaleString()} {detail.currency} ({isEn ? 'Rate' : 'Tỷ giá'}: {detail.exchangeRate.toLocaleString()})
                                     </div>
                                 )}
                             </div>
                             <div className="text-right text-xs">
-                                <div className="text-slate-500">Hạn thanh toán:</div>
-                                <div className="font-semibold text-slate-800">{detail.dueDate ? formatDate(detail.dueDate) : 'Càng sớm càng tốt'}</div>
+                                <div className="text-slate-500">{isEn ? 'Payment Due Date:' : 'Hạn thanh toán:'}</div>
+                                <div className="font-semibold text-slate-800">{detail.dueDate ? formatDate(detail.dueDate) : (isEn ? 'ASAP' : 'Càng sớm càng tốt')}</div>
                                 {detail.paidDate && (
                                     <div className="mt-1 text-emerald-700 font-medium">
-                                        Đã chi ngày: {formatDate(detail.paidDate)}
+                                        {isEn ? 'Paid on: ' : 'Đã chi ngày: '}{formatDate(detail.paidDate)}
                                     </div>
                                 )}
                             </div>
@@ -466,18 +482,18 @@ export function PaymentRequestDetailModal({
                         {/* Line Items Table */}
                         <div className="mt-5">
                             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-                                Chi Tiết Các Khoản Mục Thanh Toán
+                                {isEn ? 'Payment Line Items Detail' : 'Chi Tiết Các Khoản Mục Thanh Toán'}
                             </h3>
                             <div className="overflow-x-auto rounded-lg border border-slate-200">
                                 <table className="w-full text-left text-xs">
                                     <thead className="bg-slate-100 text-slate-600 font-semibold">
                                         <tr>
-                                            <th className="p-2.5">Khoản mục / Diễn giải</th>
-                                            <th className="p-2.5">Hạng mục chi</th>
-                                            <th className="p-2.5 text-center">SL</th>
-                                            <th className="p-2.5 text-right">Đơn giá</th>
+                                            <th className="p-2.5">{isEn ? 'Item / Description' : 'Khoản mục / Diễn giải'}</th>
+                                            <th className="p-2.5">{isEn ? 'Expense Category' : 'Hạng mục chi'}</th>
+                                            <th className="p-2.5 text-center">{isEn ? 'Qty' : 'SL'}</th>
+                                            <th className="p-2.5 text-right">{isEn ? 'Unit Price' : 'Đơn giá'}</th>
                                             <th className="p-2.5 text-right">VAT</th>
-                                            <th className="p-2.5 text-right">Thành tiền</th>
+                                            <th className="p-2.5 text-right">{isEn ? 'Total' : 'Thành tiền'}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
@@ -487,7 +503,7 @@ export function PaymentRequestDetailModal({
                                                     <div>{item.description}</div>
                                                     {item.invoiceNo && (
                                                         <div className="text-[10px] text-slate-400">
-                                                            HĐ số: {item.invoiceNo} {item.invoiceDate ? `(${formatDate(item.invoiceDate)})` : ''}
+                                                            {isEn ? 'Inv No: ' : 'HĐ số: '}{item.invoiceNo} {item.invoiceDate ? `(${formatDate(item.invoiceDate)})` : ''}
                                                         </div>
                                                     )}
                                                 </td>
@@ -518,7 +534,7 @@ export function PaymentRequestDetailModal({
                                     <div className="flex items-center gap-2">
                                         <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                                         <span className="text-xs font-bold text-emerald-900">
-                                            Ủy Nhiệm Chi (UNC): {detail.uncVoucherNo}
+                                            {isEn ? `Payment Order (UNC): ${detail.uncVoucherNo}` : `Ủy Nhiệm Chi (UNC): ${detail.uncVoucherNo}`}
                                         </span>
                                     </div>
                                     {detail.uncFileUrl && (
@@ -528,7 +544,7 @@ export function PaymentRequestDetailModal({
                                             rel="noopener noreferrer"
                                             className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:underline"
                                         >
-                                            <Eye className="h-3.5 w-3.5" /> Xem scan UNC
+                                            <Eye className="h-3.5 w-3.5" /> {isEn ? 'View Scanned UNC' : 'Xem scan UNC'}
                                         </a>
                                     )}
                                 </div>
@@ -538,14 +554,14 @@ export function PaymentRequestDetailModal({
                         {/* Notes / Basis */}
                         {detail.notes && (
                             <div className="mt-4 text-xs">
-                                <span className="font-semibold text-slate-500">Ghi chú / Căn cứ:</span>
+                                <span className="font-semibold text-slate-500">{isEn ? 'Notes / Basis:' : 'Ghi chú / Căn cứ:'}</span>
                                 <p className="mt-1 rounded bg-slate-50 p-2.5 text-slate-700 border border-slate-200">{detail.notes}</p>
                             </div>
                         )}
 
                         {detail.rejectReason && (
                             <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
-                                <span className="font-bold">Lý do từ chối / trả lại: </span>
+                                <span className="font-bold">{isEn ? 'Rejection / Return Reason: ' : 'Lý do từ chối / trả lại: '}</span>
                                 {detail.rejectReason}
                             </div>
                         )}
@@ -553,7 +569,7 @@ export function PaymentRequestDetailModal({
                         {/* Approval Logs Timeline */}
                         <div className="mt-6 border-t border-slate-200 pt-4">
                             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
-                                Nhật Ký Phê Duyệt & Diễn Biến
+                                {isEn ? 'Approval Audit Trail & Timeline' : 'Nhật Ký Phê Duyệt & Diễn Biến'}
                             </h3>
                             <div className="space-y-3">
                                 {detail.approvalLogs?.map((log: any, idx: number) => (
@@ -573,7 +589,7 @@ export function PaymentRequestDetailModal({
                                                 <span className="font-semibold text-slate-800">{log.actorName}</span>
                                                 <span className="text-[11px] text-slate-400">{formatDateTime(log.createdAt)}</span>
                                             </div>
-                                            <p className="text-slate-600 font-medium">{log.comment || 'Không có ghi chú'}</p>
+                                            <p className="text-slate-600 font-medium">{log.comment || (isEn ? 'No comment' : 'Không có ghi chú')}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -588,19 +604,22 @@ export function PaymentRequestDetailModal({
                 <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
                     <div className="w-full max-w-md rounded-md bg-white p-5 shadow-xl border border-slate-200 animate-in zoom-in-95">
                         <h3 className="text-base font-bold text-slate-900 mb-1">
-                            {actionType === 'APPROVE' ? 'Xác nhận Phê Duyệt Đề Nghị' :
-                             actionType === 'REJECT' ? 'Từ Chối Phê Duyệt' : 'Trả Lại Để Sửa Đổi'}
+                            {actionType === 'APPROVE'
+                                ? (isEn ? 'Confirm Approval' : 'Xác nhận Phê Duyệt Đề Nghị')
+                                : actionType === 'REJECT'
+                                ? (isEn ? 'Reject Request' : 'Từ Chối Phê Duyệt')
+                                : (isEn ? 'Return for Revision' : 'Trả Lại Để Sửa Đổi')}
                         </h3>
                         <p className="text-xs text-slate-500 mb-3">
                             {actionType === 'APPROVE'
-                                ? 'Phiếu sẽ được chuyển tiếp đến cấp duyệt tiếp theo hoặc chuyển sang hàng đợi chi tiền.'
-                                : 'Vui lòng nêu rõ lý do để người lập hoặc bộ phận liên quan nắm thông tin.'}
+                                ? (isEn ? 'This request will advance to the next approval level or move to the disbursement queue.' : 'Phiếu sẽ được chuyển tiếp đến cấp duyệt tiếp theo hoặc chuyển sang hàng đợi chi tiền.')
+                                : (isEn ? 'Please state the reason clearly so the requester or related department is informed.' : 'Vui lòng nêu rõ lý do để người lập hoặc bộ phận liên quan nắm thông tin.')}
                         </p>
 
                         <textarea
                             value={comment}
                             onChange={e => setComment(e.target.value)}
-                            placeholder={actionType === 'APPROVE' ? 'Ý kiến duyệt (tùy chọn)...' : 'Nhập lý do chi tiết...'}
+                            placeholder={actionType === 'APPROVE' ? (isEn ? 'Approval comment (optional)...' : 'Ý kiến duyệt (tùy chọn)...') : (isEn ? 'Enter detailed reason...' : 'Nhập lý do chi tiết...')}
                             rows={3}
                             className="w-full rounded-lg border border-slate-300 p-2.5 text-xs text-slate-800 focus:border-[#B91C1C] focus:outline-none"
                         />
@@ -610,7 +629,7 @@ export function PaymentRequestDetailModal({
                                 onClick={() => setActionType(null)}
                                 className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
                             >
-                                Hủy
+                                {isEn ? 'Cancel' : 'Hủy'}
                             </button>
                             <button
                                 onClick={handleApprovalSubmit}
@@ -621,7 +640,7 @@ export function PaymentRequestDetailModal({
                                 }`}
                             >
                                 {submittingAction && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                                Xác nhận
+                                {isEn ? 'Confirm' : 'Xác nhận'}
                             </button>
                         </div>
                     </div>
@@ -633,15 +652,19 @@ export function PaymentRequestDetailModal({
                 <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
                     <div className="w-full max-w-lg rounded-md bg-white p-6 shadow-xl border border-slate-200 animate-in zoom-in-95">
                         <h3 className="text-base font-bold text-slate-900 mb-1">
-                            Xác Nhận Giải Ngân & Đính Kèm Ủy Nhiệm Chi (UNC)
+                            {isEn ? 'Confirm Disbursement & Attach Payment Order (UNC)' : 'Xác Nhận Giải Ngân & Đính Kèm Ủy Nhiệm Chi (UNC)'}
                         </h3>
                         <p className="text-xs text-slate-500 mb-4">
-                            Ghi nhận tiền đã xuất quỹ/chuyển khoản và đính kèm bản scan UNC để hoàn tất hồ sơ kiểm toán.
+                            {isEn
+                                ? 'Record disbursed funds and attach scanned UNC slip to complete audit documentation.'
+                                : 'Ghi nhận tiền đã xuất quỹ/chuyển khoản và đính kèm bản scan UNC để hoàn tất hồ sơ kiểm toán.'}
                         </p>
 
                         <div className="space-y-3.5 text-xs">
                             <div>
-                                <label className="block font-medium text-slate-700 mb-1">Số tiền thực chi (VND) *</label>
+                                <label className="block font-medium text-slate-700 mb-1">
+                                    {isEn ? 'Actual Paid Amount (VND) *' : 'Số tiền thực chi (VND) *'}
+                                </label>
                                 <input
                                     type="number"
                                     value={paidAmount}
@@ -652,23 +675,27 @@ export function PaymentRequestDetailModal({
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block font-medium text-slate-700 mb-1">Hình thức thanh toán</label>
+                                    <label className="block font-medium text-slate-700 mb-1">
+                                        {isEn ? 'Payment Method' : 'Hình thức thanh toán'}
+                                    </label>
                                     <select
                                         value={paymentMethod}
                                         onChange={e => setPaymentMethod(e.target.value)}
                                         className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     >
-                                        <option value="BANK_TRANSFER">Chuyển khoản ngân hàng</option>
-                                        <option value="CASH">Tiền mặt</option>
-                                        <option value="LC">Tín dụng thư (L/C)</option>
-                                        <option value="TT_ADVANCE">Điện chuyển tiền (T/T)</option>
+                                        <option value="BANK_TRANSFER">{isEn ? 'Bank Transfer' : 'Chuyển khoản ngân hàng'}</option>
+                                        <option value="CASH">{isEn ? 'Cash' : 'Tiền mặt'}</option>
+                                        <option value="LC">{isEn ? 'Letter of Credit (L/C)' : 'Tín dụng thư (L/C)'}</option>
+                                        <option value="TT_ADVANCE">{isEn ? 'Telegraphic Transfer (T/T)' : 'Điện chuyển tiền (T/T)'}</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block font-medium text-slate-700 mb-1">Số hiệu UNC / Phiếu chi</label>
+                                    <label className="block font-medium text-slate-700 mb-1">
+                                        {isEn ? 'UNC / Voucher No' : 'Số hiệu UNC / Phiếu chi'}
+                                    </label>
                                     <input
                                         type="text"
-                                        placeholder="Vd: UNC-2026-VCB-088"
+                                        placeholder="e.g. UNC-2026-VCB-088"
                                         value={uncVoucherNo}
                                         onChange={e => setUncVoucherNo(e.target.value)}
                                         className="w-full rounded-lg border border-slate-300 p-2 text-xs font-mono focus:border-[#B91C1C] focus:outline-none"
@@ -677,7 +704,9 @@ export function PaymentRequestDetailModal({
                             </div>
 
                             <div>
-                                <label className="block font-medium text-slate-700 mb-1">Upload Chứng từ scan UNC / Biên lai</label>
+                                <label className="block font-medium text-slate-700 mb-1">
+                                    {isEn ? 'Upload Scanned UNC / Receipt' : 'Upload Chứng từ scan UNC / Biên lai'}
+                                </label>
                                 <div className="flex items-center gap-3">
                                     <input
                                         type="file"
@@ -686,7 +715,9 @@ export function PaymentRequestDetailModal({
                                         className="block w-full text-xs text-slate-500 file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-[#B91C1C] hover:file:bg-slate-200"
                                     />
                                 </div>
-                                <p className="mt-1 text-[11px] text-slate-400">Hỗ trợ file PDF hoặc ảnh chụp UNC (tối đa 20MB)</p>
+                                <p className="mt-1 text-[11px] text-slate-400">
+                                    {isEn ? 'Supports PDF or image files (max 20MB)' : 'Hỗ trợ file PDF hoặc ảnh chụp UNC (tối đa 20MB)'}
+                                </p>
                             </div>
                         </div>
 
@@ -695,7 +726,7 @@ export function PaymentRequestDetailModal({
                                 onClick={() => setShowSettleModal(false)}
                                 className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
                             >
-                                Hủy
+                                {isEn ? 'Cancel' : 'Hủy'}
                             </button>
                             <button
                                 onClick={handleSettlementSubmit}
@@ -703,7 +734,7 @@ export function PaymentRequestDetailModal({
                                 className="inline-flex items-center gap-1.5 rounded-lg bg-[#B91C1C] px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-[#721526] transition"
                             >
                                 {settling && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                                Hoàn Tất Giải Ngân
+                                {isEn ? 'Complete Disbursement' : 'Hoàn Tất Giải Ngân'}
                             </button>
                         </div>
                     </div>

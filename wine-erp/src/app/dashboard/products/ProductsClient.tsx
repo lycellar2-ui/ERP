@@ -12,12 +12,8 @@ const ProductDrawer = dynamic(() => import('./ProductDrawer').then(m => m.Produc
 const ProductDetailDrawer = dynamic(() => import('./ProductDetailDrawer').then(m => m.ProductDetailDrawer), { loading: () => null, ssr: false })
 import { ExcelImportDialog } from '@/components/ExcelImportDialog'
 import { toast } from 'sonner'
-
-const COUNTRY_NAMES: Record<string, string> = {
-    FR: 'Pháp', IT: 'Ý', ES: 'TBN', PT: 'BĐN', DE: 'Đức',
-    US: 'Mỹ', AU: 'Úc', NZ: 'NZ', AR: 'Argentina', CL: 'Chile', ZA: 'Nam Phi',
-    GE: 'Georgia', HU: 'Hungary', GR: 'Hy Lạp', AT: 'Áo', RO: 'Romania', MX: 'Mexico', JP: 'Nhật',
-}
+import { useAppLocale } from '@/lib/i18n'
+import { PRODUCTS_I18N } from './i18n'
 
 export const PRODUCT_STATUS_LABEL: Record<string, string> = {
     ACTIVE: 'Đang bán',
@@ -28,7 +24,9 @@ export const PRODUCT_STATUS_LABEL: Record<string, string> = {
 const PRODUCT_TONE_OVERRIDES = { ALLOCATION_ONLY: 'info' } as const
 
 export function ProductStatusBadge({ status }: { status: string }) {
-    return <StatusBadge status={status} label={PRODUCT_STATUS_LABEL[status]} toneOverrides={PRODUCT_TONE_OVERRIDES} />
+    const { locale } = useAppLocale()
+    const L = PRODUCTS_I18N[locale]
+    return <StatusBadge status={status} label={L.statuses[status] ?? PRODUCT_STATUS_LABEL[status]} toneOverrides={PRODUCT_TONE_OVERRIDES} />
 }
 
 type ProductsPageResult = { rows: ProductRow[]; total: number; stats: ProductStats; countries: { code: string; count: number }[]; producers: { id: string; name: string }[]; canEdit: boolean }
@@ -42,6 +40,8 @@ export function ProductsClient({
     canEdit = false,
     initialData,
 }: ProductsClientProps) {
+    const { locale, formatNumber } = useAppLocale()
+    const L = PRODUCTS_I18N[locale]
     const qc = useQueryClient()
     const [activeTab, setActiveTab] = useState<'CATALOG' | 'TASTING_NOTES'>('CATALOG')
     const [filters, setFilters] = useState<ProductFilters>({ page: 1, pageSize: 20 })
@@ -129,23 +129,23 @@ export function ProductsClient({
 
     const handleDelete = (id: string, name: string) => {
         confirm({
-            title: `Xóa Sản Phẩm "${name}"`,
+            title: L.deleteConfirm.title(name),
             message: (
                 <div className="space-y-1">
-                    <p>Bạn có chắc chắn muốn xóa sản phẩm <strong>"{name}"</strong>?</p>
-                    <p className="text-xs text-slate-500">Sản phẩm sẽ bị ẩn khỏi danh sách (soft delete).</p>
+                    <p>{L.deleteConfirm.message1} <strong>"{name}"</strong>?</p>
+                    <p className="text-xs text-slate-500">{L.deleteConfirm.message2}</p>
                 </div>
             ),
-            confirmLabel: 'Xác Nhận Xóa',
-            cancelLabel: 'Bỏ qua',
+            confirmLabel: L.deleteConfirm.confirmLabel,
+            cancelLabel: L.deleteConfirm.cancelLabel,
             danger: true,
             onConfirm: async () => {
                 try {
                     await deleteProduct(id)
-                    toast.success(`Đã xóa "${name}"`)
+                    toast.success(L.deleteConfirm.deletedSuccess(name))
                     reloadPageData()
                 } catch {
-                    toast.error('Không thể xóa sản phẩm')
+                    toast.error(L.deleteConfirm.deleteFailed)
                 }
             }
         })
@@ -156,7 +156,7 @@ export function ProductsClient({
         try {
             const data = await exportProductsData()
             // Convert to CSV
-            if (data.length === 0) { toast.error('Chưa có sản phẩm để xuất'); return }
+            if (data.length === 0) { toast.error(L.exportMsg.empty); return }
             const headers = Object.keys(data[0])
             const csvRows = [
                 headers.join(','),
@@ -174,9 +174,9 @@ export function ProductsClient({
             a.download = `danh_muc_san_pham_${new Date().toISOString().slice(0, 10)}.csv`
             a.click()
             URL.revokeObjectURL(url)
-            toast.success(`Đã xuất ${data.length} sản phẩm`)
+            toast.success(L.exportMsg.success(data.length))
         } catch {
-            toast.error('Lỗi xuất Excel')
+            toast.error(L.exportMsg.failed)
         } finally {
             setExporting(false)
         }
@@ -217,27 +217,27 @@ export function ProductsClient({
             <PageHeader
                 description={
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 type-caption">
-                        <span>Tổng: <strong className="type-number text-sm ml-1 text-lys-teal-strong">{stats.total}</strong></span>
+                        <span>{L.header.total} <strong className="type-number text-sm ml-1 text-lys-teal-strong">{formatNumber(stats.total)}</strong></span>
                         <span className="text-lys-border-strong">|</span>
-                        <span>Đang bán: <strong className="type-number text-sm ml-1 text-tone-success-fg">{stats.active}</strong></span>
+                        <span>{L.header.active} <strong className="type-number text-sm ml-1 text-tone-success-fg">{formatNumber(stats.active)}</strong></span>
                         <span className="text-lys-border-strong">|</span>
-                        <span>Hết hàng: <strong className="type-number text-sm ml-1 text-tone-danger-fg">{stats.outOfStock}</strong></span>
+                        <span>{L.header.outOfStock} <strong className="type-number text-sm ml-1 text-tone-danger-fg">{formatNumber(stats.outOfStock)}</strong></span>
                         <span className="hidden xl:inline text-lys-border-strong">|</span>
-                        <span className="hidden xl:inline">Nổi bật: <strong className="type-number text-sm ml-1 text-lys-primary">{topTypeLabel}</strong></span>
+                        <span className="hidden xl:inline">{L.header.featured} <strong className="type-number text-sm ml-1 text-lys-primary">{topTypeLabel}</strong></span>
                     </div>
                 }
                 actions={
                     <>
                         <Button variant="secondary" onClick={handleExport} loading={exporting} disabled={exporting}>
-                            {!exporting && <Download size={14} aria-hidden />} {exporting ? 'Đang xuất...' : 'Export'}
+                            {!exporting && <Download size={14} aria-hidden />} {exporting ? L.header.exporting : L.header.exportBtn}
                         </Button>
                         {canEdit && (
                             <>
                                 <Button variant="secondary" onClick={() => setImportOpen(true)}>
-                                    <Upload size={14} aria-hidden /> Import
+                                    <Upload size={14} aria-hidden /> {L.header.importBtn}
                                 </Button>
                                 <Button onClick={() => { setEditingId(null); setDrawerOpen(true) }}>
-                                    <Plus size={16} aria-hidden /> Thêm Sản Phẩm
+                                    <Plus size={16} aria-hidden /> {L.header.addBtn}
                                 </Button>
                             </>
                         )}
@@ -257,7 +257,7 @@ export function ProductsClient({
                     }`}
                 >
                     <Package size={14} />
-                    Danh mục Sản phẩm
+                    {L.tabs.catalog}
                 </button>
                 <button
                     type="button"
@@ -269,7 +269,7 @@ export function ProductsClient({
                     }`}
                 >
                     <FileText size={14} />
-                    Quản lý Tasting Note & Hồ sơ
+                    {L.tabs.tastingNotes}
                 </button>
             </div>
 
@@ -279,7 +279,7 @@ export function ProductsClient({
                         left={
                             <div className="flex gap-2">
                                 <SearchInput
-                                    placeholder="Tìm theo tên, SKU, nhà SX..."
+                                    placeholder={L.filters.searchPlaceholder}
                                     value={search}
                                     onChange={e => handleSearchChange(e.target.value)}
                                     className="sm:w-72"
@@ -291,55 +291,55 @@ export function ProductsClient({
                                     onClick={() => setShowMobileFilters(!showMobileFilters)}
                                 >
                                     <SlidersHorizontal size={14} aria-hidden />
-                                    Lọc{activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ''}
+                                    {L.filters.filterBtn}{activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ''}
                                 </Button>
                             </div>
                         }
                         right={
                             <div className={`${showMobileFilters ? 'grid grid-cols-2' : 'hidden'} md:flex md:flex-wrap items-center gap-2 w-full md:w-auto`}>
                                 <Select
-                                    aria-label="Loại vang"
+                                    aria-label={L.filters.wineTypeLabel}
                                     value={typeFilter}
                                     onChange={e => { setTypeFilter(e.target.value); applyFilter({ wineType: e.target.value || undefined }) }}
                                     className="md:w-36"
                                 >
-                                    <option value="">Tất cả loại</option>
-                                    <option value="WHITE">Vang trắng</option>
-                                    <option value="RED">Vang đỏ</option>
-                                    <option value="SPARKLING">Vang nổ</option>
-                                    <option value="ROSE">Vang hồng</option>
+                                    <option value="">{L.filters.allTypes}</option>
+                                    <option value="WHITE">{L.wineTypes.WHITE}</option>
+                                    <option value="RED">{L.wineTypes.RED}</option>
+                                    <option value="SPARKLING">{L.wineTypes.SPARKLING}</option>
+                                    <option value="ROSE">{L.wineTypes.ROSE}</option>
                                 </Select>
                                 <Select
-                                    aria-label="Trạng thái"
+                                    aria-label={L.filters.statusLabel}
                                     value={statusFilter}
                                     onChange={e => { setStatusFilter(e.target.value); applyFilter({ status: e.target.value || undefined }) }}
                                     className="md:w-40"
                                 >
-                                    <option value="">Tất cả trạng thái</option>
-                                    <option value="ACTIVE">Đang bán</option>
-                                    <option value="DISCONTINUED">Ngừng KD</option>
-                                    <option value="ALLOCATION_ONLY">Allocation</option>
+                                    <option value="">{L.filters.allStatuses}</option>
+                                    <option value="ACTIVE">{L.statuses.ACTIVE}</option>
+                                    <option value="DISCONTINUED">{L.statuses.DISCONTINUED}</option>
+                                    <option value="ALLOCATION_ONLY">{L.statuses.ALLOCATION_ONLY}</option>
                                 </Select>
                                 <Select
-                                    aria-label="Quốc gia"
+                                    aria-label={L.filters.countryLabel}
                                     value={countryFilter}
                                     onChange={e => { setCountryFilter(e.target.value); applyFilter({ country: e.target.value || undefined }) }}
                                     className="md:w-40"
                                 >
-                                    <option value="">Tất cả quốc gia</option>
+                                    <option value="">{L.filters.allCountries}</option>
                                     {countries.map(c => (
                                         <option key={c.code} value={c.code}>
-                                            {COUNTRY_NAMES[c.code] ?? c.code} [{c.code}] ({c.count})
+                                            {L.countries[c.code] ?? c.code} [{c.code}] ({c.count})
                                         </option>
                                     ))}
                                 </Select>
                                 <Select
-                                    aria-label="NCC / Nhà SX"
+                                    aria-label={L.filters.producerLabel}
                                     value={producerFilter}
                                     onChange={e => { setProducerFilter(e.target.value); applyFilter({ producerId: e.target.value || undefined }) }}
                                     className="md:w-44"
                                 >
-                                    <option value="">Tất cả NCC / Nhà SX</option>
+                                    <option value="">{L.filters.allProducers}</option>
                                     {producers.map(p => (
                                         <option key={p.id} value={p.id}>{p.name}</option>
                                     ))}
@@ -352,7 +352,7 @@ export function ProductsClient({
                                             applyFilter({ search: undefined, wineType: undefined, status: undefined, country: undefined, producerId: undefined })
                                         }}
                                     >
-                                        <X size={14} aria-hidden /> Xóa bộ lọc
+                                        <X size={14} aria-hidden /> {L.filters.clearFilters}
                                     </Button>
                                 )}
                             </div>
@@ -402,20 +402,20 @@ export function ProductsClient({
             <ExcelImportDialog
                 open={importOpen}
                 onClose={() => setImportOpen(false)}
-                title="Import Sản Phẩm"
+                title={L.importDialog.title}
                 templateFileName="template_san_pham.xlsx"
                 templateColumns={[
                     { header: 'SKU', sample: 'MOUTON-2018-750', required: true },
-                    { header: 'Tên SP', sample: 'Château Mouton Rothschild 2018', required: true },
-                    { header: 'Nhà SX', sample: 'Château Mouton Rothschild', required: true },
+                    { header: L.importDialog.colName, sample: 'Château Mouton Rothschild 2018', required: true },
+                    { header: L.importDialog.colProducer, sample: 'Château Mouton Rothschild', required: true },
 
-                    { header: 'Loại', sample: 'RED', required: true },
-                    { header: 'Quốc Gia', sample: 'FR', required: true },
+                    { header: L.importDialog.colType, sample: 'RED', required: true },
+                    { header: L.importDialog.colCountry, sample: 'FR', required: true },
                     { header: 'ABV', sample: '13.5' },
-                    { header: 'Dung Tích', sample: '750' },
+                    { header: L.importDialog.colVolume, sample: '750' },
                     { header: 'Format', sample: 'STANDARD' },
-                    { header: 'Đóng Gói', sample: 'OWC' },
-                    { header: 'Chai/Thùng', sample: '6' },
+                    { header: L.importDialog.colPackaging, sample: 'OWC' },
+                    { header: L.importDialog.colUnitsPerCase, sample: '6' },
                     { header: 'Classification', sample: 'Premier Cru Classé' },
                 ]}
                 onImport={bulkImportProducts}

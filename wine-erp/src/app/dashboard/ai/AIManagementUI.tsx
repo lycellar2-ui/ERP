@@ -2,19 +2,15 @@
 
 import { useState } from 'react'
 import {
-    Power, Shield, Sparkles, FileText, Pin, Archive, Trash2, Eye,
+    Power, Sparkles, FileText, Pin, Archive, Trash2,
     ChevronDown, ChevronUp, Loader2, CheckCircle, ToggleLeft, ToggleRight,
     Clock, BarChart3, MessageSquare, Wine, Users, TrendingUp
 } from 'lucide-react'
 import { useConfirmDialog } from '@/components/ui'
+import { useAppLocale } from '@/lib/i18n'
+import { getAiI18n } from './i18n'
 
-const MODULE_OPTIONS = [
-    { key: 'pipeline', label: 'Pipeline Analysis', desc: 'Sales pipeline & velocity' },
-    { key: 'crm', label: 'CRM Analysis', desc: 'Customer health & churning' },
-    { key: 'catalog', label: 'Catalog Intelligence', desc: 'Product & supplier research' },
-    { key: 'ceo', label: 'CEO Briefing', desc: 'Monthly executive summary' },
-    { key: 'product-desc', label: 'Product Description', desc: 'Auto product descriptions' },
-]
+const MODULE_KEYS = ['pipeline', 'crm', 'catalog', 'ceo', 'product-desc'] as const
 
 const MODULE_ICONS: Record<string, any> = {
     pipeline: TrendingUp,
@@ -24,10 +20,6 @@ const MODULE_ICONS: Record<string, any> = {
     'product-desc': MessageSquare,
 }
 
-// ═══════════════════════════════════════════════════
-// 1. AI SYSTEM TOGGLE — Enable/Disable + Module Whitelist
-// ═══════════════════════════════════════════════════
-
 interface AiConfig {
     aiEnabled: boolean
     allowedModules: string[]
@@ -36,6 +28,9 @@ interface AiConfig {
 }
 
 export function AiTogglePanel({ initialConfig }: { initialConfig: AiConfig }) {
+    const { locale } = useAppLocale()
+    const L = getAiI18n(locale).toggle
+
     const [config, setConfig] = useState(initialConfig)
     const [saving, setSaving] = useState(false)
     const [saved, setSaved] = useState(false)
@@ -67,7 +62,7 @@ export function AiTogglePanel({ initialConfig }: { initialConfig: AiConfig }) {
     }
 
     return (
-        <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+        <div className="p-5 rounded-md bg-white border border-lys-border">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-md flex items-center justify-center"
@@ -75,8 +70,8 @@ export function AiTogglePanel({ initialConfig }: { initialConfig: AiConfig }) {
                         <Power size={16} style={{ color: config.aiEnabled ? '#15803D' : '#B91C1C' }} />
                     </div>
                     <div>
-                        <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>AI System Control</h3>
-                        <p className="text-[10px]" style={{ color: '#64748B' }}>Bật/tắt toàn bộ AI features cho CEO & users</p>
+                        <h3 className="text-sm font-semibold text-lys-primary">{L.title}</h3>
+                        <p className="text-[10px] text-lys-muted">{L.subtitle}</p>
                     </div>
                 </div>
                 <button onClick={handleToggle} disabled={saving}
@@ -88,28 +83,28 @@ export function AiTogglePanel({ initialConfig }: { initialConfig: AiConfig }) {
                     }}>
                     {saving ? <Loader2 size={14} className="animate-spin" /> :
                         config.aiEnabled ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
-                    {config.aiEnabled ? 'AI ĐANG BẬT' : 'AI ĐÃ TẮT'}
+                    {config.aiEnabled ? L.enabledBadge : L.disabledBadge}
                     {saved && <CheckCircle size={12} />}
                 </button>
             </div>
 
-            {/* Module Whitelist */}
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-2">
-                {MODULE_OPTIONS.map(mod => {
-                    const active = config.allowedModules.includes(mod.key)
+                {MODULE_KEYS.map(key => {
+                    const mod = L.modules[key]
+                    const active = config.allowedModules.includes(key)
                     return (
-                        <button key={mod.key}
-                            onClick={() => handleModuleToggle(mod.key)}
+                        <button key={key}
+                            onClick={() => handleModuleToggle(key)}
                             disabled={!config.aiEnabled}
                             className="p-3 rounded-md text-left transition-all hover:scale-[1.01]"
                             style={{
                                 background: active ? 'rgba(21,128,61,0.06)' : '#FFFFFF',
-                                border: `1px solid ${active ? 'rgba(21,128,61,0.2)' : '#1E3545'}`,
+                                border: `1px solid ${active ? 'rgba(21,128,61,0.2)' : '#E2E8F0'}`,
                                 opacity: config.aiEnabled ? 1 : 0.4,
                             }}>
                             <div className="flex items-center justify-between mb-1.5">
                                 {(() => {
-                                    const IconComp = MODULE_ICONS[mod.key] || Sparkles
+                                    const IconComp = MODULE_ICONS[key] || Sparkles
                                     return (
                                         <div className="w-6 h-6 rounded flex items-center justify-center"
                                             style={{ background: active ? 'rgba(21,128,61,0.15)' : 'rgba(100,116,139,0.1)', color: active ? '#15803D' : '#64748B' }}>
@@ -123,7 +118,7 @@ export function AiTogglePanel({ initialConfig }: { initialConfig: AiConfig }) {
                                 }} />
                             </div>
                             <p className="text-[11px] font-semibold" style={{ color: active ? '#0F172A' : '#64748B' }}>{mod.label}</p>
-                            <p className="text-xs" style={{ color: '#64748B' }}>{mod.desc}</p>
+                            <p className="text-xs text-lys-muted">{mod.desc}</p>
                         </button>
                     )
                 })}
@@ -131,10 +126,6 @@ export function AiTogglePanel({ initialConfig }: { initialConfig: AiConfig }) {
         </div>
     )
 }
-
-// ═══════════════════════════════════════════════════
-// 2. AI REPORTS HISTORY — View, Pin, Archive, Delete
-// ═══════════════════════════════════════════════════
 
 interface AiReport {
     id: string
@@ -148,6 +139,9 @@ interface AiReport {
 }
 
 export function AiReportsPanel({ initialReports }: { initialReports: AiReport[] }) {
+    const { locale, formatDate } = useAppLocale()
+    const L = getAiI18n(locale).reports
+
     const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [reports, setReports] = useState(initialReports)
     const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -168,9 +162,9 @@ export function AiReportsPanel({ initialReports }: { initialReports: AiReport[] 
 
     async function handleDelete(id: string) {
         const ok = await confirm({
-            title: 'Xóa báo cáo AI',
-            message: 'Bạn có chắc chắn muốn xóa báo cáo này không?',
-            confirmLabel: 'Xóa báo cáo',
+            title: L.confirmDeleteTitle,
+            message: L.confirmDeleteMsg,
+            confirmLabel: L.confirmDeleteBtn,
             variant: 'danger',
         })
         if (!ok) return
@@ -179,7 +173,7 @@ export function AiReportsPanel({ initialReports }: { initialReports: AiReport[] 
     }
 
     return (
-        <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+        <div className="p-5 rounded-md bg-white border border-lys-border">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-md flex items-center justify-center"
@@ -187,15 +181,15 @@ export function AiReportsPanel({ initialReports }: { initialReports: AiReport[] 
                         <FileText size={16} style={{ color: '#B45309' }} />
                     </div>
                     <div>
-                        <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>Báo Cáo AI Đã Lưu</h3>
-                        <p className="text-[10px]" style={{ color: '#64748B' }}>{reports.length} báo cáo · ghim {reports.filter(r => r.isPinned).length}</p>
+                        <h3 className="text-sm font-semibold text-lys-primary">{L.title}</h3>
+                        <p className="text-[10px] text-lys-muted">{L.countSummary(reports.length, reports.filter(r => r.isPinned).length)}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-1">
                     <button onClick={() => setFilter('all')}
                         className="px-2 py-1 rounded text-[10px] font-semibold"
                         style={{ background: filter === 'all' ? 'rgba(100,116,139,0.15)' : 'transparent', color: filter === 'all' ? '#0F172A' : '#64748B' }}>
-                        Tất cả
+                        {L.filterAll}
                     </button>
                     {modules.map(m => (
                         <button key={m} onClick={() => setFilter(m)}
@@ -209,8 +203,8 @@ export function AiReportsPanel({ initialReports }: { initialReports: AiReport[] 
 
             {filtered.length === 0 ? (
                 <div className="py-6 text-center">
-                    <FileText size={24} className="mx-auto mb-2" style={{ color: '#E2E8F0' }} />
-                    <p className="text-xs" style={{ color: '#64748B' }}>Chưa có báo cáo. Sử dụng AI Analysis trên Pipeline, CRM hoặc Products để tạo.</p>
+                    <FileText size={24} className="mx-auto mb-2 text-lys-border" />
+                    <p className="text-xs text-lys-muted">{L.empty}</p>
                 </div>
             ) : (
                 <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
@@ -218,39 +212,38 @@ export function AiReportsPanel({ initialReports }: { initialReports: AiReport[] 
                         const ModIcon = MODULE_ICONS[report.module] ?? FileText
                         const isExpanded = expandedId === report.id
                         return (
-                            <div key={report.id} className="rounded-md overflow-hidden"
-                                style={{ background: '#FFFFFF', border: `1px solid ${report.isPinned ? 'rgba(180,83,9,0.2)' : '#1E3545'}` }}>
+                            <div key={report.id} className="rounded-md overflow-hidden bg-white border border-lys-border">
                                 <div className="flex items-center justify-between px-3 py-2.5 cursor-pointer"
                                     onClick={() => setExpandedId(isExpanded ? null : report.id)}>
                                     <div className="flex items-center gap-2 min-w-0">
                                         {report.isPinned && <Pin size={10} style={{ color: '#B45309' }} />}
                                         <ModIcon size={13} style={{ color: '#0891B2' }} />
-                                        <span className="text-xs font-semibold truncate" style={{ color: '#0F172A' }}>{report.title}</span>
+                                        <span className="text-xs font-semibold truncate text-lys-primary">{report.title}</span>
                                         <span className="inline-block text-xs px-1.5 py-0.5 rounded capitalize whitespace-nowrap shrink-0"
                                             style={{ background: 'rgba(29,78,216,0.1)', color: '#1D4ED8' }}>{report.module}</span>
                                     </div>
                                     <div className="flex items-center gap-1.5 flex-shrink-0">
-                                        <span className="text-xs" style={{ color: '#64748B' }}>
+                                        <span className="text-xs text-lys-muted">
                                             <Clock size={9} className="inline mr-0.5" />
-                                            {new Date(report.createdAt).toLocaleDateString('vi-VN')}
+                                            {formatDate(report.createdAt)}
                                         </span>
                                         <button onClick={e => { e.stopPropagation(); handlePin(report.id) }}
-                                            className="p-1 rounded transition-all hover:scale-110" title="Ghim">
+                                            className="p-1 rounded transition-all hover:scale-110" title={L.pinTitle}>
                                             <Pin size={11} style={{ color: report.isPinned ? '#B45309' : '#64748B' }} />
                                         </button>
                                         <button onClick={e => { e.stopPropagation(); handleArchive(report.id) }}
-                                            className="p-1 rounded transition-all hover:scale-110" title="Lưu trữ">
+                                            className="p-1 rounded transition-all hover:scale-110" title={L.archiveTitle}>
                                             <Archive size={11} style={{ color: '#64748B' }} />
                                         </button>
                                         <button onClick={e => { e.stopPropagation(); handleDelete(report.id) }}
-                                            className="p-1 rounded transition-all hover:scale-110" title="Xóa">
+                                            className="p-1 rounded transition-all hover:scale-110" title={L.deleteTitle}>
                                             <Trash2 size={11} style={{ color: '#B91C1C' }} />
                                         </button>
                                         {isExpanded ? <ChevronUp size={12} style={{ color: '#64748B' }} /> : <ChevronDown size={12} style={{ color: '#64748B' }} />}
                                     </div>
                                 </div>
                                 {isExpanded && (
-                                    <div className="px-3 pb-3 border-t" style={{ borderColor: '#1E3545' }}>
+                                    <div className="px-3 pb-3 border-t border-lys-border">
                                         <div className="mt-2 space-y-1 max-h-[300px] overflow-y-auto pr-1">
                                             {report.analysis.split('\n').filter(Boolean).map((line, i) => {
                                                 const isH = line.startsWith('#') || line.startsWith('**')

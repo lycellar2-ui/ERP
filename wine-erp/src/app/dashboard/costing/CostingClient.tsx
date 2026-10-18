@@ -5,36 +5,29 @@ import { Calculator, AlertCircle, TrendingUp, TrendingDown, Wine, Ship, Package,
 import { CostingProduct, runSensitivityAnalysis, getPresetScenarios } from './actions'
 import type { SensitivityResult, SensitivityScenario } from './actions'
 import { suggestPrices } from './costingUtils'
-import { formatVND } from '@/lib/utils'
 import { LandedCostTab } from './LandedCostTab'
-import { PageHeader, StatGrid, StatCard } from '@/components/ui'
+import {
+    PageHeader, StatGrid, StatCard, StatusTabs, SearchInput,
+    Table, THead, TBody, Tr, Th, Td, TableMessageRow,
+    Button, Field, Input, Badge, EmptyState
+} from '@/components/ui'
+import { useAppLocale } from '@/lib/i18n'
+import { COSTING_I18N } from './i18n'
+import { cn } from '@/lib/utils'
 
 const WINE_COLORS: Record<string, string> = {
     RED: '#B91C1C', WHITE: '#B45309', ROSE: '#B45309',
     SPARKLING: '#0E7490', FORTIFIED: '#1D4ED8', DESSERT: '#0891B2',
 }
 
-const SCT_NOTE: Record<string, string> = {
-    low: 'TTĐB 35%',
-    high: 'TTĐB 65%',
-}
-
-const CHANNEL_LABEL: Record<string, string> = {
-    HORECA: 'HORECA', WHOLESALE_DISTRIBUTOR: 'Đại Lý',
-    VIP_RETAIL: 'VIP Retail', POS: 'POS Showroom',
-}
-
-const TABS = [
-    { key: 'sku', label: 'Giá Vốn SKU', icon: Package },
-    { key: 'campaign', label: 'Landed Cost Campaign', icon: Ship },
-    { key: 'sensitivity', label: 'Phân Tích Nhạy Cảm', icon: Beaker },
-] as const
-
-type TabKey = typeof TABS[number]['key']
+type TabKey = 'sku' | 'campaign' | 'sensitivity'
 
 interface Props { products: CostingProduct[] }
 
 export function CostingClient({ products }: Props) {
+    const { locale, formatCurrency, formatNumber } = useAppLocale()
+    const i18n = COSTING_I18N[locale]
+
     const [tab, setTab] = useState<TabKey>('sku')
     const [selected, setSelected] = useState<CostingProduct | null>(null)
     const [search, setSearch] = useState('')
@@ -49,149 +42,189 @@ export function CostingClient({ products }: Props) {
 
     const suggestions = selected ? suggestPrices(selected.unitLandedCost) : []
 
+    const tabs = [
+        { value: 'sku' as TabKey, label: i18n.tabs.sku },
+        { value: 'campaign' as TabKey, label: i18n.tabs.campaign },
+        { value: 'sensitivity' as TabKey, label: i18n.tabs.sensitivity },
+    ]
+
     return (
         <div className="space-y-6 max-w-screen-2xl">
-            {/* Header */}
             <PageHeader
-                title="Tính Giá Vốn & Đề Xuất Giá (CST)"
-                description="Landed cost / chai • Margin analysis • Đề xuất giá theo kênh"
+                description={i18n.description}
             />
 
-            {/* Tab Navigation */}
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                {TABS.map(t => {
-                    const isActive = tab === t.key
-                    const Icon = t.icon
-                    return (
-                        <button key={t.key} onClick={() => setTab(t.key)}
-                            className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-md transition-all flex-1 justify-center"
-                            style={{
-                                background: isActive ? '#FFFFFF' : 'transparent',
-                                color: isActive ? '#0E7490' : '#64748B',
-                                border: isActive ? '1px solid #E2E8F0' : '1px solid transparent',
-                            }}>
-                            <Icon size={14} />
-                            {t.label}
-                        </button>
-                    )
-                })}
-            </div>
+            <StatusTabs
+                items={tabs}
+                value={tab}
+                onChange={v => setTab(v)}
+            />
 
-            {/* Tab Content */}
             {tab === 'sku' && (
                 <>
-                    {/* Summary */}
                     <StatGrid className="grid-cols-1 sm:grid-cols-3 lg:grid-cols-3">
-                        <StatCard label="SKU Đang Bán" value={products.length} icon={Package} />
-                        <StatCard label="Margin TB" value={`${avgMargin.toFixed(1)}%`} icon={TrendingUp} />
-                        <StatCard label="SKU Bán Dưới Giá Vốn" value={lossCount} icon={AlertCircle} />
+                        <StatCard label={i18n.activeSkus} value={products.length} icon={Package} />
+                        <StatCard label={i18n.avgMargin} value={`${avgMargin.toFixed(1)}%`} icon={TrendingUp} tone="success" />
+                        <StatCard label={i18n.lossSkus} value={lossCount} icon={AlertCircle} tone={lossCount > 0 ? 'danger' : undefined} />
                     </StatGrid>
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
                         {/* Left — SKU list */}
                         <div className="lg:col-span-7 space-y-3">
-                            <input type="text" placeholder="Tìm SKU hoặc tên sản phẩm..."
-                                value={search} onChange={e => setSearch(e.target.value)}
-                                className="w-full px-3 py-2 text-sm outline-none"
-                                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '6px' }}
-                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                                onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
+                            <SearchInput
+                                placeholder={i18n.searchPlaceholder}
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
                             />
 
-                            <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
-                                <table className="w-full text-left min-w-[550px]" style={{ borderCollapse: 'collapse' }}>
-                                    <thead>
-                                        <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                            {['SKU', 'Sản Phẩm', 'Giá Vốn/Chai', 'Giá Bán', 'Margin', 'Tồn'].map(h => (
-                                                <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
+                            {/* Desktop Table */}
+                            <div className="hidden md:block">
+                                <Table>
+                                    <THead>
+                                        <Tr>
+                                            <Th>{i18n.columns.sku}</Th>
+                                            <Th>{i18n.columns.product}</Th>
+                                            <Th align="right">{i18n.columns.unitCost}</Th>
+                                            <Th align="right">{i18n.columns.listPrice}</Th>
+                                            <Th>{i18n.columns.margin}</Th>
+                                            <Th align="right">{i18n.columns.stock}</Th>
+                                        </Tr>
+                                    </THead>
+                                    <TBody>
                                         {filtered.length === 0 ? (
-                                            <tr><td colSpan={6} className="text-center py-10 text-sm" style={{ color: '#64748B' }}>
-                                                <Wine size={28} className="mx-auto mb-2" style={{ color: '#E2E8F0' }} />
-                                                Chưa có SKU có dữ liệu tồn kho
-                                            </td></tr>
+                                            <TableMessageRow colSpan={6}>
+                                                <EmptyState icon={Wine} title={i18n.emptySkus} />
+                                            </TableMessageRow>
                                         ) : filtered.map(p => {
                                             const isSelected = selected?.id === p.id
                                             const typeColor = WINE_COLORS[p.wineType] ?? '#475569'
                                             const marginOk = (p.marginPct ?? 0) >= 30
                                             return (
-                                                <tr key={p.id}
+                                                <Tr
+                                                    key={p.id}
                                                     onClick={() => setSelected(p)}
-                                                    className={!isSelected ? 'hover:bg-cyan-50/40' : ''}
-                                                    style={{
-                                                        borderBottom: '1px solid #E2E8F0',
-                                                        background: isSelected ? 'rgba(8,145,178,0.08)' : p.isLoss ? 'rgba(185,28,28,0.05)' : undefined,
-                                                        cursor: 'pointer',
-                                                        borderLeft: isSelected ? '2px solid #0E7490' : p.isLoss ? '2px solid #B91C1C' : 'none',
-                                                    }}
+                                                    className={cn(
+                                                        isSelected && 'bg-lys-teal-soft border-l-2 border-l-lys-teal-strong',
+                                                        !isSelected && p.isLoss && 'bg-tone-danger-bg/40 border-l-2 border-l-tone-danger-fg'
+                                                    )}
                                                 >
-                                                    <td className="px-3 py-2.5">
-                                                        <span className="inline-block text-xs px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0"
-                                                            style={{ background: `${typeColor}25`, color: typeColor }}>
+                                                    <Td>
+                                                        <span
+                                                            className="inline-block text-xs px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0"
+                                                            style={{ background: `${typeColor}20`, color: typeColor }}
+                                                        >
                                                             {p.skuCode}
                                                         </span>
-                                                    </td>
-                                                    <td className="px-3 py-2.5">
-                                                        <p className="text-xs font-medium truncate max-w-[170px]" style={{ color: '#0F172A' }}>{p.productName}</p>
+                                                    </Td>
+                                                    <Td>
+                                                        <p className="text-xs font-semibold truncate max-w-[180px] text-lys-primary">{p.productName}</p>
                                                         {p.abvPercent && (
-                                                            <p className="text-xs" style={{ color: '#64748B' }}>
-                                                                {p.abvPercent}° — {p.abvPercent >= 20 ? SCT_NOTE.high : SCT_NOTE.low}
+                                                            <p className="text-[11px] text-lys-muted">
+                                                                {p.abvPercent}° — {p.abvPercent >= 20 ? i18n.sctHigh : i18n.sctLow}
                                                             </p>
                                                         )}
-                                                    </td>
-                                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#B45309' }}>
-                                                        {p.unitLandedCost > 0 ? formatVND(p.unitLandedCost) : '—'}
-                                                    </td>
-                                                    <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#0F172A' }}>
-                                                        {p.listPrice ? formatVND(p.listPrice) : '—'}
-                                                    </td>
-                                                    <td className="px-3 py-2.5">
+                                                    </Td>
+                                                    <Td align="right" className="font-mono text-xs font-bold text-tone-warning-fg">
+                                                        {p.unitLandedCost > 0 ? formatCurrency(p.unitLandedCost) : '—'}
+                                                    </Td>
+                                                    <Td align="right" className="font-mono text-xs font-bold text-lys-primary">
+                                                        {p.listPrice ? formatCurrency(p.listPrice) : '—'}
+                                                    </Td>
+                                                    <Td>
                                                         <div className="flex items-center gap-1">
-                                                            {p.isLoss ? <TrendingDown size={10} style={{ color: '#B91C1C' }} /> :
-                                                                <TrendingUp size={10} style={{ color: '#15803D' }} />}
-                                                            <span className="text-xs font-bold"
-                                                                style={{ color: p.isLoss ? '#B91C1C' : marginOk ? '#15803D' : '#B45309' }}>
+                                                            {p.isLoss ? (
+                                                                <TrendingDown size={11} className="text-tone-danger-fg" />
+                                                            ) : (
+                                                                <TrendingUp size={11} className="text-tone-success-fg" />
+                                                            )}
+                                                            <span className={cn(
+                                                                'font-mono text-xs font-bold',
+                                                                p.isLoss ? 'text-tone-danger-fg' : marginOk ? 'text-tone-success-fg' : 'text-tone-warning-fg'
+                                                            )}>
                                                                 {p.marginPct !== null ? `${p.marginPct.toFixed(1)}%` : '—'}
                                                             </span>
                                                         </div>
-                                                    </td>
-                                                    <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>
-                                                        {p.stockQty.toLocaleString()}
-                                                    </td>
-                                                </tr>
+                                                    </Td>
+                                                    <Td align="right" className="font-mono text-xs text-lys-secondary">
+                                                        {formatNumber(p.stockQty)}
+                                                    </Td>
+                                                </Tr>
                                             )
                                         })}
-                                    </tbody>
-                                </table>
+                                    </TBody>
+                                </Table>
+                            </div>
+
+                            {/* Mobile Cards */}
+                            <div className="block md:hidden space-y-2.5">
+                                {filtered.length === 0 ? (
+                                    <div className="p-8 bg-white rounded-lg border border-lys-border">
+                                        <EmptyState icon={Wine} title={i18n.emptySkus} />
+                                    </div>
+                                ) : filtered.map(p => {
+                                    const isSelected = selected?.id === p.id
+                                    const marginOk = (p.marginPct ?? 0) >= 30
+                                    return (
+                                        <div
+                                            key={p.id}
+                                            onClick={() => setSelected(p)}
+                                            className={cn(
+                                                'p-3.5 rounded-lg bg-white border transition-colors cursor-pointer space-y-2 shadow-2xs',
+                                                isSelected ? 'border-lys-teal-strong bg-lys-teal-soft/30' : 'border-lys-border'
+                                            )}
+                                        >
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div>
+                                                    <span className="font-mono text-xs font-bold text-lys-teal-strong">{p.skuCode}</span>
+                                                    <h4 className="text-xs font-bold text-lys-primary mt-0.5">{p.productName}</h4>
+                                                </div>
+                                                <Badge tone={p.isLoss ? 'danger' : marginOk ? 'success' : 'warning'}>
+                                                    {p.marginPct !== null ? `${p.marginPct.toFixed(1)}%` : '—'}
+                                                </Badge>
+                                            </div>
+                                            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-lys-border text-xs">
+                                                <div>
+                                                    <span className="text-[10px] text-lys-muted block">{i18n.columns.unitCost}</span>
+                                                    <span className="font-mono font-bold text-tone-warning-fg">{p.unitLandedCost > 0 ? formatCurrency(p.unitLandedCost) : '—'}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] text-lys-muted block">{i18n.columns.listPrice}</span>
+                                                    <span className="font-mono font-bold text-lys-primary">{p.listPrice ? formatCurrency(p.listPrice) : '—'}</span>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="text-[10px] text-lys-muted block">{i18n.columns.stock}</span>
+                                                    <span className="font-mono font-bold text-lys-secondary">{formatNumber(p.stockQty)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
                             </div>
                         </div>
 
                         {/* Right — Price suggestion panel */}
                         <div className="lg:col-span-5">
                             {selected ? (
-                                <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                <div className="p-5 rounded-lg bg-white border border-lys-border shadow-2xs">
                                     <div className="flex items-center gap-2 mb-4">
-                                        <Calculator size={18} style={{ color: '#0891B2' }} />
+                                        <Calculator size={18} className="text-lys-teal-strong" />
                                         <div>
-                                            <h3 className="font-semibold text-sm" style={{ color: '#0F172A' }}>Đề Xuất Giá Bán</h3>
-                                            <p className="text-xs" style={{ color: '#64748B' }}>{selected.skuCode} — {selected.productName}</p>
+                                            <h3 className="font-semibold text-sm text-lys-primary">{i18n.priceSuggestionTitle}</h3>
+                                            <p className="text-xs text-lys-muted">{selected.skuCode} — {selected.productName}</p>
                                         </div>
                                     </div>
 
-                                    <div className="p-3 rounded-md mb-4" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                    <div className="p-3 rounded-md mb-4 bg-lys-subtle border border-lys-border">
                                         <div className="flex justify-between mb-1">
-                                            <span className="text-xs" style={{ color: '#64748B' }}>Giá Vốn / Chai (WA)</span>
-                                            <span className="text-sm font-bold" style={{ color: '#B45309' }}>
-                                                {formatVND(selected.unitLandedCost)}
+                                            <span className="text-xs text-lys-muted">{i18n.unitLandedCostWa}</span>
+                                            <span className="font-mono text-sm font-bold text-tone-warning-fg">
+                                                {formatCurrency(selected.unitLandedCost)}
                                             </span>
                                         </div>
                                         {selected.abvPercent && (
                                             <div className="flex justify-between">
-                                                <span className="text-xs" style={{ color: '#64748B' }}>Thuế TTĐB áp dụng</span>
-                                                <span className="text-xs font-bold" style={{ color: selected.abvPercent >= 20 ? '#B91C1C' : '#B45309' }}>
+                                                <span className="text-xs text-lys-muted">{i18n.appliedSct}</span>
+                                                <span className={cn('text-xs font-bold', selected.abvPercent >= 20 ? 'text-tone-danger-fg' : 'text-tone-warning-fg')}>
                                                     {selected.abvPercent >= 20 ? '65%' : '35%'} ({selected.abvPercent}° ABV)
                                                 </span>
                                             </div>
@@ -199,39 +232,37 @@ export function CostingClient({ products }: Props) {
                                     </div>
 
                                     {selected.isLoss && (
-                                        <div className="flex items-center gap-2 p-3 rounded-md mb-4"
-                                            style={{ background: 'rgba(185,28,28,0.1)', border: '1px solid rgba(185,28,28,0.3)' }}>
-                                            <AlertCircle size={14} style={{ color: '#B91C1C' }} />
-                                            <p className="text-xs" style={{ color: '#B91C1C' }}>
-                                                Giá bán hiện tại <strong>{formatVND(selected.listPrice!)}</strong> thấp hơn giá vốn!
+                                        <div className="flex items-center gap-2 p-3 rounded-md mb-4 bg-tone-danger-bg border border-tone-danger-border">
+                                            <AlertCircle size={14} className="text-tone-danger-fg shrink-0" />
+                                            <p className="text-xs text-tone-danger-fg">
+                                                {i18n.lossWarningPrefix} <strong>{formatCurrency(selected.listPrice!)}</strong> {i18n.lossWarningSuffix}
                                             </p>
                                         </div>
                                     )}
 
                                     <div className="space-y-3">
-                                        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
-                                            Đề Xuất Theo Kênh (Target Margin)
+                                        <p className="text-xs font-semibold uppercase tracking-wide text-lys-muted">
+                                            {i18n.channelSuggestionHeader}
                                         </p>
                                         {suggestions.map(s => (
-                                            <div key={s.channel} className="p-3 rounded-md" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                            <div key={s.channel} className="p-3 rounded-md bg-lys-subtle border border-lys-border">
                                                 <div className="flex justify-between items-start mb-2">
-                                                    <p className="text-xs font-semibold" style={{ color: '#0F172A' }}>{CHANNEL_LABEL[s.channel]}</p>
-                                                    <span className="inline-block text-xs px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0"
-                                                        style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>
-                                                        {s.margin}% margin
-                                                    </span>
+                                                    <p className="text-xs font-semibold text-lys-primary">
+                                                        {(i18n.channels as Record<string, string>)[s.channel] ?? s.channel}
+                                                    </p>
+                                                    <Badge tone="brand">{s.margin}% margin</Badge>
                                                 </div>
                                                 <div className="flex justify-between items-end">
                                                     <div>
-                                                        <p className="text-xs" style={{ color: '#64748B' }}>Chính xác</p>
-                                                        <p className="text-sm font-bold" style={{ color: '#475569' }}>
-                                                            {formatVND(s.price)}
+                                                        <p className="text-xs text-lys-muted">{i18n.exactPrice}</p>
+                                                        <p className="font-mono text-sm font-bold text-lys-secondary">
+                                                            {formatCurrency(s.price)}
                                                         </p>
                                                     </div>
                                                     <div className="text-right">
-                                                        <p className="text-xs" style={{ color: '#64748B' }}>Làm tròn (±50k)</p>
-                                                        <p className="text-lg font-bold" style={{ color: '#0891B2' }}>
-                                                            {formatVND(s.rounded)}
+                                                        <p className="text-xs text-lys-muted">{i18n.roundedPrice}</p>
+                                                        <p className="font-mono text-lg font-bold text-lys-teal-strong">
+                                                            {formatCurrency(s.rounded)}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -240,9 +271,8 @@ export function CostingClient({ products }: Props) {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="p-8 rounded-md text-center" style={{ background: '#FFFFFF', border: '1px dashed #E2E8F0' }}>
-                                    <Calculator size={32} className="mx-auto mb-3" style={{ color: '#E2E8F0' }} />
-                                    <p className="text-sm" style={{ color: '#64748B' }}>Chọn một SKU để xem đề xuất giá bán</p>
+                                <div className="p-8 rounded-lg bg-white border border-dashed border-lys-border">
+                                    <EmptyState icon={Calculator} title={i18n.selectSkuHint} />
                                 </div>
                             )}
                         </div>
@@ -257,12 +287,14 @@ export function CostingClient({ products }: Props) {
     )
 }
 
-// ── Sensitivity Analysis Panel ──────────────────────
 function SensitivityPanel({ products }: { products: CostingProduct[] }) {
+    const { locale, formatCurrency } = useAppLocale()
+    const i18n = COSTING_I18N[locale]
+
     const [presets, setPresets] = useState<SensitivityScenario[]>([])
     const [results, setResults] = useState<SensitivityResult[]>([])
     const [loading, setLoading] = useState(false)
-    const [custom, setCustom] = useState<SensitivityScenario>({ label: 'Tùy Chỉnh', exchangeRateChange: 0, importTaxChange: 0, sctChange: 0 })
+    const [custom, setCustom] = useState<SensitivityScenario>({ label: i18n.customScenarioTitle, exchangeRateChange: 0, importTaxChange: 0, sctChange: 0 })
 
     useEffect(() => {
         getPresetScenarios().then(setPresets)
@@ -277,15 +309,17 @@ function SensitivityPanel({ products }: { products: CostingProduct[] }) {
 
     return (
         <div className="space-y-5">
-            {/* Preset Scenarios Grid */}
             <div>
-                <h4 className="text-sm font-semibold mb-3" style={{ color: '#0F172A' }}>Kịch Bản Có Sẵn</h4>
+                <h4 className="text-sm font-semibold mb-3 text-lys-primary">{i18n.presetScenariosTitle}</h4>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                     {presets.map((s, i) => (
-                        <button key={i} onClick={() => runAnalysis(s)}
-                            className="p-3 text-left rounded-md transition-all bg-white border border-[#E2E8F0] hover:border-[#0891B2]">
-                            <p className="text-xs font-bold mb-1" style={{ color: '#0F172A' }}>{s.label}</p>
-                            <div className="flex gap-3 text-[10px]" style={{ color: '#64748B' }}>
+                        <button
+                            key={i}
+                            onClick={() => runAnalysis(s)}
+                            className="p-3 text-left rounded-lg transition-all bg-white border border-lys-border hover:border-lys-teal-strong shadow-2xs cursor-pointer"
+                        >
+                            <p className="text-xs font-bold mb-1 text-lys-primary">{s.label}</p>
+                            <div className="flex gap-3 text-[10px] text-lys-muted font-mono">
                                 {s.exchangeRateChange !== 0 && <span>FX: {s.exchangeRateChange > 0 ? '+' : ''}{s.exchangeRateChange}%</span>}
                                 {s.importTaxChange !== 0 && <span>NK: {s.importTaxChange > 0 ? '+' : ''}{s.importTaxChange}%</span>}
                                 {s.sctChange !== 0 && <span>SCT: {s.sctChange > 0 ? '+' : ''}{s.sctChange}%</span>}
@@ -295,90 +329,104 @@ function SensitivityPanel({ products }: { products: CostingProduct[] }) {
                 </div>
             </div>
 
-            {/* Custom Input */}
-            <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                <h4 className="text-sm font-semibold mb-3" style={{ color: '#B45309' }}>Kịch Bản Tùy Chỉnh</h4>
+            <div className="p-4 rounded-lg bg-white border border-lys-border shadow-2xs space-y-3">
+                <h4 className="text-sm font-semibold text-tone-warning-fg">{i18n.customScenarioTitle}</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1" style={{ color: '#64748B' }}>Tỷ giá Δ (%)</label>
-                        <input type="number" value={custom.exchangeRateChange}
-                            onChange={e => setCustom({ ...custom, exchangeRateChange: Number(e.target.value) })}
-                            className="w-full px-3 py-2 text-sm outline-none"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
-                            step={1} placeholder="VD: +5" />
-                    </div>
-                    <div>
-                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1" style={{ color: '#64748B' }}>Thuế NK Δ (%)</label>
-                        <input type="number" value={custom.importTaxChange}
-                            onChange={e => setCustom({ ...custom, importTaxChange: Number(e.target.value) })}
-                            className="w-full px-3 py-2 text-sm outline-none"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
-                            step={1} placeholder="VD: -10" />
-                    </div>
-                    <div>
-                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1" style={{ color: '#64748B' }}>TTĐB Δ (%)</label>
-                        <input type="number" value={custom.sctChange}
-                            onChange={e => setCustom({ ...custom, sctChange: Number(e.target.value) })}
-                            className="w-full px-3 py-2 text-sm outline-none"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
-                            step={1} placeholder="VD: +5" />
-                    </div>
+                    <Field label={i18n.fxDeltaLabel}>
+                        {id => (
+                            <Input
+                                id={id}
+                                type="number"
+                                value={custom.exchangeRateChange}
+                                onChange={e => setCustom({ ...custom, exchangeRateChange: Number(e.target.value) })}
+                                step={1}
+                                placeholder="+5"
+                            />
+                        )}
+                    </Field>
+                    <Field label={i18n.importTaxDeltaLabel}>
+                        {id => (
+                            <Input
+                                id={id}
+                                type="number"
+                                value={custom.importTaxChange}
+                                onChange={e => setCustom({ ...custom, importTaxChange: Number(e.target.value) })}
+                                step={1}
+                                placeholder="-10"
+                            />
+                        )}
+                    </Field>
+                    <Field label={i18n.sctDeltaLabel}>
+                        {id => (
+                            <Input
+                                id={id}
+                                type="number"
+                                value={custom.sctChange}
+                                onChange={e => setCustom({ ...custom, sctChange: Number(e.target.value) })}
+                                step={1}
+                                placeholder="+5"
+                            />
+                        )}
+                    </Field>
                 </div>
-                <button onClick={() => runAnalysis(custom)} disabled={loading}
-                    className="mt-3 w-full py-2 text-sm font-semibold transition-all flex items-center justify-center gap-2"
-                    style={{ background: '#D97706', color: '#FFFFFF', borderRadius: '6px' }}>
-                    <Beaker size={14} />{loading ? 'Đang tính...' : 'Chạy Phân Tích'}
-                </button>
+                <Button onClick={() => runAnalysis(custom)} loading={loading} disabled={loading} className="w-full">
+                    <Beaker size={14} aria-hidden />
+                    {loading ? i18n.calculating : i18n.runAnalysisBtn}
+                </Button>
             </div>
 
-            {/* Results Table */}
             {results.length > 0 && (
-                <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
-                    <table className="w-full text-left min-w-[700px]" style={{ borderCollapse: 'collapse' }}>
-                        <thead>
-                            <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                {['SKU', 'Giá vốn hiện tại', 'Giá vốn mới', 'Δ Chi phí', 'Margin hiện tại', 'Margin mới', 'Δ Margin'].map(h => (
-                                    <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {results.map(r => {
-                                const sc = r.scenarios[0] // first (and only) scenario
-                                if (!sc) return null
-                                const costUp = sc.costDeltaPct > 0
-                                const marginDown = (sc.marginDelta ?? 0) < 0
-                                return (
-                                    <tr key={r.skuCode} style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                        <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#0891B2' }}>{r.skuCode}</td>
-                                        <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>{formatVND(r.currentUnitCost)}</td>
-                                        <td className="px-3 py-2.5 text-xs font-bold" style={{ color: costUp ? '#B91C1C' : '#15803D' }}>{formatVND(sc.newUnitCost)}</td>
-                                        <td className="px-3 py-2.5">
-                                            <span className="inline-block text-xs font-bold px-1.5 py-0.5 rounded whitespace-nowrap shrink-0" style={{
-                                                background: costUp ? 'rgba(232,93,93,0.15)' : 'rgba(21,128,61,0.15)',
-                                                color: costUp ? '#B91C1C' : '#15803D',
-                                            }}>
-                                                {sc.costDeltaPct > 0 ? '+' : ''}{sc.costDeltaPct.toFixed(1)}%
-                                            </span>
-                                        </td>
-                                        <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>{r.currentMarginPct !== null ? `${r.currentMarginPct.toFixed(1)}%` : '—'}</td>
-                                        <td className="px-3 py-2.5 text-xs font-bold font-mono" style={{ color: marginDown ? '#B91C1C' : '#15803D' }}>{sc.newMarginPct !== null ? `${sc.newMarginPct.toFixed(1)}%` : '—'}</td>
-                                        <td className="px-3 py-2.5">
-                                            {sc.marginDelta !== null ? (
-                                                <div className="flex items-center gap-1">
-                                                    {marginDown ? <TrendingDown size={10} style={{ color: '#B91C1C' }} /> : <TrendingUp size={10} style={{ color: '#15803D' }} />}
-                                                    <span className="text-xs font-bold" style={{ color: marginDown ? '#B91C1C' : '#15803D' }}>
-                                                        {sc.marginDelta > 0 ? '+' : ''}{sc.marginDelta.toFixed(1)}%
-                                                    </span>
-                                                </div>
-                                            ) : <span className="text-xs" style={{ color: '#64748B' }}>—</span>}
-                                        </td>
-                                    </tr>
-                                )
-                            })}
-                        </tbody>
-                    </table>
-                </div>
+                <Table>
+                    <THead>
+                        <Tr>
+                            <Th>{i18n.sensColumns.sku}</Th>
+                            <Th align="right">{i18n.sensColumns.currentCost}</Th>
+                            <Th align="right">{i18n.sensColumns.newCost}</Th>
+                            <Th align="right">{i18n.sensColumns.costDelta}</Th>
+                            <Th align="right">{i18n.sensColumns.currentMargin}</Th>
+                            <Th align="right">{i18n.sensColumns.newMargin}</Th>
+                            <Th>{i18n.sensColumns.marginDelta}</Th>
+                        </Tr>
+                    </THead>
+                    <TBody>
+                        {results.map(r => {
+                            const sc = r.scenarios[0]
+                            if (!sc) return null
+                            const costUp = sc.costDeltaPct > 0
+                            const marginDown = (sc.marginDelta ?? 0) < 0
+                            return (
+                                <Tr key={r.skuCode}>
+                                    <Td className="font-mono text-xs font-bold text-lys-teal-strong">{r.skuCode}</Td>
+                                    <Td align="right" className="font-mono text-xs text-lys-secondary">{formatCurrency(r.currentUnitCost)}</Td>
+                                    <Td align="right" className={cn('font-mono text-xs font-bold', costUp ? 'text-tone-danger-fg' : 'text-tone-success-fg')}>
+                                        {formatCurrency(sc.newUnitCost)}
+                                    </Td>
+                                    <Td align="right">
+                                        <Badge tone={costUp ? 'danger' : 'success'}>
+                                            {sc.costDeltaPct > 0 ? '+' : ''}{sc.costDeltaPct.toFixed(1)}%
+                                        </Badge>
+                                    </Td>
+                                    <Td align="right" className="font-mono text-xs text-lys-secondary">
+                                        {r.currentMarginPct !== null ? `${r.currentMarginPct.toFixed(1)}%` : '—'}
+                                    </Td>
+                                    <Td align="right" className={cn('font-mono text-xs font-bold', marginDown ? 'text-tone-danger-fg' : 'text-tone-success-fg')}>
+                                        {sc.newMarginPct !== null ? `${sc.newMarginPct.toFixed(1)}%` : '—'}
+                                    </Td>
+                                    <Td>
+                                        {sc.marginDelta !== null ? (
+                                            <div className="flex items-center gap-1">
+                                                {marginDown ? <TrendingDown size={11} className="text-tone-danger-fg" /> : <TrendingUp size={11} className="text-tone-success-fg" />}
+                                                <span className={cn('font-mono text-xs font-bold', marginDown ? 'text-tone-danger-fg' : 'text-tone-success-fg')}>
+                                                    {sc.marginDelta > 0 ? '+' : ''}{sc.marginDelta.toFixed(1)}%
+                                                </span>
+                                            </div>
+                                        ) : <span className="text-xs text-lys-muted">—</span>}
+                                    </Td>
+                                </Tr>
+                            )
+                        })}
+                    </TBody>
+                </Table>
             )}
         </div>
     )

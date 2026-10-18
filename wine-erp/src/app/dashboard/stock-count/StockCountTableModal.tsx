@@ -9,6 +9,8 @@ import {
 import { recordCountLine, completeZoneCount, getStockCountDetail, startStockCount } from './actions'
 import { toast } from 'sonner'
 import { AddUnlistedModal } from './AddUnlistedModal'
+import { useAppLocale } from '@/lib/i18n'
+import { getStockCountDict } from './i18n'
 
 type Props = {
     sessionId: string
@@ -20,6 +22,8 @@ type Props = {
 }
 
 export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onOpenAssignModal, onOpenPrintView, onRefreshSession }: Props) {
+    const { locale } = useAppLocale()
+    const t = getStockCountDict(locale)
     const [detail, setDetail] = useState<any>(null)
     const [isLoading, setIsLoading] = useState(true)
 
@@ -74,7 +78,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
             await loadDetail()
             if (onRefreshSession) onRefreshSession()
         } else {
-            toast.error(res.error || 'Lỗi khi bắt đầu kiểm kê')
+            toast.error(res.error || 'Error starting stock count')
             setIsLoading(false)
         }
     }
@@ -84,7 +88,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
                 <div className="bg-white p-6 rounded-lg flex items-center gap-3 text-slate-700 font-bold shadow-2xl animate-modal-in">
                     <RefreshCw className="w-5 h-5 animate-spin text-emerald-600" />
-                    Đang tải Bảng Theo Dõi Kiểm Kê Real-time...
+                    {t.tableModal.loading}
                 </div>
             </div>
         )
@@ -164,7 +168,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
     // Handle Finish Zone
     const handleFinishZone = async () => {
         if (selectedZone === 'ALL') {
-            toast.warning('Vui lòng chọn 1 vị trí/khu vực cụ thể trong dropdown để chốt kiểm kê khu vực đó')
+            toast.warning(t.tableModal.finishZoneWarn)
             return
         }
         setIsCompletingZone(true)
@@ -174,7 +178,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
             setZoneReport(res.summary)
             setShowZoneReportModal(true)
         } else {
-            toast.error(res.error || 'Không thể tạo báo cáo chốt khu vực')
+            toast.error(res.error || 'Error completing zone count')
         }
     }
 
@@ -202,16 +206,16 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                                     className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1.5 border transition cursor-pointer ${
                                         isLiveSync ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-500 border-slate-300'
                                     }`}
-                                    title="Bật/Tắt tự động đồng bộ kết quả kiểm đếm"
+                                    title={t.tableModal.liveSyncTitle}
                                 >
                                     <span className={`w-2 h-2 rounded-full ${isLiveSync ? 'bg-emerald-500 animate-ping' : 'bg-slate-400'}`} />
-                                    {isLiveSync ? 'Đồng bộ trực tiếp (5s)' : 'Tạm dừng đồng bộ'}
+                                    {isLiveSync ? t.tableModal.liveSyncOn : t.tableModal.liveSyncOff}
                                 </button>
                             </div>
                             <h2 className="text-base font-bold text-slate-900 mt-0.5 flex items-center gap-2">
                                 {detail.title}
                                 <span className="text-xs font-normal text-slate-500">
-                                    (Cập nhật lúc: {lastSyncTime.toLocaleTimeString('vi-VN')})
+                                    ({t.tableModal.updatedAt} {lastSyncTime.toLocaleTimeString(locale === 'en' ? 'en-US' : 'vi-VN')})
                                 </span>
                             </h2>
                         </div>
@@ -224,7 +228,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                                 onClick={handleStartSession}
                                 className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition cursor-pointer active:scale-95 whitespace-nowrap"
                             >
-                                <Zap className="w-4 h-4" /> Bắt đầu kiểm kê
+                                <Zap className="w-4 h-4" /> {t.tableModal.startBtn}
                             </button>
                         )}
 
@@ -232,7 +236,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                             onClick={() => loadDetail(false)}
                             className="px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-bold flex items-center gap-1 shadow-2xs cursor-pointer active:scale-95 whitespace-nowrap"
                         >
-                            <RefreshCw className="w-3.5 h-3.5 text-emerald-600" /> Làm mới
+                            <RefreshCw className="w-3.5 h-3.5 text-emerald-600" /> {t.common.refresh}
                         </button>
 
                         <button
@@ -242,7 +246,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                             }}
                             className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 active:scale-95 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
                         >
-                            <Smartphone className="w-4 h-4" /> Mở giao diện di động
+                            <Smartphone className="w-4 h-4" /> {t.tableModal.mobileViewBtn}
                         </button>
 
                         {onOpenAssignModal && (
@@ -252,9 +256,9 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                                     onOpenAssignModal(sessionId)
                                 }}
                                 className="px-3 py-2 bg-cyan-50 hover:bg-cyan-100 active:scale-95 text-cyan-800 border border-cyan-300 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
-                                title="Phân công nhân viên phụ trách khu vực"
+                                title={t.tableModal.assignTitle}
                             >
-                                <UserCheck className="w-3.5 h-3.5 text-cyan-700" /> Phân công
+                                <UserCheck className="w-3.5 h-3.5 text-cyan-700" /> {t.tableModal.assignBtn}
                             </button>
                         )}
 
@@ -265,9 +269,9 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                                     onOpenPrintView(sessionId)
                                 }}
                                 className="px-3 py-2 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 border border-slate-300 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
-                                title="In biên bản kiểm kê"
+                                title={t.tableModal.printTitle}
                             >
-                                <Printer className="w-3.5 h-3.5 text-slate-600" /> In phiếu
+                                <Printer className="w-3.5 h-3.5 text-slate-600" /> {t.tableModal.printBtn}
                             </button>
                         )}
 
@@ -275,7 +279,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                             onClick={() => setShowAddUnlistedModal(true)}
                             className="px-3.5 py-2 bg-[#0E7490] hover:bg-[#0E7490] active:scale-95 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
                         >
-                            <Plus className="w-4 h-4" /> Chèn mã bổ sung
+                            <Plus className="w-4 h-4" /> {t.tableModal.addUnlistedBtn}
                         </button>
 
                         <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-200 active:scale-90 transition-all rounded-lg cursor-pointer">
@@ -288,34 +292,34 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                     <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex items-center justify-between gap-3 text-xs text-amber-900 font-extrabold shrink-0">
                         <span className="flex items-center gap-2">
                             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                            PHIẾU ĐANG Ở TRẠNG THÁI NHÁP — Bạn cần bấm "Bắt Đầu Kiểm Kê" để kích hoạt cho phép nhập số lượng!
+                            {t.tableModal.draftBanner}
                         </span>
                         <button
                             onClick={handleStartSession}
                             className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[11px] font-bold shrink-0 cursor-pointer"
                         >
-                            Bắt đầu kiểm kê
+                            {t.tableModal.startBtn}
                         </button>
                     </div>
                 )}
 
-                {/* LEAD MONITORING DASHBOARD WIDGET (BẢNG THEO DÕI NHÂN VIÊN & KỆ) */}
+                {/* LEAD MONITORING DASHBOARD WIDGET */}
                 <div className="bg-slate-100 border-b border-slate-200 p-3 sm:p-4 space-y-3 shrink-0">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 text-xs font-extrabold text-slate-800">
+                        <div className="flex flex-wrap items-center gap-4 text-xs font-extrabold text-slate-800">
                             <button
                                 onClick={() => setShowLeaderboard(!showLeaderboard)}
                                 className="flex items-center gap-1 text-slate-900 hover:text-emerald-700 cursor-pointer"
                             >
                                 <Users className="w-4 h-4 text-emerald-600" />
-                                <span>TIẾN ĐỘ ĐẾM NHÂN SỰ & CÁC KHO</span>
+                                <span>{t.tableModal.leaderboardTitle}</span>
                                 {showLeaderboard ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                             </button>
 
                             <span className="text-slate-500">|</span>
-                            <span>Đã đếm: <strong className="text-emerald-800 font-mono">{countedLinesCount}/{totalLinesCount} mã ({overallProgressPercent}%)</strong></span>
-                            <span>Khớp 100%: <strong className="text-emerald-700 font-mono">{matchedLinesCount} mã</strong></span>
-                            <span>Chênh lệch: <strong className="text-amber-800 font-mono">{varianceLinesCount} mã</strong></span>
+                            <span>{t.tableModal.countedStat} <strong className="text-emerald-800 font-mono">{countedLinesCount}/{totalLinesCount} {t.common.skus} ({overallProgressPercent}%)</strong></span>
+                            <span>{t.tableModal.matchedStat} <strong className="text-emerald-700 font-mono">{matchedLinesCount} {t.common.skus}</strong></span>
+                            <span>{t.tableModal.varianceStat} <strong className="text-amber-800 font-mono">{varianceLinesCount} {t.common.skus}</strong></span>
                         </div>
 
                         {/* Overall Progress Bar */}
@@ -329,7 +333,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 pt-1">
                             {staffProgressStats.length === 0 ? (
                                 <div className="col-span-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-500 text-center">
-                                    Chưa gán phân công nhân viên cho từng vị trí.
+                                    {t.tableModal.noStaffAssigned}
                                 </div>
                             ) : (
                                 staffProgressStats.map(st => (
@@ -355,10 +359,10 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                                         </div>
 
                                         <div className="flex justify-between items-center text-[10px] font-semibold text-slate-500">
-                                            <span>Đã đếm: <strong className="text-slate-900 font-mono">{st.counted}/{st.total}</strong></span>
+                                            <span>{t.tableModal.countedStat} <strong className="text-slate-900 font-mono">{st.counted}/{st.total}</strong></span>
                                             {st.varianceCount > 0 && (
                                                 <span className="text-amber-700 font-bold bg-amber-50 px-1 rounded border border-amber-200">
-                                                    {st.varianceCount} chênh lệch
+                                                    {st.varianceCount} {t.tableModal.varianceSuffix}
                                                 </span>
                                             )}
                                         </div>
@@ -378,12 +382,12 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                             onChange={e => setSelectedZone(e.target.value)}
                             className="bg-slate-50 border border-slate-300 text-slate-900 text-base sm:text-xs rounded-lg px-3 py-2 outline-none font-bold focus:border-[#0E7490] cursor-pointer"
                         >
-                            <option value="ALL">Tất cả vị trí ({zones.length} khu vực)</option>
+                            <option value="ALL">{t.tableModal.allZonesOption} ({zones.length} {t.tableModal.zonesUnit})</option>
                             {zones.map((z: string) => {
                                 const countInZone = detail.lines.filter((l: any) => (l.zone || l.locationCode || 'Khu vực chung') === z).length
                                 return (
                                     <option key={z} value={z}>
-                                        {z} ({countInZone} mã)
+                                        {z} ({countInZone} {t.common.skus})
                                     </option>
                                 )
                             })}
@@ -395,7 +399,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                             onChange={e => setSelectedStaff(e.target.value)}
                             className="bg-slate-50 border border-slate-300 text-slate-900 text-base sm:text-xs rounded-lg px-3 py-2 outline-none font-bold focus:border-[#0E7490] cursor-pointer"
                         >
-                            <option value="ALL">Tất cả nhân viên</option>
+                            <option value="ALL">{t.tableModal.allStaffOption}</option>
                             {staffMembers.map(st => (
                                 <option key={st.id} value={st.id}>
                                     {st.name}
@@ -409,10 +413,10 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                             onChange={e => setStatusFilter(e.target.value as any)}
                             className="bg-slate-50 border border-slate-300 text-slate-900 text-base sm:text-xs rounded-lg px-3 py-2 outline-none font-bold focus:border-[#0E7490] cursor-pointer"
                         >
-                            <option value="ALL">Tất cả trạng thái</option>
-                            <option value="UNCOUNTED">Chưa đếm</option>
-                            <option value="MATCHED">Khớp số liệu</option>
-                            <option value="VARIANCE">Có chênh lệch</option>
+                            <option value="ALL">{t.tableModal.allStatusOption}</option>
+                            <option value="UNCOUNTED">{t.tableModal.statusUncounted}</option>
+                            <option value="MATCHED">{t.tableModal.statusMatched}</option>
+                            <option value="VARIANCE">{t.tableModal.statusVariance}</option>
                         </select>
                     </div>
 
@@ -421,7 +425,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
                             <input
                                 type="text"
-                                placeholder="Tìm SKU, tên rượu, nhân viên..."
+                                placeholder={t.tableModal.searchPlaceholder}
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
                                 className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-bold rounded-lg pl-9 pr-3 py-2 text-base sm:text-xs outline-none focus:border-[#0E7490]"
@@ -435,7 +439,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                                 className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold text-xs rounded-lg shadow-xs flex items-center gap-1 shrink-0 cursor-pointer transition-all"
                             >
                                 {isCompletingZone ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                                Chốt Khu Vực Này
+                                {t.tableModal.finishZoneBtn}
                             </button>
                         )}
                     </div>
@@ -447,21 +451,21 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                         <table className="w-full text-left border-collapse text-xs">
                             <thead>
                                 <tr className="bg-slate-100 text-slate-700 font-extrabold uppercase text-[10px] tracking-wider border-b border-slate-200">
-                                    <th className="p-3 text-center">STT</th>
-                                    <th className="p-3">Vị Trí Kệ</th>
-                                    <th className="p-3">Mã SKU & Tên Sản Phẩm</th>
-                                    <th className="p-3">Nhân Viên & Thời Gian Đếm</th>
-                                    <th className="p-3 text-center">Tồn Sổ</th>
-                                    <th className="p-3 text-center w-48">Thực Tế (Chai)</th>
-                                    <th className="p-3 text-center">Chênh Lệch</th>
-                                    <th className="p-3">Ghi Chú Chi Tiết</th>
+                                    <th className="p-3 text-center">{t.tableModal.colNo}</th>
+                                    <th className="p-3">{t.tableModal.colLocation}</th>
+                                    <th className="p-3">{t.tableModal.colProduct}</th>
+                                    <th className="p-3">{t.tableModal.colStaffTime}</th>
+                                    <th className="p-3 text-center">{t.tableModal.colSystemQty}</th>
+                                    <th className="p-3 text-center w-48">{t.tableModal.colActualQty}</th>
+                                    <th className="p-3 text-center">{t.tableModal.colVariance}</th>
+                                    <th className="p-3">{t.tableModal.colNotes}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 text-slate-800">
                                 {filteredLines.length === 0 ? (
                                     <tr>
                                         <td colSpan={8} className="p-8 text-center text-slate-400">
-                                            Không có mã nào phù hợp với bộ lọc được chọn.
+                                            {t.tableModal.emptyFiltered}
                                         </td>
                                     </tr>
                                 ) : (
@@ -470,7 +474,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                                         const actual = line.qtyActual !== null ? line.qtyActual : ''
                                         const systemQty = line.qtySystem
                                         const variance = line.variance
-                                        const countTimeStr = line.countedAt ? new Date(line.countedAt).toLocaleTimeString('vi-VN') : null
+                                        const countTimeStr = line.countedAt ? new Date(line.countedAt).toLocaleTimeString(locale === 'en' ? 'en-US' : 'vi-VN') : null
 
                                         return (
                                             <tr key={line.id} className="hover:bg-amber-50/50 transition">
@@ -480,7 +484,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
 
                                                 <td className="p-3">
                                                     <span className="font-mono text-[11px] font-bold text-slate-800 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-lg whitespace-nowrap">
-                                                        {line.zone || line.locationCode || 'Chung'}
+                                                        {line.zone || line.locationCode || t.common.generalZone}
                                                     </span>
                                                 </td>
 
@@ -504,7 +508,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                                                             {line.assignedToName}
                                                         </span>
                                                     ) : (
-                                                        <span className="text-slate-400 italic text-[11px]">Chưa phân công</span>
+                                                        <span className="text-slate-400 italic text-[11px]">{t.common.unassigned}</span>
                                                     )}
                                                     {countTimeStr && (
                                                         <span className="text-[10px] font-mono text-slate-500 flex items-center gap-1 mt-0.5">
@@ -514,9 +518,9 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                                                 </td>
 
                                                 <td className="p-3 text-center font-mono font-bold text-slate-700">
-                                                    {systemQty} chai
+                                                    {systemQty} {t.common.bottles}
                                                     <span className="block text-[10px] text-slate-400 font-semibold">
-                                                        ({Math.floor(systemQty / upc)} thùng + {systemQty % upc} lẻ)
+                                                        ({Math.floor(systemQty / upc)} {t.common.cases} + {systemQty % upc} {t.common.loose})
                                                     </span>
                                                 </td>
 
@@ -550,30 +554,30 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                                                         </button>
                                                     </div>
                                                     {savingLineId === line.id && (
-                                                        <span className="text-[10px] text-emerald-600 font-bold block mt-0.5">Đã lưu...</span>
+                                                        <span className="text-[10px] text-emerald-600 font-bold block mt-0.5">{t.tableModal.savedLabel}</span>
                                                     )}
                                                 </td>
 
                                                 <td className="p-3 text-center font-mono font-bold">
                                                     {line.qtyActual === null ? (
-                                                        <span className="text-slate-400 text-[11px] italic">Chưa đếm</span>
+                                                        <span className="text-slate-400 text-[11px] italic">{t.tableModal.statusUncounted}</span>
                                                     ) : variance === 0 ? (
                                                         <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap">
-                                                            Khớp
+                                                            {t.tableModal.matchedBadge}
                                                         </span>
                                                     ) : variance > 0 ? (
                                                         <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300 whitespace-nowrap">
-                                                            Thừa +{variance}
+                                                            {t.tableModal.overPrefix} +{variance}
                                                         </span>
                                                     ) : (
                                                         <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap">
-                                                            Thiếu {variance}
+                                                            {t.tableModal.underPrefix} {variance}
                                                         </span>
                                                     )}
                                                 </td>
 
                                                 <td className="p-3 text-xs text-slate-500">
-                                                    {line.notes || <span className="italic text-slate-400">Không có ghi chú</span>}
+                                                    {line.notes || <span className="italic text-slate-400">{t.common.noNotes}</span>}
                                                 </td>
                                             </tr>
                                         )
@@ -587,17 +591,17 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                 {/* FOOTER STATS SUMMARY BAR */}
                 <div className="p-3 sm:p-4 bg-slate-100 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-bold text-slate-700 shrink-0">
                     <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 sm:gap-4">
-                        <span>Hiển thị: <strong className="text-slate-900 font-mono">{filteredLines.length}/{totalLinesCount} dòng</strong></span>
-                        <span>Đã đếm: <strong className="text-emerald-700 font-mono">{countedLinesCount}</strong></span>
-                        <span>Khớp 100%: <strong className="text-emerald-800 font-mono">{matchedLinesCount}</strong></span>
-                        <span>Chênh lệch: <strong className="text-amber-800 font-mono">{varianceLinesCount}</strong></span>
+                        <span>{t.tableModal.showingPrefix} <strong className="text-slate-900 font-mono">{filteredLines.length}/{totalLinesCount} {t.common.lines}</strong></span>
+                        <span>{t.tableModal.countedStat} <strong className="text-emerald-700 font-mono">{countedLinesCount}</strong></span>
+                        <span>{t.tableModal.matchedStat} <strong className="text-emerald-800 font-mono">{matchedLinesCount}</strong></span>
+                        <span>{t.tableModal.varianceStat} <strong className="text-amber-800 font-mono">{varianceLinesCount}</strong></span>
                     </div>
 
                     <button
                         onClick={onClose}
                         className="w-full sm:w-auto px-5 py-2 bg-[#0E7490] hover:bg-[#0E7490] active:scale-95 text-white font-black text-xs rounded-lg shadow-xs cursor-pointer transition-all"
                     >
-                        Hoàn Tất & Đóng Bảng
+                        {t.tableModal.doneCloseBtn}
                     </button>
                 </div>
             </div>
@@ -625,7 +629,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                         <div className="flex justify-between items-center pb-3 border-b border-slate-200">
                             <div>
                                 <span className="inline-block text-[10px] font-bold uppercase text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 whitespace-nowrap shrink-0">
-                                    Báo cáo chốt khu vực
+                                    {t.tableModal.zoneReportBadge}
                                 </span>
                                 <h3 className="text-base font-bold text-slate-900 mt-1">{zoneReport.zoneName}</h3>
                             </div>
@@ -636,24 +640,24 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
 
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center text-xs">
                             <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-lg">
-                                <span className="text-[10px] font-bold uppercase text-emerald-700 block">Khớp số liệu</span>
-                                <strong className="text-xl font-bold text-emerald-800">{zoneReport.matchedCount} mã</strong>
+                                <span className="text-[10px] font-bold uppercase text-emerald-700 block">{t.tableModal.statusMatched}</span>
+                                <strong className="text-xl font-bold text-emerald-800">{zoneReport.matchedCount} {t.common.skus}</strong>
                             </div>
                             <div className="bg-amber-50 border border-amber-200 p-2.5 rounded-lg">
-                                <span className="text-[10px] font-bold uppercase text-amber-700 block">Thừa</span>
-                                <strong className="text-xl font-bold text-amber-800">{zoneReport.overCount} mã</strong>
+                                <span className="text-[10px] font-bold uppercase text-amber-700 block">{t.tableModal.overPrefix}</span>
+                                <strong className="text-xl font-bold text-amber-800">{zoneReport.overCount} {t.common.skus}</strong>
                             </div>
                             <div className="bg-rose-50 border border-rose-200 p-2.5 rounded-lg">
-                                <span className="text-[10px] font-bold uppercase text-rose-700 block">Thiếu</span>
-                                <strong className="text-xl font-bold text-rose-800">{zoneReport.underCount} mã</strong>
+                                <span className="text-[10px] font-bold uppercase text-rose-700 block">{t.tableModal.underPrefix}</span>
+                                <strong className="text-xl font-bold text-rose-800">{zoneReport.underCount} {t.common.skus}</strong>
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Danh sách chênh lệch:</h4>
+                            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">{t.tableModal.varianceListTitle}</h4>
                             {zoneReport.varianceLines.length === 0 ? (
                                 <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-center text-xs text-emerald-800 font-bold">
-                                    Số liệu thực tế khớp hoàn toàn với sổ sách. Không phát hiện chênh lệch.
+                                    {t.tableModal.allMatchedMsg}
                                 </div>
                             ) : (
                                 zoneReport.varianceLines.map((v: any) => (
@@ -663,7 +667,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                                             <div className="font-bold text-slate-900">{v.productName}</div>
                                         </div>
                                         <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-extrabold ${v.variance > 0 ? 'bg-amber-100 text-amber-900' : 'bg-rose-100 text-rose-900'}`}>
-                                            {v.variance > 0 ? `+${v.variance}` : v.variance} chai
+                                            {v.variance > 0 ? `+${v.variance}` : v.variance} {t.common.bottles}
                                         </span>
                                     </div>
                                 ))
@@ -675,7 +679,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
                                 onClick={() => setShowZoneReportModal(false)}
                                 className="px-5 py-2 bg-[#0E7490] text-white font-extrabold text-xs rounded-lg shadow-xs"
                             >
-                                Đã Hiểu & Đóng
+                                {t.tableModal.understandCloseBtn}
                             </button>
                         </div>
                     </div>

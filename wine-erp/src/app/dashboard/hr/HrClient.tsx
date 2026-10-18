@@ -15,6 +15,8 @@ import { EmployeeDetailDrawer } from './EmployeeDetailDrawer'
 import { EmployeeFormModal } from './EmployeeFormModal'
 import { DocumentUploadModal } from './DocumentUploadModal'
 import { PageHeader, Button, useConfirmDialog } from '@/components/ui'
+import { useAppLocale } from '@/lib/i18n'
+import { HR_I18N } from './i18n'
 
 interface Props {
     initialEmployees: any[]
@@ -45,6 +47,9 @@ function EmployeeMobileCard({
     onDelete: (emp: any) => void
     onQuickUpload: (emp: { id: string; name: string }) => void
 }) {
+    const { locale, formatDate } = useAppLocale()
+    const i18n = HR_I18N[locale]
+
     const statusStyle =
         emp.status === 'ACTIVE'
             ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
@@ -54,14 +59,7 @@ function EmployeeMobileCard({
             ? 'bg-blue-100 text-blue-800 border-blue-300'
             : 'bg-rose-100 text-rose-800 border-rose-300'
 
-    const statusText =
-        emp.status === 'ACTIVE'
-            ? 'Chính thức'
-            : emp.status === 'PROBATION'
-            ? 'Thử việc'
-            : emp.status === 'ON_LEAVE'
-            ? 'Nghỉ phép'
-            : 'Đã nghỉ'
+    const statusText = i18n.statuses[emp.status] ?? emp.status
 
     return (
         <div className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs space-y-2.5">
@@ -94,37 +92,33 @@ function EmployeeMobileCard({
 
             <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-slate-100">
                 <div>
-                    <span className="text-slate-500 block text-[10px]">Vị trí & Phòng ban</span>
+                    <span className="text-slate-500 block text-[10px]">{i18n.colPositionDept}</span>
                     <p className="font-semibold text-slate-800 truncate">{emp.position || '—'}</p>
-                    <p className="text-slate-500 text-[10px] truncate">{emp.dept?.name || 'Chưa phân phòng'}</p>
+                    <p className="text-slate-500 text-[10px] truncate">{emp.dept?.name || i18n.unassignedDept}</p>
                 </div>
                 <div>
-                    <span className="text-slate-500 block text-[10px]">Hợp đồng</span>
+                    <span className="text-slate-500 block text-[10px]">{i18n.colContractShort}</span>
                     <p className="font-semibold text-slate-800 truncate">
-                        {emp.contractType === 'PROBATION' ? 'Thử việc' :
-                         emp.contractType === 'DEFINITE_1Y' ? 'HĐ 1 năm' :
-                         emp.contractType === 'DEFINITE_3Y' ? 'HĐ 3 năm' :
-                         emp.contractType === 'INDEFINITE' ? 'Vô thời hạn' :
-                         emp.contractType || '—'}
+                        {i18n.contractTypesShort[emp.contractType] || emp.contractType || '—'}
                     </p>
                     {emp.contractEndDate ? (
                         <div className="flex items-center gap-1 mt-0.5">
                             <span className="text-slate-500 text-[10px]">
-                                {new Date(emp.contractEndDate).toLocaleDateString('vi-VN')}
+                                {formatDate(emp.contractEndDate)}
                             </span>
                             {emp.contractWarning === 'EXPIRING_SOON' && (
                                 <span className="inline-block px-1 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                                    Còn {emp.contractDaysLeft}d
+                                    {i18n.daysLeftBadge(emp.contractDaysLeft)}
                                 </span>
                             )}
                             {emp.contractWarning === 'EXPIRED' && (
                                 <span className="inline-block px-1 py-0.2 rounded text-[9px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
-                                    Hết hạn
+                                    {i18n.expiredBadge}
                                 </span>
                             )}
                         </div>
                     ) : (
-                        <span className="text-slate-400 text-[10px]">Không thời hạn</span>
+                        <span className="text-slate-400 text-[10px]">{i18n.noExpiryText}</span>
                     )}
                 </div>
             </div>
@@ -136,12 +130,12 @@ function EmployeeMobileCard({
                         className="flex items-center gap-1 px-2 py-1 rounded bg-slate-50 hover:bg-slate-100 text-[11px] font-medium text-slate-700 border border-slate-200 transition-colors cursor-pointer"
                     >
                         <FileText className="w-3 h-3 text-[#0891B2]" />
-                        <span>{emp.documentsCount} tài liệu</span>
+                        <span>{i18n.docsCountBtn(emp.documentsCount)}</span>
                     </button>
                     <button
                         onClick={() => onQuickUpload({ id: emp.id, name: emp.fullName })}
                         className="p-1 rounded bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200 transition-colors cursor-pointer"
-                        title="Tải thêm giấy tờ"
+                        title={i18n.titleUploadMore}
                     >
                         <Upload className="w-3 h-3" />
                     </button>
@@ -150,14 +144,14 @@ function EmployeeMobileCard({
                     <button
                         onClick={() => onOpenDetail(emp)}
                         className="p-1.5 rounded-md text-slate-600 hover:text-[#0891B2] hover:bg-slate-100 transition-colors cursor-pointer"
-                        title="Xem chi tiết"
+                        title={i18n.titleViewDetail}
                     >
                         <Eye className="w-3.5 h-3.5" />
                     </button>
                     <button
                         onClick={() => onOpenEdit(emp)}
                         className="p-1.5 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
-                        title="Sửa"
+                        title={i18n.titleEditInfo}
                     >
                         <Edit className="w-3.5 h-3.5" />
                     </button>
@@ -165,7 +159,7 @@ function EmployeeMobileCard({
                         <button
                             onClick={() => onDelete(emp)}
                             className="p-1.5 rounded-md text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer"
-                            title="Nghỉ việc"
+                            title={i18n.titleMarkResigned}
                         >
                             <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -177,6 +171,9 @@ function EmployeeMobileCard({
 }
 
 export function HrClient({ initialEmployees, initialStats, departments, availableUsers }: Props) {
+    const { locale, formatDate } = useAppLocale()
+    const i18n = HR_I18N[locale]
+
     const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [employees, setEmployees] = useState(initialEmployees)
     const [stats, setStats] = useState(initialStats)
@@ -214,7 +211,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                 })
                 setEmployees(data)
             } catch (err: any) {
-                toast.error(err.message || 'Lỗi khi tải danh sách nhân viên')
+                toast.error(err.message || i18n.loadEmployeesError)
             }
         })
     }
@@ -230,7 +227,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
             setSelectedEmployee(fullEmp)
             setIsDrawerOpen(true)
         } catch (err: any) {
-            toast.error(err.message || 'Lỗi khi mở chi tiết nhân sự')
+            toast.error(err.message || i18n.openDetailError)
         }
     }
 
@@ -246,9 +243,9 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
 
     const handleDelete = async (emp: any) => {
         const ok = await confirm({
-            title: 'Chuyển trạng thái nhân viên',
-            message: `Bạn có chắc chắn muốn chuyển trạng thái nhân viên "${emp.fullName}" sang "Đã nghỉ việc"?`,
-            confirmLabel: 'Xác nhận nghỉ việc',
+            title: i18n.confirmResignTitle,
+            message: i18n.confirmResignMsg(emp.fullName),
+            confirmLabel: i18n.confirmResignBtn,
             variant: 'warning',
         })
         if (!ok) return
@@ -256,11 +253,11 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
         try {
             const res = await deleteEmployee(emp.id)
             if (res.success) {
-                toast.success('Đã cập nhật trạng thái nhân viên thành công')
+                toast.success(i18n.resignSuccess)
                 fetchFilteredEmployees()
             }
         } catch (err: any) {
-            toast.error(err.message || 'Lỗi khi xóa nhân viên')
+            toast.error(err.message || i18n.resignError)
         }
     }
 
@@ -269,12 +266,12 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
         try {
             const res = await sendHrExpiryNotificationAlerts()
             if (res.success) {
-                toast.success(res.message || 'Đã gửi thông báo cảnh báo thành công')
+                toast.success(res.message || i18n.sendAlertsSuccess)
             } else {
-                toast.error(res.error || 'Không thể gửi thông báo')
+                toast.error(res.error || i18n.sendAlertsError)
             }
         } catch (err: any) {
-            toast.error(err.message || 'Lỗi khi gửi thông báo cảnh báo')
+            toast.error(err.message || i18n.sendAlertsError)
         } finally {
             setIsSendingAlerts(false)
         }
@@ -292,25 +289,25 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
         <div className="space-y-6">
             {/* Header */}
             <PageHeader
-                title="Quản Lý Hồ Sơ & Giấy Tờ Nhân Viên"
-                description="Số hóa hồ sơ nhân sự, lưu trữ hợp đồng, giấy tờ pháp lý và cảnh báo thời hạn tự động cho Wine ERP"
+                title={i18n.pageTitle}
+                description={i18n.pageDesc}
                 actions={
                     <div className="flex items-center gap-2">
                         <button
                             onClick={handleSendBellNotifications}
                             disabled={isSendingAlerts}
                             className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-md bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 transition-all cursor-pointer"
-                            title="Bắn cảnh báo tới quả chuông Header của Ban Giám Đốc và Trợ Lý"
+                            title={i18n.btnSendAlertsTitle}
                         >
                             <BellRing className={`w-3.5 h-3.5 text-amber-600 ${isSendingAlerts ? 'animate-bounce' : ''}`} />
-                            <span>Bắn Cảnh Báo</span>
+                            <span>{i18n.btnSendAlerts}</span>
                         </button>
                         <Button
                             variant="primary"
                             size="sm"
                             onClick={handleOpenCreate}
                         >
-                            <Plus className="w-3.5 h-3.5 mr-1" /> Thêm Nhân Viên
+                            <Plus className="w-3.5 h-3.5 mr-1" /> {i18n.btnAddEmployee}
                         </Button>
                     </div>
                 }
@@ -321,31 +318,31 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                 {/* 1. Total */}
                 <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-xs">
                     <div className="flex items-center justify-between text-slate-600 mb-1.5">
-                        <span className="text-[11px] font-semibold">Tổng Nhân Sự</span>
+                        <span className="text-[11px] font-semibold">{i18n.kpiTotal}</span>
                         <Users className="w-4 h-4 text-[#0891B2]" />
                     </div>
                     <p className="text-2xl font-black text-slate-900">{stats.totalEmployees}</p>
-                    <p className="text-[10px] text-slate-600 mt-0.5">Toàn bộ hồ sơ</p>
+                    <p className="text-[10px] text-slate-600 mt-0.5">{i18n.kpiTotalSub}</p>
                 </div>
 
                 {/* 2. Active */}
                 <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-xs">
                     <div className="flex items-center justify-between text-slate-600 mb-1.5">
-                        <span className="text-[11px] font-semibold">Chính Thức</span>
+                        <span className="text-[11px] font-semibold">{i18n.kpiActive}</span>
                         <UserCheck className="w-4 h-4 text-emerald-700" />
                     </div>
                     <p className="text-2xl font-black text-emerald-700">{stats.activeEmployees}</p>
-                    <p className="text-[10px] text-slate-600 mt-0.5">Đang làm việc</p>
+                    <p className="text-[10px] text-slate-600 mt-0.5">{i18n.kpiActiveSub}</p>
                 </div>
 
                 {/* 3. Probation */}
                 <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-xs">
                     <div className="flex items-center justify-between text-slate-600 mb-1.5">
-                        <span className="text-[11px] font-semibold">Thử Việc</span>
+                        <span className="text-[11px] font-semibold">{i18n.kpiProbation}</span>
                         <Clock className="w-4 h-4 text-blue-700" />
                     </div>
                     <p className="text-2xl font-black text-blue-700">{stats.probationEmployees}</p>
-                    <p className="text-[10px] text-slate-600 mt-0.5">Chờ tiếp nhận</p>
+                    <p className="text-[10px] text-slate-600 mt-0.5">{i18n.kpiProbationSub}</p>
                 </div>
 
                 {/* 4. Expiring Soon */}
@@ -362,31 +359,31 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                     }`}
                 >
                     <div className="flex items-center justify-between text-amber-800 mb-1.5">
-                        <span className="text-[11px] font-bold">HĐ Sắp Hết Hạn</span>
+                        <span className="text-[11px] font-bold">{i18n.kpiExpiring}</span>
                         <AlertTriangle className="w-4 h-4 text-amber-600" />
                     </div>
                     <p className="text-2xl font-black text-amber-700">{stats.expiringContracts}</p>
-                    <p className="text-[10px] text-amber-700/80 mt-0.5">&le; 30 ngày (Bấm lọc)</p>
+                    <p className="text-[10px] text-amber-700/80 mt-0.5">{i18n.kpiExpiringSub}</p>
                 </div>
 
                 {/* 5. Expired */}
                 <div className="p-4 rounded-lg bg-white border border-rose-500/30 shadow-xs">
                     <div className="flex items-center justify-between text-rose-800 mb-1.5">
-                        <span className="text-[11px] font-bold">HĐ Đã Hết Hạn</span>
+                        <span className="text-[11px] font-bold">{i18n.kpiExpired}</span>
                         <AlertCircle className="w-4 h-4 text-rose-600" />
                     </div>
                     <p className="text-2xl font-black text-rose-700">{stats.expiredContracts}</p>
-                    <p className="text-[10px] text-rose-700/80 mt-0.5">Cần tái ký ngay</p>
+                    <p className="text-[10px] text-rose-700/80 mt-0.5">{i18n.kpiExpiredSub}</p>
                 </div>
 
                 {/* 6. Documents Vault */}
                 <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-xs">
                     <div className="flex items-center justify-between text-slate-600 mb-1.5">
-                        <span className="text-[11px] font-semibold">Giấy Tờ Số Hóa</span>
+                        <span className="text-[11px] font-semibold">{i18n.kpiDocs}</span>
                         <FileText className="w-4 h-4 text-[#0891B2]" />
                     </div>
                     <p className="text-2xl font-black text-[#0891B2]">{stats.totalDocs}</p>
-                    <p className="text-[10px] text-slate-600 mt-0.5">File PDF/ảnh đã lưu</p>
+                    <p className="text-[10px] text-slate-600 mt-0.5">{i18n.kpiDocsSub}</p>
                 </div>
             </div>
 
@@ -399,12 +396,10 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                         </div>
                         <div>
                             <h4 className="text-xs font-bold text-amber-900">
-                                Cảnh báo thời hạn hợp đồng & giấy tờ nhân sự
+                                {i18n.alertBannerTitle}
                             </h4>
                             <p className="text-[11px] text-amber-800 mt-0.5">
-                                Có <strong>{stats.expiringContracts}</strong> nhân viên sắp hết hạn HĐLĐ (&le; 30 ngày),{' '}
-                                <strong>{stats.expiredContracts}</strong> HĐ đã hết hạn và{' '}
-                                <strong>{stats.expiringHealthChecks}</strong> hồ sơ cần khám sức khỏe định kỳ.
+                                {i18n.alertBannerText(stats.expiringContracts, stats.expiredContracts, stats.expiringHealthChecks)}
                             </p>
                         </div>
                     </div>
@@ -415,7 +410,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                         }}
                         className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-colors shrink-0 cursor-pointer"
                     >
-                        Xem Danh Sách Cần Gia Hạn &rarr;
+                        {i18n.btnViewExpiring}
                     </button>
                 </div>
             )}
@@ -428,7 +423,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                         <Search className="w-4 h-4 text-slate-600 absolute left-3 top-1/2 -translate-y-1/2" />
                         <input
                             type="text"
-                            placeholder="Tìm theo tên, mã NV, SĐT, CCCD..."
+                            placeholder={i18n.searchPlaceholder}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             className="w-full pl-9 pr-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
@@ -445,7 +440,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                             }}
                             className="w-full px-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                         >
-                            <option value="ALL">-- Tất cả phòng ban --</option>
+                            <option value="ALL">{i18n.allDepts}</option>
                             {departments.map(d => (
                                 <option key={d.id} value={d.id}>{d.name}</option>
                             ))}
@@ -462,11 +457,11 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                             }}
                             className="w-full px-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                         >
-                            <option value="ALL">-- Tất cả trạng thái --</option>
-                            <option value="ACTIVE">Chính thức (Active)</option>
-                            <option value="PROBATION">Thử việc (Probation)</option>
-                            <option value="ON_LEAVE">Nghỉ chế độ (On Leave)</option>
-                            <option value="RESIGNED">Đã nghỉ việc (Resigned)</option>
+                            <option value="ALL">{i18n.allStatuses}</option>
+                            <option value="ACTIVE">{i18n.statusesFilter.ACTIVE}</option>
+                            <option value="PROBATION">{i18n.statusesFilter.PROBATION}</option>
+                            <option value="ON_LEAVE">{i18n.statusesFilter.ON_LEAVE}</option>
+                            <option value="RESIGNED">{i18n.statusesFilter.RESIGNED}</option>
                         </select>
                     </div>
 
@@ -478,7 +473,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                             className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#0E7490] text-white font-bold text-xs hover:bg-[#68B9A5] transition-colors cursor-pointer"
                         >
                             <Filter className="w-3.5 h-3.5" />
-                            <span>Lọc Dữ Liệu</span>
+                            <span>{i18n.btnFilter}</span>
                         </button>
                         {(search || deptId !== 'ALL' || status !== 'ALL' || contractExpiringOnly) && (
                             <button
@@ -491,7 +486,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                     fetchFilteredEmployees('', 'ALL', 'ALL', false)
                                 }}
                                 className="p-2 rounded-lg bg-white text-slate-600 hover:text-slate-900 border border-slate-200 transition-colors cursor-pointer"
-                                title="Xóa bộ lọc"
+                                title={i18n.btnClearFilterTitle}
                             >
                                 <RefreshCw className="w-3.5 h-3.5" />
                             </button>
@@ -505,8 +500,8 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                 {employees.length === 0 ? (
                     <div className="p-8 text-center bg-white rounded-lg border border-slate-200 text-slate-600">
                         <Users className="w-8 h-8 mx-auto mb-2 opacity-40 text-[#0891B2]" />
-                        <p className="font-semibold text-slate-700">Không tìm thấy nhân viên phù hợp</p>
-                        <p className="text-[11px] mt-1 text-slate-500">Thử thay đổi từ khóa hoặc thêm nhân viên mới</p>
+                        <p className="font-semibold text-slate-700">{i18n.emptyTitle}</p>
+                        <p className="text-[11px] mt-1 text-slate-500">{i18n.emptySub}</p>
                     </div>
                 ) : (
                     employees.map(emp => (
@@ -528,14 +523,14 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                     <table className="w-full text-left text-xs">
                         <thead className="bg-white text-slate-600 uppercase text-[10px] tracking-wider border-b border-slate-200">
                             <tr>
-                                <th className="px-4 py-3.5 font-bold">Nhân Viên</th>
-                                <th className="px-3 py-3.5 font-bold">Mã NV</th>
-                                <th className="px-3 py-3.5 font-bold">Vị Trí & Phòng Ban</th>
-                                <th className="px-3 py-3.5 font-bold">Hợp Đồng Lao Động</th>
-                                <th className="px-3 py-3.5 font-bold text-center">Giấy Tờ</th>
-                                <th className="px-3 py-3.5 font-bold">Tài Khoản ERP</th>
-                                <th className="px-3 py-3.5 font-bold text-center">Trạng Thái</th>
-                                <th className="px-4 py-3.5 font-bold text-right">Thao Tác</th>
+                                <th className="px-4 py-3.5 font-bold">{i18n.colEmployee}</th>
+                                <th className="px-3 py-3.5 font-bold">{i18n.colCode}</th>
+                                <th className="px-3 py-3.5 font-bold">{i18n.colPositionDept}</th>
+                                <th className="px-3 py-3.5 font-bold">{i18n.colContract}</th>
+                                <th className="px-3 py-3.5 font-bold text-center">{i18n.colDocs}</th>
+                                <th className="px-3 py-3.5 font-bold">{i18n.colErpAccount}</th>
+                                <th className="px-3 py-3.5 font-bold text-center">{i18n.colStatus}</th>
+                                <th className="px-4 py-3.5 font-bold text-right">{i18n.colActions}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200/40 text-slate-900">
@@ -543,8 +538,8 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                 <tr>
                                     <td colSpan={8} className="p-8 text-center text-slate-600">
                                         <Users className="w-8 h-8 mx-auto mb-2 opacity-40 text-[#0891B2]" />
-                                        <p className="font-semibold text-slate-700">Không tìm thấy nhân viên phù hợp</p>
-                                        <p className="text-[11px] mt-1">Thử thay đổi từ khóa tìm kiếm hoặc bấm "Thêm Nhân Viên" để tạo mới</p>
+                                        <p className="font-semibold text-slate-700">{i18n.emptyTitle}</p>
+                                        <p className="text-[11px] mt-1">{i18n.emptySub}</p>
                                     </td>
                                 </tr>
                             ) : (
@@ -584,7 +579,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                         <td className="px-3 py-3">
                                              <p className="font-semibold text-slate-900 truncate max-w-[160px]">{emp.position || '—'}</p>
                                              <p className="text-[11px] text-slate-600 truncate max-w-[160px]">
-                                                 {emp.dept?.name || 'Chưa phân phòng'}
+                                                 {emp.dept?.name || i18n.unassignedDept}
                                              </p>
                                         </td>
 
@@ -592,30 +587,26 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                         <td className="px-3 py-3">
                                              <div>
                                                  <p className="font-semibold text-slate-900">
-                                                     {emp.contractType === 'PROBATION' ? 'Thử việc' :
-                                                      emp.contractType === 'DEFINITE_1Y' ? 'Xác định 1 năm' :
-                                                      emp.contractType === 'DEFINITE_3Y' ? 'Xác định 3 năm' :
-                                                      emp.contractType === 'INDEFINITE' ? 'Không xác định' :
-                                                      emp.contractType || '—'}
+                                                     {i18n.contractTypesMedium[emp.contractType] || emp.contractType || '—'}
                                                  </p>
                                                  {emp.contractEndDate ? (
                                                      <div className="flex items-center gap-1.5 mt-0.5">
                                                          <span className="text-[11px] text-slate-600">
-                                                             Hạn: {new Date(emp.contractEndDate).toLocaleDateString('vi-VN')}
+                                                             {i18n.expiryPrefix} {formatDate(emp.contractEndDate)}
                                                          </span>
                                                          {emp.contractWarning === 'EXPIRING_SOON' && (
                                                              <span className="inline-block px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
-                                                                 Còn {emp.contractDaysLeft}d
+                                                                 {i18n.daysLeftBadge(emp.contractDaysLeft)}
                                                              </span>
                                                          )}
                                                          {emp.contractWarning === 'EXPIRED' && (
                                                              <span className="inline-block px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200 whitespace-nowrap shrink-0">
-                                                                 Hết hạn
+                                                                 {i18n.expiredBadge}
                                                              </span>
                                                          )}
                                                      </div>
                                                  ) : (
-                                                     <span className="text-[11px] text-slate-600">Vô thời hạn</span>
+                                                     <span className="text-[11px] text-slate-600">{i18n.noExpiryText}</span>
                                                  )}
                                              </div>
                                         </td>
@@ -626,7 +617,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                                  <button
                                                      onClick={() => handleOpenDetail(emp)}
                                                      className="flex items-center gap-1 px-2 py-1 rounded bg-white hover:bg-[#E2E8F0] text-xs font-semibold text-[#0891B2] border border-slate-200 transition-colors cursor-pointer"
-                                                     title="Xem kho giấy tờ"
+                                                     title={i18n.titleViewDocs}
                                                  >
                                                      <FileText className="w-3.5 h-3.5" />
                                                      <span>{emp.documentsCount}</span>
@@ -634,7 +625,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                                  <button
                                                      onClick={() => setQuickUploadEmp({ id: emp.id, name: emp.fullName })}
                                                      className="p-1 rounded bg-white hover:bg-[#E2E8F0] text-slate-600 hover:text-slate-900 border border-slate-200 transition-colors cursor-pointer"
-                                                     title="Tải thêm giấy tờ"
+                                                     title={i18n.titleUploadMore}
                                                  >
                                                      <Upload className="w-3.5 h-3.5" />
                                                  </button>
@@ -651,7 +642,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                                     </span>
                                                 </div>
                                             ) : (
-                                                <span className="text-slate-600 italic text-[11px]">Chưa liên kết</span>
+                                                <span className="text-slate-600 italic text-[11px]">{i18n.unlinkedAccount}</span>
                                             )}
                                         </td>
 
@@ -666,9 +657,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                                     ? 'bg-blue-100 text-blue-800 border border-blue-300'
                                                     : 'bg-rose-100 text-rose-800 border border-rose-300'
                                             }`}>
-                                                {emp.status === 'ACTIVE' ? 'Chính thức' :
-                                                 emp.status === 'PROBATION' ? 'Thử việc' :
-                                                 emp.status === 'ON_LEAVE' ? 'Nghỉ phép' : 'Đã nghỉ'}
+                                                {i18n.statuses[emp.status] ?? emp.status}
                                             </span>
                                         </td>
 
@@ -678,14 +667,14 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                                 <button
                                                     onClick={() => handleOpenDetail(emp)}
                                                     className="p-1.5 rounded-lg text-slate-600 hover:text-[#0891B2] hover:bg-slate-100 transition-colors cursor-pointer"
-                                                    title="Xem chi tiết hồ sơ"
+                                                    title={i18n.titleViewDetail}
                                                 >
                                                     <Eye className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={() => handleOpenEdit(emp)}
                                                     className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
-                                                    title="Sửa thông tin"
+                                                    title={i18n.titleEditInfo}
                                                 >
                                                     <Edit className="w-4 h-4" />
                                                 </button>
@@ -693,7 +682,7 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                                     <button
                                                         onClick={() => handleDelete(emp)}
                                                         className="p-1.5 rounded-lg text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer"
-                                                        title="Đánh dấu nghỉ việc"
+                                                        title={i18n.titleMarkResigned}
                                                     >
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>

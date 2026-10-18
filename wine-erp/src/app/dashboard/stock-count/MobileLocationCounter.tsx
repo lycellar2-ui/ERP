@@ -13,6 +13,8 @@ import { recordMobileCountLine, completeZoneCount, startStockCount } from './act
 import { formatCasesAndBottles } from '@/lib/utils'
 import { useConfirmDialog } from '@/components/ui'
 import { toast } from 'sonner'
+import { useAppLocale } from '@/lib/i18n'
+import { getStockCountDict } from './i18n'
 
 export type LineItem = {
     id: string
@@ -138,6 +140,8 @@ function triggerHaptic(type: 'light' | 'medium' | 'success' = 'light') {
 }
 
 export default function MobileLocationCounter({ detail, onBack, onRefreshed, onOpenTableModal, onOpenReport }: Props) {
+    const { locale } = useAppLocale()
+    const t = getStockCountDict(locale)
     const { confirm, dialog } = useConfirmDialog()
     const [lines, setLines] = useState<LineItem[]>(detail.lines)
     const [viewMode, setViewMode] = useState<'FOCUS' | 'ZONES' | 'LIST'>('FOCUS')
@@ -152,7 +156,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
     const [searchTerm, setSearchTerm] = useState('')
     const [listFilter, setListFilter] = useState<'ALL' | 'UNCOUNTED' | 'COUNTED' | 'MATCHED' | 'VARIANCE'>('ALL')
     const [showSuccessToast, setShowSuccessToast] = useState(false)
-    const [toastMessage, setToastMessage] = useState('Đã lưu số lượng kiểm kê')
+    const [toastMessage, setToastMessage] = useState(t.mobile.savedToast)
     const [showNotePanel, setShowNotePanel] = useState(false)
 
     // Independent local input states for Cases & Loose Bottles to prevent mid-typing modulo jumps
@@ -196,14 +200,14 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
 
     // Extract unique zones
     const zones = useMemo(() => {
-        return Array.from(new Set(baseScopedLines.map(l => l.zone || l.locationCode || 'Khu vực chung')))
-    }, [baseScopedLines])
+        return Array.from(new Set(baseScopedLines.map(l => l.zone || l.locationCode || t.common.generalZone)))
+    }, [baseScopedLines, t.common.generalZone])
 
     // Lines used in FOCUS mode (filtered by Zone & Search, NOT by listFilter so LIST->FOCUS index is always consistent)
     const focusLines = useMemo(() => {
         return baseScopedLines.filter(l => {
             const s = searchTerm.trim().toLowerCase()
-            const itemZone = l.zone || l.locationCode || 'Khu vực chung'
+            const itemZone = l.zone || l.locationCode || t.common.generalZone
             const matchZone = s ? true : (selectedZone === 'ALL' || itemZone === selectedZone || l.locationCode === selectedZone)
             const matchSearch = !s ||
                 l.skuCode.toLowerCase().includes(s) ||
@@ -212,7 +216,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                 (l.locationCode && l.locationCode.toLowerCase().includes(s))
             return matchZone && matchSearch
         })
-    }, [baseScopedLines, searchTerm, selectedZone])
+    }, [baseScopedLines, searchTerm, selectedZone, t.common.generalZone])
 
     // Lines used in LIST mode (focusLines + listFilter)
     const listLines = useMemo(() => {
@@ -292,7 +296,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
     // Helper: Open a specific line by ID in FOCUS mode accurately
     const openLineInFocus = (lineId: string) => {
         void autoSaveDirtyLine(currentItem)
-        let idx = focusLines.findIndex(l => l.id === lineId)
+        const idx = focusLines.findIndex(l => l.id === lineId)
         if (idx !== -1) {
             setActiveIdx(idx)
             setViewMode('FOCUS')
@@ -326,7 +330,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
             setActiveIdx(firstUncounted)
         } else {
             playFeedbackSound('alert')
-            setToastMessage('Đã hoàn thành kiểm đếm tất cả sản phẩm trong danh sách.')
+            setToastMessage(t.mobile.allCountedToast)
             setShowSuccessToast(true)
             setTimeout(() => setShowSuccessToast(false), 2000)
         }
@@ -409,17 +413,17 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
         if (isLockedStatus) return
         if (line.qtyActual === null && line.qtySystem > 0 && !isBlind) {
             const confirmed = await confirm({
-                title: 'Xác nhận số lượng thực tế bằng 0',
-                message: `Chưa nhập số lượng thực tế cho sản phẩm "${line.productName}". Tồn sổ sách: ${line.qtySystem} chai. Xác nhận ghi nhận số lượng thực tế bằng 0?`,
-                confirmLabel: 'Xác nhận = 0',
+                title: t.mobile.confirmZeroTitle,
+                message: `${line.productName} (${t.mobile.bookStockPrefix} ${line.qtySystem} ${t.common.bottles}). ${t.mobile.confirmZeroTitle}?`,
+                confirmLabel: t.mobile.confirmZeroBtn,
                 variant: 'warning',
             })
             if (!confirmed) return
         } else if (line.qtyActual === null && isBlind) {
             const confirmed = await confirm({
-                title: 'Xác nhận số lượng thực tế bằng 0',
-                message: `Chưa nhập số lượng cho sản phẩm "${line.productName}". Xác nhận kệ trống (0 chai)?`,
-                confirmLabel: 'Xác nhận = 0',
+                title: t.mobile.confirmZeroTitle,
+                message: `${line.productName} — ${t.mobile.emptyRackBtn}?`,
+                confirmLabel: t.mobile.confirmZeroBtn,
                 variant: 'warning',
             })
             if (!confirmed) return
@@ -444,7 +448,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
             setLines(prev => prev.map(l => l.id === line.id ? { ...l, qtyActual, variance, countedAt: new Date().toISOString() } : l))
             if (onRefreshed) onRefreshed()
 
-            setToastMessage('Đã lưu số lượng kiểm kê')
+            setToastMessage(t.mobile.savedToast)
             setShowSuccessToast(true)
             setTimeout(() => setShowSuccessToast(false), 1200)
 
@@ -457,7 +461,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
             }
         } else {
             playFeedbackSound('alert')
-            toast.error(res.error || 'Không thể lưu dòng kiểm kê')
+            toast.error(res.error || 'Error saving count line')
         }
     }
 
@@ -473,12 +477,12 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
             setShowZoneReportModal(true)
         } else {
             playFeedbackSound('alert')
-            toast.error(res.error || 'Không thể tạo báo cáo đối soát khu vực')
+            toast.error(res.error || 'Error generating zone report')
         }
     }
 
     const getZoneStats = (zoneName: string) => {
-        const zLines = baseScopedLines.filter(l => zoneName === 'ALL' || (l.zone || l.locationCode || 'Khu vực chung') === zoneName || l.locationCode === zoneName)
+        const zLines = baseScopedLines.filter(l => zoneName === 'ALL' || (l.zone || l.locationCode || t.common.generalZone) === zoneName || l.locationCode === zoneName)
         const counted = zLines.filter(l => l.qtyActual !== null).length
         const hasDiff = !isBlind && zLines.some(l => l.variance !== null && l.variance !== 0)
         return {
@@ -502,7 +506,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                         }}
                         className="min-h-[38px] px-2.5 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 rounded-md flex items-center gap-1 text-xs font-bold transition cursor-pointer shrink-0"
                     >
-                        <ChevronLeft className="w-4 h-4" /> Quay lại
+                        <ChevronLeft className="w-4 h-4" /> {t.common.back}
                     </button>
 
                     <div className="flex-1 min-w-0 px-1 text-center">
@@ -519,7 +523,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                             onClick={() => {
                                 if (isBlindLocked) {
                                     playFeedbackSound('alert')
-                                    toast.info('Chế độ kiểm kê giấu tồn sổ: Tồn sổ sách và chênh lệch được bảo mật theo quy định kiểm toán.')
+                                    toast.info(t.mobile.blindLockedToast)
                                     return
                                 }
                                 setIsBlind(!isBlind)
@@ -527,19 +531,19 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                             className={`min-h-[38px] px-2 rounded-md text-[11px] font-bold flex items-center gap-1 border transition cursor-pointer ${
                                 isBlind ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-slate-100 text-slate-600 border-slate-200'
                             }`}
-                            title={isBlindLocked ? 'Kiểm kê giấu tồn sổ (Blind count)' : 'Bật/Tắt hiển thị tồn sổ sách'}
+                            title={isBlindLocked ? t.mobile.blindModeTitle : t.mobile.showBookBadge}
                         >
                             {isBlind ? <EyeOff className="w-3.5 h-3.5 text-amber-700" /> : <Eye className="w-3.5 h-3.5" />}
-                            <span>{isBlind ? 'Giấu sổ' : 'Hiện sổ'}</span>
+                            <span>{isBlind ? t.mobile.blindBadge : t.mobile.showBookBadge}</span>
                         </button>
 
                         {!isLockedStatus && (
                             <button
                                 onClick={() => setShowAddUnlistedModal(true)}
                                 className="min-h-[38px] px-2.5 bg-[#0E7490] hover:bg-[#155E75] text-white font-bold rounded-md text-[11px] flex items-center justify-center gap-1 shadow-2xs cursor-pointer active:scale-95 transition shrink-0"
-                                title="Chèn mã phát sinh ngoài danh sách"
+                                title={t.addUnlisted.title}
                             >
-                                <Plus className="w-3.5 h-3.5" /> Thêm mã
+                                <Plus className="w-3.5 h-3.5" /> {t.mobile.addSkuBtn}
                             </button>
                         )}
                     </div>
@@ -550,11 +554,11 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                     <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center justify-between text-[11px] font-bold text-slate-600">
                             <span>
-                                Đã đếm: <strong className="text-slate-900 font-mono">{overallCounted}/{baseScopedLines.length}</strong> ({overallPercent}%)
+                                {t.mobile.countedLabel} <strong className="text-slate-900 font-mono">{overallCounted}/{baseScopedLines.length}</strong> ({overallPercent}%)
                             </span>
                             {remainingUncountedInZone > 0 && (
                                 <span className="text-[10px] font-mono font-bold text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded">
-                                    Còn {remainingUncountedInZone}
+                                    {t.mobile.remainingPrefix} {remainingUncountedInZone}
                                 </span>
                             )}
                         </div>
@@ -581,7 +585,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                 }`}
                             >
                                 <UserCheck className="w-3 h-3" />
-                                <span>Của tôi ({myAssignedCount})</span>
+                                <span>{t.mobile.myAssignedPrefix} ({myAssignedCount})</span>
                             </button>
                         )}
                         {onOpenTableModal && (
@@ -591,9 +595,9 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     onOpenTableModal()
                                 }}
                                 className="min-h-[30px] px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-bold rounded text-[11px] flex items-center gap-1 cursor-pointer active:scale-95 transition"
-                                title="Mở bảng kiểm kê dạng lưới"
+                                title={t.mobile.gridTableBtn}
                             >
-                                <Table className="w-3 h-3 text-[#0E7490]" /> Bảng lưới
+                                <Table className="w-3 h-3 text-[#0E7490]" /> {t.mobile.gridTableBtn}
                             </button>
                         )}
                         {onOpenReport && (
@@ -603,7 +607,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     onOpenReport(detail.id)
                                 }}
                                 className="min-h-[30px] px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold rounded text-[11px] flex items-center gap-1 cursor-pointer active:scale-95 transition"
-                                title="Xem biên bản đối soát A4"
+                                title="A4"
                             >
                                 <FileText className="w-3 h-3 text-emerald-700" /> A4
                             </button>
@@ -616,7 +620,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                     <div className="bg-amber-50 border border-amber-300 px-2.5 py-1.5 rounded-md flex items-center justify-between gap-2 text-xs font-bold text-amber-900">
                         <span className="flex items-center gap-1.5 truncate">
                             <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                            Phiếu đang ở trạng thái Nháp
+                            {t.mobile.draftBanner}
                         </span>
                         <button
                             onClick={async () => {
@@ -625,7 +629,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                             }}
                             className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded text-[11px] shrink-0 active:scale-95 cursor-pointer"
                         >
-                            Bắt đầu đếm
+                            {t.mobile.startCountBtn}
                         </button>
                     </div>
                 )}
@@ -634,10 +638,10 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                     <div className="bg-slate-100 border border-slate-300 px-2.5 py-1.5 rounded-md flex items-center justify-between gap-2 text-xs font-bold text-slate-700">
                         <span className="flex items-center gap-1.5">
                             <Lock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                            Phiếu đã {detail.status === 'APPROVED' ? 'Phê duyệt (Khóa chỉnh sửa)' : 'Hủy'}
+                            {detail.status === 'APPROVED' ? t.mobile.lockedApproved : t.mobile.lockedCancelled}
                         </span>
                         <span className="text-[10px] font-mono uppercase bg-white px-2 py-0.5 rounded border border-slate-200">
-                            Chỉ xem
+                            {t.mobile.viewOnlyBadge}
                         </span>
                     </div>
                 )}
@@ -658,9 +662,9 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                     <div>
                         <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
                             <MapPin className="w-4 h-4 text-[#0E7490]" />
-                            Vị trí kho và dãy kệ
+                            {t.mobile.zonesTitle}
                         </h3>
-                        <p className="text-xs text-slate-500 mt-0.5">Chọn vị trí kiểm đếm để lọc danh sách sản phẩm theo kệ</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{t.mobile.zonesSubtitle}</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2.5">
@@ -682,15 +686,15 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     <MapPin className="w-4 h-4" />
                                 </span>
                                 <span className="inline-block text-[10px] font-mono font-bold text-[#0E7490] bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200 whitespace-nowrap shrink-0">
-                                    TẤT CẢ
+                                    {t.mobile.allBadge}
                                 </span>
                             </div>
                             <div>
-                                <h4 className="text-xs font-bold text-slate-900">Toàn bộ kho</h4>
-                                <p className="text-[11px] text-slate-500 font-mono mt-0.5">{overallCounted}/{baseScopedLines.length} mã đã đếm</p>
+                                <h4 className="text-xs font-bold text-slate-900">{t.mobile.fullWarehouseTitle}</h4>
+                                <p className="text-[11px] text-slate-500 font-mono mt-0.5">{overallCounted}/{baseScopedLines.length} {t.mobile.countedSkusSuffix}</p>
                             </div>
                             <div className="text-[11px] font-bold text-[#0891B2] flex items-center gap-1 pt-0.5">
-                                Đếm liên tục <ArrowRight className="w-3.5 h-3.5" />
+                                {t.mobile.countContinuously} <ArrowRight className="w-3.5 h-3.5" />
                             </div>
                         </button>
 
@@ -725,11 +729,11 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                         </span>
                                         {isDone ? (
                                             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-md whitespace-nowrap shrink-0">
-                                                <CheckCheck className="w-3 h-3" /> Xong
+                                                <CheckCheck className="w-3 h-3" /> {t.mobile.doneBadge}
                                             </span>
                                         ) : zStats.hasDiff ? (
                                             <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded-md inline-block whitespace-nowrap shrink-0">
-                                                Có lệch
+                                                {t.mobile.hasDiffBadge}
                                             </span>
                                         ) : null}
                                     </div>
@@ -737,7 +741,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     <div>
                                         <h4 className="text-xs font-bold text-slate-900 truncate">{zName}</h4>
                                         <p className="text-[11px] text-slate-500 font-mono mt-0.5">
-                                            {zStats.counted}/{zStats.total} mã ({zStats.percent}%)
+                                            {zStats.counted}/{zStats.total} {t.common.skus} ({zStats.percent}%)
                                         </p>
                                     </div>
 
@@ -766,7 +770,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                         </div>
                         <input
                             type="text"
-                            placeholder="Tìm nhanh mã SKU, tên rượu, niên vụ, kệ..."
+                            placeholder={t.mobile.quickSearchPlaceholder}
                             value={searchTerm}
                             onChange={e => {
                                 setSearchTerm(e.target.value)
@@ -801,9 +805,9 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                         <div className="bg-white border border-slate-200 rounded-lg p-6 text-center space-y-3 shadow-xs my-4">
                             <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto" />
                             <h4 className="text-sm font-bold text-slate-900">
-                                {searchTerm ? `Không tìm thấy mã khớp với "${searchTerm}"` : 'Không có sản phẩm nào trong bộ lọc này'}
+                                {searchTerm ? `${t.mobile.noMatchSearchPrefix} "${searchTerm}"` : t.mobile.emptyFilterMsg}
                             </h4>
-                            <p className="text-xs text-slate-500">Vui lòng kiểm tra lại từ khóa hoặc bộ lọc khu vực</p>
+                            <p className="text-xs text-slate-500">{t.mobile.checkFilterHint}</p>
                             <div className="flex items-center justify-center gap-2">
                                 <button
                                     onClick={() => {
@@ -814,14 +818,14 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     }}
                                     className="min-h-[44px] px-4 bg-[#0E7490] text-white font-bold text-xs rounded-md shadow-xs cursor-pointer active:scale-95 transition"
                                 >
-                                    Hiển thị toàn bộ ({lines.length} mã)
+                                    {t.mobile.showAllBtnPrefix} ({lines.length} {t.common.skus})
                                 </button>
                                 {!isLockedStatus && (
                                     <button
                                         onClick={() => setShowAddUnlistedModal(true)}
                                         className="min-h-[44px] px-4 bg-[#0E7490] hover:bg-[#155E75] text-white font-bold text-xs rounded-md shadow-xs cursor-pointer active:scale-95 transition flex items-center gap-1"
                                     >
-                                        <Plus className="w-4 h-4" /> Chèn mã mới
+                                        <Plus className="w-4 h-4" /> {t.mobile.insertNewSkuBtn}
                                     </button>
                                 )}
                             </div>
@@ -833,7 +837,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                 <div className="flex items-center gap-1.5 font-bold text-slate-700 min-w-0">
                                     <MapPin className="w-3.5 h-3.5 text-[#0E7490] shrink-0" />
                                     <span className="truncate">
-                                        Kệ: <strong className="text-[#0E7490] font-mono font-bold">{currentItem.zone || currentItem.locationCode}</strong>
+                                        {t.mobile.rackLabel} <strong className="text-[#0E7490] font-mono font-bold">{currentItem.zone || currentItem.locationCode}</strong>
                                     </span>
                                     {selectedZone !== 'ALL' && (
                                         <button
@@ -842,9 +846,8 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                 setActiveIdx(0)
                                             }}
                                             className="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200 shrink-0 cursor-pointer"
-                                            title="Bỏ lọc kệ"
                                         >
-                                            × Tất cả kệ
+                                            {t.mobile.allRacksBtn}
                                         </button>
                                     )}
                                     {currentItem.assignedToName && (
@@ -864,10 +867,9 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                         <button
                                             onClick={jumpToNextUncounted}
                                             className="px-2 py-0.5 bg-amber-50 hover:bg-amber-100 text-amber-900 text-[10px] font-bold rounded flex items-center gap-1 cursor-pointer active:scale-95 transition border border-amber-300"
-                                            title="Chuyển nhanh tới mã tiếp theo chưa đếm"
                                         >
                                             <ArrowRight className="w-3 h-3 text-amber-700" />
-                                            <span>Chưa đếm</span>
+                                            <span>{t.mobile.uncountedJump}</span>
                                         </button>
                                     )}
                                 </div>
@@ -883,14 +885,14 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                         </span>
                                         {currentItem.countedAt && (
                                             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
-                                                <Check className="w-3 h-3" /> Đã lưu
+                                                <Check className="w-3 h-3" /> {t.mobile.savedBadge}
                                             </span>
                                         )}
                                     </div>
 
                                     <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-300 text-slate-900 px-2.5 py-0.5 rounded-md shadow-2xs">
                                         <span className="text-xs font-bold font-mono tracking-wide">
-                                            {currentItem.vintage ? `Niên vụ: ${currentItem.vintage}` : 'Không niên vụ (NV)'}
+                                            {currentItem.vintage ? `${t.mobile.vintagePrefix} ${currentItem.vintage}` : t.mobile.nonVintage}
                                         </span>
                                     </div>
                                 </div>
@@ -902,7 +904,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     </h3>
                                     <p className="text-xs text-slate-500 font-semibold mt-0.5 flex items-center gap-1.5">
                                         <Package className="w-3.5 h-3.5 text-slate-400" />
-                                        Quy cách: <strong className="text-slate-800 font-bold">{currentItem.unitsPerCase || 6} chai / thùng</strong>
+                                        {t.mobile.specPrefix} <strong className="text-slate-800 font-bold">{currentItem.unitsPerCase || 6} {t.mobile.bottlesPerCase}</strong>
                                     </p>
                                 </div>
 
@@ -919,7 +921,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                             {!isBlind && (
                                                 <div className="flex items-center justify-between bg-slate-50 px-3 py-1.5 rounded-md border border-slate-200 text-xs font-bold gap-2">
                                                     <span className="text-slate-600 truncate">
-                                                        Tồn sổ: <strong className="text-slate-900 font-mono font-bold">{formatCasesAndBottles(currentItem.qtySystem, upc)}</strong> ({currentItem.qtySystem}c)
+                                                        {t.mobile.bookStockPrefix} <strong className="text-slate-900 font-mono font-bold">{formatCasesAndBottles(currentItem.qtySystem, upc)}</strong> ({currentItem.qtySystem}c)
                                                     </span>
 
                                                     {!isLockedStatus && currentItem.qtySystem >= 0 && (
@@ -929,7 +931,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                             className="min-h-[30px] px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-md border border-emerald-300 cursor-pointer active:scale-95 transition flex items-center gap-1 shrink-0"
                                                         >
                                                             <Check className="w-3.5 h-3.5 text-emerald-700" />
-                                                            Khớp tồn sổ
+                                                            {t.mobile.matchBookBtn}
                                                         </button>
                                                     )}
                                                 </div>
@@ -941,7 +943,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                 <div className="bg-slate-50 border border-slate-200/90 rounded-lg p-2.5 text-center space-y-1.5 shadow-2xs">
                                                     <div className="flex items-center justify-center gap-1 text-[11px] font-bold uppercase text-slate-600 tracking-wider">
                                                         <Package className="w-3.5 h-3.5 text-[#0E7490]" />
-                                                        <span>Số thùng ({upc}c)</span>
+                                                        <span>{t.mobile.casesPodTitle} ({upc}c)</span>
                                                     </div>
 
                                                     <div className="flex items-center justify-between gap-1">
@@ -950,7 +952,6 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                             disabled={isLockedStatus}
                                                             onClick={() => setExactQty(currentItem.id, Math.max(0, total - upc), true)}
                                                             className="min-h-[46px] min-w-[46px] rounded-md bg-white hover:bg-slate-100 disabled:opacity-40 text-slate-800 font-bold text-xl flex items-center justify-center active:scale-95 cursor-pointer border border-slate-300 shadow-2xs"
-                                                            aria-label="Giảm 1 thùng"
                                                         >
                                                             <Minus className="w-5 h-5 text-slate-700" />
                                                         </button>
@@ -983,7 +984,6 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                             disabled={isLockedStatus}
                                                             onClick={() => setExactQty(currentItem.id, total + upc, true)}
                                                             className="min-h-[46px] min-w-[46px] rounded-md bg-white hover:bg-slate-100 disabled:opacity-40 text-slate-800 font-bold text-xl flex items-center justify-center active:scale-95 cursor-pointer border border-slate-300 shadow-2xs"
-                                                            aria-label="Tăng 1 thùng"
                                                         >
                                                             <Plus className="w-5 h-5 text-slate-700" />
                                                         </button>
@@ -1009,7 +1009,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                 <div className="bg-slate-50 border border-slate-200/90 rounded-lg p-2.5 text-center space-y-1.5 shadow-2xs">
                                                     <div className="flex items-center justify-center gap-1 text-[11px] font-bold uppercase text-slate-600 tracking-wider">
                                                         <Wine className="w-3.5 h-3.5 text-slate-700" />
-                                                        <span>Chai lẻ rời</span>
+                                                        <span>{t.mobile.loosePodTitle}</span>
                                                     </div>
 
                                                     <div className="flex items-center justify-between gap-1">
@@ -1018,7 +1018,6 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                             disabled={isLockedStatus}
                                                             onClick={() => setExactQty(currentItem.id, Math.max(0, total - 1), true)}
                                                             className="min-h-[46px] min-w-[46px] rounded-md bg-white hover:bg-slate-100 disabled:opacity-40 text-slate-800 font-bold text-xl flex items-center justify-center active:scale-95 cursor-pointer border border-slate-300 shadow-2xs"
-                                                            aria-label="Giảm 1 chai"
                                                         >
                                                             <Minus className="w-5 h-5 text-slate-700" />
                                                         </button>
@@ -1051,7 +1050,6 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                             disabled={isLockedStatus}
                                                             onClick={() => setExactQty(currentItem.id, total + 1, true)}
                                                             className="min-h-[46px] min-w-[46px] rounded-md bg-white hover:bg-slate-100 disabled:opacity-40 text-slate-800 font-bold text-xl flex items-center justify-center active:scale-95 cursor-pointer border border-slate-300 shadow-2xs"
-                                                            aria-label="Tăng 1 chai"
                                                         >
                                                             <Plus className="w-5 h-5 text-slate-700" />
                                                         </button>
@@ -1082,7 +1080,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                         onClick={() => setExactQty(currentItem.id, 0, true)}
                                                         className="flex-1 min-h-[36px] bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 rounded-md text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer border border-slate-300"
                                                     >
-                                                        Kệ trống (0 chai)
+                                                        {t.mobile.emptyRackBtn}
                                                     </button>
 
                                                     <button
@@ -1095,7 +1093,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                         }`}
                                                     >
                                                         <Tag className="w-3.5 h-3.5 text-amber-700" />
-                                                        <span>Ghi chú / Lý do</span>
+                                                        <span>{t.mobile.noteReasonBtn}</span>
                                                     </button>
 
                                                     {currentItem.qtyActual !== null && (
@@ -1103,9 +1101,8 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                             type="button"
                                                             onClick={() => setExactQty(currentItem.id, null, true)}
                                                             className="px-2.5 min-h-[36px] bg-rose-50 hover:bg-rose-100 active:scale-95 text-rose-700 rounded-md text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer border border-rose-200"
-                                                            title="Hủy kết quả đếm của mã này"
                                                         >
-                                                            Xóa
+                                                            {t.mobile.clearBtn}
                                                         </button>
                                                     )}
                                                 </div>
@@ -1114,23 +1111,23 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                             {/* ─── VISUAL MATH & VARIANCE COCKPIT ─── */}
                                             <div className="bg-slate-50 border border-slate-200 text-slate-800 rounded-lg p-3 space-y-1.5 shadow-xs">
                                                 <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-                                                    <span>Quy đổi thực tế:</span>
+                                                    <span>{t.mobile.actualConvertedLabel}</span>
                                                     <span className="font-mono text-[#0E7490] text-xs">
-                                                        [{displayCasesNum} thùng × {upc}] + [{displayLooseNum} chai lẻ]
+                                                        [{displayCasesNum} {t.common.cases} × {upc}] + [{displayLooseNum} {t.common.loose}]
                                                     </span>
                                                 </div>
 
                                                 <div className="flex items-center justify-between pt-1 border-t border-slate-200">
                                                     <div className="text-left">
-                                                        <span className="text-[10px] text-slate-500 font-bold uppercase block">Tổng thực tế</span>
+                                                        <span className="text-[10px] text-slate-500 font-bold uppercase block">{t.mobile.totalActualLabel}</span>
                                                         <span className="text-2xl font-bold font-mono text-[#0E7490]">
-                                                            {total} <span className="text-xs font-semibold text-slate-500">chai</span>
+                                                            {total} <span className="text-xs font-semibold text-slate-500">{t.common.bottles}</span>
                                                         </span>
                                                     </div>
 
                                                     {!isBlind && currentItem.qtyActual !== null && (
                                                         <div className="text-right">
-                                                            <span className="text-[10px] text-slate-500 font-bold uppercase block">Chênh lệch tồn sổ</span>
+                                                            <span className="text-[10px] text-slate-500 font-bold uppercase block">{t.mobile.bookVarianceLabel}</span>
                                                             <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-mono font-bold ${
                                                                 currentItem.variance === 0
                                                                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -1139,10 +1136,10 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                                         : 'bg-rose-50 text-rose-700 border border-rose-200'
                                                             }`}>
                                                                 {currentItem.variance === 0
-                                                                    ? 'Khớp số liệu'
+                                                                    ? t.mobile.matchedText
                                                                     : currentItem.variance! > 0
-                                                                        ? `Thừa: +${currentItem.variance} chai`
-                                                                        : `Thiếu: ${currentItem.variance} chai`}
+                                                                        ? `${t.mobile.overPrefix} +${currentItem.variance} ${t.common.bottles}`
+                                                                        : `${t.mobile.underPrefix} ${currentItem.variance} ${t.common.bottles}`}
                                                             </span>
                                                         </div>
                                                     )}
@@ -1155,9 +1152,9 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                     <div className="flex items-center justify-between text-xs font-bold text-amber-900">
                                                         <span className="flex items-center gap-1.5">
                                                             <Tag className="w-4 h-4 text-amber-700" />
-                                                            {isBlind ? 'Phân loại phát sinh / Ghi chú:' : 'Lý do chênh lệch & Ghi chú:'}
+                                                            {isBlind ? t.mobile.blindReasonTitle : t.mobile.varianceReasonTitle}
                                                         </span>
-                                                        <span className="text-[10px] text-amber-700 font-semibold">(Tùy chọn)</span>
+                                                        <span className="text-[10px] text-amber-700 font-semibold">{t.mobile.optionalLabel}</span>
                                                     </div>
 
                                                     <div className="grid grid-cols-2 gap-1.5">
@@ -1175,7 +1172,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                                             : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-200'
                                                                     }`}
                                                                 >
-                                                                    <span className="truncate">{r.label}</span>
+                                                                    <span className="truncate">{t.mobile.reasons[r.code] || r.label}</span>
                                                                 </button>
                                                             )
                                                         })}
@@ -1185,7 +1182,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                         <input
                                                             type="text"
                                                             disabled={isLockedStatus}
-                                                            placeholder="Nhập ghi chú chi tiết (VD: Vỡ 1 chai, hàng mẫu...)"
+                                                            placeholder={t.mobile.notePlaceholder}
                                                             value={currentItem.notes || ''}
                                                             onChange={e => setLineNotes(currentItem.id, e.target.value)}
                                                             className="w-full bg-white border border-amber-300 text-slate-900 rounded-md px-3 py-2 text-base sm:text-xs font-semibold outline-none focus:border-[#0E7490]"
@@ -1209,7 +1206,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                         ) : (
                                             <>
                                                 <Save className="w-5 h-5 text-white" />
-                                                Lưu và tiếp tục
+                                                {t.mobile.saveAndNextBtn}
                                             </>
                                         )}
                                     </button>
@@ -1228,15 +1225,14 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     }}
                                     className="min-h-[46px] bg-white hover:bg-slate-50 border border-slate-300 disabled:opacity-30 text-slate-800 rounded-md font-bold text-xs flex items-center justify-center gap-1 cursor-pointer active:scale-95 transition-all duration-100 shadow-2xs select-none"
                                 >
-                                    <ChevronLeft className="w-4 h-4" /> Mã trước
+                                    <ChevronLeft className="w-4 h-4" /> {t.mobile.prevSkuBtn}
                                 </button>
 
                                 <button
                                     onClick={jumpToNextUncounted}
                                     className="min-h-[46px] bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 rounded-md font-bold text-xs flex items-center justify-center gap-1 cursor-pointer active:scale-95 transition-all duration-100 shadow-2xs select-none"
-                                    title="Chuyển tới mã tiếp theo chưa đếm"
                                 >
-                                    <span>Chưa đếm ({remainingUncountedInZone})</span>
+                                    <span>{t.mobile.uncountedJump} ({remainingUncountedInZone})</span>
                                 </button>
 
                                 <button
@@ -1249,7 +1245,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     }}
                                     className="min-h-[46px] bg-white hover:bg-slate-50 border border-slate-300 disabled:opacity-30 text-slate-800 rounded-md font-bold text-xs flex items-center justify-center gap-1 cursor-pointer active:scale-95 transition-all duration-100 shadow-2xs select-none"
                                 >
-                                    Mã sau <ChevronRight className="w-4 h-4" />
+                                    {t.mobile.nextSkuBtn} <ChevronRight className="w-4 h-4" />
                                 </button>
                             </div>
 
@@ -1266,8 +1262,8 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                         <>
                                             <Check className="w-4 h-4 text-emerald-600" />
                                             {selectedZone === 'ALL'
-                                                ? 'Xem tổng kết đối soát toàn kho'
-                                                : `Hoàn thành kiểm đếm kệ (${selectedZone})`}
+                                                ? t.mobile.viewFullSummaryBtn
+                                                : `${t.mobile.finishRackBtnPrefix} (${selectedZone})`}
                                         </>
                                     )}
                                 </button>
@@ -1289,7 +1285,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                         </div>
                         <input
                             type="text"
-                            placeholder="Tìm kiếm mã SKU, tên rượu, niên vụ, kệ..."
+                            placeholder={t.mobile.listSearchPlaceholder}
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg pl-9 pr-10 py-2.5 text-base sm:text-xs outline-none focus:border-[#0E7490] focus:ring-2 focus:ring-[#0E7490]/20 shadow-2xs"
@@ -1313,7 +1309,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     listFilter === 'ALL' ? 'bg-[#0E7490] text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
                                 }`}
                             >
-                                Tất cả ({focusLines.length})
+                                {t.mobile.filterAll} ({focusLines.length})
                             </button>
 
                             <button
@@ -1322,7 +1318,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     listFilter === 'UNCOUNTED' ? 'bg-amber-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
                                 }`}
                             >
-                                Chưa đếm ({focusLines.filter(l => l.qtyActual === null).length})
+                                {t.mobile.filterUncounted} ({focusLines.filter(l => l.qtyActual === null).length})
                             </button>
 
                             <button
@@ -1331,7 +1327,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     listFilter === 'COUNTED' ? 'bg-teal-700 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
                                 }`}
                             >
-                                Đã đếm ({focusLines.filter(l => l.qtyActual !== null).length})
+                                {t.mobile.filterCounted} ({focusLines.filter(l => l.qtyActual !== null).length})
                             </button>
                         </div>
                     ) : (
@@ -1342,7 +1338,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     listFilter === 'ALL' ? 'bg-[#0E7490] text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
                                 }`}
                             >
-                                Tất cả ({focusLines.length})
+                                {t.mobile.filterAll} ({focusLines.length})
                             </button>
 
                             <button
@@ -1351,7 +1347,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     listFilter === 'UNCOUNTED' ? 'bg-amber-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
                                 }`}
                             >
-                                Chưa đếm ({focusLines.filter(l => l.qtyActual === null).length})
+                                {t.mobile.filterUncounted} ({focusLines.filter(l => l.qtyActual === null).length})
                             </button>
 
                             <button
@@ -1360,7 +1356,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     listFilter === 'MATCHED' ? 'bg-emerald-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
                                 }`}
                             >
-                                Khớp ({focusLines.filter(l => l.qtyActual !== null && l.variance === 0).length})
+                                {t.mobile.filterMatched} ({focusLines.filter(l => l.qtyActual !== null && l.variance === 0).length})
                             </button>
 
                             <button
@@ -1369,7 +1365,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     listFilter === 'VARIANCE' ? 'bg-rose-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
                                 }`}
                             >
-                                Lệch ({focusLines.filter(l => l.qtyActual !== null && l.variance !== 0).length})
+                                {t.mobile.filterVariance} ({focusLines.filter(l => l.qtyActual !== null && l.variance !== 0).length})
                             </button>
                         </div>
                     )}
@@ -1378,7 +1374,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                     <div className="space-y-2">
                         {listLines.length === 0 ? (
                             <div className="p-8 text-center text-slate-500 bg-white rounded-lg border border-slate-200 text-xs font-bold">
-                                Không có sản phẩm nào khớp với bộ lọc
+                                {t.mobile.emptyListFilter}
                             </div>
                         ) : (
                             listLines.map((line) => {
@@ -1416,7 +1412,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
 
                                             <div className="text-right shrink-0">
                                                 <span className="text-[10px] text-slate-500 font-mono block">
-                                                    Kệ: {line.zone || line.locationCode}
+                                                    {t.mobile.rackLabel} {line.zone || line.locationCode}
                                                 </span>
                                                 <span className={`text-xs font-mono font-bold mt-1 inline-block px-2 py-0.5 rounded-md ${
                                                     !isCounted
@@ -1427,7 +1423,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                                 ? 'bg-emerald-100 text-emerald-800'
                                                                 : 'bg-amber-100 text-amber-900'
                                                 }`}>
-                                                    {isCounted ? `${line.qtyActual} chai` : 'Chưa đếm'}
+                                                    {isCounted ? `${line.qtyActual} ${t.common.bottles}` : t.mobile.filterUncounted}
                                                 </span>
                                             </div>
                                         </div>
@@ -1448,7 +1444,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                         <div className="flex justify-between items-center pb-3 border-b border-slate-200">
                             <div>
                                 <span className="inline-block text-[10px] font-mono uppercase font-bold text-[#0E7490] bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200 whitespace-nowrap shrink-0">
-                                    {isBlind ? 'Tổng kết tiến độ kiểm đếm' : 'Báo cáo đối soát khu vực'}
+                                    {isBlind ? t.mobile.blindSummaryBadge : t.mobile.zoneVarianceBadge}
                                 </span>
                                 <h3 className="text-base font-bold text-slate-900 mt-1">{zoneReport.zoneName}</h3>
                             </div>
@@ -1465,15 +1461,15 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                             <div className="space-y-3">
                                 <div className="grid grid-cols-3 gap-2">
                                     <div className="bg-slate-50 border border-slate-200 p-2.5 rounded-md text-center">
-                                        <span className="text-[10px] font-bold text-slate-600 uppercase block">Tổng số mã</span>
+                                        <span className="text-[10px] font-bold text-slate-600 uppercase block">{t.mobile.totalSkusLabel}</span>
                                         <strong className="text-lg font-bold text-slate-900 font-mono">{zoneReport.totalItems}</strong>
                                     </div>
                                     <div className="bg-teal-50 border border-teal-200 p-2.5 rounded-md text-center">
-                                        <span className="text-[10px] font-bold text-teal-800 uppercase block">Đã đếm</span>
+                                        <span className="text-[10px] font-bold text-teal-800 uppercase block">{t.mobile.filterCounted}</span>
                                         <strong className="text-lg font-bold text-teal-700 font-mono">{zoneReport.countedCount}</strong>
                                     </div>
                                     <div className="bg-amber-50 border border-amber-200 p-2.5 rounded-md text-center">
-                                        <span className="text-[10px] font-bold text-amber-800 uppercase block">Chưa đếm</span>
+                                        <span className="text-[10px] font-bold text-amber-800 uppercase block">{t.mobile.filterUncounted}</span>
                                         <strong className="text-lg font-bold text-amber-700 font-mono">{zoneReport.uncountedCount}</strong>
                                     </div>
                                 </div>
@@ -1481,10 +1477,10 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                 <div className="p-3.5 rounded-md bg-amber-50/70 border border-amber-200 text-xs text-amber-900 space-y-1">
                                     <div className="font-bold flex items-center gap-1.5">
                                         <EyeOff className="w-4 h-4 text-amber-700 shrink-0" />
-                                        Chế độ Kiểm kê mù (Blind Count)
+                                        {t.mobile.blindModeTitle}
                                     </div>
                                     <p className="text-[11px] text-amber-800 leading-relaxed">
-                                        Số liệu chênh lệch được ẩn trên thiết bị đếm hiện trường và sẽ được đối soát trên Biên bản kiểm kê của Quản lý kho / Kế toán.
+                                        {t.mobile.blindModeDesc}
                                     </p>
                                 </div>
                             </div>
@@ -1493,22 +1489,22 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                 {/* KPI Summary Grid */}
                                 <div className="grid grid-cols-3 gap-2">
                                     <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-md text-center">
-                                        <span className="text-[10px] font-bold text-emerald-800 uppercase block">Khớp số liệu</span>
+                                        <span className="text-[10px] font-bold text-emerald-800 uppercase block">{t.mobile.matchedText}</span>
                                         <strong className="text-lg font-bold text-emerald-700 font-mono">{zoneReport.matchedCount}</strong>
                                     </div>
                                     <div className="bg-amber-50 border border-amber-200 p-2.5 rounded-md text-center">
-                                        <span className="text-[10px] font-bold text-amber-800 uppercase block">Thừa</span>
+                                        <span className="text-[10px] font-bold text-amber-800 uppercase block">{t.tableModal.overPrefix}</span>
                                         <strong className="text-lg font-bold text-amber-700 font-mono">{zoneReport.overCount}</strong>
                                     </div>
                                     <div className="bg-rose-50 border border-rose-200 p-2.5 rounded-md text-center">
-                                        <span className="text-[10px] font-bold text-rose-800 uppercase block">Thiếu</span>
+                                        <span className="text-[10px] font-bold text-rose-800 uppercase block">{t.tableModal.underPrefix}</span>
                                         <strong className="text-lg font-bold text-rose-700 font-mono">{zoneReport.underCount}</strong>
                                     </div>
                                 </div>
 
                                 {zoneReport.uncountedCount > 0 && (
                                     <div className="bg-amber-50 border border-amber-300 px-3 py-2 rounded-md text-xs font-bold text-amber-900 flex items-center justify-between">
-                                        <span>Còn {zoneReport.uncountedCount} mã trong khu vực chưa đếm</span>
+                                        <span>{zoneReport.uncountedCount} {t.mobile.remainingUncountedMsg}</span>
                                         <button
                                             onClick={() => {
                                                 setShowZoneReportModal(false)
@@ -1516,7 +1512,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                             }}
                                             className="px-2 py-1 bg-amber-600 text-white rounded text-[11px] font-bold cursor-pointer"
                                         >
-                                            Đếm tiếp
+                                            {t.mobile.continueCountBtn}
                                         </button>
                                     </div>
                                 )}
@@ -1525,12 +1521,12 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                 <div className="space-y-2">
                                     <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                                         <AlertTriangle className="w-4 h-4 text-amber-600" />
-                                        Danh sách mã chênh lệch cần rà soát:
+                                        {t.mobile.varianceReviewTitle}
                                     </h4>
 
                                     {zoneReport.varianceLines.length === 0 ? (
                                         <div className="p-4 rounded-md bg-emerald-50 border border-emerald-200 text-center text-xs font-bold text-emerald-800">
-                                            Số liệu thực tế đã đếm khớp hoàn toàn với sổ sách.
+                                            {t.tableModal.allMatchedMsg}
                                         </div>
                                     ) : (
                                         <div className="space-y-2">
@@ -1554,12 +1550,12 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                                 ? 'bg-amber-100 text-amber-900 border border-amber-300'
                                                                 : 'bg-rose-100 text-rose-900 border border-rose-300'
                                                         }`}>
-                                                            {vl.variance > 0 ? `+${vl.variance}` : vl.variance} chai
+                                                            {vl.variance > 0 ? `+${vl.variance}` : vl.variance} {t.common.bottles}
                                                         </span>
                                                     </div>
 
                                                     <div className="flex justify-between items-center text-[11px] text-slate-600 font-mono pt-1 border-t border-slate-200">
-                                                        <span>Tồn sổ: {vl.qtySystem} · Thực tế: {vl.qtyActual}</span>
+                                                        <span>{t.mobile.bookStockPrefix} {vl.qtySystem} · {t.mobile.totalActualLabel}: {vl.qtyActual}</span>
                                                         <button
                                                             onClick={() => {
                                                                 setShowZoneReportModal(false)
@@ -1567,7 +1563,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                                             }}
                                                             className="px-2.5 py-1 bg-white hover:bg-slate-100 text-[#0E7490] font-bold rounded-lg border border-slate-300 shadow-2xs cursor-pointer active:scale-95"
                                                         >
-                                                            Kiểm đếm lại mã này
+                                                            {t.mobile.recountLineBtn}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -1587,14 +1583,14 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                                     }}
                                     className="flex-1 min-h-[44px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-md shadow-xs cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 transition"
                                 >
-                                    Báo cáo đối soát A4
+                                    {t.mobile.a4ReportBtn}
                                 </button>
                             )}
                             <button
                                 onClick={() => setShowZoneReportModal(false)}
                                 className="flex-1 min-h-[44px] bg-[#0E7490] hover:bg-[#0A738D] text-white font-bold text-xs rounded-md shadow-xs cursor-pointer active:scale-95 transition"
                             >
-                                Tiếp tục kiểm kê
+                                {t.mobile.keepCountingBtn}
                             </button>
                         </div>
                     </div>
@@ -1639,7 +1635,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                         }`}
                     >
                         <Grid className="w-4 h-4" />
-                        Vị trí kho ({zones.length})
+                        {t.mobile.navZones} ({zones.length})
                     </button>
 
                     <button
@@ -1655,7 +1651,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                         }`}
                     >
                         <Layers className="w-4 h-4" />
-                        Kiểm đếm chi tiết
+                        {t.mobile.navFocus}
                     </button>
 
                     <button
@@ -1671,7 +1667,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                         }`}
                     >
                         <ListFilter className="w-4 h-4" />
-                        Danh sách ({focusLines.length})
+                        {t.mobile.navList} ({focusLines.length})
                     </button>
                 </div>
             </nav>

@@ -3,7 +3,7 @@
 import { prisma } from '@/lib/db'
 import { getCurrentUser, requireAuth, hasRole } from '@/lib/session'
 import { revalidatePath } from 'next/cache'
-import { revalidateCache } from '@/lib/cache'
+import { cached, revalidateCache } from '@/lib/cache'
 import { createNotification, triggerNotificationForRole } from '@/lib/notifications'
 import { getPresignedDocUrl } from '@/lib/storage-r2'
 import type { PaymentRequestStatus, PaymentDocType, BudgetPeriodType, PaymentCategory } from '@prisma/client'
@@ -27,31 +27,33 @@ export type ExpenseCategoryRow = {
 }
 
 export async function getExpenseCategories(includeInactive = false): Promise<ExpenseCategoryRow[]> {
-    const where: any = {}
-    if (!includeInactive) where.isActive = true
+    return cached(`payment-requests:categories:${includeInactive}`, async () => {
+        const where: any = {}
+        if (!includeInactive) where.isActive = true
 
-    const categories = await prisma.expenseCategoryMaster.findMany({
-        where,
-        include: {
-            parent: { select: { name: true } },
-            _count: { select: { paymentItems: true } },
-        },
-        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-    })
+        const categories = await prisma.expenseCategoryMaster.findMany({
+            where,
+            include: {
+                parent: { select: { name: true } },
+                _count: { select: { paymentItems: true } },
+            },
+            orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        })
 
-    return categories.map(c => ({
-        id: c.id,
-        code: c.code,
-        name: c.name,
-        group: c.group,
-        defaultAccount: c.defaultAccount,
-        parentId: c.parentId,
-        parentName: c.parent?.name ?? null,
-        description: c.description,
-        isActive: c.isActive,
-        sortOrder: c.sortOrder,
-        itemCount: c._count.paymentItems,
-    }))
+        return categories.map(c => ({
+            id: c.id,
+            code: c.code,
+            name: c.name,
+            group: c.group,
+            defaultAccount: c.defaultAccount,
+            parentId: c.parentId,
+            parentName: c.parent?.name ?? null,
+            description: c.description,
+            isActive: c.isActive,
+            sortOrder: c.sortOrder,
+            itemCount: c._count.paymentItems,
+        }))
+    }, 60_000)
 }
 
 export async function saveExpenseCategory(data: {

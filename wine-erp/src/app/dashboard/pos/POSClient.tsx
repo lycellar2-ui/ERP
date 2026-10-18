@@ -3,16 +3,21 @@
 import { useState, useEffect, useCallback } from 'react'
 import { getPOSProducts, getPOSCategories, processPOSSale, getPOSShiftSummary, lookupByBarcode, generatePOSVATInvoice } from './actions'
 import type { POSProduct, CartItem } from './actions'
-import { formatVND, cn } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import {
     Search, ShoppingCart, Plus, Minus, Trash2, CreditCard, Banknote,
     QrCode, Wine, Check, BarChart3, Receipt, ScanBarcode, FileText, Star, ArrowLeft
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { Button, Modal, Badge } from '@/components/ui'
+import { Button, Modal } from '@/components/ui'
+import { useAppLocale } from '@/lib/i18n'
+import { POS_I18N } from './i18n'
 
 export default function POSClient() {
+    const { locale, formatCurrency } = useAppLocale()
+    const i18n = POS_I18N[locale]
+
     const [products, setProducts] = useState<POSProduct[]>([])
     const [categories, setCategories] = useState<{ value: string; label: string; count: number }[]>([])
     const [cart, setCart] = useState<CartItem[]>([])
@@ -80,7 +85,7 @@ export default function POSClient() {
             addToCart(product)
             setBarcodeInput('')
         } else {
-            setBarcodeError(`Không tìm thấy sản phẩm "${code}"`)
+            setBarcodeError(`${i18n.notFoundBarcodePrefix} "${code}"`)
         }
     }
 
@@ -88,14 +93,14 @@ export default function POSClient() {
         if (!lastSale) return
         setVatLoading(true)
         toast.promise(
-            generatePOSVATInvoice({ soNo: lastSale.soNo, customerName: 'Khách lẻ' }).then(result => {
-                if (!result.success) throw new Error(result.error || 'Lỗi xuất hóa đơn')
+            generatePOSVATInvoice({ soNo: lastSale.soNo, customerName: i18n.walkInCustomer }).then(result => {
+                if (!result.success) throw new Error(result.error || 'Error')
                 return result
             }),
             {
-                loading: 'Đang xuất hóa đơn VAT...',
-                success: (res: any) => `Đã xuất hóa đơn VAT ${res.invoiceNo}`,
-                error: (err: any) => `Lỗi xuất VAT: ${err.message}`,
+                loading: i18n.issuingVatToast,
+                success: (res: any) => `${i18n.issuedVatToastPrefix} ${res.invoiceNo}`,
+                error: (err: any) => `Error: ${err.message}`,
                 finally: () => setVatLoading(false)
             }
         )
@@ -114,7 +119,7 @@ export default function POSClient() {
                 paymentMethod,
                 cashReceived: paymentMethod === 'CASH' ? Number(cashReceived) : undefined,
             }).then(result => {
-                if (!result.success) throw new Error(result.error || 'Thanh toán thất bại')
+                if (!result.success) throw new Error(result.error || 'Error')
 
                 setLastSale({ soNo: result.soNo!, totalAmount: result.totalAmount!, change: result.change })
                 setShowPayment(false)
@@ -127,9 +132,9 @@ export default function POSClient() {
                 return result
             }),
             {
-                loading: 'Đang xử lý thanh toán...',
-                success: 'Thanh toán thành công!',
-                error: (err) => `Lỗi: ${err.message}`,
+                loading: i18n.processingPaymentToast,
+                success: i18n.paymentSuccessTitle,
+                error: (err) => `Error: ${err.message}`,
                 finally: () => setLoading(false)
             }
         )
@@ -144,20 +149,20 @@ export default function POSClient() {
                     <div className="flex items-center gap-3 mb-3 flex-wrap">
                         <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-md border border-lys-border shadow-xs">
                             <BarChart3 size={14} className="text-lys-teal-strong" aria-hidden />
-                            <span className="type-caption text-lys-secondary">Ca hôm nay:</span>
-                            <span className="type-number font-bold text-lys-primary">{shiftSummary.transactionCount} đơn</span>
+                            <span className="type-caption text-lys-secondary">{i18n.shiftToday}</span>
+                            <span className="type-number font-bold text-lys-primary">{shiftSummary.transactionCount} {i18n.ordersSuffix}</span>
                         </div>
                         <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-md border border-lys-border shadow-xs">
                             <Receipt size={14} className="text-tone-success-fg" aria-hidden />
-                            <span className="type-caption text-lys-secondary">Doanh thu:</span>
-                            <span className="type-number font-bold text-tone-success-fg">{formatVND(shiftSummary.totalRevenue)}</span>
+                            <span className="type-caption text-lys-secondary">{i18n.revenue}</span>
+                            <span className="type-number font-bold text-tone-success-fg">{formatCurrency(shiftSummary.totalRevenue)}</span>
                         </div>
                         <Link
                             href="/dashboard/pos/loyalty"
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-tone-warning-bg rounded-md border border-tone-warning-border text-tone-warning-fg hover:bg-amber-100/60 transition-colors"
                         >
                             <Star size={14} aria-hidden />
-                            <span className="text-xs font-semibold">Loyalty</span>
+                            <span className="text-xs font-semibold">{i18n.loyalty}</span>
                         </Link>
                     </div>
                 )}
@@ -168,7 +173,7 @@ export default function POSClient() {
                         <ScanBarcode size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-tone-warning-fg" aria-hidden />
                         <input
                             type="text"
-                            placeholder="Quét mã vạch hoặc nhập SKU..."
+                            placeholder={i18n.barcodePlaceholder}
                             value={barcodeInput}
                             onChange={e => { setBarcodeInput(e.target.value); setBarcodeError('') }}
                             onKeyDown={e => { if (e.key === 'Enter') handleBarcodeScan(barcodeInput) }}
@@ -182,7 +187,7 @@ export default function POSClient() {
                             onClick={() => handleBarcodeScan(barcodeInput)}
                             className="absolute right-1.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded bg-tone-warning-bg hover:bg-tone-warning-border text-tone-warning-fg font-semibold text-xs transition-colors"
                         >
-                            Tìm
+                            {i18n.findBtn}
                         </button>
                     </div>
 
@@ -190,7 +195,7 @@ export default function POSClient() {
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-lys-muted" aria-hidden />
                         <input
                             type="text"
-                            placeholder="Tìm sản phẩm hoặc mã SKU..."
+                            placeholder={i18n.searchPlaceholder}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             className="w-full pl-9 pr-3 py-2 rounded-md bg-white border border-lys-border-strong text-sm text-lys-primary outline-none focus:ring-1 focus:ring-lys-teal focus:border-lys-teal transition-all shadow-xs"
@@ -213,7 +218,7 @@ export default function POSClient() {
                                 : 'bg-white text-lys-secondary border-lys-border hover:bg-lys-subtle'
                         )}
                     >
-                        Tất cả
+                        {i18n.allCategories}
                     </button>
                     {categories.map(cat => (
                         <button
@@ -260,10 +265,10 @@ export default function POSClient() {
                             </div>
                             <div className="flex items-baseline justify-between mt-3 pt-2 border-t border-lys-border">
                                 <span className="type-number font-bold text-lys-teal-strong text-xs">
-                                    {p.unitPrice > 0 ? formatVND(p.unitPrice) : '—'}
+                                    {p.unitPrice > 0 ? formatCurrency(p.unitPrice) : '—'}
                                 </span>
                                 <span className={cn('type-caption', p.qtyAvailable <= 5 ? 'text-tone-warning-fg font-semibold' : 'text-lys-muted')}>
-                                    Kho: {p.qtyAvailable}
+                                    {i18n.stockPrefix} {p.qtyAvailable}
                                 </span>
                             </div>
                         </button>
@@ -281,14 +286,13 @@ export default function POSClient() {
                         <button
                             type="button"
                             onClick={() => setMobileView('CATALOG')}
-                            className="md:hidden p-1 mr-0.5 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-                            aria-label="Quay lại danh mục"
+                            className="md:hidden p-1 mr-0.5 rounded-md text-lys-secondary hover:text-lys-primary hover:bg-lys-subtle transition-colors"
                         >
                             <ArrowLeft size={16} />
                         </button>
                         <ShoppingCart size={18} className="text-lys-teal-strong" aria-hidden />
                         <h2 className="text-sm font-bold text-lys-primary">
-                            Giỏ hàng <span className="text-lys-muted font-normal">({cart.length})</span>
+                            {i18n.cartTitle} <span className="text-lys-muted font-normal">({cart.length})</span>
                         </h2>
                     </div>
                     {cart.length > 0 && (
@@ -297,7 +301,7 @@ export default function POSClient() {
                             onClick={() => setCart([])}
                             className="type-caption text-tone-danger-fg hover:underline cursor-pointer"
                         >
-                            Xóa hết
+                            {i18n.clearAll}
                         </button>
                     )}
                 </div>
@@ -307,7 +311,7 @@ export default function POSClient() {
                     {cart.length === 0 ? (
                         <div className="text-center py-20">
                             <ShoppingCart size={32} className="mx-auto mb-2 text-lys-border-strong" aria-hidden />
-                            <p className="type-caption">Chọn sản phẩm bên trái để thêm vào giỏ</p>
+                            <p className="type-caption">{i18n.emptyCartHint}</p>
                         </div>
                     ) : (
                         cart.map(item => (
@@ -321,7 +325,6 @@ export default function POSClient() {
                                         type="button"
                                         onClick={() => removeFromCart(item.productId)}
                                         className="p-1 rounded text-lys-muted hover:text-tone-danger-fg hover:bg-tone-danger-bg transition-colors cursor-pointer"
-                                        aria-label="Xóa"
                                     >
                                         <Trash2 size={13} aria-hidden />
                                     </button>
@@ -332,7 +335,6 @@ export default function POSClient() {
                                             type="button"
                                             onClick={() => updateQty(item.productId, -1)}
                                             className="w-5 h-5 rounded flex items-center justify-center text-lys-secondary hover:bg-lys-subtle cursor-pointer"
-                                            aria-label="Giảm"
                                         >
                                             <Minus size={11} aria-hidden />
                                         </button>
@@ -343,13 +345,12 @@ export default function POSClient() {
                                             type="button"
                                             onClick={() => updateQty(item.productId, 1)}
                                             className="w-5 h-5 rounded flex items-center justify-center text-lys-teal-strong hover:bg-lys-teal-soft cursor-pointer"
-                                            aria-label="Tăng"
                                         >
                                             <Plus size={11} aria-hidden />
                                         </button>
                                     </div>
                                     <span className="type-number font-bold text-xs text-lys-teal-strong">
-                                        {formatVND(item.qty * item.unitPrice)}
+                                        {formatCurrency(item.qty * item.unitPrice)}
                                     </span>
                                 </div>
                             </div>
@@ -360,9 +361,9 @@ export default function POSClient() {
                 {/* Cart Footer */}
                 <div className="border-t border-lys-border p-4 bg-lys-card">
                     <div className="flex items-baseline justify-between mb-3">
-                        <span className="text-xs font-semibold text-lys-secondary">Tổng cộng</span>
+                        <span className="text-xs font-semibold text-lys-secondary">{i18n.totalLabel}</span>
                         <span className="type-number text-lg font-extrabold text-lys-primary">
-                            {formatVND(cartTotal)}
+                            {formatCurrency(cartTotal)}
                         </span>
                     </div>
 
@@ -372,16 +373,15 @@ export default function POSClient() {
                             onClick={() => setShowPayment(true)}
                             disabled={cart.length === 0}
                         >
-                            Thanh Toán
+                            {i18n.checkoutBtn}
                         </Button>
                     ) : (
                         <div className="space-y-3 animate-fade-in">
-                            {/* Payment Method Selector */}
                             <div className="grid grid-cols-3 gap-2">
                                 {[
-                                    { method: 'CASH' as const, icon: Banknote, label: 'Tiền mặt' },
-                                    { method: 'BANK_TRANSFER' as const, icon: CreditCard, label: 'Chuyển khoản' },
-                                    { method: 'QR' as const, icon: QrCode, label: 'QR' },
+                                    { method: 'CASH' as const, icon: Banknote, label: i18n.paymentMethods.CASH },
+                                    { method: 'BANK_TRANSFER' as const, icon: CreditCard, label: i18n.paymentMethods.BANK_TRANSFER },
+                                    { method: 'QR' as const, icon: QrCode, label: i18n.paymentMethods.QR },
                                 ].map(({ method, icon: Icon, label }) => (
                                     <button
                                         key={method}
@@ -402,17 +402,17 @@ export default function POSClient() {
 
                             {paymentMethod === 'CASH' && (
                                 <div>
-                                    <label className="type-caption text-lys-secondary block mb-1">Tiền khách đưa</label>
+                                    <label className="type-caption text-lys-secondary block mb-1">{i18n.cashReceivedLabel}</label>
                                     <input
                                         type="number"
-                                        placeholder="Nhập số tiền..."
+                                        placeholder={i18n.cashReceivedPlaceholder}
                                         value={cashReceived}
                                         onChange={e => setCashReceived(e.target.value)}
                                         className="w-full px-3 py-2 rounded-md bg-white border border-lys-border-strong text-sm text-lys-primary font-semibold outline-none focus:ring-1 focus:ring-lys-teal focus:border-lys-teal"
                                     />
                                     {Number(cashReceived) > cartTotal && (
                                         <p className="type-caption text-tone-success-fg mt-1">
-                                            Tiền thối: <strong className="type-number">{formatVND(Number(cashReceived) - cartTotal)}</strong>
+                                            {i18n.changeLabel} <strong className="type-number">{formatCurrency(Number(cashReceived) - cartTotal)}</strong>
                                         </p>
                                     )}
                                 </div>
@@ -424,7 +424,7 @@ export default function POSClient() {
                                     className="flex-1"
                                     onClick={() => setShowPayment(false)}
                                 >
-                                    Huỷ
+                                    {i18n.cancelBtn}
                                 </Button>
                                 <Button
                                     className="flex-2"
@@ -432,7 +432,7 @@ export default function POSClient() {
                                     loading={loading}
                                     disabled={loading}
                                 >
-                                    {loading ? 'Đang xử lý...' : 'Xác Nhận'}
+                                    {loading ? i18n.processing : i18n.confirmBtn}
                                 </Button>
                             </div>
                         </div>
@@ -445,12 +445,12 @@ export default function POSClient() {
                 <Modal
                     open={showReceipt}
                     onClose={() => setShowReceipt(false)}
-                    title="Thanh toán thành công!"
+                    title={i18n.paymentSuccessTitle}
                     className="max-w-sm text-center"
                     footer={
                         <div className="flex flex-col gap-2 w-full">
                             <Button className="w-full" onClick={() => setShowReceipt(false)}>
-                                Đơn mới
+                                {i18n.newOrderBtn}
                             </Button>
                             <Button
                                 variant="secondary"
@@ -460,7 +460,7 @@ export default function POSClient() {
                                 disabled={vatLoading}
                             >
                                 <FileText size={14} aria-hidden />
-                                {vatLoading ? 'Đang xuất...' : 'Xuất Hóa Đơn VAT'}
+                                {vatLoading ? i18n.issuingVat : i18n.issueVatInvoiceBtn}
                             </Button>
                         </div>
                     }
@@ -469,17 +469,17 @@ export default function POSClient() {
                         <div className="w-12 h-12 rounded-full bg-tone-success-bg text-tone-success-fg flex items-center justify-center mb-3">
                             <Check size={24} aria-hidden />
                         </div>
-                        <p className="type-caption text-lys-muted mb-4">Mã đơn: <strong className="text-lys-primary type-number">{lastSale.soNo}</strong></p>
+                        <p className="type-caption text-lys-muted mb-4">{i18n.orderNoPrefix} <strong className="text-lys-primary type-number">{lastSale.soNo}</strong></p>
 
                         <div className="w-full p-3.5 bg-lys-subtle rounded-lg border border-lys-border space-y-2">
                             <div className="flex justify-between items-center text-xs">
-                                <span className="text-lys-secondary">Tổng tiền</span>
-                                <span className="type-number font-bold text-lys-primary text-sm">{formatVND(lastSale.totalAmount)}</span>
+                                <span className="text-lys-secondary">{i18n.totalAmountLabel}</span>
+                                <span className="type-number font-bold text-lys-primary text-sm">{formatCurrency(lastSale.totalAmount)}</span>
                             </div>
                             {lastSale.change !== undefined && (
                                 <div className="flex justify-between items-center text-xs pt-1.5 border-t border-lys-border">
-                                    <span className="text-lys-secondary">Tiền thối</span>
-                                    <span className="type-number font-bold text-tone-warning-fg">{formatVND(lastSale.change)}</span>
+                                    <span className="text-lys-secondary">{i18n.changeAmountLabel}</span>
+                                    <span className="type-number font-bold text-tone-warning-fg">{formatCurrency(lastSale.change)}</span>
                                 </div>
                             )}
                         </div>
@@ -493,15 +493,15 @@ export default function POSClient() {
                     <button
                         type="button"
                         onClick={() => setMobileView('CART')}
-                        className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-[#0E7490] hover:bg-[#0E7490] text-white shadow-lg shadow-cyan-950/20 cursor-pointer active:scale-[0.99] transition-all"
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-lys-teal-strong text-white shadow-lg cursor-pointer active:scale-[0.99] transition-all"
                     >
                         <div className="flex items-center gap-2.5">
                             <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs">
                                 {cart.reduce((sum, item) => sum + item.qty, 0)}
                             </div>
-                            <span className="text-xs font-bold">Xem Giỏ Hàng</span>
+                            <span className="text-xs font-bold">{i18n.viewCartBtn}</span>
                         </div>
-                        <span className="font-bold text-xs sm:text-sm">{formatVND(cartTotal)} &rarr;</span>
+                        <span className="font-bold text-xs sm:text-sm">{formatCurrency(cartTotal)} &rarr;</span>
                     </button>
                 </div>
             )}

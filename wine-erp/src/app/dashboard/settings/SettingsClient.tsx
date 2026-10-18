@@ -18,6 +18,8 @@ import {
 import { getAuditLogs, getFieldChanges } from '@/lib/audit'
 import { type SessionUser } from '@/lib/session'
 import { PageHeader, StatGrid, StatCard, Button } from '@/components/ui'
+import { useAppLocale } from '@/lib/i18n'
+import { SETTINGS_I18N } from './i18n'
 
 // ── Shared Style Tokens ──────────────────────────
 const card = { background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px' }
@@ -27,60 +29,15 @@ const inputStyle: React.CSSProperties = {
     fontSize: '14px', outline: 'none',
 }
 
-const MODULE_NAMES: Record<string, string> = {
-    DSH: 'Bảng điều khiển (Dashboard)',
-    MDM: 'Danh mục / Dữ liệu gốc (Master Data)',
-    SLS: 'Quản lý bán hàng (Sales)',
-    PRC: 'Quản lý mua hàng (Purchase)',
-    WMS: 'Quản lý kho hàng (Warehouse)',
-    FIN: 'Tài chính & Thanh toán (Finance)',
-    TAX: 'Hóa đơn & Thuế (Tax)',
-    CRM: 'Khách hàng & Liên hệ (CRM)',
-    CST: 'Chi phí & Giá thành (Cost)',
-    CNT: 'Hợp đồng (Contract)',
-    TRS: 'Vận chuyển & Giao nhận (Delivery)',
-    CSG: 'Hàng ký gửi (Consignment)',
-    AGN: 'Quản lý Đại lý (Agency)',
-    RPT: 'Báo cáo thống kê (Reports)',
-    KPI: 'Chỉ tiêu doanh số (KPI)',
-    STM: 'Điều chuyển kho (Stock Transfer)',
-    SYS: 'Quản trị hệ thống (System)',
-    HRM: 'Nhân sự & Hồ sơ nhân viên (HRM)',
-    PAY: 'Đề nghị thanh toán & Ngân sách (Payment Requests)',
-    PRO: 'Tờ trình & Phê duyệt giá đặc biệt (Proposals)',
-    SHP: 'Theo dõi lô hàng nhập khẩu (Shipments)',
-    POS: 'Bán lẻ Showroom (POS Retail)',
-    AUD: 'Nhật ký kiểm toán (Audit Log)',
-    MGN: 'Giả lập biên lợi nhuận (Margin Simulation)',
-    SFV: 'Thị trường & Check-in Sales (Field Visits)',
-    QRC: 'Mã QR & Truy xuất nguồn gốc (QR Traceability)',
-    STP: 'Quản lý tem rượu nhập khẩu (Wine Stamps)',
-    MKT: 'Thư viện tài nguyên & Marketing (Media Library)',
-    AI: 'Cấu hình & Trợ lý AI (AI Systems)',
-    APM: 'Ma trận phê duyệt đa cấp (Approval Matrix)',
-    RTN: 'Đơn trả hàng & Giảm trừ (Returns & Credit Notes)',
-}
-
-const ACTION_LABELS: Record<string, string> = {
-    READ: 'Xem (Read)',
-    CREATE: 'Thêm mới (Create)',
-    UPDATE: 'Sửa (Update)',
-    DELETE: 'Xóa (Delete)',
-    APPROVE: 'Duyệt (Approve)',
-    EXPORT: 'Xuất Excel (Export)',
-    WRITE: 'Ghi / Giao hàng (Write)',
-    MANAGE: 'Quản lý (Manage)',
-    ADMIN: 'Toàn quyền (Admin)',
-}
 const focusHandler = {
     onFocus: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => e.currentTarget.style.borderColor = '#0891B2',
     onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => e.currentTarget.style.borderColor = '#E2E8F0',
 }
 
-const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
-    ACTIVE: { label: 'Hoạt Động', color: '#15803D', bg: 'rgba(21,128,61,0.15)' },
-    INACTIVE: { label: 'Ngưng', color: '#64748B', bg: 'rgba(100,116,139,0.15)' },
-    SUSPENDED: { label: 'Khoá', color: '#B91C1C', bg: 'rgba(185,28,28,0.15)' },
+const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
+    ACTIVE: { color: '#15803D', bg: 'rgba(21,128,61,0.15)' },
+    INACTIVE: { color: '#64748B', bg: 'rgba(100,116,139,0.15)' },
+    SUSPENDED: { color: '#B91C1C', bg: 'rgba(185,28,28,0.15)' },
 }
 
 type Tab = 'users' | 'roles' | 'approvals' | 'audit' | 'entities' | 'storage'
@@ -107,6 +64,8 @@ interface Props {
 function CreateUserDrawer({ open, onClose, onCreated, roles }: {
     open: boolean; onClose: () => void; onCreated: () => void; roles: RoleRow[]
 }) {
+    const { locale } = useAppLocale()
+    const i18n = SETTINGS_I18N[locale]
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
     const [form, setForm] = useState({ email: '', name: '', password: '', roleIds: [] as string[] })
@@ -132,7 +91,7 @@ function CreateUserDrawer({ open, onClose, onCreated, roles }: {
             onCreated()
             onClose()
         } else {
-            setError(res.error || 'Lỗi tạo user')
+            setError(res.error || i18n.createUserError)
         }
         setSaving(false)
     }
@@ -142,7 +101,7 @@ function CreateUserDrawer({ open, onClose, onCreated, roles }: {
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
             <div className="w-full max-w-md h-full overflow-y-auto p-6 bg-white border-l border-slate-200 shadow-2xl">
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>Tạo Người Dùng</h3>
+                    <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>{i18n.createUserTitle}</h3>
                     <button onClick={onClose}><X size={18} style={{ color: '#64748B' }} /></button>
                 </div>
 
@@ -155,26 +114,26 @@ function CreateUserDrawer({ open, onClose, onCreated, roles }: {
 
                 <div className="space-y-4">
                     <div>
-                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Email</label>
+                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelEmail}</label>
                         <input style={inputStyle} {...focusHandler} type="email" placeholder="ten@lyscellars.com"
                             value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
                     </div>
                     <div>
-                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Họ Tên</label>
+                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelFullName}</label>
                         <input style={inputStyle} {...focusHandler} placeholder="Nguyễn Văn A"
                             value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
                     </div>
                     <div>
-                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Mật Khẩu</label>
-                        <input style={inputStyle} {...focusHandler} type="password" placeholder="Tối thiểu 6 ký tự"
+                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelPassword}</label>
+                        <input style={inputStyle} {...focusHandler} type="password" placeholder={i18n.placeholderPasswordMin}
                             value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
                     </div>
                     <div>
-                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Vai Trò</label>
+                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelRoles}</label>
                         <div className="grid grid-cols-2 gap-2">
                             {roles.map(r => (
                                 <button key={r.id} onClick={() => toggleRole(r.id)}
-                                    className="text-left px-3 py-2 rounded text-xs font-semibold transition-all"
+                                    className="text-left px-3 py-2 rounded text-xs font-semibold font-mono transition-all"
                                     style={{
                                         background: form.roleIds.includes(r.id) ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
                                         border: form.roleIds.includes(r.id) ? '1px solid #0E7490' : '1px solid #E2E8F0',
@@ -192,7 +151,7 @@ function CreateUserDrawer({ open, onClose, onCreated, roles }: {
                     className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all"
                     style={{ background: '#0E7490', color: '#FFFFFF' }}>
                     {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                    {saving ? 'Đang lưu...' : 'Tạo Người Dùng'}
+                    {saving ? i18n.btnSaving : i18n.createUserTitle}
                 </button>
             </div>
         </div>
@@ -201,37 +160,37 @@ function CreateUserDrawer({ open, onClose, onCreated, roles }: {
 
 // ── Module Business Domain Groups (31 Phân Hệ) ───────────
 interface ModuleGroupDef {
-    name: string
+    key: keyof typeof SETTINGS_I18N['vi']['moduleGroups']
     modules: string[]
 }
 
 const MODULE_GROUPS: ModuleGroupDef[] = [
     {
-        name: 'Điều Hành & Báo Cáo',
+        key: 'exec',
         modules: ['DSH', 'RPT', 'KPI'],
     },
     {
-        name: 'Dữ Liệu Gốc & Đối Tác',
+        key: 'mdm',
         modules: ['MDM', 'CRM', 'CNT'],
     },
     {
-        name: 'Kinh Doanh & Bán Hàng',
+        key: 'sales',
         modules: ['SLS', 'PRO', 'MGN', 'POS', 'CSG', 'AGN', 'SFV', 'RTN'],
     },
     {
-        name: 'Mua Hàng & Nhập Khẩu',
+        key: 'procurement',
         modules: ['PRC', 'SHP', 'CST'],
     },
     {
-        name: 'Kho Vận & Chuỗi Cung Ứng',
+        key: 'warehouse',
         modules: ['WMS', 'STM', 'TRS', 'STP', 'QRC'],
     },
     {
-        name: 'Tài Chính & Kế Toán',
+        key: 'finance',
         modules: ['FIN', 'PAY', 'TAX'],
     },
     {
-        name: 'Nhân Sự, Marketing & Quản Trị Hệ Thống',
+        key: 'admin',
         modules: ['HRM', 'MKT', 'SYS', 'AUD', 'APM', 'AI'],
     },
 ]
@@ -246,6 +205,8 @@ function RolePermissionSelector({
     selectedPerms: string[]
     onChange: (perms: string[]) => void
 }) {
+    const { locale } = useAppLocale()
+    const i18n = SETTINGS_I18N[locale]
     const [search, setSearch] = useState('')
 
     const togglePerm = (permId: string) => {
@@ -278,7 +239,7 @@ function RolePermissionSelector({
     const allModulesInPerms = Array.from(new Set(permissions.map(p => p.module)))
 
     const groupedModules = MODULE_GROUPS.map(g => ({
-        ...g,
+        name: i18n.moduleGroups[g.key],
         modules: g.modules.filter(m => allModulesInPerms.includes(m)),
     })).filter(g => g.modules.length > 0)
 
@@ -286,7 +247,7 @@ function RolePermissionSelector({
     const otherModules = allModulesInPerms.filter(m => !categorizedModules.has(m))
     if (otherModules.length > 0) {
         groupedModules.push({
-            name: 'Phân Hệ Khác',
+            name: i18n.moduleGroups.other,
             modules: otherModules,
         })
     }
@@ -295,10 +256,10 @@ function RolePermissionSelector({
         const filteredMods = g.modules.filter(mod => {
             if (!search) return true
             const q = search.toLowerCase()
-            const name = MODULE_NAMES[mod] ?? mod
+            const name = i18n.modules[mod] ?? mod
             if (mod.toLowerCase().includes(q) || name.toLowerCase().includes(q)) return true
             const modPerms = permissions.filter(p => p.module === mod)
-            return modPerms.some(p => p.action.toLowerCase().includes(q) || (ACTION_LABELS[p.action] ?? '').toLowerCase().includes(q))
+            return modPerms.some(p => p.action.toLowerCase().includes(q) || (i18n.actions[p.action] ?? '').toLowerCase().includes(q))
         })
         return { ...g, modules: filteredMods }
     }).filter(g => g.modules.length > 0)
@@ -311,14 +272,14 @@ function RolePermissionSelector({
                     <input
                         style={{ ...inputStyle, paddingLeft: '32px' }}
                         className="text-xs"
-                        placeholder="Tìm theo tên phân hệ hoặc quyền (VD: Đơn hàng, Mua hàng, READ)..."
+                        placeholder={i18n.searchPermPlaceholder}
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                     />
                 </div>
                 <div className="flex items-center justify-between text-xs px-1">
                     <span className="font-semibold" style={{ color: '#475569' }}>
-                        Đã chọn <strong style={{ color: '#0891B2' }}>{selectedPerms.length}</strong>/{permissions.length} quyền
+                        {i18n.selectedPermsCount(selectedPerms.length, permissions.length)}
                     </span>
                     <div className="flex items-center gap-1.5">
                         <button
@@ -327,7 +288,7 @@ function RolePermissionSelector({
                             className="px-2 py-1 rounded text-xs font-semibold cursor-pointer transition-all hover:opacity-80"
                             style={{ background: 'rgba(8, 145, 178, 0.1)', color: '#0891B2' }}
                         >
-                            Chọn tất cả
+                            {i18n.btnSelectAll}
                         </button>
                         <button
                             type="button"
@@ -335,7 +296,7 @@ function RolePermissionSelector({
                             className="px-2 py-1 rounded text-xs font-semibold cursor-pointer transition-all hover:opacity-80"
                             style={{ background: '#F1F5F9', color: '#64748B' }}
                         >
-                            Bỏ chọn hết
+                            {i18n.btnDeselectAll}
                         </button>
                     </div>
                 </div>
@@ -344,7 +305,7 @@ function RolePermissionSelector({
             <div className="space-y-3 max-h-[58vh] overflow-y-auto pr-1">
                 {filteredGroups.length === 0 ? (
                     <div className="text-center py-8 text-xs" style={{ color: '#94A3B8' }}>
-                        Không tìm thấy phân hệ phù hợp với từ khóa
+                        {i18n.noMatchingModules}
                     </div>
                 ) : (
                     filteredGroups.map(group => {
@@ -367,7 +328,7 @@ function RolePermissionSelector({
                                         className="text-xs font-medium hover:underline cursor-pointer"
                                         style={{ color: '#0891B2' }}
                                     >
-                                        {isAllGroupSelected ? 'Bỏ chọn nhóm' : 'Chọn cả nhóm'}
+                                        {isAllGroupSelected ? i18n.btnDeselectGroup : i18n.btnSelectGroup}
                                     </button>
                                 </div>
 
@@ -384,8 +345,9 @@ function RolePermissionSelector({
                                                     onClick={() => toggleModule(mod)}
                                                     className="flex items-center justify-between w-full text-left cursor-pointer"
                                                 >
-                                                    <span className="text-xs font-semibold" style={{ color: '#1E293B' }}>
-                                                        {MODULE_NAMES[mod] ?? mod}
+                                                    <span className="text-xs font-semibold flex items-center gap-1.5" style={{ color: '#1E293B' }}>
+                                                        <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-700">{mod}</span>
+                                                        <span>{i18n.modules[mod] ?? mod}</span>
                                                     </span>
                                                     <span className="text-xs font-semibold" style={{ color: isAllModSelected ? '#0891B2' : '#94A3B8' }}>
                                                         {count}/{modPerms.length}
@@ -399,7 +361,7 @@ function RolePermissionSelector({
                                                                 key={p.id}
                                                                 type="button"
                                                                 onClick={() => togglePerm(p.id)}
-                                                                className="text-xs px-2 py-0.5 rounded transition-all cursor-pointer"
+                                                                className="text-xs px-2 py-0.5 rounded transition-all cursor-pointer flex items-center gap-1"
                                                                 style={{
                                                                     background: active ? 'rgba(8, 145, 178, 0.15)' : '#FFFFFF',
                                                                     color: active ? '#0E7490' : '#64748B',
@@ -407,7 +369,8 @@ function RolePermissionSelector({
                                                                     fontWeight: active ? '600' : '500',
                                                                 }}
                                                             >
-                                                                {ACTION_LABELS[p.action] ?? p.action}
+                                                                <span className="font-mono text-[10px] opacity-80">{p.code}</span>
+                                                                <span>· {i18n.actions[p.action] ?? p.action}</span>
                                                             </button>
                                                         )
                                                     })}
@@ -429,6 +392,8 @@ function RolePermissionSelector({
 function CreateRoleDrawer({ open, onClose, onCreated, permissions }: {
     open: boolean; onClose: () => void; onCreated: () => void; permissions: PermissionRow[]
 }) {
+    const { locale } = useAppLocale()
+    const i18n = SETTINGS_I18N[locale]
     const [saving, setSaving] = useState(false)
     const [name, setName] = useState('')
     const [selectedPerms, setSelectedPerms] = useState<string[]>([])
@@ -451,19 +416,19 @@ function CreateRoleDrawer({ open, onClose, onCreated, permissions }: {
             <div className="w-full max-w-lg h-full overflow-y-auto p-6 bg-white border-l border-slate-200 shadow-2xl flex flex-col justify-between">
                 <div>
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>Tạo Vai Trò Mới</h3>
+                        <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>{i18n.createRoleTitle}</h3>
                         <button onClick={onClose}><X size={18} style={{ color: '#64748B' }} /></button>
                     </div>
 
                     <div className="space-y-4">
                         <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Tên Vai Trò</label>
-                            <input style={inputStyle} {...focusHandler} placeholder="VD: Trợ Lý Giám Đốc"
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelRoleName}</label>
+                            <input style={inputStyle} {...focusHandler} placeholder={i18n.placeholderRoleName}
                                 value={name} onChange={e => setName(e.target.value)} />
                         </div>
 
                         <div>
-                            <label className="text-xs font-semibold mb-2 block" style={{ color: '#475569' }}>Phân Quyền Theo Phân Hệ Nghiệp Vụ</label>
+                            <label className="text-xs font-semibold mb-2 block" style={{ color: '#475569' }}>{i18n.labelPermByModule}</label>
                             <RolePermissionSelector
                                 permissions={permissions}
                                 selectedPerms={selectedPerms}
@@ -477,7 +442,7 @@ function CreateRoleDrawer({ open, onClose, onCreated, permissions }: {
                     className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all shrink-0 cursor-pointer"
                     style={{ background: name ? '#0E7490' : '#E2E8F0', color: name ? '#FFFFFF' : '#64748B' }}>
                     {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                    {saving ? 'Đang lưu...' : `Tạo Vai Trò (${selectedPerms.length} quyền)`}
+                    {saving ? i18n.btnSaving : i18n.btnCreateRoleCount(selectedPerms.length)}
                 </button>
             </div>
         </div>
@@ -492,6 +457,8 @@ function EditRolePermissionsDrawer({ open, onClose, onUpdated, role, permissions
     role: RoleRow | null
     permissions: PermissionRow[]
 }) {
+    const { locale } = useAppLocale()
+    const i18n = SETTINGS_I18N[locale]
     const [saving, setSaving] = useState(false)
     const [selectedPerms, setSelectedPerms] = useState<string[]>([])
     const [loading, setLoading] = useState(false)
@@ -506,22 +473,22 @@ function EditRolePermissionsDrawer({ open, onClose, onUpdated, role, permissions
                     setLoading(false)
                 })
                 .catch(err => {
-                    toast.error('Lỗi khi tải danh sách quyền: ' + err.message)
+                    toast.error(i18n.loadPermsError + err.message)
                     setLoading(false)
                 })
         }
-    }, [open, role])
+    }, [open, role, i18n.loadPermsError])
 
     async function handleSave() {
         if (!role) return
         setSaving(true)
         const res = await updateRolePermissions(role.id, selectedPerms)
         if (res.success) {
-            toast.success('Cập nhật quyền thành công!')
+            toast.success(i18n.updatePermsSuccess)
             onUpdated()
             onClose()
         } else {
-            toast.error(res.error || 'Lỗi cập nhật quyền')
+            toast.error(res.error || i18n.updatePermsError)
         }
         setSaving(false)
     }
@@ -535,10 +502,10 @@ function EditRolePermissionsDrawer({ open, onClose, onUpdated, role, permissions
                     <div className="flex items-center justify-between mb-4">
                         <div>
                             <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
-                                Phân Quyền Vai Trò
+                                {i18n.editRoleTitle}
                             </h3>
                             <p className="text-xs" style={{ color: '#64748B' }}>
-                                Cấu hình quyền hạn cho: <strong style={{ color: '#0891B2' }}>{role.name}</strong>
+                                {i18n.editRoleSubtitle} <strong className="font-mono" style={{ color: '#0891B2' }}>{role.name}</strong>
                             </p>
                         </div>
                         <button onClick={onClose}><X size={18} style={{ color: '#64748B' }} /></button>
@@ -563,7 +530,7 @@ function EditRolePermissionsDrawer({ open, onClose, onUpdated, role, permissions
                     className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all shrink-0 cursor-pointer"
                     style={{ background: '#0E7490', color: '#FFFFFF' }}>
                     {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                    {saving ? 'Đang lưu...' : `Lưu Quyền Hạn (${selectedPerms.length} quyền)`}
+                    {saving ? i18n.btnSaving : i18n.btnSavePermsCount(selectedPerms.length)}
                 </button>
             </div>
         </div>
@@ -581,6 +548,8 @@ interface UserDetailDrawerProps {
 }
 
 function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }: UserDetailDrawerProps) {
+    const { locale, formatDate } = useAppLocale()
+    const i18n = SETTINGS_I18N[locale]
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
     const [form, setForm] = useState({ name: '', status: 'ACTIVE', roleIds: [] as string[] })
@@ -604,7 +573,8 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
     if (!open || !user) return null
 
     const isAdmin = currentUser?.permissions.includes('SYS:ADMIN') || false
-    const statusCfg = STATUS_CFG[user.status] ?? STATUS_CFG.ACTIVE
+    const statusStyle = STATUS_STYLE[user.status] ?? STATUS_STYLE.ACTIVE
+    const statusLabel = i18n.statuses[user.status] ?? user.status
 
     const toggleRole = (id: string) => {
         if (!isAdmin) return
@@ -620,7 +590,7 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
         setError('')
         try {
             if (resetPassword.trim().length > 0 && resetPassword.trim().length < 6) {
-                setError('Mật khẩu mới phải tối thiểu 6 ký tự')
+                setError(i18n.passwordMinError)
                 setSaving(false)
                 return
             }
@@ -632,7 +602,7 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
                     if (resetPassword.trim().length >= 6) {
                         const resPass = await adminResetPassword(user.id, resetPassword.trim())
                         if (!resPass.success) {
-                            setError(resPass.error || 'Lỗi đặt lại mật khẩu')
+                            setError(resPass.error || i18n.resetPasswordError)
                             setSaving(false)
                             return
                         }
@@ -640,13 +610,13 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
                     onUpdated()
                     onClose()
                 } else {
-                    setError(resRoles.error || 'Lỗi cập nhật vai trò')
+                    setError(resRoles.error || i18n.updateRolesError)
                 }
             } else {
-                setError(resUser.error || 'Lỗi cập nhật thông tin')
+                setError(resUser.error || i18n.updateInfoError)
             }
         } catch (err: any) {
-            setError(err.message || 'Lỗi hệ thống')
+            setError(err.message || i18n.systemError)
         } finally {
             setSaving(false)
         }
@@ -658,7 +628,7 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
                 <div>
                     <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
                         <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
-                            {isAdmin ? 'Chỉnh Sửa Người Dùng' : 'Thông Tin Chi Tiết'}
+                            {isAdmin ? i18n.editUserTitle : i18n.userDetailTitle}
                         </h3>
                         <button onClick={onClose} className="hover:opacity-80 transition-opacity"><X size={18} style={{ color: '#64748B' }} /></button>
                     </div>
@@ -672,16 +642,16 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
 
                     <div className="space-y-4">
                         <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Email</label>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelEmail}</label>
                             <div className="text-sm font-semibold p-3 rounded-md font-mono" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                                 {user.email}
                             </div>
                         </div>
 
                         <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Họ Tên</label>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelFullName}</label>
                             {isAdmin ? (
-                                <input style={inputStyle} {...focusHandler} placeholder="Họ và tên"
+                                <input style={inputStyle} {...focusHandler} placeholder={i18n.placeholderFullName}
                                     value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
                             ) : (
                                 <div className="text-sm font-semibold p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
@@ -691,33 +661,33 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
                         </div>
 
                         <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Trạng Thái</label>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelStatus}</label>
                             {isAdmin ? (
                                 <select style={inputStyle} {...focusHandler}
                                     value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as any }))}>
-                                    <option value="ACTIVE">Hoạt Động</option>
-                                    <option value="INACTIVE">Ngưng Hoạt Động</option>
-                                    <option value="SUSPENDED">Khoá</option>
+                                    <option value="ACTIVE">{i18n.statuses.ACTIVE}</option>
+                                    <option value="INACTIVE">{i18n.statusInactiveFull}</option>
+                                    <option value="SUSPENDED">{i18n.statuses.SUSPENDED}</option>
                                 </select>
                             ) : (
                                 <div className="p-3 rounded-md flex items-center" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                     <span className="inline-block text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap shrink-0"
-                                        style={{ background: statusCfg.bg, color: statusCfg.color }}>
-                                        {statusCfg.label}
+                                        style={{ background: statusStyle.bg, color: statusStyle.color }}>
+                                        {statusLabel}
                                     </span>
                                 </div>
                             )}
                         </div>
 
                         <div>
-                            <label className="text-xs font-semibold mb-2 block" style={{ color: '#475569' }}>Vai Trò</label>
+                            <label className="text-xs font-semibold mb-2 block" style={{ color: '#475569' }}>{i18n.labelRoles}</label>
                             {isAdmin ? (
                                 <div className="grid grid-cols-2 gap-2">
                                     {roles.map(r => {
                                         const selected = form.roleIds.includes(r.id)
                                         return (
                                             <button key={r.id} onClick={() => toggleRole(r.id)}
-                                                className="text-left px-3 py-2 rounded text-xs font-semibold transition-all"
+                                                className="text-left px-3 py-2 rounded text-xs font-semibold font-mono transition-all"
                                                 style={{
                                                     background: selected ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
                                                     border: selected ? '1px solid #0E7490' : '1px solid #E2E8F0',
@@ -732,7 +702,7 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
                             ) : (
                                 <div className="flex flex-wrap gap-1.5 p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                     {user.roles.map(r => (
-                                        <span key={r} className="inline-block text-xs px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0"
+                                        <span key={r} className="inline-block text-xs px-2 py-0.5 rounded font-semibold font-mono whitespace-nowrap shrink-0"
                                             style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
                                             {r}
                                         </span>
@@ -743,16 +713,16 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
 
                         {isAdmin && (
                             <div>
-                                <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Đặt Lại Mật Khẩu</label>
-                                <input style={inputStyle} {...focusHandler} type="password" placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
+                                <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelResetPassword}</label>
+                                <input style={inputStyle} {...focusHandler} type="password" placeholder={i18n.placeholderResetPassword}
                                     value={resetPassword} onChange={e => setResetPassword(e.target.value)} />
                             </div>
                         )}
 
                         <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Ngày Tạo</label>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelCreatedAt}</label>
                             <div className="text-sm p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569' }}>
-                                {new Date(user.createdAt).toLocaleString('vi-VN')}
+                                {formatDate(user.createdAt)}
                             </div>
                         </div>
                     </div>
@@ -763,7 +733,7 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
                         className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all hover:opacity-90"
                         style={{ background: '#0E7490', color: '#FFFFFF' }}>
                         {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                        {saving ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+                        {saving ? i18n.btnSaving : i18n.btnSaveChanges}
                     </button>
                 )}
             </div>
@@ -773,6 +743,9 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
 
 // ── Main Settings Client ─────────────────────────
 export function SettingsClient({ initialUsers, initialRoles, permissions, stats, currentUser }: Props) {
+    const { locale, formatDate, formatNumber } = useAppLocale()
+    const i18n = SETTINGS_I18N[locale]
+
     const [tab, setTab] = useState<Tab>('users')
     const [users, setUsers] = useState(initialUsers)
     const [roles, setRoles] = useState(initialRoles)
@@ -809,11 +782,11 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
             const res = await getSystemInfrastructureStatus()
             setInfraStatus(res)
         } catch (err: any) {
-            toast.error('Lỗi khi kiểm tra dung lượng Cloudflare R2 & DB: ' + err.message)
+            toast.error(i18n.loadInfraError + err.message)
         } finally {
             setInfraLoading(false)
         }
-    }, [])
+    }, [i18n.loadInfraError])
 
     const loadEntities = useCallback(async () => {
         try {
@@ -825,19 +798,19 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
             setWarehouses(whs)
             setEntitiesLoaded(true)
         } catch (err: any) {
-            toast.error('Lỗi khi tải thông tin Pháp nhân và Kho: ' + err.message)
+            toast.error(i18n.loadEntitiesError + err.message)
         }
-    }, [])
+    }, [i18n.loadEntitiesError])
 
     const handleSaveEntity = async (id: string, data: any) => {
         setSavingEntity(true)
         const res = await updateLegalEntity(id, data)
         if (res.success) {
-            toast.success('Đã cập nhật pháp nhân thành công!')
+            toast.success(i18n.updateEntitySuccess)
             setEditingEntity(null)
             await loadEntities()
         } else {
-            toast.error(res.error || 'Lỗi cập nhật pháp nhân')
+            toast.error(res.error || i18n.updateEntityError)
         }
         setSavingEntity(false)
     }
@@ -850,10 +823,10 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
     }) => {
         const res = await updateWarehouseConfig(warehouseId, data)
         if (res.success) {
-            toast.success('Đã cập nhật cấu hình kho thành công!')
+            toast.success(i18n.updateWarehouseSuccess)
             await loadEntities()
         } else {
-            toast.error(res.error || 'Lỗi cập nhật cấu hình kho')
+            toast.error(res.error || i18n.updateWarehouseError)
         }
     }
 
@@ -902,29 +875,22 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
         !search || u.name?.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase())
     )
 
-    const statCards = [
-        { label: 'Người Dùng', value: stats.users, icon: Users, accent: '#0E7490' },
-        { label: 'Đang Hoạt Động', value: stats.activeUsers, icon: CheckCircle2, accent: '#15803D' },
-        { label: 'Vai Trò', value: stats.roles, icon: Shield, accent: '#B45309' },
-        { label: 'Chờ Duyệt', value: stats.pendingApprovals, icon: Bell, accent: '#1D4ED8' },
-    ]
-
     const tabs: { key: Tab; label: string; icon: React.FC<any> }[] = [
-        { key: 'users', label: 'Người Dùng', icon: Users },
-        { key: 'roles', label: 'Vai Trò & Phân Quyền', icon: Shield },
-        { key: 'approvals', label: 'Quy Trình Duyệt', icon: ClipboardCheck },
-        { key: 'entities', label: 'Pháp Nhân & Kho', icon: Building2 },
-        { key: 'storage', label: 'Hạ Tầng & Lưu Trữ (R2 / DB)', icon: HardDrive },
-        { key: 'audit', label: 'Nhật Ký Hệ Thống', icon: Eye },
+        { key: 'users', label: i18n.tabUsers, icon: Users },
+        { key: 'roles', label: i18n.tabRoles, icon: Shield },
+        { key: 'approvals', label: i18n.tabApprovals, icon: ClipboardCheck },
+        { key: 'entities', label: i18n.tabEntities, icon: Building2 },
+        { key: 'storage', label: i18n.tabStorage, icon: HardDrive },
+        { key: 'audit', label: i18n.tabAudit, icon: Eye },
     ]
 
     return (
         <div className="space-y-6 max-w-screen-2xl">
             <PageHeader
-                title="Cài Đặt & Phân Quyền (SYS/RBAC)"
-                description="Quản lý tài khoản, vai trò, quyền hạn, dung lượng Cloudflare R2 & Database"
+                title={i18n.pageTitle}
+                description={i18n.pageDesc}
                 actions={
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                         <button
                             type="button"
                             onClick={() => {
@@ -933,17 +899,17 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                             }}
                             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all border border-cyan-200 bg-cyan-50 text-cyan-800 hover:bg-cyan-100 cursor-pointer"
                         >
-                            <HardDrive size={13} /> Kiểm Tra Dung Lượng R2 & DB
+                            <HardDrive size={13} /> {i18n.btnCheckStorage}
                         </button>
                         <a href="/dashboard/settings/approval-matrix"
                             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                             style={{ textDecoration: 'none' }}>
-                            <Shield size={13} style={{ color: '#0891B2' }} /> Ma Trận Phân Quyền
+                            <Shield size={13} style={{ color: '#0891B2' }} /> {i18n.btnApprovalMatrix}
                         </a>
                         <a href="/dashboard/settings/telegram"
                             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                             style={{ textDecoration: 'none' }}>
-                            <Bell size={13} style={{ color: '#0891B2' }} /> Cấu Hình Telegram Bot
+                            <Bell size={13} style={{ color: '#0891B2' }} /> {i18n.btnTelegramBot}
                         </a>
                     </div>
                 }
@@ -951,10 +917,10 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
 
             {/* Stats */}
             <StatGrid>
-                <StatCard label="Người Dùng" value={stats.users} icon={Users} />
-                <StatCard label="Đang Hoạt Động" value={stats.activeUsers} icon={CheckCircle2} tone="success" />
-                <StatCard label="Vai Trò" value={stats.roles} icon={Shield} />
-                <StatCard label="Chờ Duyệt" value={stats.pendingApprovals} icon={Bell} tone={stats.pendingApprovals > 0 ? 'warning' : undefined} />
+                <StatCard label={i18n.statUsers} value={stats.users} icon={Users} />
+                <StatCard label={i18n.statActiveUsers} value={stats.activeUsers} icon={CheckCircle2} tone="success" />
+                <StatCard label={i18n.statRoles} value={stats.roles} icon={Shield} />
+                <StatCard label={i18n.statPendingApprovals} value={stats.pendingApprovals} icon={Bell} tone={stats.pendingApprovals > 0 ? 'warning' : undefined} />
             </StatGrid>
 
             {/* Tabs */}
@@ -991,21 +957,22 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
                             <input className="w-full pl-9 pr-3 py-2 text-sm rounded-md"
                                 style={{ ...inputStyle, width: '100%' }}
-                                placeholder="Tìm theo tên hoặc email..."
+                                placeholder={i18n.searchUserPlaceholder}
                                 value={search} onChange={e => setSearch(e.target.value)} />
                         </div>
                         <button onClick={() => setShowCreateUser(true)}
                             className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md shrink-0"
                             style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                            <Plus size={16} /> Thêm Người Dùng
+                            <Plus size={16} /> {i18n.btnAddUser}
                         </button>
                     </div>
 
-                    <div className="rounded-md overflow-x-auto border border-slate-200">
+                    {/* Desktop Table */}
+                    <div className="hidden md:block rounded-md overflow-x-auto border border-slate-200">
                         <table className="w-full text-left min-w-[700px]" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                    {['Họ Tên', 'Email', 'Vai Trò', 'Trạng Thái', 'Ngày Tạo', ''].map(h => (
+                                    {[i18n.colFullName, i18n.colEmail, i18n.colRoles, i18n.colStatus, i18n.colCreatedAt, ''].map(h => (
                                         <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold"
                                             style={{ color: '#64748B' }}>{h}</th>
                                     ))}
@@ -1014,10 +981,11 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                             <tbody>
                                 {filteredUsers.length === 0 ? (
                                     <tr><td colSpan={6} className="text-center py-12 text-sm" style={{ color: '#64748B' }}>
-                                        Chưa có người dùng. Chạy seed-rbac.ts trước.
+                                        {i18n.emptyUsers}
                                     </td></tr>
                                 ) : filteredUsers.map(u => {
-                                    const st = STATUS_CFG[u.status] ?? STATUS_CFG.ACTIVE
+                                    const st = STATUS_STYLE[u.status] ?? STATUS_STYLE.ACTIVE
+                                    const statusLabel = i18n.statuses[u.status] ?? u.status
                                     return (
                                         <tr key={u.id} className="hover:bg-cyan-50/40 transition-colors" style={{ borderBottom: '1px solid #E2E8F0' }}>
                                             <td className="px-3 py-2.5 text-sm font-semibold cursor-pointer hover:underline hover:text-[#0891B2] transition-all"
@@ -1031,7 +999,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                             <td className="px-3 py-2.5">
                                                 <div className="flex flex-wrap gap-1">
                                                     {u.roles.map(r => (
-                                                        <span key={r} className="inline-block text-xs px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0"
+                                                        <span key={r} className="inline-block text-xs px-2 py-0.5 rounded font-semibold font-mono whitespace-nowrap shrink-0"
                                                             style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
                                                             {r}
                                                         </span>
@@ -1041,11 +1009,11 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                             <td className="px-3 py-2.5">
                                                 <span className="inline-block text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap shrink-0"
                                                     style={{ background: st.bg, color: st.color }}>
-                                                    {st.label}
+                                                    {statusLabel}
                                                 </span>
                                             </td>
                                             <td className="px-3 py-2.5 text-xs" style={{ color: '#64748B' }}>
-                                                {new Date(u.createdAt).toLocaleDateString('vi-VN')}
+                                                {formatDate(u.createdAt)}
                                             </td>
                                             <td className="px-3 py-2.5">
                                                 <select
@@ -1054,9 +1022,9 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                     onChange={e => handleStatusChange(u.id, e.target.value as any)}
                                                     className="text-xs px-2 py-1 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569', outline: 'none' }}>
-                                                    <option value="ACTIVE">Hoạt Động</option>
-                                                    <option value="INACTIVE">Ngưng</option>
-                                                    <option value="SUSPENDED">Khoá</option>
+                                                    <option value="ACTIVE">{i18n.statuses.ACTIVE}</option>
+                                                    <option value="INACTIVE">{i18n.statuses.INACTIVE}</option>
+                                                    <option value="SUSPENDED">{i18n.statuses.SUSPENDED}</option>
                                                 </select>
                                             </td>
                                         </tr>
@@ -1064,6 +1032,52 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                 })}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* Mobile Cards */}
+                    <div className="md:hidden space-y-2.5">
+                        {filteredUsers.length === 0 ? (
+                            <div className="text-center py-8 text-sm text-slate-500 border border-slate-200 rounded-lg bg-white">
+                                {i18n.emptyUsers}
+                            </div>
+                        ) : filteredUsers.map(u => {
+                            const st = STATUS_STYLE[u.status] ?? STATUS_STYLE.ACTIVE
+                            const statusLabel = i18n.statuses[u.status] ?? u.status
+                            return (
+                                <div key={u.id} className="p-3.5 rounded-lg border border-slate-200 bg-white space-y-2">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div onClick={() => setSelectedUser(u)} className="cursor-pointer min-w-0">
+                                            <p className="text-sm font-bold text-slate-900 truncate">{u.name || '—'}</p>
+                                            <p className="text-xs text-slate-500 truncate">{u.email}</p>
+                                        </div>
+                                        <span className="inline-block text-[11px] px-2 py-0.5 rounded font-bold shrink-0"
+                                            style={{ background: st.bg, color: st.color }}>
+                                            {statusLabel}
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1">
+                                        {u.roles.map(r => (
+                                            <span key={r} className="inline-block text-[11px] px-2 py-0.5 rounded font-semibold font-mono"
+                                                style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
+                                                {r}
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs text-slate-500">
+                                        <span>{formatDate(u.createdAt)}</span>
+                                        <select
+                                            value={u.status}
+                                            disabled={!currentUser?.permissions.includes('SYS:ADMIN')}
+                                            onChange={e => handleStatusChange(u.id, e.target.value as any)}
+                                            className="text-xs px-2 py-1 rounded border border-slate-200 bg-white text-slate-700">
+                                            <option value="ACTIVE">{i18n.statuses.ACTIVE}</option>
+                                            <option value="INACTIVE">{i18n.statuses.INACTIVE}</option>
+                                            <option value="SUSPENDED">{i18n.statuses.SUSPENDED}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            )
+                        })}
                     </div>
                 </div>
             )}
@@ -1073,12 +1087,12 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <p className="text-sm" style={{ color: '#475569' }}>
-                            {permissions.length} quyền hạn trên {Array.from(new Set(permissions.map(p => p.module))).length} module
+                            {i18n.rolesSummary(permissions.length, Array.from(new Set(permissions.map(p => p.module))).length)}
                         </p>
                         <button onClick={() => setShowCreateRole(true)}
                             className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md"
                             style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                            <Plus size={16} /> Tạo Vai Trò
+                            <Plus size={16} /> {i18n.btnCreateRole}
                         </button>
                     </div>
 
@@ -1091,22 +1105,22 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                     setShowEditRole(true)
                                 }}>
                                 <div className="flex items-center justify-between mb-3">
-                                    <h4 className="font-bold" style={{ color: '#0F172A' }}>{r.name}</h4>
+                                    <h4 className="font-bold font-mono" style={{ color: '#0F172A' }}>{r.name}</h4>
                                     <div className="flex items-center gap-2">
                                         <span className="inline-block text-xs px-2 py-0.5 rounded whitespace-nowrap shrink-0"
                                             style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
-                                            {r.permissionCount} quyền
+                                            {i18n.permsBadge(r.permissionCount)}
                                         </span>
                                         <span className="inline-block text-xs px-2 py-0.5 rounded whitespace-nowrap shrink-0"
                                             style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309' }}>
-                                            {r.userCount} user
+                                            {i18n.usersBadge(r.userCount)}
                                         </span>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-1.5 mb-3">
                                     <Users size={12} style={{ color: '#64748B' }} />
                                     <span className="text-xs" style={{ color: '#64748B' }}>
-                                        {r.userCount === 0 ? 'Chưa có người dùng' : `${r.userCount} người dùng`}
+                                        {r.userCount === 0 ? i18n.noUsersAssigned : i18n.usersAssignedCount(r.userCount)}
                                     </span>
                                 </div>
                                 <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#E2E8F0' }}>
@@ -1117,7 +1131,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                         }} />
                                 </div>
                                 <p className="text-xs mt-1.5" style={{ color: '#64748B' }}>
-                                    {r.permissionCount}/{permissions.length} quyền ({Math.round((r.permissionCount / permissions.length) * 100)}%)
+                                    {i18n.permsProgress(r.permissionCount, permissions.length, Math.round((r.permissionCount / permissions.length) * 100))}
                                 </p>
                             </div>
                         ))}
@@ -1130,13 +1144,13 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                 <div className="space-y-6">
                     {/* Pending Approvals */}
                     <div>
-                        <h3 className="text-sm font-bold mb-3" style={{ color: '#0F172A' }}>Yêu Cầu Đang Chờ Duyệt</h3>
+                        <h3 className="text-sm font-bold mb-3" style={{ color: '#0F172A' }}>{i18n.pendingApprovalsTitle}</h3>
                         {!approvalsLoaded ? (
                             <div className="flex items-center justify-center py-8"><Loader2 size={20} className="animate-spin" style={{ color: '#0891B2' }} /></div>
                         ) : pendingApprovals.length === 0 ? (
                             <div className="flex flex-col items-center py-8 gap-2 rounded-md" style={{ border: '1px dashed #E2E8F0' }}>
                                 <CheckCircle2 size={24} style={{ color: '#15803D' }} />
-                                <p className="text-sm" style={{ color: '#64748B' }}>Không có yêu cầu nào chờ duyệt</p>
+                                <p className="text-sm" style={{ color: '#64748B' }}>{i18n.noPendingApprovals}</p>
                             </div>
                         ) : (
                             <div className="space-y-2">
@@ -1146,7 +1160,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                             <ClipboardCheck size={16} style={{ color: '#B45309' }} />
                                             <div>
                                                 <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{req.templateName || req.docType}</p>
-                                                <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>Bước {req.currentStep} • Bởi {req.requestedByName || req.requestedBy}</p>
+                                                <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>{i18n.approvalStepBy(req.currentStep, req.requestedByName || req.requestedBy)}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
@@ -1154,12 +1168,12 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                             <button onClick={() => handleApproval(req.id, 'APPROVE')} disabled={processingId === req.id}
                                                 className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded transition-all"
                                                 style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)' }}>
-                                                {processingId === req.id ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />} Duyệt
+                                                {processingId === req.id ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />} {i18n.btnApprove}
                                             </button>
                                             <button onClick={() => handleApproval(req.id, 'REJECT')} disabled={processingId === req.id}
                                                 className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded transition-all"
                                                 style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.25)' }}>
-                                                <XCircle size={12} /> Từ Chối
+                                                <XCircle size={12} /> {i18n.btnReject}
                                             </button>
                                         </div>
                                     </div>
@@ -1170,11 +1184,11 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
 
                     {/* Approval Templates */}
                     <div>
-                        <h3 className="text-sm font-bold mb-3" style={{ color: '#0F172A' }}>Mẫu Quy Trình Duyệt</h3>
+                        <h3 className="text-sm font-bold mb-3" style={{ color: '#0F172A' }}>{i18n.approvalTemplatesTitle}</h3>
                         {approvalTemplates.length === 0 ? (
                             <div className="flex flex-col items-center py-8 gap-2 rounded-md" style={{ border: '1px dashed #E2E8F0' }}>
                                 <ClipboardCheck size={24} style={{ color: '#E2E8F0' }} />
-                                <p className="text-sm" style={{ color: '#64748B' }}>Chưa có mẫu quy trình. Chạy seed để tạo templates.</p>
+                                <p className="text-sm" style={{ color: '#64748B' }}>{i18n.noApprovalTemplates}</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -1187,7 +1201,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                         </div>
                                         <div className="space-y-1">
                                             {(tpl.steps || []).map((step: any, i: number) => (
-                                                <div key={i} className="flex items-center gap-2 text-xs" style={{ color: '#475569' }}>
+                                                <div key={i} className="flex items-center gap-2 text-xs font-mono" style={{ color: '#475569' }}>
                                                     <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
                                                         style={{ background: '#ECFEFF', color: '#0E7490' }}>{i + 1}</span>
                                                     {step.approverRole}
@@ -1206,11 +1220,12 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
             {/* ── Audit Log Tab ────────────────────── */}
             {tab === 'audit' && (
                 <div className="space-y-4">
-                    <div className="rounded-md overflow-x-auto border border-slate-200">
+                    {/* Desktop Table */}
+                    <div className="hidden md:block rounded-md overflow-x-auto border border-slate-200">
                         <table className="w-full text-left min-w-[750px]" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                    {['Thời Gian', 'Người Dùng', 'Hành Động', 'Đối Tượng', 'ID', 'Chi Tiết'].map(h => (
+                                    {[i18n.colTime, i18n.colUser, i18n.colAction, i18n.colEntity, i18n.colId, i18n.colDetails].map(h => (
                                         <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold"
                                             style={{ color: '#64748B' }}>{h}</th>
                                     ))}
@@ -1219,7 +1234,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                             <tbody>
                                 {auditLogs.length === 0 ? (
                                     <tr><td colSpan={6} className="text-center py-12 text-sm" style={{ color: '#64748B' }}>
-                                        {auditLoaded ? 'Chưa có nhật ký nào' : 'Đang tải...'}
+                                        {auditLoaded ? i18n.noAuditLogs : i18n.loadingText}
                                     </td></tr>
                                 ) : auditLogs.map((log: any) => (
                                     <React.Fragment key={log.id}>
@@ -1237,23 +1252,23 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                 }
                                             }}>
                                             <td className="px-3 py-2.5 text-xs" style={{ color: '#64748B' }}>
-                                                {new Date(log.createdAt).toLocaleString('vi-VN')}
+                                                {new Date(log.createdAt).toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')}
                                             </td>
                                             <td className="px-3 py-2.5 text-xs" style={{ color: '#0F172A' }}>
                                                 {log.userName || log.userId || '—'}
                                             </td>
                                             <td className="px-3 py-2.5">
-                                                <span className="inline-block text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{
+                                                <span className="inline-block text-xs px-2 py-0.5 rounded font-bold font-mono whitespace-nowrap shrink-0" style={{
                                                     color: log.action === 'DELETE' ? '#B91C1C' : log.action === 'CREATE' ? '#15803D' : '#B45309',
                                                     background: log.action === 'DELETE' ? 'rgba(185,28,28,0.15)' : log.action === 'CREATE' ? 'rgba(21,128,61,0.15)' : 'rgba(180,83,9,0.15)',
                                                 }}>
                                                     {log.action}
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-2.5 text-xs font-semibold" style={{ color: '#0891B2' }}>
+                                            <td className="px-3 py-2.5 text-xs font-semibold font-mono" style={{ color: '#0891B2' }}>
                                                 {log.entityType}
                                             </td>
-                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#64748B' }}>
+                                            <td className="px-3 py-2.5 text-xs font-mono" style={{ color: '#64748B' }}>
                                                 {log.entityId?.slice(-8) || '—'}
                                             </td>
                                             <td className="px-3 py-2.5">
@@ -1267,21 +1282,21 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                 {loadingChanges ? (
                                                     <div className="flex items-center gap-2 py-2">
                                                         <Loader2 size={14} className="animate-spin" style={{ color: '#0891B2' }} />
-                                                        <span className="text-xs" style={{ color: '#64748B' }}>Đang tải chi tiết...</span>
+                                                        <span className="text-xs" style={{ color: '#64748B' }}>{i18n.loadingDetails}</span>
                                                     </div>
                                                 ) : fieldChanges.length === 0 ? (
-                                                    <p className="text-xs py-2" style={{ color: '#64748B' }}>Không có chi tiết thay đổi theo trường cho bản ghi này.</p>
+                                                    <p className="text-xs py-2" style={{ color: '#64748B' }}>{i18n.noFieldChanges}</p>
                                                 ) : (
                                                     <div className="space-y-1">
-                                                        <p className="text-xs font-semibold mb-2" style={{ color: '#B45309' }}>Lịch Sử Thay Đổi Theo Trường</p>
+                                                        <p className="text-xs font-semibold mb-2" style={{ color: '#B45309' }}>{i18n.fieldChangesTitle}</p>
                                                         {fieldChanges.slice(0, 20).map((fc: any, i: number) => (
                                                              <div key={i} className="flex items-start gap-3 py-1" style={{ borderBottom: '1px solid #E2E8F0' }}>
                                                                 <span className="text-xs font-bold shrink-0" style={{ color: '#0891B2', minWidth: '100px' }}>{fc.field}</span>
-                                                                <span className="text-xs" style={{ color: '#B91C1C' }}>{String(fc.oldValue ?? '(trống)').slice(0, 40)}</span>
+                                                                <span className="text-xs" style={{ color: '#B91C1C' }}>{String(fc.oldValue ?? i18n.emptyVal).slice(0, 40)}</span>
                                                                 <span className="text-xs" style={{ color: '#64748B' }}>→</span>
-                                                                <span className="text-xs" style={{ color: '#15803D' }}>{String(fc.newValue ?? '(trống)').slice(0, 40)}</span>
+                                                                <span className="text-xs" style={{ color: '#15803D' }}>{String(fc.newValue ?? i18n.emptyVal).slice(0, 40)}</span>
                                                                 <span className="text-xs ml-auto shrink-0" style={{ color: '#64748B' }}>
-                                                                    {new Date(fc.changedAt).toLocaleString('vi-VN')}
+                                                                    {new Date(fc.changedAt).toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')}
                                                                 </span>
                                                             </div>
                                                         ))}
@@ -1294,6 +1309,34 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Mobile Cards */}
+                    <div className="md:hidden space-y-2.5">
+                        {auditLogs.length === 0 ? (
+                            <div className="text-center py-8 text-sm text-slate-500 border border-slate-200 rounded-lg bg-white">
+                                {auditLoaded ? i18n.noAuditLogs : i18n.loadingText}
+                            </div>
+                        ) : auditLogs.map((log: any) => (
+                            <div key={log.id} className="p-3.5 rounded-lg border border-slate-200 bg-white space-y-2">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="inline-block text-[11px] px-2 py-0.5 rounded font-bold font-mono" style={{
+                                        color: log.action === 'DELETE' ? '#B91C1C' : log.action === 'CREATE' ? '#15803D' : '#B45309',
+                                        background: log.action === 'DELETE' ? 'rgba(185,28,28,0.15)' : log.action === 'CREATE' ? 'rgba(21,128,61,0.15)' : 'rgba(180,83,9,0.15)',
+                                    }}>
+                                        {log.action}
+                                    </span>
+                                    <span className="text-xs font-mono font-semibold text-cyan-700">{log.entityType}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-xs text-slate-600">
+                                    <span className="font-medium text-slate-900">{log.userName || log.userId || '—'}</span>
+                                    <span className="font-mono text-slate-500">{log.entityId?.slice(-8) || '—'}</span>
+                                </div>
+                                <div className="text-[11px] text-slate-500">
+                                    {new Date(log.createdAt).toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 
@@ -1302,45 +1345,45 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Legal Entities Section */}
                         <div className="space-y-4">
-                            <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#B45309' }}>Danh Sách Pháp Nhân</h3>
+                            <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#B45309' }}>{i18n.entitiesListTitle}</h3>
                             <div className="space-y-4">
                                 {entities.map(ent => (
                                     <div key={ent.id} className="p-5 rounded-lg flex flex-col justify-between" style={{ ...card, background: '#FFFFFF' }}>
                                         <div className="flex justify-between items-start mb-4">
                                             <div>
                                                 <h4 className="font-bold text-base" style={{ color: '#0F172A' }}>{ent.name}</h4>
-                                                <p className="text-xs font-mono mt-0.5" style={{ color: '#475569' }}>Mã: {ent.code} · MST: {ent.taxId || '(chưa nhập)'}</p>
+                                                <p className="text-xs font-mono mt-0.5" style={{ color: '#475569' }}>{i18n.codePrefix} {ent.code} · {i18n.taxIdPrefix} {ent.taxId || i18n.notEntered}</p>
                                             </div>
                                             <button onClick={() => setEditingEntity(ent)}
                                                 className="px-3 py-1.5 text-xs font-semibold rounded-md transition-all"
                                                 style={{ border: '1px solid #E2E8F0', color: '#0891B2' }}>
-                                                Chỉnh sửa
+                                                {i18n.btnEdit}
                                             </button>
                                         </div>
                                         
                                         <div className="space-y-2 border-t border-slate-200 pt-3 text-xs" style={{ color: '#475569' }}>
                                             <div className="flex justify-between items-start gap-4">
-                                                <span className="shrink-0">Địa chỉ:</span>
+                                                <span className="shrink-0">{i18n.labelAddressColon}</span>
                                                 <span className="font-medium text-right" style={{ color: '#0F172A' }}>{ent.address || '—'}</span>
                                             </div>
                                             <div className="flex justify-between items-center">
-                                                <span>Số điện thoại:</span>
+                                                <span>{i18n.labelPhoneColon}</span>
                                                 <span className="font-medium text-right font-mono" style={{ color: '#0F172A' }}>{ent.phone || '—'}</span>
                                             </div>
                                             <div className="flex justify-between items-center">
-                                                <span>Email:</span>
+                                                <span>{i18n.labelEmailColon}</span>
                                                 <span className="font-medium text-right" style={{ color: '#0F172A' }}>{ent.email || '—'}</span>
                                             </div>
                                             <div className="flex justify-between items-start gap-4">
-                                                <span className="shrink-0">Ngân hàng:</span>
+                                                <span className="shrink-0">{i18n.labelBankColon}</span>
                                                 <span className="font-medium text-right" style={{ color: '#0F172A' }}>{ent.bankName || '—'}</span>
                                             </div>
                                             <div className="flex justify-between items-center">
-                                                <span>Chủ tài khoản:</span>
+                                                <span>{i18n.labelAccountHolderColon}</span>
                                                 <span className="font-medium text-right" style={{ color: '#0F172A' }}>{ent.bankAccountName || '—'}</span>
                                             </div>
                                             <div className="flex justify-between items-center">
-                                                <span>Số tài khoản:</span>
+                                                <span>{i18n.labelAccountNumberColon}</span>
                                                 <span className="text-[#0891B2] font-mono font-bold">{ent.bankAccountNumber || '—'}</span>
                                             </div>
                                         </div>
@@ -1352,11 +1395,11 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                         {/* Warehouses Mapping & RBAC Configuration Section */}
                         <div className="space-y-4">
                             <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: '#B45309' }}>
-                                <Shield size={16} /> Cấu Hình & Phân Quyền Kho Hàng (RBAC System Admin)
+                                <Shield size={16} /> {i18n.warehouseConfigTitle}
                             </h3>
                             <div className="p-5 rounded-lg space-y-4" style={card}>
                                 <p className="text-xs leading-relaxed" style={{ color: '#475569' }}>
-                                    Quản trị viên (Admin/CEO) thiết lập vai trò xuất bán, điều chuyển và pháp nhân cho từng kho. Thủ kho chỉ được thao tác trong phạm vi kho được cấu hình tại đây, tránh chọn nhầm kho xuất bán.
+                                    {i18n.warehouseConfigDesc}
                                 </p>
                                 <div className="space-y-4">
                                     {warehouses.map(w => (
@@ -1365,17 +1408,17 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                 <div>
                                                     <p className="text-sm font-bold flex items-center gap-2 flex-wrap" style={{ color: '#0F172A' }}>
                                                         {w.name}
-                                                        {w.isDefault && <span className="inline-block text-[10px] bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded font-mono font-bold whitespace-nowrap shrink-0">Kho Mặc Định</span>}
-                                                        {w.allowSales === false && <span className="inline-block text-[10px] bg-rose-100 text-rose-800 border border-rose-300 px-1.5 py-0.5 rounded font-mono font-bold whitespace-nowrap shrink-0">Chỉ Xuất Điều Chuyển</span>}
+                                                        {w.isDefault && <span className="inline-block text-[10px] bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded font-mono font-bold whitespace-nowrap shrink-0">{i18n.defaultWarehouseBadge}</span>}
+                                                        {w.allowSales === false && <span className="inline-block text-[10px] bg-rose-100 text-rose-800 border border-rose-300 px-1.5 py-0.5 rounded font-mono font-bold whitespace-nowrap shrink-0">{i18n.transferOnlyBadge}</span>}
                                                     </p>
-                                                    <p className="text-[11px] font-mono mt-0.5" style={{ color: '#64748B' }}>Mã: {w.code}{w.address ? ` · Địa chỉ: ${w.address}` : ''}</p>
+                                                    <p className="text-[11px] font-mono mt-0.5" style={{ color: '#64748B' }}>{i18n.codePrefix} {w.code}{w.address ? ` · ${i18n.labelAddressColon} ${w.address}` : ''}</p>
                                                 </div>
                                             </div>
 
                                             {/* Legal Entity Select */}
                                             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                                                 <label className="text-xs font-semibold whitespace-nowrap" style={{ color: '#475569' }}>
-                                                    Pháp nhân quản lý:
+                                                    {i18n.labelManagedEntity}
                                                 </label>
                                                 <select
                                                     value={w.legalEntityId || ''}
@@ -1383,7 +1426,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                     className="flex-1 px-3 py-1.5 text-xs outline-none rounded-md"
                                                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                                                 >
-                                                    <option value="">— Chưa gán / Không thuộc pháp nhân nào —</option>
+                                                    <option value="">{i18n.unassignedEntity}</option>
                                                     {entities.map(ent => (
                                                         <option key={ent.id} value={ent.id}>{ent.name} ({ent.code})</option>
                                                     ))}
@@ -1399,7 +1442,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                         onChange={e => handleUpdateWarehouseConfigState(w.id, { allowSales: e.target.checked })}
                                                         className="w-4 h-4 rounded text-teal-500 focus:ring-teal-400"
                                                     />
-                                                    <span><strong>Cho phép Bán Hàng</strong> (SO/DO)</span>
+                                                    <span><strong>{i18n.allowSalesLabel}</strong> (SO/DO)</span>
                                                 </label>
 
                                                 <label className="flex items-center gap-2 cursor-pointer select-none p-2 rounded hover:bg-white transition-colors" style={{ color: '#0F172A' }}>
@@ -1409,7 +1452,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                         onChange={e => handleUpdateWarehouseConfigState(w.id, { allowTransfer: e.target.checked })}
                                                         className="w-4 h-4 rounded text-teal-500 focus:ring-teal-400"
                                                     />
-                                                    <span><strong>Cho phép Điều Chuyển</strong></span>
+                                                    <span><strong>{i18n.allowTransferLabel}</strong></span>
                                                 </label>
 
                                                 <label className="flex items-center gap-2 cursor-pointer select-none p-2 rounded hover:bg-white transition-colors" style={{ color: '#0F172A' }}>
@@ -1419,7 +1462,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                         onChange={e => handleUpdateWarehouseConfigState(w.id, { isDefault: e.target.checked })}
                                                         className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400"
                                                     />
-                                                    <span><strong>Kho Mặc Định</strong></span>
+                                                    <span><strong>{i18n.defaultWarehouseBadge}</strong></span>
                                                 </label>
                                             </div>
                                         </div>
@@ -1437,12 +1480,12 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-lg border border-slate-200">
                         <div>
                             <h3 className="text-base font-bold text-slate-900">
-                                Giám Sát Dung Lượng Lưu Trữ Cloudflare R2 & Cơ Sở Dữ Liệu PostgreSQL
+                                {i18n.storageHeaderTitle}
                             </h3>
                             <p className="text-xs text-slate-500 mt-0.5">
                                 {infraStatus?.checkedAt
-                                    ? `Dữ liệu thực tế từ Bucket "${infraStatus.r2.bucketName}" — Cập nhật lúc ${new Date(infraStatus.checkedAt).toLocaleString('vi-VN')}`
-                                    : 'Đang truy vấn trực tiếp từ máy chủ lưu trữ Cloudflare R2...'}
+                                    ? i18n.storageHeaderSub(infraStatus.r2.bucketName, new Date(infraStatus.checkedAt).toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN'))
+                                    : i18n.storageQueryingSub}
                             </p>
                         </div>
                         <button
@@ -1456,7 +1499,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                             ) : (
                                 <RefreshCw size={14} />
                             )}
-                            Làm mới dung lượng thực tế
+                            {i18n.btnRefreshStorage}
                         </button>
                     </div>
 
@@ -1464,7 +1507,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                         <div className="bg-white rounded-lg border border-slate-200 p-12 flex flex-col items-center justify-center gap-3 text-slate-500">
                             <Loader2 size={24} className="animate-spin text-cyan-700" />
                             <p className="text-xs font-medium">
-                                Đang quét toàn bộ tệp trên Cloudflare R2 và kiểm tra dung lượng PostgreSQL...
+                                {i18n.scanningStorageMsg}
                             </p>
                         </div>
                     ) : infraStatus ? (
@@ -1481,7 +1524,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                             <div>
                                                 <div className="flex items-center gap-2">
                                                     <h4 className="text-sm font-bold text-slate-900">
-                                                        Cloudflare R2 Object Storage
+                                                        {i18n.r2CardTitle}
                                                     </h4>
                                                     <span
                                                         className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -1492,7 +1535,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                     >
                                                         {infraStatus.r2.connected
                                                             ? `ONLINE · ${infraStatus.r2.latencyMs}ms`
-                                                            : 'MẤT KẾT NỐI'}
+                                                            : i18n.statusDisconnected}
                                                     </span>
                                                 </div>
                                                 <p className="text-xs text-slate-500">
@@ -1509,7 +1552,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                 {formatBytes(infraStatus.r2.totalBytes)}
                                             </p>
                                             <p className="text-[11px] text-slate-500">
-                                                / {formatBytes(infraStatus.r2.freeTierLimitBytes)} (Gói Free)
+                                                / {formatBytes(infraStatus.r2.freeTierLimitBytes)} {i18n.freeTierSuffix}
                                             </p>
                                         </div>
                                     </div>
@@ -1518,14 +1561,14 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                     <div className="space-y-1.5">
                                         <div className="flex items-center justify-between text-xs">
                                             <span className="text-slate-600 font-medium">
-                                                Đã dùng:{' '}
+                                                {i18n.usedLabel}{' '}
                                                 <strong className="text-slate-900">
                                                     {infraStatus.r2.usagePercent}%
                                                 </strong>{' '}
-                                                ({infraStatus.r2.totalFiles.toLocaleString('vi-VN')} tệp)
+                                                ({formatNumber(infraStatus.r2.totalFiles)} {i18n.filesUnit})
                                             </span>
                                             <span className="text-emerald-700 font-semibold">
-                                                Còn trống miễn phí:{' '}
+                                                {i18n.freeRemainingLabel}{' '}
                                                 {formatBytes(infraStatus.r2.remainingFreeBytes)}
                                             </span>
                                         </div>
@@ -1541,7 +1584,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                             />
                                         </div>
                                         <p className="text-[11px] text-slate-500">
-                                            Hạn mức miễn phí tiêu chuẩn Cloudflare R2: 10 GB lưu trữ/tháng · Phí băng thông tải xuống (Egress): 0 đ.
+                                            {i18n.r2FreeTierNote}
                                         </p>
                                     </div>
                                 </div>
@@ -1556,7 +1599,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                             <div>
                                                 <div className="flex items-center gap-2">
                                                     <h4 className="text-sm font-bold text-slate-900">
-                                                        PostgreSQL Database (Supabase)
+                                                        {i18n.dbCardTitle}
                                                     </h4>
                                                     <span
                                                         className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -1567,11 +1610,11 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                     >
                                                         {infraStatus.database.connected
                                                             ? `ONLINE · ${infraStatus.database.latencyMs}ms`
-                                                            : 'LỖI KẾT NỐI'}
+                                                            : i18n.statusConnError}
                                                     </span>
                                                 </div>
                                                 <p className="text-xs text-slate-500">
-                                                    Dung lượng vật lý toàn bộ bảng & chỉ mục (Indexes)
+                                                    {i18n.dbCardDesc}
                                                 </p>
                                             </div>
                                         </div>
@@ -1588,13 +1631,13 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                     <div className="space-y-1.5">
                                         <div className="flex items-center justify-between text-xs">
                                             <span className="text-slate-600 font-medium">
-                                                Đã dùng:{' '}
+                                                {i18n.usedLabel}{' '}
                                                 <strong className="text-slate-900">
                                                     {infraStatus.database.usagePercent}%
                                                 </strong>
                                             </span>
                                             <span className="text-emerald-700 font-semibold">
-                                                Còn trống:{' '}
+                                                {i18n.remainingLabel}{' '}
                                                 {formatBytes(
                                                     Math.max(
                                                         0,
@@ -1621,27 +1664,27 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                     <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 pt-1">
                                         {[
                                             {
-                                                label: 'Sản phẩm',
+                                                label: i18n.cntProducts,
                                                 val: infraStatus.database.counts.products,
                                             },
                                             {
-                                                label: 'Hồ sơ pháp lý',
+                                                label: i18n.cntRegDocs,
                                                 val: infraStatus.database.counts.regulatedDocs,
                                             },
                                             {
-                                                label: 'Khách hàng',
+                                                label: i18n.cntCustomers,
                                                 val: infraStatus.database.counts.customers,
                                             },
                                             {
-                                                label: 'Đơn bán (SO)',
+                                                label: i18n.cntSalesOrders,
                                                 val: infraStatus.database.counts.salesOrders,
                                             },
                                             {
-                                                label: 'Lô tồn kho',
+                                                label: i18n.cntStockLots,
                                                 val: infraStatus.database.counts.stockLots,
                                             },
                                             {
-                                                label: 'Nhật ký Audit',
+                                                label: i18n.cntAuditLogs,
                                                 val: infraStatus.database.counts.auditLogs,
                                             },
                                         ].map(item => (
@@ -1650,7 +1693,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                 className="p-2 rounded bg-slate-50 border border-slate-200/80 text-center"
                                             >
                                                 <p className="text-xs font-bold font-mono text-slate-900">
-                                                    {item.val.toLocaleString('vi-VN')}
+                                                    {formatNumber(item.val)}
                                                 </p>
                                                 <p className="text-[10px] text-slate-500 truncate">
                                                     {item.label}
@@ -1669,32 +1712,32 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                         <div className="flex items-center gap-2">
                                             <FolderOpen size={15} className="text-cyan-700" />
                                             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                                                Phân Bổ Dung Lượng R2 Theo Phân Hệ / Thư Mục
+                                                {i18n.r2FolderBreakdownTitle}
                                             </h4>
                                         </div>
                                         <span className="text-xs text-slate-500">
-                                            Tổng: {infraStatus.r2.totalFiles} tệp ·{' '}
-                                            {formatBytes(infraStatus.r2.totalBytes)}
+                                            {i18n.r2TotalSummary(infraStatus.r2.totalFiles, formatBytes(infraStatus.r2.totalBytes))}
                                         </span>
                                     </div>
-                                    <div className="overflow-x-auto">
+                                    {/* Desktop Table */}
+                                    <div className="hidden md:block overflow-x-auto">
                                         <table className="w-full text-left border-collapse">
                                             <thead>
                                                 <tr className="border-b border-slate-200 bg-white text-[11px] uppercase text-slate-500">
                                                     <th className="px-4 py-2.5 font-semibold">
-                                                        Hạng mục lưu trữ
+                                                        {i18n.colStorageCategory}
                                                     </th>
                                                     <th className="px-3 py-2.5 font-semibold">
-                                                        Đường dẫn R2 Prefix
+                                                        {i18n.colR2Prefix}
                                                     </th>
                                                     <th className="px-3 py-2.5 font-semibold text-right">
-                                                        Số lượng tệp
+                                                        {i18n.colFileCount}
                                                     </th>
                                                     <th className="px-3 py-2.5 font-semibold text-right">
-                                                        Dung lượng
+                                                        {i18n.colSize}
                                                     </th>
                                                     <th className="px-4 py-2.5 font-semibold text-right">
-                                                        Cập nhật gần nhất
+                                                        {i18n.colLastModified}
                                                     </th>
                                                 </tr>
                                             </thead>
@@ -1720,7 +1763,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                                 {f.prefix}
                                                             </td>
                                                             <td className="px-3 py-2.5 text-right font-mono font-semibold text-slate-700">
-                                                                {f.fileCount.toLocaleString('vi-VN')}
+                                                                {formatNumber(f.fileCount)}
                                                             </td>
                                                             <td className="px-3 py-2.5 text-right font-mono text-slate-900">
                                                                 {formatBytes(f.totalBytes)}{' '}
@@ -1730,9 +1773,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                             </td>
                                                             <td className="px-4 py-2.5 text-right text-slate-500">
                                                                 {f.latestModified
-                                                                    ? new Date(
-                                                                          f.latestModified
-                                                                      ).toLocaleDateString('vi-VN')
+                                                                    ? formatDate(f.latestModified)
                                                                     : '—'}
                                                             </td>
                                                         </tr>
@@ -1741,19 +1782,42 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                             </tbody>
                                         </table>
                                     </div>
+                                    {/* Mobile Cards */}
+                                    <div className="md:hidden divide-y divide-slate-100">
+                                        {infraStatus.r2.folders.map(f => {
+                                            const sharePct =
+                                                infraStatus.r2.totalBytes > 0
+                                                    ? Math.round((f.totalBytes / infraStatus.r2.totalBytes) * 100)
+                                                    : 0
+                                            return (
+                                                <div key={f.prefix} className="p-3.5 space-y-1.5 text-xs">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <span className="font-semibold text-slate-800">{f.label}</span>
+                                                        <span className="font-mono text-slate-900 font-semibold">
+                                                            {formatBytes(f.totalBytes)} ({sharePct}%)
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between text-[11px] text-slate-500">
+                                                        <span className="font-mono">{f.prefix}</span>
+                                                        <span>{formatNumber(f.fileCount)} {i18n.filesUnit}</span>
+                                                    </div>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
                                 </div>
 
                                 {/* Recent Uploaded Files on R2 */}
                                 <div className="bg-white rounded-lg border border-slate-200 overflow-hidden flex flex-col">
                                     <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
                                         <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                                            Tệp Vừa Tải Lên Cloudflare R2 Gần Nhất
+                                            {i18n.r2RecentFilesTitle}
                                         </h4>
                                     </div>
                                     <div className="divide-y divide-slate-100 max-h-[360px] overflow-y-auto">
                                         {infraStatus.r2.recentFiles.length === 0 ? (
                                             <div className="p-6 text-center text-xs text-slate-400">
-                                                Chưa có tệp nào trên R2
+                                                {i18n.noR2Files}
                                             </div>
                                         ) : (
                                             infraStatus.r2.recentFiles.map(file => (
@@ -1772,7 +1836,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                             {formatBytes(file.size)} ·{' '}
                                                             {new Date(
                                                                 file.lastModified
-                                                            ).toLocaleString('vi-VN')}
+                                                            ).toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')}
                                                         </p>
                                                     </div>
                                                     <a
@@ -1780,7 +1844,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="inline-flex items-center justify-center w-7 h-7 rounded border border-slate-200 text-slate-600 hover:bg-slate-100 shrink-0"
-                                                        title="Mở tệp"
+                                                        title={i18n.openFileTitle}
                                                     >
                                                         <ExternalLink size={12} />
                                                     </a>
@@ -1831,6 +1895,9 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
 function EditEntityDrawer({ open, onClose, onSave, entity, saving }: {
     open: boolean; onClose: () => void; onSave: (id: string, data: any) => void; entity: any; saving: boolean
 }) {
+    const { locale } = useAppLocale()
+    const i18n = SETTINGS_I18N[locale]
+
     const [form, setForm] = useState({
         name: '', taxId: '', address: '', phone: '', email: '', bankName: '', bankAccountName: '', bankAccountNumber: ''
     })
@@ -1856,48 +1923,48 @@ function EditEntityDrawer({ open, onClose, onSave, entity, saving }: {
             <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between bg-white border-l border-slate-200 shadow-2xl">
                 <div>
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>Cấu Hình Pháp Nhân</h3>
+                        <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>{i18n.editEntityDrawerTitle}</h3>
                         <button onClick={onClose}><X size={18} style={{ color: '#64748B' }} /></button>
                     </div>
 
                     <div className="space-y-4">
                         <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Tên Pháp Nhân *</label>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelEntityNameReq}</label>
                             <input style={inputStyle} {...focusHandler} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
                         </div>
                         <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Mã Số Thuế</label>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelTaxId}</label>
                             <input style={inputStyle} {...focusHandler} value={form.taxId} onChange={e => setForm(f => ({ ...f, taxId: e.target.value }))} />
                         </div>
                         <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Địa Chỉ</label>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelAddress}</label>
                             <input style={inputStyle} {...focusHandler} value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
-                                <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Số Điện Thoại</label>
+                                <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelPhone}</label>
                                 <input style={inputStyle} {...focusHandler} placeholder="e.g. 024.3933.8888" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
                             </div>
                             <div>
-                                <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Email</label>
+                                <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelEmail}</label>
                                 <input style={inputStyle} {...focusHandler} placeholder="e.g. orders@lyscellars.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
                             </div>
                         </div>
                         <div className="pt-4 border-t border-slate-200">
                             <p className="text-xs font-bold uppercase mb-3 flex items-center gap-1.5" style={{ color: '#B45309' }}>
-                                <CreditCard size={12} /> Tài khoản thanh toán
+                                <CreditCard size={12} /> {i18n.secPaymentAccount}
                             </p>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Tên Ngân Hàng (kèm chi nhánh)</label>
+                                    <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelBankNameBranch}</label>
                                     <input style={inputStyle} {...focusHandler} placeholder="e.g. Vietcombank - Chi nhánh HCM" value={form.bankName} onChange={e => setForm(f => ({ ...f, bankName: e.target.value }))} />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Chủ Tài Khoản</label>
+                                    <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelAccountHolder}</label>
                                     <input style={inputStyle} {...focusHandler} placeholder="e.g. CONG TY TNHH LY'S CELLARS" value={form.bankAccountName} onChange={e => setForm(f => ({ ...f, bankAccountName: e.target.value }))} />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Số Tài Khoản</label>
+                                    <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelAccountNumber}</label>
                                     <input style={inputStyle} {...focusHandler} placeholder="e.g. 1023456789" value={form.bankAccountNumber} onChange={e => setForm(f => ({ ...f, bankAccountNumber: e.target.value }))} />
                                 </div>
                             </div>
@@ -1909,7 +1976,7 @@ function EditEntityDrawer({ open, onClose, onSave, entity, saving }: {
                     className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all"
                     style={{ background: '#0E7490', color: '#FFFFFF' }}>
                     {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                    {saving ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+                    {saving ? i18n.btnSaving : i18n.btnSaveChanges}
                 </button>
             </div>
         </div>

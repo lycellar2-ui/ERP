@@ -18,6 +18,8 @@ import {
     autoFixTransferVintages,
 } from './actions'
 import { formatDate, formatVND } from '@/lib/utils'
+import { useAppLocale } from '@/lib/i18n'
+import { getTransfersDict } from './i18n'
 
 interface TransferDetailDrawerProps {
     transferId: string | null
@@ -26,16 +28,18 @@ interface TransferDetailDrawerProps {
     currentUserRoles?: string[]
 }
 
-const STATUS_MAP: Record<string, { label: string; color: string; bg: string; border: string }> = {
-    DRAFT: { label: 'Nháp (Chưa gửi)', color: '#475569', bg: '#F1F5F9', border: '#CBD5E1' },
-    PENDING_ACCOUNTING: { label: 'Chờ Kế Toán Duyệt', color: '#B47816', bg: 'rgba(180,83,9,0.15)', border: '#F59E0B' },
-    CONFIRMED: { label: 'Kế Toán Đã Duyệt (Sẵn sàng)', color: '#0284C7', bg: 'rgba(2,132,199,0.12)', border: '#38BDF8' },
-    IN_TRANSIT: { label: 'Đang Vận Chuyển', color: '#2563EB', bg: 'rgba(37,99,235,0.12)', border: '#60A5FA' },
-    RECEIVED: { label: 'Đã Nhận Hàng (Hoàn tất)', color: '#16A34A', bg: 'rgba(22,163,74,0.12)', border: '#4ADE80' },
-    CANCELLED: { label: 'Đã Hủy / Từ Chối', color: '#B91C1C', bg: 'rgba(185,28,28,0.12)', border: '#B91C1C' },
+const STATUS_MAP: Record<string, { label: string; labelEn: string; color: string; bg: string; border: string }> = {
+    DRAFT: { label: 'Nháp (Chưa gửi)', labelEn: 'Draft (Unsent)', color: '#475569', bg: '#F1F5F9', border: '#CBD5E1' },
+    PENDING_ACCOUNTING: { label: 'Chờ Kế Toán Duyệt', labelEn: 'Pending Accounting', color: '#B47816', bg: 'rgba(180,83,9,0.15)', border: '#F59E0B' },
+    CONFIRMED: { label: 'Kế Toán Đã Duyệt (Sẵn sàng)', labelEn: 'Approved (Ready)', color: '#0284C7', bg: 'rgba(2,132,199,0.12)', border: '#38BDF8' },
+    IN_TRANSIT: { label: 'Đang Vận Chuyển', labelEn: 'In Transit', color: '#2563EB', bg: 'rgba(37,99,235,0.12)', border: '#60A5FA' },
+    RECEIVED: { label: 'Đã Nhận Hàng (Hoàn tất)', labelEn: 'Received (Completed)', color: '#16A34A', bg: 'rgba(22,163,74,0.12)', border: '#4ADE80' },
+    CANCELLED: { label: 'Đã Hủy / Từ Chối', labelEn: 'Cancelled / Rejected', color: '#B91C1C', bg: 'rgba(185,28,28,0.12)', border: '#B91C1C' },
 }
 
 export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUserRoles = [] }: TransferDetailDrawerProps) {
+    const { locale } = useAppLocale()
+    const t = getTransfersDict(locale)
     const [loading, setLoading] = useState(false)
     const [detail, setDetail] = useState<TransferOrderDetail | null>(null)
     const [pickingLocations, setPickingLocations] = useState<TransferPickingItem[]>([])
@@ -292,12 +296,12 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                             </div>
                             <div>
                                 <h3 className="text-base font-bold" style={{ color: '#0F172A' }}>
-                                    PHIẾU CHUYỂN KHO: <span className="font-mono" style={{ color: '#B47816' }}>{detail?.transferNo || '...'}</span>
+                                    {t.detailTitle}: <span className="font-mono" style={{ color: '#B47816' }}>{detail?.transferNo || '...'}</span>
                                 </h3>
                                 <div className="flex items-center gap-2 mt-0.5">
                                     <span className="text-xs font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 whitespace-nowrap shrink-0"
                                         style={{ color: st.color, background: st.bg, border: `1px solid ${st.border}` }}>
-                                        {st.label}
+                                        {locale === 'en' ? st.labelEn : st.label}
                                     </span>
                                 </div>
                             </div>
@@ -308,9 +312,8 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 <button
                                     onClick={() => { setPrintDocType('VOUCHER'); setPrintModalOpen(true) }}
                                     className="px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700"
-                                    title="In phiếu chuyển kho ra giấy A4 để ký tên 4 bên"
                                 >
-                                    <Printer size={15} /> In Phiếu (A4)
+                                    <Printer size={15} /> {t.printVoucher}
                                 </button>
                             )}
                             <button
@@ -327,25 +330,27 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                         {loading ? (
                             <div className="flex flex-col items-center justify-center py-20 gap-3" style={{ color: '#64748B' }}>
                                 <Loader2 size={32} className="animate-spin" style={{ color: '#B47816' }} />
-                                <span className="text-xs font-bold">Đang tải thông tin chi tiết phiếu...</span>
+                                <span className="text-xs font-bold">{t.loadingDetail}</span>
                             </div>
                         ) : detail ? (
                             <>
                                 {/* Status Timeline Bar */}
                                 <div className="p-4 rounded-lg space-y-2" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                    <h4 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#475569' }}>Tiến Trình Phiếu Chuyển Kho</h4>
+                                    <h4 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#475569' }}>
+                                        {locale === 'en' ? 'Transfer Order Progress' : 'Tiến Trình Phiếu Chuyển Kho'}
+                                    </h4>
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
                                         <div className={`p-2 rounded-lg border font-bold ${['PENDING_ACCOUNTING', 'CONFIRMED', 'IN_TRANSIT', 'RECEIVED'].includes(detail.status) ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
-                                            1. Lập Phiếu
+                                            {locale === 'en' ? '1. Created' : '1. Lập Phiếu'}
                                         </div>
                                         <div className={`p-2 rounded-lg border font-bold ${['CONFIRMED', 'IN_TRANSIT', 'RECEIVED'].includes(detail.status) ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : detail.status === 'PENDING_ACCOUNTING' ? 'bg-amber-50 text-amber-800 border-amber-300 animate-pulse' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
-                                            2. Kế Toán Duyệt
+                                            {locale === 'en' ? '2. Accounting' : '2. Kế Toán Duyệt'}
                                         </div>
                                         <div className={`p-2 rounded-lg border font-bold ${['IN_TRANSIT', 'RECEIVED'].includes(detail.status) ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : detail.status === 'CONFIRMED' ? 'bg-sky-50 text-sky-800 border-sky-300' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
-                                            3. Xuất Kho (Đi)
+                                            {locale === 'en' ? '3. Dispatched' : '3. Xuất Kho (Đi)'}
                                         </div>
                                         <div className={`p-2 rounded-lg border font-bold ${detail.status === 'RECEIVED' ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
-                                            4. Nhận Kho (Đến)
+                                            {locale === 'en' ? '4. Received' : '4. Nhận Kho (Đến)'}
                                         </div>
                                     </div>
                                 </div>
@@ -354,8 +359,12 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 {detail.status === 'DRAFT' && (
                                     <div className="p-4 rounded-lg flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                         <div>
-                                            <p className="text-xs font-bold" style={{ color: '#0F172A' }}>Phiếu đang ở trạng thái Nháp</p>
-                                            <p className="text-[11px]" style={{ color: '#64748B' }}>Vui lòng kiểm tra kỹ danh mục rượu trước khi gửi Kế toán phê duyệt</p>
+                                            <p className="text-xs font-bold" style={{ color: '#0F172A' }}>
+                                                {locale === 'en' ? 'Transfer Order is in Draft' : 'Phiếu đang ở trạng thái Nháp'}
+                                            </p>
+                                            <p className="text-[11px]" style={{ color: '#64748B' }}>
+                                                {locale === 'en' ? 'Review the wine items carefully before submitting to Accounting for approval' : 'Vui lòng kiểm tra kỹ danh mục rượu trước khi gửi Kế toán phê duyệt'}
+                                            </p>
                                         </div>
                                         <button
                                             disabled={actionLoading}
@@ -363,7 +372,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                             className="px-4 py-2.5 rounded-lg text-xs font-bold transition-all shadow-xs"
                                             style={{ background: '#0E7490', color: '#FFFFFF' }}
                                         >
-                                            Gửi Kế Toán Duyệt
+                                            {locale === 'en' ? 'Submit for Accounting' : 'Gửi Kế Toán Duyệt'}
                                         </button>
                                     </div>
                                 )}
@@ -373,10 +382,10 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                                             <div>
                                                 <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: '#B47816' }}>
-                                                    <Clock size={16} style={{ color: '#B47816' }} /> Cần Kế Toán Phê Duyệt Phiếu Chuyển Kho
+                                                    <Clock size={16} style={{ color: '#B47816' }} /> {locale === 'en' ? 'Pending Accounting Approval' : 'Cần Kế Toán Phê Duyệt Phiếu Chuyển Kho'}
                                                 </p>
                                                 <p className="text-[11px] mt-0.5" style={{ color: '#475569' }}>
-                                                    Kế toán kiểm tra danh mục hàng hóa, số lượng & tính hợp lệ để xác nhận duyệt phiếu
+                                                    {locale === 'en' ? 'Accounting verifies items, quantities & validity to approve this transfer' : 'Kế toán kiểm tra danh mục hàng hóa, số lượng & tính hợp lệ để xác nhận duyệt phiếu'}
                                                 </p>
                                             </div>
                                             {isAccountingOrAdmin && !showRejectInput && (
@@ -385,7 +394,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                         onClick={() => setShowRejectInput(true)}
                                                         className="px-3.5 py-2 rounded-lg border border-rose-300 bg-white text-rose-700 font-bold text-xs hover:bg-rose-50 cursor-pointer"
                                                     >
-                                                        Từ Chối
+                                                        {locale === 'en' ? 'Reject' : 'Từ Chối'}
                                                     </button>
                                                     <button
                                                         disabled={actionLoading}
@@ -393,7 +402,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                         className="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-xs cursor-pointer"
                                                         style={{ background: '#0E7490', color: '#FFFFFF' }}
                                                     >
-                                                        <Check size={15} /> Duyệt Phiếu Chuyển Kho
+                                                        <Check size={15} /> {t.btnApprove}
                                                     </button>
                                                 </div>
                                             )}
@@ -405,12 +414,12 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                     type="text"
                                                     value={rejectReason}
                                                     onChange={e => setRejectReason(e.target.value)}
-                                                    placeholder="Nhập lý do từ chối phiếu chuyển kho này..."
+                                                    placeholder={locale === 'en' ? 'Enter reason for rejecting this transfer order...' : 'Nhập lý do từ chối phiếu chuyển kho này...'}
                                                     className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-rose-500"
                                                 />
                                                 <div className="flex justify-end gap-2">
-                                                    <button onClick={() => setShowRejectInput(false)} className="inline-block px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg whitespace-nowrap shrink-0">Hủy</button>
-                                                    <button onClick={handleReject} disabled={actionLoading} className="px-3.5 py-1.5 text-xs font-bold bg-rose-600 text-white rounded-lg hover:bg-rose-700">Xác Nhận Từ Chối</button>
+                                                    <button onClick={() => setShowRejectInput(false)} className="inline-block px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg whitespace-nowrap shrink-0">{t.cancelBtn}</button>
+                                                    <button onClick={handleReject} disabled={actionLoading} className="px-3.5 py-1.5 text-xs font-bold bg-rose-600 text-white rounded-lg hover:bg-rose-700">{locale === 'en' ? 'Confirm Reject' : 'Xác Nhận Từ Chối'}</button>
                                                 </div>
                                             </div>
                                         )}
@@ -421,10 +430,10 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                     <div className="p-4 rounded-lg bg-sky-50 border border-sky-300 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                                         <div>
                                             <p className="text-xs font-bold text-sky-900 flex items-center gap-1.5">
-                                                <CheckCircle2 size={16} className="text-sky-600" /> Kế toán đã phê duyệt — Sẵn sàng xuất kho
+                                                <CheckCircle2 size={16} className="text-sky-600" /> {locale === 'en' ? 'Accounting Approved — Ready for Dispatch' : 'Kế toán đã phê duyệt — Sẵn sàng xuất kho'}
                                             </p>
                                             <p className="text-[11px] text-sky-700 mt-0.5">
-                                                Thủ kho xuất hàng bấm "In Phiếu A4" để ký nhận giấy & nhấp "Xuất Kho & Vận Chuyển"
+                                                {locale === 'en' ? 'Print the A4 voucher for 4-party signatures and click Confirm Shipment' : 'Thủ kho xuất hàng bấm "In Phiếu A4" để ký nhận giấy & nhấp "Xuất Kho & Vận Chuyển"'}
                                             </p>
                                         </div>
                                         <button
@@ -432,7 +441,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                             onClick={handleDispatch}
                                             className="px-4 py-2.5 rounded-lg bg-sky-600 text-white font-bold text-xs hover:bg-sky-700 transition-colors shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                                         >
-                                            <Truck size={15} /> Xuất Kho & Vận Chuyển
+                                            <Truck size={15} /> {t.btnConfirmShip}
                                         </button>
                                     </div>
                                 )}
@@ -441,10 +450,10 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                     <div className="p-4 rounded-lg bg-blue-50 border border-blue-300 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                                         <div>
                                             <p className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
-                                                <Truck size={16} className="text-blue-600" /> Hàng đang vận chuyển trên đường
+                                                <Truck size={16} className="text-blue-600" /> {locale === 'en' ? 'Goods are currently In Transit' : 'Hàng đang vận chuyển trên đường'}
                                             </p>
                                             <p className="text-[11px] text-blue-700 mt-0.5">
-                                                Khi hàng đến Kho Nhận, Thủ kho kiểm đếm thực tế và bấm &quot;Kiểm Đếm &amp; Nhận Hàng&quot;
+                                                {locale === 'en' ? 'Upon arrival at Destination Warehouse, inspect physical bottles and click Inspect & Confirm Receipt' : 'Khi hàng đến Kho Nhận, Thủ kho kiểm đếm thực tế và bấm "Kiểm Đếm & Nhận Hàng"'}
                                             </p>
                                         </div>
                                         <button
@@ -454,7 +463,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                             style={{ background: '#0E7490', color: '#FFFFFF' }}
                                         >
                                             {loadingLocations ? <Loader2 size={15} className="animate-spin" /> : <PackageCheck size={15} />}
-                                            Kiểm Đếm &amp; Nhận Hàng
+                                            {t.btnOpenReceiveModal}
                                         </button>
                                     </div>
                                 )}
@@ -468,31 +477,31 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                             <span className="text-emerald-700 font-bold">{detail.toWarehouse}</span>
                                         </div>
                                         <div className="flex items-center gap-2 text-slate-500 font-mono text-[11px]">
-                                            <span>{detail.lines.length} mặt hàng</span>
+                                            <span>{detail.lines.length} {t.unitLine}</span>
                                             <span>•</span>
-                                            <span className="font-bold text-emerald-700">{detail.lines.reduce((s, l) => s + Number(l.qtyTransferred), 0)} chai</span>
+                                            <span className="font-bold text-emerald-700">{detail.lines.reduce((s, l) => s + Number(l.qtyTransferred), 0)} {t.unitBottle}</span>
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-600">
                                         <div className="flex items-center gap-1.5">
-                                            <span className="text-slate-400">Người lập:</span>
+                                            <span className="text-slate-400">{t.requesterLabel}:</span>
                                             <span className="font-bold text-slate-800">{detail.requesterName}</span>
                                             <span className="text-slate-400 font-mono">({formatDate(detail.transferDate)})</span>
                                         </div>
                                         <div className="flex items-center gap-1.5 sm:justify-end">
-                                            <span className="text-slate-400">Kế toán duyệt:</span>
+                                            <span className="text-slate-400">{locale === 'en' ? 'Accounting Approved:' : 'Kế toán duyệt:'}</span>
                                             {detail.accountingApprovedBy ? (
                                                 <span className="font-bold text-emerald-700">
                                                     {detail.accountingApprovedBy} {detail.accountingApprovedAt && `(${formatDate(detail.accountingApprovedAt)})`}
                                                 </span>
                                             ) : (
-                                                <span className="text-slate-400 italic">Chưa phê duyệt</span>
+                                                <span className="text-slate-400 italic">{locale === 'en' ? 'Not approved yet' : 'Chưa phê duyệt'}</span>
                                             )}
                                         </div>
                                     </div>
                                     {detail.notes && (
                                         <div className="pt-1 text-[11px] text-slate-600 border-t border-slate-200/60">
-                                            <span className="font-bold text-slate-500 mr-1">Ghi chú:</span>
+                                            <span className="font-bold text-slate-500 mr-1">{t.notesSectionTitle}:</span>
                                             <span>{detail.notes}</span>
                                         </div>
                                     )}
@@ -510,7 +519,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                         }`}
                                     >
                                         <Boxes size={15} className={activeTab === 'ITEMS' ? 'text-amber-600' : 'text-slate-400'} />
-                                        <span>Danh Sách Mặt Hàng</span>
+                                        <span>{t.tabItems}</span>
                                         <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
                                             activeTab === 'ITEMS' ? 'bg-amber-200/80 text-amber-950' : 'bg-slate-100 text-slate-600'
                                         }`}>
@@ -528,7 +537,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                         }`}
                                     >
                                         <MapPin size={15} className={activeTab === 'PICKING' ? 'text-sky-600' : 'text-slate-400'} />
-                                        <span>Vị Trí Nhặt Hàng (Pick List)</span>
+                                        <span>{locale === 'en' ? 'Picking Locations (FIFO Pick List)' : 'Vị Trí Nhặt Hàng (Pick List)'}</span>
                                         <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
                                             activeTab === 'PICKING' ? 'bg-sky-200/80 text-sky-950' : 'bg-slate-100 text-slate-600'
                                         }`}>
@@ -547,10 +556,14 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                     <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
                                                     <div>
                                                         <p className="text-xs font-bold text-amber-950">
-                                                            Phát hiện Niên Vụ (Vintage) không khớp với tồn kho thực tế tại kho xuất!
+                                                            {locale === 'en'
+                                                                ? 'Vintage mismatch detected against physical stock at source warehouse!'
+                                                                : 'Phát hiện Niên Vụ (Vintage) không khớp với tồn kho thực tế tại kho xuất!'}
                                                         </p>
                                                         <p className="text-[11px] text-amber-800 mt-0.5">
-                                                            Có sản phẩm đang yêu cầu niên vụ mà kho xuất đã hết hàng. Bạn có thể bấm &quot;Tự Động Khớp&quot; để hệ thống tự chuyển sang niên vụ có sẵn hàng, hoặc đổi thủ công từng dòng ở bảng bên dưới.
+                                                            {locale === 'en'
+                                                                ? 'Some lines request a vintage that is out of stock. Click "Auto-Match" to switch to an available vintage or update each line manually below.'
+                                                                : 'Có sản phẩm đang yêu cầu niên vụ mà kho xuất đã hết hàng. Bạn có thể bấm "Tự Động Khớp" để hệ thống tự chuyển sang niên vụ có sẵn hàng, hoặc đổi thủ công từng dòng ở bảng bên dưới.'}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -561,7 +574,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                     className="px-3.5 py-2 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-1.5 shadow-sm transition-all shrink-0 cursor-pointer disabled:opacity-50"
                                                 >
                                                     {autoFixing ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
-                                                    Tự động khớp niên vụ còn hàng
+                                                    {locale === 'en' ? 'Auto-match available vintage' : 'Tự động khớp niên vụ còn hàng'}
                                                 </button>
                                             </div>
                                         )}
@@ -573,13 +586,13 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                 <table className="w-full text-left text-xs border-collapse">
                                                     <thead>
                                                         <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B' }}>
-                                                            <th className="p-3 font-semibold uppercase text-[10px] w-10 text-center">STT</th>
-                                                            <th className="p-3 font-semibold uppercase text-[10px]">Mã SKU</th>
-                                                            <th className="p-3 font-semibold uppercase text-[10px]">Sản Phẩm</th>
+                                                            <th className="p-3 font-semibold uppercase text-[10px] w-10 text-center">{t.colStt}</th>
+                                                            <th className="p-3 font-semibold uppercase text-[10px]">SKU</th>
+                                                            <th className="p-3 font-semibold uppercase text-[10px]">{t.colProductInfo}</th>
                                                             <th className="p-3 font-semibold uppercase text-[10px] text-center">VTG</th>
-                                                            <th className="p-3 font-semibold uppercase text-[10px] text-center">Số Lượng</th>
-                                                            <th className="p-3 font-semibold uppercase text-[10px] text-right">Đơn Giá Vốn</th>
-                                                            <th className="p-3 font-semibold uppercase text-[10px] text-right">Thành Tiền</th>
+                                                            <th className="p-3 font-semibold uppercase text-[10px] text-center">{t.colQtyTransferred}</th>
+                                                            <th className="p-3 font-semibold uppercase text-[10px] text-right">{t.colUnitCost}</th>
+                                                            <th className="p-3 font-semibold uppercase text-[10px] text-right">{t.colLineTotalCost}</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y" style={{ borderColor: '#F1F5F9' }}>
@@ -603,11 +616,11 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                                                     {l.availableVintages && l.availableVintages.length > 0 ? (
                                                                                         l.availableVintages.map(v => (
                                                                                             <option key={v.vintage ?? 'NV'} value={v.vintage !== null && v.vintage !== undefined ? String(v.vintage) : 'NV'}>
-                                                                                                {v.vintage ? `VTG ${v.vintage}` : 'NV'} (Tồn: {v.qtyAvailable}c)
+                                                                                                {v.vintage ? `VTG ${v.vintage}` : 'NV'} ({v.qtyAvailable})
                                                                                             </option>
                                                                                         ))
                                                                                     ) : (
-                                                                                        <option value="NV">Kho hết hàng</option>
+                                                                                        <option value="NV">{locale === 'en' ? 'Out of stock' : 'Kho hết hàng'}</option>
                                                                                     )}
                                                                                 </select>
                                                                                 <button
@@ -615,7 +628,6 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                                                     disabled={vintageUpdating}
                                                                                     onClick={() => handleUpdateVintage(l.id, selectedNewVintage)}
                                                                                     className="p-1 text-emerald-600 hover:bg-emerald-50 rounded cursor-pointer"
-                                                                                    title="Lưu thay đổi niên vụ"
                                                                                 >
                                                                                     {vintageUpdating ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
                                                                                 </button>
@@ -623,7 +635,6 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                                                     type="button"
                                                                                     onClick={() => setEditingVintageLineId(null)}
                                                                                     className="p-1 text-slate-400 hover:bg-slate-100 rounded cursor-pointer"
-                                                                                    title="Hủy"
                                                                                 >
                                                                                     <X size={13} />
                                                                                 </button>
@@ -647,21 +658,20 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                                                                 )
                                                                                             }}
                                                                                             className="px-1.5 py-0.5 text-[10px] font-sans font-semibold rounded bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 transition-colors flex items-center gap-1 cursor-pointer"
-                                                                                            title="Đổi niên vụ (Vintage) cho sản phẩm này"
                                                                                         >
-                                                                                            <RotateCw size={10} /> Đổi
+                                                                                            <RotateCw size={10} /> {locale === 'en' ? 'Change' : 'Đổi'}
                                                                                         </button>
                                                                                     )}
                                                                                 </div>
                                                                                 {isEditable && isLowOrZeroStock && (
                                                                                     <span className="text-[10px] text-rose-600 bg-rose-50 px-1 py-0.5 rounded font-semibold whitespace-nowrap border border-rose-100">
-                                                                                        Tồn: {l.vintageAvailableStock ?? 0} chai
+                                                                                        {l.vintageAvailableStock ?? 0} {t.unitBottle}
                                                                                     </span>
                                                                                 )}
                                                                             </div>
                                                                         )}
                                                                     </td>
-                                                                    <td className="p-3 text-center font-mono font-bold" style={{ color: '#B47816' }}>{l.qtyTransferred} chai</td>
+                                                                    <td className="p-3 text-center font-mono font-bold" style={{ color: '#B47816' }}>{l.qtyTransferred} {t.unitBottle}</td>
                                                                     <td className="p-3 text-right font-mono" style={{ color: '#64748B' }}>{formatVND(l.unitCost)}</td>
                                                                     <td className="p-3 text-right font-mono font-bold" style={{ color: '#0F172A' }}>{formatVND(l.totalValue)}</td>
                                                                 </tr>
@@ -671,10 +681,10 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                     <tfoot>
                                                         <tr className="bg-slate-50 border-t border-slate-200 font-bold text-slate-800">
                                                             <td colSpan={4} className="p-3 text-right uppercase text-[10px] text-slate-500 font-bold">
-                                                                Tổng cộng ({detail.lines.length} mặt hàng):
+                                                                {t.totalValFooter} ({detail.lines.length} {t.unitLine}):
                                                             </td>
                                                             <td className="p-3 text-center font-mono font-extrabold text-amber-700">
-                                                                {detail.lines.reduce((s, l) => s + Number(l.qtyTransferred), 0)} chai
+                                                                {detail.lines.reduce((s, l) => s + Number(l.qtyTransferred), 0)} {t.unitBottle}
                                                             </td>
                                                             <td></td>
                                                             <td className="p-3 text-right font-mono font-extrabold text-slate-900">
@@ -708,35 +718,35 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                                 {l.productName}
                                                             </p>
                                                             <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-100">
-                                                                <span className="text-slate-500">Số lượng chuyển:</span>
+                                                                <span className="text-slate-500">{t.colQtyTransferred}:</span>
                                                                 <span className="font-mono font-bold text-amber-800 text-sm">
-                                                                    {l.qtyTransferred} chai
+                                                                    {l.qtyTransferred} {t.unitBottle}
                                                                 </span>
                                                             </div>
                                                             <div className="flex items-center justify-between text-xs">
-                                                                <span className="text-slate-500">Đơn giá vốn:</span>
+                                                                <span className="text-slate-500">{t.colUnitCost}:</span>
                                                                 <span className="font-mono text-slate-700">
                                                                     {formatVND(l.unitCost)}
                                                                 </span>
                                                             </div>
                                                             <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100 font-bold">
-                                                                <span className="text-slate-900">Thành tiền:</span>
+                                                                <span className="text-slate-900">{t.colLineTotalCost}:</span>
                                                                 <span className="font-mono text-slate-900">
                                                                     {formatVND(l.totalValue)}
                                                                 </span>
                                                             </div>
                                                             {isEditable && isLowOrZeroStock && (
                                                                 <div className="text-[10px] text-rose-600 bg-rose-50 p-1.5 rounded font-semibold border border-rose-200">
-                                                                    Cảnh báo tồn: Lô còn {l.vintageAvailableStock ?? 0} chai
+                                                                    {locale === 'en' ? `Stock alert: ${l.vintageAvailableStock ?? 0} btls available` : `Cảnh báo tồn: Lô còn ${l.vintageAvailableStock ?? 0} chai`}
                                                                 </div>
                                                             )}
                                                         </div>
                                                     )
                                                 })}
                                                 <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between text-xs font-bold">
-                                                    <span>Tổng cộng ({detail.lines.length} mặt hàng):</span>
+                                                    <span>{t.totalValFooter} ({detail.lines.length} {t.unitLine}):</span>
                                                     <span className="font-mono text-amber-800 text-sm">
-                                                        {detail.lines.reduce((s, l) => s + Number(l.qtyTransferred), 0)} chai
+                                                        {detail.lines.reduce((s, l) => s + Number(l.qtyTransferred), 0)} {t.unitBottle}
                                                     </span>
                                                 </div>
                                             </div>
@@ -746,14 +756,14 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                         <div className="flex items-center justify-between p-3 rounded-lg bg-sky-50/70 border border-sky-200 text-xs">
                                             <div className="flex items-center gap-2 text-sky-900">
                                                 <MapPin size={15} className="text-sky-600 shrink-0" />
-                                                <span>Cần kiểm tra vị trí kệ/pallet nhặt hàng tại kho xuất?</span>
+                                                <span>{locale === 'en' ? 'Need to check bin/pallet picking locations at source warehouse?' : 'Cần kiểm tra vị trí kệ/pallet nhặt hàng tại kho xuất?'}</span>
                                             </div>
                                             <button
                                                 type="button"
                                                 onClick={() => setActiveTab('PICKING')}
                                                 className="font-bold text-sky-700 hover:text-sky-900 hover:underline flex items-center gap-1 cursor-pointer shrink-0"
                                             >
-                                                <span>Xem vị trí nhặt hàng</span>
+                                                <span>{locale === 'en' ? 'View Pick List' : 'Xem vị trí nhặt hàng'}</span>
                                                 <ArrowRight size={13} className="shrink-0" />
                                             </button>
                                         </div>
@@ -775,11 +785,11 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                         <div className="flex items-center gap-2 text-rose-800">
                                                             <ShieldAlert size={16} className="text-rose-600" />
                                                             <h4 className="text-xs font-extrabold uppercase tracking-wide">
-                                                                Phiếu Chuyển Kho Đã Hủy / Bị Từ Chối
+                                                                {locale === 'en' ? 'Transfer Order Cancelled / Rejected' : 'Phiếu Chuyển Kho Đã Hủy / Bị Từ Chối'}
                                                             </h4>
                                                         </div>
                                                         <p className="text-xs text-rose-700">
-                                                            Phiếu chuyển kho này không còn hiệu lực. Hàng hóa chưa hoặc không được xuất kho.
+                                                            {locale === 'en' ? 'This transfer order is no longer valid. Goods were not dispatched.' : 'Phiếu chuyển kho này không còn hiệu lực. Hàng hóa chưa hoặc không được xuất kho.'}
                                                         </p>
                                                     </div>
                                                 )
@@ -812,17 +822,17 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                                     }`}
                                                                 >
                                                                     {isReceived
-                                                                        ? `Trạng Thái Nhặt Hàng: Đã Xuất Kho & Nhập Kho Hoàn Tất`
+                                                                        ? (locale === 'en' ? 'Picking Status: Dispatched & Received in Full' : 'Trạng Thái Nhặt Hàng: Đã Xuất Kho & Nhập Kho Hoàn Tất')
                                                                         : isInTransit
-                                                                        ? `Trạng Thái Nhặt Hàng: Đã Xuất Kho (${detail.fromWarehouse}) — Đang Vận Chuyển`
-                                                                        : `Gợi Ý Vị Trí Nhặt Hàng (Pick List FIFO tại ${detail.fromWarehouse})`}
+                                                                        ? (locale === 'en' ? `Picking Status: Dispatched (${detail.fromWarehouse}) — In Transit` : `Trạng Thái Nhặt Hàng: Đã Xuất Kho (${detail.fromWarehouse}) — Đang Vận Chuyển`)
+                                                                        : (locale === 'en' ? `FIFO Pick List Suggestions at ${detail.fromWarehouse}` : `Gợi Ý Vị Trí Nhặt Hàng (Pick List FIFO tại ${detail.fromWarehouse})`)}
                                                                 </h4>
                                                                 <p className="text-[11px] text-slate-600 mt-0.5">
                                                                     {isReceived
-                                                                        ? `Toàn bộ hàng đã được xuất thành công từ ${detail.fromWarehouse} và nhập đủ vào ${detail.toWarehouse}.`
+                                                                        ? (locale === 'en' ? `All goods were dispatched from ${detail.fromWarehouse} and received into ${detail.toWarehouse}.` : `Toàn bộ hàng đã được xuất thành công từ ${detail.fromWarehouse} và nhập đủ vào ${detail.toWarehouse}.`)
                                                                         : isInTransit
-                                                                        ? `Hàng đã được trừ tồn tại ${detail.fromWarehouse}, đang trên đường chuyển đến ${detail.toWarehouse}.`
-                                                                        : `Vị trí các lô hàng khả dụng theo nguyên tắc FIFO tại kho xuất.`}
+                                                                        ? (locale === 'en' ? `Stock deducted from ${detail.fromWarehouse}, currently in transit to ${detail.toWarehouse}.` : `Hàng đã được trừ tồn tại ${detail.fromWarehouse}, đang trên đường chuyển đến ${detail.toWarehouse}.`)
+                                                                        : (locale === 'en' ? 'Available stock lots ordered by FIFO at source warehouse.' : 'Vị trí các lô hàng khả dụng theo nguyên tắc FIFO tại kho xuất.')}
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -832,12 +842,12 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                                 isReceived ? 'bg-emerald-600 hover:bg-emerald-700' : isInTransit ? 'bg-blue-600 hover:bg-blue-700' : 'bg-sky-600 hover:bg-sky-700'
                                                             }`}
                                                         >
-                                                            <Printer size={12} /> In Phiếu Nhặt Hàng
+                                                            <Printer size={12} /> {t.printPickList}
                                                         </button>
                                                     </div>
 
                                                     {pickingLocations.length === 0 ? (
-                                                        <p className="text-xs text-slate-500 italic">Đang tải thông tin vị trí nhặt hàng...</p>
+                                                        <p className="text-xs text-slate-500 italic">{t.loadingDetail}</p>
                                                     ) : (
                                                         <div className="space-y-2.5">
                                                             {pickingLocations.map(p => (
@@ -859,23 +869,23 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                                         </div>
                                                                         <div className="flex items-center gap-2">
                                                                             <span className="text-[11px] font-mono font-bold text-slate-900">
-                                                                                Yêu cầu: {p.qtyRequested} chai
+                                                                                {locale === 'en' ? 'Requested:' : 'Yêu cầu:'} {p.qtyRequested} {t.unitBottle}
                                                                             </span>
                                                                             {isReceived ? (
                                                                                 <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-emerald-100 text-emerald-800 inline-flex items-center gap-1 whitespace-nowrap shrink-0">
-                                                                                    <CheckCircle2 size={10} /> Đã Xuất & Nhận Đủ ({p.qtyRequested} chai)
+                                                                                    <CheckCircle2 size={10} /> {t.statusReceived} ({p.qtyRequested})
                                                                                 </span>
                                                                             ) : isInTransit ? (
                                                                                 <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-blue-100 text-blue-800 inline-flex items-center gap-1 whitespace-nowrap shrink-0">
-                                                                                    <Truck size={10} /> Đã Xuất Kho ({p.qtyRequested} chai)
+                                                                                    <Truck size={10} /> {t.statusInTransit} ({p.qtyRequested})
                                                                                 </span>
                                                                             ) : p.isSufficient ? (
                                                                                 <span className="inline-block px-2 py-0.5 text-[9px] font-bold rounded bg-emerald-100 text-emerald-700 whitespace-nowrap shrink-0">
-                                                                                    Đủ Tồn FIFO ({p.totalAvailableInWH} chai sẵn)
+                                                                                    FIFO OK ({p.totalAvailableInWH} {t.unitBottle})
                                                                                 </span>
                                                                             ) : (
                                                                                 <span className="inline-block px-2 py-0.5 text-[9px] font-bold rounded bg-rose-100 text-rose-700 whitespace-nowrap shrink-0">
-                                                                                    Thiếu Tồn ({p.totalAvailableInWH} chai sẵn)
+                                                                                    {t.statusShortage} ({p.totalAvailableInWH} {t.unitBottle})
                                                                                 </span>
                                                                             )}
                                                                         </div>
@@ -897,12 +907,14 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                                                     <Truck size={14} className="text-blue-600 shrink-0" />
                                                                                 )}
                                                                                 <span>
-                                                                                    Đã xuất kho đủ <strong>{p.qtyRequested} chai</strong> (Tồn kho tại <em>{detail.fromWarehouse}</em> đã được trừ hoàn tất khi xuất hàng).
+                                                                                    {locale === 'en'
+                                                                                        ? `Dispatched ${p.qtyRequested} btls in full from ${detail.fromWarehouse}.`
+                                                                                        : `Đã xuất kho đủ ${p.qtyRequested} chai từ ${detail.fromWarehouse}.`}
                                                                                 </span>
                                                                             </div>
                                                                         ) : p.pickingLocations.length === 0 ? (
                                                                             <div className="text-[11px] text-rose-600 font-semibold col-span-2">
-                                                                                Không tìm thấy lô hàng khả dụng ở Kho Xuất
+                                                                                {t.noStockInWarehouse}
                                                                             </div>
                                                                         ) : (
                                                                             p.pickingLocations.map((loc, i) => (
@@ -910,18 +922,18 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                                                     <div className="space-y-0.5">
                                                                                         <div className="flex items-center gap-1 font-mono font-extrabold text-slate-900">
                                                                                             <Layers size={12} className="text-sky-600" />
-                                                                                            <span>Kệ/Vị trí: <span className="text-blue-700 font-bold">{loc.locationCode}</span></span>
+                                                                                            <span>{locale === 'en' ? 'Bin:' : 'Kệ/Vị trí:'} <span className="text-blue-700 font-bold">{loc.locationCode}</span></span>
                                                                                         </div>
                                                                                         <div className="text-[10px] text-slate-500 font-mono">
-                                                                                            Lô: {loc.lotNo} {loc.vintage ? `· Vintage ${loc.vintage}` : ''}
+                                                                                            Lot: {loc.lotNo} {loc.vintage ? `· VTG ${loc.vintage}` : ''}
                                                                                         </div>
                                                                                     </div>
                                                                                     <div className="text-right font-mono">
                                                                                         <span className="font-bold text-emerald-700 text-xs block">
-                                                                                            {isDispatchedOrDone ? 'Đã nhặt' : 'Nhặt'} {loc.qtyToPick} chai
+                                                                                            {isDispatchedOrDone ? (locale === 'en' ? 'Picked' : 'Đã nhặt') : (locale === 'en' ? 'Pick' : 'Nhặt')} {loc.qtyToPick} {t.unitBottle}
                                                                                         </span>
                                                                                         <span className="text-[10px] text-slate-400">
-                                                                                            {isDispatchedOrDone ? `Tồn dư hiện tại: ${loc.qtyAvailable}` : `Tồn kệ: ${loc.qtyAvailable}`}
+                                                                                            {locale === 'en' ? `Bin avail: ${loc.qtyAvailable}` : `Tồn kệ: ${loc.qtyAvailable}`}
                                                                                         </span>
                                                                                     </div>
                                                                                 </div>
@@ -939,7 +951,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 )}
                             </>
                         ) : (
-                            <div className="p-12 text-center text-slate-400">Không tìm thấy dữ liệu phiếu</div>
+                            <div className="p-12 text-center text-slate-400">{t.notFoundDetail}</div>
                         )}
                     </div>
 
@@ -951,14 +963,14 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 className="px-3.5 py-2 rounded-lg text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
                                 style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', color: '#0F172A' }}
                             >
-                                <Printer size={14} /> In Phiếu Chuyển Kho A4
+                                <Printer size={14} /> {t.printVoucher}
                             </button>
                             <button
                                 onClick={() => { setPrintDocType('PICK_LIST'); setPrintModalOpen(true) }}
                                 className="px-3.5 py-2 rounded-lg text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
                                 style={{ background: '#E0F2FE', border: '1px solid #7DD3FC', color: '#0369A1' }}
                             >
-                                <MapPin size={14} /> In Phiếu Nhặt Hàng
+                                <MapPin size={14} /> {t.printPickList}
                             </button>
                         </div>
                         <button
@@ -966,7 +978,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                             className="px-4 py-2.5 rounded-lg text-xs font-semibold transition-all"
                             style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#64748B' }}
                         >
-                            Đóng
+                            {t.closeBtn}
                         </button>
                     </div>
                 </div>
@@ -1253,12 +1265,12 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                         <PackageCheck size={18} />
                                     </span>
                                     <h3 className="text-base font-bold text-slate-900">
-                                        Kiểm Đếm Thực Nhận &amp; Chọn Vị Trí Kệ Lưu Kho
+                                        {t.receiveModalTitle}
                                     </h3>
                                 </div>
                                 <p className="text-xs text-slate-600 mt-1">
-                                    Phiếu: <span className="font-mono font-bold text-amber-800">{detail.transferNo}</span> &nbsp;|&nbsp; 
-                                    Kho nhận: <strong className="text-emerald-700">{detail.toWarehouse}</strong>
+                                    {t.receiveModalVoucher} <span className="font-mono font-bold text-amber-800">{detail.transferNo}</span> &nbsp;|&nbsp; 
+                                    {t.receiveModalDest} <strong className="text-emerald-700">{detail.toWarehouse}</strong>
                                 </p>
                             </div>
                             <button
@@ -1274,7 +1286,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                             <div className="p-4 bg-rose-50 border-b border-rose-200 text-xs text-rose-900 flex items-center gap-2">
                                 <AlertCircle size={16} className="text-rose-600 shrink-0" />
                                 <span>
-                                    <strong>Cảnh báo:</strong> Kho nhận <em>{detail.toWarehouse}</em> chưa có vị trí kệ (Location) nào. Vui lòng vào Quản lý Vị Trí Kho để tạo vị trí kệ trước khi nhận hàng.
+                                    {t.noDestLocationWarn}
                                 </span>
                             </div>
                         ) : (
@@ -1282,11 +1294,11 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                 <div className="flex items-center gap-2">
                                     <AlertCircle size={16} className="text-amber-700 shrink-0" />
                                     <span>
-                                        Kiểm tra số chai thực tế nguyên vẹn khi dỡ hàng. Nếu bị nứt vỡ hoặc thiếu, vui lòng sửa cột <strong>SL Thực Nhận</strong>.
+                                        {t.receiveGuideText}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
-                                    <span className="text-[11px] font-bold text-slate-700">Gán nhanh kệ nhận:</span>
+                                    <span className="text-[11px] font-bold text-slate-700">{t.quickAssignLoc}</span>
                                     <select
                                         value={bulkLocationId}
                                         onChange={e => handleApplyBulkLocation(e.target.value)}
@@ -1307,13 +1319,13 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                             <table className="w-full text-left text-xs border-collapse">
                                 <thead>
                                     <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
-                                        <th className="px-3 py-2.5 w-10 text-center">STT</th>
-                                        <th className="px-3 py-2.5">Sản Phẩm</th>
-                                        <th className="px-3 py-2.5 w-16 text-center">Niên Vụ</th>
-                                        <th className="px-3 py-2.5 w-24 text-right">SL Xuất</th>
-                                        <th className="px-3 py-2.5 w-32 text-center">SL Thực Nhận</th>
-                                        <th className="px-3 py-2.5 w-32 text-center">Trạng Thái</th>
-                                        <th className="px-3 py-2.5 w-44">Vị Trí Kệ Nhận</th>
+                                        <th className="px-3 py-2.5 w-10 text-center">{t.colStt}</th>
+                                        <th className="px-3 py-2.5">{t.colProductInfo}</th>
+                                        <th className="px-3 py-2.5 w-16 text-center">{t.colVintage}</th>
+                                        <th className="px-3 py-2.5 w-24 text-right">{t.colQtyTransferred}</th>
+                                        <th className="px-3 py-2.5 w-32 text-center">{t.colQtyReceived}</th>
+                                        <th className="px-3 py-2.5 w-32 text-center">{t.colVariance}</th>
+                                        <th className="px-3 py-2.5 w-44">{t.colDestLoc}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
@@ -1328,7 +1340,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                 </td>
                                                 <td className="px-3 py-3 text-center font-mono text-slate-600">{line.vintage || 'NV'}</td>
                                                 <td className="px-3 py-3 text-right font-mono font-bold text-slate-700">
-                                                    {line.qtyTransferred} <span className="text-[10px] text-slate-400">chai</span>
+                                                    {line.qtyTransferred} <span className="text-[10px] text-slate-400">{t.unitBottle}</span>
                                                 </td>
                                                 <td className="px-3 py-3 text-center">
                                                     <input
@@ -1355,15 +1367,15 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                 <td className="px-3 py-3 text-center">
                                                     {diff === 0 ? (
                                                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 whitespace-nowrap shrink-0">
-                                                            <CheckCircle2 size={11} /> Đủ 100%
+                                                            <CheckCircle2 size={11} /> {t.statusMatch}
                                                         </span>
                                                     ) : diff > 0 ? (
                                                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 whitespace-nowrap shrink-0">
-                                                            <AlertTriangle size={11} /> Thiếu {diff} chai
+                                                            <AlertTriangle size={11} /> {t.statusShortage} {diff} {t.unitBottle}
                                                         </span>
                                                     ) : (
                                                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 whitespace-nowrap shrink-0">
-                                                            Thừa {Math.abs(diff)} chai
+                                                            {t.statusSurplus} {Math.abs(diff)} {t.unitBottle}
                                                         </span>
                                                     )}
                                                 </td>
@@ -1384,7 +1396,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                             ))}
                                                         </select>
                                                     ) : (
-                                                        <span className="text-[11px] text-rose-500 italic">Chưa có vị trí</span>
+                                                        <span className="text-[11px] text-rose-500 italic">{t.noLocText}</span>
                                                     )}
                                                 </td>
                                             </tr>
@@ -1396,13 +1408,13 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                             {/* Receipt Notes / Damage Report */}
                             <div className="mt-6 p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
                                 <label className="block text-xs font-bold text-slate-800">
-                                    Ghi Chú Kiểm Đếm / Biên Bản Hao Hụt (nếu có chênh lệch hoặc vỡ hỏng):
+                                    {t.receiptNotesLabel}
                                 </label>
                                 <textarea
                                     value={receiptNotes}
                                     onChange={e => setReceiptNotes(e.target.value)}
                                     rows={2}
-                                    placeholder="Ví dụ: Vỡ 2 chai do rung lắc khi vận chuyển; đã lập biên bản xác nhận với lái xe..."
+                                    placeholder={t.receiptNotesPlaceholder}
                                     className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 bg-white outline-none focus:border-emerald-500"
                                 />
                             </div>
@@ -1412,16 +1424,16 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                         <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
                             <div className="flex items-center gap-4 text-xs">
                                 <div>
-                                    <span className="text-slate-500">Tổng xuất: </span>
-                                    <strong className="font-mono text-slate-900">{receiveLines.reduce((s, l) => s + l.qtyTransferred, 0)} chai</strong>
+                                    <span className="text-slate-500">{t.summaryShipped} </span>
+                                    <strong className="font-mono text-slate-900">{receiveLines.reduce((s, l) => s + l.qtyTransferred, 0)} {t.unitBottle}</strong>
                                 </div>
                                 <div>
-                                    <span className="text-slate-500">Thực nhận: </span>
-                                    <strong className="font-mono text-emerald-700">{receiveLines.reduce((s, l) => s + l.qtyReceived, 0)} chai</strong>
+                                    <span className="text-slate-500">{t.summaryReceived} </span>
+                                    <strong className="font-mono text-emerald-700">{receiveLines.reduce((s, l) => s + l.qtyReceived, 0)} {t.unitBottle}</strong>
                                 </div>
                                 {receiveLines.reduce((s, l) => s + (l.qtyTransferred - l.qtyReceived), 0) > 0 && (
                                     <div className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold">
-                                        Hao hụt: -{receiveLines.reduce((s, l) => s + (l.qtyTransferred - l.qtyReceived), 0)} chai
+                                        {t.summaryShortage} -{receiveLines.reduce((s, l) => s + (l.qtyTransferred - l.qtyReceived), 0)} {t.unitBottle}
                                     </div>
                                 )}
                             </div>
@@ -1431,7 +1443,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                     disabled={actionLoading}
                                     className="px-4 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
                                 >
-                                    Đóng
+                                    {t.closeBtn}
                                 </button>
                                 <button
                                     onClick={handleConfirmReceive}
@@ -1439,7 +1451,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                     className="px-5 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
                                 >
                                     {actionLoading ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                                    Xác Nhận Nhận Kho
+                                    {t.confirmReceiveBtn}
                                 </button>
                             </div>
                         </div>

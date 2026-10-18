@@ -2,32 +2,29 @@
 
 import { useState, useEffect } from 'react'
 import {
-    Target, TrendingUp, TrendingDown, AlertCircle, CheckCircle2,
-    Settings, Plus, Trash2, Save, X, Copy, Loader2
+    Target, TrendingDown, AlertCircle, CheckCircle2,
+    Settings, Plus, Trash2, Save, Copy,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { PageHeader, StatGrid, StatCard, Button, useConfirmDialog } from '@/components/ui'
+import {
+    PageHeader, StatGrid, StatCard, Button, Badge, StatusTabs, Toolbar,
+    Table, THead, TBody, Tr, Th, Td, TableMessageRow,
+    Drawer, Field, Input, Select, EmptyState, useConfirmDialog,
+} from '@/components/ui'
 import type { KpiSummary, KpiTargetRow } from './actions'
 import {
     getKpiSummary, getKpiTargets, upsertKpiTarget, deleteKpiTarget,
     getSalesRepOptions, getAvailableMetrics, copyKpiFromPreviousYear,
 } from './actions'
+import { useAppLocale } from '@/lib/i18n'
+import { KPI_I18N } from './i18n'
 
-const STATUS_CFG = {
-    ON_TRACK: { label: 'Đúng KH', color: '#15803D', icon: CheckCircle2 },
-    AT_RISK: { label: 'Chú ý', color: '#B45309', icon: AlertCircle },
-    BEHIND: { label: 'Chậm', color: '#B91C1C', icon: TrendingDown },
-    EXCEEDED: { label: 'Vượt KH', color: '#0891B2', icon: TrendingUp },
-}
-
-function formatValue(val: number, unit: string) {
-    if (unit === 'VND') {
-        if (val >= 1e9) return `₫${(val / 1e9).toFixed(2)}T`
-        if (val >= 1e6) return `₫${(val / 1e6).toFixed(0)}M`
-        return `₫${val.toLocaleString()}`
-    }
-    return `${val.toLocaleString()} ${unit}`
-}
+const STATUS_TONE_MAP = {
+    ON_TRACK: 'success',
+    AT_RISK: 'warning',
+    BEHIND: 'danger',
+    EXCEEDED: 'brand',
+} as const
 
 interface Props {
     summaries: KpiSummary[]
@@ -36,6 +33,9 @@ interface Props {
 }
 
 export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
+    const { locale, formatCurrency, formatNumber } = useAppLocale()
+    const L = KPI_I18N[locale]
+
     const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [summaries, setSummaries] = useState(initialSummaries)
     const [tab, setTab] = useState<'dashboard' | 'setup'>('dashboard')
@@ -46,10 +46,14 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
 
     const [metrics, setMetrics] = useState<{ metric: string; label: string; unit: string }[]>([])
     const [copying, setCopying] = useState(false)
-    const [copyResult, setCopyResult] = useState<string | null>(null)
     const [growthPct, setGrowthPct] = useState(10)
 
     useEffect(() => { getAvailableMetrics().then(setMetrics) }, [])
+
+    const formatMetricValue = (val: number, unit: string) => {
+        if (unit === 'VND') return formatCurrency(val)
+        return `${formatNumber(val)} ${unit}`
+    }
 
     const loadSetup = async () => {
         const [t, reps] = await Promise.all([getKpiTargets(year), getSalesRepOptions()])
@@ -60,7 +64,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
     useEffect(() => { if (tab === 'setup') loadSetup() }, [tab])
 
     const handleSave = async () => {
-        if (!addForm.targetValue) return toast.error('Nhập giá trị chỉ tiêu')
+        if (!addForm.targetValue) return toast.error(L.toast.missingTarget)
         const res = await upsertKpiTarget({
             metric: addForm.metric,
             year: addForm.year,
@@ -70,20 +74,22 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
             salesRepId: addForm.salesRepId || null,
         })
         if (res.success) {
+            toast.success(L.toast.saveSuccess)
             setAddOpen(false)
             setAddForm({ metric: 'REVENUE', year, month, targetValue: '', unit: 'VND', salesRepId: '' })
             loadSetup()
-            // Reload dashboard data
             const newSummaries = await getKpiSummary()
             setSummaries(newSummaries)
-        } else toast.error(res.error || 'Lỗi lưu chỉ tiêu')
+        } else {
+            toast.error(res.error || L.toast.saveError)
+        }
     }
 
     const handleDelete = async (id: string) => {
         const ok = await confirm({
-            title: 'Xóa chỉ tiêu',
-            message: 'Bạn có chắc chắn muốn xóa chỉ tiêu này?',
-            confirmLabel: 'Xóa chỉ tiêu',
+            title: L.confirmDelete.title,
+            message: L.confirmDelete.message,
+            confirmLabel: L.confirmDelete.confirmLabel,
             variant: 'danger',
         })
         if (!ok) return
@@ -99,98 +105,107 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
     const behind = summaries.filter(s => s.status === 'BEHIND').length
 
     return (
-        <div className="space-y-6 max-w-screen-2xl">
+        <div className="flex flex-col gap-4 max-w-screen-2xl">
             <PageHeader
-                title="KPI Chỉ Tiêu Kinh Doanh"
-                description={`Tháng ${month}/${year} — Dữ liệu real-time từ tất cả module`}
+                description={L.header.description(month, year)}
+                actions={
+                    tab === 'setup' ? (
+                        <Button variant="primary" size="sm" onClick={() => setAddOpen(true)}>
+                            <Plus size={14} aria-hidden /> {L.setup.addBtn}
+                        </Button>
+                    ) : undefined
+                }
             />
 
-            {/* Tabs */}
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                {(['dashboard', 'setup'] as const).map(t => {
-                    const isActive = tab === t
-                    return (
-                        <button key={t} onClick={() => setTab(t)}
-                            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all flex-1 justify-center cursor-pointer"
-                            style={{
-                                background: isActive ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
-                                color: isActive ? '#0891B2' : '#64748B',
-                                border: isActive ? '1px solid rgba(8, 145, 178, 0.2)' : '1px solid transparent',
-                            }}>
-                            {t === 'dashboard' ? <><Target size={14} /> Dashboard</> :
-                                <><Settings size={14} /> Cấu Hình Chỉ Tiêu</>}
-                        </button>
-                    )
-                })}
-            </div>
+            <Toolbar
+                left={
+                    <StatusTabs
+                        items={[
+                            { value: 'dashboard', label: L.tabs.dashboard },
+                            { value: 'setup', label: L.tabs.setup },
+                        ]}
+                        value={tab}
+                        onChange={v => setTab(v as 'dashboard' | 'setup')}
+                    />
+                }
+            />
 
             {tab === 'dashboard' && (
                 <>
-                    {/* Overview */}
-                    <StatGrid className="grid-cols-1 sm:grid-cols-3 lg:grid-cols-3">
+                    <StatGrid className="grid-cols-1 sm:grid-cols-3">
                         <StatCard
-                            label="Đạt / Vượt KH"
+                            label={L.stats.onTrack}
                             value={`${onTrack}/${summaries.length}`}
                             icon={CheckCircle2}
                             tone="success"
                         />
                         <StatCard
-                            label="Cần Chú Ý"
+                            label={L.stats.atRisk}
                             value={summaries.filter(s => s.status === 'AT_RISK').length}
                             icon={AlertCircle}
                             tone="warning"
                         />
                         <StatCard
-                            label="Đang Chậm"
+                            label={L.stats.behind}
                             value={behind}
                             icon={TrendingDown}
                             tone={behind > 0 ? 'danger' : 'success'}
                         />
                     </StatGrid>
 
-                    {/* KPI Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                         {summaries.map(kpi => {
-                            const cfg = STATUS_CFG[kpi.status]
+                            const tone = STATUS_TONE_MAP[kpi.status]
+                            const statusLabel = L.status[kpi.status]
                             const barPct = Math.min(Math.min(kpi.progressPct, 120), 100)
+                            const barClass = kpi.progressPct >= 100 ? 'bg-tone-success-fg' : kpi.progressPct < 70 ? 'bg-tone-danger-fg' : 'bg-lys-teal-strong'
+
                             return (
-                                <div key={kpi.metric} className="p-5 rounded-md"
-                                    style={{ background: '#FFFFFF', border: `1px solid ${kpi.progressPct < 70 ? 'rgba(185,28,28,0.4)' : '#E2E8F0'}` }}>
+                                <div
+                                    key={kpi.metric}
+                                    className={`p-5 rounded-lg bg-white border shadow-xs ${
+                                        kpi.progressPct < 70 ? 'border-tone-danger-border' : 'border-lys-border'
+                                    }`}
+                                >
                                     <div className="flex items-start justify-between mb-4">
-                                        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{kpi.label}</p>
-                                        <span className="inline-block text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
-                                            style={{ color: cfg.color, background: `${cfg.color}20` }}>{cfg.label}</span>
+                                        <p className="type-caption uppercase tracking-wide font-semibold text-lys-muted">{kpi.label}</p>
+                                        <Badge tone={tone}>{statusLabel}</Badge>
                                     </div>
                                     <div className="mb-4">
                                         <div className="flex justify-between text-xs mb-1.5">
-                                            <span className="font-bold" style={{ color: kpi.color }}>
-                                                {formatValue(kpi.actual, kpi.unit)}
+                                            <span className="type-number font-bold text-lys-primary">
+                                                {formatMetricValue(kpi.actual, kpi.unit)}
                                             </span>
-                                            <span style={{ color: '#64748B' }}>KH: {formatValue(kpi.target, kpi.unit)}</span>
-                                        </div>
-                                        <div className="h-2.5 rounded-full overflow-hidden" style={{ background: '#E2E8F0' }}>
-                                            <div className="h-full rounded-full transition-all duration-700"
-                                                style={{
-                                                    width: `${barPct}%`,
-                                                    background: kpi.progressPct > 110 ? '#B45309' : kpi.progressPct < 70 ? '#B91C1C' : kpi.color,
-                                                }} />
-                                        </div>
-                                        <div className="flex justify-between mt-1">
-                                            <span className="text-xs" style={{ color: '#64748B' }}>
-                                                Còn thiếu: {kpi.actual < kpi.target ? formatValue(kpi.target - kpi.actual, kpi.unit) : '—'}
+                                            <span className="type-number text-lys-muted">
+                                                {L.cards.targetPrefix} {formatMetricValue(kpi.target, kpi.unit)}
                                             </span>
-                                            <span className="text-xs font-bold" style={{ color: cfg.color }}>{kpi.progressPct.toFixed(0)}%</span>
+                                        </div>
+                                        <div className="h-2 rounded-full overflow-hidden bg-lys-border">
+                                            <div
+                                                className={`h-full rounded-full transition-all duration-500 ${barClass}`}
+                                                style={{ width: `${barPct}%` }}
+                                            />
+                                        </div>
+                                        <div className="flex justify-between mt-1.5">
+                                            <span className="type-number text-xs text-lys-muted">
+                                                {L.cards.shortfallPrefix}{' '}
+                                                {kpi.actual < kpi.target ? formatMetricValue(kpi.target - kpi.actual, kpi.unit) : '—'}
+                                            </span>
+                                            <span className="type-number text-xs font-bold text-lys-primary">
+                                                {kpi.progressPct.toFixed(0)}%
+                                            </span>
                                         </div>
                                     </div>
-                                    <p className="text-xs" style={{ color: '#64748B' }}>
+                                    <p className="text-xs text-lys-muted">
                                         {kpi.unit === 'VND' && kpi.actual > 0 ? (
                                             <>
-                                                Dự báo cuối tháng: <span style={{ color: '#B45309', fontWeight: 600 }}>
-                                                    {formatValue(kpi.actual * (30 / Math.max(new Date().getDate(), 1)), 'VND')}
+                                                {L.cards.forecastPrefix}{' '}
+                                                <span className="type-number font-semibold text-tone-warning-fg">
+                                                    {formatMetricValue(kpi.actual * (30 / Math.max(new Date().getDate(), 1)), 'VND')}
                                                 </span>
-                                                {kpi.forecast ? ` (AI: ${formatValue(kpi.forecast, 'VND')})` : ''}
+                                                {kpi.forecast ? ` (AI: ${formatMetricValue(kpi.forecast, 'VND')})` : ''}
                                             </>
-                                        ) : 'Cập nhật real-time từ database'}
+                                        ) : L.cards.realtimeNote}
                                     </p>
                                 </div>
                             )
@@ -201,150 +216,133 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
 
             {tab === 'setup' && (
                 <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                        <h3 className="text-sm font-bold" style={{ color: '#B45309' }}>
-                            Cấu hình chỉ tiêu năm {year}
+                    <div className="flex flex-wrap justify-between items-center gap-3 p-4 rounded-lg bg-white border border-lys-border">
+                        <h3 className="type-section-title text-lys-primary">
+                            {L.setup.title(year)}
                         </h3>
-                        <div className="flex gap-2">
-                            <button onClick={() => setAddOpen(true)} className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
-                                style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                                <Plus size={12} /> Thêm Chỉ Tiêu
-                            </button>
-                            <div className="flex items-center gap-1">
-                                <input type="number" className="w-14 px-2 py-1.5 rounded text-xs text-center"
-                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#B45309' }}
-                                    value={growthPct} onChange={e => setGrowthPct(Number(e.target.value))} />
-                                <span className="text-xs" style={{ color: '#64748B' }}>%</span>
-                                <button onClick={async () => {
-                                    setCopying(true); setCopyResult(null)
+                        <div className="flex items-center gap-2">
+                            <Input
+                                type="number"
+                                className="w-20 text-center"
+                                value={growthPct}
+                                onChange={e => setGrowthPct(Number(e.target.value))}
+                            />
+                            <span className="text-xs text-lys-muted">%</span>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                loading={copying}
+                                onClick={async () => {
+                                    setCopying(true)
                                     const res = await copyKpiFromPreviousYear({
                                         fromYear: year - 1,
                                         toYear: year,
                                         growthMultiplier: 1 + growthPct / 100,
                                     })
                                     if (res.success) {
-                                        setCopyResult(`Đã copy ${res.copied} chỉ tiêu từ ${year - 1} (+${growthPct}%)`)
+                                        toast.success(L.setup.copiedMsg(res.copied ?? 0, year - 1, growthPct))
                                         loadSetup()
-                                    } else setCopyResult(res.error || 'Lỗi copy')
+                                    } else {
+                                        toast.error(res.error || L.setup.copyError)
+                                    }
                                     setCopying(false)
-                                    setTimeout(() => setCopyResult(null), 4000)
-                                }} disabled={copying}
-                                    className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold disabled:opacity-50"
-                                    style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309', border: '1px solid rgba(180,83,9,0.25)' }}>
-                                    {copying ? <Loader2 size={12} className="animate-spin" /> : <Copy size={12} />}
-                                    Copy từ {year - 1}
-                                </button>
-                            </div>
+                                }}
+                            >
+                                <Copy size={13} aria-hidden /> {L.setup.copyBtn(year - 1)}
+                            </Button>
                         </div>
-                        {copyResult && <p className="text-xs mt-1" style={{ color: '#B45309' }}>{copyResult}</p>}
                     </div>
 
-                    {/* Add Form */}
-                    {addOpen && (
-                        <div className="p-4 rounded-md space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                            <div className="flex items-center justify-between">
-                                <h4 className="text-xs font-bold" style={{ color: '#0891B2' }}>Thêm / Cập Nhật Chỉ Tiêu</h4>
-                                <button onClick={() => setAddOpen(false)} style={{ color: '#64748B' }}><X size={14} /></button>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="text-[10px] font-semibold" style={{ color: '#64748B' }}>Metric</label>
-                                    <select value={addForm.metric}
-                                        onChange={e => {
-                                            const m = metrics.find(x => x.metric === e.target.value)
-                                            setAddForm(f => ({ ...f, metric: e.target.value, unit: m?.unit ?? 'VND' }))
-                                        }}
-                                        className="w-full px-3 py-2 rounded text-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
-                                        {metrics.map(m => <option key={m.metric} value={m.metric}>{m.label}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-[10px] font-semibold" style={{ color: '#64748B' }}>Tháng (để trống = cả năm)</label>
-                                    <select value={addForm.month ?? ''}
-                                        onChange={e => setAddForm(f => ({ ...f, month: e.target.value ? Number(e.target.value) : null }))}
-                                        className="w-full px-3 py-2 rounded text-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
-                                        <option value="">Cả năm</option>
-                                        {Array.from({ length: 12 }, (_, i) => <option key={i + 1} value={i + 1}>Tháng {i + 1}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-[10px] font-semibold" style={{ color: '#64748B' }}>Giá trị chỉ tiêu</label>
-                                    <input type="number" value={addForm.targetValue}
-                                        onChange={e => setAddForm(f => ({ ...f, targetValue: e.target.value }))}
-                                        placeholder="5000000000" className="w-full px-3 py-2 rounded text-xs"
-                                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#B45309' }} />
-                                </div>
-                                <div>
-                                    <label className="text-[10px] font-semibold" style={{ color: '#64748B' }}>Sales Rep (tuỳ chọn)</label>
-                                    <select value={addForm.salesRepId}
-                                        onChange={e => setAddForm(f => ({ ...f, salesRepId: e.target.value }))}
-                                        className="w-full px-3 py-2 rounded text-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
-                                        <option value="">— Toàn công ty —</option>
-                                        {salesReps.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-                            <button onClick={handleSave} className="flex items-center gap-1 px-4 py-2 text-xs font-bold rounded"
-                                style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                                <Save size={12} /> Lưu Chỉ Tiêu
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Targets Table */}
-                    <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
-                        <table className="w-full text-left min-w-[500px]" style={{ borderCollapse: 'collapse' }}>
-                            <thead>
-                                <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                    {['Metric', 'Kỳ', 'Chỉ Tiêu', 'ĐV', 'Sales Rep', ''].map(h => (
-                                        <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold"
-                                            style={{ color: '#64748B' }}>{h}</th>
-                                    ))}
+                    {/* Desktop Table */}
+                    <div className="hidden md:block">
+                        <Table>
+                            <THead>
+                                <tr>
+                                    <Th>{L.setup.table.metric}</Th>
+                                    <Th>{L.setup.table.period}</Th>
+                                    <Th align="right">{L.setup.table.target}</Th>
+                                    <Th>{L.setup.table.unit}</Th>
+                                    <Th>{L.setup.table.salesRep}</Th>
+                                    <Th aria-label="Action" />
                                 </tr>
-                            </thead>
-                            <tbody>
+                            </THead>
+                            <TBody>
                                 {targets.length === 0 ? (
-                                    <tr><td colSpan={6} className="text-center py-12 text-sm" style={{ color: '#64748B' }}>
-                                        Chưa có chỉ tiêu — Sử dụng giá trị mặc định. Nhấn "Thêm Chỉ Tiêu" để tuỳ chỉnh.
-                                    </td></tr>
+                                    <TableMessageRow colSpan={6}>
+                                        <EmptyState
+                                            icon={Settings}
+                                            title={L.setup.table.emptyTitle}
+                                            description={L.setup.table.emptyDesc}
+                                        />
+                                    </TableMessageRow>
                                 ) : targets.map(t => {
                                     const metricInfo = metrics.find(m => m.metric === t.metric)
                                     return (
-                                        <tr key={t.id} style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#0891B2' }}>
+                                        <Tr key={t.id}>
+                                            <Td className="font-semibold text-lys-teal-strong">
                                                 {metricInfo?.label ?? t.metric}
-                                            </td>
-                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#0F172A' }}>
-                                                {t.month ? `T${t.month}/${t.year}` : `Năm ${t.year}`}
-                                            </td>
-                                            <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#B45309' }}>
-                                                {t.targetValue.toLocaleString('vi-VN')}
-                                            </td>
-                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>{t.unit}</td>
-                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#0F172A' }}>
-                                                {t.salesRepName ?? 'Toàn công ty'}
-                                            </td>
-                                            <td className="px-3 py-2.5">
-                                                <button onClick={() => handleDelete(t.id)} className="p-1 transition-all text-[#64748B] hover:text-[#B91C1C]">
-                                                    <Trash2 size={13} />
-                                                </button>
-                                            </td>
-                                        </tr>
+                                            </Td>
+                                            <Td className="type-number text-lys-primary">
+                                                {t.month ? L.setup.table.monthPrefix(t.month, t.year) : L.setup.table.yearPrefix(t.year)}
+                                            </Td>
+                                            <Td align="right" className="type-number font-semibold text-tone-warning-fg">
+                                                {formatNumber(t.targetValue)}
+                                            </Td>
+                                            <Td className="text-lys-secondary">{t.unit}</Td>
+                                            <Td className="text-lys-primary">
+                                                {t.salesRepName ?? L.setup.table.companyScope}
+                                            </Td>
+                                            <Td align="right">
+                                                <Button variant="ghost" size="sm" onClick={() => handleDelete(t.id)}>
+                                                    <Trash2 size={13} className="text-tone-danger-fg" />
+                                                </Button>
+                                            </Td>
+                                        </Tr>
                                     )
                                 })}
-                            </tbody>
-                        </table>
+                            </TBody>
+                        </Table>
                     </div>
 
-                    {/* Default values info */}
-                    <div className="p-4 rounded-md" style={{ background: 'rgba(8,145,178,0.05)', border: '1px dashed rgba(8, 145, 178, 0.25)' }}>
-                        <p className="text-xs font-bold mb-2" style={{ color: '#0891B2' }}>Giá trị mặc định (khi chưa cấu hình):</p>
-                        <div className="grid grid-cols-2 gap-1">
+                    {/* Mobile Cards */}
+                    <div className="block md:hidden space-y-2.5">
+                        {targets.length === 0 ? (
+                            <div className="rounded-lg border border-lys-border bg-white p-6">
+                                <EmptyState
+                                    icon={Settings}
+                                    title={L.setup.table.emptyTitle}
+                                    description={L.setup.table.emptyDesc}
+                                />
+                            </div>
+                        ) : targets.map(t => {
+                            const metricInfo = metrics.find(m => m.metric === t.metric)
+                            return (
+                                <div key={t.id} className="rounded-lg border border-lys-border bg-white p-3.5 flex items-center justify-between gap-2">
+                                    <div>
+                                        <p className="text-sm font-semibold text-lys-teal-strong">{metricInfo?.label ?? t.metric}</p>
+                                        <p className="text-xs text-lys-muted">
+                                            {t.month ? L.setup.table.monthPrefix(t.month, t.year) : L.setup.table.yearPrefix(t.year)} • {t.salesRepName ?? L.setup.table.companyScope}
+                                        </p>
+                                        <p className="type-number text-sm font-bold text-tone-warning-fg mt-1">
+                                            {formatNumber(t.targetValue)} {t.unit}
+                                        </p>
+                                    </div>
+                                    <Button variant="ghost" size="sm" onClick={() => handleDelete(t.id)}>
+                                        <Trash2 size={14} className="text-tone-danger-fg" />
+                                    </Button>
+                                </div>
+                            )
+                        })}
+                    </div>
+
+                    <div className="p-4 rounded-lg bg-lys-teal-soft border border-dashed border-lys-border">
+                        <p className="text-xs font-semibold text-lys-teal-strong mb-2">{L.setup.defaultsTitle}</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                             {metrics.map(m => {
-                                const def = { REVENUE: '5 tỷ', ORDERS: '50 đơn', NEW_CUSTOMERS: '5 KH', AR_LIMIT: '2 tỷ', STOCK_VALUE: '10 tỷ' }
+                                const def: Record<string, string> = { REVENUE: '5,000,000,000 VND', ORDERS: '50', NEW_CUSTOMERS: '5', AR_LIMIT: '2,000,000,000 VND', STOCK_VALUE: '10,000,000,000 VND' }
                                 return (
-                                    <p key={m.metric} className="text-xs" style={{ color: '#64748B' }}>
-                                        • {m.label}: <span style={{ color: '#B45309' }}>{(def as any)[m.metric]}</span>
+                                    <p key={m.metric} className="text-xs text-lys-secondary">
+                                        • {m.label}: <span className="type-number font-semibold text-tone-warning-fg">{def[m.metric]}</span>
                                     </p>
                                 )
                             })}
@@ -352,6 +350,76 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
                     </div>
                 </div>
             )}
+
+            <Drawer
+                open={addOpen}
+                onClose={() => setAddOpen(false)}
+                title={L.setup.formTitle}
+                size="sm"
+                footer={
+                    <>
+                        <Button variant="secondary" onClick={() => setAddOpen(false)}>{L.setup.cancelBtn}</Button>
+                        <Button variant="primary" onClick={handleSave}>
+                            <Save size={14} aria-hidden /> {L.setup.saveBtn}
+                        </Button>
+                    </>
+                }
+            >
+                <div className="flex flex-col gap-4">
+                    <Field label={L.setup.metricLabel}>
+                        {id => (
+                            <Select
+                                id={id}
+                                value={addForm.metric}
+                                onChange={e => {
+                                    const m = metrics.find(x => x.metric === e.target.value)
+                                    setAddForm(f => ({ ...f, metric: e.target.value, unit: m?.unit ?? 'VND' }))
+                                }}
+                            >
+                                {metrics.map(m => <option key={m.metric} value={m.metric}>{m.label}</option>)}
+                            </Select>
+                        )}
+                    </Field>
+                    <Field label={L.setup.monthLabel}>
+                        {id => (
+                            <Select
+                                id={id}
+                                value={addForm.month ?? ''}
+                                onChange={e => setAddForm(f => ({ ...f, month: e.target.value ? Number(e.target.value) : null }))}
+                            >
+                                <option value="">{L.setup.fullYear}</option>
+                                {Array.from({ length: 12 }, (_, i) => (
+                                    <option key={i + 1} value={i + 1}>{L.setup.monthOption(i + 1)}</option>
+                                ))}
+                            </Select>
+                        )}
+                    </Field>
+                    <Field label={L.setup.targetValueLabel} required>
+                        {id => (
+                            <Input
+                                id={id}
+                                type="number"
+                                value={addForm.targetValue}
+                                onChange={e => setAddForm(f => ({ ...f, targetValue: e.target.value }))}
+                                placeholder="5000000000"
+                            />
+                        )}
+                    </Field>
+                    <Field label={L.setup.salesRepLabel}>
+                        {id => (
+                            <Select
+                                id={id}
+                                value={addForm.salesRepId}
+                                onChange={e => setAddForm(f => ({ ...f, salesRepId: e.target.value }))}
+                            >
+                                <option value="">{L.setup.companyWide}</option>
+                                {salesReps.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                            </Select>
+                        )}
+                    </Field>
+                </div>
+            </Drawer>
+
             {confirmDialog}
         </div>
     )

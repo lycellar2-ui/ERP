@@ -48,20 +48,8 @@ import {
     deleteProductLegalDoc,
 } from './actions'
 import { toast } from 'sonner'
-
-const COUNTRY_NAMES: Record<string, string> = {
-    FR: 'Pháp',
-    IT: 'Ý',
-    ES: 'Tây Ban Nha',
-    PT: 'Bồ Đào Nha',
-    DE: 'Đức',
-    US: 'Mỹ',
-    AU: 'Úc',
-    NZ: 'New Zealand',
-    AR: 'Argentina',
-    CL: 'Chile',
-    ZA: 'Nam Phi',
-}
+import { useAppLocale } from '@/lib/i18n'
+import { PRODUCTS_I18N } from './i18n'
 
 type DocFilter =
     | 'ALL'
@@ -89,17 +77,6 @@ function getShortFileName(url: string | null): string {
     }
 }
 
-function formatShortDate(iso: string | null | undefined): string {
-    if (!iso) return ''
-    try {
-        const d = new Date(iso)
-        if (Number.isNaN(d.getTime())) return ''
-        return d.toLocaleDateString('vi-VN')
-    } catch {
-        return ''
-    }
-}
-
 function getPreviewUrl(url: string): { type: 'image' | 'office' | 'pdf'; src: string } {
     if (/\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(url)) {
         return { type: 'image', src: url }
@@ -113,37 +90,10 @@ function getPreviewUrl(url: string): { type: 'image' | 'office' | 'pdf'; src: st
     return { type: 'pdf', src: url }
 }
 
-const GROUP_META: Record<
-    ProductLegalDocGroup,
-    {
-        label: string
-        shortLabel: string
-        badgeClass: string
-        authorityPlaceholder: string
-        namePlaceholder: string
-    }
-> = {
-    TCB: {
-        label: 'Bản Tự Công Bố Sản Phẩm (TCB)',
-        shortLabel: 'Tự công bố (TCB)',
-        badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-        authorityPlaceholder: 'Chi cục ATTP Hà Nội / Tự công bố',
-        namePlaceholder: 'VD: Bản Tự Công Bố số 53/2023/TCB-TA',
-    },
-    AMENDMENT: {
-        label: 'Thông Báo Thay Đổi / Công Văn Cập Nhật Sau TCB',
-        shortLabel: 'Thông báo thay đổi',
-        badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
-        authorityPlaceholder: 'Chi cục ATTP Hà Nội',
-        namePlaceholder: 'VD: Công văn bổ sung nhãn / cập nhật nồng độ cồn',
-    },
-    TESTING: {
-        label: 'Phiếu Kiểm Định / Kết Quả Kiểm Nghiệm ATTP',
-        shortLabel: 'Phiếu kiểm định',
-        badgeClass: 'bg-indigo-50 text-indigo-800 border-indigo-200',
-        authorityPlaceholder: 'Eurofins Sắc Ký Hải Đăng / Viện Kiểm nghiệm Quốc gia (NIFC)',
-        namePlaceholder: 'VD: Phiếu kết quả thử nghiệm AR-242-2026-00018102',
-    },
+const GROUP_BADGE_CLASS: Record<ProductLegalDocGroup, string> = {
+    TCB: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+    AMENDMENT: 'bg-amber-50 text-amber-800 border-amber-200',
+    TESTING: 'bg-indigo-50 text-indigo-800 border-indigo-200',
 }
 
 export function TastingNotesCatalog({
@@ -151,6 +101,9 @@ export function TastingNotesCatalog({
     onViewProduct,
     onEditProduct,
 }: TastingNotesCatalogProps) {
+    const { locale, formatDate, formatNumber } = useAppLocale()
+    const L = PRODUCTS_I18N[locale]
+    const TC = L.tastingCatalog
     const qc = useQueryClient()
     const [search, setSearch] = useState('')
     const [docFilter, setDocFilter] = useState<DocFilter>('ALL')
@@ -182,6 +135,11 @@ export function TastingNotesCatalog({
         productId: string
         type: 'TN' | ProductLegalDocGroup
     } | null>(null)
+
+    const formatShortDate = (iso: string | null | undefined): string => {
+        if (!iso) return ''
+        return formatDate(iso)
+    }
 
     const { data: items = [], isLoading } = useQuery({
         queryKey: ['products-tasting-note-catalog'],
@@ -336,25 +294,25 @@ export function TastingNotesCatalog({
             if (type === 'TN') {
                 const res = await uploadProductTastingNote(productId, fd)
                 if (res.success) {
-                    toast.success('Đã cập nhật file Tasting Note lên Cloudflare R2')
+                    toast.success(L.drawer.toastUploadTnSuccess)
                     qc.invalidateQueries({ queryKey: ['products-tasting-note-catalog'] })
                     qc.invalidateQueries({ queryKey: ['products'] })
                 } else {
-                    toast.error(res.error || 'Lỗi khi tải file Tasting Note lên R2')
+                    toast.error(res.error || L.drawer.toastUploadTnError)
                 }
             } else {
                 fd.append('group', type)
                 const res = await uploadProductLegalDoc(productId, fd)
                 if (res.success) {
-                    toast.success(`Đã thêm ${GROUP_META[type].shortLabel} lên Cloudflare R2`)
+                    toast.success(`${TC.groups[type].shortLabel} — OK`)
                     qc.invalidateQueries({ queryKey: ['products-tasting-note-catalog'] })
                     qc.invalidateQueries({ queryKey: ['products'] })
                 } else {
-                    toast.error(res.error || 'Lỗi khi tải hồ sơ lên R2')
+                    toast.error(res.error || L.drawer.toastUploadTcbError)
                 }
             }
         } catch (err: any) {
-            toast.error(err.message || 'Lỗi kết nối khi tải file')
+            toast.error(err.message || L.drawer.toastUploadTcbError)
         } finally {
             setUploadingKey(null)
             setActiveUploadTarget(null)
@@ -389,7 +347,7 @@ export function TastingNotesCatalog({
         e.preventDefault()
         if (!activeDossierItem || !uploadFormGroup) return
         if (!uploadFile) {
-            toast.error('Vui lòng chọn file đính kèm (PDF, DOCX, Ảnh)')
+            toast.error(TC.dossierDrawer.selectFileError)
             return
         }
 
@@ -407,17 +365,17 @@ export function TastingNotesCatalog({
             const res = await uploadProductLegalDoc(activeDossierItem.id, fd)
             if (res.success) {
                 toast.success(
-                    `Đã lưu ${GROUP_META[uploadFormGroup].shortLabel} cho ${activeDossierItem.skuCode}`
+                    `${TC.groups[uploadFormGroup].shortLabel} — ${activeDossierItem.skuCode}`
                 )
                 setUploadFormGroup(null)
                 setUploadFile(null)
                 qc.invalidateQueries({ queryKey: ['products-tasting-note-catalog'] })
                 qc.invalidateQueries({ queryKey: ['products'] })
             } else {
-                toast.error(res.error || 'Không thể tải hồ sơ lên R2')
+                toast.error(res.error || L.drawer.toastUploadTcbError)
             }
         } catch (err: any) {
-            toast.error(err.message || 'Lỗi khi lưu hồ sơ pháp lý')
+            toast.error(err.message || L.drawer.toastUploadTcbError)
         } finally {
             setIsSubmittingLegalDoc(false)
         }
@@ -425,21 +383,21 @@ export function TastingNotesCatalog({
 
     const handleDeleteLegalDoc = async (doc: ProductLegalDocItem) => {
         if (doc.id.startsWith('legacy-tcb-')) {
-            toast.error('Hồ sơ mặc định này cần được thay thế bằng bản mới')
+            toast.error(TC.dossierDrawer.legacyTcbError)
             return
         }
         setDeletingDocId(doc.id)
         try {
             const res = await deleteProductLegalDoc(doc.id)
             if (res.success) {
-                toast.success(`Đã xoá hồ sơ: ${doc.name}`)
+                toast.success(`${doc.name}`)
                 qc.invalidateQueries({ queryKey: ['products-tasting-note-catalog'] })
                 qc.invalidateQueries({ queryKey: ['products'] })
             } else {
-                toast.error(res.error || 'Lỗi khi xoá hồ sơ')
+                toast.error(res.error || L.deleteConfirm.deleteFailed)
             }
         } catch (err: any) {
-            toast.error(err.message || 'Lỗi khi xoá hồ sơ')
+            toast.error(err.message || L.deleteConfirm.deleteFailed)
         } finally {
             setDeletingDocId(null)
         }
@@ -476,7 +434,7 @@ export function TastingNotesCatalog({
                                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                             }`}
                         >
-                            Tất cả SKU ({counts.total})
+                            {TC.pills.allSku} ({counts.total})
                         </button>
                         <button
                             type="button"
@@ -488,7 +446,7 @@ export function TastingNotesCatalog({
                             }`}
                         >
                             <CheckCircle2 size={13} />
-                            Tasting Note ({counts.hasTn}/{counts.total})
+                            {TC.pills.tastingNote} ({counts.hasTn}/{counts.total})
                         </button>
                         <button
                             type="button"
@@ -500,7 +458,7 @@ export function TastingNotesCatalog({
                             }`}
                         >
                             <FileCheck size={13} />
-                            Có Tự Công Bố ({counts.hasTcb})
+                            {TC.pills.hasTcb} ({counts.hasTcb})
                         </button>
                         <button
                             type="button"
@@ -512,7 +470,7 @@ export function TastingNotesCatalog({
                             }`}
                         >
                             <AlertCircle size={13} />
-                            Thiếu TCB ({counts.missingTcb})
+                            {TC.pills.missingTcb} ({counts.missingTcb})
                         </button>
                         <button
                             type="button"
@@ -524,8 +482,8 @@ export function TastingNotesCatalog({
                             }`}
                         >
                             <FileDiff size={13} />
-                            Có TB Thay đổi ({counts.hasAmendment} SKU · {counts.totalAmendmentFiles}{' '}
-                            bản)
+                            {TC.pills.hasAmendment} ({counts.hasAmendment} SKU · {counts.totalAmendmentFiles}{' '}
+                            {TC.pills.copiesUnit})
                         </button>
                         <button
                             type="button"
@@ -537,39 +495,39 @@ export function TastingNotesCatalog({
                             }`}
                         >
                             <FlaskConical size={13} />
-                            Có Kiểm định ({counts.hasTesting} SKU · {counts.totalTestingFiles} phiếu)
+                            {TC.pills.hasTesting} ({counts.hasTesting} SKU · {counts.totalTestingFiles} {TC.pills.testingUnit})
                         </button>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
                         <SearchInput
-                            placeholder="Tìm SKU, tên rượu, số TCB, số phiếu AR-242, nội dung thay đổi..."
+                            placeholder={TC.pills.searchPlaceholder}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             className="w-full sm:w-72"
                         />
                         <Select
-                            aria-label="Loại rượu"
+                            aria-label={L.filters.wineTypeLabel}
                             value={wineTypeFilter}
                             onChange={e => setWineTypeFilter(e.target.value)}
                             className="w-32"
                         >
-                            <option value="">Tất cả loại</option>
-                            <option value="RED">Vang đỏ</option>
-                            <option value="WHITE">Vang trắng</option>
-                            <option value="SPARKLING">Vang nổ</option>
-                            <option value="ROSE">Vang hồng</option>
+                            <option value="">{L.filters.allTypes}</option>
+                            <option value="RED">{L.wineTypes.RED}</option>
+                            <option value="WHITE">{L.wineTypes.WHITE}</option>
+                            <option value="SPARKLING">{L.wineTypes.SPARKLING}</option>
+                            <option value="ROSE">{L.wineTypes.ROSE}</option>
                         </Select>
                         <Select
-                            aria-label="Quốc gia"
+                            aria-label={L.filters.countryLabel}
                             value={countryFilter}
                             onChange={e => setCountryFilter(e.target.value)}
                             className="w-36"
                         >
-                            <option value="">Tất cả quốc gia</option>
+                            <option value="">{L.filters.allCountries}</option>
                             {countries.map(c => (
                                 <option key={c.code} value={c.code}>
-                                    {COUNTRY_NAMES[c.code] ?? c.code} [{c.code}] ({c.count})
+                                    {L.countries[c.code] ?? c.code} [{c.code}] ({c.count})
                                 </option>
                             ))}
                         </Select>
@@ -583,225 +541,400 @@ export function TastingNotesCatalog({
                                     setWineTypeFilter('')
                                 }}
                             >
-                                <X size={13} /> Xóa lọc
+                                <X size={13} /> {TC.pills.clearFilter}
                             </Button>
                         )}
                     </div>
                 </div>
             </div>
 
-            {/* Table */}
-            <Table>
-                <THead>
-                    <tr>
-                        <Th className="w-[260px]">Mã SKU & Sản phẩm</Th>
-                        <Th className="w-[230px]">Tasting Note & Hương vị</Th>
-                        <Th className="w-[210px]">Bản Tự Công Bố (TCB)</Th>
-                        <Th className="w-[220px]">Thông báo Thay đổi sau TCB</Th>
-                        <Th className="w-[220px]">Phiếu Kiểm định ATTP</Th>
-                        <Th className="w-[115px]" align="center">
-                            Bộ Hồ sơ
-                        </Th>
-                    </tr>
-                </THead>
-                <TBody>
-                    {isLoading ? (
-                        <TableMessageRow colSpan={6}>
-                            <TableSkeleton rows={8} cols={6} />
-                        </TableMessageRow>
-                    ) : filteredItems.length === 0 ? (
-                        <TableMessageRow colSpan={6}>
-                            <div className="py-8 text-center text-xs text-slate-500">
-                                Không tìm thấy sản phẩm nào khớp với bộ lọc hiện tại.
-                            </div>
-                        </TableMessageRow>
-                    ) : (
-                        filteredItems.map(item => {
-                            const tnFileName = getShortFileName(item.tastingNoteUrl)
-                            const isUploadingTn = uploadingKey === `${item.id}:TN`
-                            const isUploadingTcb = uploadingKey === `${item.id}:TCB`
-                            const isUploadingAmendment = uploadingKey === `${item.id}:AMENDMENT`
-                            const isUploadingTesting = uploadingKey === `${item.id}:TESTING`
+            {/* Mobile Card List (<768px) */}
+            <div className="md:hidden bg-white border border-lys-border rounded-lg divide-y divide-lys-border">
+                {isLoading ? (
+                    <div className="p-4 text-center text-xs text-slate-500">
+                        <Loader2 size={20} className="animate-spin mx-auto mb-2 text-cyan-700" />
+                    </div>
+                ) : filteredItems.length === 0 ? (
+                    <div className="py-8 text-center text-xs text-slate-500">
+                        {TC.table.emptyFiltered}
+                    </div>
+                ) : (
+                    filteredItems.map(item => {
+                        const latestTcb = item.tcbDocs?.[0] || null
+                        const latestAmendment = item.amendmentDocs?.[0] || null
+                        const latestTesting = item.testingDocs?.[0] || null
+                        const totalDocsCount =
+                            (item.tastingNoteUrl ? 1 : 0) +
+                            (item.tcbDocs?.length || 0) +
+                            (item.amendmentDocs?.length || 0) +
+                            (item.testingDocs?.length || 0)
 
-                            const latestTcb = item.tcbDocs?.[0] || null
-                            const latestAmendment = item.amendmentDocs?.[0] || null
-                            const latestTesting = item.testingDocs?.[0] || null
-                            const totalDocsCount =
-                                (item.tastingNoteUrl ? 1 : 0) +
-                                (item.tcbDocs?.length || 0) +
-                                (item.amendmentDocs?.length || 0) +
-                                (item.testingDocs?.length || 0)
-
-                            return (
-                                <Tr
-                                    key={item.id}
-                                    className="group cursor-pointer"
-                                    onClick={() => openDossierDrawer(item.id, 'ALL')}
-                                >
-                                    {/* Column 1: SKU & Product Info */}
-                                    <Td className="py-2.5 align-top">
-                                        <div className="flex items-start gap-2.5">
-                                            <div className="w-10 h-11 rounded bg-white border border-lys-border shrink-0 flex items-center justify-center overflow-hidden p-0.5 mt-0.5">
-                                                {item.primaryImageUrl ? (
-                                                    <img
-                                                        src={item.primaryImageUrl}
-                                                        alt={item.productName}
-                                                        loading="lazy"
-                                                        className="h-full object-contain"
-                                                    />
-                                                ) : (
-                                                    <ImageOff size={14} className="text-slate-300" />
+                        return (
+                            <div
+                                key={item.id}
+                                className="p-3 space-y-2.5 cursor-pointer active:bg-slate-50"
+                                onClick={() => openDossierDrawer(item.id, 'ALL')}
+                            >
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="flex items-start gap-2.5 min-w-0">
+                                        <div className="w-9 h-11 rounded bg-white border border-lys-border shrink-0 flex items-center justify-center overflow-hidden p-0.5">
+                                            {item.primaryImageUrl ? (
+                                                <img src={item.primaryImageUrl} alt={item.productName} loading="lazy" className="h-full object-contain" />
+                                            ) : (
+                                                <ImageOff size={13} className="text-slate-300" />
+                                            )}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                <span className="text-[11px] font-bold font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                                    {item.skuCode}
+                                                </span>
+                                                <WineTypeBadge type={item.wineType} />
+                                                {item.abvPercent != null && (
+                                                    <span className="text-[11px] font-mono text-slate-500">
+                                                        {item.abvPercent}°
+                                                    </span>
                                                 )}
                                             </div>
-                                            <div className="min-w-0">
-                                                <div className="flex items-center gap-1.5 flex-wrap">
-                                                    <span className="text-[11px] font-bold font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
-                                                        {item.skuCode}
-                                                    </span>
-                                                    <WineTypeBadge type={item.wineType} />
-                                                    {item.abvPercent != null && (
-                                                        <span className="text-[11px] font-mono text-slate-500">
-                                                            {item.abvPercent}°
-                                                        </span>
+                                            <p className="text-xs font-semibold text-slate-900 line-clamp-1 mt-1">
+                                                {item.productName}
+                                            </p>
+                                            <p className="text-[11px] text-slate-500 truncate">
+                                                [{item.country}] {item.producerName}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                                        <button
+                                            type="button"
+                                            onClick={() => openDossierDrawer(item.id, 'ALL')}
+                                            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold bg-slate-800 text-white"
+                                        >
+                                            <FolderOpen size={11} />
+                                            <span>{TC.table.dossierBtn} ({totalDocsCount})</span>
+                                        </button>
+                                        {canEdit && (
+                                            <Button variant="ghost" size="icon-sm" onClick={() => onEditProduct(item.id)}>
+                                                <Edit2 size={12} />
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-1.5 pt-1" onClick={e => e.stopPropagation()}>
+                                    {item.tastingNoteUrl ? (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setPreviewDoc({
+                                                    url: item.tastingNoteUrl!,
+                                                    title: `Tasting Note — ${item.skuCode} ${item.productName}`,
+                                                })
+                                            }
+                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-cyan-50 text-cyan-800 border border-cyan-200"
+                                        >
+                                            <Eye size={11} /> {TC.table.viewTn}
+                                        </button>
+                                    ) : (
+                                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                            {TC.table.noTn}
+                                        </span>
+                                    )}
+
+                                    {latestTcb ? (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setPreviewDoc({
+                                                    url: latestTcb.fileUrl,
+                                                    title: `${latestTcb.name} — ${item.skuCode}`,
+                                                })
+                                            }
+                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200"
+                                        >
+                                            <Eye size={11} /> {TC.table.viewTcb}
+                                        </button>
+                                    ) : (
+                                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                                            {TC.table.noTcb}
+                                        </span>
+                                    )}
+
+                                    {latestAmendment && (
+                                        <button
+                                            type="button"
+                                            onClick={() => openDossierDrawer(item.id, 'AMENDMENT')}
+                                            className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200"
+                                        >
+                                            {item.amendmentDocs.length} {TC.table.amendmentCountUnit}
+                                        </button>
+                                    )}
+
+                                    {latestTesting && (
+                                        <button
+                                            type="button"
+                                            onClick={() => openDossierDrawer(item.id, 'TESTING')}
+                                            className="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200"
+                                        >
+                                            {item.testingDocs.length} {TC.table.testingCountUnit}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )
+                    })
+                )}
+            </div>
+
+            {/* Desktop Table (>=768px) */}
+            <div className="hidden md:block">
+                <Table>
+                    <THead>
+                        <tr>
+                            <Th className="w-[260px]">{TC.table.colSkuProduct}</Th>
+                            <Th className="w-[230px]">{TC.table.colTnFlavor}</Th>
+                            <Th className="w-[210px]">{TC.table.colTcb}</Th>
+                            <Th className="w-[220px]">{TC.table.colAmendment}</Th>
+                            <Th className="w-[220px]">{TC.table.colTesting}</Th>
+                            <Th className="w-[115px]" align="center">
+                                {TC.table.colDossier}
+                            </Th>
+                        </tr>
+                    </THead>
+                    <TBody>
+                        {isLoading ? (
+                            <TableMessageRow colSpan={6}>
+                                <TableSkeleton rows={8} cols={6} />
+                            </TableMessageRow>
+                        ) : filteredItems.length === 0 ? (
+                            <TableMessageRow colSpan={6}>
+                                <div className="py-8 text-center text-xs text-slate-500">
+                                    {TC.table.emptyFiltered}
+                                </div>
+                            </TableMessageRow>
+                        ) : (
+                            filteredItems.map(item => {
+                                const tnFileName = getShortFileName(item.tastingNoteUrl)
+                                const isUploadingTn = uploadingKey === `${item.id}:TN`
+                                const isUploadingTcb = uploadingKey === `${item.id}:TCB`
+                                const isUploadingAmendment = uploadingKey === `${item.id}:AMENDMENT`
+                                const isUploadingTesting = uploadingKey === `${item.id}:TESTING`
+
+                                const latestTcb = item.tcbDocs?.[0] || null
+                                const latestAmendment = item.amendmentDocs?.[0] || null
+                                const latestTesting = item.testingDocs?.[0] || null
+                                const totalDocsCount =
+                                    (item.tastingNoteUrl ? 1 : 0) +
+                                    (item.tcbDocs?.length || 0) +
+                                    (item.amendmentDocs?.length || 0) +
+                                    (item.testingDocs?.length || 0)
+
+                                return (
+                                    <Tr
+                                        key={item.id}
+                                        className="group cursor-pointer"
+                                        onClick={() => openDossierDrawer(item.id, 'ALL')}
+                                    >
+                                        {/* Column 1: SKU & Product Info */}
+                                        <Td className="py-2.5 align-top">
+                                            <div className="flex items-start gap-2.5">
+                                                <div className="w-10 h-11 rounded bg-white border border-lys-border shrink-0 flex items-center justify-center overflow-hidden p-0.5 mt-0.5">
+                                                    {item.primaryImageUrl ? (
+                                                        <img
+                                                            src={item.primaryImageUrl}
+                                                            alt={item.productName}
+                                                            loading="lazy"
+                                                            className="h-full object-contain"
+                                                        />
+                                                    ) : (
+                                                        <ImageOff size={14} className="text-slate-300" />
                                                     )}
                                                 </div>
-                                                <p
-                                                    className="text-xs font-semibold text-slate-900 line-clamp-2 max-w-[210px] mt-1 leading-snug"
-                                                    title={item.productName}
-                                                >
-                                                    {item.productName}
-                                                </p>
-                                                <p className="text-[11px] text-slate-500 truncate max-w-[210px] mt-0.5">
-                                                    [{item.country}] {item.producerName}
-                                                </p>
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <span className="text-[11px] font-bold font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                                            {item.skuCode}
+                                                        </span>
+                                                        <WineTypeBadge type={item.wineType} />
+                                                        {item.abvPercent != null && (
+                                                            <span className="text-[11px] font-mono text-slate-500">
+                                                                {item.abvPercent}°
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p
+                                                        className="text-xs font-semibold text-slate-900 line-clamp-2 max-w-[210px] mt-1 leading-snug"
+                                                        title={item.productName}
+                                                    >
+                                                        {item.productName}
+                                                    </p>
+                                                    <p className="text-[11px] text-slate-500 truncate max-w-[210px] mt-0.5">
+                                                        [{item.country}] {item.producerName}
+                                                    </p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </Td>
+                                        </Td>
 
-                                    {/* Column 2: Tasting Note & Wine Profile */}
-                                    <Td className="py-2.5 align-top" onClick={e => e.stopPropagation()}>
-                                        <div className="flex flex-col gap-1.5 max-w-[225px]">
-                                            {item.tastingNoteUrl ? (
-                                                <div className="flex items-center gap-1.5 flex-wrap">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            setPreviewDoc({
-                                                                url: item.tastingNoteUrl!,
-                                                                title: `Tasting Note — ${item.skuCode} ${item.productName}`,
-                                                            })
-                                                        }
-                                                        className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold bg-cyan-50 text-cyan-800 border border-cyan-200 hover:bg-cyan-100 transition-colors cursor-pointer"
-                                                        title={tnFileName}
-                                                    >
-                                                        <Eye size={12} /> Xem Tasting Note
-                                                    </button>
-                                                    <a
-                                                        href={item.tastingNoteUrl}
-                                                        download
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="inline-flex items-center justify-center w-6 h-6 rounded text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
-                                                        title="Tải xuống Tasting Note"
-                                                    >
-                                                        <Download size={11} />
-                                                    </a>
-                                                    {canEdit && (
+                                        {/* Column 2: Tasting Note & Wine Profile */}
+                                        <Td className="py-2.5 align-top" onClick={e => e.stopPropagation()}>
+                                            <div className="flex flex-col gap-1.5 max-w-[225px]">
+                                                {item.tastingNoteUrl ? (
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
                                                         <button
                                                             type="button"
-                                                            disabled={isUploadingTn}
                                                             onClick={() =>
-                                                                handleTriggerQuickUpload(item.id, 'TN')
+                                                                setPreviewDoc({
+                                                                    url: item.tastingNoteUrl!,
+                                                                    title: `Tasting Note — ${item.skuCode} ${item.productName}`,
+                                                                })
                                                             }
-                                                            className="inline-flex items-center justify-center w-6 h-6 rounded text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer disabled:opacity-50"
-                                                            title="Đổi file Tasting Note"
+                                                            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold bg-cyan-50 text-cyan-800 border border-cyan-200 hover:bg-cyan-100 transition-colors cursor-pointer"
+                                                            title={tnFileName}
                                                         >
-                                                            {isUploadingTn ? (
-                                                                <Loader2 size={11} className="animate-spin" />
-                                                            ) : (
-                                                                <Upload size={11} />
-                                                            )}
+                                                            <Eye size={12} /> {TC.table.viewTn}
                                                         </button>
+                                                        <a
+                                                            href={item.tastingNoteUrl}
+                                                            download
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="inline-flex items-center justify-center w-6 h-6 rounded text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
+                                                            title={TC.table.downloadTnTooltip}
+                                                        >
+                                                            <Download size={11} />
+                                                        </a>
+                                                        {canEdit && (
+                                                            <button
+                                                                type="button"
+                                                                disabled={isUploadingTn}
+                                                                onClick={() =>
+                                                                    handleTriggerQuickUpload(item.id, 'TN')
+                                                                }
+                                                                className="inline-flex items-center justify-center w-6 h-6 rounded text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer disabled:opacity-50"
+                                                                title={TC.table.replaceTnTooltip}
+                                                            >
+                                                                {isUploadingTn ? (
+                                                                    <Loader2 size={11} className="animate-spin" />
+                                                                ) : (
+                                                                    <Upload size={11} />
+                                                                )}
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="text-[11px] text-amber-600 font-medium">
+                                                            {TC.table.noTn}
+                                                        </span>
+                                                        {canEdit && (
+                                                            <button
+                                                                type="button"
+                                                                disabled={isUploadingTn}
+                                                                onClick={() =>
+                                                                    handleTriggerQuickUpload(item.id, 'TN')
+                                                                }
+                                                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-cyan-600 text-white hover:bg-cyan-700 transition-colors cursor-pointer disabled:opacity-50"
+                                                            >
+                                                                {isUploadingTn ? (
+                                                                    <Loader2 size={11} className="animate-spin" />
+                                                                ) : (
+                                                                    <Upload size={11} />
+                                                                )}
+                                                                {TC.table.uploadBtn}
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {item.profile?.grapes && (
+                                                    <p
+                                                        className="text-[11px] text-slate-600 truncate"
+                                                        title={item.profile.grapes}
+                                                    >
+                                                        <span className="font-semibold text-slate-700">
+                                                            {TC.table.grapesPrefix}
+                                                        </span>{' '}
+                                                        {item.profile.grapes}
+                                                    </p>
+                                                )}
+                                                {(item.profile?.aromas || item.profile?.palate) && (
+                                                    <p
+                                                        className="text-[11px] text-slate-500 line-clamp-1"
+                                                        title={
+                                                            item.profile.aromas || item.profile.palate || ''
+                                                        }
+                                                    >
+                                                        {item.profile.aromas || item.profile.palate}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </Td>
+
+                                        {/* Column 3: Bản Tự Công Bố (TCB) */}
+                                        <Td className="py-2.5 align-top" onClick={e => e.stopPropagation()}>
+                                            {latestTcb ? (
+                                                <div className="flex flex-col gap-1 max-w-[205px]">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                setPreviewDoc({
+                                                                    url: latestTcb.fileUrl,
+                                                                    title: `${latestTcb.name} — ${item.skuCode}`,
+                                                                })
+                                                            }
+                                                            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-colors cursor-pointer"
+                                                        >
+                                                            <Eye size={12} /> {TC.table.viewTcb}
+                                                        </button>
+                                                        {item.tcbDocs.length > 1 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    openDossierDrawer(item.id, 'TCB')
+                                                                }
+                                                                className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-900 hover:bg-emerald-200 cursor-pointer"
+                                                            >
+                                                                {item.tcbDocs.length} {TC.table.tcbVersionsUnit}
+                                                            </button>
+                                                        )}
+                                                        {canEdit && (
+                                                            <button
+                                                                type="button"
+                                                                disabled={isUploadingTcb}
+                                                                onClick={() =>
+                                                                    openDossierDrawer(item.id, 'TCB', 'TCB')
+                                                                }
+                                                                className="inline-flex items-center justify-center w-6 h-6 rounded text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+                                                                title={TC.table.addTcbTooltip}
+                                                            >
+                                                                <Plus size={12} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    <p
+                                                        className="text-[11px] font-medium text-slate-700 truncate"
+                                                        title={latestTcb.name}
+                                                    >
+                                                        {latestTcb.name.replace(
+                                                            new RegExp(`\\s*—\\s*${item.skuCode}.*$`),
+                                                            ''
+                                                        )}
+                                                    </p>
+                                                    {latestTcb.description && (
+                                                        <p
+                                                            className="text-[10px] text-slate-500 truncate"
+                                                            title={latestTcb.description}
+                                                        >
+                                                            {latestTcb.description}
+                                                        </p>
                                                     )}
                                                 </div>
                                             ) : (
                                                 <div className="flex items-center gap-1.5">
-                                                    <span className="text-[11px] text-amber-600 font-medium">
-                                                        Chưa có TN
+                                                    <span className="text-[11px] text-rose-600 font-medium">
+                                                        {TC.table.noTcb}
                                                     </span>
-                                                    {canEdit && (
-                                                        <button
-                                                            type="button"
-                                                            disabled={isUploadingTn}
-                                                            onClick={() =>
-                                                                handleTriggerQuickUpload(item.id, 'TN')
-                                                            }
-                                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-cyan-600 text-white hover:bg-cyan-700 transition-colors cursor-pointer disabled:opacity-50"
-                                                        >
-                                                            {isUploadingTn ? (
-                                                                <Loader2 size={11} className="animate-spin" />
-                                                            ) : (
-                                                                <Upload size={11} />
-                                                            )}
-                                                            Upload
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            {item.profile?.grapes && (
-                                                <p
-                                                    className="text-[11px] text-slate-600 truncate"
-                                                    title={item.profile.grapes}
-                                                >
-                                                    <span className="font-semibold text-slate-700">
-                                                        Nho:
-                                                    </span>{' '}
-                                                    {item.profile.grapes}
-                                                </p>
-                                            )}
-                                            {(item.profile?.aromas || item.profile?.palate) && (
-                                                <p
-                                                    className="text-[11px] text-slate-500 line-clamp-1"
-                                                    title={
-                                                        item.profile.aromas || item.profile.palate || ''
-                                                    }
-                                                >
-                                                    {item.profile.aromas || item.profile.palate}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </Td>
-
-                                    {/* Column 3: Bản Tự Công Bố (TCB) */}
-                                    <Td className="py-2.5 align-top" onClick={e => e.stopPropagation()}>
-                                        {latestTcb ? (
-                                            <div className="flex flex-col gap-1 max-w-[205px]">
-                                                <div className="flex items-center gap-1.5 flex-wrap">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            setPreviewDoc({
-                                                                url: latestTcb.fileUrl,
-                                                                title: `${latestTcb.name} — ${item.skuCode}`,
-                                                            })
-                                                        }
-                                                        className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-colors cursor-pointer"
-                                                    >
-                                                        <Eye size={12} /> Xem TCB
-                                                    </button>
-                                                    {item.tcbDocs.length > 1 && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                openDossierDrawer(item.id, 'TCB')
-                                                            }
-                                                            className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-900 hover:bg-emerald-200 cursor-pointer"
-                                                            title="Xem lịch sử các phiên bản Tự công bố"
-                                                        >
-                                                            {item.tcbDocs.length} bản
-                                                        </button>
-                                                    )}
                                                     {canEdit && (
                                                         <button
                                                             type="button"
@@ -809,78 +942,80 @@ export function TastingNotesCatalog({
                                                             onClick={() =>
                                                                 openDossierDrawer(item.id, 'TCB', 'TCB')
                                                             }
-                                                            className="inline-flex items-center justify-center w-6 h-6 rounded text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
-                                                            title="Thêm phiên bản Tự công bố mới"
+                                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer"
                                                         >
-                                                            <Plus size={12} />
+                                                            <Plus size={11} /> {TC.table.addTcbBtn}
                                                         </button>
                                                     )}
                                                 </div>
-                                                <p
-                                                    className="text-[11px] font-medium text-slate-700 truncate"
-                                                    title={latestTcb.name}
-                                                >
-                                                    {latestTcb.name.replace(
-                                                        new RegExp(`\\s*—\\s*${item.skuCode}.*$`),
-                                                        ''
-                                                    )}
-                                                </p>
-                                                {latestTcb.description && (
-                                                    <p
-                                                        className="text-[10px] text-slate-500 truncate"
-                                                        title={latestTcb.description}
-                                                    >
-                                                        {latestTcb.description}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="text-[11px] text-rose-600 font-medium">
-                                                    Chưa có TCB
-                                                </span>
-                                                {canEdit && (
-                                                    <button
-                                                        type="button"
-                                                        disabled={isUploadingTcb}
-                                                        onClick={() =>
-                                                            openDossierDrawer(item.id, 'TCB', 'TCB')
-                                                        }
-                                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer"
-                                                    >
-                                                        <Plus size={11} /> Thêm TCB
-                                                    </button>
-                                                )}
-                                            </div>
-                                        )}
-                                    </Td>
+                                            )}
+                                        </Td>
 
-                                    {/* Column 4: Thông báo thay đổi sau TCB */}
-                                    <Td className="py-2.5 align-top" onClick={e => e.stopPropagation()}>
-                                        {latestAmendment ? (
-                                            <div className="flex flex-col gap-1 max-w-[215px]">
-                                                <div className="flex items-center gap-1.5 flex-wrap">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            setPreviewDoc({
-                                                                url: latestAmendment.fileUrl,
-                                                                title: `${latestAmendment.name} — ${item.skuCode}`,
-                                                            })
-                                                        }
-                                                        className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer"
+                                        {/* Column 4: Thông báo thay đổi sau TCB */}
+                                        <Td className="py-2.5 align-top" onClick={e => e.stopPropagation()}>
+                                            {latestAmendment ? (
+                                                <div className="flex flex-col gap-1 max-w-[215px]">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                setPreviewDoc({
+                                                                    url: latestAmendment.fileUrl,
+                                                                    title: `${latestAmendment.name} — ${item.skuCode}`,
+                                                                })
+                                                            }
+                                                            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer"
+                                                        >
+                                                            <Eye size={12} /> {TC.table.viewAmendment}
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                openDossierDrawer(item.id, 'AMENDMENT')
+                                                            }
+                                                            className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 hover:bg-amber-200 cursor-pointer"
+                                                        >
+                                                            {item.amendmentDocs.length} {TC.table.amendmentCountUnit}
+                                                        </button>
+                                                        {canEdit && (
+                                                            <button
+                                                                type="button"
+                                                                disabled={isUploadingAmendment}
+                                                                onClick={() =>
+                                                                    openDossierDrawer(
+                                                                        item.id,
+                                                                        'AMENDMENT',
+                                                                        'AMENDMENT'
+                                                                    )
+                                                                }
+                                                                className="inline-flex items-center justify-center w-6 h-6 rounded text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+                                                                title={TC.table.addAmendmentTooltip}
+                                                            >
+                                                                <Plus size={12} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    <p
+                                                        className="text-[11px] font-medium text-slate-700 line-clamp-1"
+                                                        title={latestAmendment.name}
                                                     >
-                                                        <Eye size={12} /> Xem công văn
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            openDossierDrawer(item.id, 'AMENDMENT')
-                                                        }
-                                                        className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 hover:bg-amber-200 cursor-pointer"
+                                                        {latestAmendment.name}
+                                                    </p>
+                                                    <p
+                                                        className="text-[10px] text-slate-500 line-clamp-1"
+                                                        title={latestAmendment.description || ''}
                                                     >
-                                                        {item.amendmentDocs.length} lần
-                                                    </button>
+                                                        {formatShortDate(latestAmendment.issueDate)}
+                                                        {latestAmendment.description
+                                                            ? ` · ${latestAmendment.description}`
+                                                            : ''}
+                                                    </p>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-[11px] text-slate-400">
+                                                        {TC.table.noAmendment}
+                                                    </span>
                                                     {canEdit && (
                                                         <button
                                                             type="button"
@@ -892,82 +1027,84 @@ export function TastingNotesCatalog({
                                                                     'AMENDMENT'
                                                                 )
                                                             }
-                                                            className="inline-flex items-center justify-center w-6 h-6 rounded text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
-                                                            title="Thêm Thông báo thay đổi sau TCB"
+                                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
                                                         >
-                                                            <Plus size={12} />
+                                                            <Plus size={11} /> {TC.table.addShortBtn}
                                                         </button>
                                                     )}
                                                 </div>
-                                                <p
-                                                    className="text-[11px] font-medium text-slate-700 line-clamp-1"
-                                                    title={latestAmendment.name}
-                                                >
-                                                    {latestAmendment.name}
-                                                </p>
-                                                <p
-                                                    className="text-[10px] text-slate-500 line-clamp-1"
-                                                    title={latestAmendment.description || ''}
-                                                >
-                                                    {formatShortDate(latestAmendment.issueDate)}
-                                                    {latestAmendment.description
-                                                        ? ` · ${latestAmendment.description}`
-                                                        : ''}
-                                                </p>
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="text-[11px] text-slate-400">
-                                                    Chưa phát sinh
-                                                </span>
-                                                {canEdit && (
-                                                    <button
-                                                        type="button"
-                                                        disabled={isUploadingAmendment}
-                                                        onClick={() =>
-                                                            openDossierDrawer(
-                                                                item.id,
-                                                                'AMENDMENT',
-                                                                'AMENDMENT'
-                                                            )
-                                                        }
-                                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
-                                                    >
-                                                        <Plus size={11} /> Thêm
-                                                    </button>
-                                                )}
-                                            </div>
-                                        )}
-                                    </Td>
+                                            )}
+                                        </Td>
 
-                                    {/* Column 5: Phiếu Kiểm định / Kiểm nghiệm */}
-                                    <Td className="py-2.5 align-top" onClick={e => e.stopPropagation()}>
-                                        {latestTesting ? (
-                                            <div className="flex flex-col gap-1 max-w-[215px]">
-                                                <div className="flex items-center gap-1.5 flex-wrap">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            setPreviewDoc({
-                                                                url: latestTesting.fileUrl,
-                                                                title: `${latestTesting.name} — ${item.skuCode}`,
-                                                            })
-                                                        }
-                                                        className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer"
-                                                    >
-                                                        <Eye size={12} /> Xem KĐ
-                                                    </button>
-                                                    {item.testingDocs.length > 1 && (
+                                        {/* Column 5: Phiếu Kiểm định / Kiểm nghiệm */}
+                                        <Td className="py-2.5 align-top" onClick={e => e.stopPropagation()}>
+                                            {latestTesting ? (
+                                                <div className="flex flex-col gap-1 max-w-[215px]">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
                                                         <button
                                                             type="button"
                                                             onClick={() =>
-                                                                openDossierDrawer(item.id, 'TESTING')
+                                                                setPreviewDoc({
+                                                                    url: latestTesting.fileUrl,
+                                                                    title: `${latestTesting.name} — ${item.skuCode}`,
+                                                                })
                                                             }
-                                                            className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-900 hover:bg-indigo-200 cursor-pointer"
+                                                            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer"
                                                         >
-                                                            {item.testingDocs.length} phiếu
+                                                            <Eye size={12} /> {TC.table.viewTesting}
                                                         </button>
-                                                    )}
+                                                        {item.testingDocs.length > 1 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    openDossierDrawer(item.id, 'TESTING')
+                                                                }
+                                                                className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-900 hover:bg-indigo-200 cursor-pointer"
+                                                            >
+                                                                {item.testingDocs.length} {TC.table.testingCountUnit}
+                                                            </button>
+                                                        )}
+                                                        {canEdit && (
+                                                            <button
+                                                                type="button"
+                                                                disabled={isUploadingTesting}
+                                                                onClick={() =>
+                                                                    openDossierDrawer(
+                                                                        item.id,
+                                                                        'TESTING',
+                                                                        'TESTING'
+                                                                    )
+                                                                }
+                                                                className="inline-flex items-center justify-center w-6 h-6 rounded text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+                                                                title={TC.table.addTestingTooltip}
+                                                            >
+                                                                <Plus size={12} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    <p
+                                                        className="text-[11px] font-medium text-slate-700 truncate"
+                                                        title={latestTesting.name}
+                                                    >
+                                                        {latestTesting.name}
+                                                    </p>
+                                                    <p
+                                                        className="text-[10px] text-slate-500 truncate"
+                                                        title={
+                                                            latestTesting.issuingAuthority ||
+                                                            latestTesting.description ||
+                                                            ''
+                                                        }
+                                                    >
+                                                        {latestTesting.issuingAuthority ||
+                                                            formatShortDate(latestTesting.issueDate)}
+                                                    </p>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-[11px] text-slate-400">
+                                                        {TC.table.noTesting}
+                                                    </span>
                                                     {canEdit && (
                                                         <button
                                                             type="button"
@@ -979,100 +1116,60 @@ export function TastingNotesCatalog({
                                                                     'TESTING'
                                                                 )
                                                             }
-                                                            className="inline-flex items-center justify-center w-6 h-6 rounded text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
-                                                            title="Thêm Phiếu kiểm định ATTP"
+                                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
                                                         >
-                                                            <Plus size={12} />
+                                                            <Plus size={11} /> {TC.table.addShortBtn}
                                                         </button>
                                                     )}
                                                 </div>
-                                                <p
-                                                    className="text-[11px] font-medium text-slate-700 truncate"
-                                                    title={latestTesting.name}
+                                            )}
+                                        </Td>
+
+                                        {/* Column 6: Open Full Dossier Drawer + Edit Product */}
+                                        <Td
+                                            align="center"
+                                            className="py-2.5 align-top"
+                                            onClick={e => e.stopPropagation()}
+                                        >
+                                            <div className="flex items-center justify-center gap-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openDossierDrawer(item.id, 'ALL')}
+                                                    className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold bg-slate-800 text-white hover:bg-slate-900 transition-colors cursor-pointer"
+                                                    title={TC.table.openDossierTooltip}
                                                 >
-                                                    {latestTesting.name}
-                                                </p>
-                                                <p
-                                                    className="text-[10px] text-slate-500 truncate"
-                                                    title={
-                                                        latestTesting.issuingAuthority ||
-                                                        latestTesting.description ||
-                                                        ''
-                                                    }
-                                                >
-                                                    {latestTesting.issuingAuthority ||
-                                                        formatShortDate(latestTesting.issueDate)}
-                                                </p>
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="text-[11px] text-slate-400">
-                                                    Chưa có phiếu
-                                                </span>
+                                                    <FolderOpen size={12} />
+                                                    <span>{TC.table.dossierBtn} ({totalDocsCount})</span>
+                                                </button>
                                                 {canEdit && (
-                                                    <button
-                                                        type="button"
-                                                        disabled={isUploadingTesting}
-                                                        onClick={() =>
-                                                            openDossierDrawer(
-                                                                item.id,
-                                                                'TESTING',
-                                                                'TESTING'
-                                                            )
-                                                        }
-                                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon-sm"
+                                                        title={TC.table.editProductTooltip}
+                                                        onClick={() => onEditProduct(item.id)}
                                                     >
-                                                        <Plus size={11} /> Thêm
-                                                    </button>
+                                                        <Edit2 size={13} />
+                                                    </Button>
                                                 )}
                                             </div>
-                                        )}
-                                    </Td>
-
-                                    {/* Column 6: Open Full Dossier Drawer + Edit Product */}
-                                    <Td
-                                        align="center"
-                                        className="py-2.5 align-top"
-                                        onClick={e => e.stopPropagation()}
-                                    >
-                                        <div className="flex items-center justify-center gap-1">
-                                            <button
-                                                type="button"
-                                                onClick={() => openDossierDrawer(item.id, 'ALL')}
-                                                className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold bg-slate-800 text-white hover:bg-slate-900 transition-colors cursor-pointer"
-                                                title="Mở toàn bộ hồ sơ công bố, thay đổi & kiểm định của SKU này"
-                                            >
-                                                <FolderOpen size={12} />
-                                                <span>Hồ sơ ({totalDocsCount})</span>
-                                            </button>
-                                            {canEdit && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon-sm"
-                                                    title="Chỉnh sửa thông tin sản phẩm"
-                                                    onClick={() => onEditProduct(item.id)}
-                                                >
-                                                    <Edit2 size={13} />
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </Td>
-                                </Tr>
-                            )
-                        })
-                    )}
-                </TBody>
-            </Table>
+                                        </Td>
+                                    </Tr>
+                                )
+                            })
+                        )}
+                    </TBody>
+                </Table>
+            </div>
 
             <div className="text-xs text-slate-500 px-1 flex flex-wrap items-center justify-between gap-2">
                 <span>
-                    Đang hiển thị <strong>{filteredItems.length}</strong> / {counts.total} sản phẩm.
+                    {TC.footer.showing} <strong>{formatNumber(filteredItems.length)}</strong> / {formatNumber(counts.total)} {TC.footer.productsUnit}
                 </span>
                 <span>
-                    Tổng kho tài liệu R2: <strong>{counts.hasTn}</strong> Tasting Note ·{' '}
-                    <strong>{counts.totalTcbFiles}</strong> Bản Tự Công Bố ·{' '}
-                    <strong>{counts.totalAmendmentFiles}</strong> Thông báo thay đổi ·{' '}
-                    <strong>{counts.totalTestingFiles}</strong> Phiếu kiểm định.
+                    {TC.footer.r2SummaryPrefix} <strong>{formatNumber(counts.hasTn)}</strong> Tasting Note ·{' '}
+                    <strong>{formatNumber(counts.totalTcbFiles)}</strong> {TC.footer.tcbLabel} ·{' '}
+                    <strong>{formatNumber(counts.totalAmendmentFiles)}</strong> {TC.footer.amendmentLabel} ·{' '}
+                    <strong>{formatNumber(counts.totalTestingFiles)}</strong> {TC.footer.testingLabel}
                 </span>
             </div>
 
@@ -1122,7 +1219,7 @@ export function TastingNotesCatalog({
                                             {activeDossierItem.productName}
                                         </h2>
                                         <p className="text-xs text-slate-500 mt-0.5">
-                                            Hồ sơ Kỹ thuật & Pháp lý ATTP lưu trữ trên Cloudflare R2
+                                            {TC.dossierDrawer.subtitle}
                                         </p>
                                     </div>
                                 </div>
@@ -1137,7 +1234,7 @@ export function TastingNotesCatalog({
                                         }}
                                         className="px-2.5 py-1.5 rounded-md text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 transition-colors cursor-pointer"
                                     >
-                                        Chi tiết SKU
+                                        {TC.dossierDrawer.skuDetailBtn}
                                     </button>
                                     <button
                                         type="button"
@@ -1161,7 +1258,7 @@ export function TastingNotesCatalog({
                                                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                         }`}
                                     >
-                                        Tất cả hạng mục
+                                        {TC.dossierDrawer.tabAll}
                                     </button>
                                     <button
                                         type="button"
@@ -1172,7 +1269,7 @@ export function TastingNotesCatalog({
                                                 : 'bg-cyan-50 text-cyan-800 hover:bg-cyan-100'
                                         }`}
                                     >
-                                        Tasting Note ({activeDossierItem.tastingNoteUrl ? 1 : 0})
+                                        {TC.dossierDrawer.tabTn} ({activeDossierItem.tastingNoteUrl ? 1 : 0})
                                     </button>
                                     <button
                                         type="button"
@@ -1183,7 +1280,7 @@ export function TastingNotesCatalog({
                                                 : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
                                         }`}
                                     >
-                                        Tự Công Bố ({activeDossierItem.tcbDocs.length})
+                                        {TC.dossierDrawer.tabTcb} ({activeDossierItem.tcbDocs.length})
                                     </button>
                                     <button
                                         type="button"
@@ -1194,7 +1291,7 @@ export function TastingNotesCatalog({
                                                 : 'bg-amber-50 text-amber-800 hover:bg-amber-100'
                                         }`}
                                     >
-                                        TB Thay đổi ({activeDossierItem.amendmentDocs.length})
+                                        {TC.dossierDrawer.tabAmendment} ({activeDossierItem.amendmentDocs.length})
                                     </button>
                                     <button
                                         type="button"
@@ -1205,7 +1302,7 @@ export function TastingNotesCatalog({
                                                 : 'bg-indigo-50 text-indigo-800 hover:bg-indigo-100'
                                         }`}
                                     >
-                                        Phiếu Kiểm định ({activeDossierItem.testingDocs.length})
+                                        {TC.dossierDrawer.tabTesting} ({activeDossierItem.testingDocs.length})
                                     </button>
                                 </div>
                             </div>
@@ -1222,7 +1319,7 @@ export function TastingNotesCatalog({
                                             <div className="flex items-center gap-2">
                                                 <Upload size={15} className="text-cyan-700" />
                                                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                                                    Thêm mới: {GROUP_META[uploadFormGroup].label}
+                                                    {TC.dossierDrawer.addNewPrefix} {TC.groups[uploadFormGroup].label}
                                                 </h4>
                                             </div>
                                             <button
@@ -1230,34 +1327,34 @@ export function TastingNotesCatalog({
                                                 onClick={() => setUploadFormGroup(null)}
                                                 className="text-xs text-slate-500 hover:text-slate-800 cursor-pointer"
                                             >
-                                                Đóng
+                                                {TC.dossierDrawer.closeFormBtn}
                                             </button>
                                         </div>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                             <div className="sm:col-span-2">
                                                 <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                                                    Tên hồ sơ / Nội dung trích yếu
+                                                    {TC.dossierDrawer.fieldDocName}
                                                 </label>
                                                 <input
                                                     type="text"
                                                     value={uploadName}
                                                     onChange={e => setUploadName(e.target.value)}
                                                     placeholder={
-                                                        GROUP_META[uploadFormGroup].namePlaceholder
+                                                        TC.groups[uploadFormGroup].namePlaceholder
                                                     }
                                                     className="w-full px-2.5 py-1.5 text-xs rounded border border-slate-300 focus:outline-none focus:border-cyan-600"
                                                 />
                                             </div>
                                             <div>
                                                 <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                                                    Số hiệu văn bản / Số phiếu
+                                                    {TC.dossierDrawer.fieldDocNo}
                                                 </label>
                                                 <input
                                                     type="text"
                                                     value={uploadDocNo}
                                                     onChange={e => setUploadDocNo(e.target.value)}
-                                                    placeholder="VD: 53/2023 hoặc AR-242..."
+                                                    placeholder={TC.dossierDrawer.docNoPlaceholder}
                                                     className="w-full px-2.5 py-1.5 text-xs rounded border border-slate-300 focus:outline-none focus:border-cyan-600"
                                                 />
                                             </div>
@@ -1266,7 +1363,7 @@ export function TastingNotesCatalog({
                                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                             <div>
                                                 <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                                                    Ngày ban hành / Ngày ký
+                                                    {TC.dossierDrawer.fieldIssueDate}
                                                 </label>
                                                 <input
                                                     type="date"
@@ -1277,7 +1374,7 @@ export function TastingNotesCatalog({
                                             </div>
                                             <div className="sm:col-span-2">
                                                 <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                                                    Cơ quan tiếp nhận / Đơn vị kiểm nghiệm
+                                                    {TC.dossierDrawer.fieldAuthority}
                                                 </label>
                                                 <input
                                                     type="text"
@@ -1286,7 +1383,7 @@ export function TastingNotesCatalog({
                                                         setUploadAuthority(e.target.value)
                                                     }
                                                     placeholder={
-                                                        GROUP_META[uploadFormGroup]
+                                                        TC.groups[uploadFormGroup]
                                                             .authorityPlaceholder
                                                     }
                                                     className="w-full px-2.5 py-1.5 text-xs rounded border border-slate-300 focus:outline-none focus:border-cyan-600"
@@ -1296,13 +1393,13 @@ export function TastingNotesCatalog({
 
                                         <div>
                                             <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                                                Ghi chú chi tiết (nội dung thay đổi sau công bố, niên vụ, lô kiểm nghiệm...)
+                                                {TC.dossierDrawer.fieldNotes}
                                             </label>
                                             <input
                                                 type="text"
                                                 value={uploadDescription}
                                                 onChange={e => setUploadDescription(e.target.value)}
-                                                placeholder="VD: Thay đổi mẫu nhãn chính, cập nhật niên vụ 2022 và nồng độ cồn 13.5%..."
+                                                placeholder={TC.dossierDrawer.notesPlaceholder}
                                                 className="w-full px-2.5 py-1.5 text-xs rounded border border-slate-300 focus:outline-none focus:border-cyan-600"
                                             />
                                         </div>
@@ -1322,7 +1419,7 @@ export function TastingNotesCatalog({
                                                     onClick={() => setUploadFormGroup(null)}
                                                     className="px-3 py-1.5 rounded text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 cursor-pointer"
                                                 >
-                                                    Hủy
+                                                    {TC.dossierDrawer.cancelBtn}
                                                 </button>
                                                 <button
                                                     type="submit"
@@ -1334,7 +1431,7 @@ export function TastingNotesCatalog({
                                                     ) : (
                                                         <Upload size={13} />
                                                     )}
-                                                    Lưu lên Cloudflare R2
+                                                    {TC.dossierDrawer.saveR2Btn}
                                                 </button>
                                             </div>
                                         </div>
@@ -1349,7 +1446,7 @@ export function TastingNotesCatalog({
                                             <div className="flex items-center gap-2">
                                                 <FileText size={15} className="text-cyan-700" />
                                                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                                                    1. Tasting Note & Hồ Sơ Kỹ Thuật Rượu
+                                                    {TC.dossierDrawer.sec1Title}
                                                 </h3>
                                             </div>
                                             {canEdit && (
@@ -1365,8 +1462,8 @@ export function TastingNotesCatalog({
                                                 >
                                                     <Upload size={12} />
                                                     {activeDossierItem.tastingNoteUrl
-                                                        ? 'Thay file Tasting Note'
-                                                        : 'Tải lên Tasting Note'}
+                                                        ? TC.dossierDrawer.replaceTnBtn
+                                                        : TC.dossierDrawer.uploadTnBtn}
                                                 </button>
                                             )}
                                         </div>
@@ -1380,8 +1477,7 @@ export function TastingNotesCatalog({
                                                             )}
                                                         </p>
                                                         <p className="text-[11px] text-slate-500">
-                                                            Tài liệu Tasting Note / Tech Sheet chính
-                                                            thức từ nhà sản xuất
+                                                            {TC.dossierDrawer.tnSubtitle}
                                                         </p>
                                                     </div>
                                                     <div className="flex items-center gap-1.5 shrink-0">
@@ -1395,7 +1491,7 @@ export function TastingNotesCatalog({
                                                             }
                                                             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-semibold bg-cyan-700 text-white hover:bg-cyan-800 cursor-pointer"
                                                         >
-                                                            <Eye size={13} /> Xem trực tiếp
+                                                            <Eye size={13} /> {TC.dossierDrawer.viewDirectBtn}
                                                         </button>
                                                         <a
                                                             href={activeDossierItem.tastingNoteUrl}
@@ -1404,13 +1500,13 @@ export function TastingNotesCatalog({
                                                             rel="noopener noreferrer"
                                                             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
                                                         >
-                                                            <Download size={13} /> Tải
+                                                            <Download size={13} /> {TC.dossierDrawer.downloadShortBtn}
                                                         </a>
                                                     </div>
                                                 </div>
                                             ) : (
                                                 <div className="text-xs text-amber-600 py-2">
-                                                    Chưa có file Tasting Note trên R2.
+                                                    {TC.dossierDrawer.noTnOnR2}
                                                 </div>
                                             )}
 
@@ -1419,7 +1515,7 @@ export function TastingNotesCatalog({
                                                     {activeDossierItem.profile.grapes && (
                                                         <div>
                                                             <span className="font-semibold text-slate-700">
-                                                                Giống nho:{' '}
+                                                                {L.detailDrawer.grapes}:{' '}
                                                             </span>
                                                             <span className="text-slate-600">
                                                                 {activeDossierItem.profile.grapes}
@@ -1429,7 +1525,7 @@ export function TastingNotesCatalog({
                                                     {activeDossierItem.profile.servingTemp && (
                                                         <div>
                                                             <span className="font-semibold text-slate-700">
-                                                                Nhiệt độ phục vụ:{' '}
+                                                                {L.detailDrawer.servingTemp}:{' '}
                                                             </span>
                                                             <span className="text-slate-600">
                                                                 {
@@ -1442,7 +1538,7 @@ export function TastingNotesCatalog({
                                                     {activeDossierItem.profile.aromas && (
                                                         <div className="sm:col-span-2">
                                                             <span className="font-semibold text-slate-700">
-                                                                Hương thơm:{' '}
+                                                                {L.detailDrawer.aromas}:{' '}
                                                             </span>
                                                             <span className="text-slate-600">
                                                                 {activeDossierItem.profile.aromas}
@@ -1452,7 +1548,7 @@ export function TastingNotesCatalog({
                                                     {activeDossierItem.profile.palate && (
                                                         <div className="sm:col-span-2">
                                                             <span className="font-semibold text-slate-700">
-                                                                Vị rượu:{' '}
+                                                                {L.detailDrawer.palate}:{' '}
                                                             </span>
                                                             <span className="text-slate-600">
                                                                 {activeDossierItem.profile.palate}
@@ -1508,7 +1604,7 @@ export function TastingNotesCatalog({
                                                             }
                                                         />
                                                         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                                                            {sectionNumber}. {GROUP_META[group].label}{' '}
+                                                            {sectionNumber}. {TC.groups[group].label}{' '}
                                                             ({docs.length})
                                                         </h3>
                                                     </div>
@@ -1518,8 +1614,8 @@ export function TastingNotesCatalog({
                                                             onClick={() => openUploadForm(group)}
                                                             className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold bg-white text-slate-700 border border-slate-300 hover:bg-slate-100 cursor-pointer"
                                                         >
-                                                            <Plus size={12} /> Thêm{' '}
-                                                            {GROUP_META[group].shortLabel}
+                                                            <Plus size={12} /> {TC.dossierDrawer.addGroupBtnPrefix}{' '}
+                                                            {TC.groups[group].shortLabel}
                                                         </button>
                                                     )}
                                                 </div>
@@ -1527,11 +1623,7 @@ export function TastingNotesCatalog({
                                                 <div className="divide-y divide-slate-100">
                                                     {docs.length === 0 ? (
                                                         <div className="p-4 text-xs text-slate-400 italic">
-                                                            Chưa có hồ sơ{' '}
-                                                            {GROUP_META[
-                                                                group
-                                                            ].shortLabel.toLowerCase()}{' '}
-                                                            nào được lưu cho mã SKU này.
+                                                            {TC.dossierDrawer.emptyGroupDocs(TC.groups[group].shortLabel)}
                                                         </div>
                                                     ) : (
                                                         docs.map((doc, dIdx) => (
@@ -1543,9 +1635,9 @@ export function TastingNotesCatalog({
                                                                     <div className="flex items-center gap-2 flex-wrap">
                                                                         {dIdx === 0 && (
                                                                             <span
-                                                                                className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${GROUP_META[group].badgeClass}`}
+                                                                                className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${GROUP_BADGE_CLASS[group]}`}
                                                                             >
-                                                                                Mới nhất
+                                                                                {TC.dossierDrawer.latestBadge}
                                                                             </span>
                                                                         )}
                                                                         <span className="text-xs font-bold text-slate-900">
@@ -1598,7 +1690,7 @@ export function TastingNotesCatalog({
                                                                         }
                                                                         className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-semibold bg-cyan-50 text-cyan-800 border border-cyan-200 hover:bg-cyan-100 cursor-pointer"
                                                                     >
-                                                                        <Eye size={12} /> Xem
+                                                                        <Eye size={12} /> {TC.dossierDrawer.viewShortBtn}
                                                                     </button>
                                                                     <a
                                                                         href={doc.fileUrl}
@@ -1607,7 +1699,7 @@ export function TastingNotesCatalog({
                                                                         rel="noopener noreferrer"
                                                                         className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
                                                                     >
-                                                                        <Download size={12} /> Tải
+                                                                        <Download size={12} /> {TC.dossierDrawer.downloadShortBtn}
                                                                     </a>
                                                                     {canEdit &&
                                                                         !doc.id.startsWith(
@@ -1625,7 +1717,7 @@ export function TastingNotesCatalog({
                                                                                     )
                                                                                 }
                                                                                 className="inline-flex items-center justify-center w-7 h-7 rounded text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors cursor-pointer disabled:opacity-50"
-                                                                                title="Xoá hồ sơ này"
+                                                                                title={TC.dossierDrawer.deleteDocTooltip}
                                                                             >
                                                                                 {deletingDocId ===
                                                                                 doc.id ? (
@@ -1681,7 +1773,7 @@ export function TastingNotesCatalog({
                                         rel="noopener noreferrer"
                                         className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-semibold text-cyan-800 bg-cyan-50 border border-cyan-200 hover:bg-cyan-100 transition-colors"
                                     >
-                                        <ExternalLink size={12} /> Mở tab mới
+                                        <ExternalLink size={12} /> {L.detailDrawer.openNewTab}
                                     </a>
                                     <a
                                         href={previewDoc.url}
@@ -1690,7 +1782,7 @@ export function TastingNotesCatalog({
                                         rel="noopener noreferrer"
                                         className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 transition-colors"
                                     >
-                                        <Download size={12} /> Tải về
+                                        <Download size={12} /> {TC.dossierDrawer.downloadShortBtn}
                                     </a>
                                     <button
                                         type="button"

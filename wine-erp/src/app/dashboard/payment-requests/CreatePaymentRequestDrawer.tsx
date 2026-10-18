@@ -16,6 +16,7 @@ import {
     quickCreateSupplier
 } from './actions'
 import { uploadPaymentDoc, getPresignedUploadUrl } from '@/lib/storage-r2'
+import { useAppLocale } from '@/lib/i18n'
 
 interface CreatePaymentRequestDrawerProps {
     categories: ExpenseCategoryRow[]
@@ -58,6 +59,7 @@ export function CreatePaymentRequestDrawer({
     onSuccess,
     onSupplierCreated,
 }: CreatePaymentRequestDrawerProps) {
+    const { isEn } = useAppLocale()
     const [submitting, setSubmitting] = useState(false)
     const [uploadingFiles, setUploadingFiles] = useState(false)
 
@@ -192,7 +194,7 @@ export function CreatePaymentRequestDrawer({
     async function handleQuickAddSupplierSubmit(e: React.FormEvent) {
         e.preventDefault()
         if (!quickSupplierForm.name.trim()) {
-            toast.error('Vui lòng nhập tên nhà cung cấp')
+            toast.error(isEn ? 'Please enter supplier name' : 'Vui lòng nhập tên nhà cung cấp')
             return
         }
 
@@ -200,7 +202,7 @@ export function CreatePaymentRequestDrawer({
         try {
             const res = await quickCreateSupplier(quickSupplierForm)
             if (res.success && res.supplier) {
-                toast.success(`Đã thêm nhà cung cấp: ${res.supplier.name}`)
+                toast.success(isEn ? `Added supplier: ${res.supplier.name}` : `Đã thêm nhà cung cấp: ${res.supplier.name}`)
                 const newSupp = res.supplier
                 setSuppliersList(prev => [newSupp, ...prev])
                 if (onSupplierCreated) onSupplierCreated(newSupp)
@@ -224,10 +226,10 @@ export function CreatePaymentRequestDrawer({
                     paymentTerm: 'NET30',
                 })
             } else {
-                toast.error(res.error || 'Lỗi khi tạo nhà cung cấp')
+                toast.error(res.error || (isEn ? 'Error creating supplier' : 'Lỗi khi tạo nhà cung cấp'))
             }
         } catch (err: any) {
-            toast.error(err.message || 'Lỗi kết nối')
+            toast.error(err.message || (isEn ? 'Connection error' : 'Lỗi kết nối'))
         } finally {
             setSavingSupplier(false)
         }
@@ -249,17 +251,17 @@ export function CreatePaymentRequestDrawer({
             if (next.length > 0 && (!next[0].description || next[0].unitPrice === 0)) {
                 next[0] = {
                     ...next[0],
-                    description: `Thanh toán theo đơn hàng PO: ${po.poNo}`,
+                    description: isEn ? `Payment for PO: ${po.poNo}` : `Thanh toán theo đơn hàng PO: ${po.poNo}`,
                     unitPrice: po.totalAmount || 0,
                     quantity: 1,
                 }
             }
             return next
         })
-        if (!title || title.startsWith('Thanh toán tiền hàng')) {
-            setTitle(`Thanh toán đơn hàng ${po.poNo} - ${selectedSupplier?.name || ''}`)
+        if (!title || title.startsWith('Thanh toán tiền hàng') || title.startsWith('Payment for')) {
+            setTitle(isEn ? `Payment for PO ${po.poNo} - ${selectedSupplier?.name || ''}` : `Thanh toán đơn hàng ${po.poNo} - ${selectedSupplier?.name || ''}`)
         }
-        toast.info(`Đã liên kết đơn hàng ${po.poNo}`)
+        toast.info(isEn ? `Linked PO ${po.poNo}` : `Đã liên kết đơn hàng ${po.poNo}`)
     }
 
     // Quick select an AP Invoice
@@ -278,7 +280,9 @@ export function CreatePaymentRequestDrawer({
             if (next.length > 0) {
                 next[0] = {
                     ...next[0],
-                    description: `Thanh toán Hóa đơn số ${inv.invoiceNo} (PO: ${inv.poNo || 'N/A'})`,
+                    description: isEn
+                        ? `Payment for Invoice ${inv.invoiceNo} (PO: ${inv.poNo || 'N/A'})`
+                        : `Thanh toán Hóa đơn số ${inv.invoiceNo} (PO: ${inv.poNo || 'N/A'})`,
                     unitPrice: inv.amount || 0,
                     quantity: 1,
                     invoiceNo: inv.invoiceNo,
@@ -287,10 +291,10 @@ export function CreatePaymentRequestDrawer({
             }
             return next
         })
-        if (!title || title.startsWith('Thanh toán')) {
-            setTitle(`Thanh toán hóa đơn ${inv.invoiceNo} - ${selectedSupplier?.name || ''}`)
+        if (!title || title.startsWith('Thanh toán') || title.startsWith('Payment')) {
+            setTitle(isEn ? `Payment for invoice ${inv.invoiceNo} - ${selectedSupplier?.name || ''}` : `Thanh toán hóa đơn ${inv.invoiceNo} - ${selectedSupplier?.name || ''}`)
         }
-        toast.info(`Đã liên kết hóa đơn ${inv.invoiceNo}`)
+        toast.info(isEn ? `Linked invoice ${inv.invoiceNo}` : `Đã liên kết hóa đơn ${inv.invoiceNo}`)
     }
 
     function addItem() {
@@ -312,7 +316,7 @@ export function CreatePaymentRequestDrawer({
 
     function removeItem(index: number) {
         if (items.length <= 1) {
-            toast.error('Cần có ít nhất một khoản mục chi')
+            toast.error(isEn ? 'At least one line item is required' : 'Cần có ít nhất một khoản mục chi')
             return
         }
         setItems(prev => prev.filter((_, i) => i !== index))
@@ -396,7 +400,7 @@ export function CreatePaymentRequestDrawer({
                         finalFileSize = res.fileSize || file.size
                         finalMimeType = res.mimeType || file.type
                     } else {
-                        toast.error(`Lỗi tải file ${file.name}: ${res.error || 'Upload thất bại'}`)
+                        toast.error(isEn ? `Upload failed for ${file.name}: ${res.error || 'Error'}` : `Lỗi tải file ${file.name}: ${res.error || 'Upload thất bại'}`)
                         continue
                     }
                 }
@@ -428,10 +432,10 @@ export function CreatePaymentRequestDrawer({
             }
 
             if (successCount > 0) {
-                toast.success(`Đã tải lên ${successCount} chứng từ scan thành công!`)
+                toast.success(isEn ? `Uploaded ${successCount} scanned document(s) successfully!` : `Đã tải lên ${successCount} chứng từ scan thành công!`)
             }
         } catch (err: any) {
-            toast.error(err.message || 'Lỗi khi upload file')
+            toast.error(err.message || (isEn ? 'Error uploading file' : 'Lỗi khi upload file'))
         } finally {
             setUploadingFiles(false)
             e.target.value = ''
@@ -472,17 +476,17 @@ export function CreatePaymentRequestDrawer({
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
         if (!title.trim()) {
-            toast.error('Vui lòng nhập nội dung đề nghị thanh toán')
+            toast.error(isEn ? 'Please enter payment request title/description' : 'Vui lòng nhập nội dung đề nghị thanh toán')
             return
         }
         if (!beneficiaryName.trim()) {
-            toast.error('Vui lòng nhập tên người/đơn vị thụ hưởng')
+            toast.error(isEn ? 'Please enter beneficiary name' : 'Vui lòng nhập tên người/đơn vị thụ hưởng')
             return
         }
 
         const invalidItem = items.find(i => !i.description.trim() || i.unitPrice <= 0)
         if (invalidItem) {
-            toast.error('Vui lòng nhập đầy đủ diễn giải và đơn giá hợp lệ cho các khoản mục')
+            toast.error(isEn ? 'Please enter description and valid unit price for all line items' : 'Vui lòng nhập đầy đủ diễn giải và đơn giá hợp lệ cho các khoản mục')
             return
         }
 
@@ -518,13 +522,13 @@ export function CreatePaymentRequestDrawer({
             })
 
             if (res.success) {
-                toast.success('Lập đề nghị thanh toán thành công!')
+                toast.success(isEn ? 'Payment request created successfully!' : 'Lập đề nghị thanh toán thành công!')
                 onSuccess()
             } else {
-                toast.error(res.error || 'Có lỗi xảy ra khi tạo đề nghị')
+                toast.error(res.error || (isEn ? 'Error creating payment request' : 'Có lỗi xảy ra khi tạo đề nghị'))
             }
         } catch (err: any) {
-            toast.error(err.message || 'Lỗi kết nối')
+            toast.error(err.message || (isEn ? 'Connection error' : 'Lỗi kết nối'))
         } finally {
             setSubmitting(false)
         }
@@ -536,8 +540,14 @@ export function CreatePaymentRequestDrawer({
                 {/* ═══ Header ═══ */}
                 <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4">
                     <div>
-                        <h2 className="text-base font-bold text-slate-900">Lập Đề Nghị Thanh Toán Mới</h2>
-                        <p className="text-xs text-slate-500">Khởi tạo phiếu thanh toán, chọn Nhà cung cấp, đính kèm chứng từ scan và chuyển duyệt đa cấp</p>
+                        <h2 className="text-base font-bold text-slate-900">
+                            {isEn ? 'Create New Payment Request' : 'Lập Đề Nghị Thanh Toán Mới'}
+                        </h2>
+                        <p className="text-xs text-slate-500">
+                            {isEn
+                                ? 'Create payment voucher, select Supplier, attach scanned documents and submit for multi-level approval'
+                                : 'Khởi tạo phiếu thanh toán, chọn Nhà cung cấp, đính kèm chứng từ scan và chuyển duyệt đa cấp'}
+                        </p>
                     </div>
                     <button
                         onClick={onClose}
@@ -552,17 +562,17 @@ export function CreatePaymentRequestDrawer({
                     {/* 1. Thông tin chung */}
                     <div className="rounded-md border border-slate-200 bg-slate-50/50 p-4">
                         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-1.5">
-                            <CreditCard className="h-4 w-4 text-[#B91C1C]" /> 1. Thông Tin Chung
+                            <CreditCard className="h-4 w-4 text-[#B91C1C]" /> {isEn ? '1. General Information' : '1. Thông Tin Chung'}
                         </h3>
                         <div className="space-y-3.5 text-xs">
                             <div>
                                 <label className="block font-medium text-slate-700 mb-1">
-                                    Nội dung đề nghị thanh toán *
+                                    {isEn ? 'Payment Request Title / Description *' : 'Nội dung đề nghị thanh toán *'}
                                 </label>
                                 <input
                                     type="text"
                                     required
-                                    placeholder="Vd: Thanh toán tiền hàng vang Ý lô số PO-2026-08 / Chi phí thử nếm Masterclass tháng 10"
+                                    placeholder={isEn ? 'e.g. Payment for Italian wine lot PO-2026-08 / October Masterclass tasting expense' : 'Vd: Thanh toán tiền hàng vang Ý lô số PO-2026-08 / Chi phí thử nếm Masterclass tháng 10'}
                                     value={title}
                                     onChange={e => setTitle(e.target.value)}
                                     className="w-full rounded-lg border border-slate-300 p-2.5 text-xs text-slate-900 font-medium focus:border-[#B91C1C] focus:outline-none"
@@ -571,23 +581,27 @@ export function CreatePaymentRequestDrawer({
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div>
-                                    <label className="block font-medium text-slate-700 mb-1">Nhóm chi phí *</label>
+                                    <label className="block font-medium text-slate-700 mb-1">
+                                        {isEn ? 'Expense Group *' : 'Nhóm chi phí *'}
+                                    </label>
                                     <select
                                         value={category}
                                         onChange={e => setCategory(e.target.value as any)}
                                         className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     >
-                                        <option value="VENDOR_PAYMENT">Tiền hàng Nhà cung cấp</option>
-                                        <option value="IMPORT_TAX_LOGISTICS">Thuế Hải quan & Cước tàu</option>
-                                        <option value="OPERATIONS_OFFICE">Chi phí Vận hành & Kho bãi</option>
-                                        <option value="TASTING_MARKETING">Thử nếm rượu (Tasting) & Marketing</option>
-                                        <option value="EMPLOYEE_ADVANCE">Tạm ứng / Hoàn ứng nhân sự</option>
-                                        <option value="OTHER">Chi phí khác</option>
+                                        <option value="VENDOR_PAYMENT">{isEn ? 'Vendor / Supplier Payment' : 'Tiền hàng Nhà cung cấp'}</option>
+                                        <option value="IMPORT_TAX_LOGISTICS">{isEn ? 'Customs Duty & Freight' : 'Thuế Hải quan & Cước tàu'}</option>
+                                        <option value="OPERATIONS_OFFICE">{isEn ? 'Operations & Warehouse' : 'Chi phí Vận hành & Kho bãi'}</option>
+                                        <option value="TASTING_MARKETING">{isEn ? 'Wine Tasting & Marketing' : 'Thử nếm rượu (Tasting) & Marketing'}</option>
+                                        <option value="EMPLOYEE_ADVANCE">{isEn ? 'Employee Advance / Reimbursement' : 'Tạm ứng / Hoàn ứng nhân sự'}</option>
+                                        <option value="OTHER">{isEn ? 'Other Expenses' : 'Chi phí khác'}</option>
                                     </select>
                                 </div>
 
                                 <div>
-                                    <label className="block font-medium text-slate-700 mb-1">Hạng mục chi phí mặc định</label>
+                                    <label className="block font-medium text-slate-700 mb-1">
+                                        {isEn ? 'Default Expense Category' : 'Hạng mục chi phí mặc định'}
+                                    </label>
                                     <select
                                         value={primaryCategoryId}
                                         onChange={e => handleCategoryChange(e.target.value)}
@@ -602,23 +616,27 @@ export function CreatePaymentRequestDrawer({
                                 </div>
 
                                 <div>
-                                    <label className="block font-medium text-slate-700 mb-1">Mức độ ưu tiên</label>
+                                    <label className="block font-medium text-slate-700 mb-1">
+                                        {isEn ? 'Priority Level' : 'Mức độ ưu tiên'}
+                                    </label>
                                     <select
                                         value={priority}
                                         onChange={e => setPriority(e.target.value)}
                                         className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     >
-                                        <option value="LOW">Thấp</option>
-                                        <option value="NORMAL">Bình thường</option>
-                                        <option value="HIGH">Cao</option>
-                                        <option value="URGENT">Khẩn cấp</option>
+                                        <option value="LOW">{isEn ? 'Low' : 'Thấp'}</option>
+                                        <option value="NORMAL">{isEn ? 'Normal' : 'Bình thường'}</option>
+                                        <option value="HIGH">{isEn ? 'High' : 'Cao'}</option>
+                                        <option value="URGENT">{isEn ? 'Urgent' : 'Khẩn cấp'}</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div>
-                                    <label className="block font-medium text-slate-700 mb-1">Pháp nhân chi trả</label>
+                                    <label className="block font-medium text-slate-700 mb-1">
+                                        {isEn ? 'Paying Legal Entity' : 'Pháp nhân chi trả'}
+                                    </label>
                                     <select
                                         value={legalEntityId}
                                         onChange={e => setLegalEntityId(e.target.value)}
@@ -631,7 +649,9 @@ export function CreatePaymentRequestDrawer({
                                 </div>
 
                                 <div>
-                                    <label className="block font-medium text-slate-700 mb-1">Bộ phận đề xuất</label>
+                                    <label className="block font-medium text-slate-700 mb-1">
+                                        {isEn ? 'Requesting Department' : 'Bộ phận đề xuất'}
+                                    </label>
                                     <select
                                         value={departmentId}
                                         onChange={e => setDepartmentId(e.target.value)}
@@ -644,7 +664,9 @@ export function CreatePaymentRequestDrawer({
                                 </div>
 
                                 <div>
-                                    <label className="block font-medium text-slate-700 mb-1">Hạn thanh toán</label>
+                                    <label className="block font-medium text-slate-700 mb-1">
+                                        {isEn ? 'Payment Due Date' : 'Hạn thanh toán'}
+                                    </label>
                                     <input
                                         type="date"
                                         value={dueDate}
@@ -657,24 +679,28 @@ export function CreatePaymentRequestDrawer({
                             {/* Tiền tệ & Tỷ giá */}
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-slate-200/60">
                                 <div>
-                                    <label className="block font-medium text-slate-700 mb-1">Đồng tiền thanh toán</label>
+                                    <label className="block font-medium text-slate-700 mb-1">
+                                        {isEn ? 'Payment Currency' : 'Đồng tiền thanh toán'}
+                                    </label>
                                     <select
                                         value={currency}
                                         onChange={e => setCurrency(e.target.value)}
                                         className="w-full rounded-lg border border-slate-300 p-2 text-xs font-semibold focus:border-[#B91C1C] focus:outline-none"
                                     >
-                                        <option value="VND">VND (Việt Nam Đồng)</option>
-                                        <option value="USD">USD (Đô la Mỹ)</option>
+                                        <option value="VND">{isEn ? 'VND (Vietnamese Dong)' : 'VND (Việt Nam Đồng)'}</option>
+                                        <option value="USD">{isEn ? 'USD (US Dollar)' : 'USD (Đô la Mỹ)'}</option>
                                         <option value="EUR">EUR (Euro)</option>
-                                        <option value="GBP">GBP (Bảng Anh)</option>
-                                        <option value="AUD">AUD (Đô la Úc)</option>
-                                        <option value="SGD">SGD (Đô la Singapore)</option>
+                                        <option value="GBP">{isEn ? 'GBP (British Pound)' : 'GBP (Bảng Anh)'}</option>
+                                        <option value="AUD">{isEn ? 'AUD (Australian Dollar)' : 'AUD (Đô la Úc)'}</option>
+                                        <option value="SGD">{isEn ? 'SGD (Singapore Dollar)' : 'SGD (Đô la Singapore)'}</option>
                                     </select>
                                 </div>
 
                                 {currency !== 'VND' && (
                                     <div>
-                                        <label className="block font-medium text-slate-700 mb-1">Tỷ giá quy đổi sang VNĐ</label>
+                                        <label className="block font-medium text-slate-700 mb-1">
+                                            {isEn ? 'Exchange Rate to VND' : 'Tỷ giá quy đổi sang VNĐ'}
+                                        </label>
                                         <input
                                             type="number"
                                             value={exchangeRate}
@@ -691,14 +717,14 @@ export function CreatePaymentRequestDrawer({
                     <div className="rounded-md border border-slate-200 bg-slate-50/50 p-4">
                         <div className="flex items-center justify-between mb-3">
                             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                                <Building2 className="h-4 w-4 text-[#B91C1C]" /> 2. Chọn Nhà Cung Cấp & Người Thụ Hưởng
+                                <Building2 className="h-4 w-4 text-[#B91C1C]" /> {isEn ? '2. Select Supplier & Beneficiary' : '2. Chọn Nhà Cung Cấp & Người Thụ Hưởng'}
                             </h3>
                             <button
                                 type="button"
                                 onClick={() => setShowQuickAddSupplier(true)}
                                 className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition"
                             >
-                                <Plus className="h-3 w-3" /> Thêm NCC Mới
+                                <Plus className="h-3 w-3" /> {isEn ? 'Add New Supplier' : 'Thêm NCC Mới'}
                             </button>
                         </div>
 
@@ -708,12 +734,12 @@ export function CreatePaymentRequestDrawer({
                                 <div className="flex items-center justify-between">
                                     <label className="font-semibold text-slate-800 flex items-center gap-1.5">
                                         <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                                        Chọn Nhà Cung Cấp (Master Data)
+                                        {isEn ? 'Select Supplier (Master Data)' : 'Chọn Nhà Cung Cấp (Master Data)'}
                                     </label>
                                     {selectedSupplier && (
                                         <span className="text-[11px] text-slate-500">
-                                            MST: <span className="font-mono font-bold text-slate-700">{selectedSupplier.taxId || 'N/A'}</span>
-                                            {selectedSupplier.paymentTerm && ` • Điều khoản: ${selectedSupplier.paymentTerm}`}
+                                            {isEn ? 'Tax ID' : 'MST'}: <span className="font-mono font-bold text-slate-700">{selectedSupplier.taxId || 'N/A'}</span>
+                                            {selectedSupplier.paymentTerm && ` • ${isEn ? 'Term' : 'Điều khoản'}: ${selectedSupplier.paymentTerm}`}
                                         </span>
                                     )}
                                 </div>
@@ -722,7 +748,7 @@ export function CreatePaymentRequestDrawer({
                                     <div className="relative">
                                         <input
                                             type="text"
-                                            placeholder="Tìm nhanh tên, mã NCC hoặc MST..."
+                                            placeholder={isEn ? 'Quick search supplier name, code or Tax ID...' : 'Tìm nhanh tên, mã NCC hoặc MST...'}
                                             value={supplierSearch}
                                             onChange={e => setSupplierSearch(e.target.value)}
                                             className="w-full rounded-lg border border-slate-300 pl-8 pr-3 py-1.5 text-xs focus:border-[#B91C1C] focus:outline-none"
@@ -735,10 +761,10 @@ export function CreatePaymentRequestDrawer({
                                         onChange={e => selectSupplier(e.target.value)}
                                         className="w-full rounded-lg border border-slate-300 p-1.5 text-xs font-medium focus:border-[#B91C1C] focus:outline-none"
                                     >
-                                        <option value="">-- Chọn Nhà Cung Cấp ({filteredSuppliers.length}) --</option>
+                                        <option value="">{isEn ? `-- Select Supplier (${filteredSuppliers.length}) --` : `-- Chọn Nhà Cung Cấp (${filteredSuppliers.length}) --`}</option>
                                         {filteredSuppliers.map(s => (
                                             <option key={s.id} value={s.id}>
-                                                [{s.code}] {s.name} {s.taxId ? `(MST: ${s.taxId})` : ''}
+                                                [{s.code}] {s.name} {s.taxId ? `(${isEn ? 'Tax ID' : 'MST'}: ${s.taxId})` : ''}
                                             </option>
                                         ))}
                                     </select>
@@ -747,11 +773,11 @@ export function CreatePaymentRequestDrawer({
                                 {selectedSupplier && (
                                     <div className="mt-2 flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 text-[11px] text-slate-600">
                                         <span className="rounded bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
-                                            {selectedSupplier.type || 'Nhà Cung Cấp'}
+                                            {selectedSupplier.type || (isEn ? 'Supplier' : 'Nhà Cung Cấp')}
                                         </span>
                                         {selectedSupplier.country && (
                                             <span className="rounded bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
-                                                Quốc gia: {selectedSupplier.country}
+                                                {isEn ? 'Country' : 'Quốc gia'}: {selectedSupplier.country}
                                             </span>
                                         )}
                                         {selectedSupplier.bankAccountInfo && (
@@ -767,7 +793,7 @@ export function CreatePaymentRequestDrawer({
                             {loadingPending && (
                                 <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-500">
                                     <Loader2 className="h-4 w-4 animate-spin text-[#B91C1C]" />
-                                    Đang kiểm tra đơn hàng PO và hóa đơn chưa thanh toán của NCC này...
+                                    {isEn ? 'Checking pending POs and unpaid AP invoices for this supplier...' : 'Đang kiểm tra đơn hàng PO và hóa đơn chưa thanh toán của NCC này...'}
                                 </div>
                             )}
 
@@ -776,10 +802,10 @@ export function CreatePaymentRequestDrawer({
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-1.5 font-bold text-amber-900 text-xs">
                                             <Sparkles className="h-4 w-4 text-amber-600" />
-                                            Khớp đơn hàng PO & Hóa đơn cần thanh toán của NCC:
+                                            {isEn ? 'Match Supplier POs & Unpaid Invoices:' : 'Khớp đơn hàng PO & Hóa đơn cần thanh toán của NCC:'}
                                         </div>
                                         <span className="text-[11px] text-amber-700">
-                                            Bấm vào PO hoặc Hóa đơn để tự động điền số tiền & diễn giải
+                                            {isEn ? 'Click a PO or Invoice to auto-fill amount & description' : 'Bấm vào PO hoặc Hóa đơn để tự động điền số tiền & diễn giải'}
                                         </span>
                                     </div>
 
@@ -788,7 +814,7 @@ export function CreatePaymentRequestDrawer({
                                         <div>
                                             <span className="text-[11px] font-semibold text-slate-600 flex items-center gap-1 mb-1.5">
                                                 <Package className="h-3.5 w-3.5 text-[#B91C1C]" />
-                                                Đơn đặt hàng (PO) đã duyệt:
+                                                {isEn ? 'Approved Purchase Orders (PO):' : 'Đơn đặt hàng (PO) đã duyệt:'}
                                             </span>
                                             <div className="flex flex-wrap gap-2">
                                                 {pendingData.pos.map(po => {
@@ -819,7 +845,7 @@ export function CreatePaymentRequestDrawer({
                                         <div>
                                             <span className="text-[11px] font-semibold text-slate-600 flex items-center gap-1 mb-1.5">
                                                 <Receipt className="h-3.5 w-3.5 text-blue-600" />
-                                                Hóa đơn AP chưa thanh toán:
+                                                {isEn ? 'Unpaid AP Invoices:' : 'Hóa đơn AP chưa thanh toán:'}
                                             </span>
                                             <div className="flex flex-wrap gap-2">
                                                 {pendingData.invoices.map(inv => {
@@ -836,10 +862,10 @@ export function CreatePaymentRequestDrawer({
                                                             }`}
                                                         >
                                                             {isSelected ? <Check className="h-3 w-3" /> : <LinkIcon className="h-3 w-3 text-slate-400" />}
-                                                            <span>HĐ: {inv.invoiceNo}</span>
+                                                            <span>{isEn ? 'Inv' : 'HĐ'}: {inv.invoiceNo}</span>
                                                             <span className="font-mono">({formatVND(inv.amount)})</span>
                                                             {inv.dueDate && (
-                                                                <span className="text-[10px] opacity-80">Hạn: {formatDate(inv.dueDate)}</span>
+                                                                <span className="text-[10px] opacity-80">{isEn ? 'Due' : 'Hạn'}: {formatDate(inv.dueDate)}</span>
                                                             )}
                                                         </button>
                                                     )
@@ -853,11 +879,13 @@ export function CreatePaymentRequestDrawer({
                             {/* Beneficiary Details inputs */}
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div>
-                                    <label className="block font-medium text-slate-700 mb-1">Tên đơn vị / Người nhận *</label>
+                                    <label className="block font-medium text-slate-700 mb-1">
+                                        {isEn ? 'Beneficiary / Payee Name *' : 'Tên đơn vị / Người nhận *'}
+                                    </label>
                                     <input
                                         type="text"
                                         required
-                                        placeholder="Vd: Công ty TNHH Vận Tải Biển / Nguyễn Văn A"
+                                        placeholder={isEn ? 'e.g. Ocean Freight Co., Ltd / Nguyen Van A' : 'Vd: Công ty TNHH Vận Tải Biển / Nguyễn Văn A'}
                                         value={beneficiaryName}
                                         onChange={e => setBeneficiaryName(e.target.value)}
                                         className="w-full rounded-lg border border-slate-300 p-2 text-xs font-medium focus:border-[#B91C1C] focus:outline-none"
@@ -865,10 +893,12 @@ export function CreatePaymentRequestDrawer({
                                 </div>
 
                                 <div>
-                                    <label className="block font-medium text-slate-700 mb-1">Số tài khoản ngân hàng</label>
+                                    <label className="block font-medium text-slate-700 mb-1">
+                                        {isEn ? 'Bank Account Number' : 'Số tài khoản ngân hàng'}
+                                    </label>
                                     <input
                                         type="text"
-                                        placeholder="Vd: 0071001234567"
+                                        placeholder="e.g. 0071001234567"
                                         value={beneficiaryAccount}
                                         onChange={e => setBeneficiaryAccount(e.target.value)}
                                         className="w-full rounded-lg border border-slate-300 p-2 font-mono text-xs font-semibold focus:border-[#B91C1C] focus:outline-none"
@@ -876,10 +906,12 @@ export function CreatePaymentRequestDrawer({
                                 </div>
 
                                 <div>
-                                    <label className="block font-medium text-slate-700 mb-1">Ngân hàng & Chi nhánh</label>
+                                    <label className="block font-medium text-slate-700 mb-1">
+                                        {isEn ? 'Bank & Branch' : 'Ngân hàng & Chi nhánh'}
+                                    </label>
                                     <input
                                         type="text"
-                                        placeholder="Vd: Vietcombank CN TP.HCM"
+                                        placeholder={isEn ? 'e.g. Vietcombank HCMC Branch' : 'Vd: Vietcombank CN TP.HCM'}
                                         value={beneficiaryBank}
                                         onChange={e => setBeneficiaryBank(e.target.value)}
                                         className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
@@ -893,14 +925,14 @@ export function CreatePaymentRequestDrawer({
                     <div className="rounded-md border border-slate-200 bg-white p-4">
                         <div className="flex items-center justify-between mb-3">
                             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                                3. Bảng Kê Khoản Mục Chi Tiết
+                                {isEn ? '3. Payment Line Items' : '3. Bảng Kê Khoản Mục Chi Tiết'}
                             </h3>
                             <button
                                 type="button"
                                 onClick={addItem}
                                 className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition"
                             >
-                                <Plus className="h-3 w-3" /> Thêm Dòng
+                                <Plus className="h-3 w-3" /> {isEn ? 'Add Line' : 'Thêm Dòng'}
                             </button>
                         </div>
 
@@ -908,12 +940,12 @@ export function CreatePaymentRequestDrawer({
                             <table className="w-full text-left text-xs">
                                 <thead className="bg-slate-50 text-slate-600 font-semibold">
                                     <tr>
-                                        <th className="p-2 w-[28%]">Diễn giải *</th>
-                                        <th className="p-2 w-[22%]">Hạng mục chi</th>
-                                        <th className="p-2 w-[8%] text-center">SL</th>
-                                        <th className="p-2 w-[16%] text-right">Đơn giá</th>
+                                        <th className="p-2 w-[28%]">{isEn ? 'Description *' : 'Diễn giải *'}</th>
+                                        <th className="p-2 w-[22%]">{isEn ? 'Expense Category' : 'Hạng mục chi'}</th>
+                                        <th className="p-2 w-[8%] text-center">{isEn ? 'Qty' : 'SL'}</th>
+                                        <th className="p-2 w-[16%] text-right">{isEn ? 'Unit Price' : 'Đơn giá'}</th>
                                         <th className="p-2 w-[12%] text-right">VAT</th>
-                                        <th className="p-2 w-[14%] text-right">Thành tiền</th>
+                                        <th className="p-2 w-[14%] text-right">{isEn ? 'Amount' : 'Thành tiền'}</th>
                                         <th className="p-2 w-[5%] text-center"></th>
                                     </tr>
                                 </thead>
@@ -926,7 +958,7 @@ export function CreatePaymentRequestDrawer({
                                                     <input
                                                         type="text"
                                                         required
-                                                        placeholder="Nội dung khoản chi..."
+                                                        placeholder={isEn ? 'Line item description...' : 'Nội dung khoản chi...'}
                                                         value={item.description}
                                                         onChange={e => updateItem(idx, 'description', e.target.value)}
                                                         className="w-full rounded border border-slate-300 p-1.5 text-xs focus:border-[#B91C1C] focus:outline-none"
@@ -996,12 +1028,12 @@ export function CreatePaymentRequestDrawer({
                         {/* Tổng cộng banner */}
                         <div className="mt-3 flex items-center justify-between rounded-lg bg-slate-50 p-3 border border-slate-200 text-xs">
                             <div className="text-slate-500">
-                                Số lượng khoản mục: <span className="font-semibold text-slate-800">{items.length}</span>
-                                {poId && <span className="ml-2 text-[#B91C1C] font-medium">• Đã gắn PO</span>}
-                                {apInvoiceId && <span className="ml-2 text-blue-600 font-medium">• Đã gắn HĐ AP</span>}
+                                {isEn ? 'Line items: ' : 'Số lượng khoản mục: '}<span className="font-semibold text-slate-800">{items.length}</span>
+                                {poId && <span className="ml-2 text-[#B91C1C] font-medium">• {isEn ? 'PO Linked' : 'Đã gắn PO'}</span>}
+                                {apInvoiceId && <span className="ml-2 text-blue-600 font-medium">• {isEn ? 'AP Invoice Linked' : 'Đã gắn HĐ AP'}</span>}
                             </div>
                             <div className="flex items-center gap-4">
-                                <span className="text-slate-500">Tổng cộng thanh toán:</span>
+                                <span className="text-slate-500">{isEn ? 'Grand Total:' : 'Tổng cộng thanh toán:'}</span>
                                 <span className="text-base font-bold text-[#B91C1C]">
                                     {currency === 'VND' ? formatVND(grandTotalVND) : `${grandTotal.toLocaleString()} ${currency} (~${formatVND(grandTotalVND)})`}
                                 </span>
@@ -1014,15 +1046,15 @@ export function CreatePaymentRequestDrawer({
                         <div className="flex items-center justify-between mb-2">
                             <div>
                                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                                    4. Đính Kèm Chứng Từ Scan (Hóa Đơn GTGT, Biên Bản, Hợp Đồng)
+                                    {isEn ? '4. Attach Scanned Documents (VAT Invoice, Handover Note, Contract)' : '4. Đính Kèm Chứng Từ Scan (Hóa Đơn GTGT, Biên Bản, Hợp Đồng)'}
                                 </h3>
                                 <p className="text-[11px] text-slate-500">
-                                    Hỗ trợ tải lên nhiều file PDF, JPG, PNG lưu trữ trên Cloudflare R2 bảo mật
+                                    {isEn ? 'Supports multiple PDF, JPG, PNG files stored securely on Cloudflare R2' : 'Hỗ trợ tải lên nhiều file PDF, JPG, PNG lưu trữ trên Cloudflare R2 bảo mật'}
                                 </p>
                             </div>
                             {uploadingFiles && (
                                 <div className="flex items-center gap-1.5 text-xs text-[#B91C1C] font-medium">
-                                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Đang tải lên R2...
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> {isEn ? 'Uploading to R2...' : 'Đang tải lên R2...'}
                                 </div>
                             )}
                         </div>
@@ -1030,8 +1062,12 @@ export function CreatePaymentRequestDrawer({
                         {/* Dropzone */}
                         <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-white p-5 hover:bg-slate-50 transition">
                             <UploadCloud className="h-8 w-8 text-slate-400 mb-1" />
-                            <span className="text-xs font-semibold text-slate-700">Kéo thả hoặc bấm để chọn chứng từ scan</span>
-                            <span className="text-[11px] text-slate-400">PDF, PNG, JPG (Tối đa 20MB / file)</span>
+                            <span className="text-xs font-semibold text-slate-700">
+                                {isEn ? 'Drag & drop or click to select scanned documents' : 'Kéo thả hoặc bấm để chọn chứng từ scan'}
+                            </span>
+                            <span className="text-[11px] text-slate-400">
+                                {isEn ? 'PDF, PNG, JPG (Max 20MB / file)' : 'PDF, PNG, JPG (Tối đa 20MB / file)'}
+                            </span>
                             <input
                                 type="file"
                                 multiple
@@ -1065,12 +1101,12 @@ export function CreatePaymentRequestDrawer({
                                                 onChange={e => updateAttachmentDocType(idx, e.target.value as any)}
                                                 className="rounded border border-slate-300 p-1 text-[11px] focus:border-[#B91C1C] focus:outline-none"
                                             >
-                                                <option value="VAT_INVOICE">Hóa đơn GTGT</option>
-                                                <option value="DELIVERY_NOTE">Biên bản bàn giao / Phiếu kho</option>
-                                                <option value="CONTRACT_DOC">Hợp đồng / Báo giá</option>
-                                                <option value="TAX_RECEIPT">Giấy nộp ngân sách</option>
-                                                <option value="BANK_UNC">Ủy nhiệm chi (UNC)</option>
-                                                <option value="OTHER">Chứng từ khác</option>
+                                                <option value="VAT_INVOICE">{isEn ? 'VAT Invoice' : 'Hóa đơn GTGT'}</option>
+                                                <option value="DELIVERY_NOTE">{isEn ? 'Delivery / Warehouse Note' : 'Biên bản bàn giao / Phiếu kho'}</option>
+                                                <option value="CONTRACT_DOC">{isEn ? 'Contract / Quotation' : 'Hợp đồng / Báo giá'}</option>
+                                                <option value="TAX_RECEIPT">{isEn ? 'Tax Payment Receipt' : 'Giấy nộp ngân sách'}</option>
+                                                <option value="BANK_UNC">{isEn ? 'Payment Order (UNC)' : 'Ủy nhiệm chi (UNC)'}</option>
+                                                <option value="OTHER">{isEn ? 'Other Document' : 'Chứng từ khác'}</option>
                                             </select>
 
                                             <button
@@ -1089,10 +1125,12 @@ export function CreatePaymentRequestDrawer({
 
                     {/* 5. Ghi chú */}
                     <div>
-                        <label className="block text-xs font-medium text-slate-700 mb-1">Ghi chú & Căn cứ phê duyệt</label>
+                        <label className="block text-xs font-medium text-slate-700 mb-1">
+                            {isEn ? 'Notes & Approval Basis' : 'Ghi chú & Căn cứ phê duyệt'}
+                        </label>
                         <textarea
                             rows={2}
-                            placeholder="Ghi chú thêm về điều khoản hợp đồng, tiến độ hoặc lý do cần thanh toán gấp..."
+                            placeholder={isEn ? 'Additional notes on contract terms, progress, or urgency...' : 'Ghi chú thêm về điều khoản hợp đồng, tiến độ hoặc lý do cần thanh toán gấp...'}
                             value={notes}
                             onChange={e => setNotes(e.target.value)}
                             className="w-full rounded-lg border border-slate-300 p-2.5 text-xs text-slate-800 focus:border-[#B91C1C] focus:outline-none"
@@ -1103,7 +1141,7 @@ export function CreatePaymentRequestDrawer({
                 {/* ═══ Footer ═══ */}
                 <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-4">
                     <div className="text-xs">
-                        <span className="text-slate-500">Tổng thanh toán: </span>
+                        <span className="text-slate-500">{isEn ? 'Total Payment: ' : 'Tổng thanh toán: '}</span>
                         <span className="font-mono text-base font-bold text-[#B91C1C]">{formatVND(grandTotalVND)}</span>
                     </div>
 
@@ -1113,7 +1151,7 @@ export function CreatePaymentRequestDrawer({
                             onClick={onClose}
                             className="rounded-lg px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 transition"
                         >
-                            Hủy Bỏ
+                            {isEn ? 'Cancel' : 'Hủy Bỏ'}
                         </button>
                         <button
                             type="submit"
@@ -1122,7 +1160,7 @@ export function CreatePaymentRequestDrawer({
                             className="inline-flex items-center gap-2 rounded-lg bg-[#B91C1C] px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#721526] transition disabled:opacity-50"
                         >
                             {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                            Gửi Phê Duyệt Đề Nghị
+                            {isEn ? 'Submit for Approval' : 'Gửi Phê Duyệt Đề Nghị'}
                         </button>
                     </div>
                 </div>
@@ -1135,9 +1173,11 @@ export function CreatePaymentRequestDrawer({
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                             <div>
                                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                    <Building2 className="h-5 w-5 text-[#B91C1C]" /> Thêm Nhà Cung Cấp Mới (Nhanh)
+                                    <Building2 className="h-5 w-5 text-[#B91C1C]" /> {isEn ? 'Quick Add New Supplier' : 'Thêm Nhà Cung Cấp Mới (Nhanh)'}
                                 </h3>
-                                <p className="text-xs text-slate-500">Khởi tạo nhanh thông tin NCC và tài khoản ngân hàng để thanh toán</p>
+                                <p className="text-xs text-slate-500">
+                                    {isEn ? 'Quickly create supplier profile and bank account for payment' : 'Khởi tạo nhanh thông tin NCC và tài khoản ngân hàng để thanh toán'}
+                                </p>
                             </div>
                             <button
                                 onClick={() => setShowQuickAddSupplier(false)}
@@ -1149,11 +1189,13 @@ export function CreatePaymentRequestDrawer({
 
                         <form onSubmit={handleQuickAddSupplierSubmit} className="space-y-3.5 text-xs">
                             <div>
-                                <label className="block font-medium text-slate-700 mb-1">Tên Nhà Cung Cấp *</label>
+                                <label className="block font-medium text-slate-700 mb-1">
+                                    {isEn ? 'Supplier Name *' : 'Tên Nhà Cung Cấp *'}
+                                </label>
                                 <input
                                     type="text"
                                     required
-                                    placeholder="Vd: Công ty TNHH Nhập Khẩu Rượu Vang A"
+                                    placeholder={isEn ? 'e.g. Wine Import Co., Ltd A' : 'Vd: Công ty TNHH Nhập Khẩu Rượu Vang A'}
                                     value={quickSupplierForm.name}
                                     onChange={e => setQuickSupplierForm(prev => ({ ...prev, name: e.target.value }))}
                                     className="w-full rounded-lg border border-slate-300 p-2 text-xs font-medium focus:border-[#B91C1C] focus:outline-none"
@@ -1162,10 +1204,12 @@ export function CreatePaymentRequestDrawer({
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block font-medium text-slate-700 mb-1">Mã NCC (Để trống sẽ tự sinh)</label>
+                                    <label className="block font-medium text-slate-700 mb-1">
+                                        {isEn ? 'Supplier Code (Blank for auto)' : 'Mã NCC (Để trống sẽ tự sinh)'}
+                                    </label>
                                     <input
                                         type="text"
-                                        placeholder="Vd: NCC-0088"
+                                        placeholder="e.g. NCC-0088"
                                         value={quickSupplierForm.code}
                                         onChange={e => setQuickSupplierForm(prev => ({ ...prev, code: e.target.value }))}
                                         className="w-full rounded-lg border border-slate-300 p-2 text-xs uppercase focus:border-[#B91C1C] focus:outline-none"
@@ -1173,28 +1217,32 @@ export function CreatePaymentRequestDrawer({
                                 </div>
 
                                 <div>
-                                    <label className="block font-medium text-slate-700 mb-1">Phân loại NCC</label>
+                                    <label className="block font-medium text-slate-700 mb-1">
+                                        {isEn ? 'Supplier Type' : 'Phân loại NCC'}
+                                    </label>
                                     <select
                                         value={quickSupplierForm.type}
                                         onChange={e => setQuickSupplierForm(prev => ({ ...prev, type: e.target.value }))}
                                         className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     >
-                                        <option value="DISTRIBUTOR">Nhà phân phối (Distributor)</option>
-                                        <option value="WINERY">Nhà làm rượu (Winery / Hãng rượu)</option>
-                                        <option value="FORWARDER">Hãng tàu / Giao nhận (Forwarder)</option>
-                                        <option value="LOGISTICS">Kho bãi / Vận tải nội địa</option>
-                                        <option value="LOCAL_VENDOR">Nhà cung cấp dịch vụ trong nước</option>
-                                        <option value="OTHER">Khác</option>
+                                        <option value="DISTRIBUTOR">{isEn ? 'Distributor' : 'Nhà phân phối (Distributor)'}</option>
+                                        <option value="WINERY">{isEn ? 'Winery / Producer' : 'Nhà làm rượu (Winery / Hãng rượu)'}</option>
+                                        <option value="FORWARDER">{isEn ? 'Freight Forwarder' : 'Hãng tàu / Giao nhận (Forwarder)'}</option>
+                                        <option value="LOGISTICS">{isEn ? 'Warehousing / Domestic Logistics' : 'Kho bãi / Vận tải nội địa'}</option>
+                                        <option value="LOCAL_VENDOR">{isEn ? 'Local Service Vendor' : 'Nhà cung cấp dịch vụ trong nước'}</option>
+                                        <option value="OTHER">{isEn ? 'Other' : 'Khác'}</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block font-medium text-slate-700 mb-1">Mã số thuế (MST)</label>
+                                    <label className="block font-medium text-slate-700 mb-1">
+                                        {isEn ? 'Tax ID (MST)' : 'Mã số thuế (MST)'}
+                                    </label>
                                     <input
                                         type="text"
-                                        placeholder="Vd: 0312345678"
+                                        placeholder="e.g. 0312345678"
                                         value={quickSupplierForm.taxId}
                                         onChange={e => setQuickSupplierForm(prev => ({ ...prev, taxId: e.target.value }))}
                                         className="w-full rounded-lg border border-slate-300 p-2 text-xs font-mono focus:border-[#B91C1C] focus:outline-none"
@@ -1202,32 +1250,38 @@ export function CreatePaymentRequestDrawer({
                                 </div>
 
                                 <div>
-                                    <label className="block font-medium text-slate-700 mb-1">Điều khoản thanh toán</label>
+                                    <label className="block font-medium text-slate-700 mb-1">
+                                        {isEn ? 'Payment Terms' : 'Điều khoản thanh toán'}
+                                    </label>
                                     <select
                                         value={quickSupplierForm.paymentTerm}
                                         onChange={e => setQuickSupplierForm(prev => ({ ...prev, paymentTerm: e.target.value }))}
                                         className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     >
-                                        <option value="COD">Thanh toán ngay khi giao (COD)</option>
-                                        <option value="NET15">Công nợ 15 ngày (NET15)</option>
-                                        <option value="NET30">Công nợ 30 ngày (NET30)</option>
-                                        <option value="NET45">Công nợ 45 ngày (NET45)</option>
-                                        <option value="NET60">Công nợ 60 ngày (NET60)</option>
-                                        <option value="ADVANCE_50">Tạm ứng 50% - Còn lại sau giao hàng</option>
-                                        <option value="LC">Tín dụng thư (L/C)</option>
+                                        <option value="COD">{isEn ? 'Cash on Delivery (COD)' : 'Thanh toán ngay khi giao (COD)'}</option>
+                                        <option value="NET15">{isEn ? 'Net 15 Days (NET15)' : 'Công nợ 15 ngày (NET15)'}</option>
+                                        <option value="NET30">{isEn ? 'Net 30 Days (NET30)' : 'Công nợ 30 ngày (NET30)'}</option>
+                                        <option value="NET45">{isEn ? 'Net 45 Days (NET45)' : 'Công nợ 45 ngày (NET45)'}</option>
+                                        <option value="NET60">{isEn ? 'Net 60 Days (NET60)' : 'Công nợ 60 ngày (NET60)'}</option>
+                                        <option value="ADVANCE_50">{isEn ? '50% Advance - Balance after delivery' : 'Tạm ứng 50% - Còn lại sau giao hàng'}</option>
+                                        <option value="LC">{isEn ? 'Letter of Credit (L/C)' : 'Tín dụng thư (L/C)'}</option>
                                     </select>
                                 </div>
                             </div>
 
                             {/* Bank Details */}
                             <div className="rounded-md border border-slate-200 bg-slate-50/70 p-3 space-y-2.5">
-                                <span className="font-semibold text-slate-700 block">Tài khoản ngân hàng thụ hưởng</span>
+                                <span className="font-semibold text-slate-700 block">
+                                    {isEn ? 'Beneficiary Bank Account' : 'Tài khoản ngân hàng thụ hưởng'}
+                                </span>
                                 
                                 <div>
-                                    <label className="block text-[11px] text-slate-600 mb-0.5">Tên Ngân Hàng & Chi Nhánh</label>
+                                    <label className="block text-[11px] text-slate-600 mb-0.5">
+                                        {isEn ? 'Bank Name & Branch' : 'Tên Ngân Hàng & Chi Nhánh'}
+                                    </label>
                                     <input
                                         type="text"
-                                        placeholder="Vd: Vietcombank - CN Kỳ Đồng"
+                                        placeholder={isEn ? 'e.g. Vietcombank - Ky Dong Branch' : 'Vd: Vietcombank - CN Kỳ Đồng'}
                                         value={quickSupplierForm.bankName}
                                         onChange={e => setQuickSupplierForm(prev => ({ ...prev, bankName: e.target.value }))}
                                         className="w-full rounded border border-slate-300 p-1.5 text-xs bg-white focus:border-[#B91C1C] focus:outline-none"
@@ -1236,20 +1290,24 @@ export function CreatePaymentRequestDrawer({
 
                                 <div className="grid grid-cols-2 gap-2">
                                     <div>
-                                        <label className="block text-[11px] text-slate-600 mb-0.5">Số Tài Khoản (STK)</label>
+                                        <label className="block text-[11px] text-slate-600 mb-0.5">
+                                            {isEn ? 'Account Number' : 'Số Tài Khoản (STK)'}
+                                        </label>
                                         <input
                                             type="text"
-                                            placeholder="Vd: 0071001234567"
+                                            placeholder="e.g. 0071001234567"
                                             value={quickSupplierForm.bankAccountNo}
                                             onChange={e => setQuickSupplierForm(prev => ({ ...prev, bankAccountNo: e.target.value }))}
                                             className="w-full rounded border border-slate-300 p-1.5 text-xs font-mono font-bold bg-white focus:border-[#B91C1C] focus:outline-none"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] text-slate-600 mb-0.5">Tên Chủ Tài Khoản</label>
+                                        <label className="block text-[11px] text-slate-600 mb-0.5">
+                                            {isEn ? 'Account Holder Name' : 'Tên Chủ Tài Khoản'}
+                                        </label>
                                         <input
                                             type="text"
-                                            placeholder="Vd: CTY TNHH ABC"
+                                            placeholder="e.g. ABC CO., LTD"
                                             value={quickSupplierForm.bankAccountName}
                                             onChange={e => setQuickSupplierForm(prev => ({ ...prev, bankAccountName: e.target.value }))}
                                             className="w-full rounded border border-slate-300 p-1.5 text-xs font-medium uppercase bg-white focus:border-[#B91C1C] focus:outline-none"
@@ -1261,20 +1319,24 @@ export function CreatePaymentRequestDrawer({
                             {/* Contact info */}
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block font-medium text-slate-700 mb-1">Số điện thoại</label>
+                                    <label className="block font-medium text-slate-700 mb-1">
+                                        {isEn ? 'Phone Number' : 'Số điện thoại'}
+                                    </label>
                                     <input
                                         type="text"
-                                        placeholder="Vd: 028 3822 xxxx"
+                                        placeholder="e.g. 028 3822 xxxx"
                                         value={quickSupplierForm.phone}
                                         onChange={e => setQuickSupplierForm(prev => ({ ...prev, phone: e.target.value }))}
                                         className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block font-medium text-slate-700 mb-1">Email liên hệ</label>
+                                    <label className="block font-medium text-slate-700 mb-1">
+                                        {isEn ? 'Contact Email' : 'Email liên hệ'}
+                                    </label>
                                     <input
                                         type="email"
-                                        placeholder="Vd: accounting@supplier.com"
+                                        placeholder="e.g. accounting@supplier.com"
                                         value={quickSupplierForm.email}
                                         onChange={e => setQuickSupplierForm(prev => ({ ...prev, email: e.target.value }))}
                                         className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
@@ -1288,7 +1350,7 @@ export function CreatePaymentRequestDrawer({
                                     onClick={() => setShowQuickAddSupplier(false)}
                                     className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100"
                                 >
-                                    Hủy
+                                    {isEn ? 'Cancel' : 'Hủy'}
                                 </button>
                                 <button
                                     type="submit"
@@ -1296,7 +1358,7 @@ export function CreatePaymentRequestDrawer({
                                     className="inline-flex items-center gap-1.5 rounded-lg bg-[#B91C1C] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#721526] transition disabled:opacity-50"
                                 >
                                     {savingSupplier && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                                    Lưu & Chọn Ngay
+                                    {isEn ? 'Save & Select Now' : 'Lưu & Chọn Ngay'}
                                 </button>
                             </div>
                         </form>

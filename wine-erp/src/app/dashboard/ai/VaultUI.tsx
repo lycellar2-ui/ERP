@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { Key, Plus, Trash2, ToggleLeft, ToggleRight, Loader2, Zap, FileText, Activity, Lock, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
 import { type ApiKeyRow, type PromptTemplateRow, saveApiKey, toggleApiKey, deleteApiKey, testApiKey, createPromptTemplate, deletePromptTemplate } from './vault-actions'
 import { useConfirmDialog } from '@/components/ui'
+import { useAppLocale } from '@/lib/i18n'
+import { getAiI18n } from './i18n'
 
 const PROVIDERS = [
     { value: 'gemini', label: 'Google Gemini', color: '#0891B2' },
@@ -13,6 +15,8 @@ const PROVIDERS = [
 ]
 
 export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
+    const { locale, formatDate } = useAppLocale()
+    const t = getAiI18n(locale).vault
     const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [keys, setKeys] = useState(initialKeys)
     const [showAdd, setShowAdd] = useState(false)
@@ -34,7 +38,7 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
         })
         setLoading('')
         if (!res.success) {
-            setSaveError(res.error || 'Lỗi không xác định khi lưu key')
+            setSaveError(res.error || 'Error saving key')
             return
         }
         setForm({ provider: 'gemini', label: '', apiKey: '', monthlyBudget: '' })
@@ -45,9 +49,9 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
     const handleToggle = async (id: string) => { await toggleApiKey(id); refresh() }
     const handleDelete = async (id: string) => {
         const ok = await confirm({
-            title: 'Xóa API Key',
-            message: 'Bạn có chắc chắn muốn xóa API Key này không?',
-            confirmLabel: 'Xóa Key',
+            title: t.confirmDeleteKeyTitle,
+            message: t.confirmDeleteKeyMsg,
+            confirmLabel: t.confirmDeleteKeyBtn,
             variant: 'danger',
         })
         if (!ok) return
@@ -67,12 +71,12 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
         <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold flex items-center gap-2" style={{ color: '#0F172A' }}>
-                    <Key size={16} style={{ color: '#B45309' }} /> API Key Vault
+                    <Key size={16} style={{ color: '#B45309' }} /> {t.title}
                 </h3>
                 <button onClick={() => { setShowAdd(!showAdd); setSaveError('') }}
                     className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold"
                     style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                    <Plus size={12} /> Thêm Key
+                    <Plus size={12} /> {t.addKeyBtn}
                 </button>
             </div>
 
@@ -81,7 +85,7 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                 <div className="p-4 rounded-md mb-4 space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Provider</label>
+                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>{t.providerLabel}</label>
                             <select value={form.provider} onChange={e => setForm({ ...form, provider: e.target.value })}
                                 className="w-full px-3 py-2 text-xs rounded"
                                 style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }}>
@@ -89,7 +93,7 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                             </select>
                         </div>
                         <div>
-                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Budget/tháng (USD)</label>
+                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>{t.budgetLabel}</label>
                             <input type="number" value={form.monthlyBudget} onChange={e => setForm({ ...form, monthlyBudget: e.target.value })}
                                 placeholder="10.00"
                                 className="w-full px-3 py-2 text-xs rounded outline-none"
@@ -97,9 +101,9 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                         </div>
                     </div>
                     <div>
-                        <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>API Key</label>
+                        <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>{t.apiKeyLabel}</label>
                         <input type="password" value={form.apiKey} onChange={e => setForm({ ...form, apiKey: e.target.value })}
-                            placeholder="AIza... hoặc sk-..."
+                            placeholder="AIza... / sk-..."
                             className="w-full px-3 py-2 text-xs rounded outline-none font-mono"
                             style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                     </div>
@@ -113,11 +117,11 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                         </div>
                     )}
                     <div className="flex gap-2 justify-end">
-                        <button onClick={() => setShowAdd(false)} className="text-xs px-4 py-2" style={{ color: '#64748B' }}>Hủy</button>
+                        <button onClick={() => setShowAdd(false)} className="text-xs px-4 py-2" style={{ color: '#64748B' }}>{t.cancelBtn}</button>
                         <button onClick={handleSave} disabled={!form.apiKey || loading === 'save'}
                             className="flex items-center gap-1.5 text-xs px-4 py-2 rounded font-semibold"
                             style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                            {loading === 'save' ? <Loader2 size={12} className="animate-spin" /> : <><Lock size={12} /> Mã hóa & Lưu</>}
+                            {loading === 'save' ? <Loader2 size={12} className="animate-spin" /> : <><Lock size={12} /> {t.encryptSaveBtn}</>}
                         </button>
                     </div>
                 </div>
@@ -125,11 +129,11 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
 
             {/* Keys List */}
             {keys.length === 0 ? (
-                <p className="text-xs text-center py-6" style={{ color: '#64748B' }}>Chưa có API Key. Nhấn "Thêm Key" để bắt đầu.</p>
+                <p className="text-xs text-center py-6" style={{ color: '#64748B' }}>{t.emptyKeys}</p>
             ) : (
                 <div className="space-y-3">
                     <p className="text-[10px] uppercase font-semibold" style={{ color: '#64748B' }}>
-                        {keys.length} KEY{keys.length > 1 ? 'S' : ''} ĐANG LƯU TRỮ
+                        {t.keysCount(keys.length)}
                     </p>
                     {keys.map(k => {
                         const prov = PROVIDERS.find(p => p.value === k.provider)
@@ -150,33 +154,31 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                                                 background: k.isActive ? 'rgba(21,128,61,0.15)' : 'rgba(185,28,28,0.15)',
                                                 color: k.isActive ? '#15803D' : '#B91C1C',
                                             }}>
-                                            {k.isActive ? '● Active' : '○ Inactive'}
+                                            {k.isActive ? t.activeBadge : t.inactiveBadge}
                                         </span>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3 text-[11px]">
                                         <div>
-                                            <p className="text-[10px] uppercase mb-0.5" style={{ color: '#64748B' }}>API Key</p>
+                                            <p className="text-[10px] uppercase mb-0.5" style={{ color: '#64748B' }}>{t.apiKeyLabel}</p>
                                             <p className="font-mono" style={{ color: '#475569' }}>{k.maskedKey || '••••••••••••'}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] uppercase mb-0.5" style={{ color: '#64748B' }}>Provider</p>
+                                            <p className="text-[10px] uppercase mb-0.5" style={{ color: '#64748B' }}>{t.providerLabel}</p>
                                             <p style={{ color: '#475569' }}>{k.provider}</p>
                                         </div>
                                         {k.monthlyBudget != null && (
                                             <div>
-                                                <p className="text-[10px] uppercase mb-0.5" style={{ color: '#64748B' }}>Budget Tháng</p>
+                                                <p className="text-[10px] uppercase mb-0.5" style={{ color: '#64748B' }}>{t.monthlyBudgetLabel}</p>
                                                 <p className="font-mono" style={{ color: k.usedThisMonth > k.monthlyBudget * 0.8 ? '#B91C1C' : '#0E7490' }}>
                                                     ${k.usedThisMonth.toFixed(2)} / ${k.monthlyBudget}
                                                 </p>
                                             </div>
                                         )}
                                         <div>
-                                            <p className="text-[10px] uppercase mb-0.5" style={{ color: '#64748B' }}>Lần Test Cuối</p>
+                                            <p className="text-[10px] uppercase mb-0.5" style={{ color: '#64748B' }}>{t.lastTestedLabel}</p>
                                             <p style={{ color: '#475569' }}>
-                                                {k.lastTestedAt
-                                                    ? new Date(k.lastTestedAt).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
-                                                    : 'Chưa test'}
+                                                {k.lastTestedAt ? formatDate(k.lastTestedAt, true) : t.notTested}
                                             </p>
                                         </div>
                                     </div>
@@ -190,7 +192,7 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                                             color: testResult.ok ? '#15803D' : '#B91C1C',
                                             border: `1px solid ${testResult.ok ? 'rgba(21,128,61,0.3)' : 'rgba(185,28,28,0.3)'}`,
                                         }}>
-                                            {testResult.ok ? <><CheckCircle2 size={13} /> API Key hoạt động!</> : <><XCircle size={13} /> {testResult.msg}</>}
+                                            {testResult.ok ? <><CheckCircle2 size={13} /> {t.keyWorking}</> : <><XCircle size={13} /> {testResult.msg}</>}
                                         </p>
                                     </div>
                                 )}
@@ -201,17 +203,17 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                                         className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-colors hover:opacity-80"
                                         style={{ color: '#0891B2', borderRight: '1px solid #E2E8F0' }}>
                                         {loading === k.id ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} />}
-                                        Test Key
+                                        {t.testKeyBtn}
                                     </button>
                                     <button onClick={() => handleToggle(k.id)}
                                         className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-colors hover:opacity-80"
                                         style={{ color: k.isActive ? '#B45309' : '#15803D', borderRight: '1px solid #E2E8F0' }}>
-                                        {k.isActive ? <><ToggleRight size={14} /> Tắt</> : <><ToggleLeft size={14} /> Bật</>}
+                                        {k.isActive ? <><ToggleRight size={14} /> {t.disableBtn}</> : <><ToggleLeft size={14} /> {t.enableBtn}</>}
                                     </button>
                                     <button onClick={() => handleDelete(k.id)}
                                         className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-colors hover:opacity-80"
                                         style={{ color: '#B91C1C' }}>
-                                        <Trash2 size={13} /> Xóa
+                                        <Trash2 size={13} /> {t.deleteBtn}
                                     </button>
                                 </div>
                             </div>
@@ -225,6 +227,8 @@ export function ApiKeyVault({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
 }
 
 export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTemplateRow[] }) {
+    const { locale } = useAppLocale()
+    const t = getAiI18n(locale).promptLib
     const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [templates, setTemplates] = useState(initialTemplates)
     const [showCreate, setShowCreate] = useState(false)
@@ -255,9 +259,9 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
 
     const handleDelete = async (id: string) => {
         const ok = await confirm({
-            title: 'Xóa Prompt Template',
-            message: 'Bạn có chắc chắn muốn xóa Prompt Template này không?',
-            confirmLabel: 'Xóa Template',
+            title: t.confirmDeleteTitle,
+            message: t.confirmDeleteMsg,
+            confirmLabel: t.confirmDeleteBtn,
             variant: 'danger',
         })
         if (!ok) return
@@ -269,12 +273,12 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
         <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold flex items-center gap-2" style={{ color: '#0F172A' }}>
-                    <FileText size={16} style={{ color: '#1D4ED8' }} /> Prompt Library
+                    <FileText size={16} style={{ color: '#1D4ED8' }} /> {t.title}
                 </h3>
                 <button onClick={() => setShowCreate(!showCreate)}
                     className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold"
                     style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                    <Plus size={12} /> Tạo Prompt
+                    <Plus size={12} /> {t.createBtn}
                 </button>
             </div>
 
@@ -283,61 +287,61 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
                 <div className="p-4 rounded-md mb-4 space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Slug *</label>
+                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>{t.slugLabel}</label>
                             <input value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })}
                                 placeholder="product-description"
                                 className="w-full px-3 py-2 text-xs rounded outline-none font-mono"
                                 style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                         </div>
                         <div>
-                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Tên *</label>
+                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>{t.nameLabel}</label>
                             <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
-                                placeholder="Mô tả sản phẩm"
+                                placeholder={t.namePlaceholder}
                                 className="w-full px-3 py-2 text-xs rounded outline-none"
                                 style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                         </div>
                     </div>
                     <div>
-                        <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>System Prompt</label>
+                        <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>{t.sysPromptLabel}</label>
                         <textarea value={form.systemPrompt} onChange={e => setForm({ ...form, systemPrompt: e.target.value })}
-                            rows={3} placeholder="Bạn là chuyên gia rượu vang..."
+                            rows={3} placeholder={t.sysPromptPlaceholder}
                             className="w-full px-3 py-2 text-xs rounded outline-none resize-none"
                             style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                     </div>
                     <div>
-                        <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>User Template (dùng {'{{biến}}'} )</label>
+                        <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>{t.userTemplateLabel}</label>
                         <textarea value={form.userTemplate} onChange={e => setForm({ ...form, userTemplate: e.target.value })}
-                            rows={2} placeholder={'Hãy tạo mô tả cho {{product_name}} vintage {{vintage}}'}
+                            rows={2} placeholder={'{{product_name}} vintage {{vintage}}'}
                             className="w-full px-3 py-2 text-xs rounded outline-none resize-none font-mono"
                             style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
-                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Biến (phẩy cách)</label>
+                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>{t.variablesLabel}</label>
                             <input value={form.variables} onChange={e => setForm({ ...form, variables: e.target.value })}
                                 placeholder="product_name, vintage"
                                 className="w-full px-3 py-2 text-xs rounded outline-none font-mono"
                                 style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                         </div>
                         <div>
-                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Temperature</label>
+                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>{t.tempLabel}</label>
                             <input type="number" step="0.1" value={form.temperature} onChange={e => setForm({ ...form, temperature: e.target.value })}
                                 className="w-full px-3 py-2 text-xs rounded outline-none"
                                 style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                         </div>
                         <div>
-                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>Max Tokens</label>
+                            <label className="text-[10px] uppercase block mb-1" style={{ color: '#64748B' }}>{t.maxTokensLabel}</label>
                             <input type="number" value={form.maxTokens} onChange={e => setForm({ ...form, maxTokens: e.target.value })}
                                 className="w-full px-3 py-2 text-xs rounded outline-none"
                                 style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                         </div>
                     </div>
                     <div className="flex gap-2 justify-end">
-                        <button onClick={() => setShowCreate(false)} className="text-xs px-4 py-2" style={{ color: '#64748B' }}>Hủy</button>
+                        <button onClick={() => setShowCreate(false)} className="text-xs px-4 py-2" style={{ color: '#64748B' }}>{t.cancelBtn}</button>
                         <button onClick={handleCreate} disabled={!form.slug || !form.name || loading}
                             className="text-xs px-4 py-2 rounded font-semibold"
                             style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                            {loading ? <Loader2 size={12} className="animate-spin" /> : 'Tạo'}
+                            {loading ? <Loader2 size={12} className="animate-spin" /> : t.submitCreateBtn}
                         </button>
                     </div>
                 </div>
@@ -345,29 +349,29 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
 
             {/* Templates List */}
             {templates.length === 0 ? (
-                <p className="text-xs text-center py-6" style={{ color: '#64748B' }}>Chưa có Prompt Template. Nhấn "Tạo Prompt" để bắt đầu.</p>
+                <p className="text-xs text-center py-6" style={{ color: '#64748B' }}>{t.emptyTemplates}</p>
             ) : (
                 <div className="space-y-2">
-                    {templates.map(t => (
-                        <div key={t.id} className="p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                    {templates.map(tmpl => (
+                        <div key={tmpl.id} className="p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <div className="flex items-start justify-between">
                                 <div>
-                                    <p className="text-xs font-bold" style={{ color: '#0F172A' }}>{t.name}</p>
-                                    <p className="text-[10px] font-mono" style={{ color: '#1D4ED8' }}>{t.slug}</p>
+                                    <p className="text-xs font-bold" style={{ color: '#0F172A' }}>{tmpl.name}</p>
+                                    <p className="text-[10px] font-mono" style={{ color: '#1D4ED8' }}>{tmpl.slug}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className="inline-block text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
                                         style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>
-                                        {t.runCount} runs
+                                        {tmpl.runCount} runs
                                     </span>
-                                    <button onClick={() => handleDelete(t.id)} className="p-1" style={{ color: '#B91C1C' }}>
+                                    <button onClick={() => handleDelete(tmpl.id)} className="p-1" style={{ color: '#B91C1C' }}>
                                         <Trash2 size={12} />
                                     </button>
                                 </div>
                             </div>
-                            {t.variables.length > 0 && (
+                            {tmpl.variables.length > 0 && (
                                 <div className="flex gap-1 mt-2 flex-wrap">
-                                    {t.variables.map(v => (
+                                    {tmpl.variables.map(v => (
                                         <span key={v} className="inline-block text-xs px-1.5 py-0.5 rounded font-mono whitespace-nowrap shrink-0"
                                             style={{ background: 'rgba(29,78,216,0.15)', color: '#1D4ED8' }}>
                                             {`{{${v}}}`}
@@ -375,7 +379,7 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
                                     ))}
                                     <span className="inline-block text-xs px-1.5 py-0.5 rounded whitespace-nowrap shrink-0"
                                         style={{ color: '#64748B' }}>
-                                        T={t.temperature} | {t.maxTokens} tokens
+                                        T={tmpl.temperature} | {tmpl.maxTokens} tokens
                                     </span>
                                 </div>
                             )}
@@ -389,19 +393,22 @@ export function PromptLibrary({ initialTemplates }: { initialTemplates: PromptTe
 }
 
 export function AiUsageCard({ stats }: { stats: { totalRuns: number; monthRuns: number; failedRuns: number; monthTokens: number; monthCostUsd: number; avgDurationMs: number } }) {
+    const { locale, formatNumber } = useAppLocale()
+    const t = getAiI18n(locale).usage
+
     return (
         <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
             <h3 className="font-semibold flex items-center gap-2 mb-4" style={{ color: '#0F172A' }}>
-                <Activity size={16} style={{ color: '#0891B2' }} /> AI Usage This Month
+                <Activity size={16} style={{ color: '#0891B2' }} /> {t.title}
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
                 {[
-                    { label: 'Total Runs', value: stats.totalRuns.toLocaleString(), color: '#0F172A' },
-                    { label: 'This Month', value: stats.monthRuns.toLocaleString(), color: '#0891B2' },
-                    { label: 'Failed', value: stats.failedRuns.toLocaleString(), color: stats.failedRuns > 0 ? '#B91C1C' : '#15803D' },
-                    { label: 'Tokens', value: stats.monthTokens.toLocaleString(), color: '#B45309' },
-                    { label: 'Cost', value: `$${stats.monthCostUsd.toFixed(2)}`, color: '#1D4ED8' },
-                    { label: 'Avg Speed', value: `${stats.avgDurationMs}ms`, color: '#0891B2' },
+                    { label: t.totalRuns, value: formatNumber(stats.totalRuns), color: '#0F172A' },
+                    { label: t.thisMonth, value: formatNumber(stats.monthRuns), color: '#0891B2' },
+                    { label: t.failed, value: formatNumber(stats.failedRuns), color: stats.failedRuns > 0 ? '#B91C1C' : '#15803D' },
+                    { label: t.tokens, value: formatNumber(stats.monthTokens), color: '#B45309' },
+                    { label: t.cost, value: `$${stats.monthCostUsd.toFixed(2)}`, color: '#1D4ED8' },
+                    { label: t.avgSpeed, value: `${stats.avgDurationMs}ms`, color: '#0891B2' },
                 ].map(s => (
                     <div key={s.label} className="p-3 rounded-md text-center" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                         <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>{s.label}</p>

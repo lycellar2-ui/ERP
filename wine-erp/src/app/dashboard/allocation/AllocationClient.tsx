@@ -1,28 +1,35 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Target, Plus, X, Save, ChevronRight, BarChart3, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
+import { Target, Plus, Save, BarChart3, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
 import {
     type AllocationCampaignRow, type AllocationQuotaRow,
     getAllocCampaigns, getAllocQuotas, getAllocStats,
     createAllocCampaign, addAllocQuota, getAllocOptions,
 } from './actions'
-import { PageHeader, StatGrid, StatCard, Button } from '@/components/ui'
+import {
+    PageHeader, StatGrid, StatCard, Button, StatusBadge, Badge,
+    Table, THead, TBody, Tr, Th, Td, TableMessageRow,
+    Drawer, Field, Input, Select, EmptyState,
+} from '@/components/ui'
 import { toast } from 'sonner'
+import { useAppLocale } from '@/lib/i18n'
+import { ALLOCATION_I18N } from './i18n'
 
-const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
-    ACTIVE: { label: 'Hoạt Động', color: '#15803D', bg: 'rgba(21,128,61,0.15)' },
-    PAUSED: { label: 'Tạm Dừng', color: '#B45309', bg: 'rgba(180,83,9,0.15)' },
-    COMPLETED: { label: 'Hoàn Tất', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-    CANCELLED: { label: 'Hủy', color: '#B91C1C', bg: 'rgba(185,28,28,0.15)' },
-}
+const STATUS_TONES = {
+    PAUSED: 'warning',
+    COMPLETED: 'info',
+} as const
 
 export function AllocationClient({ initialCampaigns, stats }: {
-    initialCampaigns: AllocationCampaignRow[];
+    initialCampaigns: AllocationCampaignRow[]
     stats: { total: number; active: number }
 }) {
+    const { locale, formatDate } = useAppLocale()
+    const L = ALLOCATION_I18N[locale]
+
     const [campaigns, setCampaigns] = useState(initialCampaigns)
-    const [selected, setSelected] = useState<AllocationCampaignRow | null>(null)
+    const [selected, setSelected] = useState<AllocationCampaignRow | null>(initialCampaigns[0] ?? null)
     const [quotas, setQuotas] = useState<AllocationQuotaRow[]>([])
     const [createOpen, setCreateOpen] = useState(false)
     const [addQuotaOpen, setAddQuotaOpen] = useState(false)
@@ -31,7 +38,7 @@ export function AllocationClient({ initialCampaigns, stats }: {
     const [quotaForm, setQuotaForm] = useState({ targetType: 'SALES_REP', targetId: '', qtyAllocated: '' })
 
     const reload = async () => {
-        const [c, s] = await Promise.all([getAllocCampaigns(), getAllocStats()])
+        const [c] = await Promise.all([getAllocCampaigns(), getAllocStats()])
         setCampaigns(c)
     }
 
@@ -47,89 +54,114 @@ export function AllocationClient({ initialCampaigns, stats }: {
     }
 
     const handleCreateCampaign = async () => {
-        if (!form.name || !form.productId || !form.totalQty) return toast.error('Điền đủ thông tin')
+        if (!form.name || !form.productId || !form.totalQty) return toast.error(L.toast.missingFields)
         const res = await createAllocCampaign({
             name: form.name, productId: form.productId,
             totalQty: Number(form.totalQty), unit: form.unit,
             startDate: form.startDate, endDate: form.endDate,
         })
-        if (res.success) { setCreateOpen(false); setForm({ name: '', productId: '', totalQty: '', unit: 'CASE', startDate: '', endDate: '' }); reload() }
-        else toast.error(res.error || 'Lỗi tạo campaign')
+        if (res.success) {
+            toast.success(L.toast.createSuccess)
+            setCreateOpen(false)
+            setForm({ name: '', productId: '', totalQty: '', unit: 'CASE', startDate: '', endDate: '' })
+            reload()
+        } else {
+            toast.error(res.error || L.toast.createError)
+        }
     }
 
     const handleAddQuota = async () => {
-        if (!selected || !quotaForm.targetId || !quotaForm.qtyAllocated) return toast.error('Điền đủ thông tin')
+        if (!selected || !quotaForm.targetId || !quotaForm.qtyAllocated) return toast.error(L.toast.missingFields)
         const res = await addAllocQuota({
             campaignId: selected.id, targetType: quotaForm.targetType,
             targetId: quotaForm.targetId, qtyAllocated: Number(quotaForm.qtyAllocated),
         })
         if (res.success) {
-            setAddQuotaOpen(false); setQuotaForm({ targetType: 'SALES_REP', targetId: '', qtyAllocated: '' })
+            toast.success(L.toast.quotaSuccess)
+            setAddQuotaOpen(false)
+            setQuotaForm({ targetType: 'SALES_REP', targetId: '', qtyAllocated: '' })
             const q = await getAllocQuotas(selected.id)
             setQuotas(q)
             reload()
-        } else toast.error(res.error || 'Lỗi thêm quota')
+        } else {
+            toast.error(res.error || L.toast.quotaError)
+        }
     }
 
-    useEffect(() => { loadOptions() }, [])
+    useEffect(() => {
+        loadOptions()
+        if (initialCampaigns[0]) {
+            getAllocQuotas(initialCampaigns[0].id).then(setQuotas)
+        }
+    }, [])
 
     return (
-        <div className="space-y-6 max-w-screen-2xl">
-            {/* Header */}
+        <div className="flex flex-col gap-4 max-w-screen-2xl">
             <PageHeader
-                title="Allocation Engine"
-                description="Quản lý hạn mức phân bổ sản phẩm theo Sales Rep / Khách hàng / Kênh"
+                description={L.header.description}
                 actions={
                     <Button variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
-                        <Plus size={14} /> Tạo Campaign
+                        <Plus size={14} aria-hidden /> {L.header.createBtn}
                     </Button>
                 }
             />
 
-            {/* Stats */}
-            <StatGrid className="grid-cols-1 sm:grid-cols-3 lg:grid-cols-3">
-                <StatCard label="Tổng Campaign" value={stats.total} icon={Target} />
-                <StatCard label="Đang Active" value={stats.active} icon={BarChart3} />
-                <StatCard label="Campaigns List" value={campaigns.length} icon={Target} />
+            <StatGrid className="grid-cols-1 sm:grid-cols-3">
+                <StatCard label={L.stats.total} value={stats.total} icon={Target} tone="brand" />
+                <StatCard label={L.stats.active} value={stats.active} icon={BarChart3} tone="success" />
+                <StatCard label={L.stats.listed} value={campaigns.length} icon={Target} tone="info" />
             </StatGrid>
 
-            {/* Main layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                 {/* Left: Campaign list */}
                 <div className="lg:col-span-5 space-y-2">
-                    <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#64748B' }}>Campaigns</p>
-                    <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                    <p className="type-caption uppercase tracking-wider font-semibold text-lys-muted">
+                        {L.campaigns.sectionTitle}
+                    </p>
+                    <div className="space-y-2 max-h-[540px] overflow-y-auto pr-0.5">
                         {campaigns.length === 0 ? (
-                            <p className="text-sm py-8 text-center" style={{ color: '#64748B' }}>Chưa có campaign — Tạo mới bên phải</p>
+                            <div className="rounded-lg border border-lys-border bg-white p-8 text-center">
+                                <EmptyState icon={Target} title={L.campaigns.empty} />
+                            </div>
                         ) : campaigns.map(c => {
-                            const st = STATUS_MAP[c.status] ?? STATUS_MAP.ACTIVE
+                            const isSelected = selected?.id === c.id
                             const pct = c.totalQty > 0 ? (c.soldQty / c.totalQty) * 100 : 0
-                            const barColor = pct >= 90 ? '#B91C1C' : pct >= 70 ? '#B45309' : '#0E7490'
-                            const statusLabel = pct >= 100 ? 'Đã hết' : pct >= 90 ? 'Gần hết' : pct >= 70 ? 'Sắp hết' : 'Còn nhiều'
-                            const statusColor = pct >= 90 ? '#B91C1C' : pct >= 70 ? '#B45309' : '#15803D'
+                            const barClass = pct >= 90 ? 'bg-tone-danger-fg' : pct >= 70 ? 'bg-tone-warning-fg' : 'bg-lys-teal-strong'
+                            const statusLabel = pct >= 100 ? L.campaigns.exhausted : pct >= 90 ? L.campaigns.nearlyOut : pct >= 70 ? L.campaigns.runningLow : L.campaigns.abundant
+                            const statusToneClass = pct >= 90 ? 'text-tone-danger-fg' : pct >= 70 ? 'text-tone-warning-fg' : 'text-tone-success-fg'
+
                             return (
-                                <button key={c.id} onClick={() => handleSelectCampaign(c)}
-                                    className="w-full text-left p-4 rounded-md transition-all"
-                                    style={{
-                                        background: selected?.id === c.id ? 'rgba(8,145,178,0.08)' : '#FFFFFF',
-                                        border: `1px solid ${selected?.id === c.id ? '#0E7490' : '#E2E8F0'}`,
-                                        borderLeft: `3px solid ${selected?.id === c.id ? '#0E7490' : 'transparent'}`,
-                                    }}>
-                                    <div className="flex items-start justify-between mb-2">
-                                        <div>
-                                            <p className="text-sm font-bold" style={{ color: '#0F172A' }}>{c.name}</p>
-                                            <p className="text-xs" style={{ color: '#0891B2' }}>{c.skuCode}</p>
+                                <button
+                                    key={c.id}
+                                    onClick={() => handleSelectCampaign(c)}
+                                    className={`w-full text-left p-4 rounded-lg border transition-all cursor-pointer ${
+                                        isSelected
+                                            ? 'bg-lys-teal-soft border-lys-teal-strong border-l-4'
+                                            : 'bg-white border-lys-border hover:border-lys-border-strong'
+                                    }`}
+                                >
+                                    <div className="flex items-start justify-between gap-2 mb-2">
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-semibold text-lys-primary truncate">{c.name}</p>
+                                            <p className="type-number text-xs font-medium text-lys-teal-strong">{c.skuCode}</p>
                                         </div>
-                                        <span className="inline-block text-xs px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0" style={{ color: st.color, background: st.bg }}>{st.label}</span>
+                                        <StatusBadge
+                                            status={c.status}
+                                            label={(L.status as Record<string, string>)[c.status] ?? c.status}
+                                            toneOverrides={STATUS_TONES}
+                                        />
                                     </div>
-                                    <div className="h-1.5 rounded-full overflow-hidden mb-1" style={{ background: '#E2E8F0' }}>
-                                        <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, background: barColor }} />
+                                    <div className="h-1.5 rounded-full overflow-hidden mb-1.5 bg-lys-border">
+                                        <div
+                                            className={`h-full rounded-full transition-all ${barClass}`}
+                                            style={{ width: `${Math.min(pct, 100)}%` }}
+                                        />
                                     </div>
-                                    <div className="flex justify-between items-center text-xs" style={{ color: '#64748B' }}>
-                                        <span>Đã bán: {c.soldQty}/{c.totalQty} {c.unit}</span>
+                                    <div className="flex justify-between items-center text-xs text-lys-muted">
+                                        <span className="type-number">{L.campaigns.soldProgress(c.soldQty, c.totalQty, c.unit)}</span>
                                         <div className="flex items-center gap-2">
-                                            <span className="text-[10px] font-semibold" style={{ color: statusColor }}>{statusLabel}</span>
-                                            <span>{pct.toFixed(0)}%</span>
+                                            <span className={`text-[11px] font-semibold ${statusToneClass}`}>{statusLabel}</span>
+                                            <span className="type-number font-semibold text-lys-primary">{pct.toFixed(0)}%</span>
                                         </div>
                                     </div>
                                 </button>
@@ -138,104 +170,144 @@ export function AllocationClient({ initialCampaigns, stats }: {
                     </div>
                 </div>
 
-                {/* Right: Quota matrix */}
+                {/* Right: Quota Matrix */}
                 <div className="lg:col-span-7 space-y-4">
                     {!selected ? (
-                        <div className="flex flex-col items-center justify-center py-20 rounded-md" style={{ border: '1px dashed #E2E8F0' }}>
-                            <Target size={36} style={{ color: '#E2E8F0' }} />
-                            <p className="text-sm mt-3" style={{ color: '#64748B' }}>Chọn một Campaign để xem ma trận phân bổ</p>
+                        <div className="rounded-lg border border-dashed border-lys-border bg-white py-20 px-4">
+                            <EmptyState icon={Target} title={L.quotaPanel.emptySelect} />
                         </div>
                     ) : (
                         <>
-                            <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #0E7490' }}>
-                                <div className="flex items-start justify-between mb-3">
-                                    <div>
-                                        <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
-                                            {selected.name}
-                                        </h3>
-                                        <p className="text-xs" style={{ color: '#64748B' }}>
-                                            {selected.skuCode} — {selected.productName} | {new Date(selected.startDate).toLocaleDateString('vi-VN')} → {new Date(selected.endDate).toLocaleDateString('vi-VN')}
+                            <div className="p-4 rounded-lg bg-white border border-lys-border border-l-4 border-l-lys-teal-strong space-y-3">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0">
+                                        <h3 className="type-section-title text-lys-primary">{selected.name}</h3>
+                                        <p className="text-xs text-lys-muted mt-0.5">
+                                            <span className="type-number font-semibold text-lys-teal-strong">{selected.skuCode}</span>
+                                            {' — '}
+                                            {selected.productName} | {formatDate(selected.startDate)} → {formatDate(selected.endDate)}
                                         </p>
                                     </div>
-                                    <button onClick={() => { setAddQuotaOpen(true) }} className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
-                                        style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                                        <Plus size={12} /> Thêm Quota
-                                    </button>
+                                    <Button variant="primary" size="sm" onClick={() => setAddQuotaOpen(true)}>
+                                        <Plus size={14} aria-hidden /> {L.quotaPanel.addQuotaBtn}
+                                    </Button>
                                 </div>
 
-                                {/* Summary bars */}
-                                <div className="grid grid-cols-3 gap-2 mb-3">
-                                    <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                        <p className="text-sm font-bold" style={{ color: '#0891B2' }}>{selected.totalQty}</p>
-                                        <p className="text-[10px]" style={{ color: '#64748B' }}>Tổng {selected.unit}</p>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <div className="text-center p-2.5 rounded-md bg-lys-subtle border border-lys-border">
+                                        <p className="type-number text-sm font-bold text-lys-teal-strong">{selected.totalQty}</p>
+                                        <p className="text-[11px] text-lys-muted">{L.quotaPanel.totalUnit(selected.unit)}</p>
                                     </div>
-                                    <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                        <p className="text-sm font-bold" style={{ color: '#B45309' }}>{selected.allocatedQty}</p>
-                                        <p className="text-[10px]" style={{ color: '#64748B' }}>Đã phân bổ</p>
+                                    <div className="text-center p-2.5 rounded-md bg-lys-subtle border border-lys-border">
+                                        <p className="type-number text-sm font-bold text-tone-warning-fg">{selected.allocatedQty}</p>
+                                        <p className="text-[11px] text-lys-muted">{L.quotaPanel.allocated}</p>
                                     </div>
-                                    <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                        <p className="text-sm font-bold" style={{ color: '#15803D' }}>{selected.soldQty}</p>
-                                        <p className="text-[10px]" style={{ color: '#64748B' }}>Đã bán</p>
+                                    <div className="text-center p-2.5 rounded-md bg-lys-subtle border border-lys-border">
+                                        <p className="type-number text-sm font-bold text-tone-success-fg">{selected.soldQty}</p>
+                                        <p className="text-[11px] text-lys-muted">{L.quotaPanel.sold}</p>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Quota Table */}
-                            <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
-                                <table className="w-full text-left min-w-[540px]" style={{ borderCollapse: 'collapse' }}>
-                                    <thead>
-                                        <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                            {['Đối tượng', 'Loại', 'Hạn mức', 'Đã bán', 'Còn lại', '% Sử dụng'].map(h => (
-                                                <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
-                                            ))}
+                            {/* Desktop Quota Table */}
+                            <div className="hidden md:block">
+                                <Table>
+                                    <THead>
+                                        <tr>
+                                            <Th>{L.quotaPanel.table.target}</Th>
+                                            <Th>{L.quotaPanel.table.type}</Th>
+                                            <Th align="right">{L.quotaPanel.table.allocated}</Th>
+                                            <Th align="right">{L.quotaPanel.table.sold}</Th>
+                                            <Th align="right">{L.quotaPanel.table.remaining}</Th>
+                                            <Th>{L.quotaPanel.table.usagePct}</Th>
                                         </tr>
-                                    </thead>
-                                    <tbody>
+                                    </THead>
+                                    <TBody>
                                         {quotas.length === 0 ? (
-                                            <tr><td colSpan={6} className="text-center py-12 text-sm" style={{ color: '#64748B' }}>
-                                                Chưa có quota — Nhấn "Thêm Quota" để phân bổ
-                                            </td></tr>
+                                            <TableMessageRow colSpan={6}>
+                                                <EmptyState icon={Target} title={L.quotaPanel.table.empty} />
+                                            </TableMessageRow>
                                         ) : quotas.map(q => (
-                                            <tr key={q.id} style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#0F172A' }}>{q.targetName}</td>
-                                                <td className="px-3 py-2.5">
-                                                    <span className="inline-block text-xs px-2 py-0.5 rounded whitespace-nowrap shrink-0" style={{
-                                                        background: q.targetType === 'SALES_REP' ? 'rgba(29,78,216,0.15)' : 'rgba(8, 145, 178, 0.08)',
-                                                        color: q.targetType === 'SALES_REP' ? '#1D4ED8' : '#0E7490',
-                                                    }}>{q.targetType === 'SALES_REP' ? 'Sales Rep' : q.targetType === 'CUSTOMER' ? 'Khách hàng' : 'Kênh'}</span>
-                                                </td>
-                                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#B45309' }}>{q.qtyAllocated}</td>
-                                                <td className="px-3 py-2.5 text-xs font-bold" style={{ color: '#15803D' }}>{q.qtySold}</td>
-                                                <td className="px-3 py-2.5 text-xs font-bold">
-                                                    <span style={{ color: q.remaining <= 0 ? '#B91C1C' : q.pctUsed > 70 ? '#B45309' : '#15803D' }}>
-                                                        {q.remaining}
-                                                    </span>
-                                                    {' '}
-                                                    <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0" style={{
-                                                        ...(q.remaining <= 0
-                                                            ? { color: '#B91C1C', background: 'rgba(185,28,28,0.15)' }
-                                                            : q.pctUsed > 70
-                                                                ? { color: '#B45309', background: 'rgba(180,83,9,0.15)' }
-                                                                : { color: '#15803D', background: 'rgba(21,128,61,0.15)' }),
-                                                    }}>
-                                                        {q.remaining <= 0 ? <><XCircle size={10} /> Hết</> : q.pctUsed > 70 ? <><AlertTriangle size={10} /> Sắp hết</> : <><CheckCircle2 size={10} /> Còn nhiều</>}
-                                                    </span>
-                                                </td>
-                                                <td className="px-3 py-2.5">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: '#E2E8F0' }}>
-                                                            <div className="h-full rounded-full" style={{
-                                                                width: `${Math.min(q.pctUsed, 100)}%`,
-                                                                background: q.pctUsed > 90 ? '#B91C1C' : q.pctUsed > 70 ? '#B45309' : '#0E7490',
-                                                            }} />
-                                                        </div>
-                                                        <span className="text-xs font-bold" style={{ color: '#475569' }}>{q.pctUsed.toFixed(0)}%</span>
+                                            <Tr key={q.id}>
+                                                <Td className="font-semibold text-lys-primary">{q.targetName}</Td>
+                                                <Td>
+                                                    <Badge tone={q.targetType === 'SALES_REP' ? 'info' : 'brand'}>
+                                                        {(L.quotaPanel.targetTypes as Record<string, string>)[q.targetType] ?? q.targetType}
+                                                    </Badge>
+                                                </Td>
+                                                <Td align="right" className="type-number font-semibold text-tone-warning-fg">
+                                                    {q.qtyAllocated}
+                                                </Td>
+                                                <Td align="right" className="type-number font-semibold text-tone-success-fg">
+                                                    {q.qtySold}
+                                                </Td>
+                                                <Td align="right">
+                                                    <div className="inline-flex items-center gap-1.5">
+                                                        <span className={`type-number font-semibold ${
+                                                            q.remaining <= 0 ? 'text-tone-danger-fg' : q.pctUsed > 70 ? 'text-tone-warning-fg' : 'text-tone-success-fg'
+                                                        }`}>
+                                                            {q.remaining}
+                                                        </span>
+                                                        {q.remaining <= 0 ? (
+                                                            <Badge tone="danger"><XCircle size={10} className="mr-1" />{L.quotaPanel.badgeOut}</Badge>
+                                                        ) : q.pctUsed > 70 ? (
+                                                            <Badge tone="warning"><AlertTriangle size={10} className="mr-1" />{L.quotaPanel.badgeLow}</Badge>
+                                                        ) : (
+                                                            <Badge tone="success"><CheckCircle2 size={10} className="mr-1" />{L.quotaPanel.badgeAvailable}</Badge>
+                                                        )}
                                                     </div>
-                                                </td>
-                                            </tr>
+                                                </Td>
+                                                <Td>
+                                                    <div className="flex items-center gap-2 min-w-[110px]">
+                                                        <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-lys-border">
+                                                            <div
+                                                                className={`h-full rounded-full ${
+                                                                    q.pctUsed > 90 ? 'bg-tone-danger-fg' : q.pctUsed > 70 ? 'bg-tone-warning-fg' : 'bg-lys-teal-strong'
+                                                                }`}
+                                                                style={{ width: `${Math.min(q.pctUsed, 100)}%` }}
+                                                            />
+                                                        </div>
+                                                        <span className="type-number text-xs font-semibold text-lys-secondary">
+                                                            {q.pctUsed.toFixed(0)}%
+                                                        </span>
+                                                    </div>
+                                                </Td>
+                                            </Tr>
                                         ))}
-                                    </tbody>
-                                </table>
+                                    </TBody>
+                                </Table>
+                            </div>
+
+                            {/* Mobile Quota Cards */}
+                            <div className="block md:hidden space-y-2.5">
+                                {quotas.length === 0 ? (
+                                    <div className="rounded-lg border border-lys-border bg-white p-6">
+                                        <EmptyState icon={Target} title={L.quotaPanel.table.empty} />
+                                    </div>
+                                ) : quotas.map(q => (
+                                    <div key={q.id} className="rounded-lg border border-lys-border bg-white p-3.5 space-y-2">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-sm font-semibold text-lys-primary">{q.targetName}</span>
+                                            <Badge tone={q.targetType === 'SALES_REP' ? 'info' : 'brand'}>
+                                                {(L.quotaPanel.targetTypes as Record<string, string>)[q.targetType] ?? q.targetType}
+                                            </Badge>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-2 text-xs bg-lys-subtle p-2 rounded-md">
+                                            <div>
+                                                <span className="text-[10px] text-lys-muted block">{L.quotaPanel.table.allocated}</span>
+                                                <span className="type-number font-semibold text-tone-warning-fg">{q.qtyAllocated}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-[10px] text-lys-muted block">{L.quotaPanel.table.sold}</span>
+                                                <span className="type-number font-semibold text-tone-success-fg">{q.qtySold}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-[10px] text-lys-muted block">{L.quotaPanel.table.remaining}</span>
+                                                <span className="type-number font-semibold text-lys-primary">{q.remaining}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </>
                     )}
@@ -243,97 +315,153 @@ export function AllocationClient({ initialCampaigns, stats }: {
             </div>
 
             {/* Create Campaign Drawer */}
-            {createOpen && (
-                <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
-                    <div className="w-[420px] h-full overflow-y-auto" style={{ background: '#F8FAFC' }}>
-                        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                            <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>Tạo Campaign Mới</h3>
-                            <button onClick={() => setCreateOpen(false)} style={{ color: '#64748B' }}><X size={18} /></button>
-                        </div>
-                        <div className="p-5 space-y-3">
-                            {[
-                                { label: 'Tên Campaign', key: 'name', type: 'text' },
-                                { label: 'Tổng Số Lượng', key: 'totalQty', type: 'number' },
-                                { label: 'Ngày Bắt Đầu', key: 'startDate', type: 'date' },
-                                { label: 'Ngày Kết Thúc', key: 'endDate', type: 'date' },
-                            ].map(f => (
-                                <div key={f.key}>
-                                    <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>{f.label}</label>
-                                    <input type={f.type} value={(form as any)[f.key]}
-                                        onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                                        className="w-full px-3 py-2 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }} />
-                                </div>
-                            ))}
-                            <div>
-                                <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>Sản Phẩm</label>
-                                <select value={form.productId} onChange={e => setForm(prev => ({ ...prev, productId: e.target.value }))}
-                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
-                                    <option value="">— Chọn SP —</option>
-                                    {options.products.map(p => <option key={p.id} value={p.id}>{p.skuCode} — {p.productName}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>Đơn Vị</label>
-                                <select value={form.unit} onChange={e => setForm(prev => ({ ...prev, unit: e.target.value }))}
-                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
-                                    <option value="CASE">Case</option>
-                                    <option value="BOTTLE">Bottle</option>
-                                </select>
-                            </div>
-                            <button onClick={handleCreateCampaign} className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded"
-                                style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                                <Save size={14} /> Tạo Campaign
-                            </button>
-                        </div>
+            <Drawer
+                open={createOpen}
+                onClose={() => setCreateOpen(false)}
+                title={L.createDrawer.title}
+                size="sm"
+                footer={
+                    <>
+                        <Button variant="secondary" onClick={() => setCreateOpen(false)}>{L.createDrawer.cancelBtn}</Button>
+                        <Button variant="primary" onClick={handleCreateCampaign}>
+                            <Save size={14} aria-hidden /> {L.createDrawer.saveBtn}
+                        </Button>
+                    </>
+                }
+            >
+                <div className="flex flex-col gap-4">
+                    <Field label={L.createDrawer.nameLabel} required>
+                        {id => (
+                            <Input
+                                id={id}
+                                value={form.name}
+                                onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))}
+                                placeholder={L.createDrawer.namePlaceholder}
+                            />
+                        )}
+                    </Field>
+                    <Field label={L.createDrawer.productLabel} required>
+                        {id => (
+                            <Select id={id} value={form.productId} onChange={e => setForm(prev => ({ ...prev, productId: e.target.value }))}>
+                                <option value="">{L.createDrawer.productPlaceholder}</option>
+                                {options.products.map(p => (
+                                    <option key={p.id} value={p.id}>{p.skuCode} — {p.productName}</option>
+                                ))}
+                            </Select>
+                        )}
+                    </Field>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Field label={L.createDrawer.totalQtyLabel} required>
+                            {id => (
+                                <Input
+                                    id={id}
+                                    type="number"
+                                    value={form.totalQty}
+                                    onChange={e => setForm(prev => ({ ...prev, totalQty: e.target.value }))}
+                                />
+                            )}
+                        </Field>
+                        <Field label={L.createDrawer.unitLabel}>
+                            {id => (
+                                <Select id={id} value={form.unit} onChange={e => setForm(prev => ({ ...prev, unit: e.target.value }))}>
+                                    <option value="CASE">{L.createDrawer.unitCase}</option>
+                                    <option value="BOTTLE">{L.createDrawer.unitBottle}</option>
+                                </Select>
+                            )}
+                        </Field>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Field label={L.createDrawer.startDateLabel}>
+                            {id => (
+                                <Input
+                                    id={id}
+                                    type="date"
+                                    value={form.startDate}
+                                    onChange={e => setForm(prev => ({ ...prev, startDate: e.target.value }))}
+                                />
+                            )}
+                        </Field>
+                        <Field label={L.createDrawer.endDateLabel}>
+                            {id => (
+                                <Input
+                                    id={id}
+                                    type="date"
+                                    value={form.endDate}
+                                    onChange={e => setForm(prev => ({ ...prev, endDate: e.target.value }))}
+                                />
+                            )}
+                        </Field>
                     </div>
                 </div>
-            )}
+            </Drawer>
 
             {/* Add Quota Drawer */}
-            {addQuotaOpen && selected && (
-                <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
-                    <div className="w-[420px] h-full overflow-y-auto" style={{ background: '#F8FAFC' }}>
-                        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                            <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>Thêm Quota</h3>
-                            <button onClick={() => setAddQuotaOpen(false)} style={{ color: '#64748B' }}><X size={18} /></button>
-                        </div>
-                        <div className="p-5 space-y-3">
-                            <p className="text-xs" style={{ color: '#64748B' }}>Campaign: <span style={{ color: '#0891B2' }}>{selected.name}</span></p>
-                            <div>
-                                <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>Loại Đối Tượng</label>
-                                <select value={quotaForm.targetType}
+            <Drawer
+                open={addQuotaOpen && !!selected}
+                onClose={() => setAddQuotaOpen(false)}
+                title={L.quotaDrawer.title}
+                size="sm"
+                footer={
+                    <>
+                        <Button variant="secondary" onClick={() => setAddQuotaOpen(false)}>{L.quotaDrawer.cancelBtn}</Button>
+                        <Button variant="primary" onClick={handleAddQuota}>
+                            <Save size={14} aria-hidden /> {L.quotaDrawer.saveBtn}
+                        </Button>
+                    </>
+                }
+            >
+                {selected && (
+                    <div className="flex flex-col gap-4">
+                        <p className="text-xs text-lys-muted">
+                            {L.quotaDrawer.campaignPrefix}{' '}
+                            <strong className="text-lys-teal-strong">{selected.name}</strong>
+                        </p>
+                        <Field label={L.quotaDrawer.targetTypeLabel}>
+                            {id => (
+                                <Select
+                                    id={id}
+                                    value={quotaForm.targetType}
                                     onChange={e => setQuotaForm(prev => ({ ...prev, targetType: e.target.value, targetId: '' }))}
-                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
-                                    <option value="SALES_REP">Sales Rep</option>
-                                    <option value="CUSTOMER">Khách hàng</option>
-                                    <option value="CHANNEL">Kênh</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>Đối Tượng</label>
-                                <select value={quotaForm.targetId}
+                                >
+                                    <option value="SALES_REP">{L.quotaPanel.targetTypes.SALES_REP}</option>
+                                    <option value="CUSTOMER">{L.quotaPanel.targetTypes.CUSTOMER}</option>
+                                    <option value="CHANNEL">{L.quotaPanel.targetTypes.CHANNEL}</option>
+                                </Select>
+                            )}
+                        </Field>
+                        <Field label={L.quotaDrawer.targetLabel} required>
+                            {id => (
+                                <Select
+                                    id={id}
+                                    value={quotaForm.targetId}
                                     onChange={e => setQuotaForm(prev => ({ ...prev, targetId: e.target.value }))}
-                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
-                                    <option value="">— Chọn —</option>
-                                    {quotaForm.targetType === 'SALES_REP' && options.users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-                                    {quotaForm.targetType === 'CUSTOMER' && options.customers.map(c => <option key={c.id} value={c.id}>{c.code} — {c.name}</option>)}
-                                    {quotaForm.targetType === 'CHANNEL' && ['HORECA', 'WHOLESALE_DISTRIBUTOR', 'VIP_RETAIL', 'DIRECT_INDIVIDUAL'].map(ch => <option key={ch} value={ch}>{ch}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-semibold mb-1" style={{ color: '#475569' }}>Hạn Mức ({selected.unit})</label>
-                                <input type="number" value={quotaForm.qtyAllocated}
+                                >
+                                    <option value="">{L.quotaDrawer.targetPlaceholder}</option>
+                                    {quotaForm.targetType === 'SALES_REP' && options.users.map(u => (
+                                        <option key={u.id} value={u.id}>{u.name}</option>
+                                    ))}
+                                    {quotaForm.targetType === 'CUSTOMER' && options.customers.map(c => (
+                                        <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
+                                    ))}
+                                    {quotaForm.targetType === 'CHANNEL' && ['HORECA', 'WHOLESALE_DISTRIBUTOR', 'VIP_RETAIL', 'DIRECT_INDIVIDUAL'].map(ch => (
+                                        <option key={ch} value={ch}>{ch}</option>
+                                    ))}
+                                </Select>
+                            )}
+                        </Field>
+                        <Field label={L.quotaDrawer.qtyLabel(selected.unit)} required>
+                            {id => (
+                                <Input
+                                    id={id}
+                                    type="number"
+                                    value={quotaForm.qtyAllocated}
                                     onChange={e => setQuotaForm(prev => ({ ...prev, qtyAllocated: e.target.value }))}
-                                    className="w-full px-3 py-2 rounded text-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#B45309' }} />
-                            </div>
-                            <button onClick={handleAddQuota} className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded"
-                                style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                                <Save size={14} /> Thêm Quota
-                            </button>
-                        </div>
+                                />
+                            )}
+                        </Field>
                     </div>
-                </div>
-            )}
+                )}
+            </Drawer>
         </div>
     )
 }

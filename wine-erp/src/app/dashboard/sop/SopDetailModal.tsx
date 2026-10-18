@@ -30,6 +30,8 @@ import { SopEditModal } from './SopEditModal'
 import { SopFormUploadModal } from './SopFormUploadModal'
 import { MarkdownDocModal } from './MarkdownDocModal'
 import { type SopFormFile } from '@/data/forms-data'
+import { useAppLocale } from '@/lib/i18n'
+import { getSopI18n } from './i18n'
 
 interface SopDetailModalProps {
     sop: SopItem | null
@@ -38,6 +40,8 @@ interface SopDetailModalProps {
 }
 
 export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetailModalProps) {
+    const { locale } = useAppLocale()
+    const t = getSopI18n(locale).detailModal
     const [sop, setSop] = useState<SopItem | null>(initialSop)
     const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({})
     const [activeTab, setActiveTab] = useState<'flow' | 'raci' | 'checklist' | 'forms' | 'faq'>('flow')
@@ -134,11 +138,11 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                 {sop.code}
                             </span>
                             <span className="text-xs px-2 py-0.5 rounded bg-slate-200/60 text-slate-600 font-medium">
-                                Phiên bản {sop.version}
+                                {t.versionPrefix} {sop.version}
                             </span>
                             <span className="text-xs text-slate-500 flex items-center gap-1">
                                 <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                                Hiệu lực: {sop.effectiveDate}
+                                {t.effectivePrefix} {sop.effectiveDate}
                             </span>
                         </div>
                         <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
@@ -154,22 +158,22 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                         <button
                             onClick={() => setIsEditing(true)}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-xs transition"
-                            title="Chỉnh sửa nội dung quy trình"
+                            title={t.editSopTitle}
                         >
                             <Edit3 className="w-3.5 h-3.5" />
-                            <span>Sửa Quy Trình</span>
+                            <span>{t.editSopBtn}</span>
                         </button>
 
                         <button
                             onClick={handleShare}
-                            title="Sao chép liên kết quy trình"
+                            title={t.copyLinkTitle}
                             className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition"
                         >
                             {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4" />}
                         </button>
                         <button
                             onClick={handlePrint}
-                            title="In quy trình này"
+                            title={t.printSopTitle}
                             className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition"
                         >
                             <Printer className="w-4 h-4" />
@@ -187,19 +191,19 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-5 py-2.5 bg-slate-100/50 border-b border-slate-200 text-xs text-slate-600">
                     <div className="flex items-center gap-2">
                         <Clock className="w-3.5 h-3.5 text-slate-500" />
-                        <span>SLA: <strong>{sop.estimatedDuration}</strong></span>
+                        <span>{t.slaLabel} <strong>{sop.estimatedDuration}</strong></span>
                     </div>
                     <div className="flex items-center gap-2">
                         <GitBranch className="w-3.5 h-3.5 text-slate-500" />
-                        <span>Trình tự: <strong>{sop.flowSteps.length} bước</strong></span>
+                        <span>{t.sequenceLabel} <strong>{sop.flowSteps.length} {t.stepsSuffix}</strong></span>
                     </div>
                     <div className="flex items-center gap-2">
                         <FileSpreadsheet className="w-3.5 h-3.5 text-slate-500" />
-                        <span>Biểu mẫu: <strong>{attachedForms.length} tài liệu</strong></span>
+                        <span>{t.formsLabel} <strong>{attachedForms.length} {t.docsSuffix}</strong></span>
                     </div>
                     <div className="flex items-center gap-2">
                         <CheckSquare className="w-3.5 h-3.5 text-slate-500" />
-                        <span>Kiểm soát: <strong>{completedChecklist}/{totalChecklist} hoàn tất</strong></span>
+                        <span>{t.controlLabel} <strong>{completedChecklist}/{totalChecklist} {t.completedSuffix}</strong></span>
                     </div>
                 </div>
 
@@ -214,7 +218,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                         }`}
                     >
                         <GitBranch className="w-3.5 h-3.5" />
-                        <span>Trình Tự Thực Hiện ({sop.flowSteps.length})</span>
+                        <span>{t.tabFlow(sop.flowSteps.length)}</span>
                     </button>
                     <button
                         onClick={() => setActiveTab('forms')}
@@ -225,7 +229,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                         }`}
                     >
                         <FileSpreadsheet className="w-3.5 h-3.5" />
-                        <span>Hồ Sơ & Biểu Mẫu ({attachedForms.length})</span>
+                        <span>{t.tabForms(attachedForms.length)}</span>
                     </button>
                     <button
                         onClick={() => setActiveTab('raci')}
@@ -236,7 +240,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                         }`}
                     >
                         <UserCheck className="w-3.5 h-3.5" />
-                        <span>Phân Quyền RACI</span>
+                        <span>{t.tabRaci}</span>
                     </button>
                     <button
                         onClick={() => setActiveTab('checklist')}
@@ -247,7 +251,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                         }`}
                     >
                         <CheckSquare className="w-3.5 h-3.5" />
-                        <span>Tiêu Chuẩn Kiểm Soát ({completedChecklist}/{totalChecklist})</span>
+                        <span>{t.tabChecklist(completedChecklist, totalChecklist)}</span>
                     </button>
                     <button
                         onClick={() => setActiveTab('faq')}
@@ -258,7 +262,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                         }`}
                     >
                         <HelpCircle className="w-3.5 h-3.5" />
-                        <span>Hỏi Đáp Vận Hành ({sop.faqs.length})</span>
+                        <span>{t.tabFaq(sop.faqs.length)}</span>
                     </button>
                 </div>
 
@@ -268,12 +272,12 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                     <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-2">
                         <div className="font-semibold text-slate-900 text-xs flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-[#0891B2]" />
-                            Mục tiêu & Tóm tắt nghiệp vụ:
+                            {t.summaryTitle}
                         </div>
                         <p className="text-slate-600 text-xs leading-relaxed">{sop.summary}</p>
                         <div className="pt-2 text-xs grid grid-cols-1 md:grid-cols-2 gap-2 text-slate-500 border-t border-slate-200">
-                            <div><strong>Mục tiêu:</strong> {sop.purpose}</div>
-                            <div><strong>Phạm vi áp dụng:</strong> {sop.scope}</div>
+                            <div><strong>{t.purposeLabel}</strong> {sop.purpose}</div>
+                            <div><strong>{t.scopeLabel}</strong> {sop.scope}</div>
                         </div>
                     </div>
 
@@ -286,7 +290,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                 </div>
                                 <div>
                                     <div className="text-xs font-bold text-slate-900">
-                                        Sổ tay hướng dẫn nghiệp vụ chi tiết (.md)
+                                        {t.mdBannerTitle}
                                     </div>
                                     <div className="text-[11px] text-slate-500">
                                         {attachedMdFiles.map(f => f.title).join(' • ')}
@@ -305,7 +309,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0E7490] hover:bg-[#155E75] text-white text-xs font-semibold shadow-xs transition"
                                     >
                                         <BookOpen className="w-3.5 h-3.5" />
-                                        <span>Đọc Sổ Tay (.md)</span>
+                                        <span>{t.readHandbookBtn}</span>
                                     </button>
                                 ))}
                             </div>
@@ -316,7 +320,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                     {activeTab === 'flow' && (
                         <div className="space-y-4">
                             <div className="text-[11px] uppercase tracking-wider font-bold text-slate-500">
-                                Trình Tự Thực Hiện Từng Bước
+                                {t.stepSequenceHeader}
                             </div>
 
                             <div className="relative border-l-2 border-slate-200 ml-3.5 pl-5 space-y-6">
@@ -329,7 +333,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                         <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-xs space-y-2.5 hover:border-slate-300 transition">
                                             <div className="flex flex-wrap items-center justify-between gap-2">
                                                 <h3 className="text-sm font-bold text-slate-900">
-                                                    Bước {step.stepNumber}: {step.title}
+                                                    {t.stepPrefix} {step.stepNumber}: {step.title}
                                                 </h3>
                                                 <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium border border-slate-200">
                                                     <User className="w-3 h-3 text-slate-500" />
@@ -346,7 +350,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                                 <div className="flex flex-wrap items-center gap-1.5 text-xs pt-1">
                                                     <span className="font-semibold text-slate-500 text-[11px] flex items-center gap-1">
                                                         <FileText className="w-3 h-3 text-slate-400" />
-                                                        Hồ sơ bàn giao:
+                                                        {t.deliverablesLabel}
                                                     </span>
                                                     {step.deliverables.map((doc, idx) => (
                                                         <span
@@ -364,7 +368,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                                 <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs space-y-1">
                                                     <div className="font-semibold flex items-center gap-1 text-slate-800 text-[11px]">
                                                         <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-                                                        Điểm kiểm soát rủi ro:
+                                                        {t.cautionsLabel}
                                                     </div>
                                                     <ul className="list-disc list-inside space-y-0.5 text-slate-600 text-[11px]">
                                                         {step.cautions.map((caution, idx) => (
@@ -400,10 +404,10 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                                 <div>
                                     <div className="text-[11px] uppercase tracking-wider font-bold text-slate-500">
-                                        Hồ Sơ & Biểu Mẫu Áp Dụng
+                                        {t.formsHeader}
                                     </div>
                                     <p className="text-xs text-slate-500">
-                                        Tải biểu mẫu chuẩn Excel/Word để thực hiện tác nghiệp hoặc đọc tài liệu Markdown.
+                                        {t.formsDesc}
                                     </p>
                                 </div>
                                 <button
@@ -414,13 +418,13 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-slate-700 font-semibold text-xs transition"
                                 >
                                     <Upload className="w-3.5 h-3.5" />
-                                    <span>Tải Mẫu Lên</span>
+                                    <span>{t.uploadFormBtn}</span>
                                 </button>
                             </div>
 
                             {attachedForms.length === 0 ? (
                                 <div className="p-8 text-center rounded-lg border border-slate-200 bg-slate-50 text-xs text-slate-500 space-y-1">
-                                    <div>Chưa có biểu mẫu gắn kèm riêng cho quy trình này.</div>
+                                    <div>{t.emptyForms}</div>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -462,7 +466,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                                             className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#0E7490] hover:bg-[#155E75] text-white font-semibold text-xs shadow-xs transition"
                                                         >
                                                             <Eye className="w-3.5 h-3.5" />
-                                                            <span>Đọc Văn Bản</span>
+                                                            <span>{t.readHandbookBtn}</span>
                                                         </button>
                                                     ) : null}
 
@@ -472,7 +476,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                                         className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 transition"
                                                     >
                                                         <Download className="w-3.5 h-3.5" />
-                                                        <span>{form.fileName.toLowerCase().endsWith('.md') ? 'Tải .md' : 'Tải File'}</span>
+                                                        <span>{form.fileName.toLowerCase().endsWith('.md') ? t.downloadMd : t.downloadFile}</span>
                                                     </a>
                                                 </div>
 
@@ -482,9 +486,8 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                                         setShowUploadModal(true)
                                                     }}
                                                     className="text-[11px] text-slate-400 hover:text-slate-700 transition"
-                                                    title="Thay thế file này"
                                                 >
-                                                    Thay file
+                                                    {getSopI18n(locale).formsView.replaceFileBtn}
                                                 </button>
                                             </div>
                                         </div>
@@ -497,7 +500,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                 <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 space-y-2">
                                     <h4 className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
                                         <FileText className="w-3.5 h-3.5 text-slate-500" />
-                                        Hồ sơ & Chứng từ pháp lý bắt buộc:
+                                        {t.requiredDocsTitle}
                                     </h4>
                                     <ul className="space-y-1 text-xs text-slate-600">
                                         {sop.requiredDocs.map((doc, idx) => (
@@ -516,7 +519,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                     {activeTab === 'raci' && (
                         <div className="space-y-4">
                             <div className="text-[11px] uppercase tracking-wider font-bold text-slate-500">
-                                Ma Trận Phân Quyền & Thẩm Quyền (RACI Matrix)
+                                {t.raciHeader}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -526,8 +529,8 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                             R
                                         </span>
                                         <div>
-                                            <h4 className="font-bold text-slate-900 text-xs">Responsible (Người Thực Hiện)</h4>
-                                            <p className="text-[11px] text-slate-500">Trực tiếp thao tác và tạo dữ liệu</p>
+                                            <h4 className="font-bold text-slate-900 text-xs">{t.raciRTitle}</h4>
+                                            <p className="text-[11px] text-slate-500">{t.raciRDesc}</p>
                                         </div>
                                     </div>
                                     <ul className="list-disc list-inside text-xs text-slate-700 space-y-0.5 pt-1">
@@ -543,8 +546,8 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                             A
                                         </span>
                                         <div>
-                                            <h4 className="font-bold text-slate-900 text-xs">Accountable (Người Phê Duyệt)</h4>
-                                            <p className="text-[11px] text-slate-500">Chịu trách nhiệm cuối cùng & phê duyệt</p>
+                                            <h4 className="font-bold text-slate-900 text-xs">{t.raciATitle}</h4>
+                                            <p className="text-[11px] text-slate-500">{t.raciADesc}</p>
                                         </div>
                                     </div>
                                     <ul className="list-disc list-inside text-xs text-slate-700 space-y-0.5 pt-1">
@@ -560,8 +563,8 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                             C
                                         </span>
                                         <div>
-                                            <h4 className="font-bold text-slate-900 text-xs">Consulted (Bên Tư Vấn/Phối Hợp)</h4>
-                                            <p className="text-[11px] text-slate-500">Cung cấp ý kiến chuyên môn hai chiều</p>
+                                            <h4 className="font-bold text-slate-900 text-xs">{t.raciCTitle}</h4>
+                                            <p className="text-[11px] text-slate-500">{t.raciCDesc}</p>
                                         </div>
                                     </div>
                                     <ul className="list-disc list-inside text-xs text-slate-700 space-y-0.5 pt-1">
@@ -577,8 +580,8 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                             I
                                         </span>
                                         <div>
-                                            <h4 className="font-bold text-slate-900 text-xs">Informed (Bên Nhận Tin)</h4>
-                                            <p className="text-[11px] text-slate-500">Cập nhật tiến độ sau khi hoàn thành</p>
+                                            <h4 className="font-bold text-slate-900 text-xs">{t.raciITitle}</h4>
+                                            <p className="text-[11px] text-slate-500">{t.raciIDesc}</p>
                                         </div>
                                     </div>
                                     <ul className="list-disc list-inside text-xs text-slate-700 space-y-0.5 pt-1">
@@ -597,10 +600,10 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-3.5 rounded-lg border border-slate-200">
                                 <div>
                                     <h4 className="font-bold text-slate-900 text-xs">
-                                        Bảng Tiêu Chuẩn Kiểm Soát & Nghiệm Thu
+                                        {t.checklistHeader}
                                     </h4>
                                     <p className="text-[11px] text-slate-500">
-                                        Kiểm tra từng tiêu chí trước khi bàn giao dữ liệu sang công đoạn tiếp theo.
+                                        {t.checklistDesc}
                                     </p>
                                 </div>
                                 <div className="text-right">
@@ -608,7 +611,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                         {progressPercent}%
                                     </div>
                                     <div className="text-[11px] text-slate-500">
-                                        {completedChecklist}/{totalChecklist} tiêu chuẩn
+                                        {completedChecklist}/{totalChecklist} {t.checklistSuffix}
                                     </div>
                                 </div>
                             </div>
@@ -642,7 +645,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                                                 </span>
                                                 {item.critical && (
                                                     <span className="ml-2 text-[10px] px-1.5 py-0.2 rounded font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
-                                                        Bắt buộc
+                                                        {t.mandatoryBadge}
                                                     </span>
                                                 )}
                                             </div>
@@ -657,12 +660,12 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                     {activeTab === 'faq' && (
                         <div className="space-y-3">
                             <div className="text-[11px] uppercase tracking-wider font-bold text-slate-500">
-                                Các Tình Huống Xử Lý Ngoại Lệ Thường Gặp
+                                {t.faqHeader}
                             </div>
 
                             {sop.faqs.length === 0 ? (
                                 <div className="p-6 text-center text-xs text-slate-500 rounded-lg border border-slate-200">
-                                    Chưa có ghi nhận tình huống ngoại lệ cho quy trình này.
+                                    {t.emptyFaq}
                                 </div>
                             ) : (
                                 <div className="space-y-2.5">

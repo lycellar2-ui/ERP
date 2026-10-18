@@ -3,11 +3,14 @@
 import { useState, useRef, useCallback } from 'react'
 import { FileText, Upload, Loader2, CheckCircle2, X, AlertCircle, Copy, ArrowRight, Ship } from 'lucide-react'
 import { ocrCustomsDeclaration, ocrLogisticsInvoice, type OCRDeclarationResult, type OCRLogisticsResult } from './actions'
-import { formatVND } from '@/lib/utils'
+import { useAppLocale } from '@/lib/i18n'
+import { getAiI18n } from './i18n'
 
 type OCRMode = 'customs' | 'logistics'
 
 export function OCRUploadWidget() {
+    const { locale } = useAppLocale()
+    const t = getAiI18n(locale).ocr
     const [mode, setMode] = useState<OCRMode>('customs')
     const [file, setFile] = useState<File | null>(null)
     const [dragging, setDragging] = useState(false)
@@ -28,18 +31,18 @@ export function OCRUploadWidget() {
 
     const handleFile = useCallback((f: File) => {
         if (!f.type.includes('pdf') && !f.type.includes('image') && !f.type.includes('text')) {
-            setError('Chỉ hỗ trợ PDF, ảnh hoặc file text')
+            setError(locale === 'en' ? 'Only PDF, image, or text files are supported' : 'Chỉ hỗ trợ PDF, ảnh hoặc file text')
             return
         }
         if (f.size > 10 * 1024 * 1024) {
-            setError('File quá lớn (tối đa 10MB)')
+            setError(locale === 'en' ? 'File too large (max 10MB)' : 'File quá lớn (tối đa 10MB)')
             return
         }
         setFile(f)
         setError('')
         setCustomsResult(null)
         setLogisticsResult(null)
-    }, [])
+    }, [locale])
 
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault()
@@ -54,16 +57,13 @@ export function OCRUploadWidget() {
         setError('')
 
         try {
-            // Read file as text (for demo - real OCR would use Vision API)
             let text = ''
             if (file.type.includes('text')) {
                 text = await file.text()
             } else {
-                // For PDF/image, we simulate reading text content
-                // In production, this would call Google Vision API
                 text = await file.text().catch(() => '')
                 if (!text.trim()) {
-                    text = `[File: ${file.name}] — Nội dung sẽ được xử lý bởi Google Vision API. Vui lòng paste nội dung text bên dưới nếu muốn test OCR.`
+                    text = `[File: ${file.name}] — Google Vision API`
                 }
             }
 
@@ -77,12 +77,11 @@ export function OCRUploadWidget() {
                 setLogisticsResult(result)
             }
         } catch (err: any) {
-            setError(err.message || 'Lỗi xử lý OCR')
+            setError(err.message || 'OCR Error')
         }
         setLoading(false)
     }
 
-    // Manual text input mode
     const handleManualProcess = async () => {
         if (!extractedText.trim()) return
         setLoading(true)
@@ -96,7 +95,7 @@ export function OCRUploadWidget() {
                 setLogisticsResult(result)
             }
         } catch (err: any) {
-            setError(err.message || 'Lỗi xử lý OCR')
+            setError(err.message || 'OCR Error')
         }
         setLoading(false)
     }
@@ -114,13 +113,13 @@ export function OCRUploadWidget() {
                         <FileText size={16} style={{ color: '#0891B2' }} />
                     </div>
                     <div>
-                        <h3 className="font-semibold text-sm" style={{ color: '#0F172A' }}>OCR — Đọc Tờ Khai / Invoice</h3>
-                        <p className="text-xs" style={{ color: '#64748B' }}>Upload PDF hoặc paste nội dung → trích xuất tự động</p>
+                        <h3 className="font-semibold text-sm" style={{ color: '#0F172A' }}>{t.title}</h3>
+                        <p className="text-xs" style={{ color: '#64748B' }}>{t.subtitle}</p>
                     </div>
                 </div>
                 {hasResult && (
                     <button onClick={resetState} className="inline-block text-xs px-2 py-1 rounded whitespace-nowrap shrink-0" style={{ color: '#64748B' }}>
-                        <X size={14} className="inline mr-1" />Làm Mới
+                        <X size={14} className="inline mr-1" />{t.resetBtn}
                     </button>
                 )}
             </div>
@@ -128,8 +127,8 @@ export function OCRUploadWidget() {
             {/* Mode Toggle */}
             <div className="flex gap-2 mb-4">
                 {([
-                    { key: 'customs' as OCRMode, label: 'Tờ Khai HQ', icon: FileText, desc: 'Hải quan NK' },
-                    { key: 'logistics' as OCRMode, label: 'Invoice Logistics', icon: Ship, desc: 'Forwarder' },
+                    { key: 'customs' as OCRMode, label: t.customsTab, icon: FileText, desc: t.customsDesc },
+                    { key: 'logistics' as OCRMode, label: t.logisticsTab, icon: Ship, desc: t.logisticsDesc },
                 ] as const).map(m => {
                     const IconComp = m.icon
                     return (
@@ -179,10 +178,10 @@ export function OCRUploadWidget() {
                             <div className="text-center">
                                 <Upload size={28} className="mx-auto mb-2" style={{ color: dragging ? '#0E7490' : '#E2E8F0' }} />
                                 <p className="text-sm font-semibold" style={{ color: '#475569' }}>
-                                    Kéo thả file vào đây
+                                    {t.dropHere}
                                 </p>
                                 <p className="text-xs mt-1" style={{ color: '#64748B' }}>
-                                    Hỗ trợ: PDF, ảnh (PNG/JPG), text • Tối đa 10MB
+                                    {t.dropHint}
                                 </p>
                             </div>
                         )}
@@ -191,14 +190,12 @@ export function OCRUploadWidget() {
                     {/* Text Input Area */}
                     <div className="mt-3">
                         <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>
-                            Hoặc paste nội dung text trực tiếp:
+                            {t.pasteLabel}
                         </label>
                         <textarea
                             value={extractedText}
                             onChange={e => setExtractedText(e.target.value)}
-                            placeholder={mode === 'customs'
-                                ? 'Paste nội dung tờ khai hải quan...\nVD: Số TK: 103210000123/A12, CIF: 15,000 USD...'
-                                : 'Paste nội dung invoice logistics...\nVD: Invoice No: INV-2026-001, Total: 2,500 USD...'}
+                            placeholder={mode === 'customs' ? t.customsPlaceholder : t.logisticsPlaceholder}
                             rows={4}
                             className="w-full px-3 py-2 text-sm outline-none resize-none"
                             style={inputStyle} />
@@ -217,8 +214,8 @@ export function OCRUploadWidget() {
                         className="w-full flex items-center justify-center gap-2 mt-4 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50 transition-all"
                         style={{ background: '#0E7490', color: '#FFFFFF' }}>
                         {loading
-                            ? <><Loader2 size={14} className="animate-spin" /> Đang xử lý OCR...</>
-                            : <><ArrowRight size={14} /> Trích Xuất Dữ Liệu</>}
+                            ? <><Loader2 size={14} className="animate-spin" /> {t.processingBtn}</>
+                            : <><ArrowRight size={14} /> {t.extractBtn}</>}
                     </button>
                 </>
             ) : (
@@ -232,39 +229,41 @@ export function OCRUploadWidget() {
     )
 }
 
-// ── Customs Declaration Result ──────────────
 function CustomsResultView({ result }: { result: OCRDeclarationResult }) {
+    const { locale, formatCurrency } = useAppLocale()
+    const t = getAiI18n(locale).ocr
+
     if (!result.success) {
         return (
             <div className="p-3 rounded-lg text-sm" style={{ background: 'rgba(185,28,28,0.08)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.2)' }}>
-                <AlertCircle size={14} className="inline mr-1" /> Lỗi: {result.error}
+                <AlertCircle size={14} className="inline mr-1" /> {result.error}
             </div>
         )
     }
 
     const fields = [
-        { label: 'Số Tờ Khai', value: result.declarationNo, mono: true },
-        { label: 'Ngày', value: result.date },
-        { label: 'Nhà Nhập Khẩu', value: result.importerName },
-        { label: 'HS Code', value: result.hsCode, mono: true },
-        { label: 'Trị Giá CIF', value: result.cifValue ? `${result.cifValue.toLocaleString()} ${result.cifCurrency ?? 'USD'}` : undefined, mono: true },
-        { label: 'Thuế Nhập Khẩu', value: result.importTax ? formatVND(result.importTax) : undefined, color: '#B45309' },
-        { label: 'Thuế TTĐB', value: result.specialConsumptionTax ? formatVND(result.specialConsumptionTax) : undefined, color: '#B45309' },
-        { label: 'Thuế GTGT', value: result.vatTax ? formatVND(result.vatTax) : undefined, color: '#B45309' },
-        { label: 'Tổng Thuế Phải Nộp', value: result.totalTaxPayable ? formatVND(result.totalTaxPayable) : undefined, color: '#B91C1C', bold: true },
+        { label: t.fields.declarationNo, value: result.declarationNo, mono: true },
+        { label: t.fields.date, value: result.date },
+        { label: t.fields.importerName, value: result.importerName },
+        { label: t.fields.hsCode, value: result.hsCode, mono: true },
+        { label: t.fields.cifValue, value: result.cifValue ? `${result.cifValue.toLocaleString()} ${result.cifCurrency ?? 'USD'}` : undefined, mono: true },
+        { label: t.fields.importTax, value: result.importTax ? formatCurrency(result.importTax) : undefined, color: '#B45309' },
+        { label: t.fields.sct, value: result.specialConsumptionTax ? formatCurrency(result.specialConsumptionTax) : undefined, color: '#B45309' },
+        { label: t.fields.vat, value: result.vatTax ? formatCurrency(result.vatTax) : undefined, color: '#B45309' },
+        { label: t.fields.totalTax, value: result.totalTaxPayable ? formatCurrency(result.totalTaxPayable) : undefined, color: '#B91C1C', bold: true },
     ].filter(f => f.value)
 
     return (
         <div className="space-y-2">
             <div className="flex items-center gap-2 mb-2">
                 <CheckCircle2 size={14} style={{ color: '#15803D' }} />
-                <span className="text-sm font-semibold" style={{ color: '#15803D' }}>Trích xuất thành công — Tờ Khai Hải Quan</span>
+                <span className="text-sm font-semibold" style={{ color: '#15803D' }}>{t.customsSuccess}</span>
             </div>
             <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                 {fields.map((f, i) => (
                     <div key={f.label} className="flex items-center justify-between px-4 py-2.5"
                         style={{
-                            background: i % 2 === 0 ? '#FFFFFF' : '#FFFFFF',
+                            background: '#FFFFFF',
                             borderBottom: i < fields.length - 1 ? '1px solid #E2E8F0' : undefined,
                         }}>
                         <span className="text-xs" style={{ color: '#64748B' }}>{f.label}</span>
@@ -275,18 +274,20 @@ function CustomsResultView({ result }: { result: OCRDeclarationResult }) {
                 ))}
             </div>
             <p className="text-[10px] text-center" style={{ color: '#64748B' }}>
-                * Kết quả mang tính tham khảo. Vui lòng kiểm tra lại trước khi import vào hệ thống.
+                {t.disclaimer}
             </p>
         </div>
     )
 }
 
-// ── Logistics Invoice Result ──────────────
 function LogisticsResultView({ result }: { result: OCRLogisticsResult }) {
+    const { locale } = useAppLocale()
+    const t = getAiI18n(locale).ocr
+
     if (!result.success) {
         return (
             <div className="p-3 rounded-lg text-sm" style={{ background: 'rgba(185,28,28,0.08)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.2)' }}>
-                <AlertCircle size={14} className="inline mr-1" /> Lỗi: {result.error}
+                <AlertCircle size={14} className="inline mr-1" /> {result.error}
             </div>
         )
     }
@@ -295,19 +296,19 @@ function LogisticsResultView({ result }: { result: OCRLogisticsResult }) {
         <div className="space-y-2">
             <div className="flex items-center gap-2 mb-2">
                 <CheckCircle2 size={14} style={{ color: '#15803D' }} />
-                <span className="text-sm font-semibold" style={{ color: '#15803D' }}>Trích xuất — Invoice Logistics</span>
+                <span className="text-sm font-semibold" style={{ color: '#15803D' }}>{t.logisticsSuccess}</span>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
                 {result.invoiceNo && (
                     <div className="p-3 rounded-lg" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                        <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Số Invoice</p>
+                        <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>{t.invoiceNo}</p>
                         <p className="text-sm font-bold" style={{ color: '#0F172A' }}>{result.invoiceNo}</p>
                     </div>
                 )}
                 {result.supplierName && (
                     <div className="p-3 rounded-lg" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                        <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>Nhà Cung Cấp</p>
+                        <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>{t.supplierName}</p>
                         <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{result.supplierName}</p>
                     </div>
                 )}
@@ -316,12 +317,12 @@ function LogisticsResultView({ result }: { result: OCRLogisticsResult }) {
             {result.costItems && result.costItems.length > 0 && (
                 <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                     <div className="px-4 py-2" style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                        <span className="text-xs font-semibold uppercase" style={{ color: '#64748B' }}>Chi Tiết Chi Phí</span>
+                        <span className="text-xs font-semibold uppercase" style={{ color: '#64748B' }}>{t.costDetails}</span>
                     </div>
                     {result.costItems.map((item, i) => (
                         <div key={i} className="flex items-center justify-between px-4 py-2.5"
                             style={{
-                                background: i % 2 === 0 ? '#FFFFFF' : '#FFFFFF',
+                                background: '#FFFFFF',
                                 borderBottom: i < result.costItems!.length - 1 ? '1px solid #E2E8F0' : undefined,
                             }}>
                             <span className="text-xs" style={{ color: '#475569' }}>{item.description}</span>
@@ -335,7 +336,7 @@ function LogisticsResultView({ result }: { result: OCRLogisticsResult }) {
 
             {result.totalAmount != null && (
                 <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'rgba(8,145,178,0.08)', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
-                    <span className="text-xs font-semibold" style={{ color: '#0891B2' }}>TỔNG</span>
+                    <span className="text-xs font-semibold" style={{ color: '#0891B2' }}>{t.totalLabel}</span>
                     <span className="text-lg font-bold" style={{ color: '#0891B2' }}>
                         {result.totalAmount.toLocaleString()} USD
                     </span>
@@ -343,7 +344,7 @@ function LogisticsResultView({ result }: { result: OCRLogisticsResult }) {
             )}
 
             <p className="text-[10px] text-center" style={{ color: '#64748B' }}>
-                * Kết quả mang tính tham khảo. Kiểm tra lại trước khi import.
+                {t.disclaimer}
             </p>
         </div>
     )

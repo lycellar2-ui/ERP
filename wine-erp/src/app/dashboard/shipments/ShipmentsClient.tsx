@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect } from 'react'
 import {
-    Search, Plus, Ship, Anchor, MapPin, Calendar, DollarSign,
-    FileCheck, CheckCircle2, Loader2, X, Package, Globe, Truck,
-    BarChart3, Shield, ChevronRight, Eye,
+    Plus, Ship, Anchor, MapPin, FileCheck, CheckCircle2,
+    Loader2, Package, Truck, BarChart3, Eye,
 } from 'lucide-react'
 import {
     getShipments, createShipment, getLandedCostBreakdown,
@@ -13,34 +12,34 @@ import {
 import { ShipmentDetailDrawer } from '../procurement/ShipmentDetailDrawer'
 import { getPurchaseOrders } from '../procurement/actions'
 import { getForwardersAndBrokers } from '../procurement/shipment-actions'
-import { PageHeader, Button } from '@/components/ui'
+import {
+    PageHeader, StatGrid, StatCard, Button, StatusBadge,
+    Toolbar, SearchInput, Select, Input, Field, Drawer,
+    Table, THead, TBody, Tr, Th, Td, TableMessageRow, EmptyState,
+} from '@/components/ui'
 import { toast } from 'sonner'
+import { useAppLocale } from '@/lib/i18n'
+import { SHIPMENTS_I18N } from './i18n'
 
-const fmtDate = (d: Date | string | null) => d ? new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
-const fmtNum = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(n))
+const STATUS_TONES = {
+    BOOKED: 'info',
+    DOCS_READY: 'info',
+    LOADED: 'brand',
+    ON_VESSEL: 'success',
+    ARRIVED_PORT: 'warning',
+    CUSTOMS_FILING: 'warning',
+    CUSTOMS_INSPECTING: 'warning',
+    CUSTOMS_CLEARED: 'success',
+    STAMPING: 'brand',
+    DELIVERED_TO_WAREHOUSE: 'success',
+} as const
 
-const STATUS_CFG: Record<string, { label: string; color: string }> = {
-    DRAFT: { label: 'Nháp', color: '#64748B' },
-    BOOKED: { label: 'Đã book', color: '#1D4ED8' },
-    DOCS_READY: { label: 'Docs sẵn', color: '#7AC4C4' },
-    LOADED: { label: 'Đã xếp', color: '#0891B2' },
-    ON_VESSEL: { label: 'Trên tàu', color: '#15803D' },
-    ARRIVED_PORT: { label: 'Cập cảng', color: '#B45309' },
-    CUSTOMS_FILING: { label: 'Khai HQ', color: '#C07434' },
-    CUSTOMS_INSPECTING: { label: 'Giám định', color: '#B45309' },
-    CUSTOMS_CLEARED: { label: 'Thông quan', color: '#15803D' },
-    STAMPING: { label: 'Dán tem', color: '#0891B2' },
-    DELIVERED_TO_WAREHOUSE: { label: 'Nhập kho', color: '#15803D' },
-    COMPLETED: { label: 'Hoàn tất', color: '#15803D' },
-    CANCELLED: { label: 'Đã huỷ', color: '#B91C1C' },
-}
-
-// ═══════════════════════════════════════════════════
-// CREATE SHIPMENT DRAWER
-// ═══════════════════════════════════════════════════
 function CreateShipmentDrawer({ open, onClose, onCreated }: {
     open: boolean; onClose: () => void; onCreated: () => void
 }) {
+    const { locale } = useAppLocale()
+    const L = SHIPMENTS_I18N[locale]
+
     const [pos, setPos] = useState<{ id: string; poNo: string; supplierName: string; incoterms: string | null }[]>([])
     const [fwBk, setFwBk] = useState<{ forwarders: any[]; brokers: any[] }>({ forwarders: [], brokers: [] })
     const [form, setForm] = useState({
@@ -61,11 +60,9 @@ function CreateShipmentDrawer({ open, onClose, onCreated }: {
     }, [open])
 
     const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }))
-    const inputCls = "w-full px-3 py-2 rounded-md text-sm outline-none transition-colors border border-slate-200 bg-white text-slate-900 focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600"
-    const inputStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }
 
     const handleSave = async () => {
-        if (!form.poId || !form.billOfLading) { toast.error('Chọn PO và nhập B/L'); return }
+        if (!form.poId || !form.billOfLading) { toast.error(L.toast.missingPoBl); return }
         setSaving(true)
         try {
             const res = await createShipment({
@@ -73,124 +70,145 @@ function CreateShipmentDrawer({ open, onClose, onCreated }: {
                 forwarderId: form.forwarderId || undefined,
                 customsBrokerId: form.customsBrokerId || undefined,
             })
-            if (res.success) { toast.success('Tạo lô hàng thành công!'); onCreated(); onClose() }
-            else toast.error(res.error ?? 'Lỗi')
+            if (res.success) { toast.success(L.toast.createSuccess); onCreated(); onClose() }
+            else toast.error(res.error ?? L.toast.createError)
         } finally { setSaving(false) }
     }
 
     return (
-        <>
-            <div className="fixed inset-0 z-40 transition-opacity duration-300"
-                style={{ background: 'rgba(15,23,42,0.4)', opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none' }}
-                onClick={onClose} />
-            <div className="fixed top-0 right-0 h-full z-50 flex flex-col transition-transform duration-300"
-                style={{ width: 'min(620px, 95vw)', background: '#F8FAFC', borderLeft: '1px solid #E2E8F0', transform: open ? 'translateX(0)' : 'translateX(100%)' }}>
-
-                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(29,78,216,0.15)' }}>
-                            <Ship size={18} style={{ color: '#1D4ED8' }} />
-                        </div>
-                        <div>
-                            <h3 className="font-semibold" style={{ color: '#0F172A', fontSize: 18 }}>Tạo Lô Hàng Mới</h3>
-                            <p className="text-xs" style={{ color: '#64748B' }}>Tạo shipment từ PO đã duyệt</p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="p-2 rounded-lg" style={{ color: '#64748B' }}><X size={18} /></button>
-                </div>
-
-                <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-                    <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>── Thông Tin Cơ Bản</p>
+        <Drawer
+            open={open}
+            onClose={onClose}
+            title={L.createDrawer.title}
+            size="md"
+            footer={
+                <>
+                    <Button variant="secondary" onClick={onClose}>{L.createDrawer.cancelBtn}</Button>
+                    <Button variant="primary" onClick={handleSave} loading={saving}>
+                        <Ship size={14} aria-hidden /> {saving ? L.createDrawer.savingBtn : L.createDrawer.saveBtn}
+                    </Button>
+                </>
+            }
+        >
+            <div className="space-y-5">
+                <section className="space-y-3">
+                    <p className="type-caption uppercase tracking-wider font-semibold text-lys-teal-strong">
+                        {L.createDrawer.basicSection}
+                    </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="sm:col-span-2">
-                            <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Purchase Order *</label>
-                            <select className={inputCls} style={inputStyle} value={form.poId} onChange={e => set('poId', e.target.value)}>
-                                <option value="">— Chọn PO —</option>
-                                {pos.map(p => <option key={p.id} value={p.id}>{p.poNo} — {p.supplierName}</option>)}
-                            </select>
+                            <Field label={L.createDrawer.poLabel} required>
+                                {id => (
+                                    <Select id={id} value={form.poId} onChange={e => set('poId', e.target.value)}>
+                                        <option value="">{L.createDrawer.poPlaceholder}</option>
+                                        {pos.map(p => <option key={p.id} value={p.id}>{p.poNo} — {p.supplierName}</option>)}
+                                    </Select>
+                                )}
+                            </Field>
                         </div>
-                        <div>
-                            <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Bill of Lading *</label>
-                            <input className={inputCls} style={inputStyle} value={form.billOfLading} onChange={e => set('billOfLading', e.target.value)} placeholder="VD: MAEU12345678" />
-                        </div>
-                        <div>
-                            <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Incoterms</label>
-                            <select className={inputCls} style={inputStyle} value={form.incoterms} onChange={e => set('incoterms', e.target.value)}>
-                                <option value="EXW">EXW — Ex Works</option>
-                                <option value="FOB">FOB — Free On Board</option>
-                                <option value="CIF">CIF — Cost Insurance Freight</option>
-                            </select>
-                        </div>
+                        <Field label={L.createDrawer.blLabel} required>
+                            {id => (
+                                <Input id={id} value={form.billOfLading} onChange={e => set('billOfLading', e.target.value)} placeholder={L.createDrawer.blPlaceholder} />
+                            )}
+                        </Field>
+                        <Field label={L.createDrawer.incotermsLabel}>
+                            {id => (
+                                <Select id={id} value={form.incoterms} onChange={e => set('incoterms', e.target.value)}>
+                                    <option value="EXW">EXW — Ex Works</option>
+                                    <option value="FOB">FOB — Free On Board</option>
+                                    <option value="CIF">CIF — Cost Insurance Freight</option>
+                                </Select>
+                            )}
+                        </Field>
                     </div>
+                </section>
 
-                    <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Thông Tin Vận Chuyển</p>
+                <section className="space-y-3">
+                    <p className="type-caption uppercase tracking-wider font-semibold text-lys-teal-strong">
+                        {L.createDrawer.transportSection}
+                    </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div><label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Tên Tàu</label>
-                            <input className={inputCls} style={inputStyle} value={form.vesselName} onChange={e => set('vesselName', e.target.value)} placeholder="VD: MSC ROMA" /></div>
-                        <div><label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Voyage No</label>
-                            <input className={inputCls} style={inputStyle} value={form.voyageNo} onChange={e => set('voyageNo', e.target.value)} placeholder="VD: VA523W" /></div>
-                        <div><label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Container No</label>
-                            <input className={inputCls} style={inputStyle} value={form.containerNo} onChange={e => set('containerNo', e.target.value)} placeholder="VD: MSKU1234567" /></div>
-                        <div><label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Container Type</label>
-                            <select className={inputCls} style={inputStyle} value={form.containerType} onChange={e => set('containerType', e.target.value)}>
-                                <option value="20FT">20FT Dry</option><option value="40FT">40FT Dry</option>
-                                <option value="40HC">40HC High Cube</option><option value="REEFER">Reefer (lạnh)</option>
-                                <option value="LCL">LCL (hàng lẻ)</option>
-                            </select></div>
-                        <div><label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Cảng Xuất</label>
-                            <input className={inputCls} style={inputStyle} value={form.portOfLoading} onChange={e => set('portOfLoading', e.target.value)} placeholder="VD: FRMRS (Marseille)" /></div>
-                        <div><label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Cảng Đến</label>
-                            <input className={inputCls} style={inputStyle} value={form.portOfDischarge} onChange={e => set('portOfDischarge', e.target.value)} /></div>
-                        <div><label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>ETD</label>
-                            <input type="date" className={inputCls} style={inputStyle} value={form.etd} onChange={e => set('etd', e.target.value)} /></div>
-                        <div><label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>ETA</label>
-                            <input type="date" className={inputCls} style={inputStyle} value={form.eta} onChange={e => set('eta', e.target.value)} /></div>
+                        <Field label={L.createDrawer.vesselLabel}>
+                            {id => <Input id={id} value={form.vesselName} onChange={e => set('vesselName', e.target.value)} placeholder="MSC ROMA" />}
+                        </Field>
+                        <Field label={L.createDrawer.voyageLabel}>
+                            {id => <Input id={id} value={form.voyageNo} onChange={e => set('voyageNo', e.target.value)} placeholder="VA523W" />}
+                        </Field>
+                        <Field label={L.createDrawer.containerNoLabel}>
+                            {id => <Input id={id} value={form.containerNo} onChange={e => set('containerNo', e.target.value)} placeholder="MSKU1234567" />}
+                        </Field>
+                        <Field label={L.createDrawer.containerTypeLabel}>
+                            {id => (
+                                <Select id={id} value={form.containerType} onChange={e => set('containerType', e.target.value)}>
+                                    <option value="20FT">20FT Dry</option>
+                                    <option value="40FT">40FT Dry</option>
+                                    <option value="40HC">40HC High Cube</option>
+                                    <option value="REEFER">Reefer</option>
+                                    <option value="LCL">LCL</option>
+                                </Select>
+                            )}
+                        </Field>
+                        <Field label={L.createDrawer.portLoadingLabel}>
+                            {id => <Input id={id} value={form.portOfLoading} onChange={e => set('portOfLoading', e.target.value)} placeholder="FRMRS (Marseille)" />}
+                        </Field>
+                        <Field label={L.createDrawer.portDischargeLabel}>
+                            {id => <Input id={id} value={form.portOfDischarge} onChange={e => set('portOfDischarge', e.target.value)} />}
+                        </Field>
+                        <Field label={L.createDrawer.etdLabel}>
+                            {id => <Input id={id} type="date" value={form.etd} onChange={e => set('etd', e.target.value)} />}
+                        </Field>
+                        <Field label={L.createDrawer.etaLabel}>
+                            {id => <Input id={id} type="date" value={form.eta} onChange={e => set('eta', e.target.value)} />}
+                        </Field>
                     </div>
+                </section>
 
-                    <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Giá Trị & Đối Tác</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div><label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Giá trị CIF *</label>
-                            <input type="number" className={inputCls} style={inputStyle} value={form.cifAmount || ''} onChange={e => set('cifAmount', Number(e.target.value))} /></div>
-                        <div><label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Tiền tệ</label>
-                            <select className={inputCls} style={inputStyle} value={form.cifCurrency} onChange={e => set('cifCurrency', e.target.value)}>
-                                <option value="USD">USD</option>
-                                <option value="EUR">EUR</option>
-                                <option value="GBP">GBP</option>
-                                <option value="NZD">NZD</option>
-                                <option value="AUD">AUD</option>
-                            </select></div>
-                        <div className="hidden sm:block" />
-                        <div><label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Forwarder</label>
-                            <select className={inputCls} style={inputStyle} value={form.forwarderId} onChange={e => set('forwarderId', e.target.value)}>
-                                <option value="">— Chọn —</option>
-                                {fwBk.forwarders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                            </select></div>
-                        <div className="sm:col-span-2"><label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Customs Broker</label>
-                            <select className={inputCls} style={inputStyle} value={form.customsBrokerId} onChange={e => set('customsBrokerId', e.target.value)}>
-                                <option value="">— Chọn —</option>
-                                {fwBk.brokers.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-                            </select></div>
+                <section className="space-y-3">
+                    <p className="type-caption uppercase tracking-wider font-semibold text-lys-teal-strong">
+                        {L.createDrawer.valueSection}
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Field label={L.createDrawer.cifAmountLabel} required>
+                            {id => <Input id={id} type="number" value={form.cifAmount || ''} onChange={e => set('cifAmount', Number(e.target.value))} />}
+                        </Field>
+                        <Field label={L.createDrawer.currencyLabel}>
+                            {id => (
+                                <Select id={id} value={form.cifCurrency} onChange={e => set('cifCurrency', e.target.value)}>
+                                    <option value="USD">USD</option>
+                                    <option value="EUR">EUR</option>
+                                    <option value="GBP">GBP</option>
+                                    <option value="NZD">NZD</option>
+                                    <option value="AUD">AUD</option>
+                                </Select>
+                            )}
+                        </Field>
+                        <Field label={L.createDrawer.forwarderLabel}>
+                            {id => (
+                                <Select id={id} value={form.forwarderId} onChange={e => set('forwarderId', e.target.value)}>
+                                    <option value="">{L.createDrawer.selectPlaceholder}</option>
+                                    {fwBk.forwarders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                                </Select>
+                            )}
+                        </Field>
+                        <Field label={L.createDrawer.brokerLabel}>
+                            {id => (
+                                <Select id={id} value={form.customsBrokerId} onChange={e => set('customsBrokerId', e.target.value)}>
+                                    <option value="">{L.createDrawer.selectPlaceholder}</option>
+                                    {fwBk.brokers.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                                </Select>
+                            )}
+                        </Field>
                     </div>
-                </div>
-
-                <div className="flex items-center justify-end gap-3 px-6 py-4 flex-shrink-0" style={{ borderTop: '1px solid #E2E8F0' }}>
-                    <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm" style={{ color: '#475569', border: '1px solid #E2E8F0' }}>Huỷ</button>
-                    <button onClick={handleSave} disabled={saving}
-                        className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold disabled:opacity-60"
-                        style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                        {saving ? <Loader2 size={14} className="animate-spin" /> : <Ship size={14} />}
-                        {saving ? 'Đang tạo...' : 'Tạo Lô Hàng'}
-                    </button>
-                </div>
+                </section>
             </div>
-        </>
+        </Drawer>
     )
 }
 
-// ═══════════════════════════════════════════════════
-// LANDED COST MODAL
-// ═══════════════════════════════════════════════════
-function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose: () => void }) {
+function LandedCostDrawer({ shipmentId, onClose }: { shipmentId: string; onClose: () => void }) {
+    const { locale, formatCurrency, formatNumber } = useAppLocale()
+    const L = SHIPMENTS_I18N[locale]
+
     const [data, setData] = useState<any>(null)
     const [loading, setLoading] = useState(true)
 
@@ -199,199 +217,118 @@ function LandedCostModal({ shipmentId, onClose }: { shipmentId: string; onClose:
     }, [shipmentId])
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={onClose}>
-            <div className="p-4 sm:p-6 rounded-lg w-full max-w-[640px] max-h-[85vh] overflow-y-auto" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }} onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold flex items-center gap-2" style={{ color: '#0F172A', fontSize: 16 }}>
-                        <BarChart3 size={18} style={{ color: '#B45309' }} /> Phân Tích Giá Vốn Nhập Kho
-                    </h3>
-                    <button onClick={onClose} style={{ color: '#64748B' }}><X size={16} /></button>
+        <Drawer
+            open={!!shipmentId}
+            onClose={onClose}
+            title={L.landedCostModal.title}
+            size="lg"
+            footer={
+                <Button variant="secondary" onClick={onClose}>{L.landedCostModal.closeBtn}</Button>
+            }
+        >
+            {loading ? (
+                <div className="flex justify-center py-12">
+                    <Loader2 size={20} className="animate-spin text-lys-teal-strong" />
                 </div>
+            ) : !data ? (
+                <p className="text-center py-8 text-sm text-lys-muted">{L.landedCostModal.noData}</p>
+            ) : (
+                <div className="space-y-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="p-3 rounded-lg text-center bg-lys-subtle border border-lys-border">
+                            <p className="text-[11px] uppercase text-lys-muted">{L.landedCostModal.cifVnd}</p>
+                            <p className="type-number text-sm font-bold text-lys-teal-strong mt-1">{formatCurrency(data.cifVND)}</p>
+                        </div>
+                        <div className="p-3 rounded-lg text-center bg-lys-subtle border border-lys-border">
+                            <p className="text-[11px] uppercase text-lys-muted">{L.landedCostModal.totalCosts}</p>
+                            <p className="type-number text-sm font-bold text-tone-warning-fg mt-1">{formatCurrency(data.totalCosts)}</p>
+                        </div>
+                        <div className="p-3 rounded-lg text-center bg-lys-subtle border border-lys-border">
+                            <p className="text-[11px] uppercase text-lys-muted">{L.landedCostModal.grandTotal}</p>
+                            <p className="type-number text-sm font-bold text-lys-primary mt-1">{formatCurrency(data.grandTotal)}</p>
+                        </div>
+                    </div>
 
-                {loading ? (
-                    <div className="flex justify-center py-12"><Loader2 size={20} className="animate-spin" style={{ color: '#0891B2' }} /></div>
-                ) : !data ? (
-                    <p className="text-center py-8 text-sm" style={{ color: '#64748B' }}>Không có dữ liệu</p>
-                ) : (
-                    <div className="space-y-5">
-                        {/* Summary bar */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            {[
-                                { label: 'Giá trị CIF (VND)', value: fmtNum(data.cifVND), color: '#0891B2' },
-                                { label: 'Tổng Chi Phí', value: fmtNum(data.totalCosts), color: '#B45309' },
-                                { label: 'TỔNG GIÁ VỐN', value: `${fmtNum(data.grandTotal)} ₫`, color: '#0F172A' },
-                            ].map(c => (
-                                <div key={c.label} className="p-3 rounded-lg text-center" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                    <p className="text-[10px] uppercase" style={{ color: '#64748B' }}>{c.label}</p>
-                                    <p className="text-sm font-bold mt-1" style={{ color: c.color }}>{c.value}</p>
+                    <div>
+                        <p className="type-caption font-bold uppercase tracking-wide text-tone-warning-fg mb-2">
+                            {L.landedCostModal.costByCategory}
+                        </p>
+                        <div className="space-y-1.5">
+                            {data.costsByCategory.map((c: any) => (
+                                <div key={c.category} className="flex items-center justify-between px-3 py-2 rounded-md bg-lys-subtle border border-lys-border">
+                                    <span className="text-xs text-lys-secondary">{c.label}</span>
+                                    <span className="type-number text-xs font-bold text-lys-primary">{formatCurrency(c.totalVND)}</span>
                                 </div>
                             ))}
                         </div>
+                    </div>
 
-                        {/* Cost breakdown by category */}
-                        <div>
-                            <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: '#B45309' }}>Chi Phí Theo Loại</p>
-                            <div className="space-y-1">
-                                {data.costsByCategory.map((c: any) => (
-                                    <div key={c.category} className="flex items-center justify-between px-3 py-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                        <span className="text-xs" style={{ color: '#475569' }}>{c.label}</span>
-                                        <span className="text-xs font-bold" style={{ color: '#0F172A' }}>{fmtNum(c.totalVND)} ₫</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Tax breakdown */}
-                        <div>
-                            <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: '#B45309' }}>Thuế</p>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
-                                {[
-                                    { label: 'Thuế NK', value: data.taxBreakdown.importTax },
-                                    { label: 'TTĐB', value: data.taxBreakdown.sct },
-                                    { label: 'VAT', value: data.taxBreakdown.vat },
-                                    { label: 'TỔNG THUẾ', value: data.taxBreakdown.total },
-                                ].map(t => (
-                                    <div key={t.label} className="p-2 rounded" style={{ background: 'rgba(180,83,9,0.08)' }}>
-                                        <p className="text-[10px]" style={{ color: '#B45309' }}>{t.label}</p>
-                                        <p className="text-xs font-bold" style={{ color: '#0F172A' }}>{fmtNum(t.value)}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Per product */}
-                        <div>
-                            <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: '#0891B2' }}>Giá Vốn Per SKU</p>
-                            <div className="overflow-x-auto -mx-1">
-                                <table className="w-full text-left min-w-[500px]" style={{ borderCollapse: 'collapse' }}>
-                                    <thead>
-                                        <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                            {['SKU', 'Tên', 'SL', 'CIF/chai', 'Landed/chai'].map(h => (
-                                                <th key={h} className="px-2 py-2 text-[10px] uppercase font-semibold" style={{ color: '#64748B' }}>{h}</th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {data.productBreakdown.map((p: any) => (
-                                            <tr key={p.skuCode} style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                                <td className="px-2 py-2 text-xs font-bold" style={{ color: '#0891B2' }}>{p.skuCode}</td>
-                                                <td className="px-2 py-2 text-xs truncate max-w-[140px]" style={{ color: '#0F172A' }}>{p.productName}</td>
-                                                <td className="px-2 py-2 text-xs text-center" style={{ color: '#475569' }}>{p.qty}</td>
-                                                <td className="px-2 py-2 text-xs text-right" style={{ color: '#475569' }}>{fmtNum(p.unitCIF)}</td>
-                                                <td className="px-2 py-2 text-xs text-right font-bold" style={{ color: '#B45309' }}>{fmtNum(p.estimatedLandedCost)} ₫</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        {/* Average */}
-                        <div className="flex justify-between items-center px-4 py-3 rounded-lg" style={{ background: 'rgba(8,145,178,0.08)', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
-                            <span className="text-sm font-semibold" style={{ color: '#0891B2' }}>Giá vốn BQ / chai</span>
-                            <span className="text-lg font-bold" style={{ color: '#0F172A' }}>{fmtNum(data.avgLandedCostPerUnit)} ₫</span>
+                    <div>
+                        <p className="type-caption font-bold uppercase tracking-wide text-tone-warning-fg mb-2">
+                            {L.landedCostModal.taxSection}
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                            {[
+                                { label: L.landedCostModal.importTax, value: data.taxBreakdown.importTax },
+                                { label: L.landedCostModal.sctTax, value: data.taxBreakdown.sct },
+                                { label: L.landedCostModal.vatTax, value: data.taxBreakdown.vat },
+                                { label: L.landedCostModal.totalTax, value: data.taxBreakdown.total },
+                            ].map(t => (
+                                <div key={t.label} className="p-2.5 rounded-md bg-tone-warning-bg border border-tone-warning-border">
+                                    <p className="text-[11px] text-tone-warning-fg">{t.label}</p>
+                                    <p className="type-number text-xs font-bold text-lys-primary mt-0.5">{formatCurrency(t.value)}</p>
+                                </div>
+                            ))}
                         </div>
                     </div>
-                )}
-            </div>
-        </div>
+
+                    <div>
+                        <p className="type-caption font-bold uppercase tracking-wide text-lys-teal-strong mb-2">
+                            {L.landedCostModal.perSkuSection}
+                        </p>
+                        <Table>
+                            <THead>
+                                <tr>
+                                    <Th>{L.landedCostModal.colSku}</Th>
+                                    <Th>{L.landedCostModal.colName}</Th>
+                                    <Th align="right">{L.landedCostModal.colQty}</Th>
+                                    <Th align="right">{L.landedCostModal.colUnitCif}</Th>
+                                    <Th align="right">{L.landedCostModal.colLandedCost}</Th>
+                                </tr>
+                            </THead>
+                            <TBody>
+                                {data.productBreakdown.map((p: any) => (
+                                    <Tr key={p.skuCode}>
+                                        <Td className="type-number font-semibold text-lys-teal-strong">{p.skuCode}</Td>
+                                        <Td className="truncate max-w-[160px] text-lys-primary">{p.productName}</Td>
+                                        <Td align="right" className="type-number text-lys-secondary">{formatNumber(p.qty)}</Td>
+                                        <Td align="right" className="type-number text-lys-secondary">{formatCurrency(p.unitCIF)}</Td>
+                                        <Td align="right" className="type-number font-bold text-tone-warning-fg">{formatCurrency(p.estimatedLandedCost)}</Td>
+                                    </Tr>
+                                ))}
+                            </TBody>
+                        </Table>
+                    </div>
+
+                    <div className="flex justify-between items-center px-4 py-3 rounded-lg bg-lys-teal-soft border border-lys-border">
+                        <span className="text-sm font-semibold text-lys-teal-strong">{L.landedCostModal.avgPerBottle}</span>
+                        <span className="type-number text-lg font-bold text-lys-primary">{formatCurrency(data.avgLandedCostPerUnit)}</span>
+                    </div>
+                </div>
+            )}
+        </Drawer>
     )
 }
 
-// ═══════════════════════════════════════════════════
-// MAIN CLIENT
-// ═══════════════════════════════════════════════════
 interface Props {
     initialRows: ShipmentRow[]; initialTotal: number
     stats: { total: number; booked: number; onVessel: number; atPort: number; customsFiling: number; cleared: number; delivered: number }
 }
 
-function ShipmentMobileCard({
-    row,
-    onOpenDetail,
-    onOpenLandedCost
-}: {
-    row: ShipmentRow
-    onOpenDetail: (id: string) => void
-    onOpenLandedCost: (id: string) => void
-}) {
-    const st = STATUS_CFG[row.status] ?? { label: row.status, color: '#64748B' }
-
-    return (
-        <div
-            onClick={() => onOpenDetail(row.id)}
-            className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs space-y-2.5 cursor-pointer hover:border-[#0E7490] transition-colors"
-        >
-            <div className="flex items-start justify-between gap-2">
-                <div>
-                    <span className="font-mono font-bold text-xs text-[#0891B2]">{row.billOfLading}</span>
-                    <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-slate-500">
-                        <span>PO: {row.poNo}</span>
-                        <span>•</span>
-                        <span className="font-medium text-slate-800 truncate max-w-[150px]">{row.supplierName}</span>
-                    </div>
-                </div>
-                <span
-                    className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
-                    style={{ color: st.color, background: `${st.color}20` }}
-                >
-                    {st.label}
-                </span>
-            </div>
-
-            {/* Route & Vessel */}
-            <div className="p-2 rounded-md bg-slate-50 border border-slate-100 grid grid-cols-2 gap-2 text-xs">
-                <div>
-                    <span className="text-[10px] text-slate-400 block uppercase font-medium">Hành trình</span>
-                    <p className="font-medium text-slate-700 truncate text-[11px]">
-                        {row.portOfLoading ?? '—'} &rarr; {row.portOfDischarge ?? '—'}
-                    </p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">ETA: {fmtDate(row.eta)}</p>
-                </div>
-                <div>
-                    <span className="text-[10px] text-slate-400 block uppercase font-medium">Phương tiện</span>
-                    <p className="font-medium text-slate-700 truncate text-[11px]">{row.vesselName ?? 'Chưa rõ tàu'}</p>
-                    <p className="text-[10px] font-mono text-slate-500 mt-0.5">{row.containerNo ?? 'Chưa gán cont'}</p>
-                </div>
-            </div>
-
-            {/* Progress milestone */}
-            <div className="space-y-1 pt-1 border-t border-slate-100">
-                <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-600 font-medium">Tiến độ quy trình</span>
-                    <span className="font-bold text-emerald-700">{row.milestoneProgress}%</span>
-                </div>
-                <div className="h-1.5 rounded-full overflow-hidden bg-slate-100">
-                    <div
-                        className="h-full rounded-full bg-emerald-600 transition-all duration-300"
-                        style={{ width: `${row.milestoneProgress}%` }}
-                    />
-                </div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-slate-100" onClick={e => e.stopPropagation()}>
-                <button
-                    onClick={() => onOpenLandedCost(row.id)}
-                    className="flex items-center gap-1 px-2 py-1 rounded bg-slate-50 hover:bg-slate-100 text-xs font-medium text-amber-800 border border-slate-200 transition-colors cursor-pointer"
-                    title="Phân tích giá vốn"
-                >
-                    <BarChart3 size={13} className="text-amber-600" />
-                    <span>Giá vốn</span>
-                </button>
-                <button
-                    onClick={() => onOpenDetail(row.id)}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#0E7490] hover:bg-[#0E7490] text-xs font-semibold text-white transition-colors cursor-pointer"
-                >
-                    <Eye size={13} />
-                    <span>Chi tiết</span>
-                </button>
-            </div>
-        </div>
-    )
-}
-
 export function ShipmentsClient({ initialRows, initialTotal, stats }: Props) {
+    const { locale, formatDate } = useAppLocale()
+    const L = SHIPMENTS_I18N[locale]
+
     const [rows, setRows] = useState(initialRows)
     const [total, setTotal] = useState(initialTotal)
     const [search, setSearch] = useState('')
@@ -402,188 +339,208 @@ export function ShipmentsClient({ initialRows, initialTotal, stats }: Props) {
     const [selectedId, setSelectedId] = useState<string | null>(null)
     const [landedCostId, setLandedCostId] = useState<string | null>(null)
 
-    const refresh = async () => {
+    const refresh = async (s?: string, st?: string) => {
         setLoading(true)
         try {
-            const r = await getShipments({ search: search || undefined, status: statusFilter || undefined })
+            const qSearch = s !== undefined ? s : search
+            const qStatus = st !== undefined ? st : statusFilter
+            const r = await getShipments({ search: qSearch || undefined, status: qStatus || undefined })
             setRows(r.rows); setTotal(r.total)
         } finally { setLoading(false) }
     }
 
-    const statCards = [
-        { label: 'Tổng Lô', value: stats.total, icon: Ship, accent: '#0E7490' },
-        { label: 'Đã Book', value: stats.booked, icon: Package, accent: '#1D4ED8' },
-        { label: 'Trên Tàu', value: stats.onVessel, icon: Anchor, accent: '#15803D' },
-        { label: 'Cập Cảng', value: stats.atPort, icon: MapPin, accent: '#B45309' },
-        { label: 'Hải Quan', value: stats.customsFiling, icon: FileCheck, accent: '#C07434' },
-        { label: 'Thông Quan', value: stats.cleared, icon: CheckCircle2, accent: '#15803D' },
-        { label: 'Nhập Kho', value: stats.delivered, icon: Truck, accent: '#0E7490' },
-    ]
-
     return (
-        <div className="space-y-6 max-w-screen-2xl">
-            {/* Header */}
+        <div className="flex flex-col gap-4 max-w-screen-2xl">
             <PageHeader
-                title="Quản Lý Lô Hàng"
-                description="Shipment Tracking — Theo dõi toàn bộ quy trình từ PO → Nhập kho"
+                description={L.header.description}
                 actions={
                     <Button variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
-                        <Plus size={14} /> Tạo Lô Hàng
+                        <Plus size={14} aria-hidden /> {L.header.createBtn}
                     </Button>
                 }
             />
 
-            {/* Stats */}
-            <div className="flex gap-2 overflow-x-auto pb-1">
-                {statCards.map(s => (
-                    <button key={s.label} onClick={() => { /* could filter by status */ }}
-                        className="flex items-center gap-3 px-4 py-3 rounded-lg flex-shrink-0 min-w-[130px]"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <s.icon size={18} style={{ color: s.accent }} />
-                        <div className="text-left">
-                            <p className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: '#64748B' }}>{s.label}</p>
-                            <p className="text-lg font-bold font-mono" style={{ color: '#0F172A' }}>{s.value}</p>
-                        </div>
-                    </button>
-                ))}
-            </div>
+            <StatGrid className="grid-cols-2 sm:grid-cols-4 lg:grid-cols-7">
+                <StatCard label={L.stats.total} value={stats.total} icon={Ship} tone="brand" />
+                <StatCard label={L.stats.booked} value={stats.booked} icon={Package} tone="info" />
+                <StatCard label={L.stats.onVessel} value={stats.onVessel} icon={Anchor} tone="success" />
+                <StatCard label={L.stats.atPort} value={stats.atPort} icon={MapPin} tone="warning" />
+                <StatCard label={L.stats.customsFiling} value={stats.customsFiling} icon={FileCheck} tone="warning" />
+                <StatCard label={L.stats.cleared} value={stats.cleared} icon={CheckCircle2} tone="success" />
+                <StatCard label={L.stats.delivered} value={stats.delivered} icon={Truck} tone="brand" />
+            </StatGrid>
 
-            {/* Filter */}
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                <div className="relative flex-1 sm:max-w-sm">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input placeholder="Tìm B/L, tàu, NCC..." value={search}
-                        onChange={e => { setSearch(e.target.value); refresh() }}
-                        className="w-full pl-9 pr-4 py-2 rounded-md text-sm outline-none transition-colors border border-slate-200 bg-white text-slate-900 focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600" />
-                </div>
-                <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); refresh() }}
-                    className="w-full sm:w-auto px-3 py-2 rounded-md text-sm outline-none cursor-pointer border border-slate-200 bg-white text-slate-900 focus:border-cyan-600">
-                    <option value="">Tất cả trạng thái</option>
-                    {Object.entries(STATUS_CFG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                </select>
+            <Toolbar
+                right={
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        <SearchInput
+                            placeholder={L.filters.searchPlaceholder}
+                            value={search}
+                            onChange={e => { setSearch(e.target.value); refresh(e.target.value, statusFilter) }}
+                            className="w-full sm:w-72"
+                        />
+                        <Select
+                            value={statusFilter}
+                            onChange={e => { setStatusFilter(e.target.value); refresh(search, e.target.value) }}
+                            className="w-full sm:w-48"
+                        >
+                            <option value="">{L.filters.allStatuses}</option>
+                            {Object.entries(L.status).map(([k, label]) => (
+                                <option key={k} value={k}>{label}</option>
+                            ))}
+                        </Select>
+                    </div>
+                }
+            />
+
+            {/* Desktop Table */}
+            <div className="hidden md:block">
+                <Table>
+                    <THead>
+                        <tr>
+                            <Th>{L.table.bl}</Th>
+                            <Th>{L.table.po}</Th>
+                            <Th>{L.table.supplier}</Th>
+                            <Th>{L.table.vessel}</Th>
+                            <Th>{L.table.container}</Th>
+                            <Th>{L.table.ports}</Th>
+                            <Th>{L.table.eta}</Th>
+                            <Th>{L.table.progress}</Th>
+                            <Th>{L.table.status}</Th>
+                            <Th aria-label={L.table.actions} />
+                        </tr>
+                    </THead>
+                    <TBody>
+                        {rows.length === 0 ? (
+                            <TableMessageRow colSpan={10}>
+                                <EmptyState icon={Ship} title={L.table.emptyTitle} />
+                            </TableMessageRow>
+                        ) : rows.map(row => (
+                            <Tr key={row.id}>
+                                <Td>
+                                    <button
+                                        onClick={() => { setSelectedId(row.id); setDetailOpen(true) }}
+                                        className="type-number text-xs font-semibold text-lys-teal-strong hover:underline cursor-pointer"
+                                    >
+                                        {row.billOfLading}
+                                    </button>
+                                </Td>
+                                <Td className="type-number text-lys-secondary">{row.poNo}</Td>
+                                <Td className="font-medium text-lys-primary">{row.supplierName}</Td>
+                                <Td className="text-lys-secondary">{row.vesselName ?? '—'}</Td>
+                                <Td className="type-number text-lys-muted">{row.containerNo ?? '—'}</Td>
+                                <Td>
+                                    <div className="text-[11px] text-lys-muted">{row.portOfLoading ?? '—'}</div>
+                                    <div className="text-[11px] font-medium text-lys-secondary">→ {row.portOfDischarge ?? '—'}</div>
+                                </Td>
+                                <Td className="type-number text-lys-teal-strong">{row.eta ? formatDate(row.eta) : '—'}</Td>
+                                <Td>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-14 h-1.5 rounded-full bg-lys-border overflow-hidden">
+                                            <div className="h-full rounded-full bg-tone-success-fg transition-all" style={{ width: `${row.milestoneProgress}%` }} />
+                                        </div>
+                                        <span className="type-number text-[11px] font-semibold text-tone-success-fg">{row.milestoneProgress}%</span>
+                                    </div>
+                                </Td>
+                                <Td>
+                                    <StatusBadge
+                                        status={row.status}
+                                        label={(L.status as Record<string, string>)[row.status] ?? row.status}
+                                        toneOverrides={STATUS_TONES}
+                                    />
+                                </Td>
+                                <Td align="right">
+                                    <div className="inline-flex items-center gap-1">
+                                        <Button size="sm" variant="ghost" onClick={() => setLandedCostId(row.id)} title={L.table.costBtn}>
+                                            <BarChart3 size={14} className="text-tone-warning-fg" />
+                                        </Button>
+                                        <Button size="sm" variant="ghost" onClick={() => { setSelectedId(row.id); setDetailOpen(true) }} title={L.table.detailBtn}>
+                                            <Eye size={14} className="text-lys-teal-strong" />
+                                        </Button>
+                                    </div>
+                                </Td>
+                            </Tr>
+                        ))}
+                    </TBody>
+                </Table>
             </div>
 
             {/* Mobile Cards List View */}
             <div className="block md:hidden space-y-3">
-                {loading ? (
-                    <div className="space-y-3">
-                        <div className="h-32 rounded-lg bg-white border border-slate-200 animate-pulse" />
-                        <div className="h-32 rounded-lg bg-white border border-slate-200 animate-pulse" />
-                        <div className="h-32 rounded-lg bg-white border border-slate-200 animate-pulse" />
-                    </div>
-                ) : rows.length === 0 ? (
-                    <div className="p-8 text-center bg-white rounded-lg border border-slate-200 text-slate-600 space-y-3">
-                        <Ship size={36} className="mx-auto text-slate-300" />
-                        <p className="font-semibold text-slate-700">Chưa có lô hàng nào</p>
-                        <button
-                            onClick={() => setCreateOpen(true)}
-                            className="inline-block text-xs px-3 py-1.5 rounded-lg font-semibold text-[#0891B2] border border-cyan-200 bg-cyan-50"
-                        >
-                            + Tạo lô hàng đầu tiên
-                        </button>
+                {rows.length === 0 ? (
+                    <div className="p-6 text-center bg-white rounded-lg border border-lys-border">
+                        <EmptyState icon={Ship} title={L.table.emptyTitle} />
                     </div>
                 ) : (
                     rows.map(row => (
-                        <ShipmentMobileCard
+                        <div
                             key={row.id}
-                            row={row}
-                            onOpenDetail={id => { setSelectedId(id); setDetailOpen(true) }}
-                            onOpenLandedCost={id => setLandedCostId(id)}
-                        />
+                            onClick={() => { setSelectedId(row.id); setDetailOpen(true) }}
+                            className="p-4 rounded-lg border border-lys-border bg-white shadow-xs space-y-2.5 cursor-pointer hover:border-lys-teal-strong transition-colors"
+                        >
+                            <div className="flex items-start justify-between gap-2">
+                                <div>
+                                    <span className="type-number font-semibold text-xs text-lys-teal-strong">{row.billOfLading}</span>
+                                    <div className="flex items-center gap-1.5 mt-0.5 text-xs text-lys-muted">
+                                        <span>PO: <strong className="type-number text-lys-secondary">{row.poNo}</strong></span>
+                                        <span>•</span>
+                                        <span className="font-medium text-lys-primary truncate max-w-[150px]">{row.supplierName}</span>
+                                    </div>
+                                </div>
+                                <StatusBadge
+                                    status={row.status}
+                                    label={(L.status as Record<string, string>)[row.status] ?? row.status}
+                                    toneOverrides={STATUS_TONES}
+                                />
+                            </div>
+
+                            <div className="p-2.5 rounded-md bg-lys-subtle border border-lys-border grid grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <span className="text-[10px] text-lys-muted block uppercase font-medium">{L.table.routeLabel}</span>
+                                    <p className="font-medium text-lys-primary truncate">
+                                        {row.portOfLoading ?? '—'} → {row.portOfDischarge ?? '—'}
+                                    </p>
+                                    <p className="text-[11px] text-lys-muted mt-0.5">ETA: {row.eta ? formatDate(row.eta) : '—'}</p>
+                                </div>
+                                <div>
+                                    <span className="text-[10px] text-lys-muted block uppercase font-medium">{L.table.vesselLabel}</span>
+                                    <p className="font-medium text-lys-primary truncate">{row.vesselName ?? L.table.unknownVessel}</p>
+                                    <p className="type-number text-[11px] text-lys-muted mt-0.5">{row.containerNo ?? L.table.unassignedCont}</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-1 pt-1">
+                                <div className="flex items-center justify-between text-xs">
+                                    <span className="text-lys-secondary font-medium">{L.table.progressLabel}</span>
+                                    <span className="type-number font-semibold text-tone-success-fg">{row.milestoneProgress}%</span>
+                                </div>
+                                <div className="h-1.5 rounded-full overflow-hidden bg-lys-border">
+                                    <div className="h-full rounded-full bg-tone-success-fg transition-all" style={{ width: `${row.milestoneProgress}%` }} />
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-2 border-t border-lys-border/60" onClick={e => e.stopPropagation()}>
+                                <Button size="sm" variant="secondary" onClick={() => setLandedCostId(row.id)}>
+                                    <BarChart3 size={13} aria-hidden /> {L.table.costBtn}
+                                </Button>
+                                <Button size="sm" variant="primary" onClick={() => { setSelectedId(row.id); setDetailOpen(true) }}>
+                                    <Eye size={13} aria-hidden /> {L.table.detailBtn}
+                                </Button>
+                            </div>
+                        </div>
                     ))
                 )}
             </div>
 
-            {/* Table - Desktop */}
-            <div className="hidden md:block rounded-lg overflow-x-auto" style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
-                <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                            {['B/L', 'PO', 'NCC', 'Tàu', 'Container', 'Cảng', 'ETA', 'Tiến độ', 'Trạng Thái', ''].map(h => (
-                                <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading ? (
-                            Array.from({ length: 4 }).map((_, i) => (
-                                <tr key={i} style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                    {Array.from({ length: 10 }).map((_, j) => (
-                                        <td key={j} className="px-3 py-4"><div className="h-4 rounded animate-pulse" style={{ background: '#E2E8F0', width: '70%' }} /></td>
-                                    ))}
-                                </tr>
-                            ))
-                        ) : rows.length === 0 ? (
-                            <tr><td colSpan={10}>
-                                <div className="flex flex-col items-center py-16 gap-3">
-                                    <Ship size={40} style={{ color: '#E2E8F0' }} />
-                                    <p style={{ color: '#64748B' }} className="text-sm">Chưa có lô hàng nào</p>
-                                    <button onClick={() => setCreateOpen(true)} className="inline-block text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shrink-0"
-                                        style={{ color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
-                                        + Tạo lô hàng đầu tiên
-                                    </button>
-                                </div>
-                            </td></tr>
-                        ) : rows.map(row => {
-                            const st = STATUS_CFG[row.status] ?? { label: row.status, color: '#64748B' }
-                            return (
-                                <tr key={row.id} className="group transition-colors hover:bg-[#F8FAFC]"
-                                    style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                    <td className="px-3 py-3">
-                                        <button onClick={() => { setSelectedId(row.id); setDetailOpen(true) }}
-                                            className="text-xs font-bold hover:underline" style={{ color: '#0891B2' }}>
-                                            {row.billOfLading}
-                                        </button>
-                                    </td>
-                                    <td className="px-3 py-3 text-xs" style={{ color: '#475569' }}>{row.poNo}</td>
-                                    <td className="px-3 py-3 text-xs" style={{ color: '#0F172A' }}>{row.supplierName}</td>
-                                    <td className="px-3 py-3 text-xs" style={{ color: '#475569' }}>{row.vesselName ?? '—'}</td>
-                                    <td className="px-3 py-3 text-xs" style={{ color: '#64748B' }}>{row.containerNo ?? '—'}</td>
-                                    <td className="px-3 py-3">
-                                        <div className="text-[10px]" style={{ color: '#64748B' }}>{row.portOfLoading ?? '—'}</div>
-                                        <div className="text-[10px]" style={{ color: '#475569' }}>→ {row.portOfDischarge ?? '—'}</div>
-                                    </td>
-                                    <td className="px-3 py-3 text-xs" style={{ color: '#0891B2' }}>{fmtDate(row.eta)}</td>
-                                    <td className="px-3 py-3">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-14 h-1.5 rounded-full" style={{ background: '#E2E8F0' }}>
-                                                <div className="h-full rounded-full transition-all" style={{ background: '#15803D', width: `${row.milestoneProgress}%` }} />
-                                            </div>
-                                            <span className="text-[10px] font-bold" style={{ color: '#15803D' }}>{row.milestoneProgress}%</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-3 py-3">
-                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
-                                            style={{ color: st.color, background: `${st.color}20` }}>{st.label}</span>
-                                    </td>
-                                    <td className="px-3 py-3">
-                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => { setSelectedId(row.id); setDetailOpen(true) }}
-                                                className="p-1 rounded" title="Chi tiết"
-                                                style={{ color: '#1D4ED8' }}><Eye size={14} /></button>
-                                            <button onClick={() => setLandedCostId(row.id)}
-                                                className="p-1 rounded" title="Giá vốn"
-                                                style={{ color: '#B45309' }}><BarChart3 size={14} /></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )
-                        })}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* Total */}
             {total > 0 && (
-                <p className="text-xs text-right" style={{ color: '#64748B' }}>
-                    Hiển thị {rows.length} / {total} lô hàng
+                <p className="type-caption text-right text-lys-muted">
+                    {L.table.showingCount(rows.length, total)}
                 </p>
             )}
 
-            {/* Drawers & Modals */}
-            <CreateShipmentDrawer open={createOpen} onClose={() => setCreateOpen(false)} onCreated={refresh} />
+            <CreateShipmentDrawer open={createOpen} onClose={() => setCreateOpen(false)} onCreated={() => refresh()} />
             <ShipmentDetailDrawer open={detailOpen} shipmentId={selectedId} onClose={() => { setDetailOpen(false); setSelectedId(null) }} />
-            {landedCostId && <LandedCostModal shipmentId={landedCostId} onClose={() => setLandedCostId(null)} />}
+            {landedCostId && <LandedCostDrawer shipmentId={landedCostId} onClose={() => setLandedCostId(null)} />}
         </div>
     )
 }

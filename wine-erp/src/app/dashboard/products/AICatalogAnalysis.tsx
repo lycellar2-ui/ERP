@@ -7,6 +7,8 @@ import {
     ShoppingBag, Truck, BarChart3, Save, CheckCircle
 } from 'lucide-react'
 import { useAiStatus } from '@/lib/useAiStatus'
+import { useAppLocale } from '@/lib/i18n'
+import { PRODUCTS_I18N } from './i18n'
 
 interface CatalogStats {
     totalProducts: number
@@ -36,6 +38,8 @@ const TYPE_LABELS: Record<string, string> = {
 }
 
 export function AICatalogAnalysis() {
+    const { locale, formatDate, formatNumber } = useAppLocale()
+    const L = PRODUCTS_I18N[locale].aiCatalog
     const aiStatus = useAiStatus('catalog')
     const [analysis, setAnalysis] = useState<string | null>(null)
     const [stats, setStats] = useState<CatalogStats | null>(null)
@@ -52,7 +56,7 @@ export function AICatalogAnalysis() {
         const res = await fetch('/api/ai/reports', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ module: 'catalog', title: `Catalog Analysis — ${new Date().toLocaleDateString('vi-VN')}`, analysis, stats }),
+            body: JSON.stringify({ module: 'catalog', title: `Catalog Analysis — ${formatDate(new Date())}`, analysis, stats }),
         })
         const data = await res.json()
         if (data.success) { setSaved(true); setTimeout(() => setSaved(false), 3000) }
@@ -69,16 +73,16 @@ export function AICatalogAnalysis() {
                 setAnalysis(data.analysis)
                 setStats(data.stats)
             } else {
-                setError(data.error || 'Không thể phân tích danh mục')
+                setError(data.error || L.errAnalyze)
             }
         } catch {
-            setError('Lỗi kết nối đến AI service')
+            setError(L.errConnect)
         } finally {
             setLoading(false)
         }
     }
 
-    const fmtVND = (v: number) => v >= 1e9 ? `${(v / 1e9).toFixed(1)}T` : v >= 1e6 ? `${(v / 1e6).toFixed(0)}M` : `${v.toLocaleString()}`
+    const fmtVND = (v: number) => v >= 1e9 ? `${(v / 1e9).toFixed(1)}B` : v >= 1e6 ? `${(v / 1e6).toFixed(0)}M` : `${formatNumber(v)}`
 
     return (
         <div className="rounded-md overflow-hidden mb-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
@@ -90,8 +94,8 @@ export function AICatalogAnalysis() {
                         <Wine size={14} style={{ color: '#B45309' }} />
                     </div>
                     <div>
-                        <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>AI Catalog & Market Intelligence</h3>
-                        <p className="text-[10px]" style={{ color: '#64748B' }}>Phân tích danh mục, NCC, nghiên cứu thị trường · Wine Portfolio Director</p>
+                        <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>{L.title}</h3>
+                        <p className="text-[10px]" style={{ color: '#64748B' }}>{L.subtitle}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -106,11 +110,11 @@ export function AICatalogAnalysis() {
                         }}
                     >
                         {loading ? (
-                            <><Loader2 size={13} className="animate-spin" /> Đang phân tích...</>
+                            <><Loader2 size={13} className="animate-spin" /> {L.analyzing}</>
                         ) : analysis ? (
-                            <><RefreshCw size={13} /> Phân tích lại</>
+                            <><RefreshCw size={13} /> {L.reanalyze}</>
                         ) : (
-                            <><Sparkles size={13} /> Phân Tích Danh Mục</>
+                            <><Sparkles size={13} /> {L.analyzeBtn}</>
                         )}
                     </button>
                     <button onClick={() => setCollapsed(!collapsed)} className="p-2 rounded-md transition-all" style={{ color: '#64748B' }}>
@@ -127,45 +131,45 @@ export function AICatalogAnalysis() {
                         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
                             <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><Package size={11} style={{ color: '#0891B2' }} /></div>
-                                <p className="text-lg font-bold" style={{ color: '#0891B2' }}>{stats.totalProducts}</p>
-                                <p className="text-xs" style={{ color: '#64748B' }}>Sản Phẩm</p>
+                                <p className="text-lg font-bold" style={{ color: '#0891B2' }}>{formatNumber(stats.totalProducts)}</p>
+                                <p className="text-xs" style={{ color: '#64748B' }}>{L.kpiProducts}</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><TrendingUp size={11} style={{ color: '#B45309' }} /></div>
                                 <p className="text-lg font-bold" style={{ color: '#B45309' }}>{fmtVND(stats.totalProductRevenue)}</p>
-                                <p className="text-xs" style={{ color: '#64748B' }}>Tổng Doanh Thu</p>
+                                <p className="text-xs" style={{ color: '#64748B' }}>{L.kpiRevenue}</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><BarChart3 size={11} style={{ color: '#15803D' }} /></div>
-                                <p className="text-lg font-bold" style={{ color: '#15803D' }}>{stats.productsWithSales}</p>
-                                <p className="text-xs" style={{ color: '#64748B' }}>Có Dữ Liệu Bán</p>
+                                <p className="text-lg font-bold" style={{ color: '#15803D' }}>{formatNumber(stats.productsWithSales)}</p>
+                                <p className="text-xs" style={{ color: '#64748B' }}>{L.kpiWithSales}</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: stats.productsNoSales > 0 ? 'rgba(180,83,9,0.06)' : '#FFFFFF' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><ShoppingBag size={11} style={{ color: stats.productsNoSales > 0 ? '#B45309' : '#64748B' }} /></div>
-                                <p className="text-lg font-bold font-mono" style={{ color: stats.productsNoSales > 0 ? '#B45309' : '#64748B' }}>{stats.productsNoSales}</p>
-                                <p className="text-xs" style={{ color: '#64748B' }}>Chưa Bán</p>
+                                <p className="text-lg font-bold font-mono" style={{ color: stats.productsNoSales > 0 ? '#B45309' : '#64748B' }}>{formatNumber(stats.productsNoSales)}</p>
+                                <p className="text-xs" style={{ color: '#64748B' }}>{L.kpiNoSales}</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: stats.outOfStock > 0 ? 'rgba(185,28,28,0.06)' : '#FFFFFF' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><AlertTriangle size={11} style={{ color: stats.outOfStock > 0 ? '#B91C1C' : '#64748B' }} /></div>
-                                <p className="text-lg font-bold" style={{ color: stats.outOfStock > 0 ? '#B91C1C' : '#64748B' }}>{stats.outOfStock}</p>
-                                <p className="text-xs" style={{ color: '#64748B' }}>Hết Hàng</p>
+                                <p className="text-lg font-bold" style={{ color: stats.outOfStock > 0 ? '#B91C1C' : '#64748B' }}>{formatNumber(stats.outOfStock)}</p>
+                                <p className="text-xs" style={{ color: '#64748B' }}>{L.kpiOutOfStock}</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><Truck size={11} style={{ color: '#1D4ED8' }} /></div>
-                                <p className="text-lg font-bold" style={{ color: '#1D4ED8' }}>{stats.totalSuppliers}</p>
-                                <p className="text-xs" style={{ color: '#64748B' }}>NCC</p>
+                                <p className="text-lg font-bold" style={{ color: '#1D4ED8' }}>{formatNumber(stats.totalSuppliers)}</p>
+                                <p className="text-xs" style={{ color: '#64748B' }}>{L.kpiSuppliers}</p>
                             </div>
                             <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><Globe size={11} style={{ color: '#475569' }} /></div>
-                                <p className="text-lg font-bold" style={{ color: '#475569' }}>{stats.supplierCountries}</p>
-                                <p className="text-xs" style={{ color: '#64748B' }}>Quốc Gia NCC</p>
+                                <p className="text-lg font-bold" style={{ color: '#475569' }}>{formatNumber(stats.supplierCountries)}</p>
+                                <p className="text-xs" style={{ color: '#64748B' }}>{L.kpiSupplierCountries}</p>
                             </div>
                         </div>
 
                         {/* Row 2: Type + Country Distribution */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <div className="p-2.5 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Wine Types:</span>
+                                <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.wineTypesLabel}</span>
                                 <div className="flex flex-wrap gap-1.5">
                                     {Object.entries(stats.typeDistribution).map(([type, count]) => (
                                         <span key={type} className="inline-block text-[10px] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap shrink-0"
@@ -176,7 +180,7 @@ export function AICatalogAnalysis() {
                                 </div>
                             </div>
                             <div className="p-2.5 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Countries:</span>
+                                <span className="text-[10px] font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.countriesLabel}</span>
                                 <div className="flex flex-wrap gap-1.5">
                                     {Object.entries(stats.countryDistribution).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([country, count]) => (
                                         <span key={country} className="inline-block text-[10px] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap shrink-0"
@@ -196,7 +200,7 @@ export function AICatalogAnalysis() {
                         <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin"
                             style={{ borderColor: '#E2E8F0', borderTopColor: '#B45309' }} />
                         <p className="text-xs animate-pulse" style={{ color: '#64748B' }}>
-                            AI đang phân tích danh mục, NCC, xu hướng thị trường, định giá và cơ cấu danh mục...
+                            {L.loadingText}
                         </p>
                     </div>
                 )}
@@ -242,12 +246,12 @@ export function AICatalogAnalysis() {
                             })}
                         </div>
                         <p className="text-[10px] mt-3 text-right" style={{ color: '#64748B' }}>
-                            Phân tích lúc {new Date().toLocaleString('vi-VN')} · Gemini 3.1 Pro · Wine Portfolio Director AI
+                            {L.analyzedAt} {new Date().toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')} · Gemini 3.1 Pro · Wine Portfolio Director AI
                         </p>
                         <button onClick={handleSaveReport} disabled={saved}
                             className="flex items-center gap-1 px-3 py-1.5 text-[10px] font-semibold rounded transition-all mt-1 ml-auto"
                             style={{ background: saved ? 'rgba(21,128,61,0.1)' : 'rgba(100,116,139,0.08)', color: saved ? '#15803D' : '#475569', border: `1px solid ${saved ? 'rgba(21,128,61,0.3)' : 'rgba(100,116,139,0.15)'}` }}>
-                            {saved ? <><CheckCircle size={10} /> Đã lưu</> : <><Save size={10} /> Lưu Báo Cáo</>}
+                            {saved ? <><CheckCircle size={10} /> {L.savedBtn}</> : <><Save size={10} /> {L.saveReportBtn}</>}
                         </button>
                     </div>
                 )}
@@ -257,8 +261,7 @@ export function AICatalogAnalysis() {
                     <div className="px-5 py-4 flex flex-col items-center gap-2">
                         <Wine size={20} style={{ color: '#E2E8F0' }} />
                         <p className="text-xs text-center" style={{ color: '#64748B' }}>
-                            Nhấn <strong>&quot;Phân Tích Danh Mục&quot;</strong> để nhận<br />
-                            phân tích portfolio, NCC, nghiên cứu thị trường rượu vang VN
+                            {L.emptyPrompt1} <strong>&quot;{L.analyzeBtn}&quot;</strong> {L.emptyPrompt2}
                         </p>
                     </div>
                 )}

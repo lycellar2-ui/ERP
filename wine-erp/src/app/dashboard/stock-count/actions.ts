@@ -198,6 +198,8 @@ export async function getStockCountDetail(sessionId: string) {
         }
     })
 
+    const currentUser = await getCurrentUser()
+
     return serialize({
         ...session,
         sessionNo: sessionNoStr,
@@ -207,6 +209,7 @@ export async function getStockCountDetail(sessionId: string) {
         legalEntityName: session.warehouse?.legalEntity?.name || 'CÔNG TY TNHH LY CELLARS',
         legalEntityAddress: session.warehouse?.legalEntity?.address || session.warehouse?.address || null,
         legalEntityTaxId: session.warehouse?.legalEntity?.taxId || null,
+        currentUserId: currentUser?.id || null,
         lines: formattedLines,
     })
 }
@@ -1116,7 +1119,12 @@ export async function completeZoneCount(
         })
         if (!session) return { success: false, error: 'Không tìm thấy phiên kiểm kê' }
 
-        const zoneLines = session.lines.filter(l => (l.location?.zone || l.locationCode || 'Khu vực chung') === zoneName)
+        const isAllZones = !zoneName || zoneName === 'ALL'
+        const zoneLines = isAllZones
+            ? session.lines
+            : session.lines.filter(l => (l.location?.zone || l.locationCode || 'Khu vực chung') === zoneName)
+        const displayZoneName = isAllZones ? 'Toàn bộ kho' : zoneName
+
         const totalItems = zoneLines.length
         const countedItems = zoneLines.filter(l => l.qtyActual !== null)
         const matchedItems = zoneLines.filter(l => l.qtyActual !== null && Number(l.variance) === 0)
@@ -1126,10 +1134,12 @@ export async function completeZoneCount(
 
         const varianceLines = zoneLines
             .filter(l => l.variance !== null && Number(l.variance) !== 0)
-            .map(l => ({
+            .map((l: any) => ({
                 id: l.id,
                 skuCode: l.product?.skuCode ?? '',
                 productName: l.product?.productName ?? '',
+                vintage: l.vintage ?? null,
+                locationCode: l.location?.zone || l.locationCode || 'Khu vực chung',
                 qtySystem: Number(l.qtySystem),
                 qtyActual: Number(l.qtyActual ?? 0),
                 variance: Number(l.variance),
@@ -1140,7 +1150,7 @@ export async function completeZoneCount(
         return serialize({
             success: true,
             summary: {
-                zoneName,
+                zoneName: displayZoneName,
                 totalItems,
                 countedCount: countedItems.length,
                 matchedCount: matchedItems.length,
@@ -1191,16 +1201,46 @@ export async function addUnlistedProductToStockCountSession(input: {
         })
         if (!session) return { success: false, error: 'Phiên kiểm kê không tồn tại' }
 
+        const sessStatus = (session.status as string) || ''
+        if (sessStatus === 'APPROVED') {
+            return { success: false, error: 'Phiên kiểm kê này đã được duyệt. Không thể chèn thêm mã mới.' }
+        }
+        if (sessStatus === 'CANCELLED') {
+            return { success: false, error: 'Phiên kiểm kê đã bị hủy.' }
+        }
+        if (sessStatus === 'DRAFT') {
+            await prisma.stockCountSession.update({
+                where: { id: session.id },
+                data: { status: 'IN_PROGRESS', startedAt: new Date() }
+            })
+        }
+
+        const locCode = (input.locationCode || 'CHÈN_THÊM').trim()
+        let resolvedLocationId = input.locationId || null
+
+        if (!resolvedLocationId && locCode !== 'CHÈN_THÊM') {
+            const matchedLoc = await prisma.location.findFirst({
+                where: {
+                    warehouseId: session.warehouseId,
+                    OR: [
+                        { locationCode: { equals: locCode, mode: 'insensitive' } },
+                        { zone: { equals: locCode, mode: 'insensitive' } }
+                    ]
+                },
+                select: { id: true }
+            })
+            if (matchedLoc) resolvedLocationId = matchedLoc.id
+        }
+
         const qtySystem = 0
         const variance = input.qtyActual - qtySystem
-        const locCode = input.locationCode || 'CHÈN_THÊM'
 
         const line = await prisma.stockCountLine.create({
             data: {
                 sessionId: input.sessionId,
                 productId: input.productId,
                 vintage: input.vintage ?? null,
-                locationId: input.locationId || null,
+                locationId: resolvedLocationId,
                 locationCode: locCode,
                 qtySystem,
                 qtyActual: input.qtyActual,

@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma, withRetry } from '@/lib/db'
+import { cached, revalidateCache } from '@/lib/cache'
 import { revalidatePath } from 'next/cache'
 import * as XLSX from 'xlsx'
 import ExcelJS from 'exceljs'
@@ -164,7 +165,7 @@ const EXCEL_INCOMING_FALLBACK: Record<string, { qty: number; po: string; etd: st
 export async function getStockVelocityReport(options?: { cycleMonths?: number }): Promise<StockVelocityReportResponse> {
     try {
         const cycle = options?.cycleMonths ?? 6
-
+        return await cached(`reports:stock-velocity:${cycle}`, async () => {
         const [
             prodRows,
             lotsRows,
@@ -476,6 +477,7 @@ export async function getStockVelocityReport(options?: { cycleMonths?: number })
                 },
             },
         }
+        }, 60_000)
     } catch (err: unknown) {
         console.error('[getStockVelocityReport] Critical error:', err)
         const message = err instanceof Error ? err.message : String(err)
@@ -614,6 +616,7 @@ export async function uploadHistoricalStockExcel(formData: FormData): Promise<{ 
             await withRetry(() => prisma.$executeRawUnsafe(query, ...params))
         }
 
+        revalidateCache('reports:stock-velocity')
         revalidatePath('/dashboard/reports')
         return { success: true, count: records.length }
     } catch (err: unknown) {

@@ -12,20 +12,22 @@ import {
     updateOpportunity, OpportunityDetail
 } from './actions'
 import { getCustomersForSO, getSalesReps } from '../sales/actions'
-import { formatVND, cn } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import {
     Button, PageHeader, StatCard, StatGrid, Drawer, Modal,
     Field, Input, Select, Textarea, Toolbar, useConfirmDialog
 } from '@/components/ui'
 import type { Tone } from '@/lib/ui/status'
+import { useAppLocale } from '@/lib/i18n'
+import { PIPELINE_I18N } from './i18n'
 
-const STAGES: { key: OppStage; label: string; tone: Tone; color: string; border: string; bg: string; probability: number }[] = [
-    { key: 'LEAD', label: 'Lead', tone: 'neutral', color: '#475569', border: '#CBD5E1', bg: 'bg-slate-50', probability: 10 },
-    { key: 'QUALIFIED', label: 'Qualified', tone: 'warning', color: '#B45309', border: '#FDE68A', bg: 'bg-amber-50/50', probability: 30 },
-    { key: 'PROPOSAL', label: 'Proposal', tone: 'info', color: '#0891B2', border: '#A5F3FC', bg: 'bg-cyan-50/50', probability: 50 },
-    { key: 'NEGOTIATION', label: 'Negotiation', tone: 'warning', color: '#D97706', border: '#FED7AA', bg: 'bg-orange-50/50', probability: 70 },
-    { key: 'WON', label: 'Won', tone: 'success', color: '#15803D', border: '#BBF7D0', bg: 'bg-emerald-50/50', probability: 100 },
-    { key: 'LOST', label: 'Lost', tone: 'danger', color: '#B91C1C', border: '#FECACA', bg: 'bg-red-50/40', probability: 0 },
+const STAGE_STYLES: { key: OppStage; tone: Tone; color: string; border: string; bg: string; probability: number }[] = [
+    { key: 'LEAD', tone: 'neutral', color: '#475569', border: '#CBD5E1', bg: 'bg-slate-50', probability: 10 },
+    { key: 'QUALIFIED', tone: 'warning', color: '#B45309', border: '#FDE68A', bg: 'bg-amber-50/50', probability: 30 },
+    { key: 'PROPOSAL', tone: 'info', color: '#0891B2', border: '#A5F3FC', bg: 'bg-cyan-50/50', probability: 50 },
+    { key: 'NEGOTIATION', tone: 'warning', color: '#D97706', border: '#FED7AA', bg: 'bg-orange-50/50', probability: 70 },
+    { key: 'WON', tone: 'success', color: '#15803D', border: '#BBF7D0', bg: 'bg-emerald-50/50', probability: 100 },
+    { key: 'LOST', tone: 'danger', color: '#B91C1C', border: '#FECACA', bg: 'bg-red-50/40', probability: 0 },
 ]
 
 interface Props {
@@ -40,6 +42,14 @@ interface Props {
 }
 
 export function PipelineClient({ initialRows, stats }: Props) {
+    const { locale, formatCurrency, formatDate } = useAppLocale()
+    const i18n = PIPELINE_I18N[locale]
+
+    const STAGES = STAGE_STYLES.map(s => ({
+        ...s,
+        label: i18n.stages[s.key] ?? s.key,
+    }))
+
     const [rows, setRows] = useState(initialRows)
     const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [createOpen, setCreateOpen] = useState(false)
@@ -137,10 +147,10 @@ export function PipelineClient({ initialRows, stats }: Props) {
 
     const handleDelete = (id: string) => {
         confirm({
-            title: 'Xóa Cơ Hội Kinh Doanh',
-            message: 'Bạn có chắc chắn muốn xóa cơ hội kinh doanh này không?',
-            confirmLabel: 'Xóa Cơ Hội',
-            cancelLabel: 'Bỏ qua',
+            title: i18n.deleteTitle,
+            message: i18n.deleteMsg,
+            confirmLabel: i18n.deleteConfirm,
+            cancelLabel: i18n.cancel,
             danger: true,
             onConfirm: async () => {
                 await deleteOpportunity(id)
@@ -212,7 +222,7 @@ export function PipelineClient({ initialRows, stats }: Props) {
         <div className="space-y-4 max-w-screen-2xl">
             {/* Header */}
             <PageHeader
-                description="Lead → Qualified → Proposal → Negotiation → Won"
+                description={i18n.description}
                 actions={
                     <div className="flex items-center gap-2">
                         <Button
@@ -221,10 +231,10 @@ export function PipelineClient({ initialRows, stats }: Props) {
                             className={showFilters || filterAssignee ? 'border-lys-teal text-lys-teal-strong bg-lys-teal-soft' : undefined}
                         >
                             <Filter size={14} aria-hidden />
-                            {filterAssignee ? filterAssignee : 'Lọc Sales Rep'}
+                            {filterAssignee ? filterAssignee : i18n.filterSalesRep}
                         </Button>
                         <Button onClick={openCreate}>
-                            <Plus size={16} aria-hidden /> Thêm Cơ Hội
+                            <Plus size={16} aria-hidden /> {i18n.addOpportunity}
                         </Button>
                     </div>
                 }
@@ -235,18 +245,18 @@ export function PipelineClient({ initialRows, stats }: Props) {
                 <Toolbar
                     left={
                         <div className="flex items-center gap-2">
-                            <span className="type-caption font-semibold text-lys-secondary">Sales Rep:</span>
+                            <span className="type-caption font-semibold text-lys-secondary">{i18n.salesRepLabel}</span>
                             <Select
                                 value={filterAssignee}
                                 onChange={e => setFilterAssignee(e.target.value)}
                                 className="w-48"
                             >
-                                <option value="">Tất cả</option>
+                                <option value="">{i18n.all}</option>
                                 {assignees.map(a => <option key={a} value={a}>{a}</option>)}
                             </Select>
                             {filterAssignee && (
                                 <Button size="sm" variant="ghost" onClick={() => setFilterAssignee('')}>
-                                    Xóa lọc
+                                    {i18n.clearFilter}
                                 </Button>
                             )}
                         </div>
@@ -259,25 +269,25 @@ export function PipelineClient({ initialRows, stats }: Props) {
                 <StatCard
                     icon={DollarSign}
                     tone="brand"
-                    label="Pipeline Value"
-                    value={formatVND(filterAssignee ? filteredStats.totalPipelineValue : stats.totalPipelineValue)}
+                    label={i18n.pipelineValue}
+                    value={formatCurrency(filterAssignee ? filteredStats.totalPipelineValue : stats.totalPipelineValue)}
                 />
                 <StatCard
                     icon={TrendingUp}
                     tone="warning"
-                    label="Weighted Value"
-                    value={formatVND(filterAssignee ? filteredStats.weightedValue : stats.weightedValue)}
+                    label={i18n.weightedValue}
+                    value={formatCurrency(filterAssignee ? filteredStats.weightedValue : stats.weightedValue)}
                 />
                 <StatCard
                     icon={Percent}
                     tone="success"
-                    label="Conversion Rate"
+                    label={i18n.conversionRate}
                     value={`${stats.conversionRate}%`}
                 />
                 <StatCard
                     icon={Target}
                     tone="info"
-                    label="Tổng Cơ Hội"
+                    label={i18n.totalOpportunities}
                     value={filterAssignee ? filteredRows.length : stats.total}
                 />
             </StatGrid>
@@ -312,7 +322,7 @@ export function PipelineClient({ initialRows, stats }: Props) {
                             </div>
                             <div className="px-3 py-1 bg-white/40 border-b border-lys-border">
                                 <p className="type-caption type-number text-right text-lys-muted font-medium">
-                                    {formatVND(stageValue)}
+                                    {formatCurrency(stageValue)}
                                 </p>
                             </div>
 
@@ -335,7 +345,7 @@ export function PipelineClient({ initialRows, stats }: Props) {
                                             <p className="text-xs font-semibold text-lys-primary truncate leading-tight">{row.name}</p>
                                             <p className="type-caption text-lys-muted mt-0.5 truncate">{row.customerName}</p>
                                             <p className="type-number text-xs font-bold text-tone-warning-fg mt-1.5">
-                                                {formatVND(row.expectedValue)}
+                                                {formatCurrency(row.expectedValue)}
                                             </p>
                                             <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-lys-border text-[11px]">
                                                 <span className="text-lys-secondary truncate max-w-[90px]">{row.assigneeName}</span>
@@ -348,7 +358,7 @@ export function PipelineClient({ initialRows, stats }: Props) {
                                                             onClick={() => handleMove(row.id, next)}
                                                             loading={actionLoading === row.id}
                                                             disabled={actionLoading === row.id}
-                                                            title={`Chuyển sang ${next}`}
+                                                            title={`${i18n.moveToPrefix} ${i18n.stages[next] ?? next}`}
                                                         >
                                                             <MoveRight size={11} style={{ color: stage.color }} aria-hidden />
                                                         </Button>
@@ -359,7 +369,7 @@ export function PipelineClient({ initialRows, stats }: Props) {
                                                             variant="ghost"
                                                             className="h-6 w-6 p-0 text-tone-danger-fg hover:bg-tone-danger-bg"
                                                             onClick={() => handleMarkLost(row.id, row.name)}
-                                                            title="Đánh dấu Lost"
+                                                            title={i18n.markLost}
                                                         >
                                                             <XCircle size={11} aria-hidden />
                                                         </Button>
@@ -369,7 +379,7 @@ export function PipelineClient({ initialRows, stats }: Props) {
                                                         variant="ghost"
                                                         className="h-6 w-6 p-0 text-lys-muted hover:text-tone-danger-fg"
                                                         onClick={() => handleDelete(row.id)}
-                                                        title="Xóa"
+                                                        title={i18n.delete}
                                                     >
                                                         <Trash2 size={11} aria-hidden />
                                                     </Button>
@@ -388,13 +398,13 @@ export function PipelineClient({ initialRows, stats }: Props) {
             <Drawer
                 open={Boolean(detail || detailLoading)}
                 onClose={() => { setDetail(null); setEditing(false) }}
-                title={detail ? (editing ? 'Chỉnh sửa cơ hội' : detail.name) : 'Đang tải cơ hội...'}
+                title={detail ? (editing ? i18n.editOpportunity : detail.name) : i18n.loadingOpportunity}
                 description={detail ? `${detail.customerName} · ${detail.customerCode}` : undefined}
                 size="md"
                 actions={
                     detail && !editing && (
                         <Button size="sm" variant="secondary" onClick={startEdit}>
-                            <Edit3 size={13} aria-hidden /> Sửa
+                            <Edit3 size={13} aria-hidden /> {i18n.editBtn}
                         </Button>
                     )
                 }
@@ -408,24 +418,23 @@ export function PipelineClient({ initialRows, stats }: Props) {
                                     loading={actionLoading === detail.id}
                                     disabled={actionLoading === detail.id}
                                 >
-                                    Chuyển sang {getNextStage(detail.stage)} <ArrowRight size={14} aria-hidden />
+                                    {i18n.moveToPrefix} {i18n.stages[getNextStage(detail.stage)!] ?? getNextStage(detail.stage)} <ArrowRight size={14} aria-hidden />
                                 </Button>
                             )}
                             <Button
                                 variant="danger-outline"
                                 onClick={() => handleMarkLost(detail.id, detail.name)}
                             >
-                                Đánh dấu Lost
+                                {i18n.markLost}
                             </Button>
                         </div>
                     ) : undefined
                 }
             >
                 {detailLoading ? (
-                    <div className="py-20 text-center type-caption">Đang tải chi tiết...</div>
+                    <div className="py-20 text-center type-caption">{i18n.loadingDetail}</div>
                 ) : detail && (
                     <div className="space-y-4">
-                        {/* Stage Badge + Progress */}
                         <div className="p-3.5 bg-lys-subtle rounded-lg border border-lys-border space-y-2.5">
                             <div className="flex items-center justify-between">
                                 {(() => {
@@ -441,7 +450,7 @@ export function PipelineClient({ initialRows, stats }: Props) {
                                 })()}
                                 {detail.previousStage && (
                                     <span className="type-caption flex items-center gap-1">
-                                        <ArrowRight size={10} /> từ {detail.previousStage}
+                                        <ArrowRight size={10} /> {i18n.fromStage} {(i18n.stages as Record<string, string>)[detail.previousStage] ?? detail.previousStage}
                                     </span>
                                 )}
                             </div>
@@ -460,7 +469,6 @@ export function PipelineClient({ initialRows, stats }: Props) {
                             </div>
                         </div>
 
-                        {/* KPIs Grid */}
                         <div className="grid grid-cols-2 gap-3">
                             <div className="p-3 rounded-lg border border-lys-border bg-white text-center">
                                 {editing ? (
@@ -472,37 +480,36 @@ export function PipelineClient({ initialRows, stats }: Props) {
                                     />
                                 ) : (
                                     <p className="type-number text-sm font-bold text-tone-warning-fg">
-                                        {formatVND(detail.expectedValue)}
+                                        {formatCurrency(detail.expectedValue)}
                                     </p>
                                 )}
-                                <p className="type-caption mt-0.5">Giá Trị Kỳ Vọng</p>
+                                <p className="type-caption mt-0.5">{i18n.expectedValue}</p>
                             </div>
 
                             <div className="p-3 rounded-lg border border-lys-border bg-white text-center">
                                 <p className="type-number text-sm font-bold text-lys-teal-strong">{detail.probability}%</p>
-                                <p className="type-caption mt-0.5">Xác suất thành công</p>
+                                <p className="type-caption mt-0.5">{i18n.winProbability}</p>
                             </div>
 
                             <div className="p-3 rounded-lg border border-lys-border bg-white text-center">
                                 <p className={cn('type-number text-sm font-bold', detail.daysInStage > 14 && !['WON', 'LOST'].includes(detail.stage) ? 'text-tone-danger-fg' : 'text-lys-primary')}>
-                                    {detail.daysInStage} ngày
+                                    {detail.daysInStage} {i18n.daysSuffix}
                                 </p>
                                 <p className="type-caption mt-0.5 flex items-center justify-center gap-1">
                                     {detail.daysInStage > 14 && !['WON', 'LOST'].includes(detail.stage) && <AlertTriangle size={10} className="text-tone-danger-fg" />}
-                                    Trong Stage
+                                    {i18n.inStage}
                                 </p>
                             </div>
 
                             <div className="p-3 rounded-lg border border-lys-border bg-white text-center">
-                                <p className="type-number text-sm font-bold text-lys-secondary">{detail.totalAge} ngày</p>
-                                <p className="type-caption mt-0.5">Tổng Thời Gian</p>
+                                <p className="type-number text-sm font-bold text-lys-secondary">{detail.totalAge} {i18n.daysSuffix}</p>
+                                <p className="type-caption mt-0.5">{i18n.totalTime}</p>
                             </div>
                         </div>
 
-                        {/* Details */}
                         <div className="space-y-3 pt-2">
                             <div className="flex items-center justify-between py-2 border-b border-lys-border">
-                                <span className="type-caption flex items-center gap-1.5"><User size={13} /> Sales Rep</span>
+                                <span className="type-caption flex items-center gap-1.5"><User size={13} /> {i18n.salesRep}</span>
                                 {editing ? (
                                     <Select
                                         value={editForm.assignedTo}
@@ -517,7 +524,7 @@ export function PipelineClient({ initialRows, stats }: Props) {
                             </div>
 
                             <div className="flex items-center justify-between py-2 border-b border-lys-border">
-                                <span className="type-caption flex items-center gap-1.5"><Calendar size={13} /> Close Date</span>
+                                <span className="type-caption flex items-center gap-1.5"><Calendar size={13} /> {i18n.closeDate}</span>
                                 {editing ? (
                                     <Input
                                         type="date"
@@ -527,24 +534,23 @@ export function PipelineClient({ initialRows, stats }: Props) {
                                     />
                                 ) : (
                                     <span className="type-number text-xs font-semibold text-lys-primary">
-                                        {detail.closeDate ? new Date(detail.closeDate).toLocaleDateString('vi-VN') : '—'}
+                                        {detail.closeDate ? formatDate(detail.closeDate) : '—'}
                                     </span>
                                 )}
                             </div>
 
                             <div className="flex items-center justify-between py-2 border-b border-lys-border">
-                                <span className="type-caption flex items-center gap-1.5"><Clock size={13} /> Ngày tạo</span>
+                                <span className="type-caption flex items-center gap-1.5"><Clock size={13} /> {i18n.createdDate}</span>
                                 <span className="type-caption">
-                                    {new Date(detail.createdAt).toLocaleDateString('vi-VN')}
+                                    {formatDate(detail.createdAt)}
                                 </span>
                             </div>
                         </div>
 
-                        {/* Notes */}
                         <div className="space-y-1.5">
                             <div className="flex items-center gap-1.5">
                                 <FileText size={13} className="text-lys-muted" />
-                                <span className="type-caption font-semibold">Ghi Chú</span>
+                                <span className="type-caption font-semibold">{i18n.notes}</span>
                             </div>
                             {editing ? (
                                 <Textarea
@@ -554,7 +560,7 @@ export function PipelineClient({ initialRows, stats }: Props) {
                                 />
                             ) : (
                                 <p className="text-xs leading-relaxed p-3 rounded-md bg-lys-subtle border border-lys-border text-lys-secondary">
-                                    {detail.notes || 'Chưa có ghi chú'}
+                                    {detail.notes || i18n.noNotes}
                                 </p>
                             )}
                         </div>
@@ -562,10 +568,10 @@ export function PipelineClient({ initialRows, stats }: Props) {
                         {editing && (
                             <div className="flex gap-2 pt-2">
                                 <Button variant="secondary" className="flex-1" onClick={() => setEditing(false)}>
-                                    Hủy
+                                    {i18n.cancelBtn}
                                 </Button>
                                 <Button className="flex-1" onClick={saveEdit} loading={editSaving}>
-                                    <Save size={14} aria-hidden /> Lưu thay đổi
+                                    <Save size={14} aria-hidden /> {i18n.saveChanges}
                                 </Button>
                             </div>
                         )}
@@ -578,26 +584,26 @@ export function PipelineClient({ initialRows, stats }: Props) {
                 <Modal
                     open={Boolean(lostModal)}
                     onClose={() => setLostModal(null)}
-                    title="Đánh dấu thất bại (Lost)"
+                    title={i18n.markLostModalTitle}
                     className="max-w-sm"
                     footer={
                         <div className="flex gap-2 w-full justify-end">
                             <Button variant="secondary" onClick={() => setLostModal(null)}>
-                                Hủy
+                                {i18n.cancelBtn}
                             </Button>
                             <Button variant="danger" onClick={confirmLost}>
-                                Xác Nhận Lost
+                                {i18n.confirmLostBtn}
                             </Button>
                         </div>
                     }
                 >
                     <div className="space-y-3">
-                        <p className="type-caption">Cơ hội: <strong className="text-lys-primary">{lostModal.name}</strong></p>
+                        <p className="type-caption">{i18n.opportunityPrefix} <strong className="text-lys-primary">{lostModal.name}</strong></p>
                         <Textarea
                             value={lostReason}
                             onChange={e => setLostReason(e.target.value)}
                             rows={3}
-                            placeholder="Lý do lost? (VD: Giá cao hơn đối thủ, Khách cắt ngân sách...)"
+                            placeholder={i18n.lostReasonPlaceholder}
                             autoFocus
                         />
                     </div>
@@ -609,77 +615,77 @@ export function PipelineClient({ initialRows, stats }: Props) {
                 <Modal
                     open={createOpen}
                     onClose={() => setCreateOpen(false)}
-                    title="Thêm Cơ Hội Mới"
+                    title={i18n.createModalTitle}
                     className="max-w-md"
                     footer={
                         <div className="flex gap-2 w-full justify-end">
                             <Button variant="secondary" onClick={() => setCreateOpen(false)}>
-                                Hủy
+                                {i18n.cancelBtn}
                             </Button>
                             <Button
                                 onClick={handleCreate}
                                 loading={saving}
                                 disabled={saving || !formName || !formCustomerId || !formAssignee || !formValue}
                             >
-                                Tạo Cơ Hội (→ Lead)
+                                {i18n.createSubmitBtn}
                             </Button>
                         </div>
                     }
                 >
                     <div className="space-y-3">
-                        <Field label="Tên cơ hội" required>
+                        <Field label={i18n.oppNameLabel} required>
                             {id => (
                                 <Input
                                     id={id}
                                     value={formName}
                                     onChange={e => setFormName(e.target.value)}
-                                    placeholder="VD: Park Hyatt Wine Program"
+                                    placeholder={i18n.oppNamePlaceholder}
                                 />
                             )}
                         </Field>
 
-                        <Field label="Khách hàng" required>
+                        <Field label={i18n.customerLabel} required>
                             {id => (
                                 <Select
                                     id={id}
                                     value={formCustomerId}
                                     onChange={e => setFormCustomerId(e.target.value)}
                                 >
-                                    <option value="">Chọn khách hàng...</option>
+                                    <option value="">{i18n.selectCustomer}</option>
                                     {customers.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </Select>
                             )}
                         </Field>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <Field label="Assigned To" required>
+                            <Field label={i18n.assignedToLabel} required>
                                 {id => (
                                     <Select
                                         id={id}
                                         value={formAssignee}
                                         onChange={e => setFormAssignee(e.target.value)}
                                     >
-                                        <option value="">Chọn Sales Rep...</option>
+                                        <option value="">{i18n.selectSalesRep}</option>
                                         {reps.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
                                     </Select>
                                 )}
                             </Field>
 
-                            <Field label="Giá trị kỳ vọng (VND)" required>
+                            <Field label={i18n.expectedValueVndLabel} required>
                                 {id => (
                                     <Input
                                         id={id}
                                         type="number"
                                         value={formValue}
                                         onChange={e => setFormValue(e.target.value)}
-                                        placeholder="VD: 50000000"
+                                        placeholder="50000000"
                                         className="type-number"
                                     />
                                 )}
                             </Field>
                         </div>
 
-                        <Field label="Ngày dự kiến chốt">
+                        <Field label={i18n.expectedCloseDateLabel}>
                             {id => (
                                 <Input
                                     id={id}
@@ -690,14 +696,14 @@ export function PipelineClient({ initialRows, stats }: Props) {
                             )}
                         </Field>
 
-                        <Field label="Ghi chú">
+                        <Field label={i18n.notesLabel}>
                             {id => (
                                 <Textarea
                                     id={id}
                                     value={formNotes}
                                     onChange={e => setFormNotes(e.target.value)}
                                     rows={2}
-                                    placeholder="Ghi chú thêm..."
+                                    placeholder={i18n.notesPlaceholder}
                                 />
                             )}
                         </Field>

@@ -8,6 +8,7 @@ import {
     type WinePreference,
 } from './actions'
 import { formatVND } from '@/lib/utils'
+import { useAppLocale } from '@/lib/i18n'
 
 function TagSelector({
     label, selected, presets, color, onToggle
@@ -39,6 +40,7 @@ function TagSelector({
 }
 
 export function WinePreferencePanel({ customerId }: { customerId: string }) {
+    const { isEn } = useAppLocale()
     const [pref, setPref] = useState<WinePreference | null>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
@@ -104,7 +106,7 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
         return (
             <div className="flex items-center gap-2 py-3">
                 <Loader2 size={12} className="animate-spin" style={{ color: '#0891B2' }} />
-                <span className="text-xs" style={{ color: '#64748B' }}>Đang tải sở thích...</span>
+                <span className="text-xs" style={{ color: '#64748B' }}>{isEn ? 'Loading preferences...' : 'Đang tải sở thích...'}</span>
             </div>
         )
     }
@@ -115,14 +117,14 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
                 <div className="flex items-center gap-2">
                     <Wine size={14} style={{ color: '#B91C1C' }} />
                     <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
-                        Sở Thích Rượu Vang
+                        {isEn ? 'Wine Preferences' : 'Sở Thích Rượu Vang'}
                     </p>
                 </div>
                 {!editing ? (
                     <button onClick={() => setEditing(true)}
                         className="text-xs px-2 py-1 rounded font-medium"
                         style={{ color: '#0891B2', background: 'rgba(8,145,178,0.1)' }}>
-                        {pref ? 'Sửa' : '+ Thêm'}
+                        {pref ? (isEn ? 'Edit' : 'Sửa') : (isEn ? '+ Add' : '+ Thêm')}
                     </button>
                 ) : (
                     <button onClick={() => setEditing(false)} className="p-1" style={{ color: '#64748B' }}>
@@ -136,7 +138,7 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
                     {/* Grapes */}
                     {pref.grapeVarieties.length > 0 && (
                         <div>
-                            <p className="text-xs mb-1.5" style={{ color: '#64748B' }}>Giống nho</p>
+                            <p className="text-xs mb-1.5" style={{ color: '#64748B' }}>{isEn ? 'Grape Varieties' : 'Giống nho'}</p>
                             <div className="flex flex-wrap gap-1">
                                 {pref.grapeVarieties.map(g => (
                                     <span key={g} className="inline-block text-xs px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
@@ -148,7 +150,7 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
                     {/* Regions */}
                     {pref.regions.length > 0 && (
                         <div>
-                            <p className="text-xs mb-1.5" style={{ color: '#64748B' }}>Vùng ưa thích</p>
+                            <p className="text-xs mb-1.5" style={{ color: '#64748B' }}>{isEn ? 'Preferred Regions' : 'Vùng ưa thích'}</p>
                             <div className="flex flex-wrap gap-1">
                                 {pref.regions.map(r => (
                                     <span key={r} className="inline-block text-xs px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
@@ -160,7 +162,7 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
                     {/* Taste */}
                     {pref.tasteProfile.length > 0 && (
                         <div>
-                            <p className="text-xs mb-1.5" style={{ color: '#64748B' }}>Khẩu vị</p>
+                            <p className="text-xs mb-1.5" style={{ color: '#64748B' }}>{isEn ? 'Taste Profile' : 'Khẩu vị'}</p>
                             <div className="flex flex-wrap gap-1">
                                 {pref.tasteProfile.map(t => (
                                     <span key={t} className="inline-block text-xs px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
@@ -171,7 +173,7 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
                     )}
                     {/* Price Range */}
                     <div className="flex items-center gap-2">
-                        <span className="text-xs" style={{ color: '#64748B' }}>Tầm giá:</span>
+                        <span className="text-xs" style={{ color: '#64748B' }}>{isEn ? 'Price Range:' : 'Tầm giá:'}</span>
                         <span className="text-xs font-bold" style={{ color: '#0891B2' }}>
                             {formatVND(pref.priceRangeMin)} – {formatVND(pref.priceRangeMax)}
                         </span>
@@ -184,37 +186,37 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
 
             {!editing && !pref && (
                 <p className="text-xs text-center py-4" style={{ color: '#64748B' }}>
-                    Chưa có thông tin sở thích. Nhấn "+ Thêm" để tạo.
+                    {isEn ? 'No preferences recorded. Click "+ Add" to create.' : 'Chưa có thông tin sở thích. Nhấn "+ Thêm" để tạo.'}
                 </p>
             )}
 
             {editing && (
                 <div className="space-y-4">
-                    <TagSelector label="Giống nho yêu thích" selected={grapes} presets={GRAPE_PRESETS}
+                    <TagSelector label={isEn ? 'Favorite Grape Varieties' : 'Giống nho yêu thích'} selected={grapes} presets={GRAPE_PRESETS}
                         color="#B91C1C" onToggle={item => toggleItem(grapes, setGrapes, item)} />
-                    <TagSelector label="Vùng sản xuất" selected={regions} presets={REGION_PRESETS}
+                    <TagSelector label={isEn ? 'Wine Regions' : 'Vùng sản xuất'} selected={regions} presets={REGION_PRESETS}
                         color="#B45309" onToggle={item => toggleItem(regions, setRegions, item)} />
-                    <TagSelector label="Khẩu vị" selected={tastes} presets={TASTE_PRESETS}
+                    <TagSelector label={isEn ? 'Taste Profile' : 'Khẩu vị'} selected={tastes} presets={TASTE_PRESETS}
                         color="#15803D" onToggle={item => toggleItem(tastes, setTastes, item)} />
 
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="text-xs mb-1 block" style={{ color: '#64748B' }}>Giá tối thiểu (₫)</label>
-                            <input type="number" aria-label="Giá tối thiểu" className="w-full px-3 py-2 rounded text-sm outline-none"
+                            <label className="text-xs mb-1 block" style={{ color: '#64748B' }}>{isEn ? 'Min Price (₫)' : 'Giá tối thiểu (₫)'}</label>
+                            <input type="number" aria-label={isEn ? 'Min Price' : 'Giá tối thiểu'} className="w-full px-3 py-2 rounded text-sm outline-none"
                                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                                 value={priceMin} onChange={e => setPriceMin(Number(e.target.value))} />
                         </div>
                         <div>
-                            <label className="text-xs mb-1 block" style={{ color: '#64748B' }}>Giá tối đa (₫)</label>
-                            <input type="number" aria-label="Giá tối đa" className="w-full px-3 py-2 rounded text-sm outline-none"
+                            <label className="text-xs mb-1 block" style={{ color: '#64748B' }}>{isEn ? 'Max Price (₫)' : 'Giá tối đa (₫)'}</label>
+                            <input type="number" aria-label={isEn ? 'Max Price' : 'Giá tối đa'} className="w-full px-3 py-2 rounded text-sm outline-none"
                                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                                 value={priceMax} onChange={e => setPriceMax(Number(e.target.value))} />
                         </div>
                     </div>
 
                     <div>
-                        <label className="text-xs mb-1 block" style={{ color: '#64748B' }}>Ghi chú</label>
-                        <textarea aria-label="Ghi chú" className="w-full px-3 py-2 rounded text-sm outline-none resize-none"
+                        <label className="text-xs mb-1 block" style={{ color: '#64748B' }}>{isEn ? 'Notes' : 'Ghi chú'}</label>
+                        <textarea aria-label={isEn ? 'Notes' : 'Ghi chú'} className="w-full px-3 py-2 rounded text-sm outline-none resize-none"
                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                             rows={2} value={notes} onChange={e => setNotes(e.target.value)} />
                     </div>
@@ -223,7 +225,7 @@ export function WinePreferencePanel({ customerId }: { customerId: string }) {
                         className="flex items-center gap-2 px-3 py-2 rounded text-xs font-semibold disabled:opacity-50"
                         style={{ background: '#0E7490', color: '#FFFFFF' }}>
                         {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-                        {saving ? 'Đang lưu...' : 'Lưu Sở Thích'}
+                        {saving ? (isEn ? 'Saving...' : 'Đang lưu...') : (isEn ? 'Save Preferences' : 'Lưu Sở Thích')}
                     </button>
                 </div>
             )}

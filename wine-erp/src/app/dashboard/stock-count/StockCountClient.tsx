@@ -19,6 +19,8 @@ import PrintableAuditReport from './PrintableAuditReport'
 import { BarcodeLookupModal } from './BarcodeLookupModal'
 import { StockCountTableModal } from './StockCountTableModal'
 import { toast } from 'sonner'
+import { useAppLocale } from '@/lib/i18n'
+import { getStockCountDict } from './i18n'
 
 type SessionRow = {
     id: string
@@ -53,6 +55,8 @@ type Props = {
 }
 
 export function StockCountClient({ initialList, initialRows = [], initialStats, stats: propsStats }: Props) {
+    const { locale } = useAppLocale()
+    const t = getStockCountDict(locale)
     const defaultList = initialList || initialRows
     const defaultStats = initialStats || propsStats || { total: 0, inProgress: 0, completed: 0, assignedToMe: 0 }
     const [list, setList] = useState<SessionRow[]>(defaultList)
@@ -89,7 +93,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
         setAssignSessionDetail(detail)
         const initialMap: Record<string, string> = {}
         for (const line of detail.lines) {
-            const zName = line.zone || line.locationCode || 'Khu vực chung'
+            const zName = line.zone || line.locationCode || t.common.generalZone
             if (!initialMap[zName]) {
                 initialMap[zName] = line.assignedToId || ''
             }
@@ -217,27 +221,27 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
         const targetWhId = formWarehouseId || warehouses[0]?.id || ''
         const targetWh = warehouses.find(w => w.id === targetWhId) || warehouses[0]
         const whName = targetWh?.name || 'Kho'
-        const today = new Date().toLocaleDateString('vi-VN')
+        const today = new Date().toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')
 
         if (cat === 'FULL') {
             setFormScopeType('FULL_WAREHOUSE')
-            setFormTitle(`Kiểm kê toàn bộ - ${whName} (${today})`)
+            setFormTitle(`${t.client.catFullTitle} - ${whName} (${today})`)
         } else if (cat === 'PARTIAL') {
             setFormScopeType('CYCLE_COUNT')
-            setFormTitle(`Kiểm kê phân khu kệ - ${whName}`)
+            setFormTitle(`${t.client.catPartialTitle} - ${whName}`)
             if (targetWh?.id) {
                 fetchLocationOptions(targetWh.id)
             }
         } else if (cat === 'RANDOM') {
             setFormScopeType('SPOT_COUNT')
             setRandomCountMode('RANDOM_SAMPLE')
-            setFormTitle(`Kiểm kê ngẫu nhiên (${sampleCountSize} mã) - ${whName}`)
+            setFormTitle(`${t.client.catRandomTitle} (${sampleCountSize} ${t.common.skus}) - ${whName}`)
             if (targetWh?.id) {
                 handleFetchSampleSkus(targetWh.id, sampleCountSize)
             }
         } else if (cat === 'CYCLE') {
             setFormScopeType('CYCLE_COUNT')
-            setFormTitle(`Kiểm kê cuốn chiếu ${today} - ${whName}`)
+            setFormTitle(`${t.client.catCycleTitle} ${today} - ${whName}`)
             if (targetWh?.id) {
                 loadCycleProgress(targetWh.id, cycleDaysWindow)
             }
@@ -249,19 +253,19 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
         fetchLocationOptions(whId)
         const targetWh = warehouses.find(w => w.id === whId)
         const whName = targetWh?.name || 'Kho'
-        const today = new Date().toLocaleDateString('vi-VN')
+        const today = new Date().toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')
 
         if (countCategory === 'FULL') {
-            setFormTitle(`Kiểm kê toàn bộ - ${whName} (${today})`)
+            setFormTitle(`${t.client.catFullTitle} - ${whName} (${today})`)
         } else if (countCategory === 'PARTIAL') {
-            setFormTitle(`Kiểm kê phân khu kệ - ${whName}`)
+            setFormTitle(`${t.client.catPartialTitle} - ${whName}`)
         } else if (countCategory === 'RANDOM') {
-            setFormTitle(`Kiểm kê ngẫu nhiên (${sampleCountSize} mã) - ${whName}`)
+            setFormTitle(`${t.client.catRandomTitle} (${sampleCountSize} ${t.common.skus}) - ${whName}`)
             if (randomCountMode === 'RANDOM_SAMPLE') {
                 handleFetchSampleSkus(whId, sampleCountSize)
             }
         } else if (countCategory === 'CYCLE') {
-            setFormTitle(`Kiểm kê cuốn chiếu ${today} - ${whName}`)
+            setFormTitle(`${t.client.catCycleTitle} ${today} - ${whName}`)
             loadCycleProgress(whId, cycleDaysWindow)
         }
     }
@@ -305,10 +309,10 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
         if (res.success) {
             setShowAssignModal(false)
-            toast.success('Đã lưu phân công vị trí')
+            toast.success(t.client.saveZoneAssignBtn)
             fetchData()
         } else {
-            toast.error(res.error || 'Không thể lưu phân công vị trí')
+            toast.error(res.error || 'Error saving zone assignments')
         }
     }
 
@@ -341,7 +345,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                 handleOpenDetail(sessionId)
             }
         } else {
-            toast.error(res.error || 'Lỗi khi bắt đầu đếm')
+            toast.error(res.error || 'Error starting session')
         }
     }
 
@@ -360,7 +364,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                 }
                 if (!skus || skus.length === 0) {
                     setIsSubmitting(false)
-                    setCreateError('Vui lòng nhập ít nhất 1 mã SKU cần kiểm kê đột xuất')
+                    setCreateError('Please enter at least 1 SKU')
                     return
                 }
             } else {
@@ -379,7 +383,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
             }
             if (!skus || skus.length === 0) {
                 setIsSubmitting(false)
-                setCreateError('Vui lòng chọn ít nhất 1 mã SKU để kiểm kê cuốn chiếu')
+                setCreateError('Please select at least 1 SKU')
                 return
             }
         }
@@ -404,19 +408,19 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
             loadCycleProgress()
             if (res.sessionId) handleOpenMobileView(res.sessionId)
         } else {
-            setCreateError(res.error || 'Khởi tạo phiên kiểm kê thất bại')
+            setCreateError(res.error || 'Failed to create stock count session')
         }
     }
 
     const handleCreateBatchSession = async () => {
         if (!selectedDailySkus || selectedDailySkus.length === 0) {
-            toast.warning('Vui lòng chọn ít nhất 1 mã SKU để kiểm kê')
+            toast.warning('Please select at least 1 SKU')
             return
         }
         setIsCreatingBatch(true)
         const res = await createStockCountSessionExtended({
             warehouseId: cycleWarehouseId,
-            title: batchCountTitle || `Kiểm kê cuốn chiếu ${new Date().toLocaleDateString('vi-VN')} (${selectedDailySkus.length} mã)`,
+            title: batchCountTitle || `${t.client.catCycleTitle} ${new Date().toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')} (${selectedDailySkus.length} ${t.common.skus})`,
             scopeType: 'CYCLE_COUNT',
             type: 'CYCLE',
             isBlindCount: batchIsBlind,
@@ -430,7 +434,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
             loadCycleProgress()
             if (res.sessionId) handleOpenMobileView(res.sessionId)
         } else {
-            toast.error(res.error || 'Khởi tạo đợt kiểm thất bại')
+            toast.error(res.error || 'Error creating batch session')
         }
     }
 
@@ -483,14 +487,14 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
             {/* Header & Quick Stats Bar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                    <h1 className="text-xl font-bold text-slate-900 tracking-tight">Kiểm Kê Kho</h1>
+                    <h1 className="text-xl font-bold text-slate-900 tracking-tight">{t.client.title}</h1>
 
                     {/* Inline Quick Stats */}
                     <div className="hidden lg:flex items-center gap-x-4 text-xs border-l border-slate-200 pl-4">
-                        <span className="text-slate-500">Tổng Phiếu: <strong className="font-mono text-sm ml-1 text-slate-900">{stats.total}</strong></span>
-                        <span className="text-slate-500">Đang kiểm: <strong className="font-mono text-sm ml-1 text-amber-600">{stats.inProgress}</strong></span>
-                        <span className="text-slate-500">Đã xong: <strong className="font-mono text-sm ml-1 text-emerald-600">{stats.completed}</strong></span>
-                        <span className="text-slate-500">Phân công tôi: <strong className="font-mono text-sm ml-1 text-cyan-700">{stats.assignedToMe || 0}</strong></span>
+                        <span className="text-slate-500">{t.client.totalSessions} <strong className="font-mono text-sm ml-1 text-slate-900">{stats.total}</strong></span>
+                        <span className="text-slate-500">{t.client.inProgress} <strong className="font-mono text-sm ml-1 text-amber-600">{stats.inProgress}</strong></span>
+                        <span className="text-slate-500">{t.client.completed} <strong className="font-mono text-sm ml-1 text-emerald-600">{stats.completed}</strong></span>
+                        <span className="text-slate-500">{t.client.assignedToMe} <strong className="font-mono text-sm ml-1 text-cyan-700">{stats.assignedToMe || 0}</strong></span>
                     </div>
                 </div>
 
@@ -503,13 +507,13 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
                         }`}
                     >
-                        <BarChart3 size={14} className="text-slate-600" /> Thống kê
+                        <BarChart3 size={14} className="text-slate-600" /> {t.client.statsBtn}
                     </button>
                     <button
                         onClick={() => setShowBarcodeLookup(true)}
                         className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-all cursor-pointer"
                     >
-                        <QrCode size={14} className="text-emerald-600" /> Tra cứu Barcode
+                        <QrCode size={14} className="text-emerald-600" /> {t.client.barcodeLookupBtn}
                     </button>
                     {viewMode === 'SESSIONS' ? (
                         <button
@@ -519,25 +523,25 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                             }}
                             className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-lys-teal-strong hover:bg-lys-teal-hover rounded-md transition-all cursor-pointer shadow-2xs active:scale-95"
                         >
-                            <Plus size={15} /> Tạo Phiếu Kiểm Kê
+                            <Plus size={15} /> {t.client.createSessionBtn}
                         </button>
                     ) : (
                         <button
                             type="button"
                             onClick={() => {
                                 if (!cycleProgress || cycleProgress.uncountedProducts.length === 0) {
-                                    toast.info('Tất cả các mã trong kho đã được kiểm kê trong chu kỳ này!')
+                                    toast.info(t.client.emptyCycleCategory)
                                     return
                                 }
                                 const topN = cycleProgress.uncountedProducts.slice(0, cycleProgress.dailySuggestedCount).map(p => p.skuCode)
                                 setSelectedDailySkus(topN)
-                                setBatchCountTitle(`Kiểm kê cuốn chiếu ${new Date().toLocaleDateString('vi-VN')} (${topN.length} mã) - ${cycleProgress.warehouseName}`)
+                                setBatchCountTitle(`${t.client.catCycleTitle} ${new Date().toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')} (${topN.length} ${t.common.skus}) - ${cycleProgress.warehouseName}`)
                                 setBatchSearchTerm('')
                                 setShowDailyBatchModal(true)
                             }}
                             className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-lys-teal-strong hover:bg-lys-teal-hover rounded-md transition-all cursor-pointer shadow-2xs active:scale-95"
                         >
-                            <Zap size={14} /> Tạo Đợt Đếm Hôm Nay
+                            <Zap size={14} /> {t.client.createTodayBatchBtn}
                         </button>
                     )}
                 </div>
@@ -547,26 +551,26 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
             {showStats && (
                 <div className="space-y-2 animate-in slide-in-from-top-2 duration-150">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Thống Kê Chi Tiết</span>
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t.client.detailStatsTitle}</span>
                         <button onClick={() => setShowStats(false)} className="text-xs font-semibold hover:underline flex items-center gap-1 text-[#0891B2]">
-                            Thu gọn chỉ số
+                            {t.client.collapseMetrics}
                         </button>
                     </div>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                         <div className="bg-white border border-slate-200 p-3.5 rounded-lg shadow-2xs">
-                            <span className="text-[10px] font-bold text-slate-500 uppercase block">TỔNG PHIẾU</span>
+                            <span className="text-[10px] font-bold text-slate-500 uppercase block">{t.client.cardTotal}</span>
                             <strong className="text-lg font-black text-slate-900 mt-0.5 block font-mono">{stats.total}</strong>
                         </div>
                         <div className="bg-white border border-slate-200 p-3.5 rounded-lg shadow-2xs">
-                            <span className="text-[10px] font-bold text-amber-600 uppercase block">ĐANG KIỂM KÊ</span>
+                            <span className="text-[10px] font-bold text-amber-600 uppercase block">{t.client.cardInProgress}</span>
                             <strong className="text-lg font-black text-amber-600 mt-0.5 block font-mono">{stats.inProgress}</strong>
                         </div>
                         <div className="bg-white border border-slate-200 p-3.5 rounded-lg shadow-2xs">
-                            <span className="text-[10px] font-bold text-emerald-600 uppercase block">ĐÃ DUYỆT / XONG</span>
+                            <span className="text-[10px] font-bold text-emerald-600 uppercase block">{t.client.cardCompleted}</span>
                             <strong className="text-lg font-black text-emerald-600 mt-0.5 block font-mono">{stats.completed}</strong>
                         </div>
                         <div className="bg-white border border-slate-200 p-3.5 rounded-lg shadow-2xs">
-                            <span className="text-[10px] font-bold text-cyan-700 uppercase block">PHÂN CÔNG CHO TÔI</span>
+                            <span className="text-[10px] font-bold text-cyan-700 uppercase block">{t.client.cardAssigned}</span>
                             <strong className="text-lg font-black text-cyan-700 mt-0.5 block font-mono">{stats.assignedToMe || 0}</strong>
                         </div>
                     </div>
@@ -585,7 +589,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                     }`}
                 >
                     <ClipboardList size={15} className={viewMode === 'SESSIONS' ? 'text-lys-teal-strong' : 'text-slate-400'} />
-                    <span>Danh Sách Phiếu Kiểm</span>
+                    <span>{t.client.tabSessions}</span>
                     <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
                         viewMode === 'SESSIONS' ? 'bg-lys-teal-soft text-lys-teal-strong font-bold' : 'bg-slate-200 text-slate-700'
                     }`}>
@@ -602,7 +606,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                     }`}
                 >
                     <RotateCcw size={15} className={viewMode === 'CYCLE_PLAN' ? 'text-lys-teal-strong' : 'text-slate-400'} />
-                    <span>Kế Hoạch Cuốn Chiếu (Hôm Nay)</span>
+                    <span>{t.client.tabCyclePlan}</span>
                     {cycleProgress && (
                         <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
                             viewMode === 'CYCLE_PLAN' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'
@@ -613,7 +617,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                 </button>
             </div>
 
-            {/* ═══ TAB 2: KẾ HOẠCH KIỂM KÊ CUỐN CHIẾU (CHỈ HIỂN THỊ KHI CHỌN TAB NÀY) ═══ */}
+            {/* ═══ TAB 2: KẾ HOẠCH KIỂM KÊ CUỐN CHIẾU ═══ */}
             {viewMode === 'CYCLE_PLAN' && (
                 <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-2xs space-y-4 animate-in fade-in-50 duration-150">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
@@ -623,17 +627,17 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                             </div>
                             <div>
                                 <h2 className="text-base font-bold text-slate-900 flex flex-wrap items-center gap-2">
-                                    <span>Kế Hoạch Kiểm Kê Cuốn Chiếu (Cycle Count)</span>
+                                    <span>{t.client.cycleTitle}</span>
                                     <span className="inline-block text-[10px] font-bold text-lys-teal-strong bg-lys-teal-soft border border-lys-teal-subtle px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
                                         {cycleProgress?.dateFrom && cycleProgress?.dateTo ? (
-                                            `Từ ${new Date(cycleProgress.dateFrom).toLocaleDateString('vi-VN')} đến ${new Date(cycleProgress.dateTo).toLocaleDateString('vi-VN')} (${cycleProgress.daysWindow} ngày)`
+                                            `${t.client.fromLabel} ${new Date(cycleProgress.dateFrom).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')} - ${new Date(cycleProgress.dateTo).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')} (${cycleProgress.daysWindow} ${t.client.daysUnit})`
                                         ) : (
-                                            `Chu kỳ ${cycleDaysWindow} ngày`
+                                            `${t.client.cycleWindowPrefix} ${cycleDaysWindow} ${t.client.daysUnit}`
                                         )}
                                     </span>
                                 </h2>
                                 <p className="text-xs text-slate-500 mt-0.5">
-                                    Chia nhỏ danh mục kho thành từng đợt đếm hàng ngày để kiểm soát tồn kho thực tế liên tục mà không gián đoạn bán hàng.
+                                    {t.client.cycleDesc}
                                 </p>
                             </div>
                         </div>
@@ -665,31 +669,30 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                         }}
                                         className="bg-slate-50 border border-slate-300 text-slate-900 rounded-md px-3 py-2 text-xs font-semibold outline-none cursor-pointer focus:border-lys-teal-strong"
                                     >
-                                        <option value={7}>Chu kỳ 7 ngày (1 tuần)</option>
-                                        <option value={14}>Chu kỳ 14 ngày (2 tuần)</option>
-                                        <option value={30}>Chu kỳ 30 ngày (1 tháng)</option>
-                                        <option value={60}>Chu kỳ 60 ngày (2 tháng)</option>
+                                        <option value={7}>{t.client.week1}</option>
+                                        <option value={14}>{t.client.week2}</option>
+                                        <option value={30}>{t.client.month1}</option>
+                                        <option value={60}>{t.client.month2}</option>
                                     </select>
                                     <button
                                         type="button"
                                         onClick={() => setCycleDateMode('CUSTOM')}
                                         className="px-2.5 py-2 text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-md flex items-center gap-1 cursor-pointer"
-                                        title="Chuyển sang chọn ngày tùy ý"
                                     >
                                         <Calendar size={13} />
-                                        <span>Tùy chọn ngày</span>
+                                        <span>{t.client.customDateBtn}</span>
                                     </button>
                                 </div>
                             ) : (
                                 <div className="flex flex-wrap items-center gap-1.5 bg-slate-50 p-1 rounded-md border border-slate-300">
-                                    <span className="text-[11px] font-bold text-slate-600 pl-1">Từ:</span>
+                                    <span className="text-[11px] font-bold text-slate-600 pl-1">{t.client.fromLabel}</span>
                                     <input
                                         type="date"
                                         value={cycleDateFrom}
                                         onChange={e => setCycleDateFrom(e.target.value)}
                                         className="bg-white border border-slate-300 text-slate-900 rounded px-2 py-1 text-xs outline-none focus:border-lys-teal-strong"
                                     />
-                                    <span className="text-[11px] font-bold text-slate-600">Đến:</span>
+                                    <span className="text-[11px] font-bold text-slate-600">{t.client.toLabel}</span>
                                     <input
                                         type="date"
                                         value={cycleDateTo}
@@ -700,9 +703,8 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                         type="button"
                                         onClick={() => loadCycleProgress(cycleWarehouseId, undefined, cycleDateFrom, cycleDateTo)}
                                         className="px-2 py-1 bg-lys-teal-strong hover:bg-lys-teal-hover text-white rounded font-bold text-xs cursor-pointer flex items-center gap-1 shadow-2xs"
-                                        title="Tính toán lại theo khoảng ngày"
                                     >
-                                        <RefreshCw size={11} /> Áp dụng
+                                        <RefreshCw size={11} /> {t.client.applyBtn}
                                     </button>
                                     <button
                                         type="button"
@@ -711,9 +713,8 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                             loadCycleProgress(cycleWarehouseId, 7)
                                         }}
                                         className="px-2 py-1 bg-white hover:bg-slate-200 text-slate-600 rounded font-semibold text-xs cursor-pointer border border-slate-200"
-                                        title="Trở lại chu kỳ cố định"
                                     >
-                                        Theo tuần
+                                        {t.client.byWeekBtn}
                                     </button>
                                 </div>
                             )}
@@ -723,36 +724,36 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 type="button"
                                 onClick={() => {
                                     if (!cycleProgress || cycleProgress.uncountedProducts.length === 0) {
-                                        toast.info('Tất cả các mã trong kho đã được kiểm kê trong chu kỳ này!')
+                                        toast.info(t.client.emptyCycleCategory)
                                         return
                                     }
                                     const topN = cycleProgress.uncountedProducts.slice(0, cycleProgress.dailySuggestedCount).map(p => p.skuCode)
                                     setSelectedDailySkus(topN)
-                                    setBatchCountTitle(`Kiểm kê cuốn chiếu ${new Date().toLocaleDateString('vi-VN')} (${topN.length} mã) - ${cycleProgress.warehouseName}`)
+                                    setBatchCountTitle(`${t.client.catCycleTitle} ${new Date().toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')} (${topN.length} ${t.common.skus}) - ${cycleProgress.warehouseName}`)
                                     setBatchSearchTerm('')
                                     setShowDailyBatchModal(true)
                                 }}
                                 className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-lys-teal-strong hover:bg-lys-teal-hover rounded-md shadow-xs transition cursor-pointer active:scale-95"
                             >
                                 <Zap size={14} />
-                                <span>Tạo Đợt Đếm Hôm Nay</span>
+                                <span>{t.client.createTodayBatchBtn}</span>
                             </button>
                         </div>
                     </div>
 
                     {/* Progress Bar & Key Cycle Stats */}
                     {loadingCycle ? (
-                        <div className="py-8 text-center text-xs text-slate-400">Đang đồng bộ tiến độ kiểm kê kho...</div>
+                        <div className="py-8 text-center text-xs text-slate-400">{t.client.syncingCycle}</div>
                     ) : cycleProgress ? (
                         <div className="space-y-4">
                             {/* Progress bar */}
                             <div className="p-4 rounded-lg bg-slate-50 border border-slate-200">
                                 <div className="flex items-center justify-between text-xs mb-2">
                                     <span className="font-semibold text-slate-700">
-                                        Tiến độ hoàn tất chu kỳ ({cycleDaysWindow} ngày): <strong className="text-lys-teal-strong font-mono text-sm">{cycleProgress.countedProductCount}</strong> / <span className="font-mono text-sm">{cycleProgress.totalProducts}</span> mã SKU
+                                        {t.client.cycleProgressLabel} ({cycleDaysWindow} {t.client.daysUnit}): <strong className="text-lys-teal-strong font-mono text-sm">{cycleProgress.countedProductCount}</strong> / <span className="font-mono text-sm">{cycleProgress.totalProducts}</span> SKU
                                     </span>
                                     <span className="font-extrabold text-sm text-lys-teal-strong font-mono">
-                                        {cycleProgress.progressPercent}% ĐÃ KIỂM
+                                        {cycleProgress.progressPercent}{t.client.countedBadgeSuffix}
                                     </span>
                                 </div>
                                 <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden border border-slate-300">
@@ -766,27 +767,27 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                             {/* 4 Metric cards */}
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                                 <div className="p-3.5 rounded-lg bg-emerald-50/70 border border-emerald-200">
-                                    <span className="text-[10px] text-emerald-800 uppercase font-bold block">MÃ ĐÃ KIỂM</span>
+                                    <span className="text-[10px] text-emerald-800 uppercase font-bold block">{t.client.metricCountedSkus}</span>
                                     <span className="text-lg font-black text-emerald-700 font-mono mt-1 block">
-                                        {cycleProgress.countedProductCount} mã
+                                        {cycleProgress.countedProductCount} {t.common.skus}
                                     </span>
                                 </div>
                                 <div className="p-3.5 rounded-lg bg-amber-50/70 border border-amber-200">
-                                    <span className="text-[10px] text-amber-800 uppercase font-bold block">MÃ CẦN KIỂM TIẾP</span>
+                                    <span className="text-[10px] text-amber-800 uppercase font-bold block">{t.client.metricRemainingSkus}</span>
                                     <span className="text-lg font-black text-amber-700 font-mono mt-1 block">
-                                        {cycleProgress.uncountedProductCount} mã
+                                        {cycleProgress.uncountedProductCount} {t.common.skus}
                                     </span>
                                 </div>
                                 <div className="p-3.5 rounded-lg bg-lys-teal-soft border border-lys-teal-subtle">
-                                    <span className="text-[10px] text-lys-teal-strong uppercase font-bold block">GỢI Ý HÔM NAY</span>
+                                    <span className="text-[10px] text-lys-teal-strong uppercase font-bold block">{t.client.metricDailySuggested}</span>
                                     <span className="text-lg font-black text-lys-teal-strong font-mono mt-1 block">
-                                        ~{cycleProgress.dailySuggestedCount} mã / ngày
+                                        ~{cycleProgress.dailySuggestedCount} {t.client.perDaySuffix}
                                     </span>
                                 </div>
                                 <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200">
-                                    <span className="text-[10px] text-slate-500 uppercase font-bold block">TỔNG TỒN HIỆN CÓ</span>
+                                    <span className="text-[10px] text-slate-500 uppercase font-bold block">{t.client.metricTotalStock}</span>
                                     <span className="text-lg font-black text-slate-900 font-mono mt-1 block">
-                                        {cycleProgress.totalBottles.toLocaleString()} chai
+                                        {cycleProgress.totalBottles.toLocaleString()} {t.common.bottles}
                                     </span>
                                 </div>
                             </div>
@@ -803,7 +804,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                 : 'text-slate-600 hover:text-slate-900'
                                         }`}
                                     >
-                                        Chưa kiểm ({cycleProgress.uncountedProducts.length})
+                                        {t.client.subTabUncounted} ({cycleProgress.uncountedProducts.length})
                                     </button>
                                     <button
                                         type="button"
@@ -814,7 +815,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                 : 'text-slate-600 hover:text-slate-900'
                                         }`}
                                     >
-                                        Đã kiểm ({cycleProgress.countedProducts.length})
+                                        {t.client.subTabCounted} ({cycleProgress.countedProducts.length})
                                     </button>
                                 </div>
 
@@ -823,7 +824,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                         <input
                                             type="text"
-                                            placeholder="Tìm mã SKU, tên rượu, vị trí..."
+                                            placeholder={t.client.searchCyclePlaceholder}
                                             value={cycleSearchTerm}
                                             onChange={e => setCycleSearchTerm(e.target.value)}
                                             className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-md outline-none focus:border-[#0E7490] text-slate-900 shadow-2xs"
@@ -833,7 +834,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                         type="button"
                                         onClick={() => loadCycleProgress()}
                                         className="text-slate-500 hover:text-slate-800 p-2 border border-slate-200 rounded-md bg-white hover:bg-slate-50 cursor-pointer"
-                                        title="Cập nhật tiến độ"
+                                        title={t.common.refresh}
                                     >
                                         <RefreshCw size={13} />
                                     </button>
@@ -844,7 +845,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                             <div className="max-h-[420px] overflow-y-auto divide-y divide-slate-100 border border-slate-200 rounded-lg bg-white shadow-2xs">
                                 {filteredCycleProducts.length === 0 ? (
                                     <div className="p-8 text-center text-xs text-slate-400">
-                                        {cycleSearchTerm ? 'Không tìm thấy sản phẩm nào khớp với tìm kiếm.' : 'Không có sản phẩm nào trong danh mục này.'}
+                                        {cycleSearchTerm ? t.client.emptyCycleSearch : t.client.emptyCycleCategory}
                                     </div>
                                 ) : (
                                     filteredCycleProducts.map((p: any) => (
@@ -858,15 +859,15 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                             </div>
                                             <div className="flex items-center gap-4 shrink-0 text-slate-500 text-xs">
                                                 <span className="hidden sm:inline truncate max-w-[180px] text-[11px] text-slate-600 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
-                                                    {p.locations && p.locations.length > 0 ? p.locations.join(', ') : 'Chưa gán vị trí'}
+                                                    {p.locations && p.locations.length > 0 ? p.locations.join(', ') : t.common.unassignedLoc}
                                                 </span>
                                                 {activeCycleTab === 'COUNTED' && (
                                                     <span className="text-emerald-700 font-bold shrink-0 text-[11px]">
-                                                        Đã kiểm: {p.lastCountedAt ? new Date(p.lastCountedAt).toLocaleDateString('vi-VN') : ''}
+                                                        {t.client.countedOnPrefix} {p.lastCountedAt ? new Date(p.lastCountedAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN') : ''}
                                                     </span>
                                                 )}
                                                 <strong className="font-mono text-slate-900 shrink-0 min-w-[70px] text-right">
-                                                    {(p.totalQty ?? 0).toLocaleString()} chai
+                                                    {(p.totalQty ?? 0).toLocaleString()} {t.common.bottles}
                                                 </strong>
                                             </div>
                                         </div>
@@ -880,28 +881,28 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     <div>
                                         <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                             <FileText size={16} className="text-lys-teal-strong" />
-                                            <span>Báo Cáo Các Đợt Kiểm Kê & Chênh Lệch Trong Kỳ</span>
+                                            <span>{t.client.periodReportTitle}</span>
                                         </h3>
                                         <p className="text-[11px] text-slate-500 mt-0.5">
-                                            Tổng hợp kết quả các đợt kiểm kê cuốn chiếu, tỷ lệ chênh lệch thực tế so với sổ sách và xuất biên bản đối soát A4.
+                                            {t.client.periodReportDesc}
                                         </p>
                                     </div>
 
                                     {/* Stats summary badges */}
                                     <div className="flex items-center gap-2">
                                         <span className="inline-block text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md border border-slate-200 font-semibold whitespace-nowrap shrink-0">
-                                            Tổng: <strong>{cycleProgress.recentSessions?.length || 0}</strong> đợt
+                                            {t.client.totalBatchesPrefix} <strong>{cycleProgress.recentSessions?.length || 0}</strong> {t.client.batchesUnit}
                                         </span>
                                         {cycleProgress.recentSessions && cycleProgress.recentSessions.filter(s => s.hasVariance).length > 0 && (
                                             <span className="text-xs bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-1 rounded-md font-bold inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                                                 <AlertTriangle size={12} />
-                                                {cycleProgress.recentSessions.filter(s => s.hasVariance).length} đợt có lệch
+                                                {cycleProgress.recentSessions.filter(s => s.hasVariance).length} {t.client.batchesVarianceSuffix}
                                             </span>
                                         )}
                                         {cycleProgress.recentSessions && cycleProgress.recentSessions.filter(s => !s.hasVariance && s.status !== 'DRAFT').length > 0 && (
                                             <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-md font-bold inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                                                 <CheckCircle2 size={12} />
-                                                {cycleProgress.recentSessions.filter(s => !s.hasVariance && s.status !== 'DRAFT').length} đợt khớp 100%
+                                                {cycleProgress.recentSessions.filter(s => !s.hasVariance && s.status !== 'DRAFT').length} {t.client.batchesMatchedSuffix}
                                             </span>
                                         )}
                                     </div>
@@ -912,19 +913,19 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     <table className="w-full text-left border-collapse text-xs min-w-[650px]">
                                         <thead>
                                             <tr className="bg-slate-50 text-slate-500 font-extrabold uppercase text-[10px] tracking-wider border-b border-slate-200">
-                                                <th className="p-2.5 pl-3">SỐ PHIẾU / TIÊU ĐỀ</th>
-                                                <th className="p-2.5 whitespace-nowrap">NGÀY THỰC HIỆN</th>
-                                                <th className="p-2.5 text-center whitespace-nowrap">SỐ MÃ SKU</th>
-                                                <th className="p-2.5 text-center whitespace-nowrap">TRẠNG THÁI</th>
-                                                <th className="p-2.5 text-center whitespace-nowrap">CHÊNH LỆCH TỒN</th>
-                                                <th className="p-2.5 pr-3 text-right whitespace-nowrap">BÁO CÁO & ĐỐI SOÁT</th>
+                                                <th className="p-2.5 pl-3">{t.client.colSessionTitle}</th>
+                                                <th className="p-2.5 whitespace-nowrap">{t.client.colDate}</th>
+                                                <th className="p-2.5 text-center whitespace-nowrap">{t.client.colSkuCount}</th>
+                                                <th className="p-2.5 text-center whitespace-nowrap">{t.client.colStatus}</th>
+                                                <th className="p-2.5 text-center whitespace-nowrap">{t.client.colStockVariance}</th>
+                                                <th className="p-2.5 pr-3 text-right whitespace-nowrap">{t.client.colReportReconcile}</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 text-slate-800">
                                             {!cycleProgress.recentSessions || cycleProgress.recentSessions.length === 0 ? (
                                                 <tr>
                                                     <td colSpan={6} className="p-8 text-center text-slate-400">
-                                                        Chưa có đợt kiểm kê nào được tạo trong khoảng thời gian này.
+                                                        {t.client.emptyRecentSessions}
                                                     </td>
                                                 </tr>
                                             ) : (
@@ -944,10 +945,10 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                                 </span>
                                                             </td>
                                                             <td className="p-2.5 whitespace-nowrap text-slate-600 font-medium">
-                                                                {new Date(s.createdAt).toLocaleDateString('vi-VN')}
+                                                                {new Date(s.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')}
                                                             </td>
                                                             <td className="p-2.5 text-center whitespace-nowrap font-mono font-bold text-slate-800">
-                                                                {s.lineCount} mã
+                                                                {s.lineCount} {t.common.skus}
                                                             </td>
                                                             <td className="p-2.5 text-center whitespace-nowrap">
                                                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -956,23 +957,23 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                                     s.status === 'IN_PROGRESS' ? 'bg-amber-100 text-amber-800 border border-amber-300' :
                                                                     'bg-slate-100 text-slate-700 border border-slate-200'
                                                                 }`}>
-                                                                    {s.status === 'APPROVED' ? 'Đã duyệt' :
-                                                                     s.status === 'COMPLETED' ? 'Đã hoàn tất' :
-                                                                     s.status === 'IN_PROGRESS' ? 'Đang kiểm' : 'Nháp'}
+                                                                    {s.status === 'APPROVED' ? t.client.statusApproved :
+                                                                     s.status === 'COMPLETED' ? t.client.statusCompleted :
+                                                                     s.status === 'IN_PROGRESS' ? t.client.statusInProgress : t.client.statusDraft}
                                                                 </span>
                                                             </td>
                                                             <td className="p-2.5 text-center whitespace-nowrap">
                                                                 {s.status === 'DRAFT' ? (
-                                                                    <span className="text-slate-400 text-[11px]">Chưa đếm</span>
+                                                                    <span className="text-slate-400 text-[11px]">{t.tableModal.statusUncounted}</span>
                                                                 ) : s.hasVariance ? (
                                                                     <span className="inline-flex items-center gap-1 font-mono font-bold text-xs text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 whitespace-nowrap shrink-0">
                                                                         <AlertTriangle size={11} />
-                                                                        Lệch {s.totalVariance} chai
+                                                                        {t.mobile.filterVariance} {s.totalVariance} {t.common.bottles}
                                                                     </span>
                                                                 ) : (
                                                                     <span className="inline-flex items-center gap-1 font-mono font-bold text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 whitespace-nowrap shrink-0">
                                                                         <CheckCircle2 size={11} />
-                                                                        Khớp 100% (0 chai)
+                                                                        100% (0 {t.common.bottles})
                                                                     </span>
                                                                 )}
                                                             </td>
@@ -982,18 +983,16 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                                         type="button"
                                                                         onClick={() => handleOpenPrintView(s.id)}
                                                                         className="px-2.5 py-1.5 bg-[#0E7490] hover:bg-[#0E7490] text-white rounded font-bold text-[11px] shadow-2xs flex items-center gap-1 cursor-pointer transition active:scale-95"
-                                                                        title="Xem biên bản đối soát và chênh lệch kiểm kê"
                                                                     >
                                                                         <FileText size={12} />
-                                                                        <span>Báo Cáo Chênh Lệch</span>
+                                                                        <span>{t.client.varianceReportBtn}</span>
                                                                     </button>
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => handleOpenDetail(s.id)}
                                                                         className="px-2 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded font-semibold text-[11px] cursor-pointer"
-                                                                        title="Xem chi tiết phiên kiểm"
                                                                     >
-                                                                        Chi tiết
+                                                                        {t.common.details}
                                                                     </button>
                                                                 </div>
                                                             </td>
@@ -1010,7 +1009,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                 </div>
             )}
 
-            {/* ═══ TAB 1: DANH SÁCH PHIẾU KIỂM KÊ (CHỈ HIỂN THỊ KHI CHỌN TAB NÀY) ═══ */}
+            {/* ═══ TAB 1: DANH SÁCH PHIẾU KIỂM KÊ ═══ */}
             {viewMode === 'SESSIONS' && (
                 <>
                     {/* Filter Tabs & Search Bar — Matched with Sales Order UI */}
@@ -1018,10 +1017,10 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                 {/* Filter Tabs */}
                 <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 w-full sm:w-auto overflow-x-auto no-scrollbar select-none">
                     {[
-                        { key: 'ALL', label: 'Tất cả', count: stats.total },
-                        { key: 'ASSIGNED', label: 'Phân công', count: stats.assignedToMe || 0 },
-                        { key: 'IN_PROGRESS', label: 'Đang kiểm', count: stats.inProgress },
-                        { key: 'COMPLETED', label: 'Đã xong', count: stats.completed },
+                        { key: 'ALL', label: t.client.filterAll, count: stats.total },
+                        { key: 'ASSIGNED', label: t.client.filterAssigned, count: stats.assignedToMe || 0 },
+                        { key: 'IN_PROGRESS', label: t.client.filterInProgress, count: stats.inProgress },
+                        { key: 'COMPLETED', label: t.client.filterCompleted, count: stats.completed },
                     ].map(tab => {
                         const isActive = activeTab === tab.key
                         return (
@@ -1048,7 +1047,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                         type="text"
-                        placeholder="Tìm số phiếu, kho, nhân viên..."
+                        placeholder={t.client.searchSessionsPlaceholder}
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                         className="w-full pl-9 pr-3 py-1.5 text-base sm:text-xs bg-white border border-slate-200 rounded-md outline-none focus:border-[#0E7490] focus:ring-1 focus:ring-[#0E7490] text-slate-900 placeholder-slate-400 shadow-2xs transition-all"
@@ -1062,23 +1061,23 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                     <table className="w-full text-left border-collapse text-xs">
                         <thead>
                             <tr className="bg-slate-50 text-slate-500 font-extrabold uppercase text-[10px] tracking-wider border-b border-slate-200">
-                                <th className="p-3 pl-4">SỐ PHIẾU ↑</th>
-                                <th className="p-3">TIÊU ĐỀ KIỂM KÊ</th>
-                                <th className="p-3 whitespace-nowrap">KHO HÀNG</th>
-                                <th className="p-3 whitespace-nowrap">PHẠM VI / CHẾ ĐỘ</th>
-                                <th className="p-3 whitespace-nowrap">NGƯỜI PHỤ TRÁCH</th>
-                                <th className="p-3 text-center whitespace-nowrap">SỐ DÒNG</th>
-                                <th className="p-3 text-right whitespace-nowrap">CHÊNH LỆCH ⇅</th>
-                                <th className="p-3 text-center whitespace-nowrap">TRẠNG THÁI</th>
-                                <th className="p-3 whitespace-nowrap text-center">NGÀY TẠO ⌄</th>
-                                <th className="p-3 pr-4 text-right whitespace-nowrap">HÀNH ĐỘNG</th>
+                                <th className="p-3 pl-4">{t.client.thSessionNo}</th>
+                                <th className="p-3">{t.client.thTitle}</th>
+                                <th className="p-3 whitespace-nowrap">{t.client.thWarehouse}</th>
+                                <th className="p-3 whitespace-nowrap">{t.client.thScopeMode}</th>
+                                <th className="p-3 whitespace-nowrap">{t.client.thAssignee}</th>
+                                <th className="p-3 text-center whitespace-nowrap">{t.client.thLineCount}</th>
+                                <th className="p-3 text-right whitespace-nowrap">{t.client.thVariance}</th>
+                                <th className="p-3 text-center whitespace-nowrap">{t.client.thStatus}</th>
+                                <th className="p-3 whitespace-nowrap text-center">{t.client.thCreatedAt}</th>
+                                <th className="p-3 pr-4 text-right whitespace-nowrap">{t.client.thActions}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-slate-800">
                             {filteredList.length === 0 ? (
                                 <tr>
                                     <td colSpan={10} className="p-8 text-center text-slate-400">
-                                        Không tìm thấy phiên kiểm kê nào.
+                                        {t.client.emptySessions}
                                     </td>
                                 </tr>
                             ) : (
@@ -1096,7 +1095,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                             <td className="p-3">
                                                 <div className="font-bold text-slate-900 text-xs leading-snug line-clamp-1">{row.title}</div>
                                                 <div className="text-[10px] text-slate-500 mt-0.5">
-                                                    Tạo bởi: {row.createdByName || 'Hệ thống'}
+                                                    {t.client.createdByPrefix} {row.createdByName || t.client.systemName}
                                                 </div>
                                             </td>
 
@@ -1110,13 +1109,13 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                             <td className="p-3 whitespace-nowrap">
                                                 <div className="flex items-center gap-1">
                                                     <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 inline-flex items-center shrink-0 whitespace-nowrap">
-                                                        {row.scopeType === 'FULL_WAREHOUSE' ? 'Toàn bộ kho' :
-                                                         row.scopeType === 'CYCLE_COUNT' ? 'Cuốn chiếu' :
-                                                         row.scopeType === 'TRANSACTED_ITEMS' ? 'Mã phát sinh' : 'Đột xuất'}
+                                                        {row.scopeType === 'FULL_WAREHOUSE' ? t.client.scopeFull :
+                                                         row.scopeType === 'CYCLE_COUNT' ? t.client.scopeCycle :
+                                                         row.scopeType === 'TRANSACTED_ITEMS' ? t.client.scopeTransacted : t.client.scopeSpot}
                                                     </span>
                                                     {row.isBlindCount && (
                                                         <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200 inline-flex items-center shrink-0 whitespace-nowrap">
-                                                            Giấu sổ
+                                                            {t.client.blindTag}
                                                         </span>
                                                     )}
                                                 </div>
@@ -1128,15 +1127,15 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                         <UserCheck className="w-3.5 h-3.5 shrink-0" /> {row.assignedToName}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-slate-400 italic text-[11px]">Chưa phân công</span>
+                                                    <span className="text-slate-400 italic text-[11px]">{t.common.unassigned}</span>
                                                 )}
                                             </td>
 
-                                            <td className="p-3 text-center font-mono font-bold text-slate-800 whitespace-nowrap">{row.lineCount} mã</td>
+                                            <td className="p-3 text-center font-mono font-bold text-slate-800 whitespace-nowrap">{row.lineCount} {t.common.skus}</td>
 
                                             <td className="p-3 text-right font-mono font-bold whitespace-nowrap">
                                                 <span className={row.totalVariance === 0 ? 'text-slate-500' : row.totalVariance > 0 ? 'text-amber-600' : 'text-rose-600'}>
-                                                    {row.totalVariance > 0 ? `+${row.totalVariance}` : row.totalVariance} chai
+                                                    {row.totalVariance > 0 ? `+${row.totalVariance}` : row.totalVariance} {t.common.bottles}
                                                 </span>
                                             </td>
 
@@ -1153,12 +1152,12 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                         row.status === 'IN_PROGRESS' ? 'bg-amber-500' :
                                                         'bg-slate-400'
                                                     }`} />
-                                                    {row.status === 'APPROVED' ? 'Đã duyệt' : row.status === 'COMPLETED' ? 'Đã đếm xong' : row.status === 'IN_PROGRESS' ? 'Đang kiểm' : 'Nháp'}
+                                                    {row.status === 'APPROVED' ? t.client.statusApproved : row.status === 'COMPLETED' ? t.client.statusCompleted : row.status === 'IN_PROGRESS' ? t.client.statusInProgress : t.client.statusDraft}
                                                 </span>
                                             </td>
 
                                             <td className="p-3 text-center text-[11px] text-slate-500 whitespace-nowrap">
-                                                {new Date(row.createdAt).toLocaleDateString('vi-VN')}
+                                                {new Date(row.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')}
                                             </td>
 
                                             <td className="p-3 pr-4 text-right whitespace-nowrap" onClick={e => e.stopPropagation()}>
@@ -1167,26 +1166,23 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                         <button
                                                             onClick={() => handleStartSession(row.id)}
                                                             className="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded text-[10px] font-bold flex items-center gap-1 transition cursor-pointer whitespace-nowrap"
-                                                            title="Kích hoạt bắt đầu kiểm kê"
                                                         >
-                                                            <Zap className="w-3 h-3" /> Bắt Đầu
+                                                            <Zap className="w-3 h-3" /> {t.client.startShortBtn}
                                                         </button>
                                                     )}
 
                                                     <button
                                                         onClick={() => setTableModalSessionId(row.id)}
                                                         className="px-2 py-1 bg-cyan-50 hover:bg-cyan-100 text-cyan-800 border border-cyan-200 rounded text-[10px] font-bold flex items-center gap-1 transition cursor-pointer whitespace-nowrap"
-                                                        title="Xem & Làm việc chi tiết"
                                                     >
-                                                        <Eye className="w-3 h-3" /> Xem
+                                                        <Eye className="w-3 h-3" /> {t.common.view}
                                                     </button>
 
                                                     <button
                                                         onClick={() => handleOpenPrintView(row.id)}
                                                         className="px-2 py-1 bg-cyan-50 hover:bg-cyan-100 text-[#0891B2] border border-[#0891B2]/30 rounded text-[10px] font-bold flex items-center gap-1 transition cursor-pointer whitespace-nowrap"
-                                                        title="Xem báo cáo chênh lệch & In biên bản đối soát A4"
                                                     >
-                                                        <FileText className="w-3 h-3 text-[#0891B2]" /> Báo Cáo
+                                                        <FileText className="w-3 h-3 text-[#0891B2]" /> {t.client.reportShortBtn}
                                                     </button>
                                                 </div>
                                             </td>
@@ -1203,7 +1199,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
             <div className="block md:hidden space-y-3">
                 {filteredList.length === 0 ? (
                     <div className="p-8 text-center text-slate-400 bg-white border border-slate-200 rounded-lg text-xs font-bold">
-                        Không tìm thấy phiên kiểm kê nào.
+                        {t.client.emptySessions}
                     </div>
                 ) : (
                     filteredList.map(row => (
@@ -1218,7 +1214,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     row.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-800 border border-amber-200' :
                                     'bg-slate-100 text-slate-600 border border-slate-200'
                                 }`}>
-                                    {row.status === 'APPROVED' ? 'Đã duyệt' : row.status === 'COMPLETED' ? 'Đã đếm xong' : row.status === 'IN_PROGRESS' ? 'Đang kiểm' : 'Nháp'}
+                                    {row.status === 'APPROVED' ? t.client.statusApproved : row.status === 'COMPLETED' ? t.client.statusCompleted : row.status === 'IN_PROGRESS' ? t.client.statusInProgress : t.client.statusDraft}
                                 </span>
                             </div>
 
@@ -1228,14 +1224,14 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     <span className="flex items-center gap-1">
                                         <Warehouse className="w-3.5 h-3.5 text-slate-400 shrink-0" /> {row.warehouseName}
                                     </span>
-                                    <span className="font-semibold text-slate-700">Tạo bởi: {row.createdByName}</span>
+                                    <span className="font-semibold text-slate-700">{t.client.createdByPrefix} {row.createdByName || t.client.systemName}</span>
                                 </div>
                             </div>
 
                             <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100 font-mono">
-                                <span>Số dòng: <strong className="text-slate-900">{row.lineCount} mã</strong></span>
+                                <span>{t.client.thLineCount}: <strong className="text-slate-900">{row.lineCount} {t.common.skus}</strong></span>
                                 <span className={row.totalVariance === 0 ? 'text-slate-500' : row.totalVariance > 0 ? 'text-amber-700' : 'text-rose-600'}>
-                                    Lệch: {row.totalVariance > 0 ? `+${row.totalVariance}` : row.totalVariance} chai
+                                    {t.mobile.filterVariance}: {row.totalVariance > 0 ? `+${row.totalVariance}` : row.totalVariance} {t.common.bottles}
                                 </span>
                             </div>
 
@@ -1244,7 +1240,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     onClick={() => handleStartSession(row.id)}
                                     className="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
                                 >
-                                    <Zap className="w-4 h-4" /> Bắt đầu kiểm kê
+                                    <Zap className="w-4 h-4" /> {t.tableModal.startBtn}
                                 </button>
                             )}
 
@@ -1253,25 +1249,25 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     onClick={() => setTableModalSessionId(row.id)}
                                     className="py-2.5 bg-[#0E7490] hover:bg-[#0E7490] active:scale-95 text-white font-bold rounded-lg text-[11px] flex items-center justify-center gap-1 shadow-2xs cursor-pointer transition-all duration-150"
                                 >
-                                    <FileText className="w-3.5 h-3.5" /> Bảng kiểm kê
+                                    <FileText className="w-3.5 h-3.5" /> {t.client.mobileTableBtn}
                                 </button>
                                 <button
                                     onClick={() => handleOpenMobileView(row.id)}
                                     className="py-2.5 bg-emerald-50 hover:bg-emerald-100 active:scale-95 text-emerald-800 font-bold rounded-lg text-[11px] flex items-center justify-center gap-1 border border-emerald-200 shadow-2xs cursor-pointer transition-all duration-150"
                                 >
-                                    <Smartphone className="w-3.5 h-3.5" /> Đếm di động
+                                    <Smartphone className="w-3.5 h-3.5" /> {t.client.mobileCounterBtn}
                                 </button>
                                 <button
                                     onClick={() => handleOpenAssignModal(row.id)}
                                     className="py-2 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 font-extrabold rounded-lg text-[11px] flex items-center justify-center gap-1 border border-slate-200 shadow-2xs cursor-pointer transition-all duration-150"
                                 >
-                                    <UserCheck className="w-3.5 h-3.5 text-cyan-600" /> Phân công
+                                    <UserCheck className="w-3.5 h-3.5 text-cyan-600" /> {t.tableModal.assignBtn}
                                 </button>
                                 <button
                                     onClick={() => handleOpenPrintView(row.id)}
                                     className="py-2 bg-white hover:bg-slate-50 active:scale-95 text-slate-700 font-extrabold rounded-lg text-[11px] flex items-center justify-center gap-1 border border-slate-200 shadow-2xs cursor-pointer transition-all duration-150"
                                 >
-                                    <FileText className="w-3.5 h-3.5 text-lys-teal-strong" /> Báo Cáo A4
+                                    <FileText className="w-3.5 h-3.5 text-lys-teal-strong" /> {t.client.a4ReportShort}
                                 </button>
                             </div>
                         </div>

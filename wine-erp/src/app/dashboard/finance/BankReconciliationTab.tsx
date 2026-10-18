@@ -23,6 +23,7 @@ import {
 } from './actions-bank-reconciliation'
 import { formatVND, formatDate } from '@/lib/utils'
 import { useConfirmDialog } from '@/components/ui'
+import { useAppLocale } from '@/lib/i18n'
 
 interface BankAccountItem {
     id: string
@@ -86,6 +87,7 @@ interface BankTransactionItem {
 }
 
 export function BankReconciliationTab() {
+    const { isEn } = useAppLocale()
     const [accounts, setAccounts] = useState<BankAccountItem[]>([])
     const [selectedAccountId, setSelectedAccountId] = useState<string>('ALL')
     const [statusFilter, setStatusFilter] = useState<'ALL' | 'SUGGESTED' | 'UNMATCHED' | 'POSTED' | 'IGNORED'>('ALL')
@@ -153,14 +155,14 @@ export function BankReconciliationTab() {
                 setKpis(res.data.kpis)
                 setPagination(res.data.pagination)
             } else {
-                toast.error(res.error || 'Lỗi khi tải dữ liệu sao kê.')
+                toast.error(res.error || (isEn ? 'Failed to load bank statements.' : 'Lỗi khi tải dữ liệu sao kê.'))
             }
         } catch {
-            toast.error('Không thể kết nối đến máy chủ.')
+            toast.error(isEn ? 'Failed to connect to server.' : 'Không thể kết nối đến máy chủ.')
         } finally {
             setLoading(false)
         }
-    }, [selectedAccountId, statusFilter, searchQuery, page])
+    }, [selectedAccountId, statusFilter, searchQuery, page, isEn])
 
     useEffect(() => {
         loadAccounts()
@@ -174,11 +176,11 @@ export function BankReconciliationTab() {
     const handleUploadSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!uploadFile) {
-            toast.warning('Vui lòng chọn file sao kê (Excel/CSV).')
+            toast.warning(isEn ? 'Please select a bank statement file (Excel/CSV).' : 'Vui lòng chọn file sao kê (Excel/CSV).')
             return
         }
         if (!uploadAccountId) {
-            toast.warning('Vui lòng chọn tài khoản ngân hàng.')
+            toast.warning(isEn ? 'Please select a bank account.' : 'Vui lòng chọn tài khoản ngân hàng.')
             return
         }
 
@@ -191,16 +193,18 @@ export function BankReconciliationTab() {
             const res = await uploadBankStatementAction(formData)
             if (res.success && res.data) {
                 toast.success(
-                    `Nạp sao kê thành công! Đọc ${res.data.totalParsed} dòng, ${res.data.insertedCount} giao dịch mới, ${res.data.autoSuggestedCount} gợi ý khớp.`
+                    isEn
+                        ? `Uploaded! Parsed ${res.data.totalParsed} rows, ${res.data.insertedCount} new transactions, ${res.data.autoSuggestedCount} suggested matches.`
+                        : `Nạp sao kê thành công! Đọc ${res.data.totalParsed} dòng, ${res.data.insertedCount} giao dịch mới, ${res.data.autoSuggestedCount} gợi ý khớp.`
                 )
                 setShowUploadModal(false)
                 setUploadFile(null)
                 loadTransactions()
             } else {
-                toast.error(res.error || 'Lỗi xử lý file sao kê.')
+                toast.error(res.error || (isEn ? 'Failed to process bank statement.' : 'Lỗi xử lý file sao kê.'))
             }
         } catch (err: any) {
-            toast.error(err.message || 'Lỗi hệ thống khi nạp file.')
+            toast.error(err.message || (isEn ? 'System error while uploading.' : 'Lỗi hệ thống khi nạp file.'))
         } finally {
             setLoading(false)
         }
@@ -209,22 +213,19 @@ export function BankReconciliationTab() {
     // 1-Click Approve from inline button
     const handleInlineApprove = async (txn: BankTransactionItem) => {
         if (!txn.matchedCustomerId) {
-            // Open drawer for assignment
             handleOpenAllocationDrawer(txn)
             return
         }
 
-        // Fetch candidate invoices for this customer
         startTransition(async () => {
             const invRes = await getOpenInvoicesForCustomer(txn.matchedCustomerId!)
             if (!invRes.success || !invRes.data || invRes.data.length === 0) {
-                toast.warning('Khách hàng không còn hóa đơn nào chưa thanh toán. Vui lòng mở bảng phân bổ để kiểm tra.')
+                toast.warning(isEn ? 'Customer has no unpaid invoices. Please open allocation drawer to check.' : 'Khách hàng không còn hóa đơn nào chưa thanh toán. Vui lòng mở bảng phân bổ để kiểm tra.')
                 handleOpenAllocationDrawer(txn)
                 return
             }
 
             const openInvs = invRes.data
-            // Auto match 1 invoice if amount matches or single invoice exists
             const exact = openInvs.find((i: any) => Math.abs(Number(i.totalAmount) - Number(i.paidAmount) - txn.amount) <= 10000)
             const targetInv = exact || openInvs[0]
 
@@ -245,10 +246,10 @@ export function BankReconciliationTab() {
             })
 
             if (res.success) {
-                toast.success(`Đã hạch toán thanh toán thành công cho hóa đơn ${targetInv.invoiceNo}!`)
+                toast.success(isEn ? `Successfully posted payment to invoice ${targetInv.invoiceNo}!` : `Đã hạch toán thanh toán thành công cho hóa đơn ${targetInv.invoiceNo}!`)
                 loadTransactions()
             } else {
-                toast.error(res.error || 'Lỗi khi hạch toán.')
+                toast.error(res.error || (isEn ? 'Failed to post payment.' : 'Lỗi khi hạch toán.'))
             }
         })
     }
@@ -256,9 +257,9 @@ export function BankReconciliationTab() {
     // Rollback / Unmatch
     const handleRevert = async (txn: BankTransactionItem) => {
         const ok = await confirm({
-            title: 'Hủy khớp giao dịch sao kê',
-            message: 'Bạn có chắc muốn HỦY KHỚP giao dịch này? Phiếu thu ARPayment sẽ bị xóa và công nợ hóa đơn sẽ được phục hồi.',
-            confirmLabel: 'Hủy khớp',
+            title: isEn ? 'Unmatch Bank Transaction' : 'Hủy khớp giao dịch sao kê',
+            message: isEn ? 'Are you sure you want to UNMATCH this transaction? ARPayment receipt will be deleted and invoice balance restored.' : 'Bạn có chắc muốn HỦY KHỚP giao dịch này? Phiếu thu ARPayment sẽ bị xóa và công nợ hóa đơn sẽ được phục hồi.',
+            confirmLabel: isEn ? 'Unmatch' : 'Hủy khớp',
             variant: 'danger',
         })
         if (!ok) {
@@ -268,10 +269,10 @@ export function BankReconciliationTab() {
         startTransition(async () => {
             const res = await revertBankTransactionMatch(txn.id)
             if (res.success) {
-                toast.success('Đã hoàn tác giao dịch sao kê thành công!')
+                toast.success(isEn ? 'Reverted bank transaction match!' : 'Đã hoàn tác giao dịch sao kê thành công!')
                 loadTransactions()
             } else {
-                toast.error(res.error || 'Lỗi khi hoàn tác.')
+                toast.error(res.error || (isEn ? 'Failed to revert.' : 'Lỗi khi hoàn tác.'))
             }
         })
     }
@@ -281,10 +282,10 @@ export function BankReconciliationTab() {
         startTransition(async () => {
             const res = await toggleIgnoreBankTransaction(txn.id, ignore)
             if (res.success) {
-                toast.success(ignore ? 'Đã bỏ qua giao dịch.' : 'Đã khôi phục giao dịch.')
+                toast.success(ignore ? (isEn ? 'Transaction ignored.' : 'Đã bỏ qua giao dịch.') : (isEn ? 'Transaction restored.' : 'Đã khôi phục giao dịch.'))
                 loadTransactions()
             } else {
-                toast.error(res.error || 'Lỗi cập nhật.')
+                toast.error(res.error || (isEn ? 'Failed to update.' : 'Lỗi cập nhật.'))
             }
         })
     }
@@ -295,7 +296,6 @@ export function BankReconciliationTab() {
         setSelectedInvoices({})
         setFeeDiffTolerance(0)
 
-        // Pre-fill suggested keyword from narrative
         const cleanKeyword = txn.rawNarrative.replace(/[0-9]/g, '').trim().slice(0, 30)
         setRememberKeyword(cleanKeyword)
 
@@ -304,7 +304,6 @@ export function BankReconciliationTab() {
             const invRes = await getOpenInvoicesForCustomer(txn.matchedCustomerId)
             if (invRes.success && invRes.data) {
                 setCustInvoices(invRes.data)
-                // Auto allocate if amount fits
                 const initialMap: { [id: string]: number } = {}
                 let remainingAmountToAlloc = txn.amount
 
@@ -345,7 +344,6 @@ export function BankReconciliationTab() {
         const invRes = await getOpenInvoicesForCustomer(cust.id)
         if (invRes.success && invRes.data) {
             setCustInvoices(invRes.data)
-            // Pre-select first invoice
             if (invRes.data.length > 0 && allocatingTxn) {
                 const inv = invRes.data[0]
                 const invRemain = Number(inv.totalAmount) - Number(inv.paidAmount)
@@ -367,7 +365,7 @@ export function BankReconciliationTab() {
             }))
 
         if (allocations.length === 0) {
-            toast.warning('Vui lòng nhập số tiền phân bổ cho ít nhất một hóa đơn.')
+            toast.warning(isEn ? 'Please allocate amount to at least one invoice.' : 'Vui lòng nhập số tiền phân bổ cho ít nhất một hóa đơn.')
             return
         }
 
@@ -380,11 +378,11 @@ export function BankReconciliationTab() {
             })
 
             if (res.success) {
-                toast.success('Hạch toán phân bổ thanh toán thành công!')
+                toast.success(isEn ? 'Payment allocation posted successfully!' : 'Hạch toán phân bổ thanh toán thành công!')
                 setAllocatingTxn(null)
                 loadTransactions()
             } else {
-                toast.error(res.error || 'Lỗi khi hạch toán.')
+                toast.error(res.error || (isEn ? 'Failed to post allocation.' : 'Lỗi khi hạch toán.'))
             }
         })
     }
@@ -401,10 +399,10 @@ export function BankReconciliationTab() {
     const handleDeleteRule = async (ruleId: string) => {
         const res = await deleteReconciliationRule(ruleId)
         if (res.success) {
-            toast.success('Đã xóa quy tắc ghi nhớ.')
+            toast.success(isEn ? 'Rule deleted.' : 'Đã xóa quy tắc ghi nhớ.')
             setRules(prev => prev.filter(r => r.id !== ruleId))
         } else {
-            toast.error(res.error || 'Lỗi khi xóa quy tắc.')
+            toast.error(res.error || (isEn ? 'Failed to delete rule.' : 'Lỗi khi xóa quy tắc.'))
         }
     }
 
@@ -417,9 +415,13 @@ export function BankReconciliationTab() {
                         <Building2 size={20} />
                     </div>
                     <div>
-                        <h2 className="text-sm font-bold text-slate-900">Đối Soát Sao Kê Ngân Hàng & Thu Nợ Khách Hàng</h2>
+                        <h2 className="text-sm font-bold text-slate-900">
+                            {isEn ? 'Bank Statement Reconciliation & AR Collection' : 'Đối Soát Sao Kê Ngân Hàng & Thu Nợ Khách Hàng'}
+                        </h2>
                         <p className="text-xs text-slate-500">
-                            Upload file sao kê Excel/CSV • Gợi ý thông minh (Heuristic & AI) • Duyệt 1-Click ghi nhận ARPayment
+                            {isEn
+                                ? 'Upload Excel/CSV statements • Smart Heuristic & AI matching • 1-Click approve to ARPayment'
+                                : 'Upload file sao kê Excel/CSV • Gợi ý thông minh (Heuristic & AI) • Duyệt 1-Click ghi nhận ARPayment'}
                         </p>
                     </div>
                 </div>
@@ -430,7 +432,7 @@ export function BankReconciliationTab() {
                         className="px-3 py-2 text-xs font-medium rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 transition-colors cursor-pointer"
                     >
                         <BookOpen size={14} className="text-slate-500" />
-                        Quy Tắc Nhớ
+                        {isEn ? 'Learned Rules' : 'Quy Tắc Nhớ'}
                     </button>
 
                     <button
@@ -438,7 +440,7 @@ export function BankReconciliationTab() {
                         className="px-3.5 py-2 text-xs font-semibold rounded-md bg-emerald-700 text-white hover:bg-emerald-800 flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                     >
                         <Upload size={14} />
-                        Nạp File Sao Kê (Excel/CSV)
+                        {isEn ? 'Upload Statement (Excel/CSV)' : 'Nạp File Sao Kê (Excel/CSV)'}
                     </button>
                 </div>
             </div>
@@ -446,45 +448,45 @@ export function BankReconciliationTab() {
             {/* KPI Cards */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 <div className="p-3.5 rounded-lg bg-white border border-slate-200 border-l-4 border-l-slate-700">
-                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Tổng Thu Vào</p>
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{isEn ? 'Total Credits' : 'Tổng Thu Vào'}</p>
                     <p className="text-lg font-bold text-slate-900 mt-1 font-mono">{formatVND(kpis.totalCreditAmount)}</p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">{kpis.totalCount} giao dịch đã nạp</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">{kpis.totalCount} {isEn ? 'transactions loaded' : 'giao dịch đã nạp'}</p>
                 </div>
 
                 <div className="p-3.5 rounded-lg bg-white border border-slate-200 border-l-4 border-l-amber-500">
                     <div className="flex items-center justify-between">
-                        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Chờ Duyệt (Gợi Ý)</p>
+                        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{isEn ? 'Suggested Match' : 'Chờ Duyệt (Gợi Ý)'}</p>
                         <Sparkles size={14} className="text-amber-500" />
                     </div>
                     <p className="text-lg font-bold text-amber-600 mt-1 font-mono">{kpis.suggestedCount}</p>
-                    <p className="text-[11px] text-amber-700 mt-0.5 font-medium">Khớp SO/HĐ & Khách hàng</p>
+                    <p className="text-[11px] text-amber-700 mt-0.5 font-medium">{isEn ? 'Matched SO/Invoice & Customer' : 'Khớp SO/HĐ & Khách hàng'}</p>
                 </div>
 
                 <div className="p-3.5 rounded-lg bg-white border border-slate-200 border-l-4 border-l-emerald-600">
                     <div className="flex items-center justify-between">
-                        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Đã Ghi Sổ (AR)</p>
+                        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{isEn ? 'Posted (AR)' : 'Đã Ghi Sổ (AR)'}</p>
                         <CheckCircle2 size={14} className="text-emerald-600" />
                     </div>
                     <p className="text-lg font-bold text-emerald-700 mt-1 font-mono">{kpis.postedCount}</p>
-                    <p className="text-[11px] text-emerald-600 mt-0.5">Đã sinh phiếu thu ARPayment</p>
+                    <p className="text-[11px] text-emerald-600 mt-0.5">{isEn ? 'Generated ARPayment' : 'Đã sinh phiếu thu ARPayment'}</p>
                 </div>
 
                 <div className="p-3.5 rounded-lg bg-white border border-slate-200 border-l-4 border-l-rose-500">
                     <div className="flex items-center justify-between">
-                        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Chưa Rõ</p>
+                        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{isEn ? 'Unmatched' : 'Chưa Rõ'}</p>
                         <AlertCircle size={14} className="text-rose-500" />
                     </div>
                     <p className="text-lg font-bold text-rose-600 mt-1 font-mono">{kpis.unmatchedCount}</p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Cần kế toán chỉ định tay</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">{isEn ? 'Needs manual assignment' : 'Cần kế toán chỉ định tay'}</p>
                 </div>
 
                 <div className="p-3.5 rounded-lg bg-white border border-slate-200 border-l-4 border-l-slate-400">
                     <div className="flex items-center justify-between">
-                        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Bỏ Qua</p>
+                        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{isEn ? 'Ignored' : 'Bỏ Qua'}</p>
                         <X size={14} className="text-slate-400" />
                     </div>
                     <p className="text-lg font-bold text-slate-600 mt-1 font-mono">{kpis.ignoredCount}</p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Lãi / GD nội bộ / Chi phí</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">{isEn ? 'Interest / Internal / Fees' : 'Lãi / GD nội bộ / Chi phí'}</p>
                 </div>
             </div>
 
@@ -493,13 +495,13 @@ export function BankReconciliationTab() {
                 <div className="flex flex-wrap items-center gap-2">
                     {/* Bank Account Selector */}
                     <div className="flex items-center gap-1.5">
-                        <span className="text-xs text-slate-500 font-medium">Tài khoản:</span>
+                        <span className="text-xs text-slate-500 font-medium">{isEn ? 'Account:' : 'Tài khoản:'}</span>
                         <select
                             value={selectedAccountId}
                             onChange={(e) => { setSelectedAccountId(e.target.value); setPage(1) }}
                             className="text-xs px-2.5 py-1.5 rounded-md border border-slate-200 bg-white text-slate-800 font-medium cursor-pointer"
                         >
-                            <option value="ALL">Tất cả tài khoản</option>
+                            <option value="ALL">{isEn ? 'All accounts' : 'Tất cả tài khoản'}</option>
                             {accounts.map(acc => (
                                 <option key={acc.id} value={acc.id}>
                                     {acc.bankCode} - {acc.accountNumber} ({acc.bankName})
@@ -509,18 +511,18 @@ export function BankReconciliationTab() {
                     </div>
 
                     {/* Status Tabs */}
-                    <div className="flex items-center p-0.5 rounded-md bg-slate-100 border border-slate-200">
+                    <div className="flex items-center p-0.5 rounded-md bg-slate-100 border border-slate-200 overflow-x-auto max-w-full">
                         {[
-                            { key: 'ALL', label: 'Tất cả' },
-                            { key: 'SUGGESTED', label: `Gợi ý (${kpis.suggestedCount})` },
-                            { key: 'UNMATCHED', label: `Chưa rõ (${kpis.unmatchedCount})` },
-                            { key: 'POSTED', label: `Đã duyệt (${kpis.postedCount})` },
-                            { key: 'IGNORED', label: 'Bỏ qua' },
+                            { key: 'ALL', label: isEn ? 'All' : 'Tất cả' },
+                            { key: 'SUGGESTED', label: `${isEn ? 'Suggested' : 'Gợi ý'} (${kpis.suggestedCount})` },
+                            { key: 'UNMATCHED', label: `${isEn ? 'Unmatched' : 'Chưa rõ'} (${kpis.unmatchedCount})` },
+                            { key: 'POSTED', label: `${isEn ? 'Posted' : 'Đã duyệt'} (${kpis.postedCount})` },
+                            { key: 'IGNORED', label: isEn ? 'Ignored' : 'Bỏ qua' },
                         ].map(t => (
                             <button
                                 key={t.key}
                                 onClick={() => { setStatusFilter(t.key as any); setPage(1) }}
-                                className={`text-xs px-2.5 py-1 rounded font-medium transition-all cursor-pointer ${statusFilter === t.key
+                                className={`text-xs px-2.5 py-1 rounded font-medium transition-all cursor-pointer whitespace-nowrap ${statusFilter === t.key
                                     ? 'bg-white text-slate-900 shadow-xs'
                                     : 'text-slate-600 hover:text-slate-900'
                                     }`}
@@ -536,7 +538,7 @@ export function BankReconciliationTab() {
                     <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                         type="text"
-                        placeholder="Tìm nội dung, mã đơn, KH..."
+                        placeholder={isEn ? 'Search narrative, SO code, customer...' : 'Tìm nội dung, mã đơn, KH...'}
                         value={searchQuery}
                         onChange={(e) => { setSearchQuery(e.target.value); setPage(1) }}
                         className="w-full text-xs pl-8 pr-3 py-1.5 rounded-md border border-slate-200 focus:outline-none focus:border-emerald-600"
@@ -544,18 +546,100 @@ export function BankReconciliationTab() {
                 </div>
             </div>
 
-            {/* Transactions Table */}
-            <div className="rounded-lg border border-slate-200 bg-white overflow-hidden shadow-xs">
+            {/* Mobile Cards View (<768px) */}
+            <div className="block md:hidden space-y-3">
+                {loading ? (
+                    <div className="text-center py-12 text-xs text-slate-500 bg-white rounded-lg border border-slate-200">
+                        <RefreshCw size={16} className="animate-spin text-emerald-600 mx-auto mb-2" />
+                        {isEn ? 'Loading bank statements...' : 'Đang tải dữ liệu sao kê...'}
+                    </div>
+                ) : transactions.length === 0 ? (
+                    <div className="text-center py-12 text-xs text-slate-500 bg-white rounded-lg border border-slate-200 p-4">
+                        <FileSpreadsheet size={32} className="mx-auto text-slate-300 mb-2" />
+                        <p className="font-semibold text-slate-700">{isEn ? 'No bank statement transactions' : 'Chưa có giao dịch sao kê nào'}</p>
+                    </div>
+                ) : (
+                    transactions.map(txn => {
+                        const isCredit = txn.txnType === 'CREDIT'
+                        const isPosted = txn.status === 'POSTED'
+                        const isIgnored = txn.status === 'IGNORED'
+                        const score = txn.confidenceScore || 0
+                        return (
+                            <div key={txn.id} className={`p-3.5 rounded-lg border bg-white shadow-xs space-y-2.5 ${isPosted ? 'border-emerald-200 bg-emerald-50/20' : isIgnored ? 'opacity-60 border-slate-200' : 'border-slate-200'}`}>
+                                <div className="flex items-start justify-between gap-2">
+                                    <div>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">{txn.bankAccount.bankCode}</span>
+                                            <span className="text-xs font-semibold text-slate-800">{formatDate(txn.txnDate)}</span>
+                                        </div>
+                                        <p className="text-[10px] font-mono text-slate-400 mt-0.5">{txn.txnRef ? `Ref: ${txn.txnRef}` : txn.bankAccount.accountNumber}</p>
+                                    </div>
+                                    <span className={`font-mono font-bold text-sm ${isCredit ? 'text-emerald-700' : 'text-rose-600'}`}>
+                                        {isCredit ? '+' : '-'}{formatVND(txn.amount)}
+                                    </span>
+                                </div>
+                                <p className="text-[11px] font-mono text-slate-700 bg-slate-50 p-2 rounded border border-slate-100 line-clamp-2">
+                                    {txn.rawNarrative}
+                                </p>
+                                <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 text-xs">
+                                    <div>
+                                        {isPosted ? (
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+                                                <CheckCircle2 size={11} /> {isEn ? 'Posted' : 'Đã Hạch Toán'}
+                                            </span>
+                                        ) : isIgnored ? (
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-200 text-slate-600">
+                                                {isEn ? 'Ignored' : 'Đã bỏ qua'}
+                                            </span>
+                                        ) : (
+                                            <span className="text-[11px] text-slate-600 font-medium">
+                                                {score > 0 ? `${score}% • ` : ''}{txn.matchedCustomer?.name || txn.suggestedReason || (isEn ? 'Unmatched' : 'Chưa nhận diện')}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                        {isPosted ? (
+                                            <button onClick={() => handleRevert(txn)} disabled={isPending} className="px-2.5 py-1 text-[11px] font-medium rounded border border-rose-200 text-rose-700">
+                                                {isEn ? 'Unmatch' : 'Hủy Khớp'}
+                                            </button>
+                                        ) : isIgnored ? (
+                                            <button onClick={() => handleToggleIgnore(txn, false)} className="px-2.5 py-1 text-[11px] font-medium rounded border border-slate-200 text-slate-600">
+                                                {isEn ? 'Restore' : 'Khôi phục'}
+                                            </button>
+                                        ) : (
+                                            <>
+                                                {isCredit && score >= 80 && (
+                                                    <button onClick={() => handleInlineApprove(txn)} disabled={isPending} className="px-2.5 py-1 text-[11px] font-semibold rounded bg-emerald-700 text-white">
+                                                        {isEn ? '1-Click Approve' : '1-Click Duyệt'}
+                                                    </button>
+                                                )}
+                                                {isCredit && (
+                                                    <button onClick={() => handleOpenAllocationDrawer(txn)} className="px-2.5 py-1 text-[11px] font-medium rounded border border-slate-200 text-slate-700">
+                                                        {score >= 80 ? (isEn ? 'Review' : 'Xem & Gộp') : (isEn ? 'Assign' : 'Chỉ định')}
+                                                    </button>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    })
+                )}
+            </div>
+
+            {/* Desktop Transactions Table */}
+            <div className="hidden md:block rounded-lg border border-slate-200 bg-white overflow-hidden shadow-xs">
                 <div className="overflow-x-auto" style={{ maxHeight: 'calc(100vh - 380px)', overflowY: 'auto' }}>
                     <table className="w-full text-left text-xs border-collapse">
                         <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 z-10">
                             <tr>
-                                <th className="px-3.5 py-3 font-semibold text-slate-600">Ngày / Mã GD</th>
-                                <th className="px-3.5 py-3 font-semibold text-slate-600">Tài Khoản</th>
-                                <th className="px-3.5 py-3 font-semibold text-slate-600">Số Tiền (VND)</th>
-                                <th className="px-3.5 py-3 font-semibold text-slate-600">Nội Dung Chuyển Khoản</th>
-                                <th className="px-3.5 py-3 font-semibold text-slate-600">Nhận Diện & Gợi Ý Khớp</th>
-                                <th className="px-3.5 py-3 font-semibold text-slate-600 text-right">Hành Động</th>
+                                <th className="px-3.5 py-3 font-semibold text-slate-600">{isEn ? 'Date / Ref' : 'Ngày / Mã GD'}</th>
+                                <th className="px-3.5 py-3 font-semibold text-slate-600">{isEn ? 'Account' : 'Tài Khoản'}</th>
+                                <th className="px-3.5 py-3 font-semibold text-slate-600">{isEn ? 'Amount (VND)' : 'Số Tiền (VND)'}</th>
+                                <th className="px-3.5 py-3 font-semibold text-slate-600">{isEn ? 'Bank Narrative' : 'Nội Dung Chuyển Khoản'}</th>
+                                <th className="px-3.5 py-3 font-semibold text-slate-600">{isEn ? 'Smart Match & Suggestion' : 'Nhận Diện & Gợi Ý Khớp'}</th>
+                                <th className="px-3.5 py-3 font-semibold text-slate-600 text-right">{isEn ? 'Actions' : 'Hành Động'}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -564,7 +648,7 @@ export function BankReconciliationTab() {
                                     <td colSpan={6} className="text-center py-12 text-slate-500">
                                         <div className="flex items-center justify-center gap-2">
                                             <RefreshCw size={16} className="animate-spin text-emerald-600" />
-                                            Đang tải dữ liệu sao kê...
+                                            {isEn ? 'Loading bank statements...' : 'Đang tải dữ liệu sao kê...'}
                                         </div>
                                     </td>
                                 </tr>
@@ -573,9 +657,11 @@ export function BankReconciliationTab() {
                                     <td colSpan={6} className="text-center py-14 text-slate-500">
                                         <div className="max-w-md mx-auto space-y-2">
                                             <FileSpreadsheet size={36} className="mx-auto text-slate-300" />
-                                            <p className="font-semibold text-slate-700">Chưa có giao dịch sao kê nào</p>
+                                            <p className="font-semibold text-slate-700">{isEn ? 'No bank statement transactions found' : 'Chưa có giao dịch sao kê nào'}</p>
                                             <p className="text-[11px] text-slate-400">
-                                                Bấm nút "Nạp File Sao Kê (Excel/CSV)" ở góc trên để tải lên sao kê ngân hàng và bắt đầu đối soát.
+                                                {isEn
+                                                    ? 'Click "Upload Statement (Excel/CSV)" at the top right to import bank statements and start reconciliation.'
+                                                    : 'Bấm nút "Nạp File Sao Kê (Excel/CSV)" ở góc trên để tải lên sao kê ngân hàng và bắt đầu đối soát.'}
                                             </p>
                                         </div>
                                     </td>
@@ -585,10 +671,8 @@ export function BankReconciliationTab() {
                                     const isCredit = txn.txnType === 'CREDIT'
                                     const isPosted = txn.status === 'POSTED'
                                     const isIgnored = txn.status === 'IGNORED'
-                                    const isSuggested = txn.status === 'SUGGESTED'
                                     const score = txn.confidenceScore || 0
 
-                                    // Badge color by score
                                     let badgeColor = 'bg-slate-100 text-slate-700 border-slate-200'
                                     if (score >= 95) badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                     else if (score >= 80) badgeColor = 'bg-blue-50 text-blue-700 border-blue-200'
@@ -600,7 +684,6 @@ export function BankReconciliationTab() {
                                             className={`hover:bg-slate-50/80 transition-colors ${isPosted ? 'bg-emerald-50/30' : isIgnored ? 'opacity-50 bg-slate-50/50' : ''
                                                 }`}
                                         >
-                                            {/* Date & Ref */}
                                             <td className="px-3.5 py-3 whitespace-nowrap">
                                                 <p className="font-semibold text-slate-800">{formatDate(txn.txnDate)}</p>
                                                 <p className="text-[10px] font-mono text-slate-400">
@@ -608,7 +691,6 @@ export function BankReconciliationTab() {
                                                 </p>
                                             </td>
 
-                                            {/* Bank Account */}
                                             <td className="px-3.5 py-3 whitespace-nowrap">
                                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 whitespace-nowrap shrink-0">
                                                     {txn.bankAccount.bankCode}
@@ -616,7 +698,6 @@ export function BankReconciliationTab() {
                                                 <p className="text-[10px] text-slate-500 mt-0.5">{txn.bankAccount.accountNumber}</p>
                                             </td>
 
-                                            {/* Amount */}
                                             <td className="px-3.5 py-3 whitespace-nowrap">
                                                 <div className="flex items-center gap-1">
                                                     {isCredit ? (
@@ -630,30 +711,28 @@ export function BankReconciliationTab() {
                                                 </div>
                                                 {txn.balanceAfter !== null && (
                                                     <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                                                        Dư: {formatVND(txn.balanceAfter)}
+                                                        {isEn ? 'Bal:' : 'Dư:'} {formatVND(txn.balanceAfter)}
                                                     </p>
                                                 )}
                                             </td>
 
-                                            {/* Narrative */}
                                             <td className="px-3.5 py-3 max-w-sm">
                                                 <p className="text-slate-800 line-clamp-2 leading-relaxed font-mono text-[11px]">
                                                     {txn.rawNarrative}
                                                 </p>
                                             </td>
 
-                                            {/* Smart Match Info */}
                                             <td className="px-3.5 py-3 min-w-[200px]">
                                                 {isPosted ? (
                                                     <div className="space-y-1">
                                                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 whitespace-nowrap shrink-0">
-                                                            <CheckCircle2 size={12} /> Đã Hạch Toán
+                                                            <CheckCircle2 size={12} /> {isEn ? 'Posted' : 'Đã Hạch Toán'}
                                                         </span>
                                                         {txn.paymentMatches && txn.paymentMatches.length > 0 && (
                                                             <div className="text-[11px] text-slate-600">
                                                                 {txn.paymentMatches.map(m => (
                                                                     <div key={m.id} className="flex items-center gap-1 font-medium">
-                                                                        <span>HĐ: {m.invoice.invoiceNo}</span>
+                                                                        <span>{isEn ? 'Inv:' : 'HĐ:'} {m.invoice.invoiceNo}</span>
                                                                         {m.invoice.so && <span className="text-slate-400">({m.invoice.so.soNo})</span>}
                                                                         <span className="text-emerald-700">+{formatVND(m.allocatedAmount)}</span>
                                                                     </div>
@@ -663,14 +742,14 @@ export function BankReconciliationTab() {
                                                     </div>
                                                 ) : isIgnored ? (
                                                     <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-200 text-slate-600 whitespace-nowrap shrink-0">
-                                                        Đã bỏ qua
+                                                        {isEn ? 'Ignored' : 'Đã bỏ qua'}
                                                     </span>
                                                 ) : (
                                                     <div className="space-y-1">
                                                         {score > 0 && (
                                                             <div className="flex items-center gap-1.5">
                                                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeColor} whitespace-nowrap shrink-0`}>
-                                                                    {score}% Khớp
+                                                                    {score}% {isEn ? 'Match' : 'Khớp'}
                                                                 </span>
                                                                 {txn.matchedCustomer && (
                                                                     <span className="font-semibold text-slate-800 truncate max-w-[140px]">
@@ -680,13 +759,12 @@ export function BankReconciliationTab() {
                                                             </div>
                                                         )}
                                                         <p className="text-[11px] text-slate-600 leading-tight">
-                                                            {txn.suggestedReason || 'Chưa nhận diện được'}
+                                                            {txn.suggestedReason || (isEn ? 'Unrecognized' : 'Chưa nhận diện được')}
                                                         </p>
                                                     </div>
                                                 )}
                                             </td>
 
-                                            {/* Action Buttons */}
                                             <td className="px-3.5 py-3 whitespace-nowrap text-right">
                                                 <div className="flex items-center justify-end gap-1.5">
                                                     {isPosted ? (
@@ -695,42 +773,39 @@ export function BankReconciliationTab() {
                                                             disabled={isPending}
                                                             className="px-2.5 py-1 text-[11px] font-medium rounded border border-rose-200 text-rose-700 hover:bg-rose-50 flex items-center gap-1 transition-colors cursor-pointer"
                                                         >
-                                                            <Undo2 size={12} /> Hủy Khớp
+                                                            <Undo2 size={12} /> {isEn ? 'Unmatch' : 'Hủy Khớp'}
                                                         </button>
                                                     ) : isIgnored ? (
                                                         <button
                                                             onClick={() => handleToggleIgnore(txn, false)}
                                                             className="px-2.5 py-1 text-[11px] font-medium rounded border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
                                                         >
-                                                            Khôi phục
+                                                            {isEn ? 'Restore' : 'Khôi phục'}
                                                         </button>
                                                     ) : (
                                                         <>
-                                                            {/* 1-Click Approve if high confidence */}
                                                             {isCredit && score >= 80 && (
                                                                 <button
                                                                     onClick={() => handleInlineApprove(txn)}
                                                                     disabled={isPending}
                                                                     className="px-3 py-1.5 text-xs font-semibold rounded bg-emerald-700 text-white hover:bg-emerald-800 shadow-xs flex items-center gap-1 transition-colors cursor-pointer"
                                                                 >
-                                                                    <Check size={13} /> 1-Click Duyệt
+                                                                    <Check size={13} /> {isEn ? '1-Click Approve' : '1-Click Duyệt'}
                                                                 </button>
                                                             )}
 
-                                                            {/* Manual Allocation Drawer */}
                                                             {isCredit && (
                                                                 <button
                                                                     onClick={() => handleOpenAllocationDrawer(txn)}
                                                                     className="px-2.5 py-1.5 text-xs font-medium rounded border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
                                                                 >
-                                                                    {score >= 80 ? 'Xem & Gộp' : 'Chỉ định đơn'}
+                                                                    {score >= 80 ? (isEn ? 'Review & Group' : 'Xem & Gộp') : (isEn ? 'Assign Invoice' : 'Chỉ định đơn')}
                                                                 </button>
                                                             )}
 
-                                                            {/* Ignore button */}
                                                             <button
                                                                 onClick={() => handleToggleIgnore(txn, true)}
-                                                                title="Bỏ qua giao dịch này"
+                                                                title={isEn ? 'Ignore this transaction' : 'Bỏ qua giao dịch này'}
                                                                 className="p-1.5 text-slate-400 hover:text-slate-600 rounded hover:bg-slate-100 transition-colors cursor-pointer"
                                                             >
                                                                 <X size={14} />
@@ -750,21 +825,25 @@ export function BankReconciliationTab() {
                 {/* Pagination */}
                 {pagination.totalPages > 1 && (
                     <div className="flex items-center justify-between p-3 border-t border-slate-200 text-xs text-slate-600">
-                        <span>Hiển thị trang {page} / {pagination.totalPages} ({pagination.total} giao dịch)</span>
+                        <span>
+                            {isEn
+                                ? `Showing page ${page} / ${pagination.totalPages} (${pagination.total} transactions)`
+                                : `Hiển thị trang ${page} / ${pagination.totalPages} (${pagination.total} giao dịch)`}
+                        </span>
                         <div className="flex items-center gap-1">
                             <button
                                 disabled={page <= 1}
                                 onClick={() => setPage(p => p - 1)}
                                 className="px-2.5 py-1 rounded border border-slate-200 disabled:opacity-50 cursor-pointer"
                             >
-                                Trước
+                                {isEn ? 'Prev' : 'Trước'}
                             </button>
                             <button
                                 disabled={page >= pagination.totalPages}
                                 onClick={() => setPage(p => p + 1)}
                                 className="px-2.5 py-1 rounded border border-slate-200 disabled:opacity-50 cursor-pointer"
                             >
-                                Sau
+                                {isEn ? 'Next' : 'Sau'}
                             </button>
                         </div>
                     </div>
@@ -778,7 +857,9 @@ export function BankReconciliationTab() {
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                             <div className="flex items-center gap-2 text-emerald-800">
                                 <FileSpreadsheet size={20} />
-                                <h3 className="font-bold text-base text-slate-900">Nạp File Sao Kê Ngân Hàng</h3>
+                                <h3 className="font-bold text-base text-slate-900">
+                                    {isEn ? 'Upload Bank Statement' : 'Nạp File Sao Kê Ngân Hàng'}
+                                </h3>
                             </div>
                             <button onClick={() => setShowUploadModal(false)} className="text-slate-400 hover:text-slate-600">
                                 <X size={18} />
@@ -788,7 +869,7 @@ export function BankReconciliationTab() {
                         <form onSubmit={handleUploadSubmit} className="space-y-4">
                             <div>
                                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                                    Tài khoản ngân hàng nhận tiền *
+                                    {isEn ? 'Receiving Bank Account *' : 'Tài khoản ngân hàng nhận tiền *'}
                                 </label>
                                 <select
                                     value={uploadAccountId}
@@ -806,7 +887,7 @@ export function BankReconciliationTab() {
 
                             <div>
                                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                                    Chọn file sao kê (Excel .xlsx, .xls hoặc .csv) *
+                                    {isEn ? 'Select statement file (Excel .xlsx, .xls or .csv) *' : 'Chọn file sao kê (Excel .xlsx, .xls hoặc .csv) *'}
                                 </label>
                                 <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-emerald-600 transition-colors">
                                     <Upload size={28} className="mx-auto text-slate-400 mb-2" />
@@ -819,7 +900,7 @@ export function BankReconciliationTab() {
                                     />
                                     {uploadFile && (
                                         <p className="text-xs font-medium text-emerald-700 mt-2">
-                                            Đã chọn: {uploadFile.name} ({(uploadFile.size / 1024).toFixed(1)} KB)
+                                            {isEn ? 'Selected:' : 'Đã chọn:'} {uploadFile.name} ({(uploadFile.size / 1024).toFixed(1)} KB)
                                         </p>
                                     )}
                                 </div>
@@ -827,11 +908,11 @@ export function BankReconciliationTab() {
 
                             <div className="p-3 rounded-md bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-1">
                                 <p className="font-semibold text-slate-800 flex items-center gap-1">
-                                    <Info size={13} className="text-emerald-600" /> Hệ thống tự động nhận diện:
+                                    <Info size={13} className="text-emerald-600" /> {isEn ? 'Automated detection:' : 'Hệ thống tự động nhận diện:'}
                                 </p>
-                                <p>• Các ngân hàng: Vietcombank, Techcombank, ACB, BIDV, MBBank, VPBank...</p>
-                                <p>• Tự động chống nạp trùng lặp các giao dịch đã import trước đó.</p>
-                                <p>• Chạy bộ não AI/Heuristic chấm điểm khớp với các hóa đơn mở.</p>
+                                <p>{isEn ? '• Supported banks: Vietcombank, Techcombank, ACB, BIDV, MBBank, VPBank...' : '• Các ngân hàng: Vietcombank, Techcombank, ACB, BIDV, MBBank, VPBank...'}</p>
+                                <p>{isEn ? '• Automatic deduplication against previously imported transactions.' : '• Tự động chống nạp trùng lặp các giao dịch đã import trước đó.'}</p>
+                                <p>{isEn ? '• Runs Heuristic/AI engine to score matches against open AR invoices.' : '• Chạy bộ não AI/Heuristic chấm điểm khớp với các hóa đơn mở.'}</p>
                             </div>
 
                             <div className="flex items-center justify-end gap-2 pt-2">
@@ -840,7 +921,7 @@ export function BankReconciliationTab() {
                                     onClick={() => setShowUploadModal(false)}
                                     className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-md"
                                 >
-                                    Đóng
+                                    {isEn ? 'Close' : 'Đóng'}
                                 </button>
                                 <button
                                     type="submit"
@@ -848,7 +929,7 @@ export function BankReconciliationTab() {
                                     className="px-4 py-2 text-xs font-semibold text-white bg-emerald-700 hover:bg-emerald-800 rounded-md shadow-xs flex items-center gap-1.5"
                                 >
                                     {loading ? <RefreshCw size={14} className="animate-spin" /> : <Upload size={14} />}
-                                    Tải Lên & Phân Tích
+                                    {isEn ? 'Upload & Analyze' : 'Tải Lên & Phân Tích'}
                                 </button>
                             </div>
                         </form>
@@ -862,8 +943,8 @@ export function BankReconciliationTab() {
                     <div className="bg-white w-full max-w-xl h-full shadow-2xl border-l border-slate-200 flex flex-col p-6 overflow-y-auto space-y-5">
                         <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                             <div>
-                                <h3 className="font-bold text-base text-slate-900">Phân Bổ & Ghi Nhận Thanh Toán</h3>
-                                <p className="text-xs text-slate-500">Đối soát giao dịch sao kê vào công nợ hóa đơn</p>
+                                <h3 className="font-bold text-base text-slate-900">{isEn ? 'Allocate & Post AR Payment' : 'Phân Bổ & Ghi Nhận Thanh Toán'}</h3>
+                                <p className="text-xs text-slate-500">{isEn ? 'Reconcile bank transaction against open AR invoices' : 'Đối soát giao dịch sao kê vào công nợ hóa đơn'}</p>
                             </div>
                             <button onClick={() => setAllocatingTxn(null)} className="text-slate-400 hover:text-slate-600">
                                 <X size={20} />
@@ -873,28 +954,28 @@ export function BankReconciliationTab() {
                         {/* Transaction Card */}
                         <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
                             <div className="flex items-center justify-between">
-                                <span className="text-xs font-semibold text-slate-500">Số tiền chuyển khoản</span>
+                                <span className="text-xs font-semibold text-slate-500">{isEn ? 'Transfer Amount' : 'Số tiền chuyển khoản'}</span>
                                 <span className="text-lg font-bold font-mono text-emerald-700">+{formatVND(allocatingTxn.amount)}</span>
                             </div>
                             <div className="text-xs text-slate-700">
-                                <span className="text-slate-400">Nội dung gốc: </span>
+                                <span className="text-slate-400">{isEn ? 'Raw narrative: ' : 'Nội dung gốc: '}</span>
                                 <span className="font-mono text-slate-900 font-medium">{allocatingTxn.rawNarrative}</span>
                             </div>
                             <div className="flex items-center gap-4 text-[11px] text-slate-500 pt-1 border-t border-slate-200">
-                                <span>Ngày: {formatDate(allocatingTxn.txnDate)}</span>
-                                <span>Ngân hàng: {allocatingTxn.bankAccount.bankCode}</span>
-                                {allocatingTxn.txnRef && <span>Mã GD: {allocatingTxn.txnRef}</span>}
+                                <span>{isEn ? 'Date:' : 'Ngày:'} {formatDate(allocatingTxn.txnDate)}</span>
+                                <span>{isEn ? 'Bank:' : 'Ngân hàng:'} {allocatingTxn.bankAccount.bankCode}</span>
+                                {allocatingTxn.txnRef && <span>{isEn ? 'Tx Ref:' : 'Mã GD:'} {allocatingTxn.txnRef}</span>}
                             </div>
                         </div>
 
                         {/* Customer Selection */}
                         <div className="space-y-2">
-                            <label className="block text-xs font-bold text-slate-800">Khách Hàng Nộp Tiền</label>
+                            <label className="block text-xs font-bold text-slate-800">{isEn ? 'Paying Customer' : 'Khách Hàng Nộp Tiền'}</label>
                             <div className="relative">
                                 <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                                 <input
                                     type="text"
-                                    placeholder="Tìm theo tên KH, mã KH, SĐT..."
+                                    placeholder={isEn ? 'Search customer name, code, phone...' : 'Tìm theo tên KH, mã KH, SĐT...'}
                                     value={custSearch}
                                     onChange={(e) => handleCustomerSearch(e.target.value)}
                                     className="w-full text-xs pl-8 pr-3 py-2 rounded-md border border-slate-200 focus:outline-none focus:border-emerald-600"
@@ -924,16 +1005,18 @@ export function BankReconciliationTab() {
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
                                 <label className="text-xs font-bold text-slate-800">
-                                    Danh Sách Hóa Đơn Đang Nợ ({custInvoices.length})
+                                    {isEn ? `Open AR Invoices (${custInvoices.length})` : `Danh Sách Hóa Đơn Đang Nợ (${custInvoices.length})`}
                                 </label>
                                 <span className="text-[11px] text-slate-500">
-                                    Tick chọn để phân bổ số tiền
+                                    {isEn ? 'Check to allocate payment' : 'Tick chọn để phân bổ số tiền'}
                                 </span>
                             </div>
 
                             {custInvoices.length === 0 ? (
                                 <p className="text-xs text-slate-500 text-center py-6 border border-dashed border-slate-200 rounded-lg">
-                                    {selectedCustId ? 'Khách hàng này hiện không có hóa đơn nợ nào.' : 'Vui lòng chọn khách hàng để tải hóa đơn nợ.'}
+                                    {selectedCustId
+                                        ? (isEn ? 'This customer has no open AR invoices.' : 'Khách hàng này hiện không có hóa đơn nợ nào.')
+                                        : (isEn ? 'Please select a customer to load open invoices.' : 'Vui lòng chọn khách hàng để tải hóa đơn nợ.')}
                                 </p>
                             ) : (
                                 <div className="border border-slate-200 rounded-lg overflow-hidden divide-y divide-slate-100 max-h-60 overflow-y-auto">
@@ -968,20 +1051,20 @@ export function BankReconciliationTab() {
                                                         <div>
                                                             <p className="font-bold text-slate-900">{inv.invoiceNo}</p>
                                                             <p className="text-[10px] text-slate-500">
-                                                                {inv.so ? `Đơn hàng: ${inv.so.soNo}` : ''} • Hạn TT: {formatDate(inv.dueDate)}
+                                                                {inv.so ? `SO: ${inv.so.soNo}` : ''} • {isEn ? 'Due:' : 'Hạn TT:'} {formatDate(inv.dueDate)}
                                                             </p>
                                                         </div>
                                                     </label>
 
                                                     <div className="text-right">
                                                         <p className="font-bold text-slate-800 font-mono">{formatVND(remaining)}</p>
-                                                        <p className="text-[10px] text-slate-400">Tổng: {formatVND(inv.totalAmount)}</p>
+                                                        <p className="text-[10px] text-slate-400">{isEn ? 'Total:' : 'Tổng:'} {formatVND(inv.totalAmount)}</p>
                                                     </div>
                                                 </div>
 
                                                 {isChecked && (
                                                     <div className="flex items-center justify-between pt-1 border-t border-slate-100">
-                                                        <span className="text-[11px] text-slate-500 font-medium">Số tiền phân bổ:</span>
+                                                        <span className="text-[11px] text-slate-500 font-medium">{isEn ? 'Allocated amount:' : 'Số tiền phân bổ:'}</span>
                                                         <input
                                                             type="number"
                                                             value={currentAlloc}
@@ -1003,7 +1086,7 @@ export function BankReconciliationTab() {
                         {/* Edge Case: Bank Fee Difference */}
                         <div className="p-3 rounded-lg bg-amber-50/60 border border-amber-200 text-xs space-y-1.5">
                             <div className="flex items-center justify-between">
-                                <span className="font-semibold text-amber-900">Dung sai cấn trừ phí ngân hàng (nếu có):</span>
+                                <span className="font-semibold text-amber-900">{isEn ? 'Bank fee tolerance (if any):' : 'Dung sai cấn trừ phí ngân hàng (nếu có):'}</span>
                                 <input
                                     type="number"
                                     placeholder="0"
@@ -1013,7 +1096,9 @@ export function BankReconciliationTab() {
                                 />
                             </div>
                             <p className="text-[11px] text-amber-700">
-                                Ví dụ khách chuyển thiếu 5.500đ do trừ phí ngân hàng, nhập 5.500đ để hóa đơn vẫn chuyển thành Đã Thu Đủ (PAID).
+                                {isEn
+                                    ? 'E.g. if customer transfer is short by 5,500 VND due to bank fees, enter 5500 to mark invoice as PAID.'
+                                    : 'Ví dụ khách chuyển thiếu 5.500đ do trừ phí ngân hàng, nhập 5.500đ để hóa đơn vẫn chuyển thành Đã Thu Đủ (PAID).'}
                             </p>
                         </div>
 
@@ -1029,12 +1114,12 @@ export function BankReconciliationTab() {
                                     }}
                                     className="rounded border-slate-300 text-emerald-700"
                                 />
-                                Ghi nhớ quy tắc học cho các lần sau
+                                {isEn ? 'Remember matching rule for future statements' : 'Ghi nhớ quy tắc học cho các lần sau'}
                             </label>
                             {rememberKeyword && (
                                 <input
                                     type="text"
-                                    placeholder="Từ khóa nhận diện (VD: Lê Thị Thảo, 0903123456...)"
+                                    placeholder={isEn ? 'Keyword (e.g. Le Thi Thao, 0903123456...)' : 'Từ khóa nhận diện (VD: Lê Thị Thảo, 0903123456...)'}
                                     value={rememberKeyword}
                                     onChange={(e) => setRememberKeyword(e.target.value)}
                                     className="w-full text-xs px-2.5 py-1.5 rounded border border-slate-200 bg-white"
@@ -1049,7 +1134,7 @@ export function BankReconciliationTab() {
                                 onClick={() => setAllocatingTxn(null)}
                                 className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-md"
                             >
-                                Đóng
+                                {isEn ? 'Close' : 'Đóng'}
                             </button>
                             <button
                                 type="button"
@@ -1058,7 +1143,7 @@ export function BankReconciliationTab() {
                                 className="px-5 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-md shadow-xs flex items-center gap-1.5"
                             >
                                 {isPending ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />}
-                                Xác Nhận Ghi Sổ AR
+                                {isEn ? 'Confirm & Post AR' : 'Xác Nhận Ghi Sổ AR'}
                             </button>
                         </div>
                     </div>
@@ -1072,7 +1157,9 @@ export function BankReconciliationTab() {
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                             <div className="flex items-center gap-2 text-slate-800">
                                 <BookOpen size={20} className="text-emerald-700" />
-                                <h3 className="font-bold text-base text-slate-900">Quy Tắc Nhận Diện Tự Động Đã Học</h3>
+                                <h3 className="font-bold text-base text-slate-900">
+                                    {isEn ? 'Learned Auto-Reconciliation Rules' : 'Quy Tắc Nhận Diện Tự Động Đã Học'}
+                                </h3>
                             </div>
                             <button onClick={() => setShowRulesModal(false)} className="text-slate-400 hover:text-slate-600">
                                 <X size={18} />
@@ -1080,12 +1167,14 @@ export function BankReconciliationTab() {
                         </div>
 
                         <p className="text-xs text-slate-500">
-                            Các từ khóa hoặc tên cá nhân/tài khoản do kế toán gán nhớ, hệ thống sẽ tự động gán vào khách hàng tương ứng khi đọc sao kê.
+                            {isEn
+                                ? 'Keywords or sender names saved by accounting; the system automatically maps matching narratives to the linked customer.'
+                                : 'Các từ khóa hoặc tên cá nhân/tài khoản do kế toán gán nhớ, hệ thống sẽ tự động gán vào khách hàng tương ứng khi đọc sao kê.'}
                         </p>
 
                         <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 border border-slate-200 rounded-lg">
                             {rules.length === 0 ? (
-                                <p className="text-xs text-slate-500 text-center py-8">Chưa có quy tắc nhớ nào.</p>
+                                <p className="text-xs text-slate-500 text-center py-8">{isEn ? 'No learned rules yet.' : 'Chưa có quy tắc nhớ nào.'}</p>
                             ) : (
                                 rules.map((r: any) => (
                                     <div key={r.id} className="p-3 text-xs flex items-center justify-between hover:bg-slate-50">
@@ -1098,7 +1187,7 @@ export function BankReconciliationTab() {
                                         <button
                                             onClick={() => handleDeleteRule(r.id)}
                                             className="text-slate-400 hover:text-rose-600 p-1"
-                                            title="Xóa quy tắc"
+                                            title={isEn ? 'Delete rule' : 'Xóa quy tắc'}
                                         >
                                             <X size={14} />
                                         </button>
@@ -1113,7 +1202,7 @@ export function BankReconciliationTab() {
                                 onClick={() => setShowRulesModal(false)}
                                 className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md"
                             >
-                                Đóng
+                                {isEn ? 'Close' : 'Đóng'}
                             </button>
                         </div>
                     </div>

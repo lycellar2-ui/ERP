@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { X, Save, Send, Plus, Trash2, ArrowRightLeft, AlertCircle, Building2, Calendar, FileText, Check, ChevronDown, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { createTransferOrder, getTransferOptions } from './actions'
+import { useAppLocale } from '@/lib/i18n'
+import { getTransfersDict } from './i18n'
 
 export interface TransferInitialData {
     fromWarehouseId?: string
@@ -83,6 +85,7 @@ function ProductCombobox({
     fromWarehouseId?: string
     onChange: (productId: string) => void
 }) {
+    const { locale } = useAppLocale()
     const [open, setOpen] = useState(false)
     const [query, setQuery] = useState('')
     const containerRef = useRef<HTMLDivElement>(null)
@@ -139,7 +142,7 @@ function ProductCombobox({
                 <input
                     type="text"
                     value={query}
-                    placeholder="-- Gõ SKU hoặc tên rượu vang để chọn --"
+                    placeholder={locale === 'en' ? '-- Type SKU or wine name to select --' : '-- Gõ SKU hoặc tên rượu vang để chọn --'}
                     onFocus={e => {
                         setOpen(true)
                         e.target.select()
@@ -163,7 +166,9 @@ function ProductCombobox({
                     style={{ background: '#FFFFFF', borderColor: '#0891B2' }}
                 >
                     {filtered.length === 0 ? (
-                        <div className="p-3 text-center text-xs text-slate-600">Không tìm thấy rượu phù hợp</div>
+                        <div className="p-3 text-center text-xs text-slate-600">
+                            {locale === 'en' ? 'No matching wines found' : 'Không tìm thấy rượu phù hợp'}
+                        </div>
                     ) : (
                         filtered.map(p => {
                             const isSelected = p.id === selectedProductId
@@ -192,14 +197,14 @@ function ProductCombobox({
                                                         key={String(v.vintage)}
                                                         className={`px-1.5 py-0.5 rounded font-mono font-bold ${v.qtyAvailable > 0 ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}
                                                     >
-                                                        {v.vintage ? `NV ${v.vintage}` : 'NV (K.Năm)'}: {v.qtyAvailable} chai
+                                                        {v.vintage ? `NV ${v.vintage}` : 'NV'}: {v.qtyAvailable} {locale === 'en' ? 'btls' : 'chai'}
                                                     </span>
                                                 ))}
                                             </div>
                                         ) : (
                                             p.vintages && p.vintages.length > 0 && (
                                                 <div className="flex items-center gap-1 mt-0.5 text-[10px] text-slate-400">
-                                                    <span>Niên vụ: {p.vintages.join(', ')}</span>
+                                                    <span>{locale === 'en' ? 'Vintage:' : 'Niên vụ:'} {p.vintages.join(', ')}</span>
                                                 </div>
                                             )
                                         )}
@@ -207,7 +212,7 @@ function ProductCombobox({
                                     <div className="shrink-0 text-right">
                                         {fromWarehouseId ? (
                                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded border inline-block ${whTotal > 0 ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-red-50 text-red-800 border-red-200'}`}>
-                                                Tồn kho xuất: {whTotal}c
+                                                {locale === 'en' ? `Source stock: ${whTotal}b` : `Tồn kho xuất: ${whTotal}c`}
                                             </span>
                                         ) : (
                                             <span className="text-[10px] text-slate-400">
@@ -226,6 +231,8 @@ function ProductCombobox({
 }
 
 export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: CreateTransferDrawerProps) {
+    const { locale } = useAppLocale()
+    const t = getTransfersDict(locale)
     const [loadingOpts, setLoadingOpts] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [warehouses, setWarehouses] = useState<WarehouseOpt[]>([])
@@ -412,10 +419,10 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                         </div>
                         <div>
                             <h3 className="text-base font-bold text-slate-900">
-                                Lập Phiếu Chuyển Kho Nội Bộ
+                                {t.drawerCreateTitle}
                             </h3>
                             <p className="text-xs text-slate-500 mt-0.5">
-                                Tạo phiếu điều chuyển rượu giữa các kho & gửi Kế toán phê duyệt
+                                {t.drawerCreateSubtitle}
                             </p>
                         </div>
                     </div>
@@ -432,14 +439,14 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                     {/* Warehouse Route Card */}
                     <div className="p-4 rounded-lg space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                         <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: '#B45309' }}>
-                            <Building2 size={15} style={{ color: '#B45309' }} /> Tuyến Đường Chuyển Kho
+                            <Building2 size={15} style={{ color: '#B45309' }} /> {locale === 'en' ? 'Transfer Route' : 'Tuyến Đường Chuyển Kho'}
                         </h4>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {/* Source WH */}
                             <div>
                                 <label className="text-[11px] font-bold uppercase tracking-wide block mb-1" style={{ color: '#64748B' }}>
-                                    Kho Xuất (Kho Đi) *
+                                    {t.fromWarehouseLabel}
                                 </label>
                                 <select
                                     value={fromWarehouseId}
@@ -448,7 +455,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                     className="w-full px-3 py-2 text-base sm:text-xs font-semibold outline-none rounded-lg cursor-pointer"
                                     style={{ ...inputStyle }}
                                 >
-                                    <option value="">-- Chọn Kho Xuất --</option>
+                                    <option value="">{t.selectFromWarehouse}</option>
                                     {warehouses.map(w => (
                                         <option key={`from-${w.id}`} value={w.id}>
                                             [{w.code}] {w.name}
@@ -460,7 +467,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                             {/* Destination WH */}
                             <div>
                                 <label className="text-[11px] font-bold uppercase tracking-wide block mb-1" style={{ color: '#64748B' }}>
-                                    Kho Nhận (Kho Đến) *
+                                    {t.toWarehouseLabel}
                                 </label>
                                 <select
                                     value={toWarehouseId}
@@ -469,10 +476,10 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                     className="w-full px-3 py-2 text-base sm:text-xs font-semibold outline-none rounded-lg cursor-pointer"
                                     style={{ ...inputStyle }}
                                 >
-                                    <option value="">-- Chọn Kho Nhận --</option>
+                                    <option value="">{t.selectToWarehouse}</option>
                                     {warehouses.map(w => (
                                         <option key={`to-${w.id}`} value={w.id} disabled={w.id === fromWarehouseId}>
-                                            [{w.code}] {w.name} {w.id === fromWarehouseId ? '(Trùng kho xuất)' : ''}
+                                            [{w.code}] {w.name} {w.id === fromWarehouseId ? (locale === 'en' ? '(Same as source)' : '(Trùng kho xuất)') : ''}
                                         </option>
                                     ))}
                                 </select>
@@ -484,7 +491,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="text-[11px] font-bold uppercase tracking-wide block mb-1 flex items-center gap-1.5" style={{ color: '#64748B' }}>
-                                <Calendar size={13} style={{ color: '#64748B' }} /> Ngày Chuyển Dự Kiến
+                                <Calendar size={13} style={{ color: '#64748B' }} /> {locale === 'en' ? 'Expected Transfer Date' : 'Ngày Chuyển Dự Kiến'}
                             </label>
                             <input
                                 type="date"
@@ -498,7 +505,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
 
                         <div>
                             <label className="text-[11px] font-bold uppercase tracking-wide block mb-1 flex items-center gap-1.5" style={{ color: '#64748B' }}>
-                                <FileText size={13} style={{ color: '#64748B' }} /> Lý Do Chuyển Kho
+                                <FileText size={13} style={{ color: '#64748B' }} /> {t.notesLabel}
                             </label>
                             <select
                                 value={reasonSelect}
@@ -516,14 +523,14 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
 
                     <div>
                         <label className="text-[11px] font-bold uppercase tracking-wide block mb-1" style={{ color: '#64748B' }}>
-                            Ghi Chú Bổ Sung
+                            {locale === 'en' ? 'Additional Notes' : 'Ghi Chú Bổ Sung'}
                         </label>
                         <input
                             type="text"
                             value={customNotes}
                             onChange={e => setCustomNotes(e.target.value)}
                             {...focusHandler}
-                            placeholder="Ví dụ: Chuyển 24 chai Chateau Margaux theo đề xuất SO-2608-0015..."
+                            placeholder={t.notesPlaceholder}
                             className="w-full px-3 py-2 text-base sm:text-xs outline-none rounded-lg"
                             style={{ ...inputStyle }}
                         />
@@ -533,7 +540,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                     <div className="space-y-3 pt-2 pb-28">
                         <div className="flex items-center justify-between">
                             <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
-                                Danh Mục Hàng Chuyển Kho ({lines.length} dòng)
+                                {t.selectedSummaryTitle} ({lines.length} {locale === 'en' ? 'lines' : 'dòng'})
                             </label>
                             <button
                                 type="button"
@@ -541,13 +548,15 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                 className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer"
                                 style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)', borderRadius: '4px' }}
                             >
-                                <Plus size={13} /> Thêm Rượu
+                                <Plus size={13} /> {locale === 'en' ? 'Add Wine' : 'Thêm Rượu'}
                             </button>
                         </div>
 
                         {lines.length === 0 ? (
                             <div className="py-8 text-center rounded-md" style={{ border: '1px dashed #E2E8F0', background: '#FFFFFF' }}>
-                                <p className="text-sm font-semibold" style={{ color: '#64748B' }}>Chưa có sản phẩm — Click "+ Thêm Rượu"</p>
+                                <p className="text-sm font-semibold" style={{ color: '#64748B' }}>
+                                    {locale === 'en' ? 'No products added — Click "+ Add Wine"' : 'Chưa có sản phẩm — Click "+ Thêm Rượu"'}
+                                </p>
                             </div>
                         ) : (
                             <>
@@ -559,10 +568,10 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                     <table className="w-full text-xs text-left border-collapse">
                                         <thead>
                                             <tr className="bg-white text-slate-500 border-b border-slate-200 font-semibold">
-                                                <th className="px-3 py-2.5 w-12 text-center">STT</th>
-                                                <th className="px-3 py-2.5">Gõ Tìm SKU / Tên Rượu Vang</th>
-                                                <th className="px-3 py-2.5 text-center w-28">VTG (Niên Vụ)</th>
-                                                <th className="px-3 py-2.5 text-center w-32">Số Lượng (Chai)</th>
+                                                <th className="px-3 py-2.5 w-12 text-center">{t.colStt}</th>
+                                                <th className="px-3 py-2.5">{t.colSkuProduct}</th>
+                                                <th className="px-3 py-2.5 text-center w-28">VTG ({t.colVintage})</th>
+                                                <th className="px-3 py-2.5 text-center w-32">{t.colTransferQty} ({t.unitBottle})</th>
                                                 <th className="px-3 py-2.5 text-center w-10"></th>
                                             </tr>
                                         </thead>
@@ -595,9 +604,9 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                             />
                                                             {fromWarehouseId && line.productId && (
                                                                 <div className="mt-1 flex items-center gap-2 text-[11px]">
-                                                                    <span className="text-slate-400">Tồn kho xuất:</span>
+                                                                    <span className="text-slate-400">{t.colAvailable}:</span>
                                                                     <span className={`font-mono font-bold px-1.5 py-0.2 rounded text-[10px] ${totalWhAvail > 0 ? 'text-emerald-800 bg-emerald-50 border border-emerald-200' : 'text-red-800 bg-red-50 border border-red-200'}`}>
-                                                                        {totalWhAvail} chai
+                                                                        {totalWhAvail} {t.unitBottle}
                                                                     </span>
                                                                 </div>
                                                             )}
@@ -611,20 +620,20 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                                 style={{ ...inputStyle, borderColor: isZeroStock ? '#B91C1C' : '#E2E8F0' }}
                                                             >
                                                                 <option value="">
-                                                                    NV (K.Năm) {whStock ? `(Tồn: ${whVintages.find(v => v.vintage === null)?.qtyAvailable ?? 0}c)` : ''}
+                                                                    NV {whStock ? `(${whVintages.find(v => v.vintage === null)?.qtyAvailable ?? 0})` : ''}
                                                                 </option>
                                                                 {whVintages.filter(v => v.vintage !== null).map(v => (
                                                                     <option key={v.vintage!} value={v.vintage!}>
-                                                                        {v.vintage} (Tồn: {v.qtyAvailable}c)
+                                                                        {v.vintage} ({v.qtyAvailable})
                                                                     </option>
                                                                 ))}
                                                                 {allProductVintages.filter(v => !whVintages.some(wv => wv.vintage === v)).map(v => (
                                                                     <option key={v} value={v}>
-                                                                        {v} (Tồn: 0c - Hết)
+                                                                        {v} (0)
                                                                     </option>
                                                                 ))}
                                                                 {line.vintage && !allProductVintages.includes(line.vintage) && !whVintages.some(wv => wv.vintage === line.vintage) && (
-                                                                    <option value={line.vintage}>{line.vintage} (Tồn: 0c)</option>
+                                                                    <option value={line.vintage}>{line.vintage} (0)</option>
                                                                 )}
                                                             </select>
 
@@ -632,11 +641,11 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                                 <div className="mt-1 flex items-center justify-center">
                                                                     {isZeroStock ? (
                                                                         <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-800 bg-red-50 px-1.5 py-0.5 rounded border border-red-200 whitespace-nowrap shrink-0">
-                                                                            <AlertCircle size={11} className="text-red-700" /> Tồn = 0 chai
+                                                                            <AlertCircle size={11} className="text-red-700" /> 0 {t.unitBottle}
                                                                         </span>
                                                                     ) : (
                                                                         <span className="text-[10px] font-semibold text-emerald-700">
-                                                                            Tồn: <strong className="font-mono font-bold">{selectedVintageQty}</strong> chai
+                                                                            <strong className="font-mono font-bold">{selectedVintageQty}</strong> {t.unitBottle}
                                                                         </span>
                                                                     )}
                                                                 </div>
@@ -656,11 +665,11 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                                 <div className="mt-1 flex items-center justify-center">
                                                                     {isOverStock ? (
                                                                         <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-300 whitespace-nowrap shrink-0">
-                                                                            Vượt tồn ({selectedVintageQty} chai)
+                                                                            {locale === 'en' ? `Exceeds (${selectedVintageQty})` : `Vượt tồn (${selectedVintageQty} chai)`}
                                                                         </span>
                                                                     ) : (
                                                                         <span className="text-[10px] text-slate-400">
-                                                                            Chai
+                                                                            {t.unitBottle}
                                                                         </span>
                                                                     )}
                                                                 </div>
@@ -705,13 +714,12 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                 {/* Header: STT + Delete Button */}
                                                 <div className="flex items-center justify-between">
                                                     <span className="inline-block text-xs font-bold font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shrink-0">
-                                                        Mặt hàng #{idx + 1}
+                                                        {locale === 'en' ? `Item #${idx + 1}` : `Mặt hàng #${idx + 1}`}
                                                     </span>
                                                     <button
                                                         type="button"
                                                         onClick={() => handleRemoveLine(idx)}
                                                         className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                                                        title="Xóa mặt hàng này"
                                                     >
                                                         <Trash2 size={16} />
                                                     </button>
@@ -720,7 +728,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                 {/* Product Combobox */}
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-bold uppercase tracking-wider text-slate-600 block">
-                                                        Sản Phẩm Rượu Vang *
+                                                        {t.colSkuProduct} *
                                                     </label>
                                                     <ProductCombobox
                                                         products={products}
@@ -730,9 +738,9 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                     />
                                                     {fromWarehouseId && line.productId && (
                                                         <div className="flex items-center gap-1.5 text-[11px] pt-0.5">
-                                                            <span className="text-slate-500">Tồn kho xuất:</span>
+                                                            <span className="text-slate-500">{t.colAvailable}:</span>
                                                             <span className={`font-mono font-bold px-1.5 py-0.2 rounded text-[10px] ${totalWhAvail > 0 ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-rose-700 bg-rose-50 border border-rose-200'}`}>
-                                                                {totalWhAvail} chai
+                                                                {totalWhAvail} {t.unitBottle}
                                                             </span>
                                                         </div>
                                                     )}
@@ -742,7 +750,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                                     <div>
                                                         <label className="text-[10px] font-bold uppercase tracking-wider text-slate-600 block mb-1">
-                                                            Niên Vụ (Vintage) *
+                                                            {t.colVintage} *
                                                         </label>
                                                         <select
                                                             value={line.vintage ?? ''}
@@ -752,29 +760,29 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                             style={{ ...inputStyle, borderColor: isZeroStock ? '#B91C1C' : '#E2E8F0' }}
                                                         >
                                                             <option value="">
-                                                                NV (K.Năm) {whStock ? `(Tồn: ${whVintages.find(v => v.vintage === null)?.qtyAvailable ?? 0}c)` : ''}
+                                                                NV {whStock ? `(${whVintages.find(v => v.vintage === null)?.qtyAvailable ?? 0})` : ''}
                                                             </option>
                                                             {whVintages.filter(v => v.vintage !== null).map(v => (
                                                                 <option key={v.vintage!} value={v.vintage!}>
-                                                                    {v.vintage} (Tồn: {v.qtyAvailable}c)
+                                                                    {v.vintage} ({v.qtyAvailable})
                                                                 </option>
                                                             ))}
                                                             {allProductVintages.filter(v => !whVintages.some(wv => wv.vintage === v)).map(v => (
                                                                 <option key={v} value={v}>
-                                                                    {v} (Tồn: 0c - Hết)
+                                                                    {v} (0)
                                                                 </option>
                                                             ))}
                                                         </select>
                                                         {fromWarehouseId && line.productId && (
                                                             <span className={`text-[10px] mt-1 block font-semibold ${isZeroStock ? 'text-rose-600' : 'text-emerald-700'}`}>
-                                                                {isZeroStock ? 'Hết tồn' : `Tồn: ${selectedVintageQty} chai`}
+                                                                {isZeroStock ? '0' : `${selectedVintageQty} ${t.unitBottle}`}
                                                             </span>
                                                         )}
                                                     </div>
 
                                                     <div>
                                                         <label className="text-[10px] font-bold uppercase tracking-wider text-slate-600 block mb-1">
-                                                            Số Lượng Chuyển *
+                                                            {t.colTransferQty} *
                                                         </label>
                                                         <input
                                                             type="number"
@@ -787,7 +795,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                                                         />
                                                         {isOverStock && (
                                                             <span className="text-[10px] mt-1 block font-bold text-amber-700">
-                                                                Vượt tồn ({selectedVintageQty} chai)
+                                                                {locale === 'en' ? `Exceeds (${selectedVintageQty})` : `Vượt tồn (${selectedVintageQty} chai)`}
                                                             </span>
                                                         )}
                                                     </div>
@@ -808,7 +816,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                         onClick={onClose}
                         className="w-full sm:w-auto px-4 py-2.5 text-xs font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer min-h-[44px]"
                     >
-                        Hủy Bỏ
+                        {t.cancelBtn}
                     </button>
 
                     <div className="w-full sm:w-auto flex items-center gap-2">
@@ -818,7 +826,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                             onClick={() => handleSubmit(false)}
                             className="flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-xs font-semibold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 min-h-[44px]"
                         >
-                            <Save size={14} className="text-amber-500" /> Lưu Nháp
+                            <Save size={14} className="text-amber-500" /> {locale === 'en' ? 'Save Draft' : 'Lưu Nháp'}
                         </button>
 
                         <button
@@ -827,7 +835,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
                             onClick={() => handleSubmit(true)}
                             className="flex-1 sm:flex-none px-5 py-2.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50 min-h-[44px]"
                         >
-                            <Send size={14} /> Tạo & Gửi Duyệt
+                            <Send size={14} /> {t.submitCreateBtn}
                         </button>
                     </div>
                 </div>

@@ -9,11 +9,13 @@ import {
     updateCustomerContact, deleteCustomerContact, getCustomerTags,
     addCustomerTag, removeCustomerTag
 } from './actions'
+import { useAppLocale } from '@/lib/i18n'
 
 const inputStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '6px' }
 
 // ── Contacts Panel ──────────────────────────
 export function ContactsPanel({ customerId }: { customerId: string }) {
+    const { isEn } = useAppLocale()
     const [contacts, setContacts] = useState<ContactRow[]>([])
     const [loaded, setLoaded] = useState(false)
     const [showForm, setShowForm] = useState(false)
@@ -66,18 +68,18 @@ export function ContactsPanel({ customerId }: { customerId: string }) {
         <div className="space-y-3">
             <div className="flex items-center justify-between">
                 <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: '#64748B' }}>
-                    <User size={12} className="inline mr-1" /> Liên Hệ ({contacts.length})
+                    <User size={12} className="inline mr-1" /> {isEn ? 'Contacts' : 'Liên Hệ'} ({contacts.length})
                 </h4>
                 <button onClick={() => { setShowForm(true); setEditId(null); setForm({ name: '', title: '', phone: '', email: '', isPrimary: false }) }}
                     className="text-xs px-2 py-1 rounded flex items-center gap-1"
                     style={{ color: '#0891B2', background: 'rgba(8,145,178,0.1)' }}>
-                    <Plus size={10} /> Thêm
+                    <Plus size={10} /> {isEn ? 'Add' : 'Thêm'}
                 </button>
             </div>
 
             {contacts.length === 0 && !showForm && (
                 <p className="text-xs text-center py-3" style={{ color: '#64748B' }}>
-                    Chưa có liên hệ nào
+                    {isEn ? 'No contacts yet' : 'Chưa có liên hệ nào'}
                 </p>
             )}
 
@@ -119,27 +121,27 @@ export function ContactsPanel({ customerId }: { customerId: string }) {
             {showForm && (
                 <div className="p-3 rounded-lg space-y-2" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                        placeholder="Tên liên hệ *" className="w-full px-3 py-2 text-sm outline-none" style={inputStyle} />
+                        placeholder={isEn ? 'Contact Name *' : 'Tên liên hệ *'} className="w-full px-3 py-2 text-sm outline-none" style={inputStyle} />
                     <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                        placeholder="Chức danh (VD: Quản lý mua hàng)" className="w-full px-3 py-2 text-sm outline-none" style={inputStyle} />
+                        placeholder={isEn ? 'Job Title (e.g. Purchasing Manager)' : 'Chức danh (VD: Quản lý mua hàng)'} className="w-full px-3 py-2 text-sm outline-none" style={inputStyle} />
                     <div className="grid grid-cols-2 gap-2">
                         <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                            placeholder="Điện thoại" className="w-full px-3 py-2 text-sm outline-none" style={inputStyle} />
+                            placeholder={isEn ? 'Phone' : 'Điện thoại'} className="w-full px-3 py-2 text-sm outline-none" style={inputStyle} />
                         <input value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                             placeholder="Email" className="w-full px-3 py-2 text-sm outline-none" style={inputStyle} />
                     </div>
                     <label className="flex items-center gap-2 text-xs cursor-pointer" style={{ color: '#64748B' }}>
                         <input type="checkbox" checked={form.isPrimary} onChange={e => setForm(f => ({ ...f, isPrimary: e.target.checked }))} />
-                        <Star size={10} /> Liên hệ chính
+                        <Star size={10} /> {isEn ? 'Primary Contact' : 'Liên hệ chính'}
                     </label>
                     <div className="flex gap-2 justify-end">
                         <button onClick={() => { setShowForm(false); setEditId(null) }}
-                            className="px-3 py-1.5 text-xs rounded" style={{ color: '#64748B' }}>Hủy</button>
+                            className="px-3 py-1.5 text-xs rounded" style={{ color: '#64748B' }}>{isEn ? 'Cancel' : 'Hủy'}</button>
                         <button onClick={handleSave} disabled={!form.name.trim() || saving}
                             className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded disabled:opacity-50"
                             style={{ background: '#0E7490', color: '#FFFFFF' }}>
                             {saving ? <Loader2 size={10} className="animate-spin" /> : <Check size={10} />}
-                            {editId ? 'Cập Nhật' : 'Thêm'}
+                            {editId ? (isEn ? 'Update' : 'Cập Nhật') : (isEn ? 'Add' : 'Thêm')}
                         </button>
                     </div>
                 </div>
@@ -150,6 +152,7 @@ export function ContactsPanel({ customerId }: { customerId: string }) {
 
 // ── Tags Panel ──────────────────────────
 export function TagsPanel({ customerId }: { customerId: string }) {
+    const { isEn } = useAppLocale()
     const [tags, setTags] = useState<TagRow[]>([])
     const [loaded, setLoaded] = useState(false)
     const [showPicker, setShowPicker] = useState(false)
@@ -205,19 +208,19 @@ export function TagsPanel({ customerId }: { customerId: string }) {
         <div className="space-y-3">
             <div className="flex items-center justify-between">
                 <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: '#64748B' }}>
-                    <Tag size={12} className="inline mr-1" /> Nhãn
+                    <Tag size={12} className="inline mr-1" /> {isEn ? 'Tags' : 'Nhãn'}
                 </h4>
                 <button onClick={() => setShowPicker(!showPicker)}
                     className="text-xs px-2 py-1 rounded flex items-center gap-1"
                     style={{ color: '#0891B2', background: 'rgba(8,145,178,0.1)' }}>
-                    <Plus size={10} /> Gắn
+                    <Plus size={10} /> {isEn ? 'Assign' : 'Gắn'}
                 </button>
             </div>
 
             {/* Current tags */}
             <div className="flex flex-wrap gap-1.5">
                 {tags.length === 0 && (
-                    <span className="text-xs" style={{ color: '#64748B' }}>Chưa có nhãn</span>
+                    <span className="text-xs" style={{ color: '#64748B' }}>{isEn ? 'No tags' : 'Chưa có nhãn'}</span>
                 )}
                 {tags.map(t => (
                     <span key={t.id} className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full font-semibold group whitespace-nowrap shrink-0"
@@ -234,7 +237,7 @@ export function TagsPanel({ customerId }: { customerId: string }) {
             {/* Tag picker */}
             {showPicker && (
                 <div className="p-3 rounded-lg space-y-2" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <p className="text-[10px] uppercase font-bold" style={{ color: '#64748B' }}>Nhãn có sẵn</p>
+                    <p className="text-[10px] uppercase font-bold" style={{ color: '#64748B' }}>{isEn ? 'Preset Tags' : 'Nhãn có sẵn'}</p>
                     <div className="flex flex-wrap gap-1.5">
                         {presets.filter(p => !existingTags.has(p.tag)).map(p => (
                             <button key={p.tag} onClick={() => handleAdd(p.tag, p.color)} disabled={saving}
@@ -244,18 +247,18 @@ export function TagsPanel({ customerId }: { customerId: string }) {
                             </button>
                         ))}
                         {presets.every(p => existingTags.has(p.tag)) && (
-                            <span className="text-xs" style={{ color: '#64748B' }}>Đã gắn hết nhãn có sẵn</span>
+                            <span className="text-xs" style={{ color: '#64748B' }}>{isEn ? 'All preset tags assigned' : 'Đã gắn hết nhãn có sẵn'}</span>
                         )}
                     </div>
                     <div className="flex gap-2 mt-2">
                         <input value={customTag} onChange={e => setCustomTag(e.target.value)}
-                            placeholder="Hoặc nhập nhãn mới..."
+                            placeholder={isEn ? 'Or enter custom tag...' : 'Hoặc nhập nhãn mới...'}
                             className="flex-1 px-3 py-1.5 text-xs outline-none" style={inputStyle}
                             onKeyDown={e => e.key === 'Enter' && handleCustom()} />
                         <button onClick={handleCustom} disabled={!customTag.trim() || saving}
                             className="px-3 py-1.5 text-xs font-semibold rounded disabled:opacity-50"
                             style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                            Thêm
+                            {isEn ? 'Add' : 'Thêm'}
                         </button>
                     </div>
                 </div>

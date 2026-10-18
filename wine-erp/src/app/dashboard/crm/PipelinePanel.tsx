@@ -14,6 +14,7 @@ import {
 import { getCustomersForSO, getSalesReps } from '../sales/actions'
 import { formatVND } from '@/lib/utils'
 import { useConfirmDialog } from '@/components/ui'
+import { useAppLocale } from '@/lib/i18n'
 
 const STAGES: { key: OppStage; label: string; color: string; bg: string; probability: number }[] = [
     { key: 'LEAD', label: 'Lead', color: '#475569', bg: 'rgba(100,116,139,0.08)', probability: 10 },
@@ -25,6 +26,7 @@ const STAGES: { key: OppStage; label: string; color: string; bg: string; probabi
 ]
 
 export function PipelinePanel() {
+    const { isEn, locale } = useAppLocale()
     const [rows, setRows] = useState<PipelineRow[]>([])
     const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [stats, setStats] = useState<any>(null)
@@ -131,10 +133,10 @@ export function PipelinePanel() {
 
     const handleDelete = (id: string) => {
         confirm({
-            title: 'Xóa Cơ Hội Kinh Doanh',
-            message: 'Bạn có chắc chắn muốn xóa cơ hội kinh doanh này không?',
-            confirmLabel: 'Xóa Cơ Hội',
-            cancelLabel: 'Bỏ qua',
+            title: isEn ? 'Delete Opportunity' : 'Xóa Cơ Hội Kinh Doanh',
+            message: isEn ? 'Are you sure you want to delete this opportunity?' : 'Bạn có chắc chắn muốn xóa cơ hội kinh doanh này không?',
+            confirmLabel: isEn ? 'Delete' : 'Xóa Cơ Hội',
+            cancelLabel: isEn ? 'Cancel' : 'Bỏ qua',
             danger: true,
             onConfirm: async () => {
                 await deleteOpportunity(id)
@@ -206,7 +208,7 @@ export function PipelinePanel() {
         return (
             <div className="flex items-center justify-center py-16 gap-2">
                 <Loader2 size={16} className="animate-spin" style={{ color: '#0891B2' }} />
-                <span className="text-sm" style={{ color: '#64748B' }}>Đang tải Pipeline...</span>
+                <span className="text-sm" style={{ color: '#64748B' }}>{isEn ? 'Loading pipeline...' : 'Đang tải Pipeline...'}</span>
             </div>
         )
     }
@@ -216,7 +218,7 @@ export function PipelinePanel() {
     return (
         <div className="space-y-5">
             {/* Header Toolbar */}
-            <div className="flex items-center justify-between gap-4 p-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+            <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                 <div className="flex items-center gap-2">
                     <Target size={18} style={{ color: '#B45309' }} />
                     <div>
@@ -224,7 +226,7 @@ export function PipelinePanel() {
                             Sales Pipeline
                         </h4>
                         <p className="text-xs" style={{ color: '#475569' }}>
-                            Theo dõi các giai đoạn bán hàng và doanh số dự kiến
+                            {isEn ? 'Track sales stages and expected revenue' : 'Theo dõi các giai đoạn bán hàng và doanh số dự kiến'}
                         </p>
                     </div>
                 </div>
@@ -237,29 +239,29 @@ export function PipelinePanel() {
                             border: `1px solid ${showFilters || filterAssignee ? 'rgba(180,83,9,0.3)' : '#E2E8F0'}`,
                         }}>
                         <Filter size={12} />
-                        {filterAssignee ? `${filterAssignee}` : 'Bộ lọc'}
+                        {filterAssignee ? `${filterAssignee}` : (isEn ? 'Filters' : 'Bộ lọc')}
                     </button>
                     <button onClick={openCreate}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-all rounded"
                         style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                        <Plus size={13} /> Thêm Cơ Hội
+                        <Plus size={13} /> {isEn ? 'Add Opportunity' : 'Thêm Cơ Hội'}
                     </button>
                 </div>
             </div>
 
             {/* Filter Bar */}
             {showFilters && (
-                <div className="flex gap-3 items-center p-3 rounded-md border" style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
+                <div className="flex flex-wrap gap-3 items-center p-3 rounded-md border" style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
                     <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Sales Rep:</span>
                     <select value={filterAssignee} onChange={e => setFilterAssignee(e.target.value)}
                         className="px-3 py-1.5 text-xs outline-none" style={inputStyle}>
-                        <option value="">Tất cả nhân viên</option>
+                        <option value="">{isEn ? 'All sales reps' : 'Tất cả nhân viên'}</option>
                         {assignees.map(a => <option key={a} value={a}>{a}</option>)}
                     </select>
                     {filterAssignee && (
                         <button onClick={() => setFilterAssignee('')}
                             className="text-xs px-2 py-1 rounded" style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C' }}>
-                            Xóa filter
+                            {isEn ? 'Clear filter' : 'Xóa filter'}
                         </button>
                     )}
                 </div>
@@ -271,7 +273,7 @@ export function PipelinePanel() {
                     { label: 'Pipeline Value', value: formatVND(filterAssignee ? filteredStats.totalPipelineValue : stats.totalPipelineValue), icon: DollarSign, color: '#0891B2' },
                     { label: 'Weighted Value', value: formatVND(filterAssignee ? filteredStats.weightedValue : stats.weightedValue), icon: TrendingUp, color: '#B45309' },
                     { label: 'Conversion Rate', value: `${stats.conversionRate}%`, icon: Percent, color: '#15803D' },
-                    { label: 'Tổng Cơ Hội', value: `${filterAssignee ? filteredRows.length : stats.total}`, icon: Target, color: '#475569' },
+                    { label: isEn ? 'Total Opportunities' : 'Tổng Cơ Hội', value: `${filterAssignee ? filteredRows.length : stats.total}`, icon: Target, color: '#475569' },
                 ].map(s => (
                     <div key={s.label} className="p-4 rounded-md flex items-center gap-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                         <div className="p-2 rounded-md" style={{ background: `${s.color}15` }}>
@@ -286,7 +288,7 @@ export function PipelinePanel() {
             </div>
 
             {/* Kanban Board */}
-            <div className="grid grid-cols-2 lg:grid-cols-6 gap-2" style={{ minHeight: '450px' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2" style={{ minHeight: '450px' }}>
                 {STAGES.map(stage => {
                     const stageRows = filteredRows.filter(r => r.stage === stage.key)
                     const stageValue = stageRows.reduce((s, r) => s + r.expectedValue, 0)
@@ -339,7 +341,7 @@ export function PipelinePanel() {
                                                         </button>
                                                     )}
                                                     <button onClick={() => handleDelete(row.id)} className="p-1 rounded transition"
-                                                        style={{ background: 'rgba(100,116,139,0.1)' }} title="Xóa">
+                                                        style={{ background: 'rgba(100,116,139,0.1)' }} title={isEn ? 'Delete' : 'Xóa'}>
                                                         <Trash2 size={10} style={{ color: '#64748B' }} />
                                                     </button>
                                                 </div>
@@ -412,7 +414,7 @@ export function PipelinePanel() {
                                         })()}
                                         {detail.previousStage && (
                                             <span className="text-[10px] flex items-center gap-1" style={{ color: '#64748B' }}>
-                                                <ArrowRight size={10} /> từ {detail.previousStage}
+                                                <ArrowRight size={10} /> {isEn ? 'from' : 'từ'} {detail.previousStage}
                                             </span>
                                         )}
                                     </div>
@@ -442,11 +444,11 @@ export function PipelinePanel() {
                                                 {formatVND(detail.expectedValue)}
                                             </p>
                                         )}
-                                        <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>Giá Trị</p>
+                                        <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>{isEn ? 'Expected Value' : 'Giá Trị'}</p>
                                     </div>
                                     <div className="p-3 rounded-md text-center" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                         <p className="text-sm font-bold" style={{ color: '#0891B2' }}>{detail.probability}%</p>
-                                        <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>Xác suất</p>
+                                        <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>{isEn ? 'Probability' : 'Xác suất'}</p>
                                     </div>
                                     <div className="p-3 rounded-md text-center" style={{ background: detail.daysInStage > 14 && !['WON', 'LOST'].includes(detail.stage) ? 'rgba(185,28,28,0.06)' : '#FFFFFF' }}>
                                         <p className="text-sm font-bold" style={{ color: detail.daysInStage > 14 && !['WON', 'LOST'].includes(detail.stage) ? '#B91C1C' : '#475569' }}>
@@ -454,12 +456,12 @@ export function PipelinePanel() {
                                         </p>
                                         <p className="text-[10px] mt-0.5 flex items-center justify-center gap-1" style={{ color: '#64748B' }}>
                                             {detail.daysInStage > 14 && !['WON', 'LOST'].includes(detail.stage) && <AlertTriangle size={9} style={{ color: '#B91C1C' }} />}
-                                            Trong Stage
+                                            {isEn ? 'In Stage' : 'Trong Stage'}
                                         </p>
                                     </div>
                                     <div className="p-3 rounded-md text-center" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                         <p className="text-sm font-bold" style={{ color: '#475569' }}>{detail.totalAge}d</p>
-                                        <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>Tổng Thời Gian</p>
+                                        <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>{isEn ? 'Total Age' : 'Tổng Thời Gian'}</p>
                                     </div>
                                 </div>
 
@@ -479,21 +481,21 @@ export function PipelinePanel() {
                                     </div>
                                     <div className="flex items-center gap-2 py-2" style={{ borderTop: '1px solid #E2E8F0' }}>
                                         <Calendar size={13} style={{ color: '#64748B' }} />
-                                        <span className="text-xs" style={{ color: '#64748B' }}>Close Date</span>
+                                        <span className="text-xs" style={{ color: '#64748B' }}>{isEn ? 'Close Date' : 'Ngày chốt dự kiến'}</span>
                                         {editing ? (
                                             <input type="date" value={editForm.closeDate} onChange={e => setEditForm(f => ({ ...f, closeDate: e.target.value }))}
                                                 className="ml-auto px-2 py-1 text-xs outline-none" style={inputStyle} />
                                         ) : (
                                             <span className="text-xs font-semibold ml-auto" style={{ color: '#0F172A' }}>
-                                                {detail.closeDate ? new Date(detail.closeDate).toLocaleDateString('vi-VN') : '—'}
+                                                {detail.closeDate ? new Date(detail.closeDate).toLocaleDateString(locale) : '—'}
                                             </span>
                                         )}
                                     </div>
                                     <div className="flex items-center gap-2 py-2" style={{ borderTop: '1px solid #E2E8F0' }}>
                                         <Clock size={13} style={{ color: '#64748B' }} />
-                                        <span className="text-xs" style={{ color: '#64748B' }}>Ngày tạo</span>
+                                        <span className="text-xs" style={{ color: '#64748B' }}>{isEn ? 'Created At' : 'Ngày tạo'}</span>
                                         <span className="text-xs ml-auto" style={{ color: '#475569' }}>
-                                            {new Date(detail.createdAt).toLocaleDateString('vi-VN')}
+                                            {new Date(detail.createdAt).toLocaleDateString(locale)}
                                         </span>
                                     </div>
                                 </div>
@@ -502,14 +504,14 @@ export function PipelinePanel() {
                                 <div>
                                     <div className="flex items-center gap-2 mb-2">
                                         <FileText size={13} style={{ color: '#64748B' }} />
-                                        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Ghi Chú</span>
+                                        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{isEn ? 'Notes' : 'Ghi Chú'}</span>
                                     </div>
                                     {editing ? (
                                         <textarea value={editForm.notes} onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))}
                                             rows={3} className="w-full px-3 py-2 text-xs outline-none resize-none" style={inputStyle} />
                                     ) : (
                                         <p className="text-xs leading-relaxed p-3 rounded-md" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: detail.notes ? '#475569' : '#64748B' }}>
-                                            {detail.notes || 'Chưa có ghi chú'}
+                                            {detail.notes || (isEn ? 'No notes yet' : 'Chưa có ghi chú')}
                                         </p>
                                     )}
                                 </div>
@@ -523,7 +525,7 @@ export function PipelinePanel() {
                                                 className="flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-md transition-all"
                                                 style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                                 {actionLoading === detail.id ? <Loader2 size={13} className="animate-spin" /> : <MoveRight size={13} />}
-                                                Chuyển → {getNextStage(detail.stage)}
+                                                {isEn ? 'Move →' : 'Chuyển →'} {getNextStage(detail.stage)}
                                             </button>
                                         )}
                                         <button onClick={() => handleMarkLost(detail.id, detail.name)}
@@ -550,22 +552,22 @@ export function PipelinePanel() {
                                 <XCircle size={16} style={{ color: '#B91C1C' }} />
                             </div>
                             <div>
-                                <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>Đánh dấu Lost</h3>
+                                <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>{isEn ? 'Mark as Lost' : 'Đánh dấu Lost'}</h3>
                                 <p className="text-[10px]" style={{ color: '#64748B' }}>{lostModal.name}</p>
                             </div>
                         </div>
                         <textarea value={lostReason} onChange={e => setLostReason(e.target.value)}
-                            rows={3} placeholder="Lý do lost?..."
+                            rows={3} placeholder={isEn ? 'Reason for losing...' : 'Lý do lost?...'}
                             className="w-full px-3 py-2 text-sm outline-none resize-none mb-3" style={inputStyle}
                             autoFocus />
                         <div className="flex gap-2">
                             <button onClick={() => setLostModal(null)} className="flex-1 py-2 text-xs font-semibold rounded-md"
                                 style={{ background: '#E2E8F0', color: '#475569' }}>
-                                Hủy
+                                {isEn ? 'Cancel' : 'Hủy'}
                             </button>
                             <button onClick={confirmLost} className="flex-1 py-2 text-xs font-semibold rounded-md"
-                                style={{ background: '#B91C1C', color: '#0F172A' }}>
-                                Xác Nhận Lost
+                                style={{ background: '#B91C1C', color: '#FFFFFF' }}>
+                                {isEn ? 'Confirm Lost' : 'Xác Nhận Lost'}
                             </button>
                         </div>
                     </div>
@@ -579,34 +581,34 @@ export function PipelinePanel() {
                     <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md p-6 rounded-lg"
                         style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>Thêm Cơ Hội Mới</h3>
+                            <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>{isEn ? 'New Opportunity' : 'Thêm Cơ Hội Mới'}</h3>
                             <button onClick={() => setCreateOpen(false)} className="p-1" style={{ color: '#64748B' }}><X size={16} /></button>
                         </div>
                         <div className="space-y-3">
-                            <input value={formName} onChange={e => setFormName(e.target.value)} placeholder="Tên cơ hội (VD: Park Hyatt Wine Program)"
+                            <input value={formName} onChange={e => setFormName(e.target.value)} placeholder={isEn ? 'Opportunity Name (e.g. Park Hyatt Wine Program)' : 'Tên cơ hội (VD: Park Hyatt Wine Program)'}
                                 className="w-full px-3 py-2 text-sm outline-none" style={inputStyle} />
                             <select value={formCustomerId} onChange={e => setFormCustomerId(e.target.value)}
                                 className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}>
-                                <option value="">Chọn khách hàng...</option>
+                                <option value="">{isEn ? 'Select customer...' : 'Chọn khách hàng...'}</option>
                                 {customers.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </select>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <select value={formAssignee} onChange={e => setFormAssignee(e.target.value)}
                                     className="px-3 py-2 text-sm outline-none" style={inputStyle}>
-                                    <option value="">Assigned To...</option>
+                                    <option value="">{isEn ? 'Assigned To...' : 'Phụ trách...'}</option>
                                     {reps.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
                                 </select>
-                                <input type="number" value={formValue} onChange={e => setFormValue(e.target.value)} placeholder="Giá trị kỳ vọng"
+                                <input type="number" value={formValue} onChange={e => setFormValue(e.target.value)} placeholder={isEn ? 'Expected Value' : 'Giá trị kỳ vọng'}
                                     className="px-3 py-2 text-sm outline-none" style={{ ...inputStyle, color: '#B45309' }} />
                             </div>
                             <input type="date" value={formCloseDate} onChange={e => setFormCloseDate(e.target.value)}
                                 className="w-full px-3 py-2 text-sm outline-none" style={inputStyle} />
-                            <textarea value={formNotes} onChange={e => setFormNotes(e.target.value)} rows={2} placeholder="Ghi chú..."
+                            <textarea value={formNotes} onChange={e => setFormNotes(e.target.value)} rows={2} placeholder={isEn ? 'Notes...' : 'Ghi chú...'}
                                 className="w-full px-3 py-2 text-sm outline-none resize-none" style={inputStyle} />
                             <button onClick={handleCreate} disabled={saving || !formName || !formCustomerId || !formAssignee || !formValue}
                                 className="w-full py-2.5 text-sm font-semibold transition-all disabled:opacity-50"
                                 style={{ background: '#0E7490', color: '#FFFFFF', borderRadius: '6px' }}>
-                                {saving ? <Loader2 size={14} className="animate-spin mx-auto" /> : 'Tạo Cơ Hội (→ Lead)'}
+                                {saving ? <Loader2 size={14} className="animate-spin mx-auto" /> : (isEn ? 'Create Opportunity (→ Lead)' : 'Tạo Cơ Hội (→ Lead)')}
                             </button>
                         </div>
                     </div>

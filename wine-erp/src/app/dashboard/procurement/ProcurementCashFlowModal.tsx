@@ -8,6 +8,8 @@ import {
 } from 'lucide-react'
 import type { PORow } from './types'
 import { formatVND } from '@/lib/utils'
+import { useAppLocale } from '@/lib/i18n'
+import { getProcurementDict } from './i18n'
 
 interface ProcurementCashFlowModalProps {
     open: boolean
@@ -29,6 +31,10 @@ export function ProcurementCashFlowModal({
     onClose,
     purchaseOrders,
 }: ProcurementCashFlowModalProps) {
+    const { locale, formatDate } = useAppLocale()
+    const dict = getProcurementDict(locale)
+    const t = dict.cashFlowModal
+
     if (!open) return null
 
     // ─── 1. BỘ LỌC THỜI ĐIỂM (TIME HORIZON) ─────────────────────
@@ -270,13 +276,13 @@ export function ProcurementCashFlowModal({
                             </span>
                             <div>
                                 <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                                    Kế Hoạch Dòng Tiền & Dự Trù Chi Phí Lô Hàng
+                                    {t.title}
                                     <span className="inline-block px-2 py-0.5 text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200 rounded-full whitespace-nowrap shrink-0">
-                                        Mô Phỏng Thời Điểm
+                                        {locale === 'en' ? 'Interactive Simulator' : 'Mô Phỏng Thời Điểm'}
                                     </span>
                                 </h2>
                                 <p className="text-xs text-slate-500">
-                                    Linh động chọn PO cần thanh toán • Cấu hình tỷ giá dự kiến • Phân tách Tiền hàng, Thuế 3 tầng, Cước vận tải
+                                    {t.subtitle}
                                 </p>
                             </div>
                         </div>
@@ -286,14 +292,14 @@ export function ProcurementCashFlowModal({
                         <button
                             onClick={exportCSV}
                             className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 flex items-center gap-1.5 transition-all shadow-sm"
-                            title="Tải bảng tính Excel/CSV"
+                            title={locale === 'en' ? 'Download CSV spreadsheet' : 'Tải bảng tính Excel/CSV'}
                         >
-                            <Download size={14} /> Xuất CSV
+                            <Download size={14} /> {locale === 'en' ? 'Export CSV' : 'Xuất CSV'}
                         </button>
                         <button
                             onClick={onClose}
                             className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
-                            aria-label="Đóng modal"
+                            aria-label={t.closeBtn}
                         >
                             <X size={20} />
                         </button>
@@ -305,14 +311,14 @@ export function ProcurementCashFlowModal({
                     {/* Chọn Thời Điểm */}
                     <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-slate-600 uppercase flex items-center gap-1">
-                            <Calendar size={13} className="text-slate-500" /> Thời Điểm:
+                            <Calendar size={13} className="text-slate-500" /> {locale === 'en' ? 'Horizon:' : 'Thời Điểm:'}
                         </span>
                         <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm text-xs">
                             {[
-                                { key: 'ALL_OPEN', label: 'Tất cả PO đang mở' },
-                                { key: 'THIS_MONTH', label: 'Tháng này' },
-                                { key: 'NEXT_MONTH', label: 'Tháng tới' },
-                                { key: 'THIS_QUARTER', label: 'Quý này' },
+                                { key: 'ALL_OPEN', label: locale === 'en' ? 'All Open POs' : 'Tất cả PO đang mở' },
+                                { key: 'THIS_MONTH', label: locale === 'en' ? 'This Month' : 'Tháng này' },
+                                { key: 'NEXT_MONTH', label: locale === 'en' ? 'Next Month' : 'Tháng tới' },
+                                { key: 'THIS_QUARTER', label: locale === 'en' ? 'This Quarter' : 'Quý này' },
                             ].map(tab => (
                                 <button
                                     key={tab.key}
@@ -334,7 +340,7 @@ export function ProcurementCashFlowModal({
                         {/* Tỷ Giá */}
                         <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-slate-600 uppercase flex items-center gap-1">
-                                <TrendingUp size={13} className="text-teal-600" /> Tỷ Giá:
+                                <TrendingUp size={13} className="text-teal-600" /> {locale === 'en' ? 'FX Rate:' : 'Tỷ Giá:'}
                             </span>
                             <div className="flex items-center gap-1.5">
                                 {['USD', 'EUR', 'AUD'].map(curr => (
@@ -358,10 +364,10 @@ export function ProcurementCashFlowModal({
                         {/* Cấu Hình % Thuế Dự Kiến */}
                         <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
                             <span className="text-xs font-bold text-slate-600 uppercase flex items-center gap-1">
-                                <Percent size={13} className="text-amber-600" /> % Thuế Chung:
+                                <Percent size={13} className="text-amber-600" /> {locale === 'en' ? 'Default Tax %:' : '% Thuế Chung:'}
                             </span>
                             <div className="flex items-center gap-1.5">
-                                <div className="inline-flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 shadow-xs text-xs whitespace-nowrap shrink-0" title="Thuế Nhập Khẩu">
+                                <div className="inline-flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 shadow-xs text-xs whitespace-nowrap shrink-0" title="Import Duty">
                                     <span className="font-bold text-slate-500 mr-1">NK:</span>
                                     <input
                                         type="number"
@@ -377,8 +383,8 @@ export function ProcurementCashFlowModal({
                                     />
                                     <span className="text-[10px] text-slate-400 ml-0.5">%</span>
                                 </div>
-                                <div className="inline-flex items-center bg-white border border-amber-300 bg-amber-50/30 rounded-md px-2 py-1 shadow-xs text-xs whitespace-nowrap shrink-0" title="Thuế Tiêu Thụ Đặc Biệt">
-                                    <span className="font-bold text-amber-800 mr-1">TTĐB:</span>
+                                <div className="inline-flex items-center bg-white border border-amber-300 bg-amber-50/30 rounded-md px-2 py-1 shadow-xs text-xs whitespace-nowrap shrink-0" title="SCT">
+                                    <span className="font-bold text-amber-800 mr-1">SCT:</span>
                                     <input
                                         type="number"
                                         min="0"
@@ -393,7 +399,7 @@ export function ProcurementCashFlowModal({
                                     />
                                     <span className="text-[10px] text-amber-600 ml-0.5">%</span>
                                 </div>
-                                <div className="inline-flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 shadow-xs text-xs whitespace-nowrap shrink-0" title="Thuế Giá Trị Gia Tăng (VAT)">
+                                <div className="inline-flex items-center bg-white border border-slate-300 rounded-md px-2 py-1 shadow-xs text-xs whitespace-nowrap shrink-0" title="VAT">
                                     <span className="font-bold text-slate-500 mr-1">VAT:</span>
                                     <input
                                         type="number"
@@ -416,7 +422,7 @@ export function ProcurementCashFlowModal({
                                         setGlobalTaxRates({ importTax: 20, sct: 65, vat: 10 })
                                         setPoTaxOverrides({})
                                     }}
-                                    title="Đặt lại tỷ giá & thuế mặc định"
+                                    title={t.resetGlobalRates}
                                     className="p-1.5 text-slate-400 hover:text-teal-700 hover:bg-white rounded border border-transparent hover:border-slate-200 transition-all"
                                 >
                                     <RefreshCw size={13} />
@@ -431,25 +437,25 @@ export function ProcurementCashFlowModal({
                     {/* Thẻ 1: Tiền hàng */}
                     <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-lg">
                         <div className="flex items-center justify-between text-xs text-blue-700 font-semibold mb-1">
-                            <span>1. Tiền Hàng (FOB/EXW)</span>
+                            <span>1. {t.goodsPayment}</span>
                             <span className="text-[11px] font-normal text-blue-600">
-                                {totals.count} PO chọn
+                                {totals.count} PO
                             </span>
                         </div>
                         <div className="text-lg font-bold font-mono text-blue-900">
                             {formatVND(totals.totalGoodsVND)}
                         </div>
                         <div className="text-[11px] text-blue-600/80 font-mono mt-0.5 truncate">
-                            {Object.entries(totals.foreignTotals).map(([c, a]) => `${a.toLocaleString('en-US', { maximumFractionDigits: 0 })} ${c}`).join(' • ') || '0 ngoại tệ'}
+                            {Object.entries(totals.foreignTotals).map(([c, a]) => `${a.toLocaleString('en-US', { maximumFractionDigits: 0 })} ${c}`).join(' • ') || '0'}
                         </div>
                     </div>
 
                     {/* Thẻ 2: Thuế 3 tầng */}
                     <div className="p-3 bg-amber-50/70 border border-amber-100 rounded-lg">
                         <div className="flex items-center justify-between text-xs text-amber-800 font-semibold mb-1">
-                            <span>2. Thuế Hải Quan 3 Tầng</span>
+                            <span>2. {t.taxPayment}</span>
                             <span className="inline-block text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-bold whitespace-nowrap shrink-0">
-                                Nộp Kho Bạc
+                                {locale === 'en' ? 'State Treasury' : 'Nộp Kho Bạc'}
                             </span>
                         </div>
                         <div className="text-lg font-bold font-mono text-amber-900">
@@ -457,7 +463,7 @@ export function ProcurementCashFlowModal({
                         </div>
                         <div className="text-[11px] text-amber-700 mt-0.5 flex gap-1">
                             <span>NK: {formatVND(totals.totalImportTaxVND)}</span>
-                            <span>• TTĐB: {formatVND(totals.totalSctVND)}</span>
+                            <span>• SCT: {formatVND(totals.totalSctVND)}</span>
                             <span>• VAT: {formatVND(totals.totalVatVND)}</span>
                         </div>
                     </div>
@@ -465,31 +471,31 @@ export function ProcurementCashFlowModal({
                     {/* Thẻ 3: Vận chuyển & Cảng */}
                     <div className="p-3 bg-cyan-50/70 border border-cyan-100 rounded-lg">
                         <div className="flex items-center justify-between text-xs text-cyan-800 font-semibold mb-1">
-                            <span>3. Logistics & Phí Cảng</span>
-                            <span className="text-[11px] text-cyan-600">Cước biển + Local</span>
+                            <span>3. {t.freightPayment}</span>
+                            <span className="text-[11px] text-cyan-600">Freight + Local</span>
                         </div>
                         <div className="text-lg font-bold font-mono text-cyan-900">
                             {formatVND(totals.totalFreightVND + totals.totalLocalVND)}
                         </div>
                         <div className="text-[11px] text-cyan-700 mt-0.5">
-                            Cước: {formatVND(totals.totalFreightVND)} • Cảng & Tem: {formatVND(totals.totalLocalVND)}
+                            Freight: {formatVND(totals.totalFreightVND)} • Local: {formatVND(totals.totalLocalVND)}
                         </div>
                     </div>
 
                     {/* Thẻ 4: TỔNG VỐN DÒNG TIỀN */}
                     <div className="p-3 bg-teal-900 text-white rounded-lg shadow-sm">
                         <div className="flex items-center justify-between text-xs text-teal-200 font-semibold mb-1">
-                            <span>Tổng vốn dòng tiền (Landed Cost)</span>
+                            <span>{t.totalCashOut}</span>
                             <span className="inline-block text-[10px] bg-teal-800 text-teal-100 px-1.5 py-0.2 rounded font-mono whitespace-nowrap shrink-0">
-                                100% Vốn
+                                100%
                             </span>
                         </div>
                         <div className="text-xl font-bold font-mono text-teal-50">
                             {formatVND(totals.grandTotalLandedVND)}
                         </div>
-                        <div className="text-[11px] text-teal-700 mt-0.5 flex items-center justify-between">
-                            <span>Hàng: {totals.grandTotalLandedVND > 0 ? Math.round((totals.totalGoodsVND / totals.grandTotalLandedVND) * 100) : 0}%</span>
-                            <span>Thuế: {totals.grandTotalLandedVND > 0 ? Math.round((totals.totalTaxVND / totals.grandTotalLandedVND) * 100) : 0}%</span>
+                        <div className="text-[11px] text-teal-200 mt-0.5 flex items-center justify-between">
+                            <span>Goods: {totals.grandTotalLandedVND > 0 ? Math.round((totals.totalGoodsVND / totals.grandTotalLandedVND) * 100) : 0}%</span>
+                            <span>Tax: {totals.grandTotalLandedVND > 0 ? Math.round((totals.totalTaxVND / totals.grandTotalLandedVND) * 100) : 0}%</span>
                             <span>Logistics: {totals.grandTotalLandedVND > 0 ? Math.round(((totals.totalFreightVND + totals.totalLocalVND) / totals.grandTotalLandedVND) * 100) : 0}%</span>
                         </div>
                     </div>
@@ -506,7 +512,7 @@ export function ProcurementCashFlowModal({
                                     : 'text-slate-600 hover:text-slate-900'
                             }`}
                         >
-                            <Layers size={14} /> Ma Trận Đơn Hàng & Thêm/Bớt PO
+                            <Layers size={14} /> {locale === 'en' ? 'PO Matrix & Selection' : 'Ma Trận Đơn Hàng & Thêm/Bớt PO'}
                         </button>
                         <button
                             onClick={() => setViewMode('TIMELINE')}
@@ -516,7 +522,7 @@ export function ProcurementCashFlowModal({
                                     : 'text-slate-600 hover:text-slate-900'
                             }`}
                         >
-                            <Calendar size={14} /> Lịch Dòng Tiền Theo 4 Mốc Giải Ngân
+                            <Calendar size={14} /> {t.monthlyScheduleTitle}
                         </button>
                         <button
                             onClick={() => setViewMode('TAX_BREAKDOWN')}
@@ -526,25 +532,25 @@ export function ProcurementCashFlowModal({
                                     : 'text-slate-600 hover:text-slate-900'
                             }`}
                         >
-                            <PieChart size={14} /> Bóc Tách Cơ Cấu Thuế Rượu Vang
+                            <PieChart size={14} /> {t.poConfigTitle}
                         </button>
                     </div>
 
                     <div className="flex items-center gap-2 text-slate-500">
-                        <span>Đã chọn <strong className="text-teal-700">{totals.count}</strong> / {filteredPOs.length} PO</span>
+                        <span>{t.selectedCount(totals.count, filteredPOs.length)}</span>
                         <span className="text-slate-300">|</span>
                         <button
                             onClick={selectAll}
                             className="text-teal-700 hover:underline font-semibold"
                         >
-                            Chọn tất cả
+                            {t.selectAll}
                         </button>
                         <span className="text-slate-300">•</span>
                         <button
                             onClick={deselectAll}
                             className="text-slate-500 hover:underline"
                         >
-                            Bỏ chọn
+                            {t.deselectAll}
                         </button>
                     </div>
                 </div>
@@ -559,24 +565,24 @@ export function ProcurementCashFlowModal({
                                 <thead>
                                     <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
                                         <th className="p-3 w-10 text-center">
-                                            <span className="sr-only">Chọn</span>
+                                            <span className="sr-only">Select</span>
                                         </th>
-                                        <th className="p-3">Mã PO & Pháp Nhân</th>
-                                        <th className="p-3">Nhà Cung Cấp</th>
+                                        <th className="p-3">{dict.table.poNo}</th>
+                                        <th className="p-3">{dict.table.supplier}</th>
                                         <th className="p-3 text-center">Incoterms</th>
-                                        <th className="p-3 text-right">Tiền Hàng (Ngoại Tệ)</th>
-                                        <th className="p-3 text-right">Tỷ Giá Dự Kiến</th>
-                                        <th className="p-3 text-right">Tiền Hàng (VNĐ)</th>
-                                        <th className="p-3 text-right text-amber-800">Dự Trù Thuế 3 Tầng</th>
-                                        <th className="p-3 text-right text-cyan-800">Cước & Cảng</th>
-                                        <th className="p-3 text-right font-bold text-teal-800">Tổng Dự Trù Lô</th>
+                                        <th className="p-3 text-right">{dict.table.totalAmount}</th>
+                                        <th className="p-3 text-right">{dict.detailDrawer.exchangeRate}</th>
+                                        <th className="p-3 text-right">{t.goodsPayment} (VND)</th>
+                                        <th className="p-3 text-right text-amber-800">{t.taxPayment}</th>
+                                        <th className="p-3 text-right text-cyan-800">{t.freightPayment}</th>
+                                        <th className="p-3 text-right font-bold text-teal-800">{t.totalCashOut}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 font-mono">
                                     {calculatedItems.length === 0 ? (
                                         <tr>
                                             <td colSpan={10} className="p-8 text-center text-slate-400 font-sans">
-                                                Không có đơn mua hàng nào phù hợp với bộ lọc thời điểm này.
+                                                {dict.table.emptyTitle}
                                             </td>
                                         </tr>
                                     ) : (
@@ -608,7 +614,7 @@ export function ProcurementCashFlowModal({
                                                         )}
                                                     </div>
                                                     <div className="text-[11px] text-slate-400">
-                                                        {item.po.estimatedDelivery ? `ETA: ${new Date(item.po.estimatedDelivery).toLocaleDateString('vi-VN')}` : 'Chưa có ETA'}
+                                                        {item.po.estimatedDelivery ? `ETA: ${formatDate(item.po.estimatedDelivery)}` : (locale === 'en' ? 'No ETA' : 'Chưa có ETA')}
                                                     </div>
                                                 </td>
                                                 <td className="p-3 font-sans">
@@ -636,7 +642,7 @@ export function ProcurementCashFlowModal({
                                                 <td className="p-3 text-right text-amber-900 font-medium">
                                                     <div>{formatVND(item.totalTaxVND)}</div>
                                                     <div className="text-[10px] text-amber-700/80 font-normal">
-                                                        NK {item.importTaxPct}% • TTĐB {item.sctPct}% • VAT {item.vatPct}%
+                                                        NK {item.importTaxPct}% • SCT {item.sctPct}% • VAT {item.vatPct}%
                                                     </div>
                                                 </td>
                                                 <td className="p-3 text-right text-cyan-900">
@@ -653,7 +659,7 @@ export function ProcurementCashFlowModal({
                                     <tfoot>
                                         <tr className="bg-slate-100/90 font-mono font-bold text-slate-800 border-t-2 border-slate-300">
                                             <td colSpan={6} className="p-3 text-right font-sans uppercase">
-                                                Tổng Cộng Các PO Đã Chọn ({totals.count} đơn):
+                                                {dict.financialTab.skuTable.totalRow} ({totals.count} PO):
                                             </td>
                                             <td className="p-3 text-right text-blue-900">
                                                 {formatVND(totals.totalGoodsVND)}
@@ -684,16 +690,18 @@ export function ProcurementCashFlowModal({
                                         <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
                                             1
                                         </span>
-                                        <h3 className="font-bold text-slate-800 text-xs">ĐỢT 1: ĐẶT CỌC KÝ PO</h3>
+                                        <h3 className="font-bold text-slate-800 text-xs">{locale === 'en' ? 'STAGE 1: PO DEPOSIT (30%)' : 'ĐỢT 1: ĐẶT CỌC KÝ PO'}</h3>
                                     </div>
                                     <p className="text-[11px] text-slate-500 mb-3">
-                                        Thanh toán 20% - 30% tiền hàng ngoại tệ ngay khi ký hợp đồng mua hàng với Nhà sản xuất.
+                                        {locale === 'en'
+                                            ? '20% - 30% foreign currency deposit upon signing the purchase contract with the producer.'
+                                            : 'Thanh toán 20% - 30% tiền hàng ngoại tệ ngay khi ký hợp đồng mua hàng với Nhà sản xuất.'}
                                     </p>
                                     <div className="text-lg font-bold font-mono text-blue-900 mb-1">
                                         {formatVND(totals.milestones.totalDeposit)}
                                     </div>
                                     <span className="inline-block text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0">
-                                        Tiền mặt ngoại tệ
+                                        {locale === 'en' ? 'Foreign Currency Wire (TT)' : 'Tiền mặt ngoại tệ'}
                                     </span>
                                 </div>
 
@@ -703,16 +711,18 @@ export function ProcurementCashFlowModal({
                                         <span className="w-6 h-6 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-xs">
                                             2
                                         </span>
-                                        <h3 className="font-bold text-slate-800 text-xs">ĐỢT 2: TIỀN HÀNG CÒN LẠI</h3>
+                                        <h3 className="font-bold text-slate-800 text-xs">{locale === 'en' ? 'STAGE 2: BALANCE GOODS (70%)' : 'ĐỢT 2: TIỀN HÀNG CÒN LẠI'}</h3>
                                     </div>
                                     <p className="text-[11px] text-slate-500 mb-3">
-                                        Thanh toán 70% - 80% trước khi lấy Bill of Lading gốc hoặc giải phóng điện tử (Telex Release).
+                                        {locale === 'en'
+                                            ? '70% - 80% balance payment prior to original Bill of Lading or Telex Release.'
+                                            : 'Thanh toán 70% - 80% trước khi lấy Bill of Lading gốc hoặc giải phóng điện tử (Telex Release).'}
                                     </p>
                                     <div className="text-lg font-bold font-mono text-sky-900 mb-1">
                                         {formatVND(totals.milestones.totalFinalGoods)}
                                     </div>
                                     <span className="inline-block text-[10px] text-sky-700 bg-sky-50 px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0">
-                                        Khi tàu khởi hành (ETD)
+                                        {locale === 'en' ? 'Upon Vessel Departure (ETD)' : 'Khi tàu khởi hành (ETD)'}
                                     </span>
                                 </div>
 
@@ -722,16 +732,18 @@ export function ProcurementCashFlowModal({
                                         <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-xs">
                                             3
                                         </span>
-                                        <h3 className="font-bold text-slate-800 text-xs">ĐỢT 3: THUẾ HẢI QUAN</h3>
+                                        <h3 className="font-bold text-slate-800 text-xs">{locale === 'en' ? 'STAGE 3: CUSTOMS TAXES' : 'ĐỢT 3: THUẾ HẢI QUAN'}</h3>
                                     </div>
                                     <p className="text-[11px] text-slate-500 mb-3">
-                                        Bắt buộc nộp tiền mặt vào Kho Bạc Nhà Nước (Thuế NK + TTĐB 65% + VAT 10%) để thông quan.
+                                        {locale === 'en'
+                                            ? 'Mandatory cash payment to State Treasury (Import Duty + SCT + VAT) for customs clearance.'
+                                            : 'Bắt buộc nộp tiền mặt vào Kho Bạc Nhà Nước (Thuế NK + TTĐB 65% + VAT 10%) để thông quan.'}
                                     </p>
                                     <div className="text-lg font-bold font-mono text-amber-900 mb-1">
                                         {formatVND(totals.milestones.totalTax)}
                                     </div>
                                     <span className="inline-block text-[10px] text-amber-800 bg-amber-100 px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0">
-                                        Trước ngày cập cảng (ETA)
+                                        {locale === 'en' ? 'Before Port Arrival (ETA)' : 'Trước ngày cập cảng (ETA)'}
                                     </span>
                                 </div>
 
@@ -741,16 +753,18 @@ export function ProcurementCashFlowModal({
                                         <span className="w-6 h-6 rounded-full bg-cyan-100 text-cyan-700 flex items-center justify-center font-bold text-xs">
                                             4
                                         </span>
-                                        <h3 className="font-bold text-slate-800 text-xs">ĐỢT 4: LOGISTICS & CẢNG</h3>
+                                        <h3 className="font-bold text-slate-800 text-xs">{locale === 'en' ? 'STAGE 4: LOGISTICS & PORT' : 'ĐỢT 4: LOGISTICS & CẢNG'}</h3>
                                     </div>
                                     <p className="text-[11px] text-slate-500 mb-3">
-                                        Cước tàu biển Forwarder, phí lưu cont THC/DO, cước kéo xe cont về kho và chi phí dán tem.
+                                        {locale === 'en'
+                                            ? 'Ocean freight, THC/D/O port charges, inland trucking to warehouse, and wine tax stamps.'
+                                            : 'Cước tàu biển Forwarder, phí lưu cont THC/DO, cước kéo xe cont về kho và chi phí dán tem.'}
                                     </p>
                                     <div className="text-lg font-bold font-mono text-cyan-900 mb-1">
                                         {formatVND(totals.milestones.totalLogistics)}
                                     </div>
                                     <span className="inline-block text-[10px] text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0">
-                                        Khi giao hàng về kho
+                                        {locale === 'en' ? 'Upon Warehouse Delivery' : 'Khi giao hàng về kho'}
                                     </span>
                                 </div>
                             </div>
@@ -758,7 +772,7 @@ export function ProcurementCashFlowModal({
                             {/* Bảng chi tiết từng đợt của các PO */}
                             <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
                                 <h4 className="text-xs font-bold text-slate-700 mb-3 uppercase flex items-center gap-2">
-                                    <Info size={14} className="text-teal-700" /> Kế Hoạch Chuẩn Bị Tiền Mặt Chi Tiết Theo Từng Đơn
+                                    <Info size={14} className="text-teal-700" /> {t.monthlyScheduleTitle}
                                 </h4>
                                 <div className="divide-y divide-slate-100">
                                     {calculatedItems.filter(i => i.isSelected).map(item => (
@@ -774,19 +788,19 @@ export function ProcurementCashFlowModal({
 
                                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-right font-mono text-[11px]">
                                                 <div>
-                                                    <span className="text-[10px] text-slate-400 block font-sans">1. Cọc (30%)</span>
+                                                    <span className="text-[10px] text-slate-400 block font-sans">1. Deposit (30%)</span>
                                                     <span className="text-blue-800 font-semibold">{formatVND(item.milestones.depositVND)}</span>
                                                 </div>
                                                 <div>
-                                                    <span className="text-[10px] text-slate-400 block font-sans">2. Hàng (70%)</span>
+                                                    <span className="text-[10px] text-slate-400 block font-sans">2. Balance (70%)</span>
                                                     <span className="text-sky-800 font-semibold">{formatVND(item.milestones.finalGoodsVND)}</span>
                                                 </div>
                                                 <div>
-                                                    <span className="text-[10px] text-slate-400 block font-sans">3. Thuế Hải Quan</span>
+                                                    <span className="text-[10px] text-slate-400 block font-sans">3. Customs Tax</span>
                                                     <span className="text-amber-800 font-bold">{formatVND(item.milestones.taxVND)}</span>
                                                 </div>
                                                 <div>
-                                                    <span className="text-[10px] text-slate-400 block font-sans">4. Logistics & Cảng</span>
+                                                    <span className="text-[10px] text-slate-400 block font-sans">4. Logistics</span>
                                                     <span className="text-cyan-800">{formatVND(item.milestones.logisticsVND)}</span>
                                                 </div>
                                             </div>
@@ -802,27 +816,24 @@ export function ProcurementCashFlowModal({
                         <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs space-y-4">
                             <div className="p-4 bg-amber-50/50 border border-amber-200 rounded-lg text-xs text-amber-900 space-y-1">
                                 <h4 className="font-bold flex items-center gap-1.5 text-amber-950">
-                                    <HelpCircle size={15} /> Công Thức Tính Thuế Rượu Vang Nhập Khẩu Vào Việt Nam (3 Tầng Thuế Lồng Ghép):
+                                    <HelpCircle size={15} /> {locale === 'en' ? 'Vietnam Imported Wine 3-Tier Compound Tax Formula:' : 'Công Thức Tính Thuế Rượu Vang Nhập Khẩu Vào Việt Nam (3 Tầng Thuế Lồng Ghép):'}
                                 </h4>
-                                <p>• <strong>Thuế Nhập Khẩu</strong> = Giá CIF × Thuế suất NK (ước tính 20% theo C/O Form EUR.1 EVFTA).</p>
-                                <p>• <strong>Thuế Tiêu Thụ Đặc Biệt (TTĐB 65%)</strong> = (Giá CIF + Thuế Nhập Khẩu) × 65%.</p>
-                                <p>• <strong>Thuế Giá Trị Gia Tăng (VAT 10%)</strong> = (Giá CIF + Thuế Nhập Khẩu + Thuế TTĐB) × 10%.</p>
-                                <p className="text-[11px] text-amber-700 italic pt-1">
-                                    * Toàn bộ 3 loại thuế trên được nộp cùng lúc tại thời điểm mở tờ khai hải quan trước khi thông quan lấy hàng.
-                                </p>
+                                <p>• <strong>{dict.financialTab.summary.importTax}</strong> = CIF × Import Duty % (e.g. 20% under EVFTA C/O Form EUR.1).</p>
+                                <p>• <strong>SCT (65%)</strong> = (CIF + Import Duty) × 65%.</p>
+                                <p>• <strong>VAT (10%)</strong> = (CIF + Import Duty + SCT) × 10%.</p>
                             </div>
 
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left text-xs border-collapse font-mono">
                                     <thead>
                                         <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
-                                            <th className="p-2.5 font-sans">Mã PO</th>
-                                            <th className="p-2.5 font-sans">Giá Tính Thuế (CIF)</th>
-                                            <th className="p-2.5 text-center font-sans">Thuế NK (%)</th>
-                                            <th className="p-2.5 text-center font-sans">Thuế TTĐB (%)</th>
-                                            <th className="p-2.5 text-center font-sans">Thuế VAT (%)</th>
-                                            <th className="p-2.5 text-right font-bold text-amber-900 font-sans">Tổng Thuế Phải Nộp</th>
-                                            <th className="p-2.5 text-right font-sans">Tỷ Trọng / CIF</th>
+                                            <th className="p-2.5 font-sans">{dict.table.poNo}</th>
+                                            <th className="p-2.5 font-sans">CIF (VND)</th>
+                                            <th className="p-2.5 text-center font-sans">{dict.financialTab.taxRates.importTaxLabel}</th>
+                                            <th className="p-2.5 text-center font-sans">{dict.financialTab.taxRates.sctLabel}</th>
+                                            <th className="p-2.5 text-center font-sans">{dict.financialTab.taxRates.vatLabel}</th>
+                                            <th className="p-2.5 text-right font-bold text-amber-900 font-sans">{dict.shipmentDrawer.customs.totalTax}</th>
+                                            <th className="p-2.5 text-right font-sans">% / CIF</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
@@ -844,9 +855,9 @@ export function ProcurementCashFlowModal({
                                                                     })
                                                                 }}
                                                                 className="text-[10px] font-normal text-teal-700 hover:underline"
-                                                                title="Xoá thuế riêng, quay lại dùng % thuế chung"
+                                                                title={t.resetGlobalRates}
                                                             >
-                                                                ↩ Dùng % chung
+                                                                {t.resetGlobalRates}
                                                             </button>
                                                         )}
                                                     </td>
@@ -854,7 +865,6 @@ export function ProcurementCashFlowModal({
                                                         {formatVND(item.cifVND)}
                                                     </td>
 
-                                                    {/* Thuế NK có thể tự do chỉnh % */}
                                                     <td className="p-2.5 text-center">
                                                         <div className="inline-flex items-center bg-white border border-slate-300 rounded px-1.5 py-0.5 shadow-xs">
                                                             <input
@@ -876,7 +886,6 @@ export function ProcurementCashFlowModal({
                                                         </div>
                                                     </td>
 
-                                                    {/* Thuế TTĐB có thể tự do chỉnh % */}
                                                     <td className="p-2.5 text-center">
                                                         <div className="inline-flex items-center bg-amber-50 border border-amber-300 rounded px-1.5 py-0.5 shadow-xs">
                                                             <input
@@ -898,7 +907,6 @@ export function ProcurementCashFlowModal({
                                                         </div>
                                                     </td>
 
-                                                    {/* Thuế VAT có thể tự do chỉnh % */}
                                                     <td className="p-2.5 text-center">
                                                         <div className="inline-flex items-center bg-white border border-slate-300 rounded px-1.5 py-0.5 shadow-xs">
                                                             <input
@@ -932,7 +940,7 @@ export function ProcurementCashFlowModal({
                                     </tbody>
                                     <tfoot>
                                         <tr className="bg-slate-100 font-bold border-t-2 border-slate-300">
-                                            <td className="p-2.5 font-sans uppercase">Tổng Cộng:</td>
+                                            <td className="p-2.5 font-sans uppercase">{dict.financialTab.skuTable.totalRow}:</td>
                                             <td className="p-2.5 text-slate-900">{formatVND(totals.totalGoodsVND + totals.totalFreightVND)}</td>
                                             <td className="p-2.5 text-right text-slate-900">{formatVND(totals.totalImportTaxVND)}</td>
                                             <td className="p-2.5 text-right text-amber-900">{formatVND(totals.totalSctVND)}</td>
@@ -954,14 +962,18 @@ export function ProcurementCashFlowModal({
                 <div className="px-6 py-3 border-t border-slate-200 bg-white flex items-center justify-between text-xs">
                     <div className="text-slate-500 flex items-center gap-1.5">
                         <Info size={14} className="text-teal-700" />
-                        <span>Mẹo: Bạn có thể thay đổi tỷ giá trực tiếp ở thanh trên để xem dự trù dòng tiền biến động theo thời gian thực.</span>
+                        <span>
+                            {locale === 'en'
+                                ? 'Tip: Adjust FX rates or tax rates above to simulate real-time landed cost and cash outflow.'
+                                : 'Mẹo: Bạn có thể thay đổi tỷ giá trực tiếp ở thanh trên để xem dự trù dòng tiền biến động theo thời gian thực.'}
+                        </span>
                     </div>
 
                     <button
                         onClick={onClose}
                         className="px-5 py-2 text-xs font-bold text-white bg-[#0E7490] hover:bg-[#155E75] rounded-md transition-all shadow-sm"
                     >
-                        Hoàn tất & Đóng
+                        {t.closeBtn}
                     </button>
                 </div>
 

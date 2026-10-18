@@ -329,7 +329,7 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate, isMobile
         window.location.href = '/login'
     }, [])
 
-    // Smart prefetch: prefetch route + data on hover
+    // Smart prefetch: prefetch route + data on hover only (prevents 30-route SSR/DB storm on mount)
     const handlePrefetch = useCallback((href: string) => {
         if (!prefetchedRef.current.has(href)) {
             prefetchedRef.current.add(href)
@@ -342,25 +342,6 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate, isMobile
             if (prefetcher) prefetcher(queryClient)
         }
     }, [router, queryClient])
-
-    // Auto-prefetch ALL sidebar links after current page loads
-    // This ensures every link click is instant from Router Cache
-    useEffect(() => {
-        const allHrefs = filteredGroups.flatMap(g => g.items.map(i => i.href))
-
-        // Stagger prefetching to avoid thundering herd
-        const timers: ReturnType<typeof setTimeout>[] = []
-        allHrefs.forEach((href, idx) => {
-            if (href === pathname || prefetchedRef.current.has(href)) return
-            const timer = setTimeout(() => {
-                prefetchedRef.current.add(href)
-                router.prefetch(href)
-            }, 500 + idx * 100) // Stagger: 500ms, 600ms, 700ms...
-            timers.push(timer)
-        })
-
-        return () => timers.forEach(clearTimeout)
-    }, [pathname, router, filteredGroups])
 
     const effectiveCollapsed = isMobile ? false : collapsed
 
@@ -395,6 +376,7 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate, isMobile
                                     <Link
                                         key={item.href}
                                         href={item.href}
+                                        prefetch={false}
                                         title={effectiveCollapsed ? itemLabel : undefined}
                                         onClick={onNavigate}
                                         aria-current={isActive ? 'page' : undefined}

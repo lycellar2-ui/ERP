@@ -1,23 +1,24 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, FileText, Clock, CheckCircle2, XCircle, ArrowRight, Eye, Loader2, X, Send, RefreshCcw, Download, Link2, Copy, ExternalLink, Printer, Mail, Wine, BarChart3, Zap } from 'lucide-react'
+import { useState, useCallback } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Plus, Search, FileText, ArrowRight, Eye, Loader2, X, Send, Copy, ExternalLink, Printer, Mail, Wine, BarChart3 } from 'lucide-react'
 import { toast } from 'sonner'
-import { QuotationRow, QuotationStatus, getQuotations, getQuotationDetail, updateQuotationStatus, convertQuotationToSO, createQuotation, sendQuotation, duplicateQuotation, exportQuotationExcel } from './actions'
+import { QuotationRow, QuotationStatus, getQuotations, getQuotationDetail, updateQuotationStatus, convertQuotationToSO, createQuotation, sendQuotation } from './actions'
 import { getCustomersForSO, getSalesReps, getProductsWithStock } from '../sales/actions'
 import { getCustomerResolvedPrices, ResolvedPrice } from '@/app/dashboard/price-list/customer-rules-actions'
-import { formatVND, formatDate } from '@/lib/utils'
 import { DebouncedTextarea } from '@/components/DebouncedInput'
-import { useConfirmDialog } from '@/components/ui'
+import { useConfirmDialog, SearchInput, StatusTabs, Table, THead, TBody, Tr, Th, Td, TableMessageRow } from '@/components/ui'
+import { useAppLocale } from '@/lib/i18n'
+import { getQuotationsI18n } from './i18n'
 
-const STATUS_CFG: Record<QuotationStatus, { label: string; color: string; bg: string }> = {
-    DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(100,116,139,0.12)' },
-    SENT: { label: 'Đã Gửi', color: '#B45309', bg: 'rgba(180,83,9,0.15)' },
-    ACCEPTED: { label: 'Chấp Nhận', color: '#15803D', bg: 'rgba(21,128,61,0.15)' },
-    CONVERTED: { label: 'Đã Chuyển SO', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-    EXPIRED: { label: 'Hết Hạn', color: '#64748B', bg: 'rgba(100,116,139,0.12)' },
-    CANCELLED: { label: 'Huỷ', color: '#B91C1C', bg: 'rgba(185,28,28,0.12)' },
+const STATUS_CFG: Record<QuotationStatus, { color: string; bg: string }> = {
+    DRAFT: { color: '#475569', bg: 'rgba(100,116,139,0.12)' },
+    SENT: { color: '#B45309', bg: 'rgba(180,83,9,0.15)' },
+    ACCEPTED: { color: '#15803D', bg: 'rgba(21,128,61,0.15)' },
+    CONVERTED: { color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
+    EXPIRED: { color: '#64748B', bg: 'rgba(100,116,139,0.12)' },
+    CANCELLED: { color: '#B91C1C', bg: 'rgba(185,28,28,0.12)' },
 }
 
 interface Props {
@@ -29,6 +30,8 @@ interface Props {
 }
 
 export function QuotationClient({ initialData, userRoles = [] }: Props) {
+    const { locale, formatCurrency, formatDate, formatNumber } = useAppLocale()
+    const i18n = getQuotationsI18n(locale)
     const canSeeMargin = ['CEO', 'ADMIN', 'KE_TOAN', 'Kế Toán', 'SALES_MGR', 'Sales Manager', 'CBO', 'Trợ Lý', 'TRO_LY'].some(r => userRoles.includes(r))
     const queryClient = useQueryClient()
     const [search, setSearch] = useState('')
@@ -69,10 +72,10 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
 
         if (hasContent) {
             confirm({
-                title: 'Hủy thông tin báo giá đang nhập',
-                message: 'Bạn có chắc chắn muốn đóng? Mọi thông tin báo giá đang nhập sẽ bị mất.',
+                title: i18n.discardTitle,
+                message: i18n.discardMessage,
                 danger: true,
-                confirmLabel: 'Đóng và hủy nhập',
+                confirmLabel: i18n.discardConfirm,
                 onConfirm: () => {
                     setCreateOpen(false)
                 }
@@ -153,7 +156,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
     const products = refData?.products ?? []
 
     // Cache stats (uses initial stats hydration or simple local state if not fetched)
-    const [stats, setStats] = useState(initialData?.stats ?? { total: 0, draft: 0, sent: 0, accepted: 0, converted: 0, totalValue: 0 })
+    const [stats] = useState(initialData?.stats ?? { total: 0, draft: 0, sent: 0, accepted: 0, converted: 0, totalValue: 0 })
 
     const reload = useCallback(async () => {
         refetch()
@@ -167,11 +170,11 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
             if (res.success) {
                 setDetail(res.data)
             } else {
-                toast.error(`Lỗi tải báo giá: ${res.error}`)
+                toast.error(`${i18n.loadDetailError} ${res.error}`)
                 setDetail(null)
             }
         } catch (err: any) {
-            toast.error(`Lỗi: ${err.message || 'Không thể kết nối server'}`)
+            toast.error(`${err.message || i18n.serverConnectError}`)
             console.error('Failed to load quotation detail:', err)
             setDetail(null)
         } finally {
@@ -181,19 +184,19 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
 
     const handleConvert = (id: string) => {
         confirm({
-            title: 'Chuyển báo giá thành Đơn Bán Hàng',
-            message: 'Bạn có chắc chắn muốn chuyển Quotation này thành Sales Order (SO) chính thức không?',
-            confirmLabel: 'Tạo Sales Order',
+            title: i18n.convertTitle,
+            message: i18n.convertMessage,
+            confirmLabel: i18n.convertConfirm,
             onConfirm: async () => {
                 setActionLoading(id)
                 try {
                     const res: any = await convertQuotationToSO(id)
-                    if (!res.success) throw new Error(res.error || 'Lỗi chuyển đổi thành SO')
-                    toast.success(`Đã tạo ${res.soNo} từ Quotation!`)
+                    if (!res.success) throw new Error(res.error || i18n.convertError)
+                    toast.success(i18n.convertedSuccess(res.soNo))
                     await reload()
                     setDetailId(null)
                 } catch (err: any) {
-                    toast.error(`Lỗi: ${err.message}`)
+                    toast.error(`${err.message}`)
                 } finally {
                     setActionLoading(null)
                 }
@@ -205,14 +208,14 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
         setActionLoading(id)
         toast.promise(
             updateQuotationStatus(id, status).then((res: any) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi cập nhật trạng thái')
+                if (!res.success) throw new Error(res.error || i18n.updateStatusError)
                 reload()
                 return res
             }),
             {
-                loading: 'Đang cập nhật trạng thái...',
-                success: 'Đã cập nhật trạng thái!',
-                error: (err: any) => `Lỗi: ${err.message}`,
+                loading: i18n.updatingStatus,
+                success: i18n.updatedStatus,
+                error: (err: any) => `${err.message}`,
                 finally: () => setActionLoading(null)
             }
         )
@@ -224,11 +227,11 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
 
     const handleCreate = async () => {
         if (!formData.customerId || !formData.salesRepId || !formData.validUntil || formLines.length === 0) {
-            toast.error('Vui lòng điền đầy đủ thông tin')
+            toast.error(i18n.fillRequiredError)
             return
         }
         if (formData.customerId === 'TEMP_CUSTOMER' && !formData.companyName && !formData.contactPerson) {
-            toast.error('Vui lòng điền Tên doanh nghiệp hoặc Người liên hệ cho khách hàng mới')
+            toast.error(i18n.fillTempCustomerError)
             return
         }
         setSaving(true)
@@ -237,7 +240,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                 ...formData,
                 lines: formLines.map(l => ({ productId: l.productId, qtyOrdered: l.qty, unitPrice: l.price, lineDiscountPct: l.discount, vatRate: l.vatRate ?? 10 })),
             }).then((res: any) => {
-                if (!res.success) throw new Error(res.error || 'Lỗi tạo báo giá')
+                if (!res.success) throw new Error(res.error || i18n.createError)
                 setCreateOpen(false)
                 setIsNewCustomer(false)
                 setFormData({ 
@@ -259,38 +262,38 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                 return res
             }),
             {
-                loading: 'Đang tạo báo giá...',
+                loading: i18n.creatingQt,
                 success: (res: any) => {
                     if (res?.publicToken) {
                         return (
                             <div className="flex flex-col gap-1.5 py-1">
-                                <span className="font-semibold text-slate-900">Đã tạo {res.quotationNo} thành công!</span>
+                                <span className="font-semibold text-slate-900">{i18n.createdQtWithNo(res.quotationNo)}</span>
                                 <div className="flex items-center gap-2 mt-1">
                                     <button
                                         onClick={() => {
                                             const url = `${window.location.origin}/verify/quotation/${res.publicToken}`
                                             navigator.clipboard.writeText(url)
-                                            toast.success('Đã copy link báo giá!')
+                                            toast.success(i18n.copiedLink)
                                         }}
                                         className="text-xs px-2.5 py-1 rounded font-medium transition"
                                         style={{ background: '#0E7490', color: '#FFFFFF' }}
                                     >
-                                        Copy Link
+                                        {i18n.copyLinkBtn}
                                     </button>
                                     <button
                                         onClick={() => window.open(`/verify/quotation/${res.publicToken}`, '_blank')}
                                         className="text-xs px-2.5 py-1 rounded font-medium transition"
                                         style={{ background: '#F1F5F9', color: '#334155' }}
                                     >
-                                        Mở Web
+                                        {i18n.openWebBtn}
                                     </button>
                                 </div>
                             </div>
                         )
                     }
-                    return 'Đã tạo báo giá thành công!'
+                    return i18n.createdQtSuccess
                 },
-                error: (err: any) => `Lỗi: ${err.message}`,
+                error: (err: any) => `${err.message}`,
                 finally: () => setSaving(false)
             }
         )
@@ -311,7 +314,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                     return l
                 }))
             } catch (err) {
-                console.error('Lỗi tải giá khách hàng cho báo giá:', err)
+                console.error('Error loading customer prices:', err)
             }
         } else {
             setPriceMap({})
@@ -327,7 +330,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
     const updateLine = (i: number, field: string, val: any) => {
         if (field === 'vatRate') {
             const newVatRate = Number(val)
-            toast.info(`Đã áp dụng thuế suất VAT ${newVatRate}% đồng bộ cho toàn bộ báo giá`)
+            toast.info(i18n.vatSyncedToast(newVatRate))
             setFormLines(prev => prev.map(l => ({ ...l, vatRate: newVatRate })))
             return
         }
@@ -344,7 +347,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
         const inheritedVatRate = existingLine ? (existingLine.vatRate ?? 10) : (prod ? (prod as any).vatRate ?? 10 : 10)
 
         if (existingLine && (prod as any)?.vatRate && Number((prod as any).vatRate) !== inheritedVatRate) {
-            toast.info(`Sản phẩm "${prod?.productName}" có VAT gốc ${(prod as any).vatRate}%, đã được áp dụng VAT ${inheritedVatRate}% theo báo giá để đồng nhất 1 loại thuế suất.`)
+            toast.info(i18n.vatOverrideToast(prod?.productName || '', (prod as any).vatRate, inheritedVatRate))
         }
 
         const copy = [...formLines]
@@ -393,21 +396,29 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
         setPickerWineType('')
     }
 
+    const statusTabItems = [
+        { value: '', label: i18n.allTab, count: stats.total },
+        ...(Object.keys(STATUS_CFG) as QuotationStatus[]).map(k => ({
+            value: k,
+            label: i18n.statusLabels[k],
+        })),
+    ]
+
     return (
         <div className="space-y-4 max-w-screen-2xl">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <h2 className="text-xl md:text-2xl font-bold font-brand" style={{ color: '#0F172A' }}>
-                        Báo Giá (QTN)
+                        {i18n.title}
                     </h2>
                     
                     {/* Inline Quick Stats */}
                     <div className="hidden lg:flex items-center gap-x-4 pl-4 border-l border-slate-200 text-xs">
-                        <span style={{ color: '#475569' }}>Giá trị: <strong className="font-mono text-sm ml-1" style={{ color: '#0891B2' }}>₫{(stats.totalValue / 1e6).toFixed(0)}M</strong></span>
-                        <span style={{ color: '#475569' }}>BG: <strong className="font-mono text-sm ml-1" style={{ color: '#475569' }}>{stats.total}</strong></span>
-                        <span style={{ color: '#475569' }}>Đã gửi: <strong className="font-mono text-sm ml-1" style={{ color: '#B45309' }}>{stats.sent}</strong></span>
-                        <span style={{ color: '#475569' }}>Chấp nhận: <strong className="font-mono text-sm ml-1" style={{ color: '#15803D' }}>{stats.accepted}</strong></span>
+                        <span style={{ color: '#475569' }}>{i18n.inlineValue} <strong className="font-mono text-sm ml-1" style={{ color: '#0891B2' }}>₫{(stats.totalValue / 1e6).toFixed(0)}M</strong></span>
+                        <span style={{ color: '#475569' }}>{i18n.inlineQt} <strong className="font-mono text-sm ml-1" style={{ color: '#475569' }}>{stats.total}</strong></span>
+                        <span style={{ color: '#475569' }}>{i18n.inlineSent} <strong className="font-mono text-sm ml-1" style={{ color: '#B45309' }}>{stats.sent}</strong></span>
+                        <span style={{ color: '#475569' }}>{i18n.inlineAccepted} <strong className="font-mono text-sm ml-1" style={{ color: '#15803D' }}>{stats.accepted}</strong></span>
                     </div>
                 </div>
                 
@@ -427,11 +438,11 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                         }}
                     >
                         <BarChart3 size={13} className="inline mr-1" />
-                        <span>Thống Kê</span>
+                        <span>{i18n.statsBtn}</span>
                     </button>
                     <button onClick={openCreate}
                         className="flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all duration-150 rounded-md bg-[#0E7490] hover:bg-[#155E75] text-white">
-                        <Plus size={16} /> Tạo Báo Giá
+                        <Plus size={16} /> {i18n.createBtn}
                     </button>
                 </div>
             </div>
@@ -440,11 +451,11 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
             {showStats && (
                 <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 animate-in slide-in-from-top-2 duration-150">
                     {[
-                        { label: 'Tổng Giá Trị', value: `₫${(stats.totalValue / 1e6).toFixed(0)}M`, accent: '#0E7490' },
-                        { label: 'Tổng BG', value: stats.total, accent: '#475569' },
-                        { label: 'Đã Gửi', value: stats.sent, accent: '#B45309' },
-                        { label: 'Chấp Nhận', value: stats.accepted, accent: '#15803D' },
-                        { label: 'Đã → SO', value: stats.converted, accent: '#0E7490' },
+                        { label: i18n.kpiTotalValue, value: `₫${(stats.totalValue / 1e6).toFixed(0)}M`, accent: '#0E7490' },
+                        { label: i18n.kpiTotalQt, value: stats.total, accent: '#475569' },
+                        { label: i18n.kpiSent, value: stats.sent, accent: '#B45309' },
+                        { label: i18n.kpiAccepted, value: stats.accepted, accent: '#15803D' },
+                        { label: i18n.kpiConverted, value: stats.converted, accent: '#0E7490' },
                     ].map(s => (
                         <div key={s.label} className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{s.label}</p>
@@ -456,100 +467,80 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
 
             {/* Toolbar: Status Tabs + Search */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-2 border-b border-slate-200/30">
-                {/* Status Tabs */}
-                <div className="flex flex-wrap gap-1 bg-white p-1 rounded border border-slate-200/60">
-                    <button onClick={() => { setStatusFilter(''); setTimeout(reload, 50) }}
-                        className="px-2.5 py-1 text-xs font-semibold rounded transition-all"
-                        style={{
-                            background: statusFilter === '' ? '#FFFFFF' : 'transparent',
-                            color: statusFilter === '' ? '#0E7490' : '#475569',
-                        }}
-                    >
-                        Tất cả
-                    </button>
-                    {Object.entries(STATUS_CFG).map(([k, v]) => (
-                        <button key={k} onClick={() => { setStatusFilter(k); setTimeout(reload, 50) }}
-                            className="px-2.5 py-1 text-xs font-semibold rounded transition-all"
-                            style={{
-                                background: statusFilter === k ? 'rgba(8,145,178,0.1)' : 'transparent',
-                                color: statusFilter === k ? v.color : '#475569',
-                            }}
-                        >
-                            {v.label}
-                        </button>
-                    ))}
-                </div>
+                <StatusTabs
+                    value={statusFilter}
+                    onChange={val => { setStatusFilter(val); setTimeout(reload, 50) }}
+                    items={statusTabItems}
+                />
 
-                {/* Search box */}
-                <div className="relative w-full sm:w-64">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
-                    <input value={search} onChange={e => { setSearch(e.target.value); setTimeout(reload, 300) }}
-                        placeholder="Tìm số QT, khách hàng..."
-                        className="w-full pl-9 pr-3 py-1.5 text-xs outline-none"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }} />
+                <div className="w-full sm:w-64">
+                    <SearchInput
+                        value={search}
+                        onChange={e => { setSearch(e.target.value); setTimeout(reload, 300) }}
+                        placeholder={i18n.searchPlaceholder}
+                    />
                 </div>
             </div>
 
             {/* Table (Desktop View) */}
-            <div className="hidden md:block rounded-md overflow-hidden overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
-                <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                            {['Số QT', 'Khách Hàng', 'Kênh', 'Giá Trị', 'Sales Rep', 'Hạn BG', 'Trạng Thái', 'Hành Động'].map(h => (
-                                <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
+            <div className="hidden md:block rounded-md overflow-hidden overflow-x-auto bg-white" style={{ border: '1px solid #E2E8F0' }}>
+                <Table>
+                    <THead>
+                        <tr>
+                            {[i18n.colQtNo, i18n.colCustomer, i18n.colChannel, i18n.colTotal, i18n.colSalesRep, i18n.colValidUntil, i18n.colStatus, i18n.colActions].map(h => (
+                                <Th key={h}>{h}</Th>
                             ))}
                         </tr>
-                    </thead>
-                    <tbody>
+                    </THead>
+                    <TBody>
                         {loading ? (
-                            <tr><td colSpan={8} className="text-center py-12" style={{ color: '#64748B' }}>Đang tải...</td></tr>
+                            <TableMessageRow colSpan={8}>{i18n.loading}</TableMessageRow>
                         ) : rows.length === 0 ? (
-                            <tr><td colSpan={8} className="text-center py-16" style={{ color: '#64748B' }}>
-                                <FileText size={32} className="mx-auto mb-3" style={{ color: '#E2E8F0' }} />
-                                <p className="text-sm">Chưa có báo giá nào</p>
-                            </td></tr>
+                            <TableMessageRow colSpan={8}>
+                                <FileText size={32} className="mx-auto mb-3 text-slate-200" />
+                                <p className="text-sm">{i18n.emptyList}</p>
+                            </TableMessageRow>
                         ) : rows.map(row => {
                             const cfg = STATUS_CFG[row.status]
+                            const statusLabel = i18n.statusLabels[row.status] ?? row.status
                             const isExpired = new Date(row.validUntil) < new Date() && !['CONVERTED', 'CANCELLED', 'EXPIRED'].includes(row.status)
                             return (
-                                <tr key={row.id}
-                                    className="hover:bg-[#0891B2]/4 transition-colors"
-                                    style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                    <td className="px-4 py-3">
+                                <Tr key={row.id} className="hover:bg-[#0891B2]/4 transition-colors">
+                                    <Td>
                                         <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{row.quotationNo}</span>
-                                    </td>
-                                    <td className="px-4 py-3">
+                                    </Td>
+                                    <Td>
                                         <p className="text-sm font-medium" style={{ color: '#0F172A' }}>{row.customerName}</p>
                                         <p className="text-xs" style={{ color: '#64748B' }}>{row.customerCode}</p>
-                                    </td>
-                                    <td className="px-4 py-3">
+                                    </Td>
+                                    <Td>
                                         <span className="text-xs px-2 py-0.5 rounded-full font-medium inline-block whitespace-nowrap shrink-0" style={{ background: 'rgba(8,145,178,0.1)', color: '#475569' }}>{row.channel}</span>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <span className="text-sm font-bold" style={{ color: '#0F172A' }}>{formatVND(row.totalAmount)}</span>
-                                    </td>
-                                    <td className="px-4 py-3 text-sm" style={{ color: '#475569' }}>{row.salesRepName}</td>
-                                    <td className="px-4 py-3 text-xs" style={{ color: isExpired ? '#B91C1C' : '#64748B' }}>
+                                    </Td>
+                                    <Td>
+                                        <span className="text-sm font-bold" style={{ color: '#0F172A' }}>{formatCurrency(row.totalAmount)}</span>
+                                    </Td>
+                                    <Td className="text-sm" style={{ color: '#475569' }}>{row.salesRepName}</Td>
+                                    <Td className="text-xs" style={{ color: isExpired ? '#B91C1C' : '#64748B' }}>
                                         {formatDate(row.validUntil)}
-                                        {isExpired && <span className="ml-1 text-[10px] font-bold">QUÁ HẠN</span>}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full inline-block whitespace-nowrap shrink-0" style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
-                                    </td>
-                                    <td className="px-4 py-3">
+                                        {isExpired && <span className="ml-1 text-[10px] font-bold">{i18n.expiredBadge}</span>}
+                                    </Td>
+                                    <Td>
+                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full inline-block whitespace-nowrap shrink-0" style={{ color: cfg.color, background: cfg.bg }}>{statusLabel}</span>
+                                    </Td>
+                                    <Td>
                                         <div className="flex items-center gap-1">
-                                            <button onClick={() => openDetail(row.id)} className="p-1.5 rounded" title="Chi tiết"
+                                            <button onClick={() => openDetail(row.id)} className="p-1.5 rounded" title={i18n.viewDetail}
                                                 style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
                                                 <Eye size={13} />
                                             </button>
                                             <button onClick={() => window.open(`/api/export/quotation-pdf?id=${row.id}&style=professional`, '_blank')}
-                                                className="p-1.5 rounded" title="Xem PDF"
+                                                className="p-1.5 rounded" title={i18n.viewPdf}
                                                 style={{ background: 'rgba(100,116,139,0.1)', color: '#475569' }}>
                                                 <Printer size={13} />
                                             </button>
                                             {row.publicToken && (
                                                 <button onClick={() => window.open(`/verify/quotation/${row.publicToken}`, '_blank')}
-                                                    className="p-1.5 rounded" title="Mở xem Web Báo Giá của khách"
+                                                    className="p-1.5 rounded" title={i18n.openPublicWeb}
                                                     style={{ background: 'rgba(59,130,246,0.1)', color: '#3B82F6' }}>
                                                     <ExternalLink size={13} />
                                                 </button>
@@ -558,11 +549,11 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                                 <button onClick={() => setSendDrawerOpen(row.id)}
                                                     className="flex items-center gap-0.5 px-2 py-1 text-xs font-semibold"
                                                     style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)', borderRadius: '4px' }}>
-                                                    <Send size={10} /> Gửi
+                                                    <Send size={10} /> {i18n.sendBtn}
                                                 </button>
                                             )}
                                             {row.viewCount > 0 && (
-                                                <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0" title={`KH đã xem ${row.viewCount} lần${row.lastViewedAt ? ` · Lần cuối: ${formatDate(row.lastViewedAt)}` : ''}`}
+                                                <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0" title={i18n.viewedTimes(row.viewCount, row.lastViewedAt ? formatDate(row.lastViewedAt) : undefined)}
                                                     style={{ background: 'rgba(34,197,94,0.12)', color: '#22C55E' }}>
                                                     <Eye size={9} /> {row.viewCount}
                                                 </span>
@@ -571,42 +562,43 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                                 <button onClick={() => handleConvert(row.id)} disabled={actionLoading === row.id}
                                                     className="flex items-center gap-0.5 px-2 py-1 text-xs font-semibold"
                                                     style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)', borderRadius: '4px' }}>
-                                                    {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : <><ArrowRight size={10} /> → SO</>}
+                                                    {actionLoading === row.id ? <Loader2 size={11} className="animate-spin" /> : <><ArrowRight size={10} /> {i18n.convertToSoShort}</>}
                                                 </button>
                                             )}
                                         </div>
-                                    </td>
-                                </tr>
+                                    </Td>
+                                </Tr>
                             )
                         })}
-                    </tbody>
-                </table>
+                    </TBody>
+                </Table>
             </div>
 
             {/* Mobile Stacked Quotations List (Mobile View) */}
             <div className="block md:hidden space-y-3">
                 {loading ? (
-                    <div className="text-center py-12" style={{ color: '#64748B' }}>Đang tải...</div>
+                    <div className="text-center py-12" style={{ color: '#64748B' }}>{i18n.loading}</div>
                 ) : rows.length === 0 ? (
-                    <div className="text-center py-16" style={{ color: '#64748B', border: '1px solid #E2E8F0', borderRadius: '6px' }}>
+                    <div className="text-center py-16 bg-white" style={{ color: '#64748B', border: '1px solid #E2E8F0', borderRadius: '6px' }}>
                         <FileText size={32} className="mx-auto mb-3" style={{ color: '#E2E8F0' }} />
-                        <p className="text-sm">Chưa có báo giá nào</p>
+                        <p className="text-sm">{i18n.emptyList}</p>
                     </div>
                 ) : rows.map(row => {
                     const cfg = STATUS_CFG[row.status]
+                    const statusLabel = i18n.statusLabels[row.status] ?? row.status
                     const isExpired = new Date(row.validUntil) < new Date() && !['CONVERTED', 'CANCELLED', 'EXPIRED'].includes(row.status)
                     return (
                         <div key={row.id} className="p-2.5 rounded-lg space-y-2 transition-all" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             {/* Header: Quotation No & Status */}
                             <div className="flex justify-between items-center">
                                 <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{row.quotationNo}</span>
-                                <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-full inline-block whitespace-nowrap shrink-0" style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
+                                <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-full inline-block whitespace-nowrap shrink-0" style={{ color: cfg.color, background: cfg.bg }}>{statusLabel}</span>
                             </div>
 
                             {/* Body: Customer Name & Value */}
                             <div className="flex justify-between items-start gap-2">
                                 <h4 className="text-xs font-bold truncate flex-1" style={{ color: '#0F172A' }}>{row.customerName}</h4>
-                                <span className="text-xs font-bold whitespace-nowrap font-mono" style={{ color: '#0F172A' }}>{formatVND(row.totalAmount)}</span>
+                                <span className="text-xs font-bold whitespace-nowrap font-mono" style={{ color: '#0F172A' }}>{formatCurrency(row.totalAmount)}</span>
                             </div>
 
                             {/* Financials & Timeline Info */}
@@ -614,12 +606,12 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                 <div className="flex flex-wrap items-center gap-1.5">
                                     <span className="px-1.5 py-0.2 rounded text-xs font-medium inline-block whitespace-nowrap shrink-0" style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>{row.channel}</span>
                                     <span style={{ color: '#64748B' }}>{row.customerCode}</span>
-                                    <span style={{ color: '#64748B' }}>• Rep: <strong style={{ color: '#475569' }}>{row.salesRepName}</strong></span>
+                                    <span style={{ color: '#64748B' }}>• {i18n.repLabel} <strong style={{ color: '#475569' }}>{row.salesRepName}</strong></span>
                                 </div>
                                 <div className="text-right">
                                     <span style={{ color: isExpired ? '#B91C1C' : '#475569' }}>
-                                        Hạn: {formatDate(row.validUntil)}
-                                        {isExpired && <span className="ml-1 text-xs font-bold text-[#B91C1C]">QUÁ HẠN</span>}
+                                        {i18n.validLabel} {formatDate(row.validUntil)}
+                                        {isExpired && <span className="ml-1 text-xs font-bold text-[#B91C1C]">{i18n.expiredBadge}</span>}
                                     </span>
                                 </div>
                             </div>
@@ -629,21 +621,21 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                 {row.viewCount > 0 && (
                                     <span className="inline-flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded-full font-medium mr-auto whitespace-nowrap shrink-0"
                                         style={{ background: 'rgba(34,197,94,0.12)', color: '#22C55E' }}
-                                        title={`KH đã xem ${row.viewCount} lần`}>
+                                        title={i18n.viewedTimes(row.viewCount)}>
                                         <Eye size={10} /> {row.viewCount}
                                     </span>
                                 )}
                                 <div className="flex items-center gap-1 scale-90 origin-right">
-                                    <button onClick={() => openDetail(row.id)} className="p-1 rounded bg-white/80 hover:bg-white border border-slate-200" style={{ color: '#0891B2' }} title="Chi tiết">
+                                    <button onClick={() => openDetail(row.id)} className="p-1 rounded bg-white/80 hover:bg-white border border-slate-200" style={{ color: '#0891B2' }} title={i18n.viewDetail}>
                                         <Eye size={12} />
                                     </button>
                                     <button onClick={() => window.open(`/api/export/quotation-pdf?id=${row.id}&style=professional`, '_blank')}
-                                        className="p-1 rounded bg-white/80 hover:bg-white border border-slate-200" style={{ color: '#475569' }} title="Xem PDF">
+                                        className="p-1 rounded bg-white/80 hover:bg-white border border-slate-200" style={{ color: '#475569' }} title={i18n.viewPdf}>
                                         <Printer size={12} />
                                     </button>
                                     {row.publicToken && (
                                         <button onClick={() => window.open(`/verify/quotation/${row.publicToken}`, '_blank')}
-                                            className="p-1 rounded bg-white/80 hover:bg-white border border-slate-200" style={{ color: '#3B82F6' }} title="Mở Web Báo Giá">
+                                            className="p-1 rounded bg-white/80 hover:bg-white border border-slate-200" style={{ color: '#3B82F6' }} title={i18n.openPublicWebShort}>
                                             <ExternalLink size={12} />
                                         </button>
                                     )}
@@ -651,14 +643,14 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                         <button onClick={() => setSendDrawerOpen(row.id)}
                                             className="flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-bold rounded bg-white/80 hover:bg-white border"
                                             style={{ color: '#B45309', borderColor: 'rgba(180,83,9,0.3)' }}>
-                                            <Send size={10} /> Gửi
+                                            <Send size={10} /> {i18n.sendBtn}
                                         </button>
                                     )}
                                     {['SENT', 'ACCEPTED'].includes(row.status) && (
                                         <button onClick={() => handleConvert(row.id)} disabled={actionLoading === row.id}
                                             className="flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-bold rounded bg-white/80 hover:bg-white border"
                                             style={{ color: '#0891B2', borderColor: 'rgba(8, 145, 178, 0.25)' }}>
-                                            {actionLoading === row.id ? <Loader2 size={10} className="animate-spin" /> : <><ArrowRight size={10} /> → SO</>}
+                                            {actionLoading === row.id ? <Loader2 size={10} className="animate-spin" /> : <><ArrowRight size={10} /> {i18n.convertToSoShort}</>}
                                         </button>
                                     )}
                                 </div>
@@ -675,25 +667,25 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                     <div className="fixed top-0 right-0 h-full z-50 flex flex-col bg-white border-l border-slate-200 shadow-2xl animate-in slide-in-from-right duration-200" style={{ width: 'min(580px,95vw)' }}>
                         <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
                             <h3 className="text-lg font-semibold font-brand" style={{ color: '#0F172A' }}>
-                                {detailLoading ? 'Chi Tiết Báo Giá' : `QT: ${detail?.quotationNo}`}
+                                {detailLoading ? i18n.detailTitleLoading : `QT: ${detail?.quotationNo}`}
                             </h3>
                             <button onClick={() => setDetailId(null)} className="p-1.5 rounded" style={{ color: '#64748B' }}><X size={18} /></button>
                         </div>
                         {detailLoading ? (
                             <div className="flex items-center justify-center flex-1"><Loader2 size={24} className="animate-spin" style={{ color: '#0891B2' }} /></div>
                         ) : !detail ? (
-                            <p className="text-center py-8" style={{ color: '#64748B' }}>Không tìm thấy</p>
+                            <p className="text-center py-8" style={{ color: '#64748B' }}>{i18n.detailNotFound}</p>
                         ) : (
                             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     {[
-                                        { label: 'Tổng Tiền', value: formatVND(Number(detail.totalAmount)), color: '#0891B2' },
+                                        { label: i18n.detailTotalAmount, value: formatCurrency(Number(detail.totalAmount)), color: '#0891B2' },
                                         { 
-                                            label: 'Khách Hàng', 
-                                            value: detail.customer.code === 'KH-TEMP' ? (detail.companyName || detail.contactPerson || 'Khách Hàng Mới') : detail.customer.name, 
+                                            label: i18n.detailCustomer, 
+                                            value: detail.customer.code === 'KH-TEMP' ? (detail.companyName || detail.contactPerson || i18n.detailNewCustomerFallback) : detail.customer.name, 
                                             color: '#0F172A' 
                                         },
-                                        { label: 'Sales Rep', value: detail.salesRep.name, color: '#475569' },
+                                        { label: i18n.colSalesRep, value: detail.salesRep.name, color: '#475569' },
                                     ].map(k => (
                                         <div key={k.label} className="p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                             <p className="text-xs" style={{ color: '#64748B' }}>{k.label}</p>
@@ -703,43 +695,43 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                        <p className="text-xs" style={{ color: '#64748B' }}>Hạn Báo Giá</p>
+                                        <p className="text-xs" style={{ color: '#64748B' }}>{i18n.detailValidUntil}</p>
                                         <p className="text-sm font-bold mt-1 font-mono" style={{ color: new Date(detail.validUntil) < new Date() ? '#B91C1C' : '#B45309' }}>
                                             {formatDate(detail.validUntil)}
                                         </p>
                                     </div>
                                     <div className="p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                        <p className="text-xs" style={{ color: '#64748B' }}>Trạng Thái</p>
+                                        <p className="text-xs" style={{ color: '#64748B' }}>{i18n.detailStatus}</p>
                                         <span className="text-xs font-semibold px-2 py-0.5 rounded-full mt-1 inline-block whitespace-nowrap shrink-0"
                                             style={{ color: STATUS_CFG[detail.status as QuotationStatus]?.color, background: STATUS_CFG[detail.status as QuotationStatus]?.bg }}>
-                                            {STATUS_CFG[detail.status as QuotationStatus]?.label}
+                                            {i18n.statusLabels[detail.status as QuotationStatus] ?? detail.status}
                                         </span>
                                     </div>
                                 </div>
                                 {detail.customer.code === 'KH-TEMP' && (
                                     <div className="p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                        <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#0891B2' }}>Thông Tin Khách Hàng Ngoài Hệ Thống</p>
+                                        <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#0891B2' }}>{i18n.detailExternalCustomerHeader}</p>
                                         <div className="space-y-1.5 text-xs text-slate-700">
-                                            {detail.companyName && <p><strong>Doanh nghiệp:</strong> {detail.companyName}</p>}
-                                            {detail.contactPerson && <p><strong>Người liên hệ:</strong> {detail.contactPerson}</p>}
-                                            {detail.customerEmail && <p><strong>Email:</strong> {detail.customerEmail}</p>}
-                                            {detail.customerPhone && <p><strong>Số điện thoại:</strong> {detail.customerPhone}</p>}
+                                            {detail.companyName && <p><strong>{i18n.detailCompany}</strong> {detail.companyName}</p>}
+                                            {detail.contactPerson && <p><strong>{i18n.detailContact}</strong> {detail.contactPerson}</p>}
+                                            {detail.customerEmail && <p><strong>{i18n.detailEmail}</strong> {detail.customerEmail}</p>}
+                                            {detail.customerPhone && <p><strong>{i18n.detailPhone}</strong> {detail.customerPhone}</p>}
                                         </div>
                                     </div>
                                 )}
                                 {detail.notes && (
                                     <div className="p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                        <p className="text-xs mb-1" style={{ color: '#64748B' }}>Ghi Chú</p>
+                                        <p className="text-xs mb-1" style={{ color: '#64748B' }}>{i18n.detailNotes}</p>
                                         <p className="text-xs" style={{ color: '#475569' }}>{detail.notes}</p>
                                     </div>
                                 )}
                                 <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>Sản Phẩm ({detail.lines.length} dòng)</p>
+                                    <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>{i18n.detailProductsHeader(detail.lines.length)}</p>
                                     <div className="rounded-md overflow-hidden overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
                                         <table className="w-full text-xs" style={{ borderCollapse: 'collapse' }}>
                                             <thead>
                                                 <tr style={{ background: '#F8FAFC' }}>
-                                                    {['SKU', 'Sản Phẩm', 'SL', 'Giá', 'CK%', 'VAT%', 'Thành Tiền'].map(h => (
+                                                    {[i18n.colSku, i18n.colProduct, i18n.colQty, i18n.colPrice, i18n.colDiscountPct, i18n.colVatPct, i18n.colLineTotal].map(h => (
                                                         <th key={h} className="px-3 py-2 text-left font-semibold" style={{ color: '#64748B' }}>{h}</th>
                                                     ))}
                                                 </tr>
@@ -752,10 +744,10 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                                             <td className="px-3 py-2" style={{ color: '#0891B2' }}>{l.product.skuCode}</td>
                                                             <td className="px-3 py-2" style={{ color: '#0F172A' }}>{l.product.productName}</td>
                                                             <td className="px-3 py-2 text-right" style={{ color: '#475569' }}>{Number(l.qtyOrdered)}</td>
-                                                            <td className="px-3 py-2 text-right" style={{ color: '#475569' }}>{formatVND(Number(l.unitPrice))}</td>
+                                                            <td className="px-3 py-2 text-right" style={{ color: '#475569' }}>{formatCurrency(Number(l.unitPrice))}</td>
                                                             <td className="px-3 py-2 text-center" style={{ color: '#B45309' }}>{Number(l.lineDiscountPct) > 0 ? `${Number(l.lineDiscountPct)}%` : '—'}</td>
                                                             <td className="px-3 py-2 text-center" style={{ color: '#0F172A' }}>{l.vatRate ? `${l.vatRate}%` : '10%'}</td>
-                                                            <td className="px-3 py-2 text-right font-bold" style={{ color: '#0891B2' }}>{formatVND(total)}</td>
+                                                            <td className="px-3 py-2 text-right font-bold" style={{ color: '#0891B2' }}>{formatCurrency(total)}</td>
                                                         </tr>
                                                     )
                                                 })}
@@ -769,9 +761,9 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                     <div className="p-3 rounded-md" style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)' }}>
                                         <div className="flex items-center gap-2">
                                             <Eye size={14} style={{ color: '#22C55E' }} />
-                                            <span className="text-xs font-semibold" style={{ color: '#22C55E' }}>KH đã xem {(detail as any).viewCount} lần</span>
+                                            <span className="text-xs font-semibold" style={{ color: '#22C55E' }}>{i18n.viewedTimes((detail as any).viewCount)}</span>
                                             {(detail as any).firstViewedAt && (
-                                                <span className="text-[10px]" style={{ color: '#64748B' }}>· Lần đầu: {formatDate((detail as any).firstViewedAt)}</span>
+                                                <span className="text-[10px]" style={{ color: '#64748B' }}>{i18n.firstViewed(formatDate((detail as any).firstViewedAt))}</span>
                                             )}
                                         </div>
                                     </div>
@@ -783,12 +775,12 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                     <button onClick={() => window.open(`/api/export/quotation-pdf?id=${detail.id}&style=professional`, '_blank')}
                                         className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold"
                                         style={{ background: 'rgba(100,116,139,0.12)', color: '#475569', border: '1px solid rgba(100,116,139,0.25)', borderRadius: '6px' }}>
-                                        <Printer size={13} /> PDF Trắng
+                                        <Printer size={13} /> {i18n.pdfLightBtn}
                                     </button>
                                     <button onClick={() => window.open(`/api/export/quotation-pdf?id=${detail.id}&style=elegant`, '_blank')}
                                         className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold"
                                         style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8,145,178,0.25)', borderRadius: '6px' }}>
-                                        <Printer size={13} /> PDF Dark
+                                        <Printer size={13} /> {i18n.pdfDarkBtn}
                                     </button>
 
                                     {/* Open Web */}
@@ -796,7 +788,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                         <button onClick={() => window.open(`/verify/quotation/${(detail as any).publicToken}`, '_blank')}
                                             className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold"
                                             style={{ background: 'rgba(8, 145, 178, 0.1)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)', borderRadius: '6px' }}>
-                                            <ExternalLink size={13} /> Xem Web
+                                            <ExternalLink size={13} /> {i18n.viewWebBtn}
                                         </button>
                                     )}
 
@@ -805,11 +797,11 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                         <button onClick={() => {
                                             const url = `${window.location.origin}/verify/quotation/${(detail as any).publicToken}`
                                             navigator.clipboard.writeText(url)
-                                            toast.success('Đã copy link báo giá!')
+                                            toast.success(i18n.copiedLink)
                                         }}
                                             className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold"
                                             style={{ background: 'rgba(59,130,246,0.12)', color: '#3B82F6', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '6px' }}>
-                                            <Copy size={13} /> Copy Link
+                                            <Copy size={13} /> {i18n.copyLinkBtn}
                                         </button>
                                     )}
 
@@ -818,7 +810,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                         <button onClick={() => { setSendDrawerOpen(detail.id); setDetailId(null) }}
                                             className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold"
                                             style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)', borderRadius: '6px' }}>
-                                            <Mail size={13} /> Gửi Email
+                                            <Mail size={13} /> {i18n.sendEmailBtn}
                                         </button>
                                     )}
 
@@ -827,7 +819,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                         <button onClick={() => { handleConvert(detail.id); setDetailId(null) }}
                                             className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold"
                                             style={{ background: '#0E7490', color: '#FFFFFF', borderRadius: '6px' }}>
-                                            <ArrowRight size={14} /> Chuyển → SO
+                                            <ArrowRight size={14} /> {i18n.convertSoFullBtn}
                                         </button>
                                     )}
                                 </div>
@@ -843,14 +835,14 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                     <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={handleCloseCreateDrawer} />
                     <div className="fixed top-0 right-0 h-full z-50 flex flex-col bg-white border-l border-slate-200 shadow-2xl animate-in slide-in-from-right duration-200" style={{ width: 'min(520px,95vw)' }}>
                         <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                            <h3 className="text-lg font-semibold font-brand" style={{ color: '#0F172A' }}>Tạo Báo Giá Mới</h3>
+                            <h3 className="text-lg font-semibold font-brand" style={{ color: '#0F172A' }}>{i18n.createDrawerTitle}</h3>
                             <button onClick={handleCloseCreateDrawer} className="p-1.5 rounded" style={{ color: '#64748B' }}><X size={18} /></button>
                         </div>
                         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
                             {/* Customer */}
                             <div>
                                 <div className="flex items-center justify-between">
-                                    <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Khách Hàng</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{i18n.colCustomer}</label>
                                     <label className="flex items-center gap-1.5 text-xs cursor-pointer" style={{ color: '#0891B2' }}>
                                         <input 
                                             type="checkbox" 
@@ -869,16 +861,16 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                             }}
                                             className="rounded border-slate-200 bg-white text-[#0891B2] focus:ring-0 focus:ring-offset-0"
                                         />
-                                        Khách hàng mới
+                                        {i18n.newCustomerCheckbox}
                                     </label>
                                 </div>
                                 {!isNewCustomer ? (
                                     <select value={formData.customerId} onChange={e => handleCustomerChangeInQuotation(e.target.value)}
                                         className="w-full mt-1.5 px-3 py-2.5 text-sm outline-none bg-white border border-slate-300 rounded-md text-slate-900"
                                         style={{ color: '#0F172A' }}>
-                                        <option value="">Chọn khách hàng...</option>
+                                        <option value="">{i18n.selectCustomerPlaceholder}</option>
                                         {customers.length === 0 ? (
-                                            <option disabled>Đang tải danh sách khách hàng...</option>
+                                            <option disabled>{i18n.loadingCustomers}</option>
                                         ) : (
                                             customers.map((c: any) => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)
                                         )}
@@ -886,10 +878,10 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                 ) : (
                                     <div className="mt-2.5 p-3 rounded-md space-y-3 bg-slate-50 border border-slate-200">
                                         <div>
-                                            <label className="text-[11px] font-semibold mb-1 block text-slate-600">Tên Doanh Nghiệp / Đơn Vị</label>
+                                            <label className="text-[11px] font-semibold mb-1 block text-slate-600">{i18n.companyNameLabel}</label>
                                             <input 
                                                 type="text" 
-                                                placeholder="VD: Nhà hàng Vườn Bia Hà Nội"
+                                                placeholder={i18n.companyNamePlaceholder}
                                                 value={formData.companyName} 
                                                 onChange={e => setFormData({ ...formData, companyName: e.target.value })}
                                                 className="w-full px-3 py-2 text-xs outline-none rounded-md bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400"
@@ -897,10 +889,10 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-[11px] font-semibold mb-1 block text-slate-600">Người Đại Diện / Liên Hệ</label>
+                                            <label className="text-[11px] font-semibold mb-1 block text-slate-600">{i18n.contactPersonLabel}</label>
                                             <input 
                                                 type="text" 
-                                                placeholder="VD: Anh Huy"
+                                                placeholder={i18n.contactPersonPlaceholder}
                                                 value={formData.contactPerson} 
                                                 onChange={e => setFormData({ ...formData, contactPerson: e.target.value })}
                                                 className="w-full px-3 py-2 text-xs outline-none rounded-md bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400"
@@ -909,10 +901,10 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                         </div>
                                         <div className="grid grid-cols-2 gap-2">
                                             <div>
-                                                <label className="text-[11px] font-semibold mb-1 block text-slate-600">Email</label>
+                                                <label className="text-[11px] font-semibold mb-1 block text-slate-600">{i18n.emailLabel}</label>
                                                 <input 
                                                     type="email" 
-                                                    placeholder="VD: huy@nhahang.vn"
+                                                    placeholder={i18n.emailPlaceholder}
                                                     value={formData.customerEmail} 
                                                     onChange={e => setFormData({ ...formData, customerEmail: e.target.value })}
                                                     className="w-full px-3 py-2 text-xs outline-none rounded-md bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400"
@@ -920,10 +912,10 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                                 />
                                             </div>
                                             <div>
-                                                <label className="text-[11px] font-semibold mb-1 block text-slate-600">Số điện thoại</label>
+                                                <label className="text-[11px] font-semibold mb-1 block text-slate-600">{i18n.phoneLabel}</label>
                                                 <input 
                                                     type="text" 
-                                                    placeholder="VD: 0912345678"
+                                                    placeholder={i18n.phonePlaceholder}
                                                     value={formData.customerPhone} 
                                                     onChange={e => setFormData({ ...formData, customerPhone: e.target.value })}
                                                     className="w-full px-3 py-2 text-xs outline-none rounded-md bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400"
@@ -936,29 +928,29 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Sales Rep</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{i18n.colSalesRep}</label>
                                     <select value={formData.salesRepId} onChange={e => setFormData({ ...formData, salesRepId: e.target.value })}
                                         className="w-full mt-1 px-3 py-2.5 text-sm outline-none bg-white border border-slate-300 rounded-md text-slate-900"
                                         style={{ color: '#0F172A' }}>
-                                        <option value="">Chọn...</option>
+                                        <option value="">{i18n.selectPlaceholder}</option>
                                         {reps.length === 0 ? (
-                                            <option disabled>Đang tải...</option>
+                                            <option disabled>{i18n.loading}</option>
                                         ) : (
                                             reps.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)
                                         )}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Hạn Báo Giá</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{i18n.detailValidUntil}</label>
                                     <input type="date" value={formData.validUntil} onChange={e => setFormData({ ...formData, validUntil: e.target.value })}
                                         className="w-full mt-1 px-3 py-2.5 text-sm outline-none bg-white border border-slate-300 rounded-md text-slate-900"
                                         style={{ color: '#0F172A' }} />
                                 </div>
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Ghi Chú / Điều Khoản</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{i18n.notesTermsLabel}</label>
                                 <DebouncedTextarea value={formData.notes} onChange={val => setFormData(prev => ({ ...prev, notes: val }))}
-                                    rows={2} placeholder="Điều kiện giao hàng, thanh toán..."
+                                    rows={2} placeholder={i18n.notesTermsPlaceholder}
                                     className="w-full mt-1 px-3 py-2 text-sm outline-none resize-none bg-white border border-slate-300 rounded-md text-slate-900 placeholder:text-slate-400"
                                     style={{ color: '#0F172A' }} />
                             </div>
@@ -966,18 +958,18 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                             <div className="flex items-center gap-2 py-1 select-none">
                                 <input type="checkbox" id="showQuantity" checked={formData.showQuantity} onChange={e => setFormData({ ...formData, showQuantity: e.target.checked })}
                                     className="w-4 h-4 cursor-pointer accent-[#0E7490]" />
-                                <label htmlFor="showQuantity" className="text-xs font-semibold cursor-pointer" style={{ color: '#0F172A' }}>Hiển thị số lượng (SL) trên báo giá</label>
+                                <label htmlFor="showQuantity" className="text-xs font-semibold cursor-pointer" style={{ color: '#0F172A' }}>{i18n.showQtyCheckbox}</label>
                             </div>
 
                             {/* Lines */}
                             <div>
                                 <div className="flex items-center justify-between mb-2">
-                                    <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>Sản Phẩm</p>
+                                    <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{i18n.colProduct}</p>
                                     <div className="flex gap-2">
                                         <button onClick={openPicker} disabled={products.length === 0} className="text-xs font-semibold px-2.5 py-1 transition-all disabled:opacity-50" style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', borderRadius: '4px' }}>
-                                            {products.length === 0 ? 'Đang tải...' : 'Chọn Nhanh'}
+                                            {products.length === 0 ? i18n.loading : i18n.quickPickBtn}
                                         </button>
-                                        <button onClick={addLine} disabled={products.length === 0} className="text-xs font-semibold px-2.5 py-1 transition-all disabled:opacity-50" style={{ background: 'rgba(100,116,139,0.15)', color: '#475569', borderRadius: '4px' }}>+ Thêm dòng</button>
+                                        <button onClick={addLine} disabled={products.length === 0} className="text-xs font-semibold px-2.5 py-1 transition-all disabled:opacity-50" style={{ background: 'rgba(100,116,139,0.15)', color: '#475569', borderRadius: '4px' }}>{i18n.addLineBtn}</button>
                                     </div>
                                 </div>
                                 <div className="space-y-2.5">
@@ -996,9 +988,9 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                                         <select value={line.productId} onChange={e => selectProductForLine(i, e.target.value)}
                                                             className="flex-1 px-2.5 py-1.5 text-xs outline-none"
                                                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}>
-                                                            <option value="">Chọn sản phẩm...</option>
+                                                            <option value="">{i18n.selectProductPlaceholder}</option>
                                                             {products.length === 0 ? (
-                                                                <option disabled>Đang tải sản phẩm...</option>
+                                                                <option disabled>{i18n.loadingProducts}</option>
                                                             ) : (
                                                                 products.map((p: any) => <option key={p.id} value={p.id}>{p.skuCode} — {p.productName}</option>)
                                                             )}
@@ -1023,7 +1015,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                                             <div className="flex items-center gap-2 mt-1">
                                                                 <span className="text-[10px] font-mono" style={{ color: '#475569' }}>{prod?.skuCode}</span>
                                                                 <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0" style={{ background: prod && prod.totalStock > 0 ? 'rgba(34,197,94,0.12)' : 'rgba(185,28,28,0.12)', color: prod && prod.totalStock > 0 ? '#22C55E' : '#B91C1C' }}>
-                                                                    Tồn: {prod?.totalStock}
+                                                                    {i18n.stockBadge} {prod?.totalStock}
                                                                 </span>
                                                                 <span className="text-[10px] text-slate-500 truncate">
                                                                     {prod?.supplierName}
@@ -1038,22 +1030,22 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                                     <div className="space-y-2">
                                                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                                             <div>
-                                                                <label className="text-xs uppercase tracking-wider block mb-0.5" style={{ color: '#64748B' }}>SL</label>
-                                                                <input type="number" value={line.qty} onChange={e => updateLine(i, 'qty', Number(e.target.value))} placeholder="SL"
+                                                                <label className="text-xs uppercase tracking-wider block mb-0.5" style={{ color: '#64748B' }}>{i18n.colQty}</label>
+                                                                <input type="number" value={line.qty} onChange={e => updateLine(i, 'qty', Number(e.target.value))} placeholder={i18n.colQty}
                                                                     className="w-full px-2 py-1 text-xs outline-none text-center" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }} />
                                                             </div>
                                                             <div>
-                                                                <label className="text-xs uppercase tracking-wider block mb-0.5" style={{ color: '#64748B' }}>Giá báo khách</label>
-                                                                <input type="number" value={line.price} onChange={e => updateLine(i, 'price', Number(e.target.value))} placeholder="Giá"
+                                                                <label className="text-xs uppercase tracking-wider block mb-0.5" style={{ color: '#64748B' }}>{i18n.quotedPriceLabel}</label>
+                                                                <input type="number" value={line.price} onChange={e => updateLine(i, 'price', Number(e.target.value))} placeholder={i18n.colPrice}
                                                                     className="w-full px-2 py-1 text-xs outline-none text-right font-mono" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#B45309', borderRadius: '4px' }} />
                                                             </div>
                                                             <div>
-                                                                <label className="text-xs uppercase tracking-wider block mb-0.5" style={{ color: '#64748B' }}>CK%</label>
-                                                                <input type="number" value={line.discount} onChange={e => updateLine(i, 'discount', Number(e.target.value))} placeholder="CK%"
+                                                                <label className="text-xs uppercase tracking-wider block mb-0.5" style={{ color: '#64748B' }}>{i18n.colDiscountPct}</label>
+                                                                <input type="number" value={line.discount} onChange={e => updateLine(i, 'discount', Number(e.target.value))} placeholder={i18n.colDiscountPct}
                                                                     className="w-full px-2 py-1 text-xs outline-none text-center" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }} />
                                                             </div>
                                                             <div>
-                                                                <label className="text-xs uppercase tracking-wider block mb-0.5" style={{ color: '#64748B' }}>VAT%</label>
+                                                                <label className="text-xs uppercase tracking-wider block mb-0.5" style={{ color: '#64748B' }}>{i18n.colVatPct}</label>
                                                                 <select value={line.vatRate ?? 10} onChange={e => updateLine(i, 'vatRate', Number(e.target.value))}
                                                                     className="w-full px-1 py-1 text-xs outline-none text-center" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}>
                                                                     <option value={10}>10%</option>
@@ -1065,15 +1057,15 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                                         {/* Reference metrics row */}
                                                         <div className="inline-flex items-center justify-between text-[10px] px-1 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: '#F8FAFC' }}>
                                                             <div className="flex items-center gap-1.5">
-                                                                <span style={{ color: '#64748B' }}>Wholesale:</span>
-                                                                <span className="font-mono font-semibold text-[#B45309]">{prod.wholesalePrice.toLocaleString('vi-VN')} đ</span>
+                                                                <span style={{ color: '#64748B' }}>{i18n.wholesaleRef}</span>
+                                                                <span className="font-mono font-semibold text-[#B45309]">{formatNumber(prod.wholesalePrice)} đ</span>
                                                                 <span className="font-semibold" style={{ color: diffPct >= 0 ? '#15803D' : '#B91C1C' }}>
                                                                     {diffPct >= 0 ? `+${diffPct.toFixed(1)}%` : `${diffPct.toFixed(1)}%`}
                                                                 </span>
                                                             </div>
                                                             {canSeeMargin && prod.costPrice > 0 && (
                                                                 <div className="flex items-center gap-1">
-                                                                    <span style={{ color: '#64748B' }}>Lãi gộp:</span>
+                                                                    <span style={{ color: '#64748B' }}>{i18n.grossMarginRef}</span>
                                                                     <span className="font-semibold" style={{ color: marginPct >= 15 ? '#0E7490' : marginPct >= 0 ? '#B45309' : '#B91C1C' }}>
                                                                         {marginPct.toFixed(1)}%
                                                                     </span>
@@ -1094,12 +1086,12 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                     className="flex-1 py-2.5 text-sm font-semibold transition-all disabled:opacity-50 border hover:enabled:bg-slate-500/20"
                                     style={{ background: 'rgba(100,116,139,0.1)', color: '#475569', borderColor: 'rgba(100,116,139,0.25)', borderRadius: '6px' }}
                                 >
-                                    Xem Trước
+                                    {i18n.previewBtn}
                                 </button>
                                 <button onClick={handleCreate} disabled={saving || !formData.customerId || formLines.length === 0}
                                     className="w-[60%] py-2.5 text-sm font-semibold transition-all disabled:opacity-50"
                                     style={{ background: '#0E7490', color: '#FFFFFF', borderRadius: '6px' }}>
-                                    {saving ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Tạo Báo Giá'}
+                                    {saving ? <Loader2 size={16} className="animate-spin mx-auto" /> : i18n.createBtn}
                                 </button>
                             </div>
                         </div>
@@ -1113,11 +1105,11 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                     <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={() => setSendDrawerOpen(null)} />
                     <div className="fixed top-0 right-0 h-full z-50 flex flex-col bg-white border-l border-slate-200 shadow-2xl animate-in slide-in-from-right duration-200" style={{ width: 'min(420px,95vw)' }}>
                         <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                            <h3 className="text-lg font-semibold font-brand" style={{ color: '#0F172A' }}>Gửi Báo Giá</h3>
+                            <h3 className="text-lg font-semibold font-brand" style={{ color: '#0F172A' }}>{i18n.sendDrawerTitle}</h3>
                             <button onClick={() => setSendDrawerOpen(null)} className="p-1.5 rounded" style={{ color: '#64748B' }}><X size={18} /></button>
                         </div>
                         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-                            <p className="text-sm" style={{ color: '#475569' }}>Chọn phương thức gửi báo giá cho khách hàng:</p>
+                            <p className="text-sm" style={{ color: '#475569' }}>{i18n.sendMethodPrompt}</p>
 
                             {/* Send via Email */}
                             <button onClick={async () => {
@@ -1125,14 +1117,14 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                 const res = await sendQuotation(sendDrawerOpen, 'EMAIL')
                                 setSendLoading(false)
                                 if (res.success) {
-                                    toast.success('Đã gửi báo giá qua Email!')
+                                    toast.success(i18n.emailSentToast)
                                     if (res.publicUrl) {
                                         navigator.clipboard.writeText(res.publicUrl)
-                                        toast.info('Link đã được copy vào clipboard')
+                                        toast.info(i18n.linkCopiedClipboardToast)
                                     }
                                     setSendDrawerOpen(null)
                                     reload()
-                                } else toast.error(res.error || 'Lỗi gửi email')
+                                } else toast.error(res.error || i18n.emailSendError)
                             }} disabled={sendLoading}
                                 className="w-full p-4 rounded-lg text-left transition-all border border-[#E2E8F0] hover:border-[#B45309] bg-white">
                                 <div className="flex items-center gap-3">
@@ -1140,8 +1132,8 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                         <Mail size={18} style={{ color: '#B45309' }} />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>Gửi qua Email</p>
-                                        <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>Gửi email HTML đẹp + link xem báo giá online</p>
+                                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{i18n.sendViaEmailTitle}</p>
+                                        <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>{i18n.sendViaEmailDesc}</p>
                                     </div>
                                 </div>
                             </button>
@@ -1153,19 +1145,19 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                 setSendLoading(false)
                                 if (res.success && res.publicUrl) {
                                     navigator.clipboard.writeText(res.publicUrl)
-                                    toast.success('Đã copy link! Paste vào Zalo/WhatsApp để gửi')
+                                    toast.success(i18n.zaloCopiedToast)
                                     setSendDrawerOpen(null)
                                     reload()
-                                } else toast.error(res.error || 'Lỗi tạo link')
+                                } else toast.error(res.error || i18n.linkCreateError)
                             }} disabled={sendLoading}
                                 className="w-full p-4 rounded-lg text-left transition-all border border-[#E2E8F0] hover:border-[#3B82F6] bg-white">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(59,130,246,0.15)' }}>
-                                        <Link2 size={18} style={{ color: '#3B82F6' }} />
+                                        <ExternalLink size={18} style={{ color: '#3B82F6' }} />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>Copy Link Gửi Zalo / WhatsApp</p>
-                                        <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>Copy link → paste vào tin nhắn. KH bấm xem trực tuyến</p>
+                                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{i18n.sendViaLinkTitle}</p>
+                                        <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>{i18n.sendViaLinkDesc}</p>
                                     </div>
                                 </div>
                             </button>
@@ -1180,8 +1172,8 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                         <Printer size={18} style={{ color: '#0891B2' }} />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>In / Tải PDF</p>
-                                        <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>Mở báo giá dạng web → In hoặc lưu PDF</p>
+                                        <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{i18n.printDownloadPdfTitle}</p>
+                                        <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>{i18n.printDownloadPdfDesc}</p>
                                     </div>
                                 </div>
                             </button>
@@ -1189,7 +1181,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                             {sendLoading && (
                                 <div className="flex items-center justify-center gap-2 py-4">
                                     <Loader2 size={16} className="animate-spin" style={{ color: '#0891B2' }} />
-                                    <span className="text-sm" style={{ color: '#475569' }}>Đang xử lý...</span>
+                                    <span className="text-sm" style={{ color: '#475569' }}>{i18n.processing}</span>
                                 </div>
                             )}
                         </div>
@@ -1208,10 +1200,10 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
                             <div>
                                 <h3 className="text-lg font-bold font-brand" style={{ color: '#0F172A' }}>
-                                    Chọn sản phẩm nhanh
+                                    {i18n.pickerTitle}
                                 </h3>
                                 <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>
-                                    Tìm kiếm, lọc danh sách và tích chọn hàng loạt sản phẩm để thêm vào báo giá
+                                    {i18n.pickerSubtitle}
                                 </p>
                             </div>
                             <button onClick={() => setPickerOpen(false)} className="p-1.5 rounded" style={{ color: '#64748B' }}><X size={18} /></button>
@@ -1224,7 +1216,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                 <input 
                                     value={pickerSearch} 
                                     onChange={e => setPickerSearch(e.target.value)}
-                                    placeholder="Tìm SKU, tên sản phẩm..."
+                                    placeholder={i18n.pickerSearchPlaceholder}
                                     className="w-full pl-9 pr-4 py-1.5 text-xs outline-none"
                                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }} 
                                 />
@@ -1235,7 +1227,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                 className="px-3 py-1.5 text-xs outline-none cursor-pointer"
                                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: pickerCountry ? '#0F172A' : '#64748B', borderRadius: '4px' }}
                             >
-                                <option value="">Tất cả quốc gia</option>
+                                <option value="">{i18n.allCountries}</option>
                                 {[...new Set(products.map(p => p.country).filter(Boolean))].map(c => (
                                     <option key={c} value={c}>{c}</option>
                                 ))}
@@ -1246,7 +1238,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                 className="px-3 py-1.5 text-xs outline-none cursor-pointer"
                                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: pickerWineType ? '#0F172A' : '#64748B', borderRadius: '4px' }}
                             >
-                                <option value="">Tất cả loại rượu</option>
+                                <option value="">{i18n.allWineTypes}</option>
                                 {[...new Set(products.map(p => p.wineType).filter(Boolean))].map(w => (
                                     <option key={w} value={w}>{w}</option>
                                 ))}
@@ -1266,7 +1258,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                 if (filtered.length === 0) {
                                     return (
                                         <div className="text-center py-12" style={{ color: '#64748B' }}>
-                                            Không tìm thấy sản phẩm phù hợp bộ lọc
+                                            {i18n.noMatchingProducts}
                                         </div>
                                     )
                                 }
@@ -1322,7 +1314,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                                         {p.productName}
                                                     </h4>
                                                     <span className="text-xs font-bold text-[#B45309] font-mono">
-                                                        {p.wholesalePrice.toLocaleString('vi-VN')} đ
+                                                        {formatNumber(p.wholesalePrice)} đ
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-2 mt-1">
@@ -1331,14 +1323,14 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                                     <span className="text-[10px] text-slate-600">{p.wineType} ({p.country})</span>
                                                     <span className="text-[10px] text-slate-500">•</span>
                                                     <span className="inline-block text-[10px] px-1.5 py-0.2 rounded-full whitespace-nowrap shrink-0" style={{ background: p.totalStock > 0 ? 'rgba(34,197,94,0.1)' : 'rgba(185,28,28,0.1)', color: p.totalStock > 0 ? '#22C55E' : '#B91C1C' }}>
-                                                        Tồn: {p.totalStock}
+                                                        {i18n.stockBadge} {p.totalStock}
                                                     </span>
                                                 </div>
                                             </div>
 
                                             {/* Quantity input inside picker card */}
                                             <div className="flex-shrink-0 flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
-                                                <span className="text-[10px]" style={{ color: '#64748B' }}>SL:</span>
+                                                <span className="text-[10px]" style={{ color: '#64748B' }}>{i18n.colQty}:</span>
                                                 <input 
                                                     type="number" 
                                                     min={1} 
@@ -1357,7 +1349,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                         {/* Footer */}
                         <div className="p-4 flex items-center justify-between" style={{ borderTop: '1px solid #E2E8F0', background: '#FFFFFF' }}>
                             <div className="text-xs" style={{ color: '#475569' }}>
-                                Đã chọn: <strong className="text-[#0891B2]">{Object.values(pickerSelected).filter(s => s.checked).length}</strong> sản phẩm
+                                {i18n.selectedCount(Object.values(pickerSelected).filter(s => s.checked).length)}
                             </div>
                             <div className="flex gap-2">
                                 <button 
@@ -1365,14 +1357,14 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                                     className="px-4 py-2 text-xs font-semibold rounded"
                                     style={{ background: 'rgba(100,116,139,0.1)', color: '#475569', borderRadius: '4px' }}
                                 >
-                                    Hủy bỏ
+                                    {i18n.cancelBtn}
                                 </button>
                                 <button 
                                     onClick={confirmPickerAdd}
                                     className="px-5 py-2 text-xs font-semibold rounded"
                                     style={{ background: '#0E7490', color: '#FFFFFF', borderRadius: '4px' }}
                                 >
-                                    Xác nhận thêm
+                                    {i18n.confirmAddBtn}
                                 </button>
                             </div>
                         </div>
@@ -1384,4 +1376,3 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
         </div>
     )
 }
-

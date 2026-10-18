@@ -34,6 +34,8 @@ import { SopDetailModal } from './SopDetailModal'
 import { SopEditModal } from './SopEditModal'
 import { SopFormUploadModal } from './SopFormUploadModal'
 import { MarkdownDocModal } from './MarkdownDocModal'
+import { useAppLocale } from '@/lib/i18n'
+import { getSopI18n } from './i18n'
 
 const CATEGORY_ICONS: Record<string, React.FC<{ className?: string }>> = {
     Layers,
@@ -56,6 +58,8 @@ export function SopCatalogClient({
     initialMarkdownDocs = []
 }: SopCatalogClientProps) {
     const searchParams = useSearchParams()
+    const { locale } = useAppLocale()
+    const L = getSopI18n(locale)
 
     // Core data state
     const [sops, setSops] = useState<SopItem[]>(initialSops)
@@ -279,17 +283,17 @@ export function SopCatalogClient({
 
     return (
         <div className="space-y-6 max-w-screen-2xl">
-            {/* Header: Clean Luxury B2B ERP Header (No gradients, no AI buzzwords) */}
+            {/* Header: Clean Luxury B2B ERP Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
                 <div>
                     <div className="text-[11px] uppercase tracking-wider font-bold text-slate-500 mb-1">
-                        Hệ Thống Quản Trị Doanh Nghiệp • Wine ERP
+                        {L.headerKicker}
                     </div>
                     <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-                        Quy Trình Vận Hành Tiêu Chuẩn (SOP)
+                        {L.headerTitle}
                     </h1>
                     <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
-                        Hệ thống hóa {markdownDocs.length > 0 ? markdownDocs.length : '114'} tài liệu quy trình nghiệp vụ nội bộ, ma trận phân quyền RACI, sổ tay vận hành và thư viện biểu mẫu chứng từ.
+                        {L.headerSubtitle(markdownDocs.length > 0 ? markdownDocs.length : '114')}
                     </p>
                 </div>
 
@@ -303,19 +307,19 @@ export function SopCatalogClient({
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-sm transition"
                     >
                         <Upload className="w-3.5 h-3.5 text-slate-500" />
-                        <span>Tải Biểu Mẫu Lên</span>
+                        <span>{L.uploadFormBtn}</span>
                     </button>
                     <button
                         onClick={() => setIsCreatingSop(true)}
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#0E7490] hover:bg-[#155E75] text-white text-xs font-semibold shadow-sm transition"
                     >
                         <Plus className="w-3.5 h-3.5" />
-                        <span>Thêm Quy Trình Mới</span>
+                        <span>{L.addSopBtn}</span>
                     </button>
                 </div>
             </div>
 
-            {/* Metrics Ribbon: Replaces the 4 giant pastel cards with a compact, high-density status bar */}
+            {/* Metrics Ribbon */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div
                     onClick={() => setActiveView('docs')}
@@ -326,13 +330,13 @@ export function SopCatalogClient({
                     }`}
                 >
                     <div className="text-[11px] text-slate-500 flex items-center justify-between font-medium">
-                        <span>Sổ Tay & Quy Trình (.md)</span>
+                        <span>{L.metrics.docsLabel}</span>
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-bold">
-                            12 Phân hệ
+                            {L.metrics.docsBadge}
                         </span>
                     </div>
                     <div className="text-xl font-bold text-slate-900 mt-1">
-                        {markdownDocs.length} Tài liệu
+                        {L.metrics.docsValue(markdownDocs.length)}
                     </div>
                 </div>
 
@@ -344,9 +348,9 @@ export function SopCatalogClient({
                             : 'border-slate-200 bg-white hover:border-slate-300'
                     }`}
                 >
-                    <div className="text-[11px] text-slate-500 font-medium">Quy Trình Trọng Yếu (SOPs)</div>
+                    <div className="text-[11px] text-slate-500 font-medium">{L.metrics.sopsLabel}</div>
                     <div className="text-xl font-bold text-slate-900 mt-1">
-                        {sops.length} Luồng cốt lõi
+                        {L.metrics.sopsValue(sops.length)}
                     </div>
                 </div>
 
@@ -358,16 +362,16 @@ export function SopCatalogClient({
                             : 'border-slate-200 bg-white hover:border-slate-300'
                     }`}
                 >
-                    <div className="text-[11px] text-slate-500 font-medium">Biểu Mẫu & Chứng Từ</div>
+                    <div className="text-[11px] text-slate-500 font-medium">{L.metrics.formsLabel}</div>
                     <div className="text-xl font-bold text-slate-900 mt-1">
-                        {forms.length} Mẫu Excel / Word
+                        {L.metrics.formsValue(forms.length)}
                     </div>
                 </div>
 
                 <div className="p-3.5 rounded-lg border border-slate-200 bg-white">
-                    <div className="text-[11px] text-slate-500 font-medium">Tiêu Chuẩn Kiểm Soát</div>
+                    <div className="text-[11px] text-slate-500 font-medium">{L.metrics.raciLabel}</div>
                     <div className="text-xl font-bold text-slate-900 mt-1">
-                        {totalChecklists} Tiêu chí RACI
+                        {L.metrics.raciValue(totalChecklists)}
                     </div>
                 </div>
             </div>
@@ -383,7 +387,7 @@ export function SopCatalogClient({
                     }`}
                 >
                     <FileText className="w-4 h-4 text-slate-500" />
-                    <span>Sổ Tay & Tài Liệu Quy Trình (.md) ({markdownDocs.length})</span>
+                    <span>{L.tabs.docs(markdownDocs.length)}</span>
                 </button>
 
                 <button
@@ -395,7 +399,7 @@ export function SopCatalogClient({
                     }`}
                 >
                     <BookOpen className="w-4 h-4 text-slate-500" />
-                    <span>Quy Trình Trọng Yếu ({sops.length} SOPs)</span>
+                    <span>{L.tabs.sops(sops.length)}</span>
                 </button>
 
                 <button
@@ -407,16 +411,13 @@ export function SopCatalogClient({
                     }`}
                 >
                     <FileSpreadsheet className="w-4 h-4 text-slate-500" />
-                    <span>Thư Viện Biểu Mẫu Chứng Từ ({forms.length} Mẫu)</span>
+                    <span>{L.tabs.forms(forms.length)}</span>
                 </button>
             </div>
 
-            {/* ========================================================================= */}
-            {/* VIEW 1: SỔ TAY & TÀI LIỆU QUY TRÌNH (.MD) — 114+ FILES ACROSS 12 GROUPS  */}
-            {/* ========================================================================= */}
+            {/* VIEW 1: MARKDOWN DOCS */}
             {activeView === 'docs' && (
                 <div className="space-y-4">
-                    {/* Filter & Search Bar for Markdown Documents */}
                     <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
                         <div className="relative flex-1 max-w-md">
                             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -424,7 +425,7 @@ export function SopCatalogClient({
                                 type="text"
                                 value={docSearchQuery}
                                 onChange={(e) => setDocSearchQuery(e.target.value)}
-                                placeholder="Tìm tài liệu .md (nhập kho, dán tem, hợp đồng, tasting, cogs)..."
+                                placeholder={L.docsView.searchPlaceholder}
                                 className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
                             />
                             {docSearchQuery && (
@@ -432,7 +433,7 @@ export function SopCatalogClient({
                                     onClick={() => setDocSearchQuery('')}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 hover:text-slate-600"
                                 >
-                                    Xóa
+                                    {L.docsView.clearBtn}
                                 </button>
                             )}
                         </div>
@@ -447,7 +448,7 @@ export function SopCatalogClient({
                                         : 'text-slate-500 hover:text-slate-900'
                                 }`}
                             >
-                                Tất cả ({markdownDocs.length})
+                                {L.docsView.langAll(markdownDocs.length)}
                             </button>
                             <button
                                 onClick={() => setDocLangFilter('vi')}
@@ -457,7 +458,7 @@ export function SopCatalogClient({
                                         : 'text-slate-500 hover:text-slate-900'
                                 }`}
                             >
-                                Tiếng Việt ({markdownDocs.filter(d => !d.isEnglish).length})
+                                {L.docsView.langVi(markdownDocs.filter(d => !d.isEnglish).length)}
                             </button>
                             <button
                                 onClick={() => setDocLangFilter('en')}
@@ -467,7 +468,7 @@ export function SopCatalogClient({
                                         : 'text-slate-500 hover:text-slate-900'
                                 }`}
                             >
-                                English ({markdownDocs.filter(d => d.isEnglish).length})
+                                {L.docsView.langEn(markdownDocs.filter(d => d.isEnglish).length)}
                             </button>
                         </div>
                     </div>
@@ -482,7 +483,7 @@ export function SopCatalogClient({
                                     : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                             }`}
                         >
-                            Tất cả phân hệ ({markdownDocs.length})
+                            {L.docsView.allGroups(markdownDocs.length)}
                         </button>
                         {availableDocGroups.map(grp => (
                             <button
@@ -505,13 +506,13 @@ export function SopCatalogClient({
                         <div className="p-12 text-center rounded-lg border border-slate-200 bg-white space-y-2">
                             <FileText className="w-8 h-8 text-slate-400 mx-auto" />
                             <div className="text-sm font-semibold text-slate-800">
-                                Không tìm thấy tài liệu phù hợp
+                                {L.docsView.emptyTitle}
                             </div>
                             <button
                                 onClick={() => { setSelectedDocGroup('all'); setDocSearchQuery(''); setDocLangFilter('all'); }}
                                 className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-50"
                             >
-                                Đặt lại bộ lọc
+                                {L.docsView.resetFilterBtn}
                             </button>
                         </div>
                     ) : (
@@ -584,14 +585,14 @@ export function SopCatalogClient({
                                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0E7490] hover:bg-[#155E75] text-white text-xs font-semibold shadow-xs transition"
                                         >
                                             <Eye className="w-3.5 h-3.5" />
-                                            <span>Đọc Văn Bản</span>
+                                            <span>{L.docsView.readDocBtn}</span>
                                         </button>
 
                                         <a
                                             href={doc.url}
                                             download={doc.fileName}
                                             className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition"
-                                            title="Tải tệp .md về máy"
+                                            title={L.docsView.downloadMdTitle}
                                         >
                                             <Download className="w-3.5 h-3.5" />
                                         </a>
@@ -603,9 +604,7 @@ export function SopCatalogClient({
                 </div>
             )}
 
-            {/* ========================================================================= */}
-            {/* VIEW 2: QUY TRÌNH TRỌNG YẾU (SOPS GRID) — CORE OPERATIONAL FLOWS          */}
-            {/* ========================================================================= */}
+            {/* VIEW 2: SOPS GRID */}
             {activeView === 'sops' && (
                 <div className="space-y-4">
                     {/* Search & Category Filter */}
@@ -616,7 +615,7 @@ export function SopCatalogClient({
                                 type="text"
                                 value={sopSearchQuery}
                                 onChange={(e) => setSopSearchQuery(e.target.value)}
-                                placeholder="Tìm kiếm quy trình, vai trò, nghiệp vụ..."
+                                placeholder={L.sopsView.searchPlaceholder}
                                 className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
                             />
                             {sopSearchQuery && (
@@ -624,13 +623,13 @@ export function SopCatalogClient({
                                     onClick={() => setSopSearchQuery('')}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 hover:text-slate-600"
                                 >
-                                    Xóa
+                                    {L.docsView.clearBtn}
                                 </button>
                             )}
                         </div>
 
                         <div className="text-xs text-slate-500">
-                            Hiển thị <strong>{filteredSops.length}</strong> quy trình
+                            {L.sopsView.showingCount(filteredSops.length)}
                         </div>
                     </div>
 
@@ -659,13 +658,13 @@ export function SopCatalogClient({
                         <div className="p-12 text-center rounded-lg border border-slate-200 bg-white space-y-2">
                             <BookOpen className="w-8 h-8 text-slate-400 mx-auto" />
                             <div className="text-sm font-semibold text-slate-800">
-                                Không tìm thấy quy trình phù hợp
+                                {L.sopsView.emptyTitle}
                             </div>
                             <button
                                 onClick={() => { setSelectedCategory('all'); setSopSearchQuery(''); }}
                                 className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-50"
                             >
-                                Xem tất cả quy trình
+                                {L.sopsView.viewAllBtn}
                             </button>
                         </div>
                     ) : (
@@ -693,13 +692,13 @@ export function SopCatalogClient({
 
                                             <div>
                                                 <div className="text-[11px] font-medium text-slate-400 mb-1">
-                                                    {sop.department}
+                                                    {locale === 'en' && sop.departmentEn ? sop.departmentEn : sop.department}
                                                 </div>
                                                 <h3
                                                     onClick={() => setSelectedSop(sop)}
                                                     className="text-sm font-bold text-slate-900 hover:underline cursor-pointer leading-snug line-clamp-2"
                                                 >
-                                                    {sop.title}
+                                                    {locale === 'en' && sop.titleEn ? sop.titleEn : sop.title}
                                                 </h3>
                                             </div>
 
@@ -712,7 +711,7 @@ export function SopCatalogClient({
                                                 <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
                                                     <span className="text-[11px] text-slate-600 font-medium truncate flex items-center gap-1.5">
                                                         <FileText className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                                                        <span className="truncate">Sổ tay: {attachedMdFile.title}</span>
+                                                        <span className="truncate">{L.sopsView.handbookPrefix} {attachedMdFile.title}</span>
                                                     </span>
                                                     <button
                                                         onClick={() => setPreviewDoc({
@@ -722,14 +721,14 @@ export function SopCatalogClient({
                                                         })}
                                                         className="text-[11px] font-semibold text-slate-900 hover:underline shrink-0 ml-2"
                                                     >
-                                                        Đọc .md
+                                                        {L.sopsView.readMdBtn}
                                                     </button>
                                                 </div>
                                             )}
 
                                             <div className="pt-1 flex items-center justify-between text-[11px] text-slate-400 font-medium">
-                                                <span>{sop.flowSteps.length} bước thực hiện</span>
-                                                <span>{formsCount > 0 ? `${formsCount} biểu mẫu` : `${sop.checklist.length} tiêu chuẩn`}</span>
+                                                <span>{L.sopsView.stepsCount(sop.flowSteps.length)}</span>
+                                                <span>{formsCount > 0 ? L.sopsView.formsCount(formsCount) : L.sopsView.criteriaCount(sop.checklist.length)}</span>
                                             </div>
                                         </div>
 
@@ -739,7 +738,7 @@ export function SopCatalogClient({
                                                 onClick={() => setSelectedSop(sop)}
                                                 className="inline-flex items-center gap-1 text-xs font-semibold text-slate-900 hover:underline"
                                             >
-                                                <span>Chi Tiết Quy Trình</span>
+                                                <span>{L.sopsView.detailBtn}</span>
                                             </button>
 
                                             {primaryActionLink && (
@@ -748,7 +747,7 @@ export function SopCatalogClient({
                                                     className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition"
                                                     title={primaryActionLink.label}
                                                 >
-                                                    <span>Mở Màn Hình</span>
+                                                    <span>{L.sopsView.openScreenBtn}</span>
                                                     <ExternalLink className="w-3 h-3" />
                                                 </Link>
                                             )}
@@ -761,9 +760,7 @@ export function SopCatalogClient({
                 </div>
             )}
 
-            {/* ========================================================================= */}
-            {/* VIEW 3: THƯ VIỆN BIỂU MẪU HÀNH CHÍNH (EXCEL / WORD FORMS)                 */}
-            {/* ========================================================================= */}
+            {/* VIEW 3: FORMS */}
             {activeView === 'forms' && (
                 <div className="space-y-4">
                     <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
@@ -773,7 +770,7 @@ export function SopCatalogClient({
                                 type="text"
                                 value={formSearchQuery}
                                 onChange={(e) => setFormSearchQuery(e.target.value)}
-                                placeholder="Tìm biểu mẫu (Form 8.8-A, Form 6.1-B, Landed Cost)..."
+                                placeholder={L.formsView.searchPlaceholder}
                                 className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
                             />
                             {formSearchQuery && (
@@ -781,7 +778,7 @@ export function SopCatalogClient({
                                     onClick={() => setFormSearchQuery('')}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 hover:text-slate-600"
                                 >
-                                    Xóa
+                                    {L.docsView.clearBtn}
                                 </button>
                             )}
                         </div>
@@ -794,7 +791,7 @@ export function SopCatalogClient({
                             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#0E7490] hover:bg-[#155E75] text-white text-xs font-semibold transition shadow-xs self-start sm:self-auto"
                         >
                             <Upload className="w-3.5 h-3.5" />
-                            <span>Tải Biểu Mẫu Mới Lên</span>
+                            <span>{L.formsView.uploadNewBtn}</span>
                         </button>
                     </div>
 
@@ -835,13 +832,13 @@ export function SopCatalogClient({
                                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0E7490] hover:bg-[#155E75] text-white text-xs font-semibold shadow-xs transition"
                                             >
                                                 <Eye className="w-3.5 h-3.5" />
-                                                <span>Xem Văn Bản</span>
+                                                <span>{L.formsView.viewDocBtn}</span>
                                             </button>
                                             <a
                                                 href={form.downloadUrl}
                                                 download={form.fileName}
                                                 className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition"
-                                                title="Tải về .md"
+                                                title={L.docsView.downloadMdTitle}
                                             >
                                                 <Download className="w-3.5 h-3.5" />
                                             </a>
@@ -853,7 +850,7 @@ export function SopCatalogClient({
                                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0E7490] hover:bg-[#155E75] text-white text-xs font-semibold shadow-xs transition"
                                         >
                                             <Download className="w-3.5 h-3.5" />
-                                            <span>Tải Mẫu Về</span>
+                                            <span>{L.formsView.downloadTemplateBtn}</span>
                                         </a>
                                     )}
 
@@ -863,9 +860,9 @@ export function SopCatalogClient({
                                             setShowUploadModal(true)
                                         }}
                                         className="text-[11px] text-slate-500 hover:text-slate-900 transition"
-                                        title="Thay thế file mẫu này"
+                                        title={L.formsView.replaceFileTitle}
                                     >
-                                        Thay file
+                                        {L.formsView.replaceFileBtn}
                                     </button>
                                 </div>
                             </div>

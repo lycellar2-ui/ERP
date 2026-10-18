@@ -41,6 +41,11 @@ const ROUTE_PERMISSIONS: Record<string, string> = {
     '/dashboard/market-price': 'TAX:READ',
 }
 
+// Short-lived in-memory cache (30s) for verified Supabase access tokens in middleware
+// Prevents hammering Supabase Auth endpoint on rapid page transitions / parallel requests
+const verifiedTokenCache = new Map<string, { user: { id: string; email?: string }; expiresAt: number }>()
+const TOKEN_CACHE_TTL_MS = 30_000
+
 export async function middleware(request: NextRequest) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -48,21 +53,26 @@ export async function middleware(request: NextRequest) {
     const isProduction = process.env.NODE_ENV === 'production'
     const isSupabaseConfigured = supabaseUrl && !supabaseUrl.includes('YOUR_PROJECT_REF') && supabaseKey
 
+    // Always strip internal auth headers from incoming client requests to prevent spoofing
+    const requestHeaders = new Headers(request.headers)
+    requestHeaders.delete('x-verified-user-email')
+    requestHeaders.delete('x-required-permission')
+
     if (!isSupabaseConfigured) {
         if (isProduction) {
             return new NextResponse('Configuration Error: Supabase credentials are missing.', { status: 500 })
         }
-        return NextResponse.next()
+        return NextResponse.next({ request: { headers: requestHeaders } })
     }
 
     const authOnlyPaths = ['/login', '/forgot-password', '/reset-password']
     const publicPaths = [...authOnlyPaths, '/verify']
     if (!isProduction && (
-        request.nextUrl.pathname.startsWith('/dashboard/sales/visits') ||
+        request.nextUrl.pathname.startsWith('/dashboard/sales') ||
         request.nextUrl.pathname.startsWith('/dashboard/price-list') ||
         request.nextUrl.pathname.startsWith('/dashboard/customers')
     )) {
-        return NextResponse.next()
+        return NextResponse.next({ request: { headers: requestHeaders } })
     }
     const isPublic = publicPaths.some(p => request.nextUrl.pathname.startsWith(p))
     const isAgencyPath = request.nextUrl.pathname.startsWith('/portal')
@@ -75,65 +85,67 @@ export async function middleware(request: NextRequest) {
     // Check auth for protected routes (non-public, non-agency, non-public-api)
     const needsAuthCheck = (!isApiPath || !isPublicApi) && !isAgencyPath
 
-    let user = null
+    let user: { id: string; email?: string } | null = null
     let authTimedOut = false
-    const requestHeaders = new Headers(request.headers)
-    let supabaseResponse = NextResponse.next({
-        request: {
-            headers: requestHeaders,
-        },
-    })
+    const pendingCookiesToSet: Array<{ name: string; value: string; options?: any }> = []
 
     if (needsAuthCheck) {
-        // Quick check: If there are no Supabase auth cookies, the user is definitely not logged in.
-        const hasSessionCookie = request.cookies.getAll().some(cookie => cookie.name.startsWith('sb-'))
+        const allCookies = request.cookies.getAll()
+        const sbCookies = allCookies.filter(cookie => cookie.name.startsWith('sb-'))
+        const hasSessionCookie = sbCookies.length > 0
 
         if (hasSessionCookie) {
-            const { createServerClient } = await import('@supabase/ssr')
-            const supabase = createServerClient(supabaseUrl, supabaseKey, {
-                cookieOptions: {
-                    maxAge: 60 * 60 * 24 * 365, // 365 days persistent session
-                    sameSite: 'lax',
-                    secure: process.env.NODE_ENV === 'production',
-                    path: '/',
-                },
-                cookies: {
-                    getAll() {
-                        return request.cookies.getAll()
+            const cookieSignature = sbCookies.map(c => `${c.name}=${c.value}`).join(';')
+            const now = Date.now()
+            const cachedAuth = verifiedTokenCache.get(cookieSignature)
+
+            if (cachedAuth && cachedAuth.expiresAt > now) {
+                user = cachedAuth.user
+            } else {
+                const { createServerClient } = await import('@supabase/ssr')
+                const supabase = createServerClient(supabaseUrl, supabaseKey, {
+                    cookieOptions: {
+                        maxAge: 60 * 60 * 24 * 365, // 365 days persistent session
+                        sameSite: 'lax',
+                        secure: process.env.NODE_ENV === 'production',
+                        path: '/',
                     },
-                    setAll(cookiesToSet) {
-                        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-                        supabaseResponse = NextResponse.next({
-                            request: {
-                                headers: requestHeaders,
-                            },
-                        })
-                        cookiesToSet.forEach(({ name, value, options }) =>
-                            supabaseResponse.cookies.set(name, value, {
-                                ...options,
-                                maxAge: 60 * 60 * 24 * 365, // Enforce 365 days persistence
-                                sameSite: 'lax',
-                                secure: process.env.NODE_ENV === 'production',
-                                path: '/',
+                    cookies: {
+                        getAll() {
+                            return request.cookies.getAll()
+                        },
+                        setAll(cookiesToSet) {
+                            cookiesToSet.forEach(({ name, value, options }) => {
+                                request.cookies.set(name, value)
+                                pendingCookiesToSet.push({ name, value, options })
                             })
-                        )
+                        },
                     },
-                },
-            })
+                })
 
-            try {
-                // Generous timeout (4000ms) to ensure mobile 4G latency never aborts token refresh
-                const authPromise = supabase.auth.getUser()
-                const timeoutPromise = new Promise<{ data: { user: null } }>((_, reject) =>
-                    setTimeout(() => reject(new Error('Auth check timeout')), 4000)
-                )
+                try {
+                    // Generous timeout (4000ms) to ensure mobile 4G latency never aborts token refresh
+                    const authPromise = supabase.auth.getUser()
+                    const timeoutPromise = new Promise<{ data: { user: null } }>((_, reject) =>
+                        setTimeout(() => reject(new Error('Auth check timeout')), 4000)
+                    )
 
-                const { data: { user: authUser } } = await Promise.race([authPromise, timeoutPromise])
-                user = authUser
-            } catch (error) {
-                console.error('Middleware auth check error/timeout:', error)
-                if (error instanceof Error && error.message === 'Auth check timeout') {
-                    authTimedOut = true
+                    const { data: { user: authUser } } = await Promise.race([authPromise, timeoutPromise])
+                    user = authUser
+                    if (authUser && pendingCookiesToSet.length === 0) {
+                        if (verifiedTokenCache.size > 200) {
+                            verifiedTokenCache.clear()
+                        }
+                        verifiedTokenCache.set(cookieSignature, {
+                            user: { id: authUser.id, email: authUser.email },
+                            expiresAt: now + TOKEN_CACHE_TTL_MS,
+                        })
+                    }
+                } catch (error) {
+                    console.error('Middleware auth check error/timeout:', error)
+                    if (error instanceof Error && error.message === 'Auth check timeout') {
+                        authTimedOut = true
+                    }
                 }
             }
         }
@@ -152,26 +164,50 @@ export async function middleware(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // RBAC enforcement — check permissions for dashboard routes
-    if (user && request.nextUrl.pathname.startsWith('/dashboard/') && !isApiPath) {
-        const matchedRoute = Object.keys(ROUTE_PERMISSIONS)
-            .sort((a, b) => b.length - a.length)
-            .find(route => request.nextUrl.pathname.startsWith(route))
-
-        if (matchedRoute) {
-            // Store required permission in request header for server layout/components
-            requestHeaders.set('x-required-permission', ROUTE_PERMISSIONS[matchedRoute])
-            // Also keep on response headers for compatibility
-            supabaseResponse.headers.set('x-required-permission', ROUTE_PERMISSIONS[matchedRoute])
-        }
-    }
-
     // Redirect authenticated users away from auth-only pages (/login, /forgot-password, /reset-password)
     const isAuthOnlyPath = authOnlyPaths.some(p => request.nextUrl.pathname.startsWith(p))
     if (user && isAuthOnlyPath) {
         const url = request.nextUrl.clone()
         url.pathname = '/dashboard'
         return NextResponse.redirect(url)
+    }
+
+    // Forward verified user email to RSC / Server Actions so getCurrentUser() skips duplicate Supabase network call
+    if (user?.email) {
+        requestHeaders.set('x-verified-user-email', user.email)
+    }
+
+    // RBAC enforcement — check permissions for dashboard routes
+    let requiredPermission: string | undefined
+    if (user && request.nextUrl.pathname.startsWith('/dashboard/') && !isApiPath) {
+        const matchedRoute = Object.keys(ROUTE_PERMISSIONS)
+            .sort((a, b) => b.length - a.length)
+            .find(route => request.nextUrl.pathname.startsWith(route))
+
+        if (matchedRoute) {
+            requiredPermission = ROUTE_PERMISSIONS[matchedRoute]
+            requestHeaders.set('x-required-permission', requiredPermission)
+        }
+    }
+
+    const supabaseResponse = NextResponse.next({
+        request: {
+            headers: requestHeaders,
+        },
+    })
+
+    if (requiredPermission) {
+        supabaseResponse.headers.set('x-required-permission', requiredPermission)
+    }
+
+    for (const { name, value, options } of pendingCookiesToSet) {
+        supabaseResponse.cookies.set(name, value, {
+            ...options,
+            maxAge: 60 * 60 * 24 * 365, // Enforce 365 days persistence
+            sameSite: 'lax',
+            secure: process.env.NODE_ENV === 'production',
+            path: '/',
+        })
     }
 
     return supabaseResponse

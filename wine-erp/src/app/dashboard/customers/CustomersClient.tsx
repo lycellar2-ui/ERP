@@ -18,6 +18,8 @@ import {
 } from './actions'
 import { getLegalEntities, LegalEntityRow } from '../sales/actions'
 import { cn, formatVND } from '@/lib/utils'
+import { useAppLocale } from '@/lib/i18n'
+import { CUSTOMERS_I18N } from './i18n'
 import type { Tone } from '@/lib/ui/status'
 import {
     Badge, Button, Drawer, EmptyState, PageHeader, Pagination, SearchInput, Select, Skeleton, StatCard, StatGrid, StatusBadge,
@@ -32,20 +34,7 @@ const CUSTOMER_TYPE: Record<string, { label: string; tone: Tone }> = {
     RETAIL: { label: 'Retail', tone: 'info' },
 }
 
-const CUSTOMER_STATUS_LABEL: Record<string, string> = {
-    ACTIVE: 'Hoạt động',
-    INACTIVE: 'Tạm dừng',
-    CREDIT_HOLD: 'Giữ tín dụng',
-    PENDING_APPROVAL: 'Chờ duyệt',
-    REJECTED: 'Bị từ chối',
-}
 const CUSTOMER_TONE_OVERRIDES = { CREDIT_HOLD: 'warning', PENDING_APPROVAL: 'warning' } as const
-
-const CHANNEL_LABEL: Record<string, string> = {
-    HORECA: 'HORECA (Khách sạn/Nhà hàng)',
-    CORPORATE: 'Corporate (Doanh nghiệp)',
-    RETAIL: 'Retail (Bán lẻ)',
-}
 
 const CITIES = [
     'Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Nha Trang', 'Phú Quốc', 'Hội An',
@@ -58,8 +47,10 @@ function TypeBadge({ type }: { type: string | null }) {
     return <Badge tone={cfg.tone}>{cfg.label}</Badge>
 }
 
-function StatusDot({ status }: { status: string }) {
-    return <StatusBadge status={status} label={CUSTOMER_STATUS_LABEL[status]} toneOverrides={CUSTOMER_TONE_OVERRIDES} />
+function StatusDot({ status, label }: { status: string; label?: string }) {
+    const { locale } = useAppLocale()
+    const L = CUSTOMERS_I18N[locale]
+    return <StatusBadge status={status} label={label ?? L.status[status] ?? status} toneOverrides={CUSTOMER_TONE_OVERRIDES} />
 }
 
 function CustomerMobileCard({
@@ -75,6 +66,8 @@ function CustomerMobileCard({
     onSyncTax?: () => void
     onSelectParent?: (parentId: string) => void
 }) {
+    const { locale, formatCurrency, formatNumber } = useAppLocale()
+    const L = CUSTOMERS_I18N[locale]
     const taxToDisplay = row.taxId || row.resolvedVatInfo?.taxId
     const isVatInherited = !row.taxId && Boolean(row.resolvedVatInfo?.taxId)
 
@@ -94,7 +87,7 @@ function CustomerMobileCard({
                     {row.entityType === 'COMPANY' || row.childrenCount > 0 ? (
                         <>
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold text-slate-800 bg-slate-100 border border-slate-200 whitespace-nowrap shrink-0">
-                                <Building2 size={11} className="text-slate-600" /> Công ty Mẹ
+                                <Building2 size={11} className="text-slate-600" /> {L.badges.parentCompany}
                             </span>
                             <button
                                 type="button"
@@ -110,14 +103,14 @@ function CustomerMobileCard({
                                         ? "bg-cyan-50 text-lys-teal-strong border border-cyan-200 active:bg-cyan-100 cursor-pointer"
                                         : "bg-slate-50 text-slate-400 border border-slate-200"
                                 )}
-                                title={row.childrenCount > 0 ? `Chạm để lọc ${row.childrenCount} khách hàng con trực thuộc` : "Chưa có khách hàng con"}
+                                title={row.childrenCount > 0 ? L.badges.filterChildTooltip(row.childrenCount) : L.badges.noChildTooltip}
                             >
-                                <Users size={10} /> {row.childrenCount} KH con
+                                <Users size={10} /> {L.badges.childCustomersCount(row.childrenCount)}
                             </button>
                         </>
                     ) : (
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 whitespace-nowrap shrink-0">
-                            <UtensilsCrossed size={11} className="text-emerald-700" /> Nhà hàng
+                            <UtensilsCrossed size={11} className="text-emerald-700" /> {L.badges.restaurant}
                         </span>
                     )}
                 </div>
@@ -131,12 +124,12 @@ function CustomerMobileCard({
                 </h4>
                 {row.shortName && (
                     <p className="text-xs text-slate-500 font-medium mt-0.5">
-                        Tên viết tắt: {row.shortName}
+                        {L.badges.shortNamePrefix} {row.shortName}
                     </p>
                 )}
                 {row.brandGroup && (
                     <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold mt-1 text-slate-700 bg-slate-50 border border-slate-200 whitespace-nowrap shrink-0">
-                        Chuỗi: {row.brandGroup}
+                        {L.badges.chainPrefix} {row.brandGroup}
                     </span>
                 )}
             </div>
@@ -152,20 +145,20 @@ function CustomerMobileCard({
                                 onSelectParent(row.parentId)
                             }
                         }}
-                        title="Chạm để lọc các cơ sở thuộc KH Cha này"
+                        title={L.badges.filterByParentTooltip}
                     >
-                        <span className="text-slate-400">Khách hàng Cha:</span>
+                        <span className="text-slate-400">{L.badges.parentCustomerPrefix}</span>
                         <strong className="font-mono text-cyan-800 font-semibold">{row.parentCode}</strong>
                         <span className="truncate text-slate-600">— {row.parentName}</span>
                     </div>
                 )}
                 <div>
-                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Mã Số Thuế</span>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">{L.badges.taxIdLabel}</span>
                     <div className="flex items-center gap-1 font-mono font-medium text-slate-700 mt-0.5">
                         {taxToDisplay ? (
                             <>
                                 <span className={isVatInherited ? "text-amber-700 font-bold" : ""}>
-                                    {taxToDisplay} {isVatInherited && '(MST Mẹ)'}
+                                    {taxToDisplay} {isVatInherited && L.badges.parentTaxInherited}
                                 </span>
                                 {onSyncTax && (
                                     <button
@@ -175,7 +168,7 @@ function CustomerMobileCard({
                                             onSyncTax()
                                         }}
                                         className="p-1 hover:bg-teal-50 text-teal-600 rounded transition-colors"
-                                        title="Tra cứu Cục Thuế"
+                                        title={L.badges.lookupTaxTooltip}
                                     >
                                         <Search size={11} />
                                     </button>
@@ -186,23 +179,23 @@ function CustomerMobileCard({
                 </div>
 
                 <div>
-                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Sales Phụ Trách</span>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">{L.badges.salesRepLabel}</span>
                     <span className="font-medium text-slate-700 truncate block mt-0.5">
                         {row.salesRepName || '—'}
                     </span>
                 </div>
 
                 <div>
-                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Tín Dụng & Hạn Mức</span>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">{L.badges.creditAndLimit}</span>
                     <span className="font-mono font-medium text-slate-700 mt-0.5 block">
-                        {row.creditLimit > 0 ? formatVND(row.creditLimit) : '0 ₫'} <span className="text-[10px] text-slate-400 font-sans">({row.paymentTerm})</span>
+                        {row.creditLimit > 0 ? formatCurrency(row.creditLimit) : '0 ₫'} <span className="text-[10px] text-slate-400 font-sans">({row.paymentTerm})</span>
                     </span>
                 </div>
 
                 <div>
-                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Đơn Hàng</span>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">{L.badges.ordersLabel}</span>
                     <span className="font-mono font-bold text-emerald-700 mt-0.5 block">
-                        {row.orderCount} <span className="text-[10px] text-slate-400 font-sans">đơn</span>
+                        {formatNumber(row.orderCount)} <span className="text-[10px] text-slate-400 font-sans">{L.badges.ordersUnit}</span>
                     </span>
                 </div>
             </div>
@@ -214,14 +207,14 @@ function CustomerMobileCard({
                     onClick={onDelete}
                     className="flex-1 min-h-[38px] flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-600 border border-slate-200 hover:bg-rose-50 transition-colors"
                 >
-                    <Trash2 size={13} /> Xóa
+                    <Trash2 size={13} /> {L.badges.deleteBtn}
                 </button>
                 <button
                     type="button"
                     onClick={onEdit}
                     className="flex-[2] min-h-[38px] flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-cyan-50 text-lys-teal-strong border border-cyan-300 hover:bg-cyan-100 transition-colors"
                 >
-                    <Edit2 size={13} /> Chỉnh sửa hồ sơ
+                    <Edit2 size={13} /> {L.badges.editProfileBtn}
                 </button>
             </div>
         </div>
@@ -239,6 +232,8 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
     onClose: () => void; onSaved: () => void
     currentUser?: any
 }) {
+    const { locale } = useAppLocale()
+    const L = CUSTOMERS_I18N[locale]
     const isSalesAdmin = currentUser?.roles?.includes('Sales Admin') || currentUser?.roles?.includes('SALES_ADMIN') || currentUser?.roles?.includes('ADMIN') || currentUser?.roles?.includes('CEO') || currentUser?.roles?.includes('Sales Manager') || currentUser?.roles?.includes('SALES_MGR') || currentUser?.roles?.includes('Kế Toán') || currentUser?.roles?.includes('KE_TOAN')
     const isSalesRep = currentUser?.roles?.includes('Sales Rep') || currentUser?.roles?.includes('SALES_REP')
 
@@ -363,14 +358,14 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
         const parentCandidate = parentCandidates.find(p => p.id === form.parentId)
         const taxToQuery = form.taxId || parentCandidate?.taxId
         if (!taxToQuery || !taxToQuery.trim()) {
-            toast.error('Vui lòng nhập Mã số thuế hoặc chọn Khách hàng Cha có Mã số thuế trước khi tra cứu')
+            toast.error(L.toasts.enterTaxBeforeLookup)
             return
         }
         setTaxLookupLoading(true)
         try {
             const res = await lookupTaxInfo(taxToQuery)
             if (!res.success || !res.data) {
-                toast.error(res.error || 'Không tìm thấy thông tin đăng ký thuế cho MST này')
+                toast.error(res.error || L.toasts.taxNotFound)
                 return
             }
             const gdtName = res.data.vatCompanyName
@@ -385,9 +380,9 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                     address: !prev.address || prev.address === prev.vatAddress ? gdtAddr : prev.address,
                 } : {}),
             }))
-            toast.success(`Lấy thành công: ${gdtName}`)
+            toast.success(L.toasts.taxFetched(gdtName))
         } catch (err: any) {
-            toast.error('Lỗi tra cứu Cục Thuế: ' + err.message)
+            toast.error(L.toasts.taxLookupError + err.message)
         } finally {
             setTaxLookupLoading(false)
         }
@@ -447,28 +442,15 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
         if (!form) return
         const printWindow = window.open('', '_blank')
         if (!printWindow) {
-            toast.warning('Hãy cấp quyền mở popup trên trình duyệt của bạn')
+            toast.warning(L.toasts.allowPopup)
             return
         }
 
-        const customerTypeLabels: Record<string, string> = {
-            HORECA: 'HORECA (Nhà hàng / Khách sạn)',
-            WHOLESALE_DISTRIBUTOR: 'Phân Phối Sỉ / Đại lý',
-            VIP_RETAIL: 'VIP Retail',
-            INDIVIDUAL: 'Cá Nhân'
-        }
-
-        const statusLabels: Record<string, string> = {
-            ACTIVE: 'Hoạt động',
-            INACTIVE: 'Tạm dừng',
-            CREDIT_HOLD: 'Giữ tín dụng',
-            PENDING_APPROVAL: 'Chờ duyệt',
-            REJECTED: 'Bị từ chối'
-        }
+        const statusLabels: Record<string, string> = L.status
 
         const mainAddress = form.address
-            ? `${form.address}${form.ward ? ', Phường/Xã ' + form.ward : ''}${form.district ? ', Quận/Huyện ' + form.district : ''}${form.city ? ', Tỉnh/TP ' + form.city : ''}`
-            : 'Chưa cấu hình địa chỉ chính'
+            ? `${form.address}${form.ward ? ', ' + form.ward : ''}${form.district ? ', ' + form.district : ''}${form.city ? ', ' + form.city : ''}`
+            : '—'
 
         const htmlContent = `
             <html>
@@ -624,12 +606,12 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                 a.download = res.filename
                 a.click()
                 window.URL.revokeObjectURL(url)
-                toast.success('Đã tải xuống biểu mẫu Excel thành công')
+                toast.success(L.toasts.excelDownloaded)
             } else {
-                toast.error(res.error ?? 'Lỗi xuất biểu mẫu Excel')
+                toast.error(res.error ?? L.toasts.excelExportError)
             }
         } catch (err: any) {
-            toast.error(err.message ?? 'Đã xảy ra lỗi')
+            toast.error(err.message ?? L.toasts.genericError)
         } finally {
             setExportingExcel(false)
         }
@@ -642,11 +624,11 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
         try {
             const res = await approveCustomer(editingId, officialCodeInput)
             if (res.success) {
-                toast.success('Đã phê duyệt khách hàng thành công!')
+                toast.success(L.toasts.approvedSuccess)
                 onSaved()
             } else {
-                setApprovalError(res.error ?? 'Lỗi phê duyệt')
-                toast.error(res.error ?? 'Lỗi phê duyệt')
+                setApprovalError(res.error ?? L.toasts.approveError)
+                toast.error(res.error ?? L.toasts.approveError)
             }
         } catch (err: any) {
             setApprovalError(err.message)
@@ -663,11 +645,11 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
         try {
             const res = await rejectCustomer(editingId)
             if (res.success) {
-                toast.success('Đã từ chối yêu cầu duyệt khách hàng.')
+                toast.success(L.toasts.rejectedSuccess)
                 onSaved()
             } else {
-                setApprovalError(res.error ?? 'Lỗi từ chối duyệt')
-                toast.error(res.error ?? 'Lỗi từ chối duyệt')
+                setApprovalError(res.error ?? L.toasts.rejectError)
+                toast.error(res.error ?? L.toasts.rejectError)
             }
         } catch (err: any) {
             setApprovalError(err.message)
@@ -679,10 +661,10 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
 
     const handleSave = async () => {
         const e: Record<string, string> = {}
-        if (!isEdit && !isSalesRep && !form.code) e.code = 'Bắt buộc'
-        if (isEdit && !form.code) e.code = 'Bắt buộc'
+        if (!isEdit && !isSalesRep && !form.code) e.code = L.drawer.required
+        if (isEdit && !form.code) e.code = L.drawer.required
         const resolvedName = form.entityType === 'COMPANY' ? (form.name || form.vatCompanyName || '') : (form.name || '')
-        if (!resolvedName.trim()) e.name = 'Bắt buộc'
+        if (!resolvedName.trim()) e.name = L.drawer.required
         setErrors(e)
         if (Object.keys(e).length) return
         setSaving(true)
@@ -701,25 +683,25 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
             if (isEdit) {
                 const res = await updateCustomer(editingId!, payload)
                 if (res.success) {
-                    toast.success('Đã cập nhật khách hàng')
+                    toast.success(L.toasts.updatedSuccess)
                     onSaved()
                 } else {
-                    toast.error(res.error ?? 'Lỗi cập nhật khách hàng')
-                    setErrors({ _global: res.error ?? 'Lỗi cập nhật khách hàng' })
+                    toast.error(res.error ?? L.toasts.updateError)
+                    setErrors({ _global: res.error ?? L.toasts.updateError })
                 }
             } else {
                 const res = await createCustomer(payload)
                 if (res.success) {
-                    toast.success('Đã tạo khách hàng mới')
+                    toast.success(L.toasts.createdSuccess)
                     onSaved()
                 } else {
-                    toast.error(res.error ?? 'Lỗi tạo khách hàng')
-                    setErrors({ _global: res.error ?? 'Lỗi tạo khách hàng' })
+                    toast.error(res.error ?? L.toasts.createError)
+                    setErrors({ _global: res.error ?? L.toasts.createError })
                 }
             }
         } catch (err: any) {
             setErrors({ _global: err.message })
-            toast.error(err.message ?? 'Đã xảy ra lỗi')
+            toast.error(err.message ?? L.toasts.genericError)
         } finally {
             setSaving(false)
         }
@@ -739,10 +721,10 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
         }
         if (isDirty) {
             confirmDrawer({
-                title: 'Thông Tin Chưa Lưu',
-                message: 'Bạn có thông tin chưa lưu trong form khách hàng. Bạn có chắc chắn muốn đóng mà không lưu?',
-                confirmLabel: 'Đóng Form',
-                cancelLabel: 'Tiếp tục sửa',
+                title: L.drawer.unsavedTitle,
+                message: L.drawer.unsavedMessage,
+                confirmLabel: L.drawer.closeForm,
+                cancelLabel: L.drawer.continueEditing,
                 danger: true,
                 onConfirm: () => {
                     onClose()
@@ -774,24 +756,24 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
             onClose={handleClose}
             size="md"
             className="bg-lys-bg"
-            title={isEdit ? 'Chỉnh Sửa Khách Hàng' : 'Thêm Khách Hàng'}
-            description={isEdit ? 'Điền thông tin đầy đủ về khách hàng' : 'Khách sạn, nhà hàng, phân phối, VIP retail'}
+            title={isEdit ? L.drawer.editTitle : L.drawer.createTitle}
+            description={isEdit ? L.drawer.editDesc : L.drawer.createDesc}
             footer={
                 <>
                     {isEdit && (
                         <div className="flex items-center gap-2 mr-auto">
                             <Button variant="secondary" onClick={handlePrintCustomer}>
-                                <Printer size={14} aria-hidden /> In Hồ Sơ
+                                <Printer size={14} aria-hidden /> {L.drawer.printProfile}
                             </Button>
                             <Button variant="secondary" onClick={handleExportExcelForm} loading={exportingExcel} disabled={exportingExcel}>
-                                {!exportingExcel && <Download size={14} aria-hidden />} Xuất Excel
+                                {!exportingExcel && <Download size={14} aria-hidden />} {L.drawer.exportExcel}
                             </Button>
                         </div>
                     )}
-                    <Button variant="secondary" onClick={handleClose}>Hủy</Button>
+                    <Button variant="secondary" onClick={handleClose}>{L.drawer.cancel}</Button>
                     <Button onClick={handleSave} loading={saving} disabled={saving || loading} title="Ctrl+Enter">
                         {!saving && <Save size={14} aria-hidden />}
-                        {saving ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo KH'}
+                        {saving ? L.drawer.saving : isEdit ? L.drawer.saveChanges : L.drawer.createCustomer}
                     </Button>
                 </>
             }
@@ -813,13 +795,13 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                     <div className="flex items-center gap-2">
                                         <Scale size={18} className="text-[#D4963A] shrink-0" />
                                         <div>
-                                            <p className="text-xs font-bold uppercase tracking-wider text-[#D4963A]">Yêu cầu tạo Khách Hàng</p>
-                                            <p className="text-[11px]" style={{ color: '#475569' }}>Khách hàng này do Sale tạo với mã tạm thời là <strong className="font-mono">{form.code}</strong>. Vui lòng ấn định mã chính thức để duyệt.</p>
+                                            <p className="text-xs font-bold uppercase tracking-wider text-[#D4963A]">{L.drawer.approvalReqTitle}</p>
+                                            <p className="text-[11px]" style={{ color: '#475569' }}>{L.drawer.approvalReqDescPrefix} <strong className="font-mono">{form.code}</strong>. {L.drawer.approvalReqDescSuffix}</p>
                                         </div>
                                     </div>
                                     <div className="flex flex-col sm:flex-row gap-3 pt-1">
                                         <div className="flex-1">
-                                            <input type="text" placeholder="Mã KH chính thức (Ví dụ: KH-00123)"
+                                            <input type="text" placeholder={L.drawer.officialCodePlaceholder}
                                                 value={officialCodeInput}
                                                 onChange={e => setOfficialCodeInput(e.target.value.toUpperCase())}
                                                 className="w-full px-3 py-2 rounded-lg text-sm outline-none"
@@ -829,12 +811,12 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                         <div className="flex gap-2">
                                             <button onClick={handleReject} disabled={approving} type="button"
                                                 className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-all text-[#B91C1C] border border-[#B91C1C]/30 hover:bg-[#B91C1C]/10 disabled:opacity-50">
-                                                Từ chối
+                                                {L.drawer.rejectBtn}
                                             </button>
                                             <button onClick={handleApprove} disabled={approving} type="button"
                                                 className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-all bg-[#15803D] hover:bg-[#72BF9E] text-slate-900 disabled:opacity-60">
                                                 {approving ? <Loader2 size={14} className="animate-spin" /> : null}
-                                                Duyệt
+                                                {L.drawer.approveBtn}
                                             </button>
                                         </div>
                                     </div>
@@ -845,7 +827,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                             {duplicateWarnings.length > 0 && (
                                 <div className="p-3.5 rounded-lg space-y-2 transition-all" style={{ background: 'rgba(212,150,58,0.12)', border: '1px solid rgba(212,150,58,0.4)' }}>
                                     <p className="text-xs font-bold uppercase tracking-wider text-[#D4963A] flex items-center gap-1.5">
-                                        <AlertCircle size={15} /> Cảnh báo trùng lặp thông tin Khách Hàng
+                                        <AlertCircle size={15} /> {L.drawer.duplicateWarningTitle}
                                     </p>
                                     <div className="space-y-1 text-xs" style={{ color: '#0F172A' }}>
                                         {duplicateWarnings.map((w, idx) => (
@@ -862,7 +844,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                             {form.channel === 'HORECA' && (
                                 <div className="space-y-2">
                                     <label className="text-xs font-semibold uppercase tracking-wide block" style={{ color: '#64748B' }}>
-                                        Loại hình hồ sơ khách hàng *
+                                        {L.drawer.entityTypeLabel}
                                     </label>
                                     <div className="grid grid-cols-2 gap-2.5 p-1 rounded-lg bg-slate-100 border border-slate-200">
                                         <button
@@ -882,7 +864,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             )}
                                         >
                                             <UtensilsCrossed size={14} className={(form.entityType ?? 'RESTAURANT') === 'RESTAURANT' ? "text-emerald-700 shrink-0" : "text-slate-500 shrink-0"} />
-                                            <span className="truncate">Điểm bán / Nhà hàng (Con)</span>
+                                            <span className="truncate">{L.drawer.entityRestaurantTab}</span>
                                         </button>
                                         <button
                                             type="button"
@@ -907,27 +889,27 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             )}
                                         >
                                             <Building2 size={14} className={form.entityType === 'COMPANY' ? "text-lys-teal-strong shrink-0" : "text-slate-500 shrink-0"} />
-                                            <span className="truncate">Công ty Mẹ (KH Cha)</span>
+                                            <span className="truncate">{L.drawer.entityCompanyTab}</span>
                                         </button>
                                     </div>
                                     <p className="text-[11px] text-slate-500">
                                         {form.entityType === 'COMPANY'
-                                            ? 'Hồ sơ Công ty Mẹ dùng để quản lý pháp nhân xuất hóa đơn VAT, hạn mức công nợ chung và hợp đồng chuỗi.'
-                                            : 'Hồ sơ Điểm bán / Nhà hàng dùng để lên đơn hàng, giao rượu thực tế và kế thừa MST / cơ chế giá từ Công ty Mẹ.'}
+                                            ? L.drawer.entityCompanyDesc
+                                            : L.drawer.entityRestaurantDesc}
                                     </p>
                                 </div>
                             )}
 
                             <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
-                                {form.entityType === 'COMPANY' ? '── Định Danh Pháp Nhân & Thuế VAT' : '── Thông Tin Cơ Bản'}
+                                {form.entityType === 'COMPANY' ? L.drawer.sectionCompanyVat : L.drawer.sectionBasicInfo}
                             </p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Mã KH {(!isSalesRep || isEdit) && <span style={{ color: '#B91C1C' }}>*</span>}</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.customerCodeLabel} {(!isSalesRep || isEdit) && <span style={{ color: '#B91C1C' }}>*</span>}</label>
                                     <div className="flex gap-2">
                                         <input className={inputCls} style={inputStyle} 
-                                            value={isEdit ? (form.code ?? '') : (isSalesRep ? 'MÃ TỰ SINH' : (form.code ?? ''))} 
-                                            placeholder={isSalesRep ? 'Sẽ được sinh tự động' : 'VD: HR10023'}
+                                            value={isEdit ? (form.code ?? '') : (isSalesRep ? L.drawer.autoGeneratedValue : (form.code ?? ''))} 
+                                            placeholder={isSalesRep ? L.drawer.autoGeneratedPlaceholder : L.drawer.codePlaceholder}
                                             onChange={e => set('code', e.target.value.toUpperCase())} 
                                             disabled={isEdit || isSalesRep}
                                             onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
@@ -936,18 +918,18 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                 type="button"
                                                 onClick={() => handleAutoGenerateCode()}
                                                 disabled={generatingCode}
-                                                title="Tạo mã tự động theo chuẩn Master Data"
+                                                title={L.drawer.generateCodeTooltip}
                                                 className="px-3 py-2 text-xs font-semibold rounded-lg flex items-center gap-1 transition-all hover:bg-[#E2E8F0] text-lys-teal-strong border border-slate-200 whitespace-nowrap shrink-0 min-h-[42px] sm:min-h-0"
                                                 style={{ background: '#FFFFFF' }}
                                             >
-                                                {generatingCode ? <Loader2 size={13} className="animate-spin" /> : <><Sparkles size={13} /> Sinh mã</>}
+                                                {generatingCode ? <Loader2 size={13} className="animate-spin" /> : <><Sparkles size={13} /> {L.drawer.generateCodeBtn}</>}
                                             </button>
                                         )}
                                     </div>
                                     {errors.code && <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>{errors.code}</p>}
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Kênh bán hàng *</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.salesChannelLabel}</label>
                                     <select className={inputCls} style={inputStyle} value={form.channel ?? 'HORECA'}
                                         onChange={e => {
                                             const val = e.target.value as any
@@ -961,9 +943,9 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             }
                                         }}
                                         onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
-                                        <option value="HORECA">HORECA (Nhà hàng / Khách sạn)</option>
-                                        <option value="CORPORATE">Corporate (Doanh nghiệp)</option>
-                                        <option value="RETAIL">Retail (Bán lẻ)</option>
+                                        <option value="HORECA">{L.channel.HORECA}</option>
+                                        <option value="CORPORATE">{L.channel.CORPORATE}</option>
+                                        <option value="RETAIL">{L.channel.RETAIL}</option>
                                     </select>
                                 </div>
                             </div>
@@ -977,10 +959,10 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                     <div className="p-3.5 rounded-lg space-y-3.5" style={{ background: 'rgba(180,83,9,0.06)', border: '1px solid rgba(180,83,9,0.25)' }}>
                                         <div className="flex items-center justify-between flex-wrap gap-2">
                                             <p className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#B45309' }}>
-                                                <FileText size={14} /> Thông Tin Pháp Nhân & Hóa Đơn VAT
+                                                <FileText size={14} /> {L.drawer.legalAndVatTitle}
                                             </p>
                                             <span className="text-[11px] text-amber-800 font-medium">
-                                                Nhập MST và bấm Tra cứu để tự điền Tên & Địa chỉ công ty
+                                                {L.drawer.legalAndVatHint}
                                             </span>
                                         </div>
 
@@ -988,21 +970,21 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             <div className="flex flex-col justify-end">
                                                 <div className="flex items-center justify-between mb-1.5 gap-2">
                                                     <label className="text-xs font-semibold uppercase tracking-wide block" style={{ color: '#475569' }}>
-                                                        Mã Số Thuế VAT
+                                                        {L.drawer.vatTaxIdLabel}
                                                     </label>
                                                     <button
                                                         type="button"
                                                         disabled={taxLookupLoading}
                                                         onClick={handleLookupTax}
                                                         className="px-2.5 py-1 sm:py-0.5 rounded text-xs sm:text-[11px] font-extrabold bg-teal-50 text-lys-teal-strong hover:bg-teal-100 transition-all flex items-center gap-1 cursor-pointer border border-teal-300 active:scale-95 shrink-0 min-h-[30px] sm:min-h-0"
-                                                        title="Tự động tra cứu Tên công ty & Địa chỉ từ Tổng cục Thuế"
+                                                        title={L.drawer.lookupTaxBtnTooltip}
                                                     >
                                                         {taxLookupLoading ? <Loader2 size={11} className="animate-spin" /> : <Search size={11} />}
-                                                        <span>Tra Cứu Cục Thuế</span>
+                                                        <span>{L.drawer.lookupTaxBtn}</span>
                                                     </button>
                                                 </div>
                                                 <input className={inputCls} style={inputStyle} value={form.taxId ?? ''} 
-                                                    placeholder="VD: 0302012345"
+                                                    placeholder={L.drawer.taxIdPlaceholder}
                                                     onChange={e => set('taxId', e.target.value || null)}
                                                     onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                                 {duplicateWarnings.find(w => w.type === 'TAX_ID') && (
@@ -1013,7 +995,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             </div>
                                             <div className="flex flex-col justify-end">
                                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
-                                                    Email Nhận Hóa Đơn VAT
+                                                    {L.drawer.vatEmailLabel}
                                                 </label>
                                                 <input type="email" className={inputCls} style={inputStyle} value={form.vatEmail ?? form.email ?? ''} 
                                                     placeholder="ketoan@company.com"
@@ -1027,10 +1009,10 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
 
                                         <div>
                                             <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
-                                                Tên Pháp Nhân / Công Ty Mẹ (Xuất HĐ VAT) <span style={{ color: '#B91C1C' }}>*</span>
+                                                {L.drawer.legalNameLabel} <span style={{ color: '#B91C1C' }}>*</span>
                                             </label>
                                             <input className={inputCls} style={inputStyle} value={form.name ?? form.vatCompanyName ?? ''} 
-                                                placeholder="VD: CÔNG TY TNHH THƯƠNG MẠI MINH ĐĂNG CONNECT"
+                                                placeholder={L.drawer.legalNamePlaceholder}
                                                 onChange={e => {
                                                     const val = e.target.value
                                                     setForm(f => ({ ...f, name: val, vatCompanyName: val || null }))
@@ -1046,10 +1028,10 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
 
                                         <div>
                                             <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
-                                                Địa Chỉ Đăng Ký Thuế VAT
+                                                {L.drawer.vatAddressLabel}
                                             </label>
                                             <input className={inputCls} style={inputStyle} value={form.vatAddress ?? form.address ?? ''} 
-                                                placeholder="Số 123 Đường ABC, Phường X, Quận Y, TP..."
+                                                placeholder={L.drawer.vatAddressPlaceholder}
                                                 onChange={e => {
                                                     const val = e.target.value || null
                                                     setForm(f => ({ ...f, vatAddress: val, address: val }))
@@ -1061,17 +1043,17 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                     {/* Tên thương hiệu / Viết tắt & Liên hệ kế toán */}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                         <div>
-                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên gọi tắt / Tên Chuỗi</label>
-                                            <input className={inputCls} style={inputStyle} value={form.shortName ?? ''} placeholder="VD: Minh Đăng / Golden Gate"
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.shortNameChainLabel}</label>
+                                            <input className={inputCls} style={inputStyle} value={form.shortName ?? ''} placeholder={L.drawer.shortNameChainPlaceholder}
                                                 onChange={e => set('shortName', e.target.value || null)}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Sales phụ trách</label>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.salesRepLabel}</label>
                                             <select className={inputCls} style={inputStyle} value={form.salesRepId ?? ''}
                                                 onChange={e => set('salesRepId', e.target.value || null)}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
-                                                <option value="">— Chọn Sales —</option>
+                                                <option value="">{L.drawer.selectSalesRep}</option>
                                                 {salesReps.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                             </select>
                                         </div>
@@ -1079,13 +1061,13 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                         <div>
-                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Người liên hệ (Kế toán / Đại diện)</label>
-                                            <input className={inputCls} style={inputStyle} value={form.contactName ?? ''} placeholder="VD: Chị Lan Kế Toán"
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.contactAccountantLabel}</label>
+                                            <input className={inputCls} style={inputStyle} value={form.contactName ?? ''} placeholder={L.drawer.contactAccountantPlaceholder}
                                                 onChange={e => set('contactName', e.target.value || null)}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Số điện thoại liên hệ</label>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.contactPhoneLabel}</label>
                                             <input className={inputCls} style={inputStyle} value={form.phone ?? ''} placeholder="0901234567"
                                                 onChange={e => set('phone', e.target.value || null)}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
@@ -1102,7 +1084,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             <input type="checkbox" checked={form.allowDirectSO ?? false}
                                                 onChange={e => set('allowDirectSO', e.target.checked)}
                                                 className="rounded bg-white border-slate-300 text-lys-teal-strong focus:ring-0" />
-                                            <span>Cho phép lên Đơn bán hàng (SO) trực tiếp vào mã Công ty Mẹ này</span>
+                                            <span>{L.drawer.allowDirectSoLabel}</span>
                                         </label>
                                     </div>
 
@@ -1112,11 +1094,11 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                 <div className="flex items-center gap-2">
                                                     <Users size={15} className="text-lys-teal-strong" />
                                                     <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                                                        Khách hàng con trực thuộc ({loadedChildren.length})
+                                                        {L.drawer.childCustomersHeader(loadedChildren.length)}
                                                     </span>
                                                 </div>
                                                 <span className="inline-block text-[11px] font-semibold text-lys-teal-strong bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200 whitespace-nowrap shrink-0">
-                                                    {loadedChildren.length} cơ sở
+                                                    {L.drawer.outletsCount(loadedChildren.length)}
                                                 </span>
                                             </div>
                                             {loadedChildren.length > 0 ? (
@@ -1138,7 +1120,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                 </div>
                                             ) : (
                                                 <p className="text-[11px] text-slate-500 italic">
-                                                    Công ty này hiện chưa có cơ sở/chi nhánh con nào liên kết.
+                                                    {L.drawer.noChildOutlets}
                                                 </p>
                                             )}
                                         </div>
@@ -1152,14 +1134,14 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                     {form.channel === 'HORECA' && (
                                         <div className="space-y-4">
                                             <div className="relative" ref={parentContainerRef}>
-                                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Khách hàng Cha (Đơn vị quản lý)</label>
+                                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.parentCustomerLabel}</label>
                                                 <div className="relative flex items-center">
                                                     <Search size={14} className="absolute left-3 text-slate-500 pointer-events-none" />
                                                     <input
                                                         type="text"
                                                         className={`${inputCls} pl-9 pr-8`}
                                                         style={inputStyle}
-                                                        placeholder="Gõ tên hoặc mã KH cha để tìm..."
+                                                        placeholder={L.drawer.parentSearchPlaceholder}
                                                         value={parentSearch}
                                                         onFocus={() => setParentDropdownOpen(true)}
                                                         onChange={e => {
@@ -1208,7 +1190,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                                     }
                                                                 }}
                                                             >
-                                                                — Không chọn Khách hàng Cha —
+                                                                {L.drawer.noParentOption}
                                                             </button>
                                                             {parentCandidates
                                                                 .filter(c => {
@@ -1241,13 +1223,13 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                                                 <span className="truncate">{c.name}</span>
                                                                                 {c.childrenCount !== undefined && (
                                                                                     <span className="text-[10px] text-slate-500 font-normal shrink-0">
-                                                                                        ({c.childrenCount} con)
+                                                                                        {L.filters.childrenSuffix(c.childrenCount)}
                                                                                     </span>
                                                                                 )}
                                                                             </div>
                                                                             {c.entityType === 'COMPANY' && (
                                                                                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#0E7490]/10 text-lys-teal-strong border border-[#0E7490]/20 font-semibold shrink-0 inline-flex items-center gap-1 whitespace-nowrap">
-                                                                                    <Building2 size={10} /> Công ty Mẹ
+                                                                                    <Building2 size={10} /> {L.badges.parentCompany}
                                                                                 </span>
                                                                             )}
                                                                         </button>
@@ -1259,7 +1241,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                                 return c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)
                                                             }).length === 0 && (
                                                                 <div className="px-3.5 py-3.5 text-center text-xs text-slate-500">
-                                                                    Không tìm thấy đơn vị phù hợp
+                                                                    {L.drawer.noParentFound}
                                                                 </div>
                                                             )}
                                                         </div>
@@ -1270,7 +1252,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                     )}
 
                                     <div>
-                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên Khách Hàng / Điểm Bán <span style={{ color: '#B91C1C' }}>*</span></label>
+                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.outletNameLabel} <span style={{ color: '#B91C1C' }}>*</span></label>
                                         <input className={inputCls} style={inputStyle} value={form.name ?? ''} placeholder="Park Hyatt Saigon"
                                             onChange={e => set('name', e.target.value)}
                                             onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
@@ -1284,25 +1266,25 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
 
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                                         <div>
-                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên viết tắt</label>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.shortNameLabel}</label>
                                             <input className={inputCls} style={inputStyle} value={form.shortName ?? ''} placeholder="PH Saigon"
                                                 onChange={e => set('shortName', e.target.value || null)}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                         </div>
                                         {form.channel === 'HORECA' && (
                                             <div>
-                                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên Brand / Chuỗi</label>
-                                                <input className={inputCls} style={inputStyle} value={form.brandGroup ?? ''} placeholder="Ví dụ: Manwah, Gogi"
+                                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.brandChainLabel}</label>
+                                                <input className={inputCls} style={inputStyle} value={form.brandGroup ?? ''} placeholder={L.drawer.brandChainPlaceholder}
                                                     onChange={e => set('brandGroup', e.target.value || null)}
                                                     onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                             </div>
                                         )}
                                         <div className={form.channel !== 'HORECA' ? 'sm:col-span-2' : ''}>
-                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Sales phụ trách</label>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.salesRepLabel}</label>
                                             <select className={inputCls} style={inputStyle} value={form.salesRepId ?? ''}
                                                 onChange={e => set('salesRepId', e.target.value || null)}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
-                                                <option value="">— Chọn Sales —</option>
+                                                <option value="">{L.drawer.selectSalesRep}</option>
                                                 {salesReps.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                             </select>
                                         </div>
@@ -1312,13 +1294,13 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                     <div className="p-3.5 rounded-lg space-y-3.5" style={{ background: 'rgba(180,83,9,0.06)', border: '1px solid rgba(180,83,9,0.25)' }}>
                                         <div className="flex items-center justify-between flex-wrap gap-2">
                                             <p className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#B45309' }}>
-                                                <FileText size={14} /> Thông Tin Xuất Hóa Đơn VAT
+                                                <FileText size={14} /> {L.drawer.vatInvoiceSectionTitle}
                                             </p>
                                             {form.parentId && (() => {
                                                 const parent = parentCandidates.find(p => p.id === form.parentId)
                                                 return (
                                                     <span className="inline-block text-[11px] font-medium text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded border border-amber-300 whitespace-nowrap shrink-0">
-                                                        {parent?.taxId ? `Kế thừa MST (${parent.taxId}) từ Công Ty Cha` : 'Để trống sẽ tự động lấy theo Công Ty Cha'}
+                                                        {parent?.taxId ? L.drawer.inheritedTaxBadge(parent.taxId) : L.drawer.inheritEmptyHint}
                                                     </span>
                                                 )
                                             })()}
@@ -1326,10 +1308,10 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
 
                                         <div>
                                             <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
-                                                Tên Công Ty Xuất Hóa Đơn VAT
+                                                {L.drawer.vatCompanyNameLabel}
                                             </label>
                                             <input className={inputCls} style={inputStyle} value={form.vatCompanyName ?? ''} 
-                                                placeholder={form.parentId ? (parentCandidates.find(p => p.id === form.parentId)?.vatCompanyName ? `Tên Cty Cha: ${parentCandidates.find(p => p.id === form.parentId)?.vatCompanyName}` : "Tự động lấy theo Tên Công ty Cha nếu để trống...") : "CÔNG TY TNHH ABC..."}
+                                                placeholder={form.parentId ? (parentCandidates.find(p => p.id === form.parentId)?.vatCompanyName ? `${L.drawer.parentCompanyNamePrefix} ${parentCandidates.find(p => p.id === form.parentId)?.vatCompanyName}` : L.drawer.autoUseParentNamePlaceholder) : L.drawer.defaultCompanyPlaceholder}
                                                 onChange={e => set('vatCompanyName', e.target.value || null)}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                         </div>
@@ -1338,21 +1320,21 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             <div>
                                                 <div className="flex items-center justify-between mb-1.5 gap-2">
                                                     <label className="text-xs font-semibold uppercase tracking-wide block" style={{ color: '#475569' }}>
-                                                        Mã Số Thuế VAT
+                                                        {L.drawer.vatTaxIdLabel}
                                                     </label>
                                                     <button
                                                         type="button"
                                                         disabled={taxLookupLoading}
                                                         onClick={handleLookupTax}
                                                         className="px-2.5 py-1 sm:py-0.5 rounded text-xs sm:text-[11px] font-extrabold bg-teal-50 text-lys-teal-strong hover:bg-teal-100 transition-all flex items-center gap-1 cursor-pointer border border-teal-300 active:scale-95 shrink-0 min-h-[30px] sm:min-h-0"
-                                                        title="Tự động tra cứu Tên công ty & Địa chỉ từ Tổng cục Thuế"
+                                                        title={L.drawer.lookupTaxBtnTooltip}
                                                     >
                                                         {taxLookupLoading ? <Loader2 size={11} className="animate-spin" /> : <Search size={11} />}
-                                                        <span>Tra Cứu Cục Thuế</span>
+                                                        <span>{L.drawer.lookupTaxBtn}</span>
                                                     </button>
                                                 </div>
                                                 <input className={inputCls} style={inputStyle} value={form.taxId ?? ''} 
-                                                    placeholder={form.parentId ? (parentCandidates.find(p => p.id === form.parentId)?.taxId ? `Kế thừa MST Cha: ${parentCandidates.find(p => p.id === form.parentId)?.taxId}` : "Tự động dùng MST Công ty Cha") : "0302012345"}
+                                                    placeholder={form.parentId ? (parentCandidates.find(p => p.id === form.parentId)?.taxId ? L.drawer.inheritedParentTaxPlaceholder(parentCandidates.find(p => p.id === form.parentId)!.taxId!) : L.drawer.autoUseParentTaxPlaceholder) : "0302012345"}
                                                     onChange={e => set('taxId', e.target.value || null)}
                                                     onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                                 {(() => {
@@ -1360,7 +1342,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                     if (parent?.taxId && !form.taxId) {
                                                         return (
                                                             <div className="mt-1 inline-flex items-center justify-between text-[11px] text-amber-800 bg-amber-50 px-2 py-1 rounded border border-amber-200 whitespace-nowrap shrink-0">
-                                                                <span className="flex items-center gap-1"><Building2 size={12} className="text-amber-700" /> MST Công ty Cha: <strong className="font-mono">{parent.taxId}</strong></span>
+                                                                <span className="flex items-center gap-1"><Building2 size={12} className="text-amber-700" /> {L.drawer.parentTaxInfoLabel} <strong className="font-mono">{parent.taxId}</strong></span>
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => {
@@ -1371,7 +1353,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                                     }}
                                                                     className="text-[10px] font-bold text-lys-teal-strong hover:text-[#06748E] underline cursor-pointer ml-2"
                                                                 >
-                                                                    Áp dụng
+                                                                    {L.drawer.applyBtn}
                                                                 </button>
                                                             </div>
                                                         )
@@ -1379,7 +1361,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                     if (parent?.taxId && form.taxId === parent.taxId) {
                                                         return (
                                                             <div className="mt-1 inline-flex items-center gap-1.5 text-[11px] text-teal-800 bg-teal-50 px-2 py-1 rounded border border-teal-200 whitespace-nowrap shrink-0">
-                                                                <span>Đang dùng chung MST với Công ty Cha (<strong className="font-mono">{parent.code}</strong> — {parent.name})</span>
+                                                                <span>{L.drawer.sharingParentTaxText} (<strong className="font-mono">{parent.code}</strong> — {parent.name})</span>
                                                             </div>
                                                         )
                                                     }
@@ -1393,10 +1375,10 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             </div>
                                             <div>
                                                 <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
-                                                    Email Nhận Hóa Đơn VAT
+                                                    {L.drawer.vatEmailLabel}
                                                 </label>
                                                 <input className={inputCls} style={inputStyle} value={form.vatEmail ?? ''} 
-                                                    placeholder={form.parentId ? "Tự động dùng Email Công ty Cha" : "ketoan@company.com"}
+                                                    placeholder={form.parentId ? L.drawer.autoUseParentEmailPlaceholder : "ketoan@company.com"}
                                                     onChange={e => set('vatEmail', e.target.value || null)}
                                                     onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                             </div>
@@ -1404,25 +1386,25 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
 
                                         <div>
                                             <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
-                                                Địa Chỉ Đăng Ký Thuế VAT
+                                                {L.drawer.vatAddressLabel}
                                             </label>
                                             <input className={inputCls} style={inputStyle} value={form.vatAddress ?? ''} 
-                                                placeholder={form.parentId ? (parentCandidates.find(p => p.id === form.parentId)?.vatAddress ? `Địa chỉ Cty Cha: ${parentCandidates.find(p => p.id === form.parentId)?.vatAddress}` : "Tự động dùng Địa chỉ Công ty Cha nếu để trống...") : "Số 123 Đường ABC, Phường X, Quận Y, TP..."}
+                                                placeholder={form.parentId ? (parentCandidates.find(p => p.id === form.parentId)?.vatAddress ? `${L.drawer.parentAddressPrefix} ${parentCandidates.find(p => p.id === form.parentId)?.vatAddress}` : L.drawer.autoUseParentAddressPlaceholder) : L.drawer.vatAddressPlaceholder}
                                                 onChange={e => set('vatAddress', e.target.value || null)}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                         </div>
                                     </div>
 
-                                    <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Liên Hệ & Địa Chỉ Giao Hàng</p>
+                                    <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>{L.drawer.sectionContactDelivery}</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                         <div>
-                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Người liên hệ</label>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.contactPersonLabel}</label>
                                             <input className={inputCls} style={inputStyle} value={form.contactName ?? ''} placeholder="Nguyễn Văn A"
                                                 onChange={e => set('contactName', e.target.value || null)}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Số điện thoại</label>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.phoneLabel}</label>
                                             <input className={inputCls} style={inputStyle} value={form.phone ?? ''} placeholder="0901234567"
                                                 onChange={e => set('phone', e.target.value || null)}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
@@ -1434,88 +1416,88 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Email</label>
+                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.emailLabel}</label>
                                         <input type="email" className={inputCls} style={inputStyle} value={form.email ?? ''} placeholder="contact@hotel.com"
                                             onChange={e => set('email', e.target.value || null)}
                                             onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                     </div>
                                     <div>
-                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Địa chỉ giao hàng</label>
-                                        <input className={inputCls} style={inputStyle} value={form.address ?? ''} placeholder="123 Đường Lê Lai, Quận 1"
+                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.deliveryAddressLabel}</label>
+                                        <input className={inputCls} style={inputStyle} value={form.address ?? ''} placeholder={L.drawer.deliveryAddressPlaceholder}
                                             onChange={e => set('address', e.target.value || null)}
                                             onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         <div>
-                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Phường/Xã</label>
-                                            <input className={inputCls} style={inputStyle} value={form.ward ?? ''} placeholder="Phường Bến Nghé"
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.wardLabel}</label>
+                                            <input className={inputCls} style={inputStyle} value={form.ward ?? ''} placeholder={L.drawer.wardPlaceholder}
                                                 onChange={e => set('ward', e.target.value || null)}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Quận/Huyện</label>
-                                            <input className={inputCls} style={inputStyle} value={form.district ?? ''} placeholder="Quận 1"
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.districtLabel}</label>
+                                            <input className={inputCls} style={inputStyle} value={form.district ?? ''} placeholder={L.drawer.districtPlaceholder}
                                                 onChange={e => set('district', e.target.value || null)}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Thành phố</label>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.cityLabel}</label>
                                             <select className={inputCls} style={inputStyle} value={form.city ?? ''}
                                                 onChange={e => set('city', e.target.value || null)}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
-                                                <option value="">— Chọn —</option>
+                                                <option value="">{L.drawer.selectCity}</option>
                                                 {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
                                             </select>
                                         </div>
                                     </div>
 
-                                    <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Thông Tin Thu Mua & Kênh Nhận Order</p>
+                                    <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>{L.drawer.sectionPurchasingOrder}</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                                         <div>
-                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Tên người thu mua</label>
-                                            <input className={inputCls} style={inputStyle} value={form.purchasingName ?? ''} placeholder="Ví dụ: Anh Nam Thu Mua"
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.purchasingNameLabel}</label>
+                                            <input className={inputCls} style={inputStyle} value={form.purchasingName ?? ''} placeholder={L.drawer.purchasingNamePlaceholder}
                                                 onChange={e => set('purchasingName', e.target.value || null)}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>SĐT thu mua</label>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.purchasingPhoneLabel}</label>
                                             <input className={inputCls} style={inputStyle} value={form.purchasingPhone ?? ''} placeholder="0912345678"
                                                 onChange={e => set('purchasingPhone', e.target.value || null)}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Kênh nhận order</label>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.orderChannelLabel}</label>
                                             <select className={inputCls} style={inputStyle} value={form.orderChannel ?? 'ZALO'}
                                                 onChange={e => set('orderChannel', e.target.value || null)}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
-                                                <option value="ZALO">Zalo</option>
-                                                <option value="EMAIL">Email</option>
-                                                <option value="WHATSAPP">WhatsApp</option>
-                                                <option value="PHONE">Điện thoại</option>
-                                                <option value="DIRECT">Trực tiếp</option>
-                                                <option value="OTHER">Khác</option>
+                                                <option value="ZALO">{L.orderChannel.ZALO}</option>
+                                                <option value="EMAIL">{L.orderChannel.EMAIL}</option>
+                                                <option value="WHATSAPP">{L.orderChannel.WHATSAPP}</option>
+                                                <option value="PHONE">{L.orderChannel.PHONE}</option>
+                                                <option value="DIRECT">{L.orderChannel.DIRECT}</option>
+                                                <option value="OTHER">{L.orderChannel.OTHER}</option>
                                             </select>
                                         </div>
                                     </div>
 
-                                    <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Thông Tin Giao Hàng & Lưu Ý</p>
+                                    <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>{L.drawer.sectionDeliveryNotes}</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                         <div>
-                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Người nhận hàng</label>
-                                            <input className={inputCls} style={inputStyle} value={form.receiverName ?? ''} placeholder="Ví dụ: Quản lý nhà hàng / Thủ kho"
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.receiverNameLabel}</label>
+                                            <input className={inputCls} style={inputStyle} value={form.receiverName ?? ''} placeholder={L.drawer.receiverNamePlaceholder}
                                                 onChange={e => set('receiverName', e.target.value || null)}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>SĐT người nhận</label>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.receiverPhoneLabel}</label>
                                             <input className={inputCls} style={inputStyle} value={form.receiverPhone ?? ''} placeholder="0987654321"
                                                 onChange={e => set('receiverPhone', e.target.value || null)}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Lưu ý về giao hàng</label>
-                                        <textarea className={`${inputCls} h-20 resize-none`} style={inputStyle} value={form.deliveryNotes ?? ''} placeholder="Ví dụ: Giao sau 14h, báo trước 30 phút, giao tầng hầm B2..."
+                                        <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.deliveryNotesLabel}</label>
+                                        <textarea className={`${inputCls} h-20 resize-none`} style={inputStyle} value={form.deliveryNotes ?? ''} placeholder={L.drawer.deliveryNotesPlaceholder}
                                             onChange={e => set('deliveryNotes', e.target.value || null)}
                                             onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                     </div>
@@ -1527,26 +1509,26 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                 <div className="p-3 rounded-lg flex items-center justify-between flex-wrap gap-2" style={{ background: 'rgba(8,145,178,0.06)', border: '1px solid rgba(8,145,178,0.25)' }}>
                                     <div className="flex items-center gap-2 text-xs">
                                         <Tag size={14} className="text-[#0891B2] shrink-0" />
-                                        <span className="font-semibold text-slate-700">Cơ chế giá đang áp dụng:</span>
+                                        <span className="font-semibold text-slate-700">{L.drawer.pricingMechanismLabel}</span>
                                         <span className="font-mono font-bold text-slate-900">
-                                            {form.basePriceType === 'WHOLESALE' ? 'Giá Buôn (WS)' : form.basePriceType === 'RETAIL' ? 'Giá Lẻ (Retail)' : `Theo kênh (${form.channel || 'HORECA'})`}
+                                            {form.basePriceType === 'WHOLESALE' ? L.drawer.priceWholesale : form.basePriceType === 'RETAIL' ? L.drawer.priceRetail : L.drawer.priceByChannel(form.channel || 'HORECA')}
                                         </span>
                                         {Number(form.defaultDiscountPct || 0) > 0 && (
                                             <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                -{form.defaultDiscountPct}% toàn kho
+                                                {L.drawer.discountAllCatalog(Number(form.defaultDiscountPct))}
                                             </span>
                                         )}
                                     </div>
                                     <Link href="/dashboard/price-list" className="text-xs text-lys-teal-strong hover:underline flex items-center gap-1 font-bold">
-                                        Quản lý tại Trung tâm giá <ArrowUpRight size={13} />
+                                        {L.drawer.manageAtPriceCenter} <ArrowUpRight size={13} />
                                     </Link>
                                 </div>
                             )}
 
-                            <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>── Tín Dụng & Thanh Toán</p>
+                            <p className="text-xs uppercase tracking-widest font-bold pt-2" style={{ color: '#0891B2' }}>{L.drawer.sectionCreditPayment}</p>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Điều khoản</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.paymentTermLabel}</label>
                                     <select className={inputCls} style={inputStyle} value={form.paymentTerm ?? 'NET30'}
                                         onChange={e => set('paymentTerm', e.target.value)}
                                         onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
@@ -1560,25 +1542,25 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Hạn mức (VND)</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.creditLimitLabel}</label>
                                     <input type="number" className={inputCls} style={inputStyle} value={form.creditLimit ?? 0}
                                         onChange={e => set('creditLimit', Number(e.target.value))} step={50000000}
                                         onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Trạng thái</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.drawer.statusLabel}</label>
                                     {isSalesRep || form.status === 'PENDING_APPROVAL' || form.status === 'REJECTED' ? (
                                         <div className="py-2.5 px-3 rounded-lg text-sm font-semibold text-slate-900 border border-slate-200 bg-white flex items-center gap-2">
                                             <span className="w-1.5 h-1.5 rounded-full" style={{ background: { PENDING_APPROVAL: '#E0A96D', REJECTED: '#B91C1C', ACTIVE: '#15803D', INACTIVE: '#64748B', CREDIT_HOLD: '#D4963A' }[form.status ?? 'ACTIVE'] }} />
-                                            {{ PENDING_APPROVAL: 'Chờ duyệt', REJECTED: 'Bị từ chối', ACTIVE: 'Hoạt động', INACTIVE: 'Tạm dừng', CREDIT_HOLD: 'Giữ tín dụng' }[form.status ?? 'ACTIVE']}
+                                            {L.status[form.status ?? 'ACTIVE'] ?? form.status}
                                         </div>
                                     ) : (
                                         <select className={inputCls} style={inputStyle} value={form.status ?? 'ACTIVE'}
                                             onChange={e => set('status', e.target.value as any)}
                                             onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}>
-                                            <option value="ACTIVE">Hoạt động</option>
-                                            <option value="CREDIT_HOLD">Giữ tín dụng</option>
-                                            <option value="INACTIVE">Tạm dừng</option>
+                                            <option value="ACTIVE">{L.status.ACTIVE}</option>
+                                            <option value="CREDIT_HOLD">{L.status.CREDIT_HOLD}</option>
+                                            <option value="INACTIVE">{L.status.INACTIVE}</option>
                                         </select>
                                     )}
                                 </div>
@@ -1605,6 +1587,8 @@ interface CustomersClientProps {
 
 export function CustomersClient({ initialData, currentUser }: CustomersClientProps) {
     const qc = useQueryClient()
+    const { locale, formatCurrency, formatNumber } = useAppLocale()
+    const L = CUSTOMERS_I18N[locale]
     const isSalesAdmin = currentUser?.roles?.includes('Sales Admin') || currentUser?.roles?.includes('SALES_ADMIN') || currentUser?.roles?.includes('ADMIN') || currentUser?.roles?.includes('CEO') || currentUser?.roles?.includes('Sales Manager') || currentUser?.roles?.includes('SALES_MGR')
     const isSalesRep = currentUser?.roles?.includes('Sales Rep') || currentUser?.roles?.includes('SALES_REP')
 
@@ -1689,27 +1673,27 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
 
     const handleDelete = (id: string, name: string) => {
         confirm({
-            title: `Xóa Khách Hàng "${name}"`,
+            title: L.toasts.deleteTitle(name),
             message: (
                 <div className="space-y-1">
-                    <p>Bạn có chắc chắn muốn xóa khách hàng <strong>"{name}"</strong>?</p>
-                    <p className="text-xs text-slate-500">KH sẽ bị đánh dấu Tạm dừng (soft delete). Nếu KH đang có đơn hàng chưa hoàn tất sẽ không xóa được.</p>
+                    <p>{L.toasts.deleteConfirmPrefix} <strong>"{name}"</strong>?</p>
+                    <p className="text-xs text-slate-500">{L.toasts.deleteSoftHint}</p>
                 </div>
             ),
-            confirmLabel: 'Xác Nhận Xóa',
-            cancelLabel: 'Bỏ qua',
+            confirmLabel: L.toasts.confirmDeleteBtn,
+            cancelLabel: L.toasts.cancelDeleteBtn,
             danger: true,
             onConfirm: async () => {
                 try {
                     const result = await deleteCustomer(id)
                     if (result.success) {
-                        toast.success(`Đã xóa "${name}"`)
+                        toast.success(L.toasts.deletedSuccess(name))
                         reload()
                     } else {
-                        toast.error(result.error ?? 'Không thể xóa')
+                        toast.error(result.error ?? L.toasts.cannotDelete)
                     }
                 } catch {
-                    toast.error('Lỗi khi xóa khách hàng')
+                    toast.error(L.toasts.deleteError)
                 }
             }
         })
@@ -1719,7 +1703,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
         setExporting(true)
         try {
             const data = await exportCustomersData()
-            if (data.length === 0) { toast.error('Chưa có KH để xuất'); return }
+            if (data.length === 0) { toast.error(L.toasts.noCustomerToExport); return }
             const headers = Object.keys(data[0])
             const csvRows = [
                 headers.join(','),
@@ -1737,9 +1721,9 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
             a.download = `danh_sach_khach_hang_${new Date().toISOString().slice(0, 10)}.csv`
             a.click()
             URL.revokeObjectURL(url)
-            toast.success(`Đã xuất ${data.length} khách hàng`)
+            toast.success(L.toasts.exportedCount(data.length))
         } catch {
-            toast.error('Lỗi xuất dữ liệu')
+            toast.error(L.toasts.exportError)
         } finally {
             setExporting(false)
         }
@@ -1752,13 +1736,13 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
 
     const handleSyncTax = (id: string) => {
         toast.promise(syncCustomerTaxInfoFromGDT(id), {
-            loading: 'Đang tra cứu Cục Thuế...',
+            loading: L.toasts.syncingTax,
             success: (res) => {
                 if (!res.success) throw new Error(res.error)
                 queryClient.invalidateQueries({ queryKey: ['customers'] })
-                return `Đã đồng bộ: ${res.updatedInfo?.vatCompanyName}`
+                return L.toasts.syncedTax(res.updatedInfo?.vatCompanyName || '')
             },
-            error: (err) => `Lỗi tra cứu: ${err.message}`
+            error: (err) => L.toasts.syncTaxError(err.message)
         })
     }
 
@@ -1773,16 +1757,16 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
             <PageHeader
                 description={
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 type-caption">
-                        <span>Tổng KH: <strong className="type-number text-sm ml-1 text-lys-teal-strong">{stats.total}</strong></span>
+                        <span>{L.header.totalCustomers} <strong className="type-number text-sm ml-1 text-lys-teal-strong">{formatNumber(stats.total)}</strong></span>
                         <span className="text-lys-border-strong">|</span>
-                        <span>Hoạt động: <strong className="type-number text-sm ml-1 text-tone-success-fg">{stats.active}</strong></span>
+                        <span>{L.header.active} <strong className="type-number text-sm ml-1 text-tone-success-fg">{formatNumber(stats.active)}</strong></span>
                         <span className="text-lys-border-strong">|</span>
-                        <span>Chờ duyệt: <strong className="type-number text-sm ml-1 text-tone-warning-fg">{stats.pendingApproval ?? 0}</strong></span>
+                        <span>{L.header.pendingApproval} <strong className="type-number text-sm ml-1 text-tone-warning-fg">{formatNumber(stats.pendingApproval ?? 0)}</strong></span>
                         <span className="hidden xl:inline text-lys-border-strong">|</span>
                         {isSalesRep ? (
-                            <span className="hidden xl:inline">Từ chối: <strong className="type-number text-sm ml-1 text-tone-danger-fg">{stats.rejected ?? 0}</strong></span>
+                            <span className="hidden xl:inline">{L.header.rejected} <strong className="type-number text-sm ml-1 text-tone-danger-fg">{formatNumber(stats.rejected ?? 0)}</strong></span>
                         ) : (
-                            <span className="hidden xl:inline">Tổng hạn mức: <strong className="type-number text-sm ml-1 text-lys-teal-strong">{formatVND(stats.totalCreditLimit)}</strong></span>
+                            <span className="hidden xl:inline">{L.header.totalCreditLimit} <strong className="type-number text-sm ml-1 text-lys-teal-strong">{formatCurrency(stats.totalCreditLimit)}</strong></span>
                         )}
                     </div>
                 }
@@ -1794,16 +1778,16 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                             aria-pressed={showStats}
                             className={showStats ? 'border-lys-teal text-lys-teal-strong bg-lys-teal-soft hover:bg-lys-teal-soft' : undefined}
                         >
-                            <BarChart3 size={14} aria-hidden /> Thống Kê
+                            <BarChart3 size={14} aria-hidden /> {L.header.statsBtn}
                         </Button>
                         <Button variant="secondary" onClick={handleExport} loading={exporting} disabled={exporting}>
-                            {!exporting && <Download size={14} aria-hidden />} {exporting ? 'Đang xuất...' : 'Export CSV'}
+                            {!exporting && <Download size={14} aria-hidden />} {exporting ? L.header.exportingBtn : L.header.exportCsvBtn}
                         </Button>
                         <Button variant="secondary" onClick={() => setImportOpen(true)}>
-                            <Upload size={14} aria-hidden /> Import Excel
+                            <Upload size={14} aria-hidden /> {L.header.importExcelBtn}
                         </Button>
                         <Button onClick={() => { setEditingId(null); setDrawerOpen(true) }}>
-                            <Plus size={16} aria-hidden /> Thêm Khách Hàng
+                            <Plus size={16} aria-hidden /> {L.header.addCustomerBtn}
                         </Button>
                     </>
                 }
@@ -1811,13 +1795,13 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
 
             {showStats && (
                 <StatGrid className="grid-cols-2 lg:grid-cols-4 animate-fade-in">
-                    <StatCard icon={Users} tone="brand" label="Tổng KH" value={stats.total} />
-                    <StatCard icon={Building2} tone="success" label="Hoạt động" value={stats.active} />
-                    <StatCard icon={ShoppingBag} tone="warning" label="Chờ duyệt" value={stats.pendingApproval ?? 0} />
+                    <StatCard icon={Users} tone="brand" label={L.header.statTotal} value={formatNumber(stats.total)} />
+                    <StatCard icon={Building2} tone="success" label={L.header.statActive} value={formatNumber(stats.active)} />
+                    <StatCard icon={ShoppingBag} tone="warning" label={L.header.statPending} value={formatNumber(stats.pendingApproval ?? 0)} />
                     {isSalesRep ? (
-                        <StatCard icon={X} tone="danger" label="Bị từ chối" value={stats.rejected ?? 0} />
+                        <StatCard icon={X} tone="danger" label={L.header.statRejected} value={formatNumber(stats.rejected ?? 0)} />
                     ) : (
-                        <StatCard icon={CreditCard} tone="brand" label="Tổng hạn mức" value={formatVND(stats.totalCreditLimit)} />
+                        <StatCard icon={CreditCard} tone="brand" label={L.header.statCreditLimit} value={formatCurrency(stats.totalCreditLimit)} />
                     )}
                 </StatGrid>
             )}
@@ -1825,7 +1809,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
             <Toolbar
                 left={
                     <SearchInput
-                        placeholder="Tìm theo tên, mã, MST, email, SĐT..."
+                        placeholder={L.filters.searchPlaceholder}
                         value={search}
                         onChange={e => handleSearchChange(e.target.value)}
                         className="sm:w-80"
@@ -1834,7 +1818,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                 right={
                     <div className="grid grid-cols-2 md:flex md:flex-wrap items-center gap-2 w-full md:w-auto">
                         <Select
-                            aria-label="Phân cấp khách hàng"
+                            aria-label={L.filters.hierarchyAria}
                             value={hierarchyFilter}
                             onChange={e => {
                                 const val = e.target.value as any
@@ -1843,13 +1827,13 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                             }}
                             className="md:w-36"
                         >
-                            <option value="">Tất cả phân cấp</option>
-                            <option value="PARENT_ONLY">Công ty Mẹ</option>
-                            <option value="CHILD_ONLY">Điểm bán con</option>
-                            <option value="INDEPENDENT">KH độc lập</option>
+                            <option value="">{L.filters.allHierarchy}</option>
+                            <option value="PARENT_ONLY">{L.filters.parentOnly}</option>
+                            <option value="CHILD_ONLY">{L.filters.childOnly}</option>
+                            <option value="INDEPENDENT">{L.filters.independent}</option>
                         </Select>
                         <Select
-                            aria-label="Lọc theo Khách hàng Cha"
+                            aria-label={L.filters.parentAria}
                             value={parentFilter}
                             onChange={e => {
                                 const val = e.target.value
@@ -1858,47 +1842,47 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                             }}
                             className="md:w-56"
                         >
-                            <option value="">Tất cả KH Cha ({parentOptions.length})</option>
+                            <option value="">{L.filters.allParents(parentOptions.length)}</option>
                             {parentOptions.map(p => (
                                 <option key={p.id} value={p.id}>
-                                    [{p.code}] {p.name} {p.childrenCount !== undefined ? `(${p.childrenCount} con)` : ''}
+                                    [{p.code}] {p.name} {p.childrenCount !== undefined ? L.filters.childrenSuffix(p.childrenCount) : ''}
                                 </option>
                             ))}
                         </Select>
                         <Select
-                            aria-label="Loại khách hàng"
+                            aria-label={L.filters.typeAria}
                             value={typeFilter}
                             onChange={e => { setTypeFilter(e.target.value); applyFilter({ type: e.target.value || undefined }) }}
                             className="md:w-32"
                         >
-                            <option value="">Tất cả loại</option>
-                            <option value="HORECA">HORECA</option>
-                            <option value="WHOLESALE_DISTRIBUTOR">Phân Phối</option>
-                            <option value="VIP_RETAIL">VIP Retail</option>
-                            <option value="INDIVIDUAL">Cá Nhân</option>
+                            <option value="">{L.filters.allTypes}</option>
+                            <option value="HORECA">{L.customerType.HORECA}</option>
+                            <option value="WHOLESALE_DISTRIBUTOR">{L.customerType.WHOLESALE_DISTRIBUTOR}</option>
+                            <option value="VIP_RETAIL">{L.customerType.VIP_RETAIL}</option>
+                            <option value="INDIVIDUAL">{L.customerType.INDIVIDUAL}</option>
                         </Select>
                         <Select
-                            aria-label="Trạng thái"
+                            aria-label={L.filters.statusAria}
                             value={statusFilter}
                             onChange={e => { setStatusFilter(e.target.value); applyFilter({ status: e.target.value || undefined }) }}
                             className="md:w-32"
                         >
-                            <option value="">Trạng thái</option>
-                            <option value="ACTIVE">Hoạt động</option>
-                            <option value="PENDING_APPROVAL">Chờ duyệt</option>
-                            <option value="REJECTED">Bị từ chối</option>
-                            <option value="CREDIT_HOLD">Giữ tín dụng</option>
-                            <option value="INACTIVE">Tạm dừng</option>
+                            <option value="">{L.filters.allStatuses}</option>
+                            <option value="ACTIVE">{L.status.ACTIVE}</option>
+                            <option value="PENDING_APPROVAL">{L.status.PENDING_APPROVAL}</option>
+                            <option value="REJECTED">{L.status.REJECTED}</option>
+                            <option value="CREDIT_HOLD">{L.status.CREDIT_HOLD}</option>
+                            <option value="INACTIVE">{L.status.INACTIVE}</option>
                         </Select>
                         <Select
-                            aria-label="Kênh"
+                            aria-label={L.filters.channelAria}
                             value={channelFilter}
                             onChange={e => { setChannelFilter(e.target.value); applyFilter({ channel: e.target.value || undefined }) }}
                             className="md:w-40"
                         >
-                            <option value="">Tất cả kênh</option>
+                            <option value="">{L.filters.allChannels}</option>
                             {channels.map(c => (
-                                <option key={c.channel} value={c.channel}>{CHANNEL_LABEL[c.channel] ?? c.channel} ({c.count})</option>
+                                <option key={c.channel} value={c.channel}>{L.channel[c.channel] ?? c.channel} ({c.count})</option>
                             ))}
                         </Select>
                         {hasFilters && (
@@ -1910,7 +1894,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                     applyFilter({ search: undefined, type: undefined, status: undefined, channel: undefined, hierarchyRole: undefined, parentId: undefined })
                                 }}
                             >
-                                <X size={14} aria-hidden /> Xóa lọc
+                                <X size={14} aria-hidden /> {L.filters.clearFilter}
                             </Button>
                         )}
                     </div>
@@ -1935,7 +1919,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                     ))
                 ) : rows.length === 0 ? (
                     <div className="bg-lys-card border border-lys-border rounded-lg">
-                        <EmptyState icon={Users} title="Chưa có khách hàng nào" />
+                        <EmptyState icon={Users} title={L.table.emptyTitle} />
                     </div>
                 ) : (
                     rows.map(row => (
@@ -1962,20 +1946,20 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                 <Table>
                     <THead>
                         <tr>
-                            <Th className="w-[110px]">Mã & Kênh</Th>
-                            <Th className="min-w-[220px]" sort={sortFor('name')} onSort={() => handleSort('name')}>Khách Hàng</Th>
-                            <Th className="w-[110px]">Sales Rep</Th>
-                            <Th className="w-[130px]" align="right" sort={sortFor('creditLimit')} onSort={() => handleSort('creditLimit')}>Công nợ & TT</Th>
-                            <Th className="w-[75px]" align="center" sort={sortFor('orderCount')} onSort={() => handleSort('orderCount')}>Đơn Hàng</Th>
-                            <Th className="w-[100px]">Trạng Thái</Th>
-                            <Th className="w-[65px]"><span className="sr-only">Thao tác</span></Th>
+                            <Th className="w-[110px]">{L.table.codeAndChannel}</Th>
+                            <Th className="min-w-[220px]" sort={sortFor('name')} onSort={() => handleSort('name')}>{L.table.customer}</Th>
+                            <Th className="w-[110px]">{L.table.salesRep}</Th>
+                            <Th className="w-[130px]" align="right" sort={sortFor('creditLimit')} onSort={() => handleSort('creditLimit')}>{L.table.creditAndPayment}</Th>
+                            <Th className="w-[75px]" align="center" sort={sortFor('orderCount')} onSort={() => handleSort('orderCount')}>{L.table.orders}</Th>
+                            <Th className="w-[100px]">{L.table.status}</Th>
+                            <Th className="w-[65px]"><span className="sr-only">{L.table.actions}</span></Th>
                         </tr>
                     </THead>
                     <TBody className={cn('transition-opacity duration-200', refetching && 'opacity-50 pointer-events-none')}>
                         {loading && rows.length === 0 ? (
                             <TableMessageRow colSpan={COL_COUNT}><TableSkeleton rows={6} cols={COL_COUNT} /></TableMessageRow>
                         ) : rows.length === 0 ? (
-                            <TableMessageRow colSpan={COL_COUNT}><EmptyState icon={Users} title="Chưa có khách hàng nào" /></TableMessageRow>
+                            <TableMessageRow colSpan={COL_COUNT}><EmptyState icon={Users} title={L.table.emptyTitle} /></TableMessageRow>
                         ) : rows.map(row => (
                             <Tr key={row.id} className="group">
                                 <Td className="whitespace-nowrap">
@@ -1999,7 +1983,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                                 <>
                                                     <Badge tone="neutral" className="gap-1 inline-flex items-center text-[10px]">
                                                         <Building2 size={10} />
-                                                        Công ty Mẹ{row.allowDirectSO && ' (Bán TT)'}
+                                                        {row.allowDirectSO ? L.badges.parentCompanyDirect : L.badges.parentCompany}
                                                     </Badge>
                                                     <button
                                                         type="button"
@@ -2017,16 +2001,16 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                                                 ? "bg-cyan-50 text-lys-teal-strong border border-cyan-200 hover:bg-cyan-100"
                                                                 : "bg-slate-50 text-slate-400 border border-slate-200"
                                                         )}
-                                                        title={row.childrenCount > 0 ? `Bấm để lọc ${row.childrenCount} khách hàng con trực thuộc` : "Chưa có khách hàng con"}
+                                                        title={row.childrenCount > 0 ? L.badges.filterChildTooltip(row.childrenCount) : L.badges.noChildTooltip}
                                                     >
                                                         <Users size={10} />
-                                                        {row.childrenCount} KH con
+                                                        {L.badges.childCustomersCount(row.childrenCount)}
                                                     </button>
                                                 </>
                                             ) : (
                                                 <Badge tone="success" className="gap-1 inline-flex items-center text-[10px]">
                                                     <UtensilsCrossed size={10} />
-                                                    Nhà hàng
+                                                    {L.badges.restaurant}
                                                 </Badge>
                                             )}
                                             {row.brandGroup && <Badge tone="info" className="text-[10px]">{row.brandGroup}</Badge>}
@@ -2045,29 +2029,29 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                                             applyFilter({ parentId: row.parentId, search: undefined, hierarchyRole: undefined })
                                                         }
                                                     }}
-                                                    title="Bấm để lọc toàn bộ cơ sở thuộc KH Cha này"
+                                                    title={L.badges.filterByParentTooltip}
                                                     className="inline-flex items-center gap-0.5 text-lys-teal-strong font-medium hover:underline text-left cursor-pointer"
                                                 >
-                                                    <CornerDownRight size={11} /> Thuộc KH Cha: <span className="font-mono underline">{row.parentCode}</span>
+                                                    <CornerDownRight size={11} /> {L.badges.belongsToParentPrefix} <span className="font-mono underline">{row.parentCode}</span>
                                                 </button>
                                             )}
                                             {row.taxId ? (
                                                 <span className="inline-flex items-center gap-1">
-                                                    <span>MST: <span className="font-mono font-medium text-lys-secondary">{row.taxId}</span></span>
+                                                    <span>{L.badges.taxIdShort} <span className="font-mono font-medium text-lys-secondary">{row.taxId}</span></span>
                                                     <Button
                                                         variant="ghost"
                                                         size="icon-sm"
                                                         onClick={() => handleSyncTax(row.id)}
-                                                        title="Tự động tra cứu & đồng bộ Tên công ty / Địa chỉ từ Cục Thuế"
-                                                        aria-label="Tra cứu Cục Thuế"
+                                                        title={L.badges.lookupTaxTooltip}
+                                                        aria-label={L.badges.lookupTaxTooltip}
                                                         className="h-4 w-4 p-0 text-slate-400 hover:text-lys-teal-strong"
                                                     >
                                                         <Search size={10} />
                                                     </Button>
                                                 </span>
                                             ) : row.resolvedVatInfo?.taxId ? (
-                                                <span className="text-amber-600 font-medium" title={`Kế thừa MST từ Công ty Mẹ ${row.parentName || ''}`}>
-                                                    MST Mẹ: <span className="font-mono">{row.resolvedVatInfo.taxId}</span>
+                                                <span className="text-amber-600 font-medium" title={L.badges.parentTaxInheritedTooltip(row.parentName || '')}>
+                                                    {L.badges.parentTaxPrefix} <span className="font-mono">{row.resolvedVatInfo.taxId}</span>
                                                 </span>
                                             ) : null}
                                             {row.shortName && (
@@ -2082,21 +2066,21 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                 <Td align="right" className="whitespace-nowrap">
                                     <div className="flex flex-col items-end gap-0.5">
                                         <span className={cn('font-mono text-xs font-semibold', row.creditLimit > 0 ? 'text-lys-primary' : 'text-lys-dim')}>
-                                            {row.creditLimit > 0 ? formatVND(row.creditLimit) : '—'}
+                                            {row.creditLimit > 0 ? formatCurrency(row.creditLimit) : '—'}
                                         </span>
                                         <span className="text-[11px] text-lys-muted">{row.paymentTerm}</span>
                                     </div>
                                 </Td>
                                 <Td align="center" className={cn('whitespace-nowrap type-number font-semibold', row.orderCount > 0 ? 'text-tone-success-fg' : 'text-lys-dim')}>
-                                    {row.orderCount}
+                                    {formatNumber(row.orderCount)}
                                 </Td>
                                 <Td className="whitespace-nowrap"><StatusDot status={row.status} /></Td>
                                 <Td>
                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity whitespace-nowrap">
-                                        <Button variant="ghost" size="icon-sm" title="Chỉnh sửa" aria-label="Chỉnh sửa" onClick={() => openEdit(row.id)}>
+                                        <Button variant="ghost" size="icon-sm" title={L.badges.editBtn} aria-label={L.badges.editBtn} onClick={() => openEdit(row.id)}>
                                             <Edit2 size={14} />
                                         </Button>
-                                        <Button variant="ghost" size="icon-sm" title="Xóa" aria-label="Xóa" className="hover:text-tone-danger-fg hover:bg-tone-danger-bg" onClick={() => handleDelete(row.id, row.name)}>
+                                        <Button variant="ghost" size="icon-sm" title={L.badges.deleteBtn} aria-label={L.badges.deleteBtn} className="hover:text-tone-danger-fg hover:bg-tone-danger-bg" onClick={() => handleDelete(row.id, row.name)}>
                                             <Trash2 size={14} />
                                         </Button>
                                     </div>
@@ -2112,7 +2096,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                 pageSize={filters.pageSize ?? 25}
                 total={total}
                 onPageChange={p => applyFilter({ page: p })}
-                itemLabel="khách hàng"
+                itemLabel={L.table.paginationItem}
             />
 
             <CustomerDrawer
@@ -2127,22 +2111,22 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
             <ExcelImportDialog
                 open={importOpen}
                 onClose={() => setImportOpen(false)}
-                title="Import Khách Hàng"
+                title={L.importDialog.title}
                 templateFileName="template_khach_hang.xlsx"
                 templateColumns={[
-                    { header: 'Mã KH', sample: 'CUS-PARKHYATT', required: true },
-                    { header: 'Tên KH', sample: 'Park Hyatt Saigon', required: true },
-                    { header: 'Tên Viết Tắt', sample: 'PH Saigon' },
-                    { header: 'Loại KH', sample: 'HORECA', required: true },
-                    { header: 'Kênh', sample: 'HORECA' },
-                    { header: 'MST', sample: '0302012345' },
-                    { header: 'Thanh Toán', sample: 'NET30' },
-                    { header: 'Hạn Mức', sample: '500000000' },
-                    { header: 'Người Liên Hệ', sample: 'Nguyễn Văn A' },
-                    { header: 'Email', sample: 'contact@parkhyatt.com' },
-                    { header: 'SĐT', sample: '0281234567' },
-                    { header: 'Địa Chỉ', sample: '2 Công Trường Lam Sơn, Q.1' },
-                    { header: 'Thành Phố', sample: 'Hồ Chí Minh' },
+                    { header: L.importDialog.colCode, sample: 'CUS-PARKHYATT', required: true },
+                    { header: L.importDialog.colName, sample: 'Park Hyatt Saigon', required: true },
+                    { header: L.importDialog.colShortName, sample: 'PH Saigon' },
+                    { header: L.importDialog.colType, sample: 'HORECA', required: true },
+                    { header: L.importDialog.colChannel, sample: 'HORECA' },
+                    { header: L.importDialog.colTaxId, sample: '0302012345' },
+                    { header: L.importDialog.colPaymentTerm, sample: 'NET30' },
+                    { header: L.importDialog.colCreditLimit, sample: '500000000' },
+                    { header: L.importDialog.colContact, sample: 'Nguyễn Văn A' },
+                    { header: L.importDialog.colEmail, sample: 'contact@parkhyatt.com' },
+                    { header: L.importDialog.colPhone, sample: '0281234567' },
+                    { header: L.importDialog.colAddress, sample: '2 Công Trường Lam Sơn, Q.1' },
+                    { header: L.importDialog.colCity, sample: 'Hồ Chí Minh' },
                 ]}
                 onImport={bulkImportCustomers}
                 onComplete={() => reload()}

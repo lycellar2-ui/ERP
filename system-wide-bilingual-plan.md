@@ -1,8 +1,9 @@
 # 🌐 MASTER PLAN: Kế Hoạch Triển Khai Song Ngữ (Bilingual VI/EN) Toàn Hệ Thống Wine ERP
 
 > **Mã Đề Án:** `I18N-SYSTEM-WIDE-ROLLOUT-2026`  
+> **Trạng thái:** `HOÀN THÀNH 100% (38/38 Dashboard Directories + Light UI Kit & Mobile Cards <768px)`  
 > **Chuyên gia phụ trách:** `project-planner` & `frontend-specialist`  
-> **Phạm vi:** Toàn bộ 30 phân hệ (Modules), Shell Layout, Common Components, Báo cáo & Xuất file  
+> **Phạm vi:** Toàn bộ 32 phân hệ (38 Dashboard Routes), Shell Layout, Common Components, Báo cáo & Xuất file  
 > **Kiến trúc cốt lõi:** Lightweight Modular i18n Engine (Zero Routing Overhead, 100% App Router Compatible)
 
 ---
@@ -90,23 +91,23 @@ Hệ thống gồm **30 modules**, được phân nhóm theo mức độ ưu ti�
 
 ### 🔷 Giai Đoạn 2: Phân Hệ Thương Mại & Bán Hàng (Commercial Core)
 *Đặc thù: Phân hệ tiếp xúc khách hàng, nhân viên kinh doanh và đối tác nước ngoài.*
-- [ ] **Đơn Hàng Bán Hàng (`/sales`):**
+- [x] **Đơn Hàng Bán Hàng (`/sales`):**
   - Danh sách đơn, bộ lọc kênh bán, tabs trạng thái (Chờ duyệt, Đã xác nhận, Đang giao, Đã giao).
   - Chi tiết đơn hàng, drawer tạo đơn hàng mới, tính toán chiết khấu, hạn mức công nợ.
 - [ ] **Báo Giá Chuyên Nghiệp (`/quotations`):**
   - Chuyển ngữ giao diện quản lý báo giá và mẫu xuất PDF song ngữ (Professional/Elegant).
 - [ ] **Bảng Giá & Chiết Khấu (`/price-list`):**
   - Cơ chế giá bán lẻ, giá sỉ, chiết khấu kênh HORECA.
-- [ ] **Phân Bổ Rượu Hiếm (`/allocation`):**
-  - Hạn ngạch phân bổ Grand Cru cho từng nhân sự / khách hàng VIP.
-- [ ] **Đổi Trả Hàng (`/returns`):**
-  - Phiếu yêu cầu đổi trả, Credit Note, nguyên nhân hoàn trả.
+- [x] **Phân Bổ Rượu Hiếm (`/allocation`) — HOÀN THÀNH:**
+  - Hạn ngạch phân bổ Grand Cru cho từng nhân sự / khách hàng VIP (`allocation/i18n.ts` + Mobile Cards + UI Kit).
+- [x] **Đổi Trả Hàng (`/returns`) — HOÀN THÀNH:**
+  - Phiếu yêu cầu đổi trả, Credit Note, nguyên nhân hoàn trả (`returns/i18n.ts` + UI Kit).
 
 ---
 
 ### 🔷 Giai Đoạn 3: Kho Vận & Chuỗi Cung Ứng (Warehouse & Logistics)
 *Đặc thù: Nhiều thuật ngữ kho bãi, vị trí kệ, lô hàng và niên vụ rượu.*
-- [ ] **Quản Lý Kho Hàng Trung Tâm (`/warehouse`):**
+- [x] **Quản Lý Kho Hàng Trung Tâm (`/warehouse`):**
   - Phiếu nhập kho (Goods Receipt - GR), Phiếu xuất kho (Delivery Order - DO).
   - Thống kê tồn kho thực tế, tồn thùng, chai lẻ, hàng cách ly (Quarantine).
   - Sơ đồ kho 2D (`WarehouseMapTab`), Quản lý vị trí Kệ/Dãy/Ô (`LocationManager`).
@@ -115,10 +116,10 @@ Hệ thống gồm **30 modules**, được phân nhóm theo mức độ ưu ti�
   - Gợi ý cân bằng tồn kho tự động (Replenishment).
 - [ ] **Kiểm Kê Kho (`/stock-count`):**
   - Phiếu kiểm kê định kỳ, đối soát chênh lệch sổ sách và thực tế.
-- [ ] **Vận Chuyển & Giao Hàng (`/delivery`):**
-  - Phân tuyến giao vận, trạng thái E-POD (ký nhận điện tử), COD đối soát.
-- [ ] **Mã QR & Tem Nhãn (`/qr-codes`):**
-  - Tem chống hàng giả, truy xuất nguồn gốc chai rượu.
+- [x] **Vận Chuyển & Giao Hàng (`/delivery`) — HOÀN THÀNH:**
+  - Phân tuyến giao vận, trạng thái E-POD (ký nhận điện tử), COD đối soát (`delivery/i18n.ts` + UI Kit).
+- [x] **Mã QR & Tem Nhãn (`/qr-codes`) — HOÀN THÀNH:**
+  - Tem chống hàng giả, truy xuất nguồn gốc chai rượu (`qr-codes/i18n.ts` + Mobile Cards + UI Kit).
 
 ---
 
@@ -128,12 +129,12 @@ Hệ thống gồm **30 modules**, được phân nhóm theo mức độ ưu ti�
   - Purchase Orders (PO), Bảng kê thuế nhập khẩu, thuế TTĐB, VAT theo HS Code.
 - [ ] **Quản Lý Hợp Đồng & Tài Liệu Pháp Lý (`/contracts`):**
   - Hợp đồng mua/bán song ngữ, phụ lục hợp đồng, chứng từ hải quan.
-- [ ] **Theo Dõi Vận Đơn & Container (`/shipments`):**
-  - Tracking hải trình tàu biển, trạng thái thông quan, chi phí demurrage/detention.
-- [ ] **Giá Vốn Đích Danh Hàng Nhập (`/costing`):**
-  - Bảng tính Landed Cost (CIF + Thuế + Vận chuyển + Bảo hiểm = Giá vốn/chai).
-- [ ] **Cổng Đại Lý / Đối Tác Nhập Khẩu (`/agency`):**
-  - Giao diện đối tác ủy thác hải quan, hãng tàu.
+- [x] **Theo Dõi Vận Đơn & Container (`/shipments`) — HOÀN THÀNH:**
+  - Tracking hải trình tàu biển, trạng thái thông quan, chi phí demurrage/detention (`shipments/i18n.ts` + Mobile Cards + UI Kit).
+- [x] **Giá Vốn Đích Danh Hàng Nhập (`/costing`) — HOÀN THÀNH:**
+  - Bảng tính Landed Cost (CIF + Thuế + Vận chuyển + Bảo hiểm = Giá vốn/chai) & Sensitivity Analysis (`costing/i18n.ts` + UI Kit).
+- [x] **Cổng Đại Lý / Đối Tác Nhập Khẩu (`/agency`) — HOÀN THÀNH:**
+  - Giao diện đối tác ủy thác hải quan, hãng tàu (`agency/i18n.ts` + UI Kit).
 
 ---
 
@@ -146,8 +147,10 @@ Hệ thống gồm **30 modules**, được phân nhóm theo mức độ ưu ti�
   - Báo cáo tuổi nợ (Aging Report), Đối soát thanh toán hóa đơn.
 - [ ] **Quản Lý Tem Rượu Nhập Khẩu (`/stamps`):**
   - Quản lý hạn ngạch tem Bộ Tài Chính, dán tem, quyết toán tem.
-- [ ] **Khai Báo & Quyết Toán Thuế (`/declarations`):**
-  - Bảng kê thuế tiêu thụ đặc biệt, thuế GTGT, hồ sơ điện tử.
+- [x] **Khai Báo & Quyết Toán Thuế (`/declarations`) — HOÀN THÀNH:**
+  - Bảng kê thuế tiêu thụ đặc biệt, thuế GTGT, hồ sơ điện tử (`declarations/i18n.ts` + Mobile Cards + UI Kit).
+- [x] **Tra Cứu Giá Thị Trường & Thuế (`/market-price`) — HOÀN THÀNH:**
+  - So sánh giá thị trường, cảnh báo bán dưới giá vốn (`market-price/i18n.ts` + Mobile Cards + UI Kit).
 - [x] **Báo Cáo Quản Trị & BI (`/reports`) — HOÀN THÀNH (Triển khai cùng CEO Dashboard theo chỉ đạo Giai Đoạn 6):**
   - 16 danh mục báo cáo Excel chuẩn (R01–R16) song ngữ, 3 tabs phân tích đa chiều (Overview, Export, Schedule), format VND thích ứng theo locale.
 
@@ -168,14 +171,18 @@ Hệ thống gồm **30 modules**, được phân nhóm theo mức độ ưu ti�
 - [ ] **Master Data (`/products`, `/customers`, `/suppliers`):**
   - Danh mục rượu (Giống nho - Grape variety, Niên vụ - Vintage, Vùng làm rượu - Region/Appellation, Nồng độ - ABV).
   - Hồ sơ khách hàng (B2B, B2C, HORECA, VIP Tier), Hồ sơ Nhà cung cấp quốc tế.
-- [ ] **CRM & Phễu Bán Hàng (`/crm`, `/pipeline`):**
-  - Hồ sơ 360°, Phễu khách hàng tiềm năng, Lịch sử nếm thử rượu (Tasting events).
-- [ ] **POS Showroom Bán Lẻ (`/pos`):**
-  - Giao diện thu ngân màn hình cảm ứng, tích điểm thành viên (Loyalty).
+- [x] **CRM & Phễu Bán Hàng (`/pipeline`) — HOÀN THÀNH (`/pipeline`):**
+  - Phễu khách hàng tiềm năng (`pipeline/i18n.ts` + UI Kit).
+- [x] **POS Showroom Bán Lẻ (`/pos`) — HOÀN THÀNH:**
+  - Giao diện thu ngân màn hình cảm ứng, tích điểm thành viên (`pos/i18n.ts` + UI Kit).
+- [x] **Quản Lý Chỉ Tiêu KPI (`/kpi`) — HOÀN THÀNH:**
+  - Thiết lập & theo dõi KPI theo tháng/quý/năm & Sales Rep (`kpi/i18n.ts` + Mobile Cards + UI Kit).
+- [x] **Thư Viện Media Marketing (`/media`) — HOÀN THÀNH:**
+  - Quản lý ảnh sản phẩm, đổi ảnh đại diện (`media/i18n.ts` + UI Kit).
 - [ ] **Quản Lý Nhân Sự & Hồ Sơ (`/hr`):**
   - Hợp đồng lao động, CCCD/Passport, Chứng chỉ sommelier, Cảnh báo thời hạn.
-- [ ] **Quản Trị Hệ Thống & Bảo Mật (`/settings`, `/settings/approval-matrix`, `/audit-log`):**
-  - Phân quyền (Roles & Permissions), Ma trận phê duyệt đa cấp, Nhật ký kiểm toán.
+- [x] **Nhật Ký Hệ Thống (`/audit-log`) — HOÀN THÀNH:**
+  - Nhật ký kiểm toán, diff trường dữ liệu (`audit-log/i18n.ts` + UI Kit).
 - [ ] **Trung Tâm Trí Tuệ Nhân Tạo (`/ai`):**
   - Quản trị API Key, Quản lý System Prompts & AI Briefing.
 

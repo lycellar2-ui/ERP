@@ -10,15 +10,17 @@ import { InvoiceReconciliationTab } from './InvoiceReconciliationTab'
 import { BankReconciliationTab } from './BankReconciliationTab'
 import { FilterBar } from '@/components/FilterBar'
 import { PageHeader, Pagination } from '@/components/ui'
+import { useAppLocale } from '@/lib/i18n'
+import { getFinanceLabels } from './i18n'
 
 type Tab = 'ar' | 'ap' | 'aging' | 'invoice-reconcile' | 'bank-reconcile' | 'journal' | 'pnl' | 'bs' | 'trialbalance' | 'ledger' | 'expense' | 'period' | 'baddebt' | 'cashflow'
 
-const AR_STATUS: Record<string, { label: string; color: string }> = {
-    UNPAID: { label: 'Chưa Thu', color: '#B45309' },
-    PARTIALLY_PAID: { label: 'Đã Thu 1 Phần', color: '#1D4ED8' },
-    PAID: { label: 'Đã Thu Đủ', color: '#15803D' },
-    OVERDUE: { label: 'Quá Hạn', color: '#B91C1C' },
-    CANCELLED: { label: 'Huỷ', color: '#64748B' },
+const AR_STATUS: Record<string, { label: string; labelEn: string; color: string }> = {
+    UNPAID: { label: 'Chưa Thu', labelEn: 'Unpaid', color: '#B45309' },
+    PARTIALLY_PAID: { label: 'Đã Thu 1 Phần', labelEn: 'Partially Paid', color: '#1D4ED8' },
+    PAID: { label: 'Đã Thu Đủ', labelEn: 'Paid', color: '#15803D' },
+    OVERDUE: { label: 'Quá Hạn', labelEn: 'Overdue', color: '#B91C1C' },
+    CANCELLED: { label: 'Huỷ', labelEn: 'Cancelled', color: '#64748B' },
 }
 
 function FinKpiCard({ label, value, sub, accent, icon: Icon }: {
@@ -40,19 +42,21 @@ function FinKpiCard({ label, value, sub, accent, icon: Icon }: {
     )
 }
 
-function AgingBars({ buckets }: { buckets: Record<string, number> }) {
+function AgingBars({ buckets, isEn }: { buckets: Record<string, number>; isEn?: boolean }) {
     const total = Object.values(buckets).reduce((a, b) => a + b, 0)
     const bars = [
-        { label: 'Chưa Đến Hạn', key: 'current', color: '#15803D' },
-        { label: '1–30 Ngày', key: 'd30', color: '#B45309' },
-        { label: '31–60 Ngày', key: 'd60', color: '#D4833A' },
-        { label: '61–90 Ngày', key: 'd90', color: '#B45309' },
-        { label: '> 90 Ngày', key: 'over90', color: '#B91C1C' },
+        { label: isEn ? 'Current' : 'Chưa Đến Hạn', key: 'current', color: '#15803D' },
+        { label: isEn ? '1–30 Days' : '1–30 Ngày', key: 'd30', color: '#B45309' },
+        { label: isEn ? '31–60 Days' : '31–60 Ngày', key: 'd60', color: '#D4833A' },
+        { label: isEn ? '61–90 Days' : '61–90 Ngày', key: 'd90', color: '#B45309' },
+        { label: isEn ? '> 90 Days' : '> 90 Ngày', key: 'over90', color: '#B91C1C' },
     ]
 
     return (
         <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-            <h3 className="font-semibold mb-4" style={{ color: '#0F172A' }}>AR Aging Report – Phân Tầng Công Nợ</h3>
+            <h3 className="font-semibold mb-4" style={{ color: '#0F172A' }}>
+                {isEn ? 'AR Aging Report – Receivables Aging Analysis' : 'AR Aging Report – Phân Tầng Công Nợ'}
+            </h3>
             <div className="space-y-3">
                 {bars.map(b => {
                     const val = (buckets as any)[b.key] ?? 0
@@ -77,7 +81,9 @@ function AgingBars({ buckets }: { buckets: Record<string, number> }) {
                 })}
             </div>
             <div className="flex justify-between pt-4 mt-4" style={{ borderTop: '1px solid #E2E8F0' }}>
-                <span className="text-sm font-semibold" style={{ color: '#475569' }}>Tổng AR Outstanding</span>
+                <span className="text-sm font-semibold" style={{ color: '#475569' }}>
+                    {isEn ? 'Total AR Outstanding' : 'Tổng AR Outstanding'}
+                </span>
                 <span className="text-sm font-bold" style={{ color: '#0891B2' }}>
                     {formatVND(total)}
                 </span>
@@ -86,7 +92,7 @@ function AgingBars({ buckets }: { buckets: Record<string, number> }) {
     )
 }
 
-function ARMobileCard({ row, onPayment }: { row: ARRow; onPayment: (id: string) => void }) {
+function ARMobileCard({ row, onPayment, isEn }: { row: ARRow; onPayment: (id: string) => void; isEn?: boolean }) {
     const st = AR_STATUS[row.status]
     return (
         <div className={`p-3.5 rounded-lg border bg-white shadow-xs space-y-2.5 ${row.isOverdue ? 'border-rose-300' : 'border-slate-200'}`}>
@@ -105,22 +111,22 @@ function ARMobileCard({ row, onPayment }: { row: ARRow; onPayment: (id: string) 
                         className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0"
                         style={{ color: st.color, background: `${st.color}18` }}
                     >
-                        {st.label}
+                        {isEn ? st.labelEn : st.label}
                     </span>
                 )}
             </div>
 
             <div className="grid grid-cols-3 gap-2 text-xs pt-1 border-t border-slate-100">
                 <div>
-                    <span className="text-slate-400 block text-[10px]">Tổng HĐ</span>
+                    <span className="text-slate-400 block text-[10px]">{isEn ? 'Total' : 'Tổng HĐ'}</span>
                     <span className="font-bold text-slate-900 text-xs">{formatVND(row.amount)}</span>
                 </div>
                 <div>
-                    <span className="text-slate-400 block text-[10px]">Đã thu</span>
+                    <span className="text-slate-400 block text-[10px]">{isEn ? 'Collected' : 'Đã thu'}</span>
                     <span className="font-medium text-emerald-700 text-xs">{formatVND(row.paidAmount)}</span>
                 </div>
                 <div>
-                    <span className="text-slate-400 block text-[10px]">Còn lại</span>
+                    <span className="text-slate-400 block text-[10px]">{isEn ? 'Remaining' : 'Còn lại'}</span>
                     <span className={`font-bold text-xs ${row.outstanding > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
                         {formatVND(row.outstanding)}
                     </span>
@@ -129,7 +135,7 @@ function ARMobileCard({ row, onPayment }: { row: ARRow; onPayment: (id: string) 
 
             <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
                 <div className="text-[11px]">
-                    <span className="text-slate-500">Hạn TT: </span>
+                    <span className="text-slate-500">{isEn ? 'Due: ' : 'Hạn TT: '}</span>
                     <span className={row.isOverdue ? 'font-bold text-rose-600' : 'text-slate-700'}>
                         {formatDate(row.dueDate)}
                         {row.isOverdue && row.daysOverdue > 0 && ` (+${row.daysOverdue}d)`}
@@ -140,7 +146,7 @@ function ARMobileCard({ row, onPayment }: { row: ARRow; onPayment: (id: string) 
                         onClick={() => onPayment(row.id)}
                         className="px-3 py-1 text-xs font-semibold rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 transition-colors cursor-pointer"
                     >
-                        Ghi Thu
+                        {isEn ? 'Collect' : 'Ghi Thu'}
                     </button>
                 )}
             </div>
@@ -148,18 +154,21 @@ function ARMobileCard({ row, onPayment }: { row: ARRow; onPayment: (id: string) 
     )
 }
 
-function ARTable({ rows, onPayment }: { rows: ARRow[]; onPayment: (id: string) => void }) {
+function ARTable({ rows, onPayment, isEn }: { rows: ARRow[]; onPayment: (id: string) => void; isEn?: boolean }) {
+    const headers = isEn
+        ? ['Invoice No.', 'Customer', 'SO', 'Amount', 'Collected', 'Remaining', 'Due Date', 'Status', '']
+        : ['Số HĐ', 'Khách Hàng', 'SO', 'Giá Trị', 'Đã Thu', 'Còn Lại', 'Hạn TT', 'Trạng Thái', '']
     return (
         <div>
             {/* Mobile View */}
             <div className="block md:hidden space-y-3">
                 {rows.length === 0 ? (
                     <div className="text-center py-12 text-sm bg-white rounded-md border border-slate-200" style={{ color: '#64748B' }}>
-                        Không có hóa đơn nào
+                        {isEn ? 'No AR invoices found' : 'Không có hóa đơn nào'}
                     </div>
                 ) : (
                     rows.map(row => (
-                        <ARMobileCard key={row.id} row={row} onPayment={onPayment} />
+                        <ARMobileCard key={row.id} row={row} onPayment={onPayment} isEn={isEn} />
                     ))
                 )}
             </div>
@@ -170,7 +179,7 @@ function ARTable({ rows, onPayment }: { rows: ARRow[]; onPayment: (id: string) =
                     <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0, zIndex: 10 }}>
-                                {['Số HĐ', 'Khách Hàng', 'SO', 'Giá Trị', 'Đã Thu', 'Còn Lại', 'Hạn TT', 'Trạng Thái', ''].map(h => (
+                                {headers.map(h => (
                                     <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
                                 ))}
                             </tr>
@@ -178,7 +187,7 @@ function ARTable({ rows, onPayment }: { rows: ARRow[]; onPayment: (id: string) =
                         <tbody>
                             {rows.length === 0 ? (
                                 <tr><td colSpan={9} className="text-center py-12 text-sm" style={{ color: '#64748B' }}>
-                                    Không có hóa đơn nào
+                                    {isEn ? 'No AR invoices found' : 'Không có hóa đơn nào'}
                                 </td></tr>
                             ) : rows.map(row => (
                                 <tr key={row.id}
@@ -211,7 +220,7 @@ function ARTable({ rows, onPayment }: { rows: ARRow[]; onPayment: (id: string) =
                                         {AR_STATUS[row.status] && (
                                             <span className="inline-block text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap shrink-0"
                                                 style={{ color: AR_STATUS[row.status].color, background: `${AR_STATUS[row.status].color}18` }}>
-                                                {AR_STATUS[row.status].label}
+                                                {isEn ? AR_STATUS[row.status].labelEn : AR_STATUS[row.status].label}
                                             </span>
                                         )}
                                     </td>
@@ -220,7 +229,7 @@ function ARTable({ rows, onPayment }: { rows: ARRow[]; onPayment: (id: string) =
                                             <button onClick={() => onPayment(row.id)}
                                                 className="px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer rounded bg-[#15803D]/15 hover:bg-[#15803D]/25 text-[#15803D] border border-[#15803D]/30"
                                             >
-                                                Ghi Thu
+                                                {isEn ? 'Collect' : 'Ghi Thu'}
                                             </button>
                                         )}
                                     </td>
@@ -234,7 +243,7 @@ function ARTable({ rows, onPayment }: { rows: ARRow[]; onPayment: (id: string) =
     )
 }
 
-function APMobileCard({ row, onPayment }: { row: APRow; onPayment: (id: string, outstanding: number) => void }) {
+function APMobileCard({ row, onPayment, isEn }: { row: APRow; onPayment: (id: string, outstanding: number) => void; isEn?: boolean }) {
     const isMultiCurrency = row.currency !== 'VND'
     const fmtFx = (val: number) => `${row.currency === 'USD' ? '$' : row.currency === 'EUR' ? '€' : row.currency + ' '}${val.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
 
@@ -256,18 +265,24 @@ function APMobileCard({ row, onPayment }: { row: APRow; onPayment: (id: string, 
                     row.isOverdue ? 'bg-rose-100 text-rose-800' :
                     'bg-amber-100 text-amber-800'
                 }`}>
-                    {row.status === 'PAID' ? 'Đã Trả' : row.status === 'PARTIALLY_PAID' ? 'Trả 1 Phần' : row.isOverdue ? 'Quá Hạn' : 'Chưa Trả'}
+                    {row.status === 'PAID'
+                        ? (isEn ? 'Paid' : 'Đã Trả')
+                        : row.status === 'PARTIALLY_PAID'
+                        ? (isEn ? 'Partially Paid' : 'Trả 1 Phần')
+                        : row.isOverdue
+                        ? (isEn ? 'Overdue' : 'Quá Hạn')
+                        : (isEn ? 'Unpaid' : 'Chưa Trả')}
                 </span>
             </div>
 
             <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100">
                 <div>
-                    <span className="text-slate-400 block text-[10px]">Giá trị hóa đơn</span>
+                    <span className="text-slate-400 block text-[10px]">{isEn ? 'Invoice Amount' : 'Giá trị hóa đơn'}</span>
                     <p className="font-bold text-slate-900 text-xs">{isMultiCurrency ? fmtFx(row.amount) : formatVND(row.amount)}</p>
                     {isMultiCurrency && <p className="text-[10px] text-slate-500">≈ {formatVND(row.amountVND)}</p>}
                 </div>
                 <div>
-                    <span className="text-slate-400 block text-[10px]">Còn phải trả</span>
+                    <span className="text-slate-400 block text-[10px]">{isEn ? 'Remaining Payable' : 'Còn phải trả'}</span>
                     <p className={`font-bold text-xs ${row.outstanding > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
                         {isMultiCurrency ? fmtFx(row.outstanding) : formatVND(row.outstanding)}
                     </p>
@@ -279,7 +294,7 @@ function APMobileCard({ row, onPayment }: { row: APRow; onPayment: (id: string, 
 
             <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
                 <div className="text-[11px]">
-                    <span className="text-slate-500">Hạn TT: </span>
+                    <span className="text-slate-500">{isEn ? 'Due: ' : 'Hạn TT: '}</span>
                     <span className={row.isOverdue ? 'font-bold text-rose-600' : 'text-slate-700'}>
                         {formatDate(row.dueDate)}
                     </span>
@@ -289,7 +304,7 @@ function APMobileCard({ row, onPayment }: { row: APRow; onPayment: (id: string, 
                         onClick={() => onPayment(row.id, row.outstanding)}
                         className="px-3 py-1 text-xs font-semibold rounded bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 transition-colors cursor-pointer"
                     >
-                        Ghi Trả
+                        {isEn ? 'Pay' : 'Ghi Trả'}
                     </button>
                 )}
             </div>
@@ -308,6 +323,8 @@ interface Props {
 }
 
 export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPTotal, stats, agingBuckets, userId }: Props) {
+    const { locale, isEn } = useAppLocale()
+    const L = getFinanceLabels(locale)
     const [tab, setTab] = useState<Tab>('ar')
 
     useEffect(() => {
@@ -364,7 +381,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
         setPayLoading(true)
         toast.promise(
             recordARPayment(paymentModal, Number(payAmount), payMethod).then(async (result: any) => {
-                if (!result.success) throw new Error(result.error || 'Thanh toán thất bại')
+                if (!result.success) throw new Error(result.error || (isEn ? 'Payment failed' : 'Thanh toán thất bại'))
                 const { rows } = await getARInvoices({ pageSize: 25 })
                 setArRows(rows)
                 setPaymentModal(null)
@@ -372,9 +389,9 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                 return result
             }),
             {
-                loading: 'Đang ghi nhận AR...',
-                success: 'Đã ghi nhận thanh toán AR!',
-                error: (err: any) => `Lỗi: ${err.message}`,
+                loading: isEn ? 'Recording AR payment...' : 'Đang ghi nhận AR...',
+                success: isEn ? 'AR payment recorded!' : 'Đã ghi nhận thanh toán AR!',
+                error: (err: any) => `${isEn ? 'Error' : 'Lỗi'}: ${err.message}`,
                 finally: () => setPayLoading(false)
             }
         )
@@ -385,7 +402,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
         setPayLoading(true)
         toast.promise(
             recordAPPayment(apPaymentModal, Number(payAmount), payMethod, payReference || undefined).then(async (result: any) => {
-                if (!result.success) throw new Error(result.error || 'Ghi nhận thất bại')
+                if (!result.success) throw new Error(result.error || (isEn ? 'Recording failed' : 'Ghi nhận thất bại'))
                 const { rows } = await getAPInvoices({ pageSize: 25 })
                 setApRows(rows)
                 setApPaymentModal(null)
@@ -394,9 +411,9 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                 return result
             }),
             {
-                loading: 'Đang ghi nhận AP...',
-                success: 'Đã ghi nhận thanh toán AP!',
-                error: (err: any) => `Lỗi: ${err.message}`,
+                loading: isEn ? 'Recording AP payment...' : 'Đang ghi nhận AP...',
+                success: isEn ? 'AP payment recorded!' : 'Đã ghi nhận thanh toán AP!',
+                error: (err: any) => `${isEn ? 'Error' : 'Lỗi'}: ${err.message}`,
                 finally: () => setPayLoading(false)
             }
         )
@@ -405,35 +422,41 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
     // Tab groups: Operational (AR/AP) | Accounting (Journal/Reports)
     const tabs: { key: Tab; label: string; icon: React.FC<any>; group: 'ops' | 'acct' }[] = [
         // Operational — Quản lý công nợ
-        { key: 'ar', label: 'Phải Thu (AR)', icon: ArrowUpRight, group: 'ops' },
-        { key: 'ap', label: 'Phải Trả (AP)', icon: ArrowDownRight, group: 'ops' },
+        { key: 'ar', label: L.tabAr, icon: ArrowUpRight, group: 'ops' },
+        { key: 'ap', label: L.tabAp, icon: ArrowDownRight, group: 'ops' },
         { key: 'aging', label: 'AR Aging', icon: Clock, group: 'ops' },
-        { key: 'invoice-reconcile', label: 'Đối Chiếu HĐ VNPT', icon: FileCheck2, group: 'ops' },
-        { key: 'bank-reconcile', label: 'Sao Kê & Thu Nợ', icon: Building2, group: 'ops' },
+        { key: 'invoice-reconcile', label: L.tabInvoiceRecon, icon: FileCheck2, group: 'ops' },
+        { key: 'bank-reconcile', label: L.tabBankRecon, icon: Building2, group: 'ops' },
         // Accounting — Kế toán (export to external SW)
-        { key: 'journal', label: 'Sổ Cái', icon: BookOpen, group: 'acct' },
+        { key: 'journal', label: L.tabJournal, icon: BookOpen, group: 'acct' },
         { key: 'pnl', label: 'P&L', icon: BarChart3, group: 'acct' },
-        { key: 'bs', label: 'CĐKT', icon: ReceiptText, group: 'acct' },
-        { key: 'trialbalance', label: 'CĐPS', icon: Table2, group: 'acct' },
-        { key: 'ledger', label: 'Sổ TK', icon: Search, group: 'acct' },
-        { key: 'expense', label: 'Chi Phí', icon: Wallet, group: 'acct' },
-        { key: 'period', label: 'Đóng Kỳ', icon: Lock, group: 'acct' },
-        { key: 'cashflow', label: 'Dòng Tiền', icon: Banknote, group: 'acct' },
-        { key: 'baddebt', label: 'Nợ Khó Đòi', icon: Skull, group: 'acct' },
+        { key: 'bs', label: L.tabBalanceSheet, icon: ReceiptText, group: 'acct' },
+        { key: 'trialbalance', label: L.tabTrialBalance, icon: Table2, group: 'acct' },
+        { key: 'ledger', label: L.tabLedger, icon: Search, group: 'acct' },
+        { key: 'expense', label: L.tabExpenses, icon: Wallet, group: 'acct' },
+        { key: 'period', label: L.tabClosing, icon: Lock, group: 'acct' },
+        { key: 'cashflow', label: L.tabCashFlow, icon: Banknote, group: 'acct' },
+        { key: 'baddebt', label: L.tabBadDebt, icon: Skull, group: 'acct' },
     ]
+
+    const apHeaders = isEn
+        ? ['Invoice No.', 'Supplier', 'PO', 'Amount', 'FX Rate', 'Remaining', 'Due Date', 'Status', '']
+        : ['Số HĐ', 'Nhà Cung Cấp', 'PO', 'Giá Trị', 'Tỷ Giá', 'Còn Lại', 'Hạn TT', 'Trạng Thái', '']
 
     return (
         <div className="space-y-6 max-w-screen-2xl">
             {/* Header */}
             <PageHeader
-                title="Tài Chính & Kế Toán"
-                description="Quản lý công nợ AR/AP vận hành — Bút toán xuất sang PM kế toán"
+                title={L.headerTitle}
+                description={L.headerSubtitle}
                 actions={
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-amber-50 border border-amber-200">
                         <div className="w-2 h-2 rounded-full bg-amber-600" />
                         <div>
                             <p className="text-xs font-bold text-amber-800">Export-Only</p>
-                            <p className="text-[10px] text-slate-500">Xuất bút toán → PM kế toán</p>
+                            <p className="text-[10px] text-slate-500">
+                                {isEn ? 'Export GL entries → Accounting SW' : 'Xuất bút toán → PM kế toán'}
+                            </p>
                         </div>
                     </div>
                 }
@@ -441,18 +464,20 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
 
             {/* KPIs */}
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                <FinKpiCard label="Phải Thu (AR)" value={`₫${(stats.arTotal / 1e9).toFixed(2)}T`} accent="#0E7490" icon={ArrowUpRight} />
-                <FinKpiCard label="AR Quá Hạn" value={`₫${(stats.arOverdue / 1e6).toFixed(0)}M`} sub={`${stats.arOverdueCount} hóa đơn`} accent="#B91C1C" icon={AlertCircle} />
-                <FinKpiCard label="Phải Trả (AP)" value={`₫${(stats.apTotal / 1e9).toFixed(2)}T`} accent="#B45309" icon={ArrowDownRight} />
-                <FinKpiCard label="AP Quá Hạn" value={`₫${(stats.apOverdue / 1e6).toFixed(0)}M`} sub={`${stats.apOverdueCount} hóa đơn`} accent="#B45309" icon={AlertCircle} />
-                <FinKpiCard label="Doanh Thu Tháng" value={`₫${(stats.monthRevenue / 1e9).toFixed(2)}T`} accent="#15803D" icon={TrendingDown} />
+                <FinKpiCard label={L.tabAr} value={`₫${(stats.arTotal / 1e9).toFixed(2)}T`} accent="#0E7490" icon={ArrowUpRight} />
+                <FinKpiCard label={isEn ? 'AR Overdue' : 'AR Quá Hạn'} value={`₫${(stats.arOverdue / 1e6).toFixed(0)}M`} sub={`${stats.arOverdueCount} ${isEn ? 'invoices' : 'hóa đơn'}`} accent="#B91C1C" icon={AlertCircle} />
+                <FinKpiCard label={L.tabAp} value={`₫${(stats.apTotal / 1e9).toFixed(2)}T`} accent="#B45309" icon={ArrowDownRight} />
+                <FinKpiCard label={isEn ? 'AP Overdue' : 'AP Quá Hạn'} value={`₫${(stats.apOverdue / 1e6).toFixed(0)}M`} sub={`${stats.apOverdueCount} ${isEn ? 'invoices' : 'hóa đơn'}`} accent="#B45309" icon={AlertCircle} />
+                <FinKpiCard label={isEn ? 'Monthly Revenue' : 'Doanh Thu Tháng'} value={`₫${(stats.monthRevenue / 1e9).toFixed(2)}T`} accent="#15803D" icon={TrendingDown} />
             </div>
 
             {/* Tabs — 2 groups: Operational | Accounting */}
             <div className="overflow-x-auto pb-1" style={{ scrollbarWidth: 'thin', scrollbarColor: '#E2E8F0 transparent' }}>
                 <div className="flex items-center gap-1 p-1 rounded-md" style={{ background: '#F1F5F9', border: '1px solid #E2E8F0', width: 'max-content', minWidth: '100%' }}>
                     {/* Group: Operational */}
-                    <span className="text-xs font-bold uppercase tracking-wider px-2" style={{ color: '#64748B' }}>Vận hành</span>
+                    <span className="text-xs font-bold uppercase tracking-wider px-2" style={{ color: '#64748B' }}>
+                        {isEn ? 'Operations' : 'Vận hành'}
+                    </span>
                     {tabs.filter(t => t.group === 'ops').map(t => {
                         const Icon = t.icon
                         return (
@@ -470,7 +495,9 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                     {/* Divider */}
                     <div className="w-px h-6 mx-1" style={{ background: '#E2E8F0' }} />
                     {/* Group: Accounting */}
-                    <span className="text-xs font-bold uppercase tracking-wider px-2" style={{ color: '#64748B' }}>Kế toán</span>
+                    <span className="text-xs font-bold uppercase tracking-wider px-2" style={{ color: '#64748B' }}>
+                        {isEn ? 'Accounting' : 'Kế toán'}
+                    </span>
                     {tabs.filter(t => t.group === 'acct').map(t => {
                         const Icon = t.icon
                         return (
@@ -493,17 +520,17 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                 <div className="space-y-3">
                     <FilterBar
                         searchValue={arSearch}
-                        searchPlaceholder="Tìm HĐ, khách hàng..."
+                        searchPlaceholder={L.searchArPlaceholder}
                         onSearchChange={v => { setArSearch(v); setArPage(1); reloadAR(v, undefined, 1) }}
                         filters={[{
-                            key: 'arStatus', label: 'Tất cả trạng thái',
-                            options: Object.entries(AR_STATUS).map(([k, v]) => ({ value: k, label: v.label })),
+                            key: 'arStatus', label: L.allStatuses,
+                            options: Object.entries(AR_STATUS).map(([k, v]) => ({ value: k, label: isEn ? v.labelEn : v.label })),
                             value: arStatus,
                             onChange: v => { setArStatus(v); setArPage(1); reloadAR(undefined, v, 1) },
                         }]}
                         onClearAll={() => { setArSearch(''); setArStatus(''); setArPage(1); reloadAR('', '', 1) }}
                     />
-                    <ARTable rows={arRows} onPayment={setPaymentModal} />
+                    <ARTable rows={arRows} onPayment={setPaymentModal} isEn={isEn} />
                     <Pagination page={arPage} pageSize={25} total={arTotal}
                         onPageChange={p => { setArPage(p); reloadAR(undefined, undefined, p) }} />
                 </div>
@@ -513,14 +540,14 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                 <div className="space-y-3">
                     <FilterBar
                         searchValue={apSearch}
-                        searchPlaceholder="Tìm HĐ, NCC..."
+                        searchPlaceholder={L.searchApPlaceholder}
                         onSearchChange={v => { setApSearch(v); setApPage(1); reloadAP(v, undefined, 1) }}
                         filters={[{
-                            key: 'apStatus', label: 'Tất cả trạng thái',
+                            key: 'apStatus', label: L.allStatuses,
                             options: [
-                                { value: 'UNPAID', label: 'Chưa Trả' },
-                                { value: 'PARTIALLY_PAID', label: 'Đã Trả 1 Phần' },
-                                { value: 'PAID', label: 'Đã Trả Đủ' },
+                                { value: 'UNPAID', label: L.apStatusUnpaid },
+                                { value: 'PARTIALLY_PAID', label: L.apStatusPartial },
+                                { value: 'PAID', label: L.apStatusPaid },
                             ],
                             value: apStatus,
                             onChange: v => { setApStatus(v); setApPage(1); reloadAP(undefined, v, 1) },
@@ -531,13 +558,14 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                     <div className="block md:hidden space-y-3">
                         {apRows.length === 0 ? (
                             <div className="text-center py-12 text-sm bg-white rounded-md border border-slate-200" style={{ color: '#64748B' }}>
-                                Không có hóa đơn phải trả nào
+                                {L.emptyApTitle}
                             </div>
                         ) : (
                             apRows.map(row => (
                                 <APMobileCard
                                     key={row.id}
                                     row={row}
+                                    isEn={isEn}
                                     onPayment={(id, outstanding) => {
                                         setApPaymentModal(id)
                                         setPayAmount(String(Math.round(outstanding)))
@@ -553,14 +581,14 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                             <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                                 <thead>
                                     <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0, zIndex: 10 }}>
-                                        {['Số HĐ', 'Nhà Cung Cấp', 'PO', 'Giá Trị', 'Tỷ Giá', 'Còn Lại', 'Hạn TT', 'Trạng Thái', ''].map(h => (
+                                        {apHeaders.map(h => (
                                             <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
                                         ))}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {apRows.length === 0 ? (
-                                        <tr><td colSpan={9} className="text-center py-12 text-sm" style={{ color: '#64748B' }}>Không có AP nào</td></tr>
+                                        <tr><td colSpan={9} className="text-center py-12 text-sm" style={{ color: '#64748B' }}>{L.emptyApTitle}</td></tr>
                                     ) : apRows.map(row => {
                                         const isMultiCurrency = row.currency !== 'VND'
                                         const fmtFx = (val: number) => `${row.currency === 'USD' ? '$' : row.currency === 'EUR' ? '€' : row.currency + ' '}${val.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
@@ -610,14 +638,20 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                                             background: row.status === 'PAID' ? 'rgba(21,128,61,0.15)' : row.isOverdue ? 'rgba(185,28,28,0.15)' : 'rgba(180,83,9,0.15)',
                                                             color: row.status === 'PAID' ? '#15803D' : row.isOverdue ? '#B91C1C' : '#B45309',
                                                         }}>
-                                                        {row.status === 'PAID' ? 'Đã Trả' : row.status === 'PARTIALLY_PAID' ? 'Trả 1 Phần' : row.isOverdue ? 'Quá Hạn' : 'Chưa Trả'}
+                                                        {row.status === 'PAID'
+                                                            ? L.apStatusPaid
+                                                            : row.status === 'PARTIALLY_PAID'
+                                                            ? L.apStatusPartial
+                                                            : row.isOverdue
+                                                            ? L.apStatusOverdue
+                                                            : L.apStatusUnpaid}
                                                     </span>
                                                 </td>
                                                 <td className="px-3 py-3">
                                                     {row.outstanding > 0 && (
                                                         <button onClick={() => { setApPaymentModal(row.id); setPayAmount(String(Math.round(row.outstanding))); }}
                                                             className="px-2.5 py-1 text-xs font-semibold cursor-pointer rounded bg-[#B45309]/15 hover:bg-[#B45309]/25 text-[#B45309] border border-[#B45309]/30">
-                                                            Ghi Trả
+                                                            {isEn ? 'Pay' : 'Ghi Trả'}
                                                         </button>
                                                     )}
                                                 </td>
@@ -646,14 +680,14 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                 const a = document.createElement('a')
                                 a.href = url; a.download = `AR_Aging_${new Date().toISOString().slice(0, 10)}.xlsx`; a.click()
                                 URL.revokeObjectURL(url)
-                                toast.success('Đã xuất AR Aging Excel')
-                            } catch { toast.error('Lỗi xuất Excel') }
+                                toast.success(isEn ? 'Exported AR Aging Excel' : 'Đã xuất AR Aging Excel')
+                            } catch { toast.error(isEn ? 'Failed to export Excel' : 'Lỗi xuất Excel') }
                         }} className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-md font-semibold"
                             style={{ border: '1px solid #E2E8F0', color: '#B45309' }}>
                             <ArrowDownRight size={13} /> Export AR Aging Excel
                         </button>
                     </div>
-                    <AgingBars buckets={agingBuckets} />
+                    <AgingBars buckets={agingBuckets} isEn={isEn} />
                 </div>
             )}
 
@@ -684,10 +718,10 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15, 23, 42, 0.45)' }}>
                     <div className="w-full max-w-sm max-h-[90vh] overflow-y-auto p-5 sm:p-6 rounded-md"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 24px 64px rgba(15, 23, 42, 0.45)' }}>
-                        <h3 className="text-lg font-bold mb-4" style={{ color: '#0F172A' }}>Ghi Nhận Thanh Toán AR</h3>
+                        <h3 className="text-lg font-bold mb-4" style={{ color: '#0F172A' }}>{L.modalArPaymentTitle}</h3>
                         <div className="space-y-3">
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Số Tiền Thu (VND)</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.fieldCollectAmount}</label>
                                 <input type="number" value={payAmount} onChange={e => setPayAmount(e.target.value)}
                                     className="w-full px-3 py-2.5 text-sm outline-none"
                                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
@@ -697,26 +731,26 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Phương Thức</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.fieldPaymentMethod}</label>
                                     <select value={payMethod} onChange={e => setPayMethod(e.target.value)}
                                         className="w-full px-3 py-2.5 text-sm outline-none"
                                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}>
-                                        <option value="BANK_TRANSFER">Chuyển Khoản</option>
-                                        <option value="CASH">Tiền Mặt</option>
+                                        <option value="BANK_TRANSFER">{L.methodBankTransfer}</option>
+                                        <option value="CASH">{L.methodCash}</option>
                                         <option value="COD">COD</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Ngày Thanh Toán</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{isEn ? 'Payment Date' : 'Ngày Thanh Toán'}</label>
                                     <input type="date" value={payDate} onChange={e => setPayDate(e.target.value)}
                                         className="w-full px-3 py-2.5 text-sm outline-none"
                                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }} />
                                 </div>
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Số Tham Chiếu (tùy chọn)</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.fieldReference}</label>
                                 <input type="text" value={payReference} onChange={e => setPayReference(e.target.value)}
-                                    placeholder="Số chứng từ NH, mã GD..."
+                                    placeholder={isEn ? 'Bank reference, Tx ID...' : 'Số chứng từ NH, mã GD...'}
                                     className="w-full px-3 py-2.5 text-sm outline-none"
                                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
                                     onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
@@ -725,11 +759,11 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                         </div>
                         <div className="flex justify-end gap-3 mt-5">
                             <button onClick={() => { setPaymentModal(null); setPayReference(''); setPayDate(new Date().toISOString().slice(0, 10)) }} className="px-4 py-2 text-sm"
-                                style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '6px' }}>Huỷ</button>
+                                style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '6px' }}>{L.cancelBtn}</button>
                             <button onClick={handlePayment} disabled={payLoading || !payAmount}
                                 className="px-5 py-2 text-sm font-semibold transition-all"
                                 style={{ background: '#0E7490', color: '#FFFFFF', borderRadius: '6px' }}>
-                                {payLoading ? 'Đang lưu...' : 'Xác Nhận'}
+                                {payLoading ? L.processingText : L.confirmCollectBtn}
                             </button>
                         </div>
                     </div>
@@ -741,10 +775,10 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15, 23, 42, 0.45)' }}>
                     <div className="w-full max-w-sm max-h-[90vh] overflow-y-auto p-5 sm:p-6 rounded-md"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 24px 64px rgba(15, 23, 42, 0.45)' }}>
-                        <h3 className="text-lg font-bold mb-4" style={{ color: '#0F172A' }}>Ghi Nhận Thanh Toán AP</h3>
+                        <h3 className="text-lg font-bold mb-4" style={{ color: '#0F172A' }}>{L.modalApPaymentTitle}</h3>
                         <div className="space-y-3">
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Số Tiền Thanh Toán</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.fieldPayAmount}</label>
                                 <input type="number" value={payAmount} onChange={e => setPayAmount(e.target.value)}
                                     className="w-full px-3 py-2.5 text-sm outline-none"
                                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
@@ -752,19 +786,19 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                     onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Phương Thức</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.fieldPaymentMethod}</label>
                                 <select value={payMethod} onChange={e => setPayMethod(e.target.value)}
                                     className="w-full px-3 py-2.5 text-sm outline-none"
                                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}>
-                                    <option value="BANK_TRANSFER">Chuyển Khoản</option>
-                                    <option value="CASH">Tiền Mặt</option>
-                                    <option value="CHECK">Séc</option>
+                                    <option value="BANK_TRANSFER">{L.methodBankTransfer}</option>
+                                    <option value="CASH">{L.methodCash}</option>
+                                    <option value="CHECK">{L.methodCheck}</option>
                                 </select>
                             </div>
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>Số Tham Chiếu (tùy chọn)</label>
+                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.fieldReference}</label>
                                 <input type="text" value={payReference} onChange={e => setPayReference(e.target.value)}
-                                    placeholder="Số chứng từ, mã GD..."
+                                    placeholder={isEn ? 'Document no., Tx ID...' : 'Số chứng từ, mã GD...'}
                                     className="w-full px-3 py-2.5 text-sm outline-none"
                                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
                                     onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
@@ -773,11 +807,11 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                         </div>
                         <div className="flex justify-end gap-3 mt-5">
                             <button onClick={() => setApPaymentModal(null)} className="px-4 py-2 text-sm"
-                                style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '6px' }}>Huỷ</button>
+                                style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '6px' }}>{L.cancelBtn}</button>
                             <button onClick={handleAPPayment} disabled={payLoading || !payAmount}
                                 className="px-5 py-2 text-sm font-semibold"
                                 style={{ background: '#D97706', color: '#FFFFFF', borderRadius: '6px' }}>
-                                {payLoading ? 'Đang lưu...' : 'Xác Nhận Thanh Toán'}
+                                {payLoading ? L.processingText : L.confirmPayBtn}
                             </button>
                         </div>
                     </div>

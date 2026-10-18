@@ -2,17 +2,20 @@
 
 import React, { useState, useMemo } from 'react'
 import {
-    DollarSign, TrendingUp, Ship, FileText, CheckCircle2,
-    Clock, HelpCircle, Layers, ArrowRight
+    TrendingUp, FileText, CheckCircle2, Clock
 } from 'lucide-react'
 import type { PODetail } from './types'
 import { formatVND } from '@/lib/utils'
+import { useAppLocale } from '@/lib/i18n'
 
 interface POFinancialTabProps {
     po: PODetail
 }
 
 export function POFinancialTab({ po }: POFinancialTabProps) {
+    const { locale } = useAppLocale()
+    const isEn = locale === 'en'
+
     // Cho phép setup tỷ giá dự kiến cho PO này
     const defaultRate = po.exchangeRate || (po.currency === 'EUR' ? 27200 : po.currency === 'USD' ? 25450 : 1)
     const [forecastRate, setForecastRate] = useState<number>(defaultRate)
@@ -78,43 +81,47 @@ export function POFinancialTab({ po }: POFinancialTabProps) {
             milestones: [
                 {
                     step: 1,
-                    title: 'Đợt 1: Đặt Cọc Hợp Đồng (30%)',
-                    desc: 'Thanh toán ngoại tệ ngay khi ký kết PO với Nhà sản xuất.',
+                    title: isEn ? 'Stage 1: Contract Deposit (30%)' : 'Đợt 1: Đặt Cọc Hợp Đồng (30%)',
+                    desc: isEn ? 'Foreign currency payment upon PO signing with Producer.' : 'Thanh toán ngoại tệ ngay khi ký kết PO với Nhà sản xuất.',
                     amountVND: depositAmount,
                     foreignAmount: foreignAmount * 0.30,
                     status: po.status !== 'DRAFT' ? 'PAID' : 'PLANNED',
-                    date: po.createdAt ? new Date(po.createdAt).toLocaleDateString('vi-VN') : '—',
+                    date: po.createdAt ? new Date(po.createdAt).toLocaleDateString(isEn ? 'en-US' : 'vi-VN') : '—',
                 },
                 {
                     step: 2,
-                    title: 'Đợt 2: Tiền Hàng Còn Lại (70%)',
-                    desc: 'Thanh toán ngoại tệ khi xuất xưởng hoặc nhận Vận đơn (Bill of Lading).',
+                    title: isEn ? 'Stage 2: Balance Goods Payment (70%)' : 'Đợt 2: Tiền Hàng Còn Lại (70%)',
+                    desc: isEn ? 'Foreign currency payment upon ex-works or Bill of Lading receipt.' : 'Thanh toán ngoại tệ khi xuất xưởng hoặc nhận Vận đơn (Bill of Lading).',
                     amountVND: finalGoodsAmount,
                     foreignAmount: foreignAmount * 0.70,
                     status: ['IN_TRANSIT', 'RECEIVED', 'PARTIALLY_RECEIVED'].includes(po.status) ? 'PAID' : 'PLANNED',
-                    date: 'Trước khi tàu rời cảng (ETD)',
+                    date: isEn ? 'Before vessel departure (ETD)' : 'Trước khi tàu rời cảng (ETD)',
                 },
                 {
                     step: 3,
-                    title: 'Đợt 3: Nộp Thuế Hải Quan 3 Tầng',
-                    desc: `Nộp tiền mặt VNĐ vào Kho bạc: Thuế NK (${importTaxPct}%) + TTĐB (${sctPct}%) + VAT (${vatPct}%).`,
+                    title: isEn ? 'Stage 3: 3-Tier Customs Tax Payment' : 'Đợt 3: Nộp Thuế Hải Quan 3 Tầng',
+                    desc: isEn
+                        ? `Pay VND to State Treasury: Import Duty (${importTaxPct}%) + SCT (${sctPct}%) + VAT (${vatPct}%).`
+                        : `Nộp tiền mặt VNĐ vào Kho bạc: Thuế NK (${importTaxPct}%) + TTĐB (${sctPct}%) + VAT (${vatPct}%).`,
                     amountVND: totalTaxVND,
                     foreignAmount: null,
                     status: ['RECEIVED', 'PARTIALLY_RECEIVED'].includes(po.status) ? 'PAID' : 'PLANNED',
-                    date: po.estimatedDelivery ? `Trước ngày ${new Date(po.estimatedDelivery).toLocaleDateString('vi-VN')} (ETA)` : 'Trước khi cập cảng',
+                    date: po.estimatedDelivery
+                        ? (isEn ? `Before ${new Date(po.estimatedDelivery).toLocaleDateString('en-US')} (ETA)` : `Trước ngày ${new Date(po.estimatedDelivery).toLocaleDateString('vi-VN')} (ETA)`)
+                        : (isEn ? 'Before port arrival' : 'Trước khi cập cảng'),
                 },
                 {
                     step: 4,
-                    title: 'Đợt 4: Logistics Cảng & Kéo Hàng Về Kho',
-                    desc: 'Cước tàu biển Forwarder + Phí THC/DO + Kéo xe cont lạnh + Chi phí tem nhãn rượu.',
+                    title: isEn ? 'Stage 4: Port Logistics & Warehouse Delivery' : 'Đợt 4: Logistics Cảng & Kéo Hàng Về Kho',
+                    desc: isEn ? 'Ocean freight + THC/DO fees + Reefer trucking + Wine excise stamps.' : 'Cước tàu biển Forwarder + Phí THC/DO + Kéo xe cont lạnh + Chi phí tem nhãn rượu.',
                     amountVND: estimatedFreightVND + estimatedLocalVND,
                     foreignAmount: null,
                     status: po.status === 'RECEIVED' ? 'PAID' : 'PLANNED',
-                    date: 'Khi hàng giao về kho',
+                    date: isEn ? 'Upon warehouse delivery' : 'Khi hàng giao về kho',
                 }
             ]
         }
-    }, [po, forecastRate, importTaxPct, sctPct, vatPct])
+    }, [po, forecastRate, importTaxPct, sctPct, vatPct, isEn])
 
     return (
         <div className="space-y-4">
@@ -126,10 +133,12 @@ export function POFinancialTab({ po }: POFinancialTabProps) {
                     </span>
                     <div>
                         <div className="text-xs font-bold text-slate-800">
-                            Cấu Hình Tỷ Giá Dự Kiến ({po.currency} / VNĐ)
+                            {isEn ? `Forecast Exchange Rate (${po.currency} / VND)` : `Cấu Hình Tỷ Giá Dự Kiến (${po.currency} / VNĐ)`}
                         </div>
                         <div className="text-[11px] text-slate-500">
-                            Thay đổi tỷ giá dự trù để mô phỏng tức thì tác động lên chi phí & thuế của lô hàng
+                            {isEn
+                                ? 'Adjust forecast exchange rate to simulate instant impact on shipment landed cost & taxes'
+                                : 'Thay đổi tỷ giá dự trù để mô phỏng tức thì tác động lên chi phí & thuế của lô hàng'}
                         </div>
                     </div>
                 </div>
@@ -146,9 +155,9 @@ export function POFinancialTab({ po }: POFinancialTabProps) {
                     <button
                         onClick={() => setForecastRate(defaultRate)}
                         className="text-[11px] text-teal-700 hover:underline font-semibold ml-1"
-                        title="Đặt lại tỷ giá mặc định lúc tạo PO"
+                        title={isEn ? 'Reset to default PO exchange rate' : 'Đặt lại tỷ giá mặc định lúc tạo PO'}
                     >
-                        Mặc định
+                        {isEn ? 'Reset' : 'Mặc định'}
                     </button>
                 </div>
             </div>
@@ -156,7 +165,7 @@ export function POFinancialTab({ po }: POFinancialTabProps) {
             {/* 4 Thẻ KPI Tài chính của PO */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
                 <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-lg">
-                    <span className="text-[11px] font-bold text-blue-800 uppercase block">1. Tiền Hàng (FOB)</span>
+                    <span className="text-[11px] font-bold text-blue-800 uppercase block">{isEn ? '1. Goods Value (FOB)' : '1. Tiền Hàng (FOB)'}</span>
                     <span className="font-mono text-base font-bold text-blue-900 block mt-0.5">
                         {formatVND(calc.goodsVND)}
                     </span>
@@ -166,32 +175,32 @@ export function POFinancialTab({ po }: POFinancialTabProps) {
                 </div>
 
                 <div className="p-3 bg-amber-50/70 border border-amber-100 rounded-lg">
-                    <span className="text-[11px] font-bold text-amber-800 uppercase block">2. Thuế Hải Quan 3 Tầng</span>
+                    <span className="text-[11px] font-bold text-amber-800 uppercase block">{isEn ? '2. 3-Tier Customs Tax' : '2. Thuế Hải Quan 3 Tầng'}</span>
                     <span className="font-mono text-base font-bold text-amber-900 block mt-0.5">
                         {formatVND(calc.totalTaxVND)}
                     </span>
                     <span className="text-[10px] text-amber-700 block">
-                        NK + TTĐB (65%) + VAT
+                        {isEn ? 'Import + SCT (65%) + VAT' : 'NK + TTĐB (65%) + VAT'}
                     </span>
                 </div>
 
                 <div className="p-3 bg-cyan-50/70 border border-cyan-100 rounded-lg">
-                    <span className="text-[11px] font-bold text-cyan-800 uppercase block">3. Vận Tải & Phí Cảng</span>
+                    <span className="text-[11px] font-bold text-cyan-800 uppercase block">{isEn ? '3. Freight & Port Fees' : '3. Vận Tải & Phí Cảng'}</span>
                     <span className="font-mono text-base font-bold text-cyan-900 block mt-0.5">
                         {formatVND(calc.estimatedFreightVND + calc.estimatedLocalVND)}
                     </span>
                     <span className="text-[10px] text-cyan-700 block">
-                        Cước tàu + THC/DO + Tem
+                        {isEn ? 'Ocean Freight + THC/DO + Stamps' : 'Cước tàu + THC/DO + Tem'}
                     </span>
                 </div>
 
                 <div className="p-3 bg-teal-900 text-white rounded-lg">
-                    <span className="text-[11px] font-bold text-teal-200 uppercase block">Tổng dự trù lô (Landed Cost)</span>
+                    <span className="text-[11px] font-bold text-teal-200 uppercase block">{isEn ? 'Total Est. Landed Cost' : 'Tổng dự trù lô (Landed Cost)'}</span>
                     <span className="font-mono text-base font-bold text-white block mt-0.5">
                         {formatVND(calc.grandTotalLandedVND)}
                     </span>
                     <span className="text-[10px] text-teal-700 font-mono block">
-                        ~{formatVND(calc.landedCostPerBottle)} / chai ({calc.totalBottles} chai)
+                        ~{formatVND(calc.landedCostPerBottle)} / {isEn ? `btl (${calc.totalBottles} btls)` : `chai (${calc.totalBottles} chai)`}
                     </span>
                 </div>
             </div>
@@ -199,8 +208,8 @@ export function POFinancialTab({ po }: POFinancialTabProps) {
             {/* Thanh tỷ trọng cơ cấu chi phí */}
             <div className="p-3 bg-white border border-slate-200 rounded-lg space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-                    <span>Cơ Cấu Tỷ Trọng Chi Phí Về Kho (Landed Cost Breakdown):</span>
-                    <span className="text-teal-800 font-mono">100% Tổng Chi Phí</span>
+                    <span>{isEn ? 'Landed Cost Breakdown:' : 'Cơ Cấu Tỷ Trọng Chi Phí Về Kho (Landed Cost Breakdown):'}</span>
+                    <span className="text-teal-800 font-mono">{isEn ? '100% Total Cost' : '100% Tổng Chi Phí'}</span>
                 </div>
 
                 {calc.grandTotalLandedVND > 0 && (
@@ -208,12 +217,12 @@ export function POFinancialTab({ po }: POFinancialTabProps) {
                         <div
                             style={{ width: `${(calc.goodsVND / calc.grandTotalLandedVND) * 100}%` }}
                             className="bg-blue-600 h-full"
-                            title={`Tiền hàng: ${Math.round((calc.goodsVND / calc.grandTotalLandedVND) * 100)}%`}
+                            title={`Goods: ${Math.round((calc.goodsVND / calc.grandTotalLandedVND) * 100)}%`}
                         />
                         <div
                             style={{ width: `${(calc.totalTaxVND / calc.grandTotalLandedVND) * 100}%` }}
                             className="bg-amber-500 h-full"
-                            title={`Thuế Hải quan: ${Math.round((calc.totalTaxVND / calc.grandTotalLandedVND) * 100)}%`}
+                            title={`Tax: ${Math.round((calc.totalTaxVND / calc.grandTotalLandedVND) * 100)}%`}
                         />
                         <div
                             style={{ width: `${((calc.estimatedFreightVND + calc.estimatedLocalVND) / calc.grandTotalLandedVND) * 100}%` }}
@@ -226,11 +235,11 @@ export function POFinancialTab({ po }: POFinancialTabProps) {
                 <div className="flex flex-wrap items-center justify-between text-[11px] text-slate-600 pt-1">
                     <span className="flex items-center gap-1.5">
                         <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />
-                        Tiền hàng: <strong>{calc.grandTotalLandedVND > 0 ? Math.round((calc.goodsVND / calc.grandTotalLandedVND) * 100) : 0}%</strong> ({formatVND(calc.goodsVND)})
+                        {isEn ? 'Goods:' : 'Tiền hàng:'} <strong>{calc.grandTotalLandedVND > 0 ? Math.round((calc.goodsVND / calc.grandTotalLandedVND) * 100) : 0}%</strong> ({formatVND(calc.goodsVND)})
                     </span>
                     <span className="flex items-center gap-1.5">
                         <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                        Thuế 3 tầng: <strong>{calc.grandTotalLandedVND > 0 ? Math.round((calc.totalTaxVND / calc.grandTotalLandedVND) * 100) : 0}%</strong> ({formatVND(calc.totalTaxVND)})
+                        {isEn ? '3-Tier Tax:' : 'Thuế 3 tầng:'} <strong>{calc.grandTotalLandedVND > 0 ? Math.round((calc.totalTaxVND / calc.grandTotalLandedVND) * 100) : 0}%</strong> ({formatVND(calc.totalTaxVND)})
                     </span>
                     <span className="flex items-center gap-1.5">
                         <span className="w-2.5 h-2.5 rounded-full bg-cyan-600" />
@@ -243,10 +252,10 @@ export function POFinancialTab({ po }: POFinancialTabProps) {
             <div className="bg-white border border-slate-200 rounded-lg p-3.5 space-y-3">
                 <div className="text-xs font-bold text-slate-800 uppercase flex items-center justify-between">
                     <span className="flex items-center gap-1.5">
-                        <FileText size={14} className="text-amber-700" /> Bóc Tách Dự Trù 3 Tầng Thuế (Tự Do Điều Chỉnh %)
+                        <FileText size={14} className="text-amber-700" /> {isEn ? '3-Tier Tax Breakdown Simulator (Custom %)' : 'Bóc Tách Dự Trù 3 Tầng Thuế (Tự Do Điều Chỉnh %)'}
                     </span>
                     <span className="inline-block text-[10px] text-teal-700 font-semibold bg-teal-50 px-2 py-0.5 rounded border border-teal-200 whitespace-nowrap shrink-0">
-                        Nhập trực tiếp % để mô phỏng
+                        {isEn ? 'Enter % directly to simulate' : 'Nhập trực tiếp % để mô phỏng'}
                     </span>
                 </div>
 

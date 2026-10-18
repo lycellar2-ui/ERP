@@ -1,4 +1,5 @@
 import { cache } from 'react'
+import { headers } from 'next/headers'
 import { createServerSupabaseClient } from '@/lib/supabase'
 import { prisma } from '@/lib/db'
 import { cached, revalidateCache } from '@/lib/cache'
@@ -75,6 +76,17 @@ async function fetchUserByEmail(email: string): Promise<SessionUser | null> {
 // Supabase + Prisma calls when multiple server functions need the user in one render.
 export const getCurrentUser = cache(async function getCurrentUser(): Promise<SessionUser | null> {
     try {
+        // Fast path: Middleware already verified the user token and forwarded the sanitized email header
+        try {
+            const reqHeaders = await headers()
+            const verifiedEmail = reqHeaders.get('x-verified-user-email')
+            if (verifiedEmail) {
+                return await fetchUserByEmail(verifiedEmail)
+            }
+        } catch {
+            // headers() may throw outside of a Next.js request context; safely fall back
+        }
+
         const supabase = await createServerSupabaseClient()
         const { data: { user: authUser } } = await supabase.auth.getUser()
 

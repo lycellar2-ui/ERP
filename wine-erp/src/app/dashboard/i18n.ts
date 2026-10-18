@@ -9,6 +9,7 @@ export const DASHBOARD_I18N = {
         customerAnalytics: 'Khách Hàng & Bảng Giá Riêng',
         customerAnalyticsBadge: 'Giá riêng & Lịch sử mua',
         exportExcel: 'Xuất Excel',
+        exportingExcel: 'Đang xuất...',
         noData: 'Không có dữ liệu',
         viewAll: 'Xem tất cả',
         details: 'Chi tiết',
@@ -103,6 +104,13 @@ export const DASHBOARD_I18N = {
             apSurplus: 'Cần dự phòng thanh toán (AP > AR)',
             currentAR: 'Nợ phải thu chưa thu',
             currentAP: 'Nợ phải trả nhà cung cấp',
+            upcomingTitle: 'Nghĩa vụ chi ngắn hạn (30 ngày tới)',
+            upcomingObligations: 'Nghĩa vụ chi ngắn hạn (30 ngày tới)',
+            apDueSoon: 'Công nợ NCC đến hạn (≤30 ngày)',
+            apDue30d: 'Công nợ NCC đến hạn (≤30 ngày)',
+            pendingDisbursement: 'Đề nghị thanh toán chờ giải ngân',
+            pendingPRDisbursement: 'Đề nghị thanh toán chờ giải ngân',
+            noUpcomingObligations: 'Không có khoản phải trả cấp bách trong 30 ngày tới',
         },
 
         waterfall: {
@@ -142,6 +150,7 @@ export const DASHBOARD_I18N = {
             totalChannelSales: 'Tổng Doanh Thu Kênh',
             monthTitle: 'Top Tháng Này',
             periodTitle: 'Top Bán Hàng Trong Kỳ',
+            clickCustomerHint: 'Bấm vào khách hàng để mở Hồ sơ 360°',
         },
 
         // Operations & Containers
@@ -149,6 +158,7 @@ export const DASHBOARD_I18N = {
             title: 'Container Đang Về',
             empty: 'Không có container đang về',
             eta: 'ETA',
+            totalCif: 'Tổng giá trị CIF đang về:',
             statuses: {
                 BOOKED: 'Đã đặt',
                 ON_VESSEL: 'Trên biển',
@@ -160,18 +170,72 @@ export const DASHBOARD_I18N = {
 
         // Approvals Hub
         approvals: {
-            title: 'Chờ CEO Duyệt',
-            viewAll: 'Xem tất cả →',
-            noPending: 'Không có mục nào chờ duyệt',
-            reviewAndApprove: 'Xem & Duyệt',
+            title: 'Trung Tâm Phê Duyệt CEO',
+            viewAll: 'Tờ trình →',
+            viewAllPR: 'Đề nghị TT →',
+            viewAllSO: 'Đơn hàng →',
+            noPending: 'Tất cả hồ sơ đã được xử lý hoàn tất',
+            reviewAndApprove: 'Chi tiết',
             step: 'Bước',
+            level: 'Cấp',
             approve: 'Duyệt',
             reject: 'Từ Chối',
+            filterAll: 'Tất cả',
+            filterSO: 'Đơn hàng (SO)',
+            filterProposals: 'Tờ trình',
+            filterPR: 'Đề nghị TT',
+            filterPayments: 'Đề nghị TT',
+            filterSystem: 'Hệ thống',
+            filterEngine: 'Hệ thống',
+            marginLabel: 'Biên gộp',
+            margin: 'Biên gộp',
+            discountLabel: 'Chiết khấu',
+            discount: 'Chiết khấu',
+            salesRep: 'Sales',
+            paymentTerm: 'Công nợ',
+            paymentReqBadge: 'ĐỀ NGHỊ TT',
+            beneficiaryLabel: 'Thụ hưởng:',
+            dueDateLabel: 'Hạn TT:',
+            rejectModalTitle: 'Xác nhận từ chối phê duyệt',
+            rejectReasonTitle: 'Xác nhận từ chối phê duyệt',
+            rejectModalPlaceholder: 'Nhập lý do từ chối để thông báo cho bộ phận trình ký...',
+            rejectReasonPlaceholder: 'Nhập lý do từ chối để thông báo cho bộ phận trình ký...',
+            rejectConfirmBtn: 'Xác nhận từ chối',
+            confirmReject: 'Xác nhận từ chối',
+            cancelBtn: 'Hủy',
+            cancel: 'Hủy',
+        },
+
+        // Slow-moving Stock
+        slowStock: {
+            title: 'Cảnh Báo Tồn Kho Chậm Luân Chuyển',
+            capitalTiedUp: 'Vốn đọng trong kho chậm:',
+            tiedCapital: 'Vốn đọng trong kho chậm:',
+            deadLabel: 'Tồn chết (>180 ngày)',
+            slowLabel: 'Chậm bán (90–180 ngày)',
+            neverSold: 'Chưa phát sinh bán',
+            daysAgo: 'ngày trước',
+            daysInStock: 'ngày tồn',
+            noAlerts: 'Tất cả SKU tồn kho đều luân chuyển tốt',
+            viewWarehouse: 'Kho hàng →',
+        },
+
+        // AI Briefing
+        aiBriefing: {
+            buttonLabel: 'Tóm Tắt Điều Hành AI',
+            generating: 'Đang phân tích dữ liệu...',
+            loading: 'Đang phân tích dữ liệu...',
+            panelTitle: 'Báo Cáo Phân Tích Chiến Lược (AI CEO Briefing)',
+            regenerate: 'Phân tích lại',
+            refresh: 'Phân tích lại',
+            hide: 'Thu gọn',
+            close: 'Đóng',
+            error: 'Không thể tạo báo cáo AI lúc này.',
         },
 
         // In-depth Analysis
         inDepth: {
-            title: 'Phân Tích Chuyên Sâu',
+            title: 'Phân Tích Chuyên Sâu & Kiểm Soát Rủi Ro',
             monthlyKpiTargets: 'KPI Tháng Này',
             achieved: 'đạt',
             onTrack: 'Đạt',
@@ -182,7 +246,7 @@ export const DASHBOARD_I18N = {
 
         // Compliance
         compliance: {
-            title: 'Cảnh Báo Tuân Thủ',
+            title: 'Cảnh Báo Tuân Thủ Pháp Lý',
             documents: 'giấy tờ',
             viewAll: 'Xem tất cả →',
             overdue: 'Quá hạn',
@@ -263,6 +327,7 @@ export const DASHBOARD_I18N = {
         customerAnalytics: 'Customer 360 & Price Lists',
         customerAnalyticsBadge: 'Special pricing & purchase history',
         exportExcel: 'Export Excel',
+        exportingExcel: 'Exporting...',
         noData: 'No data available',
         viewAll: 'View all',
         details: 'Details',
@@ -357,6 +422,13 @@ export const DASHBOARD_I18N = {
             apSurplus: 'Cash Reserve Required (AP > AR)',
             currentAR: 'Outstanding AR Receivables',
             currentAP: 'Outstanding Supplier Payables',
+            upcomingTitle: 'Short-Term Cash Obligations (Next 30d)',
+            upcomingObligations: 'Short-Term Cash Obligations (Next 30d)',
+            apDueSoon: 'Supplier AP Due (≤30 days)',
+            apDue30d: 'Supplier AP Due (≤30 days)',
+            pendingDisbursement: 'Approved Payment Requests Pending Payout',
+            pendingPRDisbursement: 'Approved Payment Requests Pending Payout',
+            noUpcomingObligations: 'No urgent payables due in the next 30 days',
         },
 
         waterfall: {
@@ -396,6 +468,7 @@ export const DASHBOARD_I18N = {
             totalChannelSales: 'Total Channel Revenue',
             monthTitle: 'Top Sales This Month',
             periodTitle: 'Top Sales in Period',
+            clickCustomerHint: 'Click any customer to open 360° Profile',
         },
 
         // Operations & Containers
@@ -403,6 +476,7 @@ export const DASHBOARD_I18N = {
             title: 'Inbound Containers',
             empty: 'No containers currently in transit',
             eta: 'ETA',
+            totalCif: 'Total Inbound CIF Value:',
             statuses: {
                 BOOKED: 'Booked',
                 ON_VESSEL: 'On Vessel',
@@ -414,18 +488,72 @@ export const DASHBOARD_I18N = {
 
         // Approvals Hub
         approvals: {
-            title: 'Pending CEO Approvals',
-            viewAll: 'View all →',
-            noPending: 'No pending items requiring review',
-            reviewAndApprove: 'Review & Approve',
+            title: 'CEO Approval Command Center',
+            viewAll: 'Proposals →',
+            viewAllPR: 'Payments →',
+            viewAllSO: 'Orders →',
+            noPending: 'All pending items have been processed',
+            reviewAndApprove: 'Details',
             step: 'Step',
+            level: 'Lvl',
             approve: 'Approve',
             reject: 'Reject',
+            filterAll: 'All',
+            filterSO: 'Sales Orders',
+            filterProposals: 'Proposals',
+            filterPR: 'Payment Reqs',
+            filterPayments: 'Payment Reqs',
+            filterSystem: 'System',
+            filterEngine: 'System',
+            marginLabel: 'Margin',
+            margin: 'Margin',
+            discountLabel: 'Discount',
+            discount: 'Discount',
+            salesRep: 'Sales',
+            paymentTerm: 'Terms',
+            paymentReqBadge: 'PAYMENT REQ',
+            beneficiaryLabel: 'Beneficiary:',
+            dueDateLabel: 'Due:',
+            rejectModalTitle: 'Confirm Rejection',
+            rejectReasonTitle: 'Confirm Rejection',
+            rejectModalPlaceholder: 'Enter rejection reason to notify the requester...',
+            rejectReasonPlaceholder: 'Enter rejection reason to notify the requester...',
+            rejectConfirmBtn: 'Confirm Rejection',
+            confirmReject: 'Confirm Rejection',
+            cancelBtn: 'Cancel',
+            cancel: 'Cancel',
+        },
+
+        // Slow-moving Stock
+        slowStock: {
+            title: 'Slow-Moving & Dead Stock Alert',
+            capitalTiedUp: 'Capital tied in slow stock:',
+            tiedCapital: 'Capital tied in slow stock:',
+            deadLabel: 'Dead Stock (>180d)',
+            slowLabel: 'Slow-Moving (90–180d)',
+            neverSold: 'Never sold',
+            daysAgo: 'days ago',
+            daysInStock: 'days in stock',
+            noAlerts: 'All active SKUs have healthy inventory turnover',
+            viewWarehouse: 'Warehouse →',
+        },
+
+        // AI Briefing
+        aiBriefing: {
+            buttonLabel: 'AI Executive Briefing',
+            generating: 'Analyzing data...',
+            loading: 'Analyzing data...',
+            panelTitle: 'Strategic Executive Briefing (AI CEO Summary)',
+            regenerate: 'Re-analyze',
+            refresh: 'Re-analyze',
+            hide: 'Collapse',
+            close: 'Close',
+            error: 'Failed to generate AI briefing.',
         },
 
         // In-depth Analysis
         inDepth: {
-            title: 'In-Depth Financial Analysis',
+            title: 'In-Depth Financial & Risk Analysis',
             monthlyKpiTargets: 'Monthly KPI Targets',
             achieved: 'achieved',
             onTrack: 'On Track',
@@ -436,7 +564,7 @@ export const DASHBOARD_I18N = {
 
         // Compliance
         compliance: {
-            title: 'Compliance Warnings',
+            title: 'Legal & Compliance Warnings',
             documents: 'documents',
             viewAll: 'View all →',
             overdue: 'Overdue',

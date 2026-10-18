@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { useConfirmDialog } from '@/components/ui'
 import { getWeeklyPlan, createOrUpdateWeeklyPlan, updateVisitStatus, getSalesRepCustomers, getSalesRepsList, getCurrentUserProfile } from './actions'
 import { formatDate } from '@/lib/utils'
+import { useAppLocale } from '@/lib/i18n'
 
 function getWeekNumber(d: Date): { week: number; year: number } {
     const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
@@ -16,21 +17,22 @@ function getWeekNumber(d: Date): { week: number; year: number } {
 }
 
 const PURPOSE_PRESETS = [
-    'Chăm sóc khách hàng định kỳ',
-    'Thử rượu (Wine tasting) & Giới thiệu mẫu mới',
-    'Giải quyết khiếu nại / Phản hồi',
-    'Ký kết / Đàm phán hợp đồng mới',
-    'Thu hồi công nợ',
-    'Mục đích khác'
+    { vi: 'Chăm sóc khách hàng định kỳ', en: 'Regular customer care' },
+    { vi: 'Thử rượu (Wine tasting) & Giới thiệu mẫu mới', en: 'Wine tasting & New product introduction' },
+    { vi: 'Giải quyết khiếu nại / Phản hồi', en: 'Resolve complaint / Feedback' },
+    { vi: 'Ký kết / Đàm phán hợp đồng mới', en: 'Sign / Negotiate new contract' },
+    { vi: 'Thu hồi công nợ', en: 'AR collection' },
+    { vi: 'Mục đích khác', en: 'Other purpose' },
 ]
 
-const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
-    PLANNED: { label: 'Đã lên lịch', color: '#1D4ED8', bg: 'rgba(29,78,216,0.15)' },
-    COMPLETED: { label: 'Đã hoàn thành', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
-    CANCELLED: { label: 'Đã hủy', color: '#B91C1C', bg: 'rgba(185,28,28,0.15)' },
+const STATUS_CFG: Record<string, { label: string; labelEn: string; color: string; bg: string }> = {
+    PLANNED: { label: 'Đã lên lịch', labelEn: 'Planned', color: '#1D4ED8', bg: 'rgba(29,78,216,0.15)' },
+    COMPLETED: { label: 'Đã hoàn thành', labelEn: 'Completed', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)' },
+    CANCELLED: { label: 'Đã hủy', labelEn: 'Cancelled', color: '#B91C1C', bg: 'rgba(185,28,28,0.15)' },
 }
 
 export function WeeklyVisitPlannerPanel() {
+    const { isEn, locale } = useAppLocale()
     const [weekOffset, setWeekOffset] = useState(0)
     const { confirm, dialog: confirmDialog } = useConfirmDialog()
     const [loading, setLoading] = useState(false)
@@ -136,10 +138,10 @@ export function WeeklyVisitPlannerPanel() {
                 visits: apiVisits
             })
             if (res.success) {
-                toast.success('Đã lưu kế hoạch viếng thăm!')
+                toast.success(isEn ? 'Visit plan saved!' : 'Đã lưu kế hoạch viếng thăm!')
                 await load()
             } else {
-                toast.error(res.error || 'Không thể lưu kế hoạch')
+                toast.error(res.error || (isEn ? 'Failed to save plan' : 'Không thể lưu kế hoạch'))
             }
         } catch (err: any) {
             toast.error(err.message)
@@ -150,7 +152,7 @@ export function WeeklyVisitPlannerPanel() {
 
     const handleAddLocalVisit = () => {
         if (!newVisit.customerId || !newVisit.visitDate) {
-            toast.error('Vui lòng điền đầy đủ ngày giờ và chọn khách hàng')
+            toast.error(isEn ? 'Please select date/time and customer' : 'Vui lòng điền đầy đủ ngày giờ và chọn khách hàng')
             return
         }
         const cust = customers.find(c => c.id === newVisit.customerId)
@@ -182,12 +184,12 @@ export function WeeklyVisitPlannerPanel() {
                 resultNotes
             })
             if (res.success) {
-                toast.success('Đã hoàn thành chuyến đi thăm khách hàng!')
+                toast.success(isEn ? 'Customer visit completed!' : 'Đã hoàn thành chuyến đi thăm khách hàng!')
                 setCheckInVisitId(null)
                 setResultNotes('')
                 await load()
             } else {
-                toast.error(res.error || 'Có lỗi xảy ra')
+                toast.error(res.error || (isEn ? 'An error occurred' : 'Có lỗi xảy ra'))
             }
         } catch (err: any) {
             toast.error(err.message)
@@ -198,10 +200,10 @@ export function WeeklyVisitPlannerPanel() {
 
     const handleCancelVisit = (visitId: string) => {
         confirm({
-            title: 'Hủy Lịch Đi Thăm',
-            message: 'Bạn có chắc chắn muốn hủy lịch đi thăm này không?',
-            confirmLabel: 'Hủy Lịch',
-            cancelLabel: 'Bỏ qua',
+            title: isEn ? 'Cancel Visit' : 'Hủy Lịch Đi Thăm',
+            message: isEn ? 'Are you sure you want to cancel this planned visit?' : 'Bạn có chắc chắn muốn hủy lịch đi thăm này không?',
+            confirmLabel: isEn ? 'Cancel Visit' : 'Hủy Lịch',
+            cancelLabel: isEn ? 'Back' : 'Bỏ qua',
             danger: true,
             onConfirm: async () => {
                 try {
@@ -210,10 +212,10 @@ export function WeeklyVisitPlannerPanel() {
                         status: 'CANCELLED'
                     })
                     if (res.success) {
-                        toast.success('Đã hủy lịch đi thăm!')
+                        toast.success(isEn ? 'Visit cancelled!' : 'Đã hủy lịch đi thăm!')
                         await load()
                     } else {
-                        toast.error(res.error || 'Có lỗi xảy ra')
+                        toast.error(res.error || (isEn ? 'An error occurred' : 'Có lỗi xảy ra'))
                     }
                 } catch (err: any) {
                     toast.error(err.message)
@@ -229,22 +231,24 @@ export function WeeklyVisitPlannerPanel() {
     const getTargetRepName = () => {
         if (selectedSalesRepId === currentUser?.id) return currentUser?.name
         const rep = salesReps.find(r => r.id === selectedSalesRepId)
-        return rep ? rep.name : 'Nhân viên kinh doanh'
+        return rep ? rep.name : (isEn ? 'Sales Rep' : 'Nhân viên kinh doanh')
     }
 
     // Export completed visits to CSV
     const handleExportCSV = () => {
         if (completedVisits.length === 0) {
-            toast.error('Không có chuyến viếng thăm nào đã hoàn thành để xuất báo cáo')
+            toast.error(isEn ? 'No completed visits to export' : 'Không có chuyến viếng thăm nào đã hoàn thành để xuất báo cáo')
             return
         }
-        const headers = ['Mã khách hàng', 'Tên khách hàng', 'Thời gian viếng thăm', 'Mục đích viếng thăm', 'Báo cáo kết quả']
+        const headers = isEn
+            ? ['Customer Code', 'Customer Name', 'Visit Time', 'Purpose', 'Result Notes']
+            : ['Mã khách hàng', 'Tên khách hàng', 'Thời gian viếng thăm', 'Mục đích viếng thăm', 'Báo cáo kết quả']
         const rows = completedVisits.map(v => [
             v.customer?.code || '',
             v.customer?.name || '',
-            new Date(v.visitDate).toLocaleString('vi-VN'),
+            new Date(v.visitDate).toLocaleString(locale),
             v.purpose,
-            v.resultNotes || 'Đã hoàn thành'
+            v.resultNotes || (isEn ? 'Completed' : 'Đã hoàn thành')
         ])
         
         const csvContent = "\ufeff" + [
@@ -261,18 +265,18 @@ export function WeeklyVisitPlannerPanel() {
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
-        toast.success('Đã tải xuống báo cáo tuần (CSV)!')
+        toast.success(isEn ? 'Weekly report (CSV) downloaded!' : 'Đã tải xuống báo cáo tuần (CSV)!')
     }
 
     // Print & PDF Report generator
     const handlePrintReport = () => {
         if (completedVisits.length === 0) {
-            toast.error('Không có dữ liệu hoàn thành để xuất bản báo cáo in')
+            toast.error(isEn ? 'No completed visits to print' : 'Không có dữ liệu hoàn thành để xuất bản báo cáo in')
             return
         }
         const printWindow = window.open('', '_blank')
         if (!printWindow) {
-            toast.error('Vui lòng cho phép trình duyệt mở popup để in báo cáo')
+            toast.error(isEn ? 'Please allow popups to print report' : 'Vui lòng cho phép trình duyệt mở popup để in báo cáo')
             return
         }
         
@@ -280,16 +284,16 @@ export function WeeklyVisitPlannerPanel() {
             <tr>
                 <td style="border: 1px solid #ddd; padding: 8px; font-family: Arial, sans-serif;">${v.customer?.code || ''}</td>
                 <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${v.customer?.name || ''}</td>
-                <td style="border: 1px solid #ddd; padding: 8px;">${new Date(v.visitDate).toLocaleString('vi-VN')}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">${new Date(v.visitDate).toLocaleString(locale)}</td>
                 <td style="border: 1px solid #ddd; padding: 8px;">${v.purpose}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; color: #222;">${v.resultNotes || 'Đã viếng thăm'}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; color: #222;">${v.resultNotes || (isEn ? 'Visited' : 'Đã viếng thăm')}</td>
             </tr>
         `).join('')
 
         printWindow.document.write(`
             <html>
             <head>
-                <title>Báo cáo tuần viếng thăm khách hàng - ${getTargetRepName()}</title>
+                <title>${isEn ? 'Weekly Customer Visit Report' : 'Báo cáo tuần viếng thăm khách hàng'} - ${getTargetRepName()}</title>
                 <style>
                     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 40px; color: #333; }
                     h2 { text-align: center; margin-bottom: 5px; color: #111; text-transform: uppercase; }
@@ -302,21 +306,21 @@ export function WeeklyVisitPlannerPanel() {
                 </style>
             </head>
             <body>
-                <h2>Báo cáo tuần viếng thăm khách hàng</h2>
-                <p>Tuần ${week} · Năm ${year}</p>
+                <h2>${isEn ? 'Weekly Customer Visit Report' : 'Báo cáo tuần viếng thăm khách hàng'}</h2>
+                <p>${isEn ? `Week ${week} · Year ${year}` : `Tuần ${week} · Năm ${year}`}</p>
                 <div class="info">
-                    <strong>Nhân viên Sales:</strong> ${getTargetRepName()}<br />
-                    <strong>Ngày báo cáo:</strong> ${new Date().toLocaleDateString('vi-VN')}<br />
-                    <strong>Tổng số lượt viếng thăm đã hoàn thành:</strong> ${completedVisits.length} lượt
+                    <strong>Sales Rep:</strong> ${getTargetRepName()}<br />
+                    <strong>${isEn ? 'Report Date:' : 'Ngày báo cáo:'}</strong> ${new Date().toLocaleDateString(locale)}<br />
+                    <strong>${isEn ? 'Total Completed Visits:' : 'Tổng số lượt viếng thăm đã hoàn thành:'}</strong> ${completedVisits.length}
                 </div>
                 <table>
                     <thead>
                         <tr>
-                            <th style="width: 15%">Mã KH</th>
-                            <th style="width: 25%">Tên Khách Hàng</th>
-                            <th style="width: 20%">Thời Gian</th>
-                            <th style="width: 20%">Mục Đích</th>
-                            <th style="width: 20%">Kết Quả Ghi Nhận</th>
+                            <th style="width: 15%">${isEn ? 'Code' : 'Mã KH'}</th>
+                            <th style="width: 25%">${isEn ? 'Customer Name' : 'Tên Khách Hàng'}</th>
+                            <th style="width: 20%">${isEn ? 'Time' : 'Thời Gian'}</th>
+                            <th style="width: 20%">${isEn ? 'Purpose' : 'Mục Đích'}</th>
+                            <th style="width: 20%">${isEn ? 'Result Notes' : 'Kết Quả Ghi Nhận'}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -324,7 +328,7 @@ export function WeeklyVisitPlannerPanel() {
                     </tbody>
                 </table>
                 <div class="footer">
-                    <i>Hệ thống báo cáo tự động từ Wine ERP</i>
+                    <i>${isEn ? 'Automated report from Wine ERP' : 'Hệ thống báo cáo tự động từ Wine ERP'}</i>
                 </div>
                 <script>
                     window.onload = function() {
@@ -347,7 +351,7 @@ export function WeeklyVisitPlannerPanel() {
         return (
             <div className="flex items-center justify-center py-16 gap-2">
                 <Loader2 size={16} className="animate-spin" style={{ color: '#0891B2' }} />
-                <span className="text-sm" style={{ color: '#64748B' }}>Đang tải kế hoạch...</span>
+                <span className="text-sm" style={{ color: '#64748B' }}>{isEn ? 'Loading plan...' : 'Đang tải kế hoạch...'}</span>
             </div>
         )
     }
@@ -363,10 +367,12 @@ export function WeeklyVisitPlannerPanel() {
                     <Calendar size={18} style={{ color: '#0891B2' }} />
                     <div>
                         <h4 className="font-semibold text-sm" style={{ color: '#0F172A' }}>
-                            Kế Hoạch Đi Thăm Tuần {week} · Năm {year}
+                            {isEn ? `Visit Plan — Week ${week} · ${year}` : `Kế Hoạch Đi Thăm Tuần ${week} · Năm ${year}`}
                         </h4>
                         <p className="text-xs" style={{ color: '#475569' }}>
-                            {isReadOnly ? `Đang xem lịch trình của: ${getTargetRepName()}` : 'Lập kế hoạch & báo cáo đi thăm khách hàng'}
+                            {isReadOnly
+                                ? (isEn ? `Viewing schedule of: ${getTargetRepName()}` : `Đang xem lịch trình của: ${getTargetRepName()}`)
+                                : (isEn ? 'Plan & report weekly customer visits' : 'Lập kế hoạch & báo cáo đi thăm khách hàng')}
                         </p>
                     </div>
                 </div>
@@ -375,14 +381,14 @@ export function WeeklyVisitPlannerPanel() {
                     {/* Manager's Sales Rep Dropdown */}
                     {isManager && salesReps.length > 0 && (
                         <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold" style={{ color: '#475569' }}>Xem nhân viên:</span>
+                            <span className="text-xs font-semibold" style={{ color: '#475569' }}>{isEn ? 'View rep:' : 'Xem nhân viên:'}</span>
                             <select
                                 className="px-3 py-1.5 rounded text-xs outline-none"
                                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                                 value={selectedSalesRepId}
                                 onChange={e => setSelectedSalesRepId(e.target.value)}
                             >
-                                <option value={currentUser?.id}>Tôi (Cá nhân)</option>
+                                <option value={currentUser?.id}>{isEn ? 'Me (Personal)' : 'Tôi (Cá nhân)'}</option>
                                 {salesReps.map(r => (
                                     <option key={r.id} value={r.id}>{r.name} ({r.email})</option>
                                 ))}
@@ -395,7 +401,7 @@ export function WeeklyVisitPlannerPanel() {
                             <ArrowLeft size={15} />
                         </button>
                         <button onClick={() => setWeekOffset(0)} className="inline-block px-2.5 py-1 text-xs rounded transition border font-semibold whitespace-nowrap shrink-0" style={{ borderColor: '#E2E8F0', color: '#0891B2' }}>
-                            Tuần Này
+                            {isEn ? 'This Week' : 'Tuần Này'}
                         </button>
                         <button onClick={() => setWeekOffset(prev => prev + 1)} className="p-1.5 rounded transition hover:bg-slate-100" style={{ color: '#475569' }}>
                             <ArrowRight size={15} />
@@ -410,7 +416,7 @@ export function WeeklyVisitPlannerPanel() {
                     <div className="p-4 sm:p-5 rounded-lg space-y-4" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#0891B2' }}>
-                                Lộ trình đi thăm dự kiến ({visits.length})
+                                {isEn ? `Planned Visit Itinerary (${visits.length})` : `Lộ trình đi thăm dự kiến (${visits.length})`}
                             </span>
                             
                             {!isReadOnly && (
@@ -420,7 +426,7 @@ export function WeeklyVisitPlannerPanel() {
                                         className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold"
                                         style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8,145,178,0.25)' }}
                                     >
-                                        <Plus size={12} /> Thêm Lịch Mới
+                                        <Plus size={12} /> {isEn ? 'Add Visit' : 'Thêm Lịch Mới'}
                                     </button>
                                     <button
                                         onClick={handleSavePlan}
@@ -429,7 +435,7 @@ export function WeeklyVisitPlannerPanel() {
                                         style={{ background: '#0E7490', color: '#FFFFFF' }}
                                     >
                                         {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-                                        Lưu kế hoạch
+                                        {isEn ? 'Save Plan' : 'Lưu kế hoạch'}
                                     </button>
                                 </div>
                             )}
@@ -438,17 +444,17 @@ export function WeeklyVisitPlannerPanel() {
                         {/* Form thêm lịch viếng thăm mới */}
                         {showAddVisit && !isReadOnly && (
                             <div className="p-4 rounded border space-y-3" style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
-                                <p className="text-xs font-bold text-[#B45309]">Thêm Khách Hàng</p>
+                                <p className="text-xs font-bold text-[#B45309]">{isEn ? 'Add Customer Visit' : 'Thêm Khách Hàng'}</p>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                     <div>
-                                        <label className="text-[10px] uppercase font-bold block mb-1" style={{ color: '#64748B' }}>Khách Hàng</label>
+                                        <label className="text-[10px] uppercase font-bold block mb-1" style={{ color: '#64748B' }}>{isEn ? 'Customer' : 'Khách Hàng'}</label>
                                         <select
                                             className={inputCls}
                                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px', padding: '6px 8px', width: '100%', fontSize: '12px' }}
                                             value={newVisit.customerId}
                                             onChange={e => setNewVisit(prev => ({ ...prev, customerId: e.target.value }))}
                                         >
-                                            <option value="" style={{ backgroundColor: '#FFFFFF', color: '#0F172A' }}>-- Chọn khách hàng --</option>
+                                            <option value="" style={{ backgroundColor: '#FFFFFF', color: '#0F172A' }}>{isEn ? '-- Select customer --' : '-- Chọn khách hàng --'}</option>
                                             {customers.map(c => (
                                                 <option key={c.id} value={c.id} style={{ backgroundColor: '#FFFFFF', color: '#0F172A' }}>
                                                     {c.name} ({c.code})
@@ -457,7 +463,7 @@ export function WeeklyVisitPlannerPanel() {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="text-[10px] uppercase font-bold block mb-1" style={{ color: '#64748B' }}>Thời Gian</label>
+                                        <label className="text-[10px] uppercase font-bold block mb-1" style={{ color: '#64748B' }}>{isEn ? 'Time' : 'Thời Gian'}</label>
                                         <input
                                             type="datetime-local"
                                             className={inputCls}
@@ -467,7 +473,7 @@ export function WeeklyVisitPlannerPanel() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-[10px] uppercase font-bold block mb-1" style={{ color: '#64748B' }}>Mục Đích</label>
+                                        <label className="text-[10px] uppercase font-bold block mb-1" style={{ color: '#64748B' }}>{isEn ? 'Purpose' : 'Mục Đích'}</label>
                                         <select
                                             className={inputCls}
                                             style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px', padding: '6px 8px', width: '100%', fontSize: '12px' }}
@@ -475,20 +481,20 @@ export function WeeklyVisitPlannerPanel() {
                                             onChange={e => setNewVisit(prev => ({ ...prev, purpose: e.target.value }))}
                                         >
                                             {PURPOSE_PRESETS.map(p => (
-                                                <option key={p} value={p} style={{ backgroundColor: '#FFFFFF', color: '#0F172A' }}>{p}</option>
+                                                <option key={p.vi} value={p.vi} style={{ backgroundColor: '#FFFFFF', color: '#0F172A' }}>{isEn ? p.en : p.vi}</option>
                                             ))}
                                         </select>
                                     </div>
                                 </div>
                                 <div className="flex justify-end gap-2">
-                                    <button onClick={() => setShowAddVisit(false)} className="inline-block px-3 py-1 text-xs font-semibold rounded border whitespace-nowrap shrink-0" style={{ borderColor: '#E2E8F0', color: '#64748B' }}>Hủy</button>
-                                    <button onClick={handleAddLocalVisit} className="inline-block px-3 py-1 text-xs font-semibold rounded whitespace-nowrap shrink-0" style={{ background: '#0E7490', color: '#FFFFFF' }}>Thêm</button>
+                                    <button onClick={() => setShowAddVisit(false)} className="inline-block px-3 py-1 text-xs font-semibold rounded border whitespace-nowrap shrink-0" style={{ borderColor: '#E2E8F0', color: '#64748B' }}>{isEn ? 'Cancel' : 'Hủy'}</button>
+                                    <button onClick={handleAddLocalVisit} className="inline-block px-3 py-1 text-xs font-semibold rounded whitespace-nowrap shrink-0" style={{ background: '#0E7490', color: '#FFFFFF' }}>{isEn ? 'Add' : 'Thêm'}</button>
                                 </div>
                             </div>
                         )}
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-bold" style={{ color: '#475569' }}>Trọng tâm tuần:</label>
+                            <label className="text-xs font-bold" style={{ color: '#475569' }}>{isEn ? 'Weekly Focus:' : 'Trọng tâm tuần:'}</label>
                             <input
                                 type="text"
                                 className="w-full px-3 py-2 text-sm outline-none"
@@ -496,18 +502,18 @@ export function WeeklyVisitPlannerPanel() {
                                 value={note}
                                 onChange={e => setNote(e.target.value)}
                                 disabled={isReadOnly}
-                                placeholder="Trọng tâm kế hoạch tuần đi chăm sóc..."
+                                placeholder={isEn ? 'Key focus for customer visits this week...' : 'Trọng tâm kế hoạch tuần đi chăm sóc...'}
                             />
                         </div>
 
                         {visits.length === 0 ? (
                             <div className="py-12 text-center text-xs" style={{ color: '#64748B' }}>
-                                Chưa có lộ trình đi thăm được lên kế hoạch cho tuần này.
+                                {isEn ? 'No customer visits planned for this week yet.' : 'Chưa có lộ trình đi thăm được lên kế hoạch cho tuần này.'}
                             </div>
                         ) : (
                             <div className="space-y-3">
                                 {visits.map((v, index) => {
-                                    const cfg = STATUS_CFG[v.status] || { label: v.status, color: '#475569', bg: 'rgba(100,116,139,0.1)' }
+                                    const cfg = STATUS_CFG[v.status] || { label: v.status, labelEn: v.status, color: '#475569', bg: 'rgba(100,116,139,0.1)' }
                                     const isSaved = !!v.id
                                     return (
                                         <div
@@ -522,17 +528,18 @@ export function WeeklyVisitPlannerPanel() {
                                                 <div className="space-y-0.5">
                                                     <div className="flex items-center gap-2 flex-wrap">
                                                         <span className="text-xs font-bold text-slate-900">
-                                                            {v.customer?.name || 'Khách hàng'}
+                                                            {v.customer?.name || (isEn ? 'Customer' : 'Khách hàng')}
                                                         </span>
                                                         <span className="text-[10px] font-mono" style={{ color: '#64748B' }}>
                                                             {v.customer?.code}
                                                         </span>
                                                         <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap shrink-0" style={{ color: cfg.color, background: cfg.bg }}>
-                                                            {cfg.label}
+                                                            {isEn ? cfg.labelEn : cfg.label}
                                                         </span>
                                                     </div>
-                                                    <p className="text-xs" style={{ color: '#475569' }}>
-                                                        ⏱ Dự kiến: {formatDate(v.visitDate)}
+                                                    <p className="text-xs flex items-center gap-1" style={{ color: '#475569' }}>
+                                                        <Clock size={11} className="shrink-0" />
+                                                        <span>{isEn ? 'Scheduled:' : 'Dự kiến:'} {formatDate(v.visitDate)}</span>
                                                     </p>
                                                 </div>
 
@@ -544,13 +551,13 @@ export function WeeklyVisitPlannerPanel() {
                                                                 className="flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-bold text-white shadow-xs"
                                                                 style={{ background: '#0891B2' }}
                                                             >
-                                                                <CheckCircle2 size={10} /> Check-in/Báo cáo
+                                                                <CheckCircle2 size={10} /> {isEn ? 'Check-in / Report' : 'Check-in/Báo cáo'}
                                                             </button>
                                                             <button
                                                                 onClick={() => handleCancelVisit(v.id!)}
                                                                 className="px-2.5 py-1 rounded text-[10px] font-bold text-rose-700 border border-rose-500/25 transition hover:bg-rose-500/10"
                                                             >
-                                                                Hủy lịch
+                                                                {isEn ? 'Cancel' : 'Hủy lịch'}
                                                             </button>
                                                         </>
                                                     )}
@@ -567,13 +574,13 @@ export function WeeklyVisitPlannerPanel() {
 
                                             <div className="text-xs p-2 rounded flex items-center gap-1.5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569' }}>
                                                 <Target size={12} className="text-cyan-700 shrink-0" />
-                                                <span><strong>Mục đích:</strong> {v.purpose}</span>
+                                                <span><strong>{isEn ? 'Purpose:' : 'Mục đích:'}</strong> {v.purpose}</span>
                                             </div>
 
                                             {v.resultNotes && (
                                                 <div className="text-xs p-2.5 rounded border border-[#15803D]/20 flex items-center gap-1.5" style={{ background: 'rgba(21,128,61,0.03)', color: '#0891B2' }}>
                                                     <FileText size={12} className="text-emerald-700 shrink-0" />
-                                                    <span><strong>Ghi chú kết quả:</strong> {v.resultNotes}</span>
+                                                    <span><strong>{isEn ? 'Result notes:' : 'Ghi chú kết quả:'}</strong> {v.resultNotes}</span>
                                                 </div>
                                             )}
                                         </div>
@@ -590,18 +597,18 @@ export function WeeklyVisitPlannerPanel() {
                     {checkInVisitId && !isReadOnly && (
                         <div className="p-5 rounded-lg space-y-4" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <div className="flex items-center justify-between">
-                                <p className="text-xs font-bold uppercase tracking-wider text-[#0891B2]">Báo cáo kết quả chuyến đi</p>
+                                <p className="text-xs font-bold uppercase tracking-wider text-[#0891B2]">{isEn ? 'Visit Result Report' : 'Báo cáo kết quả chuyến đi'}</p>
                                 <button onClick={() => setCheckInVisitId(null)} className="p-1" style={{ color: '#64748B' }}><X size={14} /></button>
                             </div>
                             <div className="space-y-3">
                                 <p className="text-xs" style={{ color: '#475569' }}>
-                                    Cập nhật ghi chú chuyến đi. Hệ thống tự động ghi nhận vào Lịch sử chăm sóc (Customer Activity).
+                                    {isEn ? 'Update visit notes. The system will automatically log this into Customer Activity.' : 'Cập nhật ghi chú chuyến đi. Hệ thống tự động ghi nhận vào Lịch sử chăm sóc (Customer Activity).'}
                                 </p>
                                 <textarea
                                     className="w-full px-3 py-2 text-sm outline-none resize-none"
                                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
                                     rows={4}
-                                    placeholder="Nội dung kết quả làm việc với khách hàng..."
+                                    placeholder={isEn ? 'Enter outcome and notes from customer visit...' : 'Nội dung kết quả làm việc với khách hàng...'}
                                     value={resultNotes}
                                     onChange={e => setResultNotes(e.target.value)}
                                 />
@@ -611,7 +618,7 @@ export function WeeklyVisitPlannerPanel() {
                                     className="w-full py-2 text-center text-xs font-bold rounded text-slate-900"
                                     style={{ background: resultNotes.trim() ? '#0E7490' : '#E2E8F0', color: resultNotes.trim() ? '#F8FAFC' : '#64748B', borderRadius: '4px' }}
                                 >
-                                    {completing ? 'Đang hoàn thành...' : 'Xác nhận Hoàn Thành'}
+                                    {completing ? (isEn ? 'Completing...' : 'Đang hoàn thành...') : (isEn ? 'Confirm Completed' : 'Xác nhận Hoàn Thành')}
                                 </button>
                             </div>
                         </div>
@@ -621,16 +628,16 @@ export function WeeklyVisitPlannerPanel() {
                     <div className="p-5 rounded-lg space-y-4" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-bold uppercase tracking-wider text-[#B45309]">
-                                Báo cáo tuần đã thăm
+                                {isEn ? 'Completed Weekly Visits' : 'Báo cáo tuần đã thăm'}
                             </span>
                             <span className="inline-block text-xs px-2 py-0.5 rounded-full font-bold bg-[#0E7490]/10 text-[#0891B2] whitespace-nowrap shrink-0">
-                                {completedVisits.length} lượt
+                                {completedVisits.length} {isEn ? 'visits' : 'lượt'}
                             </span>
                         </div>
 
                         {completedVisits.length === 0 ? (
                             <div className="py-6 text-center text-xs" style={{ color: '#64748B' }}>
-                                Chưa có khách hàng nào được ghi nhận hoàn thành tuần này.
+                                {isEn ? 'No completed visits recorded this week.' : 'Chưa có khách hàng nào được ghi nhận hoàn thành tuần này.'}
                             </div>
                         ) : (
                             <div className="space-y-3">
@@ -640,11 +647,11 @@ export function WeeklyVisitPlannerPanel() {
                                             <p className="text-xs font-bold text-slate-900">{v.customer?.name}</p>
                                             <p className="text-[10px] flex items-center gap-1" style={{ color: '#475569' }}>
                                                 <Clock size={10} className="shrink-0" />
-                                                <span>{new Date(v.visitDate).toLocaleDateString('vi-VN')}</span>
+                                                <span>{new Date(v.visitDate).toLocaleDateString(locale)}</span>
                                             </p>
                                             <p className="text-[10px] mt-1 text-slate-600 truncate flex items-center gap-1">
                                                 <FileText size={10} className="shrink-0 text-slate-400" />
-                                                <span>{v.resultNotes || 'Đã viếng thăm'}</span>
+                                                <span>{v.resultNotes || (isEn ? 'Visited' : 'Đã viếng thăm')}</span>
                                             </p>
                                         </div>
                                     ))}
@@ -656,14 +663,14 @@ export function WeeklyVisitPlannerPanel() {
                                         className="flex items-center justify-center gap-1.5 py-2 rounded text-xs font-bold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition border border-slate-300"
                                         style={{ background: '#FFFFFF' }}
                                     >
-                                        <Download size={12} /> Xuất CSV
+                                        <Download size={12} /> {isEn ? 'Export CSV' : 'Xuất CSV'}
                                     </button>
                                     <button
                                         onClick={handlePrintReport}
-                                        className="flex items-center justify-center gap-1.5 py-2 rounded text-xs font-bold text-slate-900 hover:opacity-90 transition"
+                                        className="flex items-center justify-center gap-1.5 py-2 rounded text-xs font-bold text-white hover:opacity-90 transition"
                                         style={{ background: '#B45309' }}
                                     >
-                                        <Printer size={12} /> In Báo Cáo
+                                        <Printer size={12} /> {isEn ? 'Print Report' : 'In Báo Cáo'}
                                     </button>
                                 </div>
                             </div>
@@ -672,14 +679,14 @@ export function WeeklyVisitPlannerPanel() {
 
                     {/* Vận hành hướng dẫn */}
                     <div className="p-5 rounded-lg space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#475569' }}>Thông tin</p>
+                        <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#475569' }}>{isEn ? 'Information' : 'Thông tin'}</p>
                         <ul className="text-xs space-y-2 list-disc list-inside" style={{ color: '#64748B' }}>
                           {isReadOnly ? (
-                              <li>Chế độ xem giám sát (Đọc kế hoạch nhân viên). Không hiển thị chức năng lập hoặc sửa lịch trình.</li>
+                              <li>{isEn ? 'Supervisor read-only mode. Creating or editing schedules is disabled.' : 'Chế độ xem giám sát (Đọc kế hoạch nhân viên). Không hiển thị chức năng lập hoặc sửa lịch trình.'}</li>
                           ) : (
-                              <li>Bạn đang lập và báo cáo lịch trình tuần cá nhân của mình.</li>
+                              <li>{isEn ? 'You are planning and reporting your personal weekly schedule.' : 'Bạn đang lập và báo cáo lịch trình tuần cá nhân của mình.'}</li>
                           )}
-                          <li>Lịch đi thăm hoàn thành sẽ xuất hiện tại tab <strong>"Báo cáo tuần đã thăm"</strong> để xuất báo cáo nộp.</li>
+                          <li>{isEn ? 'Completed visits appear under "Completed Weekly Visits" for report export.' : 'Lịch đi thăm hoàn thành sẽ xuất hiện tại tab "Báo cáo tuần đã thăm" để xuất báo cáo nộp.'}</li>
                         </ul>
                     </div>
                 </div>

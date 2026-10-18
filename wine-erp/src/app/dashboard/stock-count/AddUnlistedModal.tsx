@@ -1,8 +1,10 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Plus, Minus, Search, MapPin, Package, AlertCircle, Save, RefreshCw, X } from 'lucide-react'
+import { Plus, Minus, Search, MapPin, AlertCircle, Save, RefreshCw, X } from 'lucide-react'
 import { searchProductsForAddition, addUnlistedProductToStockCountSession, getWarehouseLocationOptions } from './actions'
+import { useAppLocale } from '@/lib/i18n'
+import { getStockCountDict } from './i18n'
 
 type Props = {
     sessionId: string
@@ -15,6 +17,8 @@ type Props = {
 }
 
 export function AddUnlistedModal({ sessionId, sessionNo, warehouseId, defaultZone, zones, onClose, onSuccess }: Props) {
+    const { locale } = useAppLocale()
+    const t = getStockCountDict(locale)
     const [searchQuery, setSearchQuery] = useState('')
     const [products, setProducts] = useState<any[]>([])
     const [isSearching, setIsSearching] = useState(false)
@@ -23,13 +27,13 @@ export function AddUnlistedModal({ sessionId, sessionNo, warehouseId, defaultZon
 
     // Form inputs
     const [vintage, setVintage] = useState<string>('')
-    const initialLoc = (defaultZone && defaultZone !== 'ALL') ? defaultZone : (zones[0] || 'Khu vực chung')
+    const initialLoc = (defaultZone && defaultZone !== 'ALL') ? defaultZone : (zones[0] || t.common.generalZone)
     const [locationCode, setLocationCode] = useState<string>(initialLoc)
     const [selectedLocationId, setSelectedLocationId] = useState<string>('')
     const [casesStr, setCasesStr] = useState<string>('0')
     const [looseStr, setLooseStr] = useState<string>('0')
     const [varianceReason, setVarianceReason] = useState<string>('UNRECORDED_GR')
-    const [notes, setNotes] = useState<string>('Mã chèn thêm ngoài danh sách kiểm kê')
+    const [notes, setNotes] = useState<string>(t.addUnlisted.defaultNotes)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [errorMsg, setErrorMsg] = useState('')
 
@@ -64,12 +68,12 @@ export function AddUnlistedModal({ sessionId, sessionNo, warehouseId, defaultZon
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!selectedProduct) {
-            setErrorMsg('Vui lòng chọn 1 sản phẩm từ danh sách')
+            setErrorMsg(t.addUnlisted.errNoProduct)
             return
         }
 
         if (totalBottles <= 0) {
-            setErrorMsg('Số lượng đếm thực tế phải lớn hơn 0')
+            setErrorMsg(t.addUnlisted.errZeroQty)
             return
         }
 
@@ -93,7 +97,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, warehouseId, defaultZon
             onSuccess(res.lineId)
             onClose()
         } else {
-            setErrorMsg(res.error || 'Không thể chèn thêm sản phẩm vào kiểm kê')
+            setErrorMsg(res.error || t.addUnlisted.errNoProduct)
         }
     }
 
@@ -115,10 +119,10 @@ export function AddUnlistedModal({ sessionId, sessionNo, warehouseId, defaultZon
                                 {sessionNo}
                             </span>
                             <span className="inline-block text-[10px] font-extrabold uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 whitespace-nowrap shrink-0">
-                                + Chèn Mã Bổ Sung
+                                {t.addUnlisted.badge}
                             </span>
                         </div>
-                        <h3 className="text-sm sm:text-base font-extrabold text-slate-900 mt-1">Chèn Mã / Niên Vụ Ngoài Danh Sách</h3>
+                        <h3 className="text-sm sm:text-base font-extrabold text-slate-900 mt-1">{t.addUnlisted.title}</h3>
                     </div>
                     <button onClick={onClose} className="min-h-[40px] min-w-[40px] flex items-center justify-center text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 active:scale-90 transition-all cursor-pointer">
                         <X className="w-5 h-5" />
@@ -135,12 +139,12 @@ export function AddUnlistedModal({ sessionId, sessionNo, warehouseId, defaultZon
                 <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
                     {/* Step 1: Product Selector */}
                     <div>
-                        <label className="text-slate-700 font-bold block mb-1">1. Chọn sản phẩm phát sinh tại kệ:</label>
+                        <label className="text-slate-700 font-bold block mb-1">{t.addUnlisted.step1Label}</label>
                         <div className="relative mb-2">
                             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                             <input
                                 type="text"
-                                placeholder="Gõ mã SKU hoặc tên rượu để tìm..."
+                                placeholder={t.addUnlisted.searchPlaceholder}
                                 value={searchQuery}
                                 onChange={e => {
                                     setSearchQuery(e.target.value)
@@ -165,10 +169,10 @@ export function AddUnlistedModal({ sessionId, sessionNo, warehouseId, defaultZon
                         <div className="max-h-36 overflow-y-auto border border-slate-200 rounded-lg divide-y divide-slate-100 bg-white">
                             {isSearching ? (
                                 <div className="p-3 text-center text-slate-400 flex items-center justify-center gap-1.5">
-                                    <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Đang tìm sản phẩm...
+                                    <RefreshCw className="w-3.5 h-3.5 animate-spin" /> {t.addUnlisted.searching}
                                 </div>
                             ) : products.length === 0 ? (
-                                <div className="p-3 text-center text-slate-400">Không tìm thấy sản phẩm phù hợp</div>
+                                <div className="p-3 text-center text-slate-400">{t.addUnlisted.emptyProducts}</div>
                             ) : (
                                 products.map(p => (
                                     <div
@@ -181,7 +185,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, warehouseId, defaultZon
                                             <div className="font-bold text-xs mt-0.5 truncate">{p.productName}</div>
                                         </div>
                                         <span className="inline-block text-[10px] font-mono text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 whitespace-nowrap shrink-0">
-                                            {p.unitsPerCase || 6} chai/thùng
+                                            {p.unitsPerCase || 6} {t.barcodeModal.bottlesPerCase}
                                         </span>
                                     </div>
                                 ))
@@ -189,9 +193,9 @@ export function AddUnlistedModal({ sessionId, sessionNo, warehouseId, defaultZon
                         </div>
                         {selectedProduct && (
                             <div className="mt-2 p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-900 font-bold flex items-center justify-between gap-2 text-xs">
-                                <span className="truncate">Đã chọn: {selectedProduct.productName} ({selectedProduct.skuCode})</span>
+                                <span className="truncate">{t.addUnlisted.selectedPrefix} {selectedProduct.productName} ({selectedProduct.skuCode})</span>
                                 <span className="inline-block text-[10px] bg-emerald-200 px-2 py-0.5 rounded text-emerald-900 font-mono whitespace-nowrap shrink-0">
-                                    {selectedProduct.unitsPerCase || 6} chai/thùng
+                                    {selectedProduct.unitsPerCase || 6} {t.barcodeModal.bottlesPerCase}
                                 </span>
                             </div>
                         )}
@@ -200,12 +204,12 @@ export function AddUnlistedModal({ sessionId, sessionNo, warehouseId, defaultZon
                     {/* Step 2: Vintage & Zone/Location */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         <div>
-                            <label className="text-slate-700 font-bold block mb-1">2. Niên vụ (Vintage):</label>
+                            <label className="text-slate-700 font-bold block mb-1">{t.addUnlisted.step2Label}</label>
                             <input
                                 type="number"
                                 inputMode="numeric"
                                 pattern="[0-9]*"
-                                placeholder="VD: 2020 (Trống = NV)"
+                                placeholder={t.addUnlisted.vintagePlaceholder}
                                 value={vintage}
                                 onChange={e => setVintage(e.target.value)}
                                 className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg p-2.5 text-base sm:text-xs outline-none focus:border-[#0E7490] font-mono font-bold"
@@ -213,10 +217,10 @@ export function AddUnlistedModal({ sessionId, sessionNo, warehouseId, defaultZon
                         </div>
 
                         <div>
-                            <label className="text-slate-700 font-bold block mb-1">3. Vị trí kệ kho:</label>
+                            <label className="text-slate-700 font-bold block mb-1">{t.addUnlisted.step3Label}</label>
                             <input
                                 type="text"
-                                placeholder="VD: Khu A - Kệ 02"
+                                placeholder={t.addUnlisted.locationPlaceholder}
                                 value={locationCode}
                                 onChange={e => {
                                     const val = e.target.value
@@ -232,7 +236,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, warehouseId, defaultZon
                     {quickLocations.length > 0 && (
                         <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
-                                <MapPin className="w-3 h-3 text-[#0E7490]" /> Chọn nhanh kệ:
+                                <MapPin className="w-3 h-3 text-[#0E7490]" /> {t.addUnlisted.quickPickLoc}
                             </span>
                             {quickLocations.map(z => (
                                 <button
@@ -257,11 +261,11 @@ export function AddUnlistedModal({ sessionId, sessionNo, warehouseId, defaultZon
 
                     {/* Step 3: Quantity found with Mobile Steppers */}
                     <div>
-                        <label className="text-slate-700 font-bold block mb-1">4. Số lượng thực tế đếm được:</label>
+                        <label className="text-slate-700 font-bold block mb-1">{t.addUnlisted.step4Label}</label>
                         <div className="grid grid-cols-2 gap-2.5 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
                             <div className="bg-white border border-slate-300 rounded-lg p-2 text-center space-y-1.5">
                                 <span className="text-[10px] font-bold text-slate-500 block uppercase tracking-wider">
-                                    Số thùng ({upc}c)
+                                    {t.addUnlisted.casesLabel} ({upc}c)
                                 </span>
                                 <div className="flex items-center justify-between gap-1">
                                     <button
@@ -293,7 +297,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, warehouseId, defaultZon
 
                             <div className="bg-white border border-slate-300 rounded-lg p-2 text-center space-y-1.5">
                                 <span className="text-[10px] font-bold text-slate-500 block uppercase tracking-wider">
-                                    Chai lẻ
+                                    {t.addUnlisted.looseLabel}
                                 </span>
                                 <div className="flex items-center justify-between gap-1">
                                     <button
@@ -324,30 +328,30 @@ export function AddUnlistedModal({ sessionId, sessionNo, warehouseId, defaultZon
                             </div>
                         </div>
                         <div className="mt-1.5 flex items-center justify-between text-[11px] font-mono px-1">
-                            <span className="text-slate-500">Quy đổi: [{casesNum} thùng × {upc}] + {looseNum} lẻ</span>
-                            <span className="text-emerald-700 font-extrabold">Tổng cộng: {totalBottles} chai</span>
+                            <span className="text-slate-500">{t.addUnlisted.convertedPrefix} [{casesNum} {t.common.cases} × {upc}] + {looseNum} {t.common.loose}</span>
+                            <span className="text-emerald-700 font-extrabold">{t.addUnlisted.totalPrefix} {totalBottles} {t.common.bottles}</span>
                         </div>
                     </div>
 
                     {/* Step 4: Variance Reason & Notes */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         <div>
-                            <label className="text-slate-700 font-bold block mb-1">5. Lý do nguyên nhân:</label>
+                            <label className="text-slate-700 font-bold block mb-1">{t.addUnlisted.step5Label}</label>
                             <select
                                 value={varianceReason}
                                 onChange={e => setVarianceReason(e.target.value)}
                                 className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg p-2.5 text-base sm:text-xs outline-none font-semibold cursor-pointer"
                             >
-                                <option value="UNRECORDED_GR">Chưa ghi nhận phiếu nhập GR</option>
-                                <option value="WRONG_LOCATION">Xếp sai vị trí kệ kho</option>
-                                <option value="WRONG_SKU">Nhầm mã SKU / Niên vụ</option>
-                                <option value="SAMPLE_STOCK">Hàng mẫu trưng bày</option>
-                                <option value="OTHER">Lý do khác</option>
+                                <option value="UNRECORDED_GR">{t.addUnlisted.reasonUnrecordedGr}</option>
+                                <option value="WRONG_LOCATION">{t.addUnlisted.reasonWrongLocation}</option>
+                                <option value="WRONG_SKU">{t.addUnlisted.reasonWrongSku}</option>
+                                <option value="SAMPLE_STOCK">{t.addUnlisted.reasonSampleStock}</option>
+                                <option value="OTHER">{t.addUnlisted.reasonOther}</option>
                             </select>
                         </div>
 
                         <div>
-                            <label className="text-slate-700 font-bold block mb-1">6. Ghi chú:</label>
+                            <label className="text-slate-700 font-bold block mb-1">{t.addUnlisted.step6Label}</label>
                             <input
                                 type="text"
                                 value={notes}
@@ -364,7 +368,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, warehouseId, defaultZon
                             onClick={onClose}
                             className="min-h-[44px] px-4 py-2 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold rounded-lg border border-slate-200 transition-all cursor-pointer"
                         >
-                            Hủy Bỏ
+                            {t.common.cancel}
                         </button>
                         <button
                             type="submit"
@@ -376,7 +380,7 @@ export function AddUnlistedModal({ sessionId, sessionNo, warehouseId, defaultZon
                             ) : (
                                 <>
                                     <Save className="w-4 h-4" />
-                                    Chèn Vào Phiếu ({totalBottles} chai)
+                                    {t.addUnlisted.submitBtn} ({totalBottles} {t.common.bottles})
                                 </>
                             )}
                         </button>
@@ -386,4 +390,3 @@ export function AddUnlistedModal({ sessionId, sessionNo, warehouseId, defaultZon
         </div>
     )
 }
-

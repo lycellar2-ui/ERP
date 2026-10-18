@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useEffect } from 'react'
 import {
     Globe, Package, FileText, CheckCircle2, Clock, Users, Plus, X, Loader2,
-    AlertTriangle, ChevronRight, Ship, Eye, Check, XCircle, Send, UploadCloud, Link,
+    AlertTriangle, Ship, Eye, Check, XCircle, UploadCloud, Link,
     Anchor, Warehouse, Mail
 } from 'lucide-react'
 import {
@@ -13,42 +13,39 @@ import {
     getActiveShipments, uploadAgencyDocument, getSubmissionDocuments,
     assignShipmentToPartner,
 } from './actions'
-import { formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
-import { PageHeader, StatGrid, StatCard, Button } from '@/components/ui'
+import {
+    PageHeader, StatGrid, StatCard, Button, StatusTabs, Toolbar,
+    Select, Input, Field, Table, THead, TBody, Tr, Th, Td, TableMessageRow,
+    StatusBadge, Badge, EmptyState
+} from '@/components/ui'
+import type { Tone } from '@/lib/ui/status'
+import { useAppLocale } from '@/lib/i18n'
+import { AGENCY_I18N } from './i18n'
+import { cn } from '@/lib/utils'
 
-const card: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px' }
-const inputStyle: React.CSSProperties = {
-    background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '6px',
+const STATUS_TONES: Record<string, Tone> = {
+    PENDING_REVIEW: 'warning',
+    APPROVED: 'success',
+    REJECTED: 'danger',
+    ACTIVE: 'success',
 }
 
-const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
-    PENDING_REVIEW: { label: 'Chờ Duyệt', color: '#B45309', bg: 'rgba(180,83,9,0.12)' },
-    APPROVED: { label: 'Đã Duyệt', color: '#15803D', bg: 'rgba(21,128,61,0.12)' },
-    REJECTED: { label: 'Từ Chối', color: '#B91C1C', bg: 'rgba(185,28,28,0.12)' },
-}
-
-const PARTNER_TYPE_MAP: Record<string, { label: string; color: string }> = {
-    CUSTOMS_BROKER: { label: 'ĐL Hải Quan', color: '#B45309' },
-    FORWARDER: { label: 'Forwarding', color: '#1D4ED8' },
-    SURVEYOR: { label: 'Giám Định', color: '#0891B2' },
+const PARTNER_TYPE_TONES: Record<string, Tone> = {
+    CUSTOMS_BROKER: 'warning',
+    FORWARDER: 'info',
+    SURVEYOR: 'brand',
 }
 
 const SHIPMENT_MILESTONES = [
-    { key: 'BOOKED', label: 'Đặt Chỗ', icon: Package },
-    { key: 'ON_VESSEL', label: 'Trên Tàu', icon: Ship },
-    { key: 'ARRIVED_PORT', label: 'Đến Cảng', icon: Anchor },
-    { key: 'CUSTOMS_CLEARED', label: 'Thông Quan', icon: CheckCircle2 },
-    { key: 'DELIVERED_TO_WAREHOUSE', label: 'Về Kho', icon: Warehouse },
+    { key: 'BOOKED', icon: Package },
+    { key: 'ON_VESSEL', icon: Ship },
+    { key: 'ARRIVED_PORT', icon: Anchor },
+    { key: 'CUSTOMS_CLEARED', icon: CheckCircle2 },
+    { key: 'DELIVERED_TO_WAREHOUSE', icon: Warehouse },
 ] as const
 
-const TABS = [
-    { key: 'submissions', label: 'Submissions', icon: FileText },
-    { key: 'assignments', label: 'Gán Đối Tác', icon: Link },
-    { key: 'partners', label: 'Đối Tác', icon: Users },
-] as const
-
-type TabKey = typeof TABS[number]['key']
+type TabKey = 'submissions' | 'assignments' | 'partners'
 
 function AgencySubmissionMobileCard({
     sub,
@@ -56,72 +53,74 @@ function AgencySubmissionMobileCard({
     isExpanded,
     onReview,
     isReviewing,
-    reviewAction,
+    i18n,
+    formatDate,
 }: {
     sub: AgencySubmissionRow
     onToggleExpand: (id: string) => void
     isExpanded: boolean
     onReview: (id: string, action: 'APPROVED' | 'REJECTED') => void
     isReviewing: boolean
-    reviewAction: 'APPROVED' | 'REJECTED' | null
+    i18n: typeof AGENCY_I18N['vi']
+    formatDate: (d: string | Date) => string
 }) {
-    const st = STATUS_MAP[sub.status] ?? STATUS_MAP.PENDING_REVIEW
-    const pt = PARTNER_TYPE_MAP[sub.partnerType] ?? { label: sub.partnerType, color: '#475569' }
+    const ptLabel = (i18n.partnerType as Record<string, string>)[sub.partnerType] ?? sub.partnerType
+    const ptTone = PARTNER_TYPE_TONES[sub.partnerType] ?? 'neutral'
+    const stLabel = (i18n.status as Record<string, string>)[sub.status] ?? sub.status
 
     return (
-        <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-xs space-y-3">
+        <div className="p-4 rounded-lg bg-white border border-lys-border shadow-2xs space-y-3">
             <div className="flex items-start justify-between gap-2">
                 <div>
-                    <h4 className="text-sm font-bold text-slate-900">{sub.partnerName}</h4>
-                    <span className="inline-block text-[11px] font-semibold px-2 py-0.5 rounded mt-1 whitespace-nowrap"
-                        style={{ color: pt.color, background: `${pt.color}18` }}>
-                        {pt.label}
-                    </span>
+                    <h4 className="text-sm font-bold text-lys-primary">{sub.partnerName}</h4>
+                    <Badge tone={ptTone} className="mt-1">{ptLabel}</Badge>
                 </div>
-                <span className="inline-block text-xs px-2.5 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0"
-                    style={{ color: st.color, background: st.bg }}>
-                    {st.label}
-                </span>
+                <StatusBadge status={sub.status} label={stLabel} toneOverrides={STATUS_TONES} />
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-xs border-t border-slate-100 pt-2 text-slate-600">
+            <div className="grid grid-cols-2 gap-2 text-xs border-t border-lys-border pt-2 text-lys-secondary">
                 <div>
-                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">B/L</span>
+                    <span className="text-lys-muted block text-[10px] uppercase font-semibold">{i18n.columns.bl}</span>
                     <span className="font-mono font-bold text-lys-teal-strong">{sub.shipmentBol || '—'}</span>
                 </div>
                 <div>
-                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Tờ Khai</span>
+                    <span className="text-lys-muted block text-[10px] uppercase font-semibold">{i18n.columns.declaration}</span>
                     <span className="font-mono">{sub.declarationNo || '—'}</span>
                 </div>
                 <div>
-                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Chứng Từ</span>
-                    <span className={sub.documentCount > 0 ? 'text-tone-success-fg font-semibold' : 'text-slate-400'}>
-                        {sub.documentCount} file
+                    <span className="text-lys-muted block text-[10px] uppercase font-semibold">{i18n.columns.docs}</span>
+                    <span className={sub.documentCount > 0 ? 'text-tone-success-fg font-semibold' : 'text-lys-muted'}>
+                        {sub.documentCount} {i18n.filesSuffix}
                     </span>
                 </div>
                 <div>
-                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Ngày Gửi</span>
+                    <span className="text-lys-muted block text-[10px] uppercase font-semibold">{i18n.columns.submittedAt}</span>
                     <span>{formatDate(sub.submittedAt)}</span>
                 </div>
             </div>
 
-            <div className="flex items-center justify-between border-t border-slate-100 pt-2 gap-2 flex-wrap">
-                <Button size="sm" variant="ghost" className="text-xs" onClick={() => onToggleExpand(sub.id)}>
-                    <Eye size={12} className="mr-1" /> {isExpanded ? 'Ẩn chi tiết' : 'Xem chi tiết'}
+            <div className="flex items-center justify-between border-t border-lys-border pt-2 gap-2 flex-wrap">
+                <Button size="sm" variant="ghost" onClick={() => onToggleExpand(sub.id)}>
+                    <Eye size={12} aria-hidden /> {isExpanded ? i18n.hideDetails : i18n.viewDetails}
                 </Button>
 
                 {sub.status === 'PENDING_REVIEW' && (
                     <div className="flex gap-1.5 ml-auto">
-                        <button onClick={() => onReview(sub.id, 'APPROVED')} disabled={isReviewing}
-                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded disabled:opacity-50"
-                            style={{ background: 'rgba(21,128,61,0.12)', color: '#15803D', border: '1px solid rgba(21,128,61,0.25)' }}>
-                            <Check size={11} /> Duyệt
-                        </button>
-                        <button onClick={() => onReview(sub.id, 'REJECTED')} disabled={isReviewing}
-                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded disabled:opacity-50"
-                            style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.2)' }}>
-                            <XCircle size={11} /> Từ chối
-                        </button>
+                        <Button
+                            size="sm"
+                            onClick={() => onReview(sub.id, 'APPROVED')}
+                            disabled={isReviewing}
+                        >
+                            <Check size={12} aria-hidden /> {i18n.approve}
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="danger-outline"
+                            onClick={() => onReview(sub.id, 'REJECTED')}
+                            disabled={isReviewing}
+                        >
+                            <XCircle size={12} aria-hidden /> {i18n.reject}
+                        </Button>
                     </div>
                 )}
             </div>
@@ -130,25 +129,24 @@ function AgencySubmissionMobileCard({
 }
 
 export function AgencyClient() {
+    const { locale, formatDate } = useAppLocale()
+    const i18n = AGENCY_I18N[locale]
+
     const [tab, setTab] = useState<TabKey>('submissions')
     const [stats, setStats] = useState<AgencyDashboardStats | null>(null)
 
-    // Submissions
     const [submissions, setSubmissions] = useState<AgencySubmissionRow[]>([])
     const [subsLoading, setSubsLoading] = useState(false)
     const [subsFilter, setSubsFilter] = useState('')
 
-    // Partners
     const [partners, setPartners] = useState<AgencyPartnerRow[]>([])
     const [partnersLoading, setPartnersLoading] = useState(false)
 
-    // Create partner drawer
     const [showCreatePartner, setShowCreatePartner] = useState(false)
     const [partnerForm, setPartnerForm] = useState({ code: '', name: '', type: 'CUSTOMS_BROKER' as const, email: '', password: '' })
     const [creatingPartner, setCreatingPartner] = useState(false)
     const [partnerError, setPartnerError] = useState('')
 
-    // Create submission drawer
     const [showCreateSub, setShowCreateSub] = useState(false)
     const [shipments, setShipments] = useState<any[]>([])
     const [shipmentsLoading, setShipmentsLoading] = useState(false)
@@ -156,18 +154,15 @@ export function AgencyClient() {
     const [creatingSub, setCreatingSub] = useState(false)
     const [subError, setSubError] = useState('')
 
-    // Review
     const [reviewingId, setReviewingId] = useState<string | null>(null)
     const [reviewAction, setReviewAction] = useState<'APPROVED' | 'REJECTED' | null>(null)
 
-    // Document expansion
     const [expandedSubId, setExpandedSubId] = useState<string | null>(null)
     const [documents, setDocuments] = useState<AgencyDocumentRow[]>([])
     const [docsLoading, setDocsLoading] = useState(false)
     const [uploadingDoc, setUploadingDoc] = useState(false)
     const [selectedDocType, setSelectedDocType] = useState('OTHER')
 
-    // Assignment
     const [assignShipments, setAssignShipments] = useState<any[]>([])
     const [assignLoading, setAssignLoading] = useState(false)
     const [assignForm, setAssignForm] = useState({ shipmentId: '', partnerId: '', role: 'FORWARDER' as 'FORWARDER' | 'CUSTOMS_BROKER' })
@@ -198,7 +193,6 @@ export function AgencyClient() {
         loadPartners()
     }, [loadStats, loadSubmissions, loadPartners])
 
-    // ── Create Partner ──────────────────────────
     const handleCreatePartner = async () => {
         if (!partnerForm.code || !partnerForm.name || !partnerForm.email) return
         setCreatingPartner(true)
@@ -214,12 +208,11 @@ export function AgencyClient() {
             loadPartners()
             loadStats()
         } else {
-            setPartnerError(result.error || 'Lỗi tạo đối tác')
+            setPartnerError(result.error || 'Error')
         }
         setCreatingPartner(false)
     }
 
-    // ── Create Submission ───────────────────────
     const openCreateSub = async () => {
         setShowCreateSub(true)
         setShipmentsLoading(true)
@@ -247,12 +240,11 @@ export function AgencyClient() {
             loadSubmissions()
             loadStats()
         } else {
-            setSubError(result.error || 'Lỗi tạo submission')
+            setSubError(result.error || 'Error')
         }
         setCreatingSub(false)
     }
 
-    // ── Review Submission ───────────────────────
     const handleReview = async (id: string, decision: 'APPROVED' | 'REJECTED') => {
         setReviewingId(id)
         setReviewAction(decision)
@@ -263,7 +255,6 @@ export function AgencyClient() {
         loadStats()
     }
 
-    // ── Document Management ─────────────────────
     const toggleExpand = async (subId: string) => {
         if (expandedSubId === subId) { setExpandedSubId(null); return }
         setExpandedSubId(subId)
@@ -285,288 +276,265 @@ export function AgencyClient() {
             setDocuments(docs)
             loadSubmissions(subsFilter)
         } else {
-            toast.error(`Lỗi upload: ${res.error || ''}`)
+            toast.error(`Error: ${res.error || ''}`)
         }
         setUploadingDoc(false)
         e.target.value = ''
     }
 
+    const tabItems = [
+        { value: 'submissions' as TabKey, label: i18n.tabs.submissions, count: stats?.pendingSubmissions ?? 0 },
+        { value: 'assignments' as TabKey, label: i18n.tabs.assignments },
+        { value: 'partners' as TabKey, label: i18n.tabs.partners, count: partners.length },
+    ]
+
     return (
         <div className="space-y-6 max-w-screen-2xl">
             <PageHeader
-                title="Import Agency Portal (AGN)"
-                description="Cổng đối tác hải quan – Quản lý partners, submissions, review & confirm"
+                description={i18n.description}
             />
 
             {/* Stats */}
             <StatGrid>
-                <StatCard icon={Users} label="Đối Tác" value={stats?.totalPartners ?? 0} />
-                <StatCard icon={Clock} label="Chờ Duyệt" value={stats?.pendingSubmissions ?? 0} tone={(stats?.pendingSubmissions ?? 0) > 0 ? 'warning' : undefined} />
-                <StatCard icon={CheckCircle2} label="Đã Duyệt Tháng Này" value={stats?.approvedThisMonth ?? 0} tone="success" />
-                <StatCard icon={Ship} label="Lô Hàng Active" value={stats?.activeShipments ?? 0} />
+                <StatCard icon={Users} label={i18n.stats.partners} value={stats?.totalPartners ?? 0} />
+                <StatCard icon={Clock} label={i18n.stats.pendingReview} value={stats?.pendingSubmissions ?? 0} tone={(stats?.pendingSubmissions ?? 0) > 0 ? 'warning' : undefined} />
+                <StatCard icon={CheckCircle2} label={i18n.stats.approvedThisMonth} value={stats?.approvedThisMonth ?? 0} tone="success" />
+                <StatCard icon={Ship} label={i18n.stats.activeShipments} value={stats?.activeShipments ?? 0} tone="info" />
             </StatGrid>
 
             {/* Tabs */}
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                {TABS.map(t => {
-                    const Icon = t.icon
-                    const isActive = tab === t.key
-                    return (
-                        <button key={t.key} onClick={() => setTab(t.key)}
-                            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all flex-1 justify-center cursor-pointer"
-                            style={{
-                                background: isActive ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
-                                color: isActive ? '#0891B2' : '#64748B',
-                                border: isActive ? '1px solid rgba(8, 145, 178, 0.2)' : '1px solid transparent',
-                            }}>
-                            <Icon size={14} />
-                            {t.label}
-                            {t.key === 'submissions' && (stats?.pendingSubmissions ?? 0) > 0 && (
-                                <span className="w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-bold"
-                                    style={{ background: '#D97706', color: '#FFFFFF' }}>{stats?.pendingSubmissions}</span>
-                            )}
-                        </button>
-                    )
-                })}
-            </div>
+            <StatusTabs
+                items={tabItems}
+                value={tab}
+                onChange={v => setTab(v)}
+            />
 
             {/* ═══ SUBMISSIONS TAB ═══ */}
             {tab === 'submissions' && (
                 <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex gap-2">
-                            <select value={subsFilter}
+                    <Toolbar
+                        left={
+                            <Select
+                                value={subsFilter}
                                 onChange={e => { setSubsFilter(e.target.value); loadSubmissions(e.target.value) }}
-                                className="px-3 py-2 text-sm outline-none"
-                                style={{ ...inputStyle, color: subsFilter ? '#0F172A' : '#64748B' }}>
-                                <option value="">Tất cả trạng thái</option>
-                                {Object.entries(STATUS_MAP).map(([k, v]) => (
-                                    <option key={k} value={k}>{v.label}</option>
+                                className="w-56"
+                            >
+                                <option value="">{i18n.allStatuses}</option>
+                                {Object.entries(i18n.status).map(([k, v]) => (
+                                    <option key={k} value={k}>{v}</option>
                                 ))}
-                            </select>
-                        </div>
-                        <button onClick={openCreateSub}
-                            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-md"
-                            style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                            <Plus size={14} /> Tạo Submission
-                        </button>
-                    </div>
+                            </Select>
+                        }
+                        right={
+                            <Button onClick={openCreateSub}>
+                                <Plus size={14} aria-hidden /> {i18n.createSubmission}
+                            </Button>
+                        }
+                    />
 
                     {/* Create Submission inline */}
                     {showCreateSub && (
-                        <div className="p-5 rounded-md space-y-4" style={card}>
+                        <div className="p-5 rounded-lg bg-white border border-lys-border shadow-xs space-y-4">
                             <div className="flex items-center justify-between">
-                                <h4 className="text-sm font-semibold" style={{ color: '#0F172A' }}>Tạo Submission Mới</h4>
-                                <button onClick={() => setShowCreateSub(false)} className="p-1 rounded" style={{ color: '#64748B' }}><X size={16} /></button>
+                                <h4 className="text-sm font-bold text-lys-primary">{i18n.createSubTitle}</h4>
+                                <Button size="sm" variant="ghost" onClick={() => setShowCreateSub(false)}><X size={16} /></Button>
                             </div>
 
                             {shipmentsLoading ? (
-                                <div className="flex justify-center py-4"><Loader2 size={18} className="animate-spin" style={{ color: '#0891B2' }} /></div>
+                                <div className="flex justify-center py-4"><Loader2 size={18} className="animate-spin text-lys-teal-strong" /></div>
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>
-                                            Đối tác <span style={{ color: '#B91C1C' }}>*</span>
-                                        </label>
-                                        <select value={subForm.partnerId} onChange={e => setSubForm(f => ({ ...f, partnerId: e.target.value }))}
-                                            className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}>
-                                            <option value="">— Chọn đối tác —</option>
-                                            {partners.map(p => <option key={p.id} value={p.id}>{p.name} ({PARTNER_TYPE_MAP[p.type]?.label})</option>)}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>
-                                            Lô hàng <span style={{ color: '#B91C1C' }}>*</span>
-                                        </label>
-                                        <select value={subForm.shipmentId} onChange={e => setSubForm(f => ({ ...f, shipmentId: e.target.value }))}
-                                            className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}>
-                                            <option value="">— Chọn lô hàng —</option>
-                                            {shipments.map(s => (
-                                                <option key={s.id} value={s.id}>{s.billOfLading} — {s.vesselName || 'N/A'}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Số Tờ Khai</label>
-                                        <input type="text" value={subForm.declarationNo}
-                                            onChange={e => setSubForm(f => ({ ...f, declarationNo: e.target.value }))}
-                                            placeholder="VD: 305-2026-0123"
-                                            className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}
-                                            onFocus={e => e.currentTarget.style.borderColor = '#0891B2'}
-                                            onBlur={e => e.currentTarget.style.borderColor = '#E2E8F0'} />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>ETA</label>
-                                        <input type="date" value={subForm.eta}
-                                            onChange={e => setSubForm(f => ({ ...f, eta: e.target.value }))}
-                                            className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}
-                                            onFocus={e => e.currentTarget.style.borderColor = '#0891B2'}
-                                            onBlur={e => e.currentTarget.style.borderColor = '#E2E8F0'} />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Chi phí phát sinh (VND)</label>
-                                        <input type="number" value={subForm.additionalCosts}
-                                            onChange={e => setSubForm(f => ({ ...f, additionalCosts: e.target.value }))}
-                                            placeholder="VD: 5000000"
-                                            className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}
-                                            onFocus={e => e.currentTarget.style.borderColor = '#0891B2'}
-                                            onBlur={e => e.currentTarget.style.borderColor = '#E2E8F0'} />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Ghi chú</label>
-                                        <input type="text" value={subForm.notes}
-                                            onChange={e => setSubForm(f => ({ ...f, notes: e.target.value }))}
-                                            placeholder="Ghi chú bổ sung..."
-                                            className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}
-                                            onFocus={e => e.currentTarget.style.borderColor = '#0891B2'}
-                                            onBlur={e => e.currentTarget.style.borderColor = '#E2E8F0'} />
-                                    </div>
+                                    <Field label={i18n.partnerLabel} required>
+                                        {id => (
+                                            <Select id={id} value={subForm.partnerId} onChange={e => setSubForm(f => ({ ...f, partnerId: e.target.value }))}>
+                                                <option value="">{i18n.selectPartner}</option>
+                                                {partners.map(p => (
+                                                    <option key={p.id} value={p.id}>
+                                                        {p.name} ({(i18n.partnerType as Record<string, string>)[p.type] ?? p.type})
+                                                    </option>
+                                                ))}
+                                            </Select>
+                                        )}
+                                    </Field>
+                                    <Field label={i18n.shipmentLabel} required>
+                                        {id => (
+                                            <Select id={id} value={subForm.shipmentId} onChange={e => setSubForm(f => ({ ...f, shipmentId: e.target.value }))}>
+                                                <option value="">{i18n.selectShipment}</option>
+                                                {shipments.map(s => (
+                                                    <option key={s.id} value={s.id}>{s.billOfLading} — {s.vesselName || 'N/A'}</option>
+                                                ))}
+                                            </Select>
+                                        )}
+                                    </Field>
+                                    <Field label={i18n.declarationNoLabel}>
+                                        {id => (
+                                            <Input
+                                                id={id}
+                                                value={subForm.declarationNo}
+                                                onChange={e => setSubForm(f => ({ ...f, declarationNo: e.target.value }))}
+                                                placeholder="305-2026-0123"
+                                            />
+                                        )}
+                                    </Field>
+                                    <Field label={i18n.etaLabel}>
+                                        {id => (
+                                            <Input
+                                                id={id}
+                                                type="date"
+                                                value={subForm.eta}
+                                                onChange={e => setSubForm(f => ({ ...f, eta: e.target.value }))}
+                                            />
+                                        )}
+                                    </Field>
+                                    <Field label={i18n.additionalCostsLabel}>
+                                        {id => (
+                                            <Input
+                                                id={id}
+                                                type="number"
+                                                value={subForm.additionalCosts}
+                                                onChange={e => setSubForm(f => ({ ...f, additionalCosts: e.target.value }))}
+                                                placeholder="5000000"
+                                            />
+                                        )}
+                                    </Field>
+                                    <Field label={i18n.notesLabel}>
+                                        {id => (
+                                            <Input
+                                                id={id}
+                                                value={subForm.notes}
+                                                onChange={e => setSubForm(f => ({ ...f, notes: e.target.value }))}
+                                                placeholder={i18n.notesPlaceholder}
+                                            />
+                                        )}
+                                    </Field>
                                 </div>
                             )}
 
                             {subError && (
-                                <p className="text-xs flex items-center gap-1" style={{ color: '#B91C1C' }}>
+                                <p className="text-xs flex items-center gap-1 text-tone-danger-fg">
                                     <AlertTriangle size={12} /> {subError}
                                 </p>
                             )}
 
                             <div className="flex justify-end gap-2">
-                                <button onClick={() => setShowCreateSub(false)} className="inline-block px-3 py-1.5 text-xs rounded-md whitespace-nowrap shrink-0"
-                                    style={{ color: '#475569', border: '1px solid #E2E8F0' }}>Huỷ</button>
-                                <button onClick={handleCreateSub} disabled={creatingSub || !subForm.partnerId || !subForm.shipmentId}
-                                    className="px-5 py-2 text-xs font-semibold rounded-md disabled:opacity-50"
-                                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                                    {creatingSub ? 'Đang tạo...' : 'Gửi Submission'}
-                                </button>
+                                <Button variant="secondary" onClick={() => setShowCreateSub(false)}>{i18n.cancel}</Button>
+                                <Button onClick={handleCreateSub} loading={creatingSub} disabled={creatingSub || !subForm.partnerId || !subForm.shipmentId}>
+                                    {creatingSub ? i18n.creating : i18n.submitSubmission}
+                                </Button>
                             </div>
                         </div>
                     )}
 
                     {/* Submissions table (Desktop) */}
-                    <div className="hidden md:block rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
-                        <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                            <thead>
-                                <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                    {['Đối Tác', 'Loại', 'B/L', 'Tờ Khai', 'Chứng Từ', 'Ngày Gửi', 'Trạng Thái', 'Hành Động'].map(h => (
-                                        <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold"
-                                            style={{ color: '#64748B' }}>{h}</th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
+                    <div className="hidden md:block">
+                        <Table>
+                            <THead>
+                                <Tr>
+                                    <Th>{i18n.columns.partner}</Th>
+                                    <Th>{i18n.columns.type}</Th>
+                                    <Th>{i18n.columns.bl}</Th>
+                                    <Th>{i18n.columns.declaration}</Th>
+                                    <Th>{i18n.columns.docs}</Th>
+                                    <Th>{i18n.columns.submittedAt}</Th>
+                                    <Th>{i18n.columns.status}</Th>
+                                    <Th>{i18n.columns.actions}</Th>
+                                </Tr>
+                            </THead>
+                            <TBody>
                                 {subsLoading ? (
-                                    <tr><td colSpan={8} className="text-center py-12"><Loader2 size={20} className="animate-spin mx-auto" style={{ color: '#0891B2' }} /></td></tr>
+                                    <Tr><Td colSpan={8} className="text-center py-12"><Loader2 size={20} className="animate-spin mx-auto text-lys-teal-strong" /></Td></Tr>
                                 ) : submissions.length === 0 ? (
-                                    <tr><td colSpan={8} className="text-center py-16" style={{ color: '#64748B' }}>
-                                        <Globe size={32} className="mx-auto mb-3" style={{ color: '#E2E8F0' }} />
-                                        <p>Chưa có submission nào</p>
-                                    </td></tr>
+                                    <TableMessageRow colSpan={8}>
+                                        <EmptyState icon={Globe} title={i18n.emptySubmissions} />
+                                    </TableMessageRow>
                                 ) : submissions.map(sub => {
-                                    const st = STATUS_MAP[sub.status] ?? STATUS_MAP.PENDING_REVIEW
-                                    const pt = PARTNER_TYPE_MAP[sub.partnerType] ?? { label: sub.partnerType, color: '#475569' }
+                                    const ptLabel = (i18n.partnerType as Record<string, string>)[sub.partnerType] ?? sub.partnerType
+                                    const ptTone = PARTNER_TYPE_TONES[sub.partnerType] ?? 'neutral'
+                                    const stLabel = (i18n.status as Record<string, string>)[sub.status] ?? sub.status
                                     const isReviewing = reviewingId === sub.id
                                     const isExpanded = expandedSubId === sub.id
 
                                     return (
                                         <React.Fragment key={sub.id}>
-                                            <tr
-                                                className="cursor-pointer hover:bg-[#0891B2]/4"
-                                                style={{ borderBottom: '1px solid #E2E8F0' }}
-                                                onClick={() => toggleExpand(sub.id)}>
-                                                <td className="px-3 py-3 text-sm font-medium" style={{ color: '#0F172A' }}>{sub.partnerName}</td>
-                                                <td className="px-3 py-3">
-                                                    <span className="inline-block text-xs font-semibold px-2 py-0.5 rounded whitespace-nowrap shrink-0"
-                                                        style={{ color: pt.color, background: `${pt.color}18` }}>{pt.label}</span>
-                                                </td>
-                                                <td className="px-3 py-3 text-xs font-bold" style={{ color: '#0891B2' }}>
-                                                    {sub.shipmentBol || '—'}
-                                                </td>
-                                                <td className="px-3 py-3 text-xs" style={{ color: '#475569' }}>
-                                                    {sub.declarationNo || '—'}
-                                                </td>
-                                                <td className="px-3 py-3 text-xs font-bold" style={{ color: sub.documentCount > 0 ? '#15803D' : '#64748B' }}>
-                                                    {sub.documentCount} file
-                                                </td>
-                                                <td className="px-3 py-3 text-xs" style={{ color: '#475569' }}>
-                                                    {formatDate(sub.submittedAt)}
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    <span className="inline-block text-xs px-2 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0"
-                                                        style={{ color: st.color, background: st.bg }}>{st.label}</span>
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    {sub.status === 'PENDING_REVIEW' && (
-                                                        <div className="flex gap-1">
-                                                            <button onClick={(e) => { e.stopPropagation(); handleReview(sub.id, 'APPROVED') }}
+                                            <Tr onClick={() => toggleExpand(sub.id)}>
+                                                <Td className="font-semibold text-lys-primary">{sub.partnerName}</Td>
+                                                <Td><Badge tone={ptTone}>{ptLabel}</Badge></Td>
+                                                <Td className="font-mono text-xs font-bold text-lys-teal-strong">{sub.shipmentBol || '—'}</Td>
+                                                <Td className="font-mono text-xs text-lys-secondary">{sub.declarationNo || '—'}</Td>
+                                                <Td className={cn('text-xs font-bold', sub.documentCount > 0 ? 'text-tone-success-fg' : 'text-lys-muted')}>
+                                                    {sub.documentCount} {i18n.filesSuffix}
+                                                </Td>
+                                                <Td className="text-xs text-lys-secondary">{formatDate(sub.submittedAt)}</Td>
+                                                <Td>
+                                                    <StatusBadge status={sub.status} label={stLabel} toneOverrides={STATUS_TONES} />
+                                                </Td>
+                                                <Td onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                                                    {sub.status === 'PENDING_REVIEW' ? (
+                                                        <div className="flex gap-1.5">
+                                                            <Button
+                                                                size="sm"
+                                                                onClick={() => handleReview(sub.id, 'APPROVED')}
+                                                                loading={isReviewing && reviewAction === 'APPROVED'}
                                                                 disabled={isReviewing}
-                                                                className="flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded disabled:opacity-50"
-                                                                style={{ background: 'rgba(21,128,61,0.12)', color: '#15803D', border: '1px solid rgba(21,128,61,0.25)' }}>
-                                                                {isReviewing && reviewAction === 'APPROVED'
-                                                                    ? <Loader2 size={10} className="animate-spin" />
-                                                                    : <Check size={10} />}
-                                                                Duyệt
-                                                            </button>
-                                                            <button onClick={(e) => { e.stopPropagation(); handleReview(sub.id, 'REJECTED') }}
+                                                            >
+                                                                <Check size={11} aria-hidden /> {i18n.approve}
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="danger-outline"
+                                                                onClick={() => handleReview(sub.id, 'REJECTED')}
+                                                                loading={isReviewing && reviewAction === 'REJECTED'}
                                                                 disabled={isReviewing}
-                                                                className="flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded disabled:opacity-50"
-                                                                style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.2)' }}>
-                                                                {isReviewing && reviewAction === 'REJECTED'
-                                                                    ? <Loader2 size={10} className="animate-spin" />
-                                                                    : <XCircle size={10} />}
-                                                                Từ chối
-                                                            </button>
+                                                            >
+                                                                <XCircle size={11} aria-hidden /> {i18n.reject}
+                                                            </Button>
                                                         </div>
-                                                    )}
-                                                    {sub.status !== 'PENDING_REVIEW' && sub.reviewedAt && (
-                                                        <span className="text-xs" style={{ color: '#64748B' }}>
-                                                            {formatDate(sub.reviewedAt)}
-                                                        </span>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                            {/* ── Document Expansion Row ── */}
+                                                    ) : sub.reviewedAt ? (
+                                                        <span className="text-xs text-lys-muted">{formatDate(sub.reviewedAt)}</span>
+                                                    ) : null}
+                                                </Td>
+                                            </Tr>
                                             {isExpanded && (
-                                                <tr style={{ background: '#F8FAFC' }}>
-                                                    <td colSpan={8} className="px-6 py-4">
+                                                <Tr className="bg-lys-subtle/50">
+                                                    <Td colSpan={8} className="px-6 py-4">
                                                         {docsLoading ? (
-                                                            <div className="flex items-center gap-2 text-xs" style={{ color: '#64748B' }}>
-                                                                <Loader2 size={12} className="animate-spin" /> Đang tải chứng từ...
+                                                            <div className="flex items-center gap-2 text-xs text-lys-muted">
+                                                                <Loader2 size={12} className="animate-spin" /> {i18n.loadingDocs}
                                                             </div>
                                                         ) : (
                                                             <div className="space-y-3">
-                                                                {/* ── Tracking Milestones ── */}
                                                                 {sub.shipmentStatus && (
-                                                                    <div className="mb-4 pb-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                                                        <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#B45309' }}>
-                                                                            Tracking Lô Hàng {sub.vesselName && `— ${sub.vesselName}`}
-                                                                            {sub.shipmentEta && <span style={{ color: '#64748B' }}> · ETA: {formatDate(sub.shipmentEta)}</span>}
+                                                                    <div className="mb-4 pb-4 border-b border-lys-border">
+                                                                        <p className="text-xs font-semibold uppercase tracking-wide mb-3 text-tone-warning-fg">
+                                                                            {i18n.shipmentTracking} {sub.vesselName && `— ${sub.vesselName}`}
+                                                                            {sub.shipmentEta && <span className="text-lys-muted"> · ETA: {formatDate(sub.shipmentEta)}</span>}
                                                                         </p>
                                                                         <div className="flex items-center gap-0">
                                                                             {SHIPMENT_MILESTONES.map((m, i) => {
                                                                                 const currentIdx = SHIPMENT_MILESTONES.findIndex(ms => ms.key === sub.shipmentStatus)
                                                                                 const isDone = i <= currentIdx
                                                                                 const isCurrent = i === currentIdx
+                                                                                const mLabel = (i18n.milestones as Record<string, string>)[m.key] ?? m.key
                                                                                 return (
                                                                                     <React.Fragment key={m.key}>
-                                                                                        <div className="flex flex-col items-center" style={{ minWidth: 70 }}>
-                                                                                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm mb-1 transition-all"
-                                                                                                style={{
-                                                                                                    background: isDone ? (isCurrent ? 'rgba(8, 145, 178, 0.15)' : 'rgba(21,128,61,0.15)') : '#FFFFFF',
-                                                                                                    border: `2px solid ${isDone ? (isCurrent ? '#0E7490' : '#15803D') : '#E2E8F0'}`,
-                                                                                                    boxShadow: isCurrent ? '0 0 12px rgba(8, 145, 178, 0.25)' : 'none',
-                                                                                                }}>
-                                                                                                <m.icon size={14} style={{ color: isDone ? (isCurrent ? '#0E7490' : '#15803D') : '#94A3B8' }} />
+                                                                                        <div className="flex flex-col items-center min-w-[70px]">
+                                                                                            <div className={cn(
+                                                                                                'w-8 h-8 rounded-full flex items-center justify-center text-sm mb-1 transition-all border-2',
+                                                                                                isDone
+                                                                                                    ? (isCurrent ? 'bg-lys-teal-soft border-lys-teal-strong text-lys-teal-strong' : 'bg-tone-success-bg border-tone-success-fg text-tone-success-fg')
+                                                                                                    : 'bg-white border-lys-border text-lys-muted'
+                                                                                            )}>
+                                                                                                <m.icon size={14} />
                                                                                             </div>
-                                                                                            <span className="text-[10px] font-semibold text-center leading-tight"
-                                                                                                style={{ color: isDone ? (isCurrent ? '#0E7490' : '#15803D') : '#64748B' }}>
-                                                                                                {m.label}
+                                                                                            <span className={cn(
+                                                                                                'text-[10px] font-semibold text-center leading-tight',
+                                                                                                isDone ? (isCurrent ? 'text-lys-teal-strong' : 'text-tone-success-fg') : 'text-lys-muted'
+                                                                                            )}>
+                                                                                                {mLabel}
                                                                                             </span>
                                                                                         </div>
                                                                                         {i < SHIPMENT_MILESTONES.length - 1 && (
-                                                                                            <div className="flex-1 h-0.5 -mt-4" style={{
-                                                                                                background: i < currentIdx ? '#15803D' : '#E2E8F0',
-                                                                                                minWidth: 16,
-                                                                                            }} />
+                                                                                            <div className={cn('flex-1 h-0.5 -mt-4 min-w-[16px]', i < currentIdx ? 'bg-tone-success-fg' : 'bg-lys-border')} />
                                                                                         )}
                                                                                     </React.Fragment>
                                                                                 )
@@ -575,27 +543,23 @@ export function AgencyClient() {
                                                                     </div>
                                                                 )}
 
-                                                                {/* ── Documents Section ── */}
                                                                 <div className="flex items-center justify-between">
-                                                                    <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#0891B2' }}>
-                                                                        Chứng từ đính kèm ({documents.length})
+                                                                    <p className="text-xs font-semibold uppercase tracking-wide text-lys-teal-strong">
+                                                                        {i18n.attachedDocs} ({documents.length})
                                                                     </p>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <select value={selectedDocType}
+                                                                    <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                                                                        <Select
+                                                                            value={selectedDocType}
                                                                             onChange={e => setSelectedDocType(e.target.value)}
-                                                                            onClick={e => e.stopPropagation()}
-                                                                            className="px-2 py-1 text-xs outline-none rounded"
-                                                                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569' }}>
-                                                                            <option value="CUSTOMS_DECLARATION">Tờ Khai HQ</option>
-                                                                            <option value="LOGISTICS_INVOICE">Invoice Logistics</option>
-                                                                            <option value="INSPECTION_CERT">Chứng Nhận GĐ</option>
-                                                                            <option value="OTHER">Khác</option>
-                                                                        </select>
-                                                                        <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold cursor-pointer whitespace-nowrap shrink-0"
-                                                                            style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}
-                                                                            onClick={e => e.stopPropagation()}>
+                                                                            className="w-40 text-xs"
+                                                                        >
+                                                                            {Object.entries(i18n.docTypes).map(([k, v]) => (
+                                                                                <option key={k} value={k}>{v}</option>
+                                                                            ))}
+                                                                        </Select>
+                                                                        <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold cursor-pointer whitespace-nowrap shrink-0 bg-lys-teal-soft text-lys-teal-strong border border-lys-teal">
                                                                             {uploadingDoc ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
-                                                                            {uploadingDoc ? 'Đang tải...' : 'Upload File'}
+                                                                            {uploadingDoc ? i18n.uploading : i18n.uploadFile}
                                                                             <input type="file" className="hidden" accept=".pdf,.doc,.docx,.jpg,.png,.xlsx"
                                                                                 onChange={e => handleUploadDoc(sub.id, e)} disabled={uploadingDoc} />
                                                                         </label>
@@ -607,47 +571,46 @@ export function AgencyClient() {
                                                                         {documents.map(doc => (
                                                                             <a key={doc.id} href={doc.fileUrl} target="_blank" rel="noreferrer"
                                                                                 onClick={e => e.stopPropagation()}
-                                                                                className="flex items-center gap-3 p-3 rounded transition-colors bg-white hover:bg-[#F1F5F9] border border-[#E2E8F0]">
-                                                                                <FileText size={18} style={{ color: '#475569', flexShrink: 0 }} />
+                                                                                className="flex items-center gap-3 p-3 rounded transition-colors bg-white hover:bg-lys-subtle border border-lys-border">
+                                                                                <FileText size={18} className="text-lys-secondary shrink-0" />
                                                                                 <div className="overflow-hidden flex-1">
-                                                                                    <p className="text-xs font-semibold" style={{ color: '#B45309' }}>{doc.typeLabel}</p>
-                                                                                    <p className="text-[10px] truncate" style={{ color: '#64748B' }}>{formatDate(doc.uploadedAt)}</p>
+                                                                                    <p className="text-xs font-semibold text-tone-warning-fg">{doc.typeLabel}</p>
+                                                                                    <p className="text-[10px] truncate text-lys-muted">{formatDate(doc.uploadedAt)}</p>
                                                                                 </div>
                                                                             </a>
                                                                         ))}
                                                                     </div>
                                                                 ) : (
-                                                                    <p className="text-xs italic" style={{ color: '#64748B' }}>Chưa có chứng từ nào. Nhấn "Upload File" để thêm.</p>
+                                                                    <p className="text-xs italic text-lys-muted">{i18n.noDocsYet}</p>
                                                                 )}
 
                                                                 {sub.notes && (
-                                                                    <div className="mt-2 pt-2" style={{ borderTop: '1px solid #E2E8F0' }}>
-                                                                        <p className="text-[10px] uppercase font-semibold mb-1" style={{ color: '#64748B' }}>Ghi chú</p>
-                                                                        <p className="text-xs" style={{ color: '#475569' }}>{sub.notes}</p>
+                                                                    <div className="mt-2 pt-2 border-t border-lys-border">
+                                                                        <p className="text-[10px] uppercase font-semibold mb-1 text-lys-muted">{i18n.notesLabel}</p>
+                                                                        <p className="text-xs text-lys-secondary">{sub.notes}</p>
                                                                     </div>
                                                                 )}
                                                             </div>
                                                         )}
-                                                    </td>
-                                                </tr>
+                                                    </Td>
+                                                </Tr>
                                             )}
                                         </React.Fragment>
                                     )
                                 })}
-                            </tbody>
-                        </table>
+                            </TBody>
+                        </Table>
                     </div>
 
                     {/* Submissions Mobile Card List */}
                     <div className="block md:hidden space-y-3">
                         {subsLoading ? (
-                            <div className="p-8 text-center bg-white rounded-lg border border-slate-200">
-                                <Loader2 size={20} className="animate-spin mx-auto" style={{ color: '#0891B2' }} />
+                            <div className="p-8 text-center bg-white rounded-lg border border-lys-border">
+                                <Loader2 size={20} className="animate-spin mx-auto text-lys-teal-strong" />
                             </div>
                         ) : submissions.length === 0 ? (
-                            <div className="p-8 text-center bg-white rounded-lg border border-slate-200 text-slate-500">
-                                <Globe size={28} className="mx-auto mb-2 text-slate-300" />
-                                <p className="text-xs">Chưa có submission nào</p>
+                            <div className="p-8 bg-white rounded-lg border border-lys-border">
+                                <EmptyState icon={Globe} title={i18n.emptySubmissions} />
                             </div>
                         ) : (
                             submissions.map(sub => (
@@ -658,7 +621,8 @@ export function AgencyClient() {
                                     isExpanded={expandedSubId === sub.id}
                                     onReview={handleReview}
                                     isReviewing={reviewingId === sub.id}
-                                    reviewAction={reviewAction}
+                                    i18n={i18n as any}
+                                    formatDate={formatDate}
                                 />
                             ))
                         )}
@@ -671,85 +635,103 @@ export function AgencyClient() {
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>Gán Forwarder / Customs Broker cho Lô Hàng</p>
-                            <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>Chọn lô hàng → Chọn đối tác → Gán vai trò</p>
+                            <p className="text-sm font-semibold text-lys-primary">{i18n.assignTitle}</p>
+                            <p className="text-xs mt-0.5 text-lys-muted">{i18n.assignDesc}</p>
                         </div>
-                        <button onClick={async () => { setAssignLoading(true); const d = await getActiveShipments(); setAssignShipments(d); setAssignLoading(false) }}
-                            className="px-3 py-2 text-xs font-semibold rounded-md" style={{ color: '#1D4ED8', border: '1px solid rgba(29,78,216,0.3)' }}>
-                            {assignLoading ? <Loader2 size={12} className="animate-spin" /> : 'Tải danh sách lô hàng'}
-                        </button>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            loading={assignLoading}
+                            onClick={async () => {
+                                setAssignLoading(true)
+                                const d = await getActiveShipments()
+                                setAssignShipments(d)
+                                setAssignLoading(false)
+                            }}
+                        >
+                            {i18n.loadShipmentsBtn}
+                        </Button>
                     </div>
 
-                    <div className="p-5 rounded-md space-y-4" style={card}>
+                    <div className="p-5 rounded-lg bg-white border border-lys-border shadow-2xs space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div>
-                                <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Lô hàng</label>
-                                <select value={assignForm.shipmentId} onChange={e => setAssignForm(f => ({ ...f, shipmentId: e.target.value }))}
-                                    className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}>
-                                    <option value="">— Chọn lô hàng —</option>
-                                    {assignShipments.map(s => <option key={s.id} value={s.id}>{s.billOfLading} — {s.vesselName ?? 'TBC'}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Đối tác</label>
-                                <select value={assignForm.partnerId} onChange={e => setAssignForm(f => ({ ...f, partnerId: e.target.value }))}
-                                    className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}>
-                                    <option value="">— Chọn đối tác —</option>
-                                    {partners.filter(p => p.status === 'ACTIVE').map(p => (
-                                        <option key={p.id} value={p.id}>{p.name} ({PARTNER_TYPE_MAP[p.type]?.label})</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Vai trò</label>
-                                <select value={assignForm.role} onChange={e => setAssignForm(f => ({ ...f, role: e.target.value as any }))}
-                                    className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}>
-                                    <option value="FORWARDER">Forwarder</option>
-                                    <option value="CUSTOMS_BROKER">Customs Broker</option>
-                                </select>
-                            </div>
+                            <Field label={i18n.shipmentLabel}>
+                                {id => (
+                                    <Select id={id} value={assignForm.shipmentId} onChange={e => setAssignForm(f => ({ ...f, shipmentId: e.target.value }))}>
+                                        <option value="">{i18n.selectShipment}</option>
+                                        {assignShipments.map(s => <option key={s.id} value={s.id}>{s.billOfLading} — {s.vesselName ?? 'TBC'}</option>)}
+                                    </Select>
+                                )}
+                            </Field>
+                            <Field label={i18n.partnerLabel}>
+                                {id => (
+                                    <Select id={id} value={assignForm.partnerId} onChange={e => setAssignForm(f => ({ ...f, partnerId: e.target.value }))}>
+                                        <option value="">{i18n.selectPartner}</option>
+                                        {partners.filter(p => p.status === 'ACTIVE').map(p => (
+                                            <option key={p.id} value={p.id}>
+                                                {p.name} ({(i18n.partnerType as Record<string, string>)[p.type] ?? p.type})
+                                            </option>
+                                        ))}
+                                    </Select>
+                                )}
+                            </Field>
+                            <Field label={i18n.roleLabel}>
+                                {id => (
+                                    <Select id={id} value={assignForm.role} onChange={e => setAssignForm(f => ({ ...f, role: e.target.value as any }))}>
+                                        <option value="FORWARDER">{i18n.partnerType.FORWARDER}</option>
+                                        <option value="CUSTOMS_BROKER">{i18n.partnerType.CUSTOMS_BROKER}</option>
+                                    </Select>
+                                )}
+                            </Field>
                         </div>
                         <div className="flex justify-end">
-                            <button onClick={async () => {
-                                if (!assignForm.shipmentId || !assignForm.partnerId) { toast.error('Chọn lô hàng và đối tác'); return }
-                                setAssigning(true)
-                                const res = await assignShipmentToPartner(assignForm.shipmentId, assignForm.partnerId, assignForm.role)
-                                if (res.success) { toast.success('Đã gán đối tác thành công!'); setAssignForm({ shipmentId: '', partnerId: '', role: 'FORWARDER' }); loadStats() }
-                                else toast.error(res.error ?? 'Lỗi')
-                                setAssigning(false)
-                            }} disabled={assigning || !assignForm.shipmentId || !assignForm.partnerId}
-                                className="px-5 py-2 text-xs font-semibold rounded-md disabled:opacity-50 flex items-center gap-1.5"
-                                style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                                {assigning ? <Loader2 size={12} className="animate-spin" /> : <Link size={12} />}
-                                {assigning ? 'Đang gán...' : 'Gán Đối Tác'}
-                            </button>
+                            <Button
+                                loading={assigning}
+                                disabled={assigning || !assignForm.shipmentId || !assignForm.partnerId}
+                                onClick={async () => {
+                                    if (!assignForm.shipmentId || !assignForm.partnerId) {
+                                        toast.error(i18n.selectShipmentAndPartnerErr)
+                                        return
+                                    }
+                                    setAssigning(true)
+                                    const res = await assignShipmentToPartner(assignForm.shipmentId, assignForm.partnerId, assignForm.role)
+                                    if (res.success) {
+                                        toast.success(i18n.assignSuccess)
+                                        setAssignForm({ shipmentId: '', partnerId: '', role: 'FORWARDER' })
+                                        loadStats()
+                                    } else {
+                                        toast.error(res.error ?? 'Error')
+                                    }
+                                    setAssigning(false)
+                                }}
+                            >
+                                <Link size={12} aria-hidden />
+                                {assigning ? i18n.assigning : i18n.assignPartnerBtn}
+                            </Button>
                         </div>
                     </div>
 
                     {assignShipments.length > 0 && (
-                        <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
-                            <table className="w-full text-left min-w-[500px]" style={{ borderCollapse: 'collapse' }}>
-                                <thead>
-                                    <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                        {['B/L', 'Tàu', 'ETA', 'Trạng Thái'].map(h => (
-                                            <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {assignShipments.map(s => (
-                                        <tr key={s.id} style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                            <td className="px-3 py-3 text-xs font-bold" style={{ color: '#0891B2' }}>{s.billOfLading}</td>
-                                            <td className="px-3 py-3 text-xs" style={{ color: '#0F172A' }}>{s.vesselName ?? '—'}</td>
-                                            <td className="px-3 py-3 text-xs" style={{ color: '#475569' }}>{s.eta ? formatDate(s.eta) : '—'}</td>
-                                            <td className="px-3 py-3">
-                                                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0" style={{ color: '#1D4ED8', background: 'rgba(29,78,216,0.12)' }}>{s.status}</span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        <Table>
+                            <THead>
+                                <Tr>
+                                    <Th>{i18n.columns.bl}</Th>
+                                    <Th>{i18n.columns.vessel}</Th>
+                                    <Th>{i18n.columns.eta}</Th>
+                                    <Th>{i18n.columns.status}</Th>
+                                </Tr>
+                            </THead>
+                            <TBody>
+                                {assignShipments.map(s => (
+                                    <Tr key={s.id}>
+                                        <Td className="font-mono text-xs font-bold text-lys-teal-strong">{s.billOfLading}</Td>
+                                        <Td className="text-xs text-lys-primary">{s.vesselName ?? '—'}</Td>
+                                        <Td className="text-xs text-lys-secondary">{s.eta ? formatDate(s.eta) : '—'}</Td>
+                                        <Td><Badge tone="info">{s.status}</Badge></Td>
+                                    </Tr>
+                                ))}
+                            </TBody>
+                        </Table>
                     )}
                 </div>
             )}
@@ -758,121 +740,122 @@ export function AgencyClient() {
             {tab === 'partners' && (
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <p className="text-sm" style={{ color: '#475569' }}>
+                        <p className="text-sm text-lys-secondary">
                             <Users size={14} className="inline mr-1.5" />
-                            {partners.length} đối tác
+                            {partners.length} {i18n.partnersSuffix}
                         </p>
-                        <button onClick={() => { setShowCreatePartner(true); setPartnerError('') }}
-                            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-md"
-                            style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                            <Plus size={14} /> Thêm Đối Tác
-                        </button>
+                        <Button onClick={() => { setShowCreatePartner(true); setPartnerError('') }}>
+                            <Plus size={14} aria-hidden /> {i18n.addPartnerBtn}
+                        </Button>
                     </div>
 
-                    {/* Create Partner inline */}
                     {showCreatePartner && (
-                        <div className="p-5 rounded-md space-y-4" style={card}>
+                        <div className="p-5 rounded-lg bg-white border border-lys-border shadow-xs space-y-4">
                             <div className="flex items-center justify-between">
-                                <h4 className="text-sm font-semibold" style={{ color: '#0F172A' }}>Thêm Đối Tác Mới</h4>
-                                <button onClick={() => setShowCreatePartner(false)} className="p-1" style={{ color: '#64748B' }}><X size={16} /></button>
+                                <h4 className="text-sm font-bold text-lys-primary">{i18n.addPartnerTitle}</h4>
+                                <Button size="sm" variant="ghost" onClick={() => setShowCreatePartner(false)}><X size={16} /></Button>
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Mã <span style={{ color: '#B91C1C' }}>*</span></label>
-                                    <input type="text" value={partnerForm.code}
-                                        onChange={e => setPartnerForm(f => ({ ...f, code: e.target.value }))}
-                                        placeholder="VD: AGN-001" className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}
-                                        onFocus={e => e.currentTarget.style.borderColor = '#0891B2'}
-                                        onBlur={e => e.currentTarget.style.borderColor = '#E2E8F0'} />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Tên <span style={{ color: '#B91C1C' }}>*</span></label>
-                                    <input type="text" value={partnerForm.name}
-                                        onChange={e => setPartnerForm(f => ({ ...f, name: e.target.value }))}
-                                        placeholder="Tên đối tác" className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}
-                                        onFocus={e => e.currentTarget.style.borderColor = '#0891B2'}
-                                        onBlur={e => e.currentTarget.style.borderColor = '#E2E8F0'} />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Loại</label>
-                                    <select value={partnerForm.type}
-                                        onChange={e => setPartnerForm(f => ({ ...f, type: e.target.value as any }))}
-                                        className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}>
-                                        {Object.entries(PARTNER_TYPE_MAP).map(([k, v]) => (
-                                            <option key={k} value={k}>{v.label}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold block mb-1" style={{ color: '#64748B' }}>Email <span style={{ color: '#B91C1C' }}>*</span></label>
-                                    <input type="email" value={partnerForm.email}
-                                        onChange={e => setPartnerForm(f => ({ ...f, email: e.target.value }))}
-                                        placeholder="email@partner.com" className="w-full px-3 py-2 text-sm outline-none" style={inputStyle}
-                                        onFocus={e => e.currentTarget.style.borderColor = '#0891B2'}
-                                        onBlur={e => e.currentTarget.style.borderColor = '#E2E8F0'} />
-                                </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <Field label={i18n.codeLabel} required>
+                                    {id => (
+                                        <Input
+                                            id={id}
+                                            value={partnerForm.code}
+                                            onChange={e => setPartnerForm(f => ({ ...f, code: e.target.value }))}
+                                            placeholder="AGN-001"
+                                        />
+                                    )}
+                                </Field>
+                                <Field label={i18n.nameLabel} required>
+                                    {id => (
+                                        <Input
+                                            id={id}
+                                            value={partnerForm.name}
+                                            onChange={e => setPartnerForm(f => ({ ...f, name: e.target.value }))}
+                                            placeholder={i18n.namePlaceholder}
+                                        />
+                                    )}
+                                </Field>
+                                <Field label={i18n.typeLabel}>
+                                    {id => (
+                                        <Select
+                                            id={id}
+                                            value={partnerForm.type}
+                                            onChange={e => setPartnerForm(f => ({ ...f, type: e.target.value as any }))}
+                                        >
+                                            {Object.entries(i18n.partnerType).map(([k, v]) => (
+                                                <option key={k} value={k}>{v}</option>
+                                            ))}
+                                        </Select>
+                                    )}
+                                </Field>
+                                <Field label={i18n.emailLabel} required>
+                                    {id => (
+                                        <Input
+                                            id={id}
+                                            type="email"
+                                            value={partnerForm.email}
+                                            onChange={e => setPartnerForm(f => ({ ...f, email: e.target.value }))}
+                                            placeholder="email@partner.com"
+                                        />
+                                    )}
+                                </Field>
                             </div>
                             {partnerError && (
-                                <p className="text-xs flex items-center gap-1" style={{ color: '#B91C1C' }}>
+                                <p className="text-xs flex items-center gap-1 text-tone-danger-fg">
                                     <AlertTriangle size={12} /> {partnerError}
                                 </p>
                             )}
                             <div className="flex justify-end gap-2">
-                                <button onClick={() => setShowCreatePartner(false)} className="inline-block px-3 py-1.5 text-xs rounded-md whitespace-nowrap shrink-0"
-                                    style={{ color: '#475569', border: '1px solid #E2E8F0' }}>Huỷ</button>
-                                <button onClick={handleCreatePartner} disabled={creatingPartner}
-                                    className="px-5 py-2 text-xs font-semibold rounded-md disabled:opacity-50"
-                                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                                    {creatingPartner ? 'Đang tạo...' : 'Thêm Đối Tác'}
-                                </button>
+                                <Button variant="secondary" onClick={() => setShowCreatePartner(false)}>{i18n.cancel}</Button>
+                                <Button onClick={handleCreatePartner} loading={creatingPartner} disabled={creatingPartner}>
+                                    {creatingPartner ? i18n.creating : i18n.addPartnerBtn}
+                                </Button>
                             </div>
                         </div>
                     )}
 
-                    {/* Partners grid */}
                     {partnersLoading ? (
-                        <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin" style={{ color: '#0891B2' }} /></div>
+                        <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-lys-teal-strong" /></div>
                     ) : partners.length === 0 ? (
-                        <div className="text-center py-16 rounded-md" style={{ ...card, borderStyle: 'dashed' }}>
-                            <Users size={36} className="mx-auto mb-3" style={{ color: '#E2E8F0' }} />
-                            <p className="text-sm" style={{ color: '#64748B' }}>Chưa có đối tác nào</p>
+                        <div className="p-8 bg-white rounded-lg border border-lys-border">
+                            <EmptyState icon={Users} title={i18n.emptyPartners} />
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {partners.map(p => {
-                                const pt = PARTNER_TYPE_MAP[p.type] ?? { label: p.type, color: '#475569' }
+                                const ptLabel = (i18n.partnerType as Record<string, string>)[p.type] ?? p.type
+                                const ptTone = PARTNER_TYPE_TONES[p.type] ?? 'neutral'
                                 return (
-                                    <div key={p.id} className="p-4 rounded-md" style={card}>
+                                    <div key={p.id} className="p-4 rounded-lg bg-white border border-lys-border shadow-2xs">
                                         <div className="flex items-start justify-between mb-3">
                                             <div>
-                                                <p className="text-sm font-bold" style={{ color: '#0F172A' }}>{p.name}</p>
-                                                <p className="text-xs" style={{ color: '#64748B' }}>{p.code}</p>
+                                                <p className="text-sm font-bold text-lys-primary">{p.name}</p>
+                                                <p className="font-mono text-xs text-lys-muted">{p.code}</p>
                                             </div>
-                                            <span className="inline-block text-xs font-semibold px-2 py-0.5 rounded whitespace-nowrap shrink-0"
-                                                style={{ color: pt.color, background: `${pt.color}18` }}>{pt.label}</span>
+                                            <Badge tone={ptTone}>{ptLabel}</Badge>
                                         </div>
                                         <div className="space-y-1.5">
-                                            <p className="text-xs flex items-center gap-1.5" style={{ color: '#475569' }}><Mail size={12} className="shrink-0" /> {p.email}</p>
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-xs" style={{ color: '#64748B' }}>
-                                                    {p.submissionCount} hồ sơ
+                                            <p className="text-xs flex items-center gap-1.5 text-lys-secondary">
+                                                <Mail size={12} className="shrink-0" /> {p.email}
+                                            </p>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-lys-muted">
+                                                    {p.submissionCount} {i18n.submissionsCountSuffix}
                                                 </span>
                                                 {p.pendingCount > 0 && (
-                                                    <span className="inline-block text-xs font-bold px-1.5 py-0.5 rounded whitespace-nowrap shrink-0"
-                                                        style={{ color: '#B45309', background: 'rgba(180,83,9,0.12)' }}>
-                                                        {p.pendingCount} chờ duyệt
-                                                    </span>
+                                                    <Badge tone="warning">
+                                                        {p.pendingCount} {i18n.pendingCountSuffix}
+                                                    </Badge>
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="mt-3 pt-3" style={{ borderTop: '1px solid #E2E8F0' }}>
-                                            <span className="inline-block text-xs px-2 py-0.5 rounded-full font-semibold whitespace-nowrap shrink-0"
-                                                style={{
-                                                    color: p.status === 'ACTIVE' ? '#15803D' : '#B45309',
-                                                    background: p.status === 'ACTIVE' ? 'rgba(21,128,61,0.12)' : 'rgba(180,83,9,0.12)',
-                                                }}>
-                                                {p.status === 'ACTIVE' ? 'Active' : p.status}
-                                            </span>
+                                        <div className="mt-3 pt-3 border-t border-lys-border">
+                                            <StatusBadge
+                                                status={p.status}
+                                                label={p.status === 'ACTIVE' ? i18n.activeStatus : p.status}
+                                                toneOverrides={STATUS_TONES}
+                                            />
                                         </div>
                                     </div>
                                 )

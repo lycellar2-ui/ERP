@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, Loader2, RefreshCw, Package, AlertTriangle, TrendingDown, CheckCircle2 } from 'lucide-react'
+import { Sparkles, Loader2, RefreshCw, Package, AlertTriangle } from 'lucide-react'
+import { useAppLocale } from '@/lib/i18n'
 
 interface Stats {
     totalProducts: number
@@ -11,6 +12,8 @@ interface Stats {
 }
 
 export function AIPurchaseSuggestion() {
+    const { locale } = useAppLocale()
+    const isEn = locale === 'en'
     const [suggestion, setSuggestion] = useState<string | null>(null)
     const [stats, setStats] = useState<Stats | null>(null)
     const [loading, setLoading] = useState(false)
@@ -26,10 +29,10 @@ export function AIPurchaseSuggestion() {
                 setSuggestion(data.suggestion)
                 setStats(data.stats)
             } else {
-                setError(data.error || 'Không thể tạo gợi ý nhập hàng')
+                setError(data.error || (isEn ? 'Unable to generate purchase suggestions' : 'Không thể tạo gợi ý nhập hàng'))
             }
         } catch {
-            setError('Lỗi kết nối đến AI service')
+            setError(isEn ? 'Connection error to AI service' : 'Lỗi kết nối đến AI service')
         } finally {
             setLoading(false)
         }
@@ -45,8 +48,12 @@ export function AIPurchaseSuggestion() {
                         <Package size={14} style={{ color: '#1D4ED8' }} />
                     </div>
                     <div>
-                        <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>AI Gợi Ý Nhập Hàng</h3>
-                        <p className="text-[10px]" style={{ color: '#64748B' }}>Phân tích tồn kho + trend bán → đề xuất nhập</p>
+                        <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>
+                            {isEn ? 'AI Purchase Suggestion' : 'AI Gợi Ý Nhập Hàng'}
+                        </h3>
+                        <p className="text-[10px]" style={{ color: '#64748B' }}>
+                            {isEn ? 'Analyze inventory & sales trend → reorder suggestions' : 'Phân tích tồn kho + trend bán → đề xuất nhập'}
+                        </p>
                     </div>
                 </div>
                 <button
@@ -60,11 +67,11 @@ export function AIPurchaseSuggestion() {
                     }}
                 >
                     {loading ? (
-                        <><Loader2 size={13} className="animate-spin" /> Đang phân tích...</>
+                        <><Loader2 size={13} className="animate-spin" /> {isEn ? 'Analyzing...' : 'Đang phân tích...'}</>
                     ) : suggestion ? (
-                        <><RefreshCw size={13} /> Phân tích lại</>
+                        <><RefreshCw size={13} /> {isEn ? 'Re-analyze' : 'Phân tích lại'}</>
                     ) : (
-                        <><Sparkles size={13} /> Phân Tích Tồn Kho</>
+                        <><Sparkles size={13} /> {isEn ? 'Analyze Inventory' : 'Phân Tích Tồn Kho'}</>
                     )}
                 </button>
             </div>
@@ -74,19 +81,19 @@ export function AIPurchaseSuggestion() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 px-5 pt-4">
                     <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                         <p className="text-lg font-bold" style={{ color: '#0891B2' }}>{stats.totalProducts}</p>
-                        <p className="text-[10px]" style={{ color: '#64748B' }}>Sản phẩm</p>
+                        <p className="text-[10px]" style={{ color: '#64748B' }}>{isEn ? 'Products' : 'Sản phẩm'}</p>
                     </div>
                     <div className="text-center p-2 rounded" style={{ background: 'rgba(185,28,28,0.06)', border: stats.urgentReorder > 0 ? '1px solid rgba(185,28,28,0.2)' : 'none' }}>
                         <p className="text-lg font-bold" style={{ color: '#B91C1C' }}>{stats.urgentReorder}</p>
-                        <p className="text-[10px]" style={{ color: '#64748B' }}>Cần nhập gấp</p>
+                        <p className="text-[10px]" style={{ color: '#64748B' }}>{isEn ? 'Urgent Reorder' : 'Cần nhập gấp'}</p>
                     </div>
                     <div className="text-center p-2 rounded" style={{ background: 'rgba(180,83,9,0.06)' }}>
                         <p className="text-lg font-bold" style={{ color: '#B45309' }}>{stats.lowStock}</p>
-                        <p className="text-[10px]" style={{ color: '#64748B' }}>Sắp hết</p>
+                        <p className="text-[10px]" style={{ color: '#64748B' }}>{isEn ? 'Low Stock' : 'Sắp hết'}</p>
                     </div>
                     <div className="text-center p-2 rounded" style={{ background: 'rgba(29,78,216,0.06)' }}>
                         <p className="text-lg font-bold" style={{ color: '#1D4ED8' }}>{stats.overstock}</p>
-                        <p className="text-[10px]" style={{ color: '#64748B' }}>Tồn cao</p>
+                        <p className="text-[10px]" style={{ color: '#64748B' }}>{isEn ? 'Overstock' : 'Tồn cao'}</p>
                     </div>
                 </div>
             )}
@@ -99,7 +106,9 @@ export function AIPurchaseSuggestion() {
                             style={{ borderColor: '#E2E8F0', borderTopColor: '#1D4ED8' }} />
                     </div>
                     <p className="text-xs animate-pulse" style={{ color: '#64748B' }}>
-                        AI đang phân tích tồn kho, doanh số 3 tháng, trend bán...
+                        {isEn
+                            ? 'AI is analyzing stock levels, 3-month sales velocity, and demand trends...'
+                            : 'AI đang phân tích tồn kho, doanh số 3 tháng, trend bán...'}
                     </p>
                 </div>
             )}
@@ -152,7 +161,9 @@ export function AIPurchaseSuggestion() {
                         })}
                     </div>
                     <p className="text-[10px] mt-3 text-right" style={{ color: '#64748B' }}>
-                        Phân tích lúc {new Date().toLocaleString('vi-VN')} · Phân tích AI · Dữ liệu 3 tháng gần nhất
+                        {isEn
+                            ? `Analyzed at ${new Date().toLocaleString('en-US')} · AI Analysis · Last 3 months data`
+                            : `Phân tích lúc ${new Date().toLocaleString('vi-VN')} · Phân tích AI · Dữ liệu 3 tháng gần nhất`}
                     </p>
                 </div>
             )}
@@ -162,11 +173,15 @@ export function AIPurchaseSuggestion() {
                 <div className="px-5 py-6 flex flex-col items-center gap-2">
                     <Package size={20} style={{ color: '#E2E8F0' }} />
                     <p className="text-xs text-center" style={{ color: '#64748B' }}>
-                        Nhấn <strong>&quot;Phân Tích Tồn Kho&quot;</strong> để nhận gợi ý<br />
-                        sản phẩm cần nhập, số lượng và mức ưu tiên
+                        {isEn ? (
+                            <>Click <strong>&quot;Analyze Inventory&quot;</strong> to receive AI suggestions<br />on items to reorder, quantities, and priority levels</>
+                        ) : (
+                            <>Nhấn <strong>&quot;Phân Tích Tồn Kho&quot;</strong> để nhận gợi ý<br />sản phẩm cần nhập, số lượng và mức ưu tiên</>
+                        )}
                     </p>
                 </div>
             )}
         </div>
     )
 }
+

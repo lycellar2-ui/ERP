@@ -166,7 +166,7 @@ export default async function DashboardPage(props: PageProps) {
                 currentEntity={resolvedParams.entity}
                 exportAction={async () => {
                     'use server'
-                    await exportDashboardExcel()
+                    return await exportDashboardExcel()
                 }}
             />
 

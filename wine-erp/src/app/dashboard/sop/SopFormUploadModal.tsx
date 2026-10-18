@@ -4,6 +4,8 @@ import React, { useState, useRef } from 'react'
 import { X, Upload, FileText, CheckCircle2, AlertTriangle, FileSpreadsheet } from 'lucide-react'
 import { uploadFormAction } from './actions'
 import { type SopFormFile } from '@/data/forms-data'
+import { useAppLocale } from '@/lib/i18n'
+import { getSopI18n } from './i18n'
 
 interface SopFormUploadModalProps {
     targetFileName?: string
@@ -12,6 +14,8 @@ interface SopFormUploadModalProps {
 }
 
 export function SopFormUploadModal({ targetFileName, onClose, onUploaded }: SopFormUploadModalProps) {
+    const { locale } = useAppLocale()
+    const t = getSopI18n(locale).uploadModal
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [customName, setCustomName] = useState(targetFileName || '')
@@ -31,7 +35,7 @@ export function SopFormUploadModal({ targetFileName, onClose, onUploaded }: SopF
 
     const handleUpload = async () => {
         if (!selectedFile) {
-            setError('Vui lòng chọn tệp tin (.xlsx, .docx, .pdf)')
+            setError(t.selectFileErr)
             return
         }
 
@@ -51,10 +55,10 @@ export function SopFormUploadModal({ targetFileName, onClose, onUploaded }: SopF
                     onClose()
                 }, 1000)
             } else {
-                setError(res.error || 'Lỗi khi tải lên biểu mẫu')
+                setError(res.error || 'Error')
             }
         } catch (err: any) {
-            setError(err?.message || 'Lỗi kết nối')
+            setError(err?.message || 'Error')
         } finally {
             setUploading(false)
         }
@@ -71,10 +75,10 @@ export function SopFormUploadModal({ targetFileName, onClose, onUploaded }: SopF
                         </div>
                         <div>
                             <h3 className="text-base font-bold text-slate-900">
-                                {targetFileName ? 'Thay Thế Biểu Mẫu' : 'Tải Lên Biểu Mẫu Mới'}
+                                {targetFileName ? t.replaceTitle : t.newTitle}
                             </h3>
                             <p className="text-xs text-slate-500">
-                                {targetFileName ? `Cập nhật tệp: ${targetFileName}` : 'Thêm biểu mẫu vào thư viện SOP'}
+                                {targetFileName ? t.replaceDesc(targetFileName) : t.newDesc}
                             </p>
                         </div>
                     </div>
@@ -93,7 +97,7 @@ export function SopFormUploadModal({ targetFileName, onClose, onUploaded }: SopF
                 {success && (
                     <div className="p-4 bg-emerald-50 border-b border-emerald-200 text-emerald-700 text-xs flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                        <span>Tải lên và thay thế biểu mẫu thành công! Web đã tự cập nhật.</span>
+                        <span>{t.uploadSuccess}</span>
                     </div>
                 )}
 
@@ -118,17 +122,17 @@ export function SopFormUploadModal({ targetFileName, onClose, onUploaded }: SopF
                                     {selectedFile.name}
                                 </div>
                                 <div className="text-slate-500">
-                                    {(selectedFile.size / 1024).toFixed(1)} KB • Bấm để chọn tệp khác
+                                    {(selectedFile.size / 1024).toFixed(1)} KB • {t.clickAnotherFile}
                                 </div>
                             </div>
                         ) : (
                             <div className="space-y-1">
                                 <Upload className="w-8 h-8 text-slate-400 mx-auto" />
                                 <div className="font-semibold text-slate-700">
-                                    Nhấp để chọn tệp từ máy tính
+                                    {t.clickToSelect}
                                 </div>
                                 <div className="text-slate-400 text-[11px]">
-                                    Hỗ trợ định dạng: .XLSX, .DOCX, .PDF (Excel, Word biểu mẫu)
+                                    {t.supportedFormats}
                                 </div>
                             </div>
                         )}
@@ -137,17 +141,17 @@ export function SopFormUploadModal({ targetFileName, onClose, onUploaded }: SopF
                     {/* Target file name */}
                     <div className="space-y-1">
                         <label className="font-semibold text-slate-700">
-                            Tên Lưu Trữ Trên Hệ Thống (File Name)
+                            {t.fileNameLabel}
                         </label>
                         <input
                             type="text"
                             value={customName}
                             onChange={(e) => setCustomName(e.target.value)}
-                            placeholder="Ví dụ: Form_8.8-A_Yeu_cau_Tao_ma_KH.xlsx"
+                            placeholder="Form_8.8-A_Yeu_cau_Tao_ma_KH.xlsx"
                             className="w-full p-2.5 rounded-lg border border-slate-300 bg-white text-slate-900"
                         />
                         <p className="text-[11px] text-slate-400">
-                            Tệp này sẽ được lưu vào thư mục tải về của hệ thống. Nhân viên bấm tải sẽ nhận tệp này.
+                            {t.fileNameHint}
                         </p>
                     </div>
                 </div>
@@ -159,7 +163,7 @@ export function SopFormUploadModal({ targetFileName, onClose, onUploaded }: SopF
                         onClick={onClose}
                         className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium"
                     >
-                        Hủy
+                        {t.cancelBtn}
                     </button>
                     <button
                         type="button"
@@ -168,7 +172,7 @@ export function SopFormUploadModal({ targetFileName, onClose, onUploaded }: SopF
                         className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white font-bold transition shadow-sm disabled:opacity-50"
                     >
                         <Upload className="w-4 h-4" />
-                        <span>{uploading ? 'Đang Tải Lên...' : 'Xác Nhận Tải Lên Web'}</span>
+                        <span>{uploading ? t.uploadingBtn : t.confirmBtn}</span>
                     </button>
                 </div>
             </div>

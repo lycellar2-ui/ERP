@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useConfirmDialog } from '@/components/ui'
+import { useAppLocale } from '@/lib/i18n'
 import {
     SalesCallPlanItem,
     getDailyCallPlanAction,
@@ -100,6 +101,8 @@ export function DailyCallPlannerView({
     customersList = [],
     onCallCompleted
 }: DailyCallPlannerViewProps) {
+    const { locale } = useAppLocale()
+    const isEn = locale === 'en'
     const todayDateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date())
 
     // Filters
@@ -497,14 +500,16 @@ export function DailyCallPlannerView({
                                 <CalendarCheck size={18} />
                             </span>
                             <h3 className="text-base sm:text-lg font-bold text-slate-900">
-                                Kế Hoạch Cuộc Gọi Trong Ngày (To-Call List)
+                                {isEn ? 'Daily Sales Call Planner (To-Call List)' : 'Kế Hoạch Cuộc Gọi Trong Ngày (To-Call List)'}
                             </h3>
                             <span className="inline-block text-[10px] font-mono px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 font-bold whitespace-nowrap shrink-0">
                                 Pure Light UI
                             </span>
                         </div>
                         <p className="text-xs text-slate-500 mt-0.5">
-                            Danh sách khách hàng Telesale cần liên hệ theo ngày, tích hợp nút gọi 1-chạm & tự động bật form báo cáo kết quả
+                            {isEn
+                                ? 'Daily Telesales call list with 1-tap dialing & automated call outcome reporting'
+                                : 'Danh sách khách hàng Telesale cần liên hệ theo ngày, tích hợp nút gọi 1-chạm & tự động bật form báo cáo kết quả'}
                         </p>
                     </div>
 
@@ -520,7 +525,7 @@ export function DailyCallPlannerView({
                                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer border border-slate-200"
                             >
                                 <UserCheck size={14} className="text-teal-600" />
-                                <span>Phân Bổ Danh Sách Gọi</span>
+                                <span>{isEn ? 'Assign Call Batch' : 'Phân Bổ Danh Sách Gọi'}</span>
                             </button>
                         )}
 
@@ -537,17 +542,17 @@ export function DailyCallPlannerView({
                             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
                         >
                             <Plus size={14} />
-                            <span>+ Thêm Vào Kế Hoạch</span>
+                            <span>{isEn ? '+ Add to Call Plan' : '+ Thêm Vào Kế Hoạch'}</span>
                         </button>
 
                         <button
                             type="button"
                             onClick={handleExportCSV}
                             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition border border-slate-200 shadow-2xs cursor-pointer"
-                            title="Xuất báo cáo kế hoạch gọi ra file CSV"
+                            title={isEn ? 'Export call plan report to CSV' : 'Xuất báo cáo kế hoạch gọi ra file CSV'}
                         >
                             <Download size={14} className="text-slate-500" />
-                            <span>Xuất CSV</span>
+                            <span>{isEn ? 'Export CSV' : 'Xuất CSV'}</span>
                         </button>
 
                         <button
@@ -555,7 +560,7 @@ export function DailyCallPlannerView({
                             onClick={loadPlans}
                             disabled={loading}
                             className="p-2 rounded-md border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition cursor-pointer"
-                            title="Làm mới kế hoạch"
+                            title={isEn ? 'Refresh plan' : 'Làm mới kế hoạch'}
                         >
                             <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
                         </button>
@@ -571,7 +576,7 @@ export function DailyCallPlannerView({
                                 type="button"
                                 onClick={handlePrevDay}
                                 className="p-1 rounded-lg hover:bg-slate-200 text-slate-600 transition cursor-pointer"
-                                title="Ngày trước"
+                                title={isEn ? 'Previous day' : 'Ngày trước'}
                             >
                                 <ChevronLeft size={14} />
                             </button>
@@ -586,7 +591,7 @@ export function DailyCallPlannerView({
                                 type="button"
                                 onClick={handleNextDay}
                                 className="p-1 rounded-lg hover:bg-slate-200 text-slate-600 transition cursor-pointer"
-                                title="Ngày sau"
+                                title={isEn ? 'Next day' : 'Ngày sau'}
                             >
                                 <ChevronRight size={14} />
                             </button>
@@ -596,7 +601,7 @@ export function DailyCallPlannerView({
                                     onClick={() => setPlanDate(todayDateStr)}
                                     className="px-2 py-0.5 text-[10px] font-bold rounded-lg bg-teal-50 text-teal-700 hover:bg-teal-100 transition cursor-pointer"
                                 >
-                                    Hôm nay
+                                    {isEn ? 'Today' : 'Hôm nay'}
                                 </button>
                             )}
                         </div>
@@ -614,7 +619,7 @@ export function DailyCallPlannerView({
                                             : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >
-                                    {ch === 'ALL' ? 'Tất cả kênh' : ch === 'CORPORATE' ? 'Corporate' : 'Retail'}
+                                    {ch === 'ALL' ? (isEn ? 'All Channels' : 'Tất cả kênh') : ch === 'CORPORATE' ? 'Corporate' : 'Retail'}
                                 </button>
                             ))}
                         </div>
@@ -632,7 +637,13 @@ export function DailyCallPlannerView({
                                             : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >
-                                    {st === 'ALL' ? 'Tất cả' : st === 'PENDING' ? 'Chưa gọi' : st === 'COMPLETED' ? 'Đã gọi' : 'Hẹn lại'}
+                                    {st === 'ALL'
+                                        ? (isEn ? 'All' : 'Tất cả')
+                                        : st === 'PENDING'
+                                            ? (isEn ? 'Pending' : 'Chưa gọi')
+                                            : st === 'COMPLETED'
+                                                ? (isEn ? 'Completed' : 'Đã gọi')
+                                                : (isEn ? 'Rescheduled' : 'Hẹn lại')}
                                 </button>
                             ))}
                         </div>
@@ -644,7 +655,7 @@ export function DailyCallPlannerView({
                                 onChange={e => setSelectedRepId(e.target.value)}
                                 className="bg-slate-50 border border-slate-200 text-slate-800 text-xs font-medium rounded-md p-1.5 outline-none focus:border-teal-500 cursor-pointer"
                             >
-                                <option value="ALL">Toàn bộ Telesale ({salesReps.length})</option>
+                                <option value="ALL">{isEn ? `All Telesales (${salesReps.length})` : `Toàn bộ Telesale (${salesReps.length})`}</option>
                                 {salesReps.map(rep => (
                                     <option key={rep.id} value={rep.id}>
                                         {rep.name}

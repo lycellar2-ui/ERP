@@ -4,6 +4,8 @@ import React, { useState } from 'react'
 import { X, Save, Plus, Trash2, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { type SopItem, type SopStep, type SopChecklistItem } from '@/data/sops'
 import { saveSopAction } from './actions'
+import { useAppLocale } from '@/lib/i18n'
+import { getSopI18n } from './i18n'
 
 interface SopEditModalProps {
     sop: SopItem
@@ -12,6 +14,8 @@ interface SopEditModalProps {
 }
 
 export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
+    const { locale } = useAppLocale()
+    const t = getSopI18n(locale).editModal
     const [title, setTitle] = useState(sop.title)
     const [department, setDepartment] = useState(sop.department)
     const [estimatedDuration, setEstimatedDuration] = useState(sop.estimatedDuration)
@@ -122,10 +126,10 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                 <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
                     <div>
                         <span className="text-xs font-bold text-rose-700 uppercase tracking-wider">
-                            Chế độ Chỉnh Sửa Quản Trị
+                            {t.kicker}
                         </span>
                         <h2 className="text-xl font-bold text-slate-900">
-                            Chỉnh Sửa: {sop.code} — {sop.title}
+                            {t.titlePrefix} {sop.code} — {sop.title}
                         </h2>
                     </div>
                     <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600">
@@ -145,7 +149,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                     {/* Basic Meta */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
-                            <label className="font-semibold text-slate-700">Tên Quy Trình</label>
+                            <label className="font-semibold text-slate-700">{t.sopTitleLabel}</label>
                             <input
                                 type="text"
                                 value={title}
@@ -155,7 +159,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                         </div>
 
                         <div className="space-y-1">
-                            <label className="font-semibold text-slate-700">Phòng Ban Phụ Trách</label>
+                            <label className="font-semibold text-slate-700">{t.deptLabel}</label>
                             <input
                                 type="text"
                                 value={department}
@@ -165,7 +169,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                         </div>
 
                         <div className="space-y-1">
-                            <label className="font-semibold text-slate-700">Thời Lượng Thực Hiện / SLA</label>
+                            <label className="font-semibold text-slate-700">{t.slaLabel}</label>
                             <input
                                 type="text"
                                 value={estimatedDuration}
@@ -175,7 +179,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                         </div>
 
                         <div className="space-y-1">
-                            <label className="font-semibold text-slate-700">Số Hiệu Phiên Bản</label>
+                            <label className="font-semibold text-slate-700">{t.versionLabel}</label>
                             <input
                                 type="text"
                                 value={version}
@@ -186,7 +190,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                     </div>
 
                     <div className="space-y-1">
-                        <label className="font-semibold text-slate-700">Tóm Tắt Quy Trình</label>
+                        <label className="font-semibold text-slate-700">{t.summaryLabel}</label>
                         <textarea
                             rows={3}
                             value={summary}
@@ -197,7 +201,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
-                            <label className="font-semibold text-slate-700">Mục Tiêu</label>
+                            <label className="font-semibold text-slate-700">{t.purposeLabel}</label>
                             <input
                                 type="text"
                                 value={purpose}
@@ -207,7 +211,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                         </div>
 
                         <div className="space-y-1">
-                            <label className="font-semibold text-slate-700">Phạm Vi Áp Dụng</label>
+                            <label className="font-semibold text-slate-700">{t.scopeLabel}</label>
                             <input
                                 type="text"
                                 value={scope}
@@ -221,7 +225,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                     <div className="space-y-3 pt-4 border-t border-slate-200">
                         <div className="flex justify-between items-center">
                             <h3 className="font-bold text-sm text-slate-900">
-                                Các Bước Thực Hiện Chuẩn ({steps.length} bước)
+                                {t.stepsHeader(steps.length)}
                             </h3>
                             <button
                                 type="button"
@@ -229,7 +233,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold"
                             >
                                 <Plus className="w-3.5 h-3.5" />
-                                <span>Thêm Bước</span>
+                                <span>{t.addStepBtn}</span>
                             </button>
                         </div>
 
@@ -245,7 +249,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                                                 type="text"
                                                 value={st.title}
                                                 onChange={(e) => updateStep(i, 'title', e.target.value)}
-                                                placeholder="Tên bước..."
+                                                placeholder={t.stepTitlePlaceholder}
                                                 className="flex-1 p-2 rounded-lg border border-slate-300 bg-white text-slate-900 font-bold text-xs"
                                             />
                                         </div>
@@ -254,14 +258,14 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                                                 type="text"
                                                 value={st.role}
                                                 onChange={(e) => updateStep(i, 'role', e.target.value)}
-                                                placeholder="Vai trò thực hiện..."
+                                                placeholder={t.stepRolePlaceholder}
                                                 className="flex-1 sm:w-48 p-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs"
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => removeStep(i)}
                                                 className="p-2 text-rose-600 hover:text-rose-800 flex-shrink-0"
-                                                title="Xóa bước này"
+                                                title={t.removeStepTitle}
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
@@ -272,7 +276,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                                         rows={2}
                                         value={st.action}
                                         onChange={(e) => updateStep(i, 'action', e.target.value)}
-                                        placeholder="Mô tả chi tiết hành động..."
+                                        placeholder={t.stepActionPlaceholder}
                                         className="w-full p-2.5 rounded-lg border border-slate-300 bg-white text-slate-800 text-xs"
                                     />
                                 </div>
@@ -284,7 +288,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                     <div className="space-y-3 pt-4 border-t border-slate-200">
                         <div className="flex justify-between items-center">
                             <h3 className="font-bold text-sm text-slate-900">
-                                Tiêu Chí Kiểm Soát Chất Lượng ({checklist.length} tiêu chí)
+                                {t.checklistHeader(checklist.length)}
                             </h3>
                             <button
                                 type="button"
@@ -292,7 +296,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold"
                             >
                                 <Plus className="w-3.5 h-3.5" />
-                                <span>Thêm Tiêu Chí</span>
+                                <span>{t.addChecklistBtn}</span>
                             </button>
                         </div>
 
@@ -313,7 +317,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                                             : 'bg-slate-100 text-slate-600 border-slate-200'
                                             }`}
                                     >
-                                        {item.critical ? 'Bắt buộc' : 'Khuyến nghị'}
+                                        {item.critical ? t.mandatoryBtn : t.optionalBtn}
                                     </button>
                                     <button
                                         type="button"
@@ -335,7 +339,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                         onClick={onClose}
                         className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium"
                     >
-                        Hủy Bỏ
+                        {t.cancelBtn}
                     </button>
                     <button
                         type="button"
@@ -344,7 +348,7 @@ export function SopEditModal({ sop, onClose, onSaved }: SopEditModalProps) {
                         className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white font-bold transition shadow-sm disabled:opacity-50"
                     >
                         <Save className="w-4 h-4" />
-                        <span>{saving ? 'Đang Lưu...' : 'Lưu Quy Trình Lên Web'}</span>
+                        <span>{saving ? t.savingBtn : t.saveBtn}</span>
                     </button>
                 </div>
             </div>

@@ -4,6 +4,8 @@ import React, { useState } from 'react'
 import { X, Upload, FileText, AlertCircle, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { createEmployeeDocument, uploadHrDocumentFile } from './actions'
+import { useAppLocale } from '@/lib/i18n'
+import { HR_I18N } from './i18n'
 
 interface Props {
     employeeId: string
@@ -13,16 +15,12 @@ interface Props {
     onSuccess: () => void
 }
 
-const DOC_TYPES = [
-    { value: 'CONTRACT', label: 'Hợp đồng lao động' },
-    { value: 'NATIONAL_ID', label: 'CCCD / CMND / Hộ chiếu' },
-    { value: 'DEGREE_CERT', label: 'Bằng cấp / Chứng chỉ' },
-    { value: 'HEALTH_CERT', label: 'Giấy khám sức khỏe' },
-    { value: 'CV', label: 'Sơ yếu lý lịch / CV' },
-    { value: 'OTHER', label: 'Tài liệu / Quyết định khác' },
-]
+const DOC_TYPE_KEYS = ['CONTRACT', 'NATIONAL_ID', 'DEGREE_CERT', 'HEALTH_CERT', 'CV', 'OTHER'] as const
 
 export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose, onSuccess }: Props) {
+    const { locale } = useAppLocale()
+    const i18n = HR_I18N[locale]
+
     const [docType, setDocType] = useState('CONTRACT')
     const [title, setTitle] = useState('')
     const [docNumber, setDocNumber] = useState('')
@@ -39,7 +37,7 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
         if (e.target.files && e.target.files[0]) {
             const selected = e.target.files[0]
             if (selected.size > 10 * 1024 * 1024) {
-                toast.error('Kích thước tệp không được vượt quá 10MB')
+                toast.error(i18n.errFileTooLarge)
                 return
             }
             setFile(selected)
@@ -54,11 +52,11 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!file) {
-            toast.error('Vui lòng chọn tệp giấy tờ cần tải lên')
+            toast.error(i18n.errFileRequired)
             return
         }
         if (!title.trim()) {
-            toast.error('Vui lòng nhập tên giấy tờ')
+            toast.error(i18n.errDocTitleRequired)
             return
         }
 
@@ -70,7 +68,7 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
 
             const uploadRes = await uploadHrDocumentFile(formData)
             if (!uploadRes.success || !uploadRes.url) {
-                throw new Error(uploadRes.error || 'Tải tệp lên hệ thống thất bại')
+                throw new Error(uploadRes.error || i18n.errUploadFailed)
             }
 
             // 2. Create document record in database
@@ -89,15 +87,15 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
             })
 
             if (!docRes.success) {
-                throw new Error('Lỗi khi lưu thông tin giấy tờ')
+                throw new Error(i18n.errSaveDocFailed)
             }
 
-            toast.success('Đã tải lên giấy tờ thành công')
+            toast.success(i18n.uploadDocSuccess)
             onSuccess()
             onClose()
         } catch (err: any) {
             console.error('Upload document error:', err)
-            toast.error(err.message || 'Không thể lưu giấy tờ')
+            toast.error(err.message || i18n.errSaveDocFailed)
         } finally {
             setIsUploading(false)
         }
@@ -111,9 +109,9 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
                     <div>
                         <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                             <Upload className="w-5 h-5 text-[#0891B2]" />
-                            Tải Lên Giấy Tờ & Hồ Sơ Số Hóa
+                            {i18n.uploadModalTitle}
                         </h3>
-                        <p className="text-xs text-slate-600 mt-0.5">Nhân viên: <span className="font-semibold text-slate-900">{employeeName}</span></p>
+                        <p className="text-xs text-slate-600 mt-0.5">{i18n.uploadModalEmpPrefix} <span className="font-semibold text-slate-900">{employeeName}</span></p>
                     </div>
                     <button
                         onClick={onClose}
@@ -129,7 +127,7 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
                     {/* File Dropzone */}
                     <div>
                         <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                            Chọn tệp giấy tờ (PDF, JPG, PNG - Tối đa 10MB) <span className="text-rose-700">*</span>
+                            {i18n.lblSelectDocFile} <span className="text-rose-700">*</span>
                         </label>
                         <div className="relative flex flex-col items-center justify-center p-5 border-2 border-dashed border-slate-200 hover:border-[#0E7490] rounded-lg bg-slate-50 hover:bg-slate-100/80 transition-colors">
                             <input
@@ -152,8 +150,8 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
                             ) : (
                                 <div className="text-center">
                                     <Upload className="w-8 h-8 text-[#0891B2] mx-auto mb-2 opacity-80" />
-                                    <p className="text-xs font-medium text-slate-900">Kéo thả file vào đây hoặc <span className="text-[#0891B2] underline">bấm để chọn</span></p>
-                                    <p className="text-[11px] text-slate-600 mt-1">Hỗ trợ PDF scan, ảnh CCCD, chứng chỉ rõ nét</p>
+                                    <p className="text-xs font-medium text-slate-900">{i18n.dropzonePrompt1} <span className="text-[#0891B2] underline">{i18n.dropzonePromptLink}</span></p>
+                                    <p className="text-[11px] text-slate-600 mt-1">{i18n.dropzoneSub}</p>
                                 </div>
                             )}
                         </div>
@@ -163,25 +161,25 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className="block text-xs font-semibold text-slate-600 mb-1">
-                                Loại giấy tờ <span className="text-rose-700">*</span>
+                                {i18n.lblDocType} <span className="text-rose-700">*</span>
                             </label>
                             <select
                                 value={docType}
                                 onChange={e => setDocType(e.target.value)}
                                 className="w-full px-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                             >
-                                {DOC_TYPES.map(t => (
-                                    <option key={t.value} value={t.value}>{t.label}</option>
+                                {DOC_TYPE_KEYS.map(k => (
+                                    <option key={k} value={k}>{i18n.docTypes[k]}</option>
                                 ))}
                             </select>
                         </div>
                         <div>
                             <label className="block text-xs font-semibold text-slate-600 mb-1">
-                                Số hiệu / Mã văn bản
+                                {i18n.lblDocCode}
                             </label>
                             <input
                                 type="text"
-                                placeholder="VD: HĐ-2026/01, 079..."
+                                placeholder={i18n.phDocCode}
                                 value={docNumber}
                                 onChange={e => setDocNumber(e.target.value)}
                                 className="w-full px-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
@@ -191,11 +189,11 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
 
                     <div>
                         <label className="block text-xs font-semibold text-slate-600 mb-1">
-                            Tên giấy tờ / Tiêu đề <span className="text-rose-700">*</span>
+                            {i18n.lblDocTitle} <span className="text-rose-700">*</span>
                         </label>
                         <input
                             type="text"
-                            placeholder="VD: Hợp đồng lao động xác định thời hạn 1 năm"
+                            placeholder={i18n.phDocTitle}
                             value={title}
                             onChange={e => setTitle(e.target.value)}
                             required
@@ -207,7 +205,7 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className="block text-xs font-semibold text-slate-600 mb-1">
-                                Ngày ban hành / Ngày ký
+                                {i18n.lblDocIssueDate}
                             </label>
                             <input
                                 type="date"
@@ -219,7 +217,7 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
                         <div>
                             <div className="flex items-center justify-between mb-1">
                                 <label className="text-xs font-semibold text-slate-600">
-                                    Ngày hết hạn hiệu lực
+                                    {i18n.lblDocExpiryDate}
                                 </label>
                                 <label className="flex items-center gap-1.5 text-[11px] text-slate-600 cursor-pointer">
                                     <input
@@ -228,7 +226,7 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
                                         onChange={e => setHasNoExpiry(e.target.checked)}
                                         className="rounded border-slate-200 bg-white text-[#0891B2] focus:ring-0"
                                     />
-                                    Vô thời hạn
+                                    {i18n.noExpiryText}
                                 </label>
                             </div>
                             <input
@@ -245,18 +243,18 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
                     {!hasNoExpiry && expiryDate && (
                         <div className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-800 text-xs font-medium">
                             <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
-                            <span>Hệ thống sẽ tự động bật cảnh báo trước khi giấy tờ này hết hạn 30 ngày.</span>
+                            <span>{i18n.docExpiryWarnNote}</span>
                         </div>
                     )}
 
                     {/* Notes */}
                     <div>
                         <label className="block text-xs font-semibold text-slate-600 mb-1">
-                            Ghi chú nội bộ
+                            {i18n.lblInternalNotes}
                         </label>
                         <textarea
                             rows={2}
-                            placeholder="Ghi chú về tình trạng tài liệu, bản gốc lưu tại đâu..."
+                            placeholder={i18n.phDocNotes}
                             value={notes}
                             onChange={e => setNotes(e.target.value)}
                             className="w-full px-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490] resize-none"
@@ -271,7 +269,7 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
                             disabled={isUploading}
                             className="px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 bg-white hover:bg-[#E2E8F0] transition-colors"
                         >
-                            Hủy bỏ
+                            {i18n.btnCancel}
                         </button>
                         <button
                             type="submit"
@@ -281,12 +279,12 @@ export function DocumentUploadModal({ employeeId, employeeName, isOpen, onClose,
                             {isUploading ? (
                                 <>
                                     <Loader2 className="w-4 h-4 animate-spin" />
-                                    Đang tải lên...
+                                    {i18n.btnUploading}
                                 </>
                             ) : (
                                 <>
                                     <Upload className="w-4 h-4" />
-                                    Lưu Giấy Tờ
+                                    {i18n.btnSaveDoc}
                                 </>
                             )}
                         </button>

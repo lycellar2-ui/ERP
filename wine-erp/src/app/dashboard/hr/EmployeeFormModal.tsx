@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react'
 import { X, UserPlus, Save, Loader2, Link2, Shield, AlertTriangle, Building, CreditCard, HeartPulse, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { createEmployee, updateEmployee, CreateEmployeeInput } from './actions'
+import { useAppLocale } from '@/lib/i18n'
+import { HR_I18N } from './i18n'
 
 interface Props {
     isOpen: boolean
@@ -14,23 +16,13 @@ interface Props {
     availableUsers: { id: string; name: string; email: string; roles: string; isLinkedOther: boolean }[]
 }
 
-const CONTRACT_TYPES = [
-    { value: 'PROBATION', label: 'Hợp đồng thử việc (1-2 tháng)' },
-    { value: 'DEFINITE_1Y', label: 'Hợp đồng xác định thời hạn 1 năm' },
-    { value: 'DEFINITE_3Y', label: 'Hợp đồng xác định thời hạn 3 năm' },
-    { value: 'INDEFINITE', label: 'Hợp đồng không xác định thời hạn' },
-    { value: 'PART_TIME', label: 'Hợp đồng bán thời gian' },
-    { value: 'SEASONAL', label: 'Hợp đồng thời vụ' },
-]
-
-const STATUS_OPTIONS = [
-    { value: 'ACTIVE', label: 'Đang làm việc chính thức' },
-    { value: 'PROBATION', label: 'Đang trong thời gian thử việc' },
-    { value: 'ON_LEAVE', label: 'Tạm hoãn / Nghỉ chế độ / Thai sản' },
-    { value: 'RESIGNED', label: 'Đã nghỉ việc / Chấm dứt HĐ' },
-]
+const CONTRACT_TYPE_KEYS = ['PROBATION', 'DEFINITE_1Y', 'DEFINITE_3Y', 'INDEFINITE', 'PART_TIME', 'SEASONAL'] as const
+const STATUS_OPTION_KEYS = ['ACTIVE', 'PROBATION', 'ON_LEAVE', 'RESIGNED'] as const
 
 export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, departments, availableUsers }: Props) {
+    const { locale } = useAppLocale()
+    const i18n = HR_I18N[locale]
+
     const isEdit = Boolean(employee)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [activeTab, setActiveTab] = useState<'BASIC' | 'WORK' | 'FINANCE' | 'ACCOUNT'>('BASIC')
@@ -158,7 +150,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!formData.fullName.trim()) {
-            toast.error('Vui lòng nhập họ và tên nhân viên')
+            toast.error(i18n.errFullNameRequired)
             setActiveTab('BASIC')
             return
         }
@@ -168,21 +160,21 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
             if (isEdit) {
                 const res = await updateEmployee(employee.id, formData)
                 if (res.success) {
-                    toast.success('Cập nhật hồ sơ nhân viên thành công')
+                    toast.success(i18n.updateEmpSuccess)
                     onSuccess()
                     onClose()
                 }
             } else {
                 const res = await createEmployee(formData)
                 if (res.success) {
-                    toast.success('Tạo mới hồ sơ nhân viên thành công')
+                    toast.success(i18n.createEmpSuccess)
                     onSuccess()
                     onClose()
                 }
             }
         } catch (err: any) {
             console.error('Save employee error:', err)
-            toast.error(err.message || 'Lỗi khi lưu hồ sơ nhân viên')
+            toast.error(err.message || i18n.saveEmpError)
         } finally {
             setIsSubmitting(false)
         }
@@ -199,10 +191,10 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                         </div>
                         <div>
                             <h3 className="text-base font-bold text-slate-900">
-                                {isEdit ? `Chỉnh Sửa Hồ Sơ: ${employee.fullName}` : 'Thêm Mới Hồ Sơ Nhân Viên'}
+                                {isEdit ? i18n.formTitleEdit(employee.fullName) : i18n.formTitleCreate}
                             </h3>
                             <p className="text-xs text-slate-600">
-                                {isEdit ? `Mã NV: ${employee.code}` : 'Hệ thống tự động đồng bộ và theo dõi hạn giấy tờ'}
+                                {isEdit ? i18n.formSubEdit(employee.code) : i18n.formSubCreate}
                             </p>
                         </div>
                     </div>
@@ -227,7 +219,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                         }`}
                     >
                         <FileText className="w-4 h-4" />
-                        1. Định Danh & Cá Nhân
+                        {i18n.formTab1}
                     </button>
                     <button
                         type="button"
@@ -239,7 +231,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                         }`}
                     >
                         <Building className="w-4 h-4" />
-                        2. Công Tác & Hợp Đồng
+                        {i18n.formTab2}
                     </button>
                     <button
                         type="button"
@@ -251,7 +243,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                         }`}
                     >
                         <CreditCard className="w-4 h-4" />
-                        3. Tài Chính, Thuế & Sức Khỏe
+                        {i18n.formTab3}
                     </button>
                     <button
                         type="button"
@@ -263,7 +255,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                         }`}
                     >
                         <Link2 className="w-4 h-4" />
-                        4. Liên Kết Tài Khoản ERP
+                        {i18n.formTab4}
                     </button>
                 </div>
 
@@ -276,11 +268,11 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div>
                                         <label className="block font-semibold text-slate-600 mb-1">
-                                            Mã nhân viên (Để trống để tự tạo)
+                                            {i18n.lblEmpCodeAuto}
                                         </label>
                                         <input
                                             type="text"
-                                            placeholder="VD: NV-001"
+                                            placeholder={i18n.phEmpCode}
                                             value={formData.code || ''}
                                             onChange={e => handleChange('code', e.target.value)}
                                             className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
@@ -288,11 +280,11 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                     </div>
                                     <div className="sm:col-span-2">
                                         <label className="block font-semibold text-slate-600 mb-1">
-                                            Họ và tên nhân viên <span className="text-rose-700">*</span>
+                                            {i18n.lblEmpFullName} <span className="text-rose-700">*</span>
                                         </label>
                                         <input
                                             type="text"
-                                            placeholder="VD: Nguyễn Văn An"
+                                            placeholder={i18n.phEmpFullName}
                                             value={formData.fullName}
                                             onChange={e => handleChange('fullName', e.target.value)}
                                             required
@@ -303,19 +295,19 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
 
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div>
-                                        <label className="block font-semibold text-slate-600 mb-1">Giới tính</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">{i18n.lblGender}</label>
                                         <select
                                             value={formData.gender || 'NAM'}
                                             onChange={e => handleChange('gender', e.target.value)}
                                             className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         >
-                                            <option value="NAM">Nam</option>
-                                            <option value="NU">Nữ</option>
-                                            <option value="KHAC">Khác</option>
+                                            <option value="NAM">{i18n.genders.NAM}</option>
+                                            <option value="NU">{i18n.genders.NU}</option>
+                                            <option value="KHAC">{i18n.genders.KHAC}</option>
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block font-semibold text-slate-600 mb-1">Ngày sinh</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">{i18n.lblDob}</label>
                                         <input
                                             type="date"
                                             value={formData.dateOfBirth || ''}
@@ -324,7 +316,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                         />
                                     </div>
                                     <div>
-                                        <label className="block font-semibold text-slate-600 mb-1">Số điện thoại</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">{i18n.lblPhone}</label>
                                         <input
                                             type="tel"
                                             placeholder="0912 345 678"
@@ -337,17 +329,17 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
 
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div>
-                                        <label className="block font-semibold text-slate-600 mb-1">Số CCCD / Hộ chiếu</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">{i18n.secNationalId}</label>
                                         <input
                                             type="text"
-                                            placeholder="12 chữ số CCCD..."
+                                            placeholder={i18n.phNationalId}
                                             value={formData.nationalId || ''}
                                             onChange={e => handleChange('nationalId', e.target.value)}
                                             className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block font-semibold text-slate-600 mb-1">Ngày cấp CCCD</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">{i18n.lblNationalIdDate}</label>
                                         <input
                                             type="date"
                                             value={formData.nationalIdDate || ''}
@@ -356,10 +348,10 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                         />
                                     </div>
                                     <div>
-                                        <label className="block font-semibold text-slate-600 mb-1">Nơi cấp</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">{i18n.lblIssuePlace}</label>
                                         <input
                                             type="text"
-                                            placeholder="Cục CS QLHC về TTXH..."
+                                            placeholder={i18n.phIssuePlace}
                                             value={formData.nationalIdPlace || ''}
                                             onChange={e => handleChange('nationalIdPlace', e.target.value)}
                                             className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
@@ -369,20 +361,20 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block font-semibold text-slate-600 mb-1">Địa chỉ thường trú</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">{i18n.lblPermAddress}</label>
                                         <input
                                             type="text"
-                                            placeholder="Địa chỉ theo hộ khẩu / CCCD..."
+                                            placeholder={i18n.phPermAddress}
                                             value={formData.address || ''}
                                             onChange={e => handleChange('address', e.target.value)}
                                             className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block font-semibold text-slate-600 mb-1">Nơi ở hiện nay</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">{i18n.lblCurrAddress}</label>
                                         <input
                                             type="text"
-                                            placeholder="Địa chỉ tạm trú thực tế..."
+                                            placeholder={i18n.phCurrAddress}
                                             value={formData.currentAddress || ''}
                                             onChange={e => handleChange('currentAddress', e.target.value)}
                                             className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
@@ -392,33 +384,33 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
 
                                 {/* Emergency Contact */}
                                 <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-2.5">
-                                    <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">Người Liên Hệ Khẩn Cấp</p>
+                                    <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">{i18n.secEmergency}</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         <div>
-                                            <label className="block text-slate-600 mb-1">Tên người liên hệ</label>
+                                            <label className="block text-slate-600 mb-1">{i18n.lblEmergencyName}</label>
                                             <input
                                                 type="text"
-                                                placeholder="Bố/Mẹ/Vợ/Chồng..."
+                                                placeholder={i18n.phEmergencyName}
                                                 value={formData.emergencyContact || ''}
                                                 onChange={e => handleChange('emergencyContact', e.target.value)}
                                                 className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-slate-600 mb-1">Số điện thoại liên hệ</label>
+                                            <label className="block text-slate-600 mb-1">{i18n.lblPhone}</label>
                                             <input
                                                 type="tel"
-                                                placeholder="SĐT người thân..."
+                                                placeholder={i18n.phEmergencyPhone}
                                                 value={formData.emergencyPhone || ''}
                                                 onChange={e => handleChange('emergencyPhone', e.target.value)}
                                                 className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-slate-600 mb-1">Mối quan hệ</label>
+                                            <label className="block text-slate-600 mb-1">{i18n.lblEmergencyRelation}</label>
                                             <input
                                                 type="text"
-                                                placeholder="Quan hệ gia đình..."
+                                                placeholder={i18n.phEmergencyRelation}
                                                 value={formData.emergencyRelation || ''}
                                                 onChange={e => handleChange('emergencyRelation', e.target.value)}
                                                 className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
@@ -434,37 +426,37 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                             <div className="space-y-4">
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div>
-                                        <label className="block font-semibold text-slate-600 mb-1">Phòng ban</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">{i18n.lblDept}</label>
                                         <select
                                             value={formData.deptId || ''}
                                             onChange={e => handleChange('deptId', e.target.value)}
                                             className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         >
-                                            <option value="">-- Chưa phân phòng ban --</option>
+                                            <option value="">-- {i18n.unassignedDept} --</option>
                                             {departments.map(d => (
                                                 <option key={d.id} value={d.id}>{d.name}</option>
                                             ))}
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block font-semibold text-slate-600 mb-1">Chức danh / Vị trí</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">{i18n.lblPosition}</label>
                                         <input
                                             type="text"
-                                            placeholder="VD: Nhân viên Sales, Kế toán kho..."
+                                            placeholder={i18n.phPosition}
                                             value={formData.position || ''}
                                             onChange={e => handleChange('position', e.target.value)}
                                             className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block font-semibold text-slate-600 mb-1">Trạng thái công tác</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">{i18n.lblWorkStatus}</label>
                                         <select
                                             value={formData.status || 'ACTIVE'}
                                             onChange={e => handleChange('status', e.target.value)}
                                             className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         >
-                                            {STATUS_OPTIONS.map(s => (
-                                                <option key={s.value} value={s.value}>{s.label}</option>
+                                            {STATUS_OPTION_KEYS.map(s => (
+                                                <option key={s} value={s}>{i18n.statusesFull[s]}</option>
                                             ))}
                                         </select>
                                     </div>
@@ -472,7 +464,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block font-semibold text-slate-600 mb-1">Ngày vào làm việc</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">{i18n.lblStartDate}</label>
                                         <input
                                             type="date"
                                             value={formData.startDate || ''}
@@ -481,7 +473,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                         />
                                     </div>
                                     <div>
-                                        <label className="block font-semibold text-slate-600 mb-1">Ngày tiếp nhận chính thức</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">{i18n.lblOfficialDate}</label>
                                         <input
                                             type="date"
                                             value={formData.officialDate || ''}
@@ -494,28 +486,28 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                 {/* Contract Section */}
                                 <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">Thông Tin Hợp Đồng Lao Động</p>
-                                        <span className="text-[11px] text-amber-700 font-medium">Tự động cảnh báo trước 30 ngày hết hạn</span>
+                                        <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">{i18n.secCurrentContract}</p>
+                                        <span className="text-[11px] text-amber-700 font-medium">{i18n.autoWarn30Days}</span>
                                     </div>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div>
-                                            <label className="block text-slate-600 mb-1">Loại hợp đồng</label>
+                                            <label className="block text-slate-600 mb-1">{i18n.lblContractType}</label>
                                             <select
                                                 value={formData.contractType || 'DEFINITE_1Y'}
                                                 onChange={e => handleChange('contractType', e.target.value)}
                                                 className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                             >
-                                                {CONTRACT_TYPES.map(c => (
-                                                    <option key={c.value} value={c.value}>{c.label}</option>
+                                                {CONTRACT_TYPE_KEYS.map(c => (
+                                                    <option key={c} value={c}>{i18n.contractTypesFull[c]}</option>
                                                 ))}
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-slate-600 mb-1">Số hợp đồng</label>
+                                            <label className="block text-slate-600 mb-1">{i18n.lblContractNumber}</label>
                                             <input
                                                 type="text"
-                                                placeholder="VD: HĐLĐ-2026/01/LYS..."
+                                                placeholder={i18n.phContractNumber}
                                                 value={formData.contractNumber || ''}
                                                 onChange={e => handleChange('contractNumber', e.target.value)}
                                                 className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
@@ -525,7 +517,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div>
-                                            <label className="block text-slate-600 mb-1">Ngày bắt đầu hợp đồng</label>
+                                            <label className="block text-slate-600 mb-1">{i18n.lblContractStart}</label>
                                             <input
                                                 type="date"
                                                 value={formData.contractStartDate || ''}
@@ -535,7 +527,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                         </div>
                                         <div>
                                             <label className="block text-slate-600 mb-1">
-                                                Ngày kết thúc hợp đồng <span className="text-amber-700 font-bold">*</span>
+                                                {i18n.lblContractEnd} <span className="text-amber-700 font-bold">*</span>
                                             </label>
                                             <input
                                                 type="date"
@@ -553,33 +545,33 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                         {activeTab === 'FINANCE' && (
                             <div className="space-y-4">
                                 <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-3">
-                                    <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">Tài Khoản Ngân Hàng & Chi Trả Lương</p>
+                                    <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px]">{i18n.secBankAccount}</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         <div>
-                                            <label className="block text-slate-600 mb-1">Số tài khoản</label>
+                                            <label className="block text-slate-600 mb-1">{i18n.lblBankAccountNo}</label>
                                             <input
                                                 type="text"
-                                                placeholder="Số TK ngân hàng..."
+                                                placeholder={i18n.phBankAccountNo}
                                                 value={formData.bankAccountNo || ''}
                                                 onChange={e => handleChange('bankAccountNo', e.target.value)}
                                                 className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-slate-600 mb-1">Tên ngân hàng & Chi nhánh</label>
+                                            <label className="block text-slate-600 mb-1">{i18n.lblBankNameBranch}</label>
                                             <input
                                                 type="text"
-                                                placeholder="VD: Vietcombank - CN Tân Bình"
+                                                placeholder={i18n.phBankName}
                                                 value={formData.bankName || ''}
                                                 onChange={e => handleChange('bankName', e.target.value)}
                                                 className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-slate-600 mb-1">Tên chủ tài khoản</label>
+                                            <label className="block text-slate-600 mb-1">{i18n.lblBankAccountHolder}</label>
                                             <input
                                                 type="text"
-                                                placeholder="Tên in hoa không dấu..."
+                                                placeholder={i18n.phBankAccountHolder}
                                                 value={formData.bankAccountHolder || ''}
                                                 onChange={e => handleChange('bankAccountHolder', e.target.value)}
                                                 className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
@@ -590,20 +582,20 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block font-semibold text-slate-600 mb-1">Mã số thuế cá nhân (MST)</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">{i18n.lblPersonalTaxCode}</label>
                                         <input
                                             type="text"
-                                            placeholder="MST 10 số..."
+                                            placeholder={i18n.phTaxCode}
                                             value={formData.taxCode || ''}
                                             onChange={e => handleChange('taxCode', e.target.value)}
                                             className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block font-semibold text-slate-600 mb-1">Số sổ Bảo Hiểm Xã Hội (BHXH)</label>
+                                        <label className="block font-semibold text-slate-600 mb-1">{i18n.lblSocialInsuranceNo}</label>
                                         <input
                                             type="text"
-                                            placeholder="Mã số BHXH..."
+                                            placeholder={i18n.phSocialInsuranceNo}
                                             value={formData.socialInsuranceNo || ''}
                                             onChange={e => handleChange('socialInsuranceNo', e.target.value)}
                                             className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
@@ -615,13 +607,13 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                     <div className="flex items-center justify-between">
                                         <p className="font-bold text-[#0891B2] uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                                             <HeartPulse className="w-4 h-4 text-rose-500" />
-                                            Khám Sức Khỏe Định Kỳ
+                                            {i18n.secHealthCheck}
                                         </p>
-                                        <span className="text-[11px] text-amber-700 font-medium">Cảnh báo tái khám định kỳ</span>
+                                        <span className="text-[11px] text-amber-700 font-medium">{i18n.healthPeriodicWarn}</span>
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div>
-                                            <label className="block text-slate-600 mb-1">Ngày khám sức khỏe gần nhất</label>
+                                            <label className="block text-slate-600 mb-1">{i18n.lblLatestHealthCheck}</label>
                                             <input
                                                 type="date"
                                                 value={formData.healthCheckDate || ''}
@@ -630,7 +622,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-slate-600 mb-1">Ngày hết hạn giấy khám sức khỏe</label>
+                                            <label className="block text-slate-600 mb-1">{i18n.lblHealthCheckExpiry}</label>
                                             <input
                                                 type="date"
                                                 value={formData.healthCheckExpiry || ''}
@@ -642,10 +634,10 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                 </div>
 
                                 <div>
-                                    <label className="block font-semibold text-slate-600 mb-1">Ghi chú nội bộ</label>
+                                    <label className="block font-semibold text-slate-600 mb-1">{i18n.lblInternalNotes}</label>
                                     <textarea
                                         rows={2}
-                                        placeholder="Ghi chú về nhân viên..."
+                                        placeholder={i18n.phEmpNotes}
                                         value={formData.notes || ''}
                                         onChange={e => handleChange('notes', e.target.value)}
                                         className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490] resize-none"
@@ -661,9 +653,9 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                     <div className="flex items-start gap-3">
                                         <Link2 className="w-5 h-5 text-[#0891B2] mt-0.5 shrink-0" />
                                         <div>
-                                            <h4 className="text-sm font-bold text-slate-900 mb-1">Liên Kết Tài Khoản Đăng Nhập ERP</h4>
+                                            <h4 className="text-sm font-bold text-slate-900 mb-1">{i18n.secErpLogin}</h4>
                                             <p className="leading-relaxed">
-                                                Khi liên kết hồ sơ nhân viên với tài khoản ERP, nhân viên có thể đăng nhập để xem hồ sơ của chính mình, và các module nghiệp vụ (Bán hàng, Kho, Check-in) sẽ liên kết chính xác với thông tin cá nhân.
+                                                {i18n.erpLinkInfoDesc}
                                             </p>
                                         </div>
                                     </div>
@@ -671,21 +663,21 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
 
                                 <div>
                                     <label className="block font-semibold text-slate-600 mb-1.5">
-                                        Chọn tài khoản ERP trong hệ thống
+                                        {i18n.lblSelectErpAccount}
                                     </label>
                                     <select
                                         value={formData.userId || ''}
                                         onChange={e => handleChange('userId', e.target.value)}
                                         className="w-full px-3.5 py-2.5 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:outline-hidden focus:border-[#0E7490]"
                                     >
-                                        <option value="">-- Không liên kết (Nhân viên chưa có hoặc không cần tài khoản ERP) --</option>
+                                        <option value="">{i18n.optNoErpLink}</option>
                                         {availableUsers.map(u => (
                                             <option
                                                 key={u.id}
                                                 value={u.id}
                                                 disabled={u.isLinkedOther && u.id !== employee?.userId}
                                             >
-                                                {u.name} ({u.email}) - Vai trò: {u.roles || 'Không vai trò'} {u.isLinkedOther && u.id !== employee?.userId ? '(Đã gắn NV khác)' : ''}
+                                                {u.name} ({u.email}) - {i18n.rolePrefix} {u.roles || i18n.noRoleText} {u.isLinkedOther && u.id !== employee?.userId ? i18n.linkedOtherSuffix : ''}
                                             </option>
                                         ))}
                                     </select>
@@ -695,7 +687,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                     <div className="flex items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
                                         <Shield className="w-4 h-4 text-[#0891B2]" />
                                         <span className="text-slate-800">
-                                            Tài khoản đã chọn: <strong>{availableUsers.find(u => u.id === formData.userId)?.name}</strong> ({availableUsers.find(u => u.id === formData.userId)?.email})
+                                            {i18n.selectedAccountLabel} <strong>{availableUsers.find(u => u.id === formData.userId)?.name}</strong> ({availableUsers.find(u => u.id === formData.userId)?.email})
                                         </span>
                                     </div>
                                 )}
@@ -715,7 +707,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                 disabled={isSubmitting}
                                 className="px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 bg-white hover:bg-[#E2E8F0] transition-colors"
                             >
-                                Hủy bỏ
+                                {i18n.btnCancel}
                             </button>
                             <button
                                 type="submit"
@@ -725,12 +717,12 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, employee, depart
                                 {isSubmitting ? (
                                     <>
                                         <Loader2 className="w-4 h-4 animate-spin" />
-                                        Đang lưu...
+                                        {i18n.btnSaving}
                                     </>
                                 ) : (
                                     <>
                                         <Save className="w-4 h-4" />
-                                        {isEdit ? 'Lưu Thay Đổi' : 'Tạo Hồ Sơ'}
+                                        {isEdit ? i18n.btnSaveChanges : i18n.btnCreateProfile}
                                     </>
                                 )}
                             </button>

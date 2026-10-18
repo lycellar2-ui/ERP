@@ -16,26 +16,29 @@ import {
     setSalesQuotaAction,
     convertProspectToCustomerAction
 } from './actions'
+import { useAppLocale } from '@/lib/i18n'
 
 interface TelesalesProspectingPanelProps {
     initialData?: TelesalesDashboardData | null
 }
 
 const CALL_TYPES = [
-    { id: 'CORPORATE_GIFT', label: 'Quà Tết & Sự Kiện Doanh Nghiệp', channel: 'CORPORATE' },
-    { id: 'COLD_PROSPECTING', label: 'Chào hàng danh mục vang B2B', channel: 'CORPORATE' },
-    { id: 'CONTRACT_NEGOTIATION', label: 'Đàm phán hợp đồng / Chiết khấu', channel: 'CORPORATE' },
-    { id: 'RETAIL_CARE', label: 'Chăm sóc khách VIP / Nhà sưu tập', channel: 'RETAIL' },
-    { id: 'TASTING_INVITE', label: 'Mời thử rượu Tasting / Event', channel: 'ALL' },
-    { id: 'QUOTE_FOLLOWUP', label: 'Theo dõi phản hồi báo giá', channel: 'ALL' },
-    { id: 'REORDER_AR', label: 'Chốt đơn tái đặt / Công nợ', channel: 'ALL' },
+    { id: 'CORPORATE_GIFT', label: 'Quà Tết & Sự Kiện Doanh Nghiệp', labelEn: 'Corporate Gifts & Events', channel: 'CORPORATE' },
+    { id: 'COLD_PROSPECTING', label: 'Chào hàng danh mục vang B2B', labelEn: 'B2B Wine Catalog Pitch', channel: 'CORPORATE' },
+    { id: 'CONTRACT_NEGOTIATION', label: 'Đàm phán hợp đồng / Chiết khấu', labelEn: 'Contract / Discount Negotiation', channel: 'CORPORATE' },
+    { id: 'RETAIL_CARE', label: 'Chăm sóc khách VIP / Nhà sưu tập', labelEn: 'VIP / Collector Care', channel: 'RETAIL' },
+    { id: 'TASTING_INVITE', label: 'Mời thử rượu Tasting / Event', labelEn: 'Tasting / Event Invitation', channel: 'ALL' },
+    { id: 'QUOTE_FOLLOWUP', label: 'Theo dõi phản hồi báo giá', labelEn: 'Quotation Follow-up', channel: 'ALL' },
+    { id: 'REORDER_AR', label: 'Chốt đơn tái đặt / Công nợ', labelEn: 'Reorder / AR Collection', channel: 'ALL' },
 ]
 
 const CALL_OUTCOMES = [
     {
         id: 'CONNECTED_INTERESTED',
         label: 'Quan tâm báo giá / Catalog',
+        labelEn: 'Interested in Quotation / Catalog',
         shortLabel: 'Quan tâm',
+        shortLabelEn: 'Interested',
         color: '#0891B2',
         bg: 'rgba(8, 145, 178, 0.1)',
         badgeClass: 'bg-teal-50 text-teal-700 border-teal-200',
@@ -44,7 +47,9 @@ const CALL_OUTCOMES = [
     {
         id: 'CONNECTED_MEETING_SET',
         label: 'Đã chốt lịch hẹn / Tasting',
+        labelEn: 'Meeting / Tasting Scheduled',
         shortLabel: 'Chốt hẹn',
+        shortLabelEn: 'Meeting Set',
         color: '#15803D',
         bg: 'rgba(5, 150, 105, 0.1)',
         badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -53,7 +58,9 @@ const CALL_OUTCOMES = [
     {
         id: 'CONNECTED_CLOSED_DEAL',
         label: 'Chốt đơn hàng thành công!',
+        labelEn: 'Deal Closed Successfully!',
         shortLabel: 'Chốt đơn',
+        shortLabelEn: 'Deal Closed',
         color: '#15803D',
         bg: 'rgba(21,128,61, 0.15)',
         badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold',
@@ -62,7 +69,9 @@ const CALL_OUTCOMES = [
     {
         id: 'CONNECTED_BUSY_CALLBACK',
         label: 'Khách bận – Hẹn gọi lại',
+        labelEn: 'Customer Busy – Call Back Later',
         shortLabel: 'Hẹn gọi lại',
+        shortLabelEn: 'Call Back',
         color: '#D97706',
         bg: 'rgba(217, 119, 6, 0.1)',
         badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
@@ -71,7 +80,9 @@ const CALL_OUTCOMES = [
     {
         id: 'NOT_ANSWERED_MISSED',
         label: 'Không nghe máy / Máy bận',
+        labelEn: 'No Answer / Busy Line',
         shortLabel: 'Không nghe máy',
+        shortLabelEn: 'No Answer',
         color: '#64748B',
         bg: 'rgba(100, 116, 139, 0.1)',
         badgeClass: 'bg-slate-100 text-slate-600 border-slate-200',
@@ -80,7 +91,9 @@ const CALL_OUTCOMES = [
     {
         id: 'WRONG_NUMBER_INVALID',
         label: 'Sai số / Không có nhu cầu',
+        labelEn: 'Wrong Number / Not Interested',
         shortLabel: 'Từ chối / Sai số',
+        shortLabelEn: 'Rejected / Invalid',
         color: '#B91C1C',
         bg: 'rgba(185,28,28, 0.1)',
         badgeClass: 'bg-rose-50 text-rose-700 border-rose-200',
@@ -89,6 +102,7 @@ const CALL_OUTCOMES = [
 ]
 
 export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingPanelProps) {
+    const { isEn, locale } = useAppLocale()
     const [data, setData] = useState<TelesalesDashboardData | null>(initialData || null)
     const [loading, setLoading] = useState(!initialData)
     const [channelFilter, setChannelFilter] = useState<'ALL' | 'CORPORATE' | 'RETAIL'>('ALL')
@@ -133,10 +147,10 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
             if (res.success) {
                 setData(res)
             } else {
-                toast.error(res.error || 'Lỗi khi tải dữ liệu Telesales')
+                toast.error(res.error || (isEn ? 'Failed to load Telesales data' : 'Lỗi khi tải dữ liệu Telesales'))
             }
         } catch {
-            toast.error('Lỗi kết nối máy chủ')
+            toast.error(isEn ? 'Server connection error' : 'Lỗi kết nối máy chủ')
         } finally {
             setLoading(false)
         }
@@ -207,11 +221,11 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
     const handleSubmitCall = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!phone.trim() || phone.trim().length < 8) {
-            toast.error('Vui lòng nhập số điện thoại hợp lệ (tối thiểu 8 số)')
+            toast.error(isEn ? 'Please enter a valid phone number (min 8 digits)' : 'Vui lòng nhập số điện thoại hợp lệ (tối thiểu 8 số)')
             return
         }
         if (!prospectName.trim()) {
-            toast.error('Vui lòng nhập tên người liên hệ / khách hàng')
+            toast.error(isEn ? 'Please enter contact / customer name' : 'Vui lòng nhập tên người liên hệ / khách hàng')
             return
         }
 
@@ -230,14 +244,14 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
             })
 
             if (res.success) {
-                toast.success('Đã lưu nhật ký cuộc gọi thành công!')
+                toast.success(isEn ? 'Call log saved successfully!' : 'Đã lưu nhật ký cuộc gọi thành công!')
                 setLoggerOpen(false)
                 loadDashboard()
             } else {
-                toast.error(res.error || 'Lỗi khi lưu cuộc gọi')
+                toast.error(res.error || (isEn ? 'Failed to save call' : 'Lỗi khi lưu cuộc gọi'))
             }
         } catch {
-            toast.error('Lỗi kết nối máy chủ')
+            toast.error(isEn ? 'Server connection error' : 'Lỗi kết nối máy chủ')
         } finally {
             setSavingCall(false)
         }
@@ -247,7 +261,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
     const handleSaveQuota = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!targetRepId) {
-            toast.error('Vui lòng chọn nhân viên')
+            toast.error(isEn ? 'Please select a sales rep' : 'Vui lòng chọn nhân viên')
             return
         }
         setSavingQuota(true)
@@ -261,14 +275,14 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                 monthlyDealTarget: Number(monthlyDealTargetInput),
             })
             if (res.success) {
-                toast.success('Đã cập nhật chỉ tiêu KPI thành công!')
+                toast.success(isEn ? 'KPI quota updated!' : 'Đã cập nhật chỉ tiêu KPI thành công!')
                 setQuotaModalOpen(false)
                 loadDashboard()
             } else {
-                toast.error(res.error || 'Lỗi khi lưu KPI')
+                toast.error(res.error || (isEn ? 'Failed to save KPI' : 'Lỗi khi lưu KPI'))
             }
         } catch {
-            toast.error('Lỗi kết nối máy chủ')
+            toast.error(isEn ? 'Server connection error' : 'Lỗi kết nối máy chủ')
         } finally {
             setSavingQuota(false)
         }
@@ -290,15 +304,15 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                 address: convertAddress.trim() || undefined,
             })
             if (res.success) {
-                toast.success(`Đã tạo thành công khách hàng mới: [${res.code}]`)
+                toast.success(isEn ? `Created new customer: [${res.code}]` : `Đã tạo thành công khách hàng mới: [${res.code}]`)
                 setConvertModalOpen(false)
                 setConvertingLog(null)
                 loadDashboard()
             } else {
-                toast.error(res.error || 'Lỗi khi chuyển đổi khách hàng')
+                toast.error(res.error || (isEn ? 'Failed to convert customer' : 'Lỗi khi chuyển đổi khách hàng'))
             }
         } catch {
-            toast.error('Lỗi kết nối máy chủ')
+            toast.error(isEn ? 'Server connection error' : 'Lỗi kết nối máy chủ')
         } finally {
             setSavingConvert(false)
         }
@@ -316,14 +330,14 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                         <div>
                             <div className="flex items-center gap-2 flex-wrap">
                                 <h3 className="text-base sm:text-lg font-bold text-slate-900">
-                                    Mục Tiêu Tìm Kiếm & Cuộc Gọi Bán Hàng
+                                    {isEn ? 'Prospecting Targets & Sales Calls' : 'Mục Tiêu Tìm Kiếm & Cuộc Gọi Bán Hàng'}
                                 </h3>
                                 <span className="inline-block text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 font-mono whitespace-nowrap shrink-0">
                                     Telesales & Prospecting Hub
                                 </span>
                             </div>
                             <p className="text-xs text-slate-500 mt-0.5">
-                                Quản lý định mức cuộc gọi ngày, kế hoạch tiếp cận khách hàng mới Corporate (B2B) & Retail (B2C)
+                                {isEn ? 'Manage daily call quotas and outreach plans for Corporate (B2B) & Retail (B2C) prospects' : 'Quản lý định mức cuộc gọi ngày, kế hoạch tiếp cận khách hàng mới Corporate (B2B) & Retail (B2C)'}
                             </p>
                         </div>
                     </div>
@@ -345,7 +359,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer border border-slate-200"
                         >
                             <Target size={14} className="text-teal-600" />
-                            <span>Thiết Lập Chỉ Tiêu KPI</span>
+                            <span>{isEn ? 'Set KPI Quotas' : 'Thiết Lập Chỉ Tiêu KPI'}</span>
                         </button>
                     )}
 
@@ -355,7 +369,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                         className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
                     >
                         <Plus size={14} />
-                        <span>+ Ghi Cuộc Gọi Mới</span>
+                        <span>{isEn ? '+ Log New Call' : '+ Ghi Cuộc Gọi Mới'}</span>
                     </button>
 
                     <button
@@ -363,7 +377,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                         onClick={loadDashboard}
                         disabled={loading}
                         className="p-2 rounded-md border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition cursor-pointer"
-                        title="Làm mới dữ liệu"
+                        title={isEn ? 'Refresh data' : 'Làm mới dữ liệu'}
                     >
                         <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
                     </button>
@@ -382,7 +396,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                     }`}
                 >
                     <CalendarCheck size={14} className={activeSubTab === 'planner' ? 'text-teal-600' : 'text-slate-400'} />
-                    <span>Kế Hoạch Cuộc Gọi Trong Ngày (To-Call List)</span>
+                    <span>{isEn ? 'Daily Call Planner (To-Call List)' : 'Kế Hoạch Cuộc Gọi Trong Ngày (To-Call List)'}</span>
                 </button>
                 <button
                     type="button"
@@ -394,7 +408,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                     }`}
                 >
                     <TrendingUp size={14} className={activeSubTab === 'metrics' ? 'text-teal-600' : 'text-slate-400'} />
-                    <span>Tổng Quan & Chỉ Tiêu Đội Ngũ</span>
+                    <span>{isEn ? 'Team Overview & Quotas' : 'Tổng Quan & Chỉ Tiêu Đội Ngũ'}</span>
                 </button>
             </div>
 
@@ -414,41 +428,41 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
             {/* 2. Top Channel Filter & 4 KPI Metric Cards */}
             <div className="flex items-center justify-between gap-3 flex-wrap">
                 {/* Channel Switcher */}
-                <div className="flex items-center gap-1 p-1 rounded-md bg-white border border-slate-200 shadow-2xs">
+                <div className="flex items-center gap-1 p-1 rounded-md bg-white border border-slate-200 shadow-2xs overflow-x-auto max-w-full">
                     <button
                         type="button"
                         onClick={() => setChannelFilter('ALL')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
                             channelFilter === 'ALL'
                                 ? 'bg-teal-600 text-white shadow-xs'
                                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                         }`}
                     >
-                        Toàn Bộ Đội Ngũ
+                        {isEn ? 'All Team' : 'Toàn Bộ Đội Ngũ'}
                     </button>
                     <button
                         type="button"
                         onClick={() => setChannelFilter('CORPORATE')}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
                             channelFilter === 'CORPORATE'
                                 ? 'bg-teal-600 text-white shadow-xs'
                                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                         }`}
                     >
                         <Building2 size={13} />
-                        <span>Corporate (Doanh Nghiệp)</span>
+                        <span>{isEn ? 'Corporate (B2B)' : 'Corporate (Doanh Nghiệp)'}</span>
                     </button>
                     <button
                         type="button"
                         onClick={() => setChannelFilter('RETAIL')}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
                             channelFilter === 'RETAIL'
                                 ? 'bg-teal-600 text-white shadow-xs'
                                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                         }`}
                     >
                         <Users size={13} />
-                        <span>Retail (Khách Lẻ VIP)</span>
+                        <span>{isEn ? 'Retail (VIP B2C)' : 'Retail (Khách Lẻ VIP)'}</span>
                     </button>
                 </div>
 
@@ -459,7 +473,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                         type="text"
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        placeholder="Tìm nhân viên, khách hàng, SĐT..."
+                        placeholder={isEn ? 'Search sales rep, customer, phone...' : 'Tìm nhân viên, khách hàng, SĐT...'}
                         className="w-full pl-9 pr-3 py-1.5 text-xs rounded-md bg-white border border-slate-200 text-slate-800 placeholder:text-slate-400 outline-none focus:border-teal-500 transition shadow-2xs"
                     />
                 </div>
@@ -473,9 +487,9 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                     </div>
                     <div>
                         <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                            Cuộc Gọi Hôm Nay
+                            {isEn ? 'Calls Today' : 'Cuộc Gọi Hôm Nay'}
                         </p>
-                        <div className="flex items-baseline gap-1.5 mt-0.5">
+                        <div className="flex items-baseline gap-1.5 mt-0.5 flex-wrap">
                             <span className="text-xl sm:text-2xl font-black text-slate-900 font-mono">
                                 {data?.stats.totalCallsToday || 0}
                             </span>
@@ -492,14 +506,14 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                     </div>
                     <div>
                         <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                            Tỷ Lệ Kết Nối Thành Công
+                            {isEn ? 'Connection Rate' : 'Tỷ Lệ Kết Nối Thành Công'}
                         </p>
-                        <div className="flex items-baseline gap-1.5 mt-0.5">
+                        <div className="flex items-baseline gap-1.5 mt-0.5 flex-wrap">
                             <span className="text-xl sm:text-2xl font-black text-emerald-600 font-mono">
                                 {data?.stats.connectionRate || 0}%
                             </span>
                             <span className="text-[11px] text-slate-500 font-mono">
-                                ({data?.stats.connectedCallsToday || 0} cuộc)
+                                ({data?.stats.connectedCallsToday || 0} {isEn ? 'calls' : 'cuộc'})
                             </span>
                         </div>
                     </div>
@@ -511,13 +525,13 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                     </div>
                     <div>
                         <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                            Lead Mới Tìm Được (Tháng)
+                            {isEn ? 'New Leads (Month)' : 'Lead Mới Tìm Được (Tháng)'}
                         </p>
-                        <div className="flex items-baseline gap-1.5 mt-0.5">
+                        <div className="flex items-baseline gap-1.5 mt-0.5 flex-wrap">
                             <span className="text-xl sm:text-2xl font-black text-slate-900 font-mono">
                                 {data?.stats.leadsFoundThisMonth || 0}
                             </span>
-                            <span className="text-[11px] text-slate-500">khách tiềm năng</span>
+                            <span className="text-[11px] text-slate-500">{isEn ? 'prospects' : 'khách tiềm năng'}</span>
                         </div>
                     </div>
                 </div>
@@ -528,13 +542,13 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                     </div>
                     <div>
                         <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                            Cơ Hội (Deals) Mới (Tháng)
+                            {isEn ? 'New Deals (Month)' : 'Cơ Hội (Deals) Mới (Tháng)'}
                         </p>
-                        <div className="flex items-baseline gap-1.5 mt-0.5">
+                        <div className="flex items-baseline gap-1.5 mt-0.5 flex-wrap">
                             <span className="text-xl sm:text-2xl font-black text-slate-900 font-mono">
                                 {data?.stats.dealsCreatedThisMonth || 0}
                             </span>
-                            <span className="text-[11px] text-slate-500">cơ hội bán hàng</span>
+                            <span className="text-[11px] text-slate-500">{isEn ? 'opportunities' : 'cơ hội bán hàng'}</span>
                         </div>
                     </div>
                 </div>
@@ -542,36 +556,116 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
 
             {/* 3. Team Daily Progress & Matrix Table */}
             <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
-                <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between gap-3">
+                <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between gap-3 flex-wrap">
                     <div className="flex items-center gap-2">
                         <Award size={18} className="text-teal-600" />
                         <h4 className="text-sm sm:text-base font-bold text-slate-900">
-                            Bảng Theo Dõi Cuộc Gọi & Chỉ Tiêu Tìm Kiếm Khách Hàng
+                            {isEn ? 'Call Progress & Prospecting Quota Matrix' : 'Bảng Theo Dõi Cuộc Gọi & Chỉ Tiêu Tìm Kiếm Khách Hàng'}
                         </h4>
                     </div>
                     <span className="text-xs text-slate-400 font-mono">
-                        Hôm nay: {data?.todayStr || '2026-09-25'}
+                        {isEn ? 'Today:' : 'Hôm nay:'} {data?.todayStr || '2026-09-25'}
                     </span>
                 </div>
 
-                <div className="overflow-x-auto">
+                {/* Mobile card view */}
+                <div className="block md:hidden divide-y divide-slate-100">
+                    {filteredTeam.length === 0 ? (
+                        <div className="p-8 text-center text-slate-400 text-xs">
+                            {isEn ? 'No sales reps match the filter.' : 'Không tìm thấy nhân viên bán hàng nào phù hợp bộ lọc.'}
+                        </div>
+                    ) : filteredTeam.map(rep => {
+                        const isReached = rep.callsToday >= rep.dailyCallTarget
+                        return (
+                            <div key={rep.repId} className="p-4 space-y-3">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div>
+                                        <p className="font-bold text-xs text-slate-900">{rep.repName}</p>
+                                        <p className="text-[11px] text-slate-400 font-mono">{rep.repEmail}</p>
+                                    </div>
+                                    {rep.channel === 'CORPORATE' ? (
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap shrink-0">
+                                            <Building2 size={11} /> Corporate
+                                        </span>
+                                    ) : (
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
+                                            <Users size={11} /> Retail
+                                        </span>
+                                    )}
+                                </div>
+                                <div>
+                                    <div className="flex items-center justify-between text-[11px] font-mono mb-1">
+                                        <span className="font-bold text-slate-800">
+                                            {rep.callsToday} / {rep.dailyCallTarget} {isEn ? 'calls' : 'cuộc'}
+                                        </span>
+                                        <span className={`font-black ${isReached ? 'text-emerald-600' : 'text-slate-500'}`}>
+                                            {rep.todayProgressPct}%
+                                        </span>
+                                    </div>
+                                    <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden border border-slate-200/60">
+                                        <div
+                                            className={`h-full transition-all duration-300 rounded-full ${isReached ? 'bg-emerald-500' : 'bg-teal-500'}`}
+                                            style={{ width: `${Math.min(100, rep.todayProgressPct)}%` }}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between text-xs pt-1">
+                                    <div className="flex gap-3 font-mono text-[11px]">
+                                        <span>{isEn ? 'Connected:' : 'Kết nối:'} <strong className="text-emerald-600">{rep.connectedToday}</strong>/{rep.callsToday}</span>
+                                        <span>Leads: <strong>{rep.leadsFoundMonth}</strong>/{rep.monthlyLeadTarget}</span>
+                                        <span>Deals: <strong>{rep.dealsCreatedMonth}</strong>/{rep.monthlyDealTarget}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setLoggerChannel(rep.channel === 'CORPORATE' ? 'CORPORATE' : 'RETAIL')
+                                                handleOpenLogger(rep.channel === 'CORPORATE' ? 'CORPORATE' : 'RETAIL')
+                                            }}
+                                            className="px-2.5 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs font-bold transition cursor-pointer"
+                                        >
+                                            {isEn ? '+ Call' : '+ Gọi'}
+                                        </button>
+                                        {data?.isManager && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setTargetRepId(rep.repId)
+                                                    setDailyCallTargetInput(rep.dailyCallTarget)
+                                                    setMonthlyLeadTargetInput(rep.monthlyLeadTarget)
+                                                    setMonthlyDealTargetInput(rep.monthlyDealTarget)
+                                                    setQuotaModalOpen(true)
+                                                }}
+                                                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                                            >
+                                                <Target size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left text-xs">
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
-                                <th className="p-3.5 pl-5">Nhân viên Sales</th>
-                                <th className="p-3.5">Kênh phụ trách</th>
-                                <th className="p-3.5 text-center">Tiến độ cuộc gọi hôm nay</th>
-                                <th className="p-3.5 text-center">Cuộc gọi kết nối</th>
-                                <th className="p-3.5 text-center">Lead mới (Tháng)</th>
-                                <th className="p-3.5 text-center">Deals tạo mới</th>
-                                <th className="p-3.5 text-right pr-5">Thao tác</th>
+                                <th className="p-3.5 pl-5">{isEn ? 'Sales Rep' : 'Nhân viên Sales'}</th>
+                                <th className="p-3.5">{isEn ? 'Channel' : 'Kênh phụ trách'}</th>
+                                <th className="p-3.5 text-center">{isEn ? "Today's Call Progress" : 'Tiến độ cuộc gọi hôm nay'}</th>
+                                <th className="p-3.5 text-center">{isEn ? 'Connected Calls' : 'Cuộc gọi kết nối'}</th>
+                                <th className="p-3.5 text-center">{isEn ? 'New Leads (Month)' : 'Lead mới (Tháng)'}</th>
+                                <th className="p-3.5 text-center">{isEn ? 'New Deals' : 'Deals tạo mới'}</th>
+                                <th className="p-3.5 text-right pr-5">{isEn ? 'Actions' : 'Thao tác'}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {filteredTeam.length === 0 ? (
                                 <tr>
                                     <td colSpan={7} className="p-8 text-center text-slate-400">
-                                        Không tìm thấy nhân viên bán hàng nào phù hợp bộ lọc.
+                                        {isEn ? 'No sales reps match the filter.' : 'Không tìm thấy nhân viên bán hàng nào phù hợp bộ lọc.'}
                                     </td>
                                 </tr>
                             ) : (
@@ -603,7 +697,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                                 <div className="inline-block w-44">
                                                     <div className="flex items-center justify-between text-[11px] font-mono mb-1">
                                                         <span className="font-bold text-slate-800">
-                                                            {rep.callsToday} / {rep.dailyCallTarget} cuộc
+                                                            {rep.callsToday} / {rep.dailyCallTarget} {isEn ? 'calls' : 'cuộc'}
                                                         </span>
                                                         <span className={`font-black ${isReached ? 'text-emerald-600' : 'text-slate-500'}`}>
                                                             {rep.todayProgressPct}%
@@ -629,7 +723,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                             {/* Leads target vs actual */}
                                             <td className="p-3.5 text-center font-mono">
                                                 <span className="font-bold text-slate-800">{rep.leadsFoundMonth}</span>
-                                                <span className="text-slate-400 text-[11px]"> / {rep.monthlyLeadTarget} KH</span>
+                                                <span className="text-slate-400 text-[11px]"> / {rep.monthlyLeadTarget} {isEn ? 'leads' : 'KH'}</span>
                                             </td>
 
                                             {/* Deals count */}
@@ -648,9 +742,9 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                                             handleOpenLogger(rep.channel === 'CORPORATE' ? 'CORPORATE' : 'RETAIL')
                                                         }}
                                                         className="px-2.5 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs font-bold transition cursor-pointer"
-                                                        title="Ghi cuộc gọi cho nhân viên này"
+                                                        title={isEn ? 'Log call for this sales rep' : 'Ghi cuộc gọi cho nhân viên này'}
                                                     >
-                                                        + Gọi
+                                                        {isEn ? '+ Call' : '+ Gọi'}
                                                     </button>
                                                     {data?.isManager && (
                                                         <button
@@ -663,7 +757,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                                                 setQuotaModalOpen(true)
                                                             }}
                                                             className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                                                            title="Chỉnh sửa KPI"
+                                                            title={isEn ? 'Edit KPI' : 'Chỉnh sửa KPI'}
                                                         >
                                                             <Target size={14} />
                                                         </button>
@@ -685,28 +779,28 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                     <div className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
                         <h4 className="text-sm sm:text-base font-bold text-slate-900">
-                            Nhật Ký Cuộc Gọi Thực Hiện Gần Nhất
+                            {isEn ? 'Recent Call Activity Log' : 'Nhật Ký Cuộc Gọi Thực Hiện Gần Nhất'}
                         </h4>
                     </div>
                     <span className="text-xs text-slate-400 font-mono">
-                        {filteredLogs.length} cuộc gọi ghi nhận
+                        {filteredLogs.length} {isEn ? 'calls logged' : 'cuộc gọi ghi nhận'}
                     </span>
                 </div>
 
                 <div className="divide-y divide-slate-100 max-h-[600px] overflow-y-auto">
                     {filteredLogs.length === 0 ? (
                         <div className="p-8 text-center text-slate-400 text-xs">
-                            Chưa có cuộc gọi nào được ghi nhận trong khoảng thời gian này.
+                            {isEn ? 'No calls logged in this period.' : 'Chưa có cuộc gọi nào được ghi nhận trong khoảng thời gian này.'}
                         </div>
                     ) : (
                         filteredLogs.map(log => {
                             const outcomeCfg = CALL_OUTCOMES.find(o => o.id === log.outcome) || CALL_OUTCOMES[0]
                             const OutcomeIcon = outcomeCfg.icon
-                            const callTime = new Date(log.calledAt).toLocaleTimeString('vi-VN', {
+                            const callTime = new Date(log.calledAt).toLocaleTimeString(locale, {
                                 hour: '2-digit',
                                 minute: '2-digit'
                             })
-                            const callDate = new Date(log.calledAt).toLocaleDateString('vi-VN', {
+                            const callDate = new Date(log.calledAt).toLocaleDateString(locale, {
                                 day: '2-digit',
                                 month: '2-digit'
                             })
@@ -724,7 +818,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                         <div className="min-w-0 flex-1 space-y-1">
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${outcomeCfg.badgeClass}`}>
-                                                    {outcomeCfg.shortLabel}
+                                                    {isEn ? outcomeCfg.shortLabelEn : outcomeCfg.shortLabel}
                                                 </span>
 
                                                 {log.channel === 'CORPORATE' ? (
@@ -776,7 +870,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                             {log.followUpDate && (
                                                 <div className="text-[11px] text-amber-700 font-medium flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-md inline-flex border border-amber-200 whitespace-nowrap shrink-0">
                                                     <Calendar size={11} />
-                                                    Lịch hẹn gọi lại: {new Date(log.followUpDate).toLocaleString('vi-VN')}
+                                                    {isEn ? 'Follow-up scheduled:' : 'Lịch hẹn gọi lại:'} {new Date(log.followUpDate).toLocaleString(locale)}
                                                 </div>
                                             )}
                                         </div>
@@ -796,11 +890,11 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                                 className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs font-bold transition cursor-pointer border border-teal-200"
                                             >
                                                 <UserPlus size={13} />
-                                                <span>+ Mở Mã Khách</span>
+                                                <span>{isEn ? '+ Create Customer' : '+ Mở Mã Khách'}</span>
                                             </button>
                                         ) : (
                                             <span className="text-[11px] font-bold text-emerald-600 inline-flex items-center gap-1 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 whitespace-nowrap shrink-0">
-                                                <Check size={12} /> Đã có hồ sơ KH
+                                                <Check size={12} /> {isEn ? 'Linked Customer' : 'Đã có hồ sơ KH'}
                                             </span>
                                         )}
                                     </div>
@@ -830,10 +924,10 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                 </div>
                                 <div>
                                     <h3 className="text-base font-bold text-slate-900">
-                                        Ghi Nhanh Nhật Ký Cuộc Gọi
+                                        {isEn ? 'Quick Call Logger' : 'Ghi Nhanh Nhật Ký Cuộc Gọi'}
                                     </h3>
                                     <p className="text-xs text-slate-500">
-                                        Ghi nhận ngay sau khi kết thúc cuộc đàm thoại với khách hàng
+                                        {isEn ? 'Log immediately after finishing a call with a customer' : 'Ghi nhận ngay sau khi kết thúc cuộc đàm thoại với khách hàng'}
                                     </p>
                                 </div>
                             </div>
@@ -851,7 +945,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                             {/* Kênh bán hàng */}
                             <div>
                                 <label className="block font-bold text-slate-700 mb-1.5">
-                                    Kênh Bán Hàng <span className="text-red-500">*</span>
+                                    {isEn ? 'Sales Channel' : 'Kênh Bán Hàng'} <span className="text-red-500">*</span>
                                 </label>
                                 <div className="grid grid-cols-2 gap-2">
                                     <button
@@ -864,7 +958,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                         }`}
                                     >
                                         <Building2 size={15} />
-                                        <span>Corporate (Doanh Nghiệp)</span>
+                                        <span>{isEn ? 'Corporate (B2B)' : 'Corporate (Doanh Nghiệp)'}</span>
                                     </button>
                                     <button
                                         type="button"
@@ -876,7 +970,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                         }`}
                                     >
                                         <Users size={15} />
-                                        <span>Retail (Khách Lẻ VIP)</span>
+                                        <span>{isEn ? 'Retail (VIP B2C)' : 'Retail (Khách Lẻ VIP)'}</span>
                                     </button>
                                 </div>
                             </div>
@@ -885,7 +979,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                             <div>
                                 <div className="flex items-center justify-between mb-1.5">
                                     <label className="font-bold text-slate-700">
-                                        Đối tượng liên hệ <span className="text-red-500">*</span>
+                                        {isEn ? 'Contact Type' : 'Đối tượng liên hệ'} <span className="text-red-500">*</span>
                                     </label>
                                     <div className="flex items-center gap-2">
                                         <button
@@ -895,7 +989,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                                 loggerCustomerType === 'PROSPECT' ? 'bg-teal-600 text-white' : 'text-slate-500 hover:text-slate-800'
                                             }`}
                                         >
-                                            Đầu Mối Mới (Prospect)
+                                            {isEn ? 'New Prospect' : 'Đầu Mối Mới (Prospect)'}
                                         </button>
                                         <button
                                             type="button"
@@ -904,7 +998,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                                 loggerCustomerType === 'EXISTING' ? 'bg-teal-600 text-white' : 'text-slate-500 hover:text-slate-800'
                                             }`}
                                         >
-                                            Khách Hàng Có Sẵn
+                                            {isEn ? 'Existing Customer' : 'Khách Hàng Có Sẵn'}
                                         </button>
                                     </div>
                                 </div>
@@ -915,7 +1009,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                         onChange={e => handleSelectExistingCustomer(e.target.value)}
                                         className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500 font-bold"
                                     >
-                                        <option value="">-- Chọn khách hàng từ hệ thống --</option>
+                                        <option value="">{isEn ? '-- Select existing customer --' : '-- Chọn khách hàng từ hệ thống --'}</option>
                                         {data?.customersList.map(c => (
                                             <option key={c.id} value={c.id}>
                                                 [{c.code}] {c.name} {c.phone ? `(${c.phone})` : ''}
@@ -926,26 +1020,26 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                         <div>
                                             <label className="block text-slate-500 text-[11px] mb-1">
-                                                Tên người liên hệ / Người nhận quà
+                                                {isEn ? 'Contact Name / Recipient' : 'Tên người liên hệ / Người nhận quà'}
                                             </label>
                                             <input
                                                 type="text"
                                                 value={prospectName}
                                                 onChange={e => setProspectName(e.target.value)}
-                                                placeholder="VD: Anh Minh / Chị Linh HR"
+                                                placeholder={isEn ? 'e.g. Mr. Minh / Ms. Linh HR' : 'VD: Anh Minh / Chị Linh HR'}
                                                 className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
                                                 required
                                             />
                                         </div>
                                         <div>
                                             <label className="block text-slate-500 text-[11px] mb-1">
-                                                Tên Công Ty / Đơn Vị (nếu có)
+                                                {isEn ? 'Company / Organization (optional)' : 'Tên Công Ty / Đơn Vị (nếu có)'}
                                             </label>
                                             <input
                                                 type="text"
                                                 value={prospectCompany}
                                                 onChange={e => setProspectCompany(e.target.value)}
-                                                placeholder="VD: Tập đoàn X / Công ty Y"
+                                                placeholder={isEn ? 'e.g. Group X / Company Y' : 'VD: Tập đoàn X / Công ty Y'}
                                                 className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
                                             />
                                         </div>
@@ -956,13 +1050,13 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                             {/* Số điện thoại */}
                             <div>
                                 <label className="block font-bold text-slate-700 mb-1">
-                                    Số điện thoại gọi <span className="text-red-500">*</span>
+                                    {isEn ? 'Phone Number' : 'Số điện thoại gọi'} <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="tel"
                                     value={phone}
                                     onChange={e => setPhone(e.target.value)}
-                                    placeholder="VD: 0912345678"
+                                    placeholder={isEn ? 'e.g. 0912345678' : 'VD: 0912345678'}
                                     className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 font-mono outline-none focus:border-teal-500"
                                     required
                                 />
@@ -971,7 +1065,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                             {/* Loại cuộc gọi */}
                             <div>
                                 <label className="block font-bold text-slate-700 mb-1">
-                                    Mục Đích / Phân Loại Cuộc Gọi <span className="text-red-500">*</span>
+                                    {isEn ? 'Call Purpose / Category' : 'Mục Đích / Phân Loại Cuộc Gọi'} <span className="text-red-500">*</span>
                                 </label>
                                 <select
                                     value={callType}
@@ -980,7 +1074,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                 >
                                     {CALL_TYPES.map(t => (
                                         <option key={t.id} value={t.label}>
-                                            {t.label}
+                                            {isEn ? t.labelEn : t.label}
                                         </option>
                                     ))}
                                 </select>
@@ -989,7 +1083,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                             {/* Kết quả cuộc gọi (Chip 1-chạm) */}
                             <div>
                                 <label className="block font-bold text-slate-700 mb-1.5">
-                                    Kết Quả Cuộc Gọi <span className="text-red-500">*</span>
+                                    {isEn ? 'Call Outcome' : 'Kết Quả Cuộc Gọi'} <span className="text-red-500">*</span>
                                 </label>
                                 <div className="grid grid-cols-2 gap-2">
                                     {CALL_OUTCOMES.map(o => {
@@ -1011,10 +1105,10 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                                 />
                                                 <div className="min-w-0">
                                                     <div className="font-bold text-[11px] truncate">
-                                                        {o.shortLabel}
+                                                        {isEn ? o.shortLabelEn : o.shortLabel}
                                                     </div>
                                                     <div className="text-[10px] text-slate-400 line-clamp-1">
-                                                        {o.label}
+                                                        {isEn ? o.labelEn : o.label}
                                                     </div>
                                                 </div>
                                             </button>
@@ -1026,13 +1120,13 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                             {/* Ghi chú chi tiết */}
                             <div>
                                 <label className="block font-bold text-slate-700 mb-1">
-                                    Ghi Chú Trao Đổi
+                                    {isEn ? 'Call Notes' : 'Ghi Chú Trao Đổi'}
                                 </label>
                                 <textarea
                                     rows={2}
                                     value={notes}
                                     onChange={e => setNotes(e.target.value)}
-                                    placeholder="Khách cần báo giá set 100 hộp quà Tết vang Ý, ngân sách 1tr - 1.5tr/hộp..."
+                                    placeholder={isEn ? 'Customer requested quotation for 100 Italian wine gift sets...' : 'Khách cần báo giá set 100 hộp quà Tết vang Ý, ngân sách 1tr - 1.5tr/hộp...'}
                                     className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500 resize-y"
                                 />
                             </div>
@@ -1042,7 +1136,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                 <div className="p-3 rounded-md bg-amber-50/60 border border-amber-200 space-y-1">
                                     <label className="font-bold text-amber-900 text-[11px] flex items-center gap-1.5">
                                         <Calendar size={12} className="shrink-0 text-amber-700" />
-                                        <span>Đặt Lịch Hẹn / Gọi Lại</span>
+                                        <span>{isEn ? 'Schedule Follow-up / Callback' : 'Đặt Lịch Hẹn / Gọi Lại'}</span>
                                     </label>
                                     <input
                                         type="datetime-local"
@@ -1060,14 +1154,14 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                     onClick={() => setLoggerOpen(false)}
                                     className="px-4 py-2 rounded-md text-slate-600 hover:bg-slate-100 font-bold transition cursor-pointer"
                                 >
-                                    Hủy
+                                    {isEn ? 'Cancel' : 'Hủy'}
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={savingCall}
                                     className="px-5 py-2 rounded-md bg-teal-600 hover:bg-teal-700 text-white font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
                                 >
-                                    {savingCall ? 'Đang lưu...' : 'Lưu Cuộc Gọi'}
+                                    {savingCall ? (isEn ? 'Saving...' : 'Đang lưu...') : (isEn ? 'Save Call' : 'Lưu Cuộc Gọi')}
                                 </button>
                             </div>
                         </form>
@@ -1091,10 +1185,10 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                 </div>
                                 <div>
                                     <h3 className="text-base font-bold text-slate-900">
-                                        Thiết Lập Chỉ Tiêu KPI Bán Hàng
+                                        {isEn ? 'Set Sales KPI Quotas' : 'Thiết Lập Chỉ Tiêu KPI Bán Hàng'}
                                     </h3>
                                     <p className="text-xs text-slate-500">
-                                        Phân bổ chỉ tiêu cuộc gọi ngày và mục tiêu tìm kiếm khách hàng
+                                        {isEn ? 'Assign daily call targets and monthly prospecting goals' : 'Phân bổ chỉ tiêu cuộc gọi ngày và mục tiêu tìm kiếm khách hàng'}
                                     </p>
                                 </div>
                             </div>
@@ -1110,7 +1204,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                         <form onSubmit={handleSaveQuota} className="p-4 sm:p-5 space-y-4 text-xs">
                             <div>
                                 <label className="block font-bold text-slate-700 mb-1">
-                                    Nhân Viên Sales <span className="text-red-500">*</span>
+                                    {isEn ? 'Sales Rep' : 'Nhân Viên Sales'} <span className="text-red-500">*</span>
                                 </label>
                                 <select
                                     value={targetRepId}
@@ -1135,7 +1229,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
 
                             <div>
                                 <label className="block font-bold text-slate-700 mb-1">
-                                    Định mức cuộc gọi tối thiểu / ngày (cuộc)
+                                    {isEn ? 'Min Daily Call Target (calls/day)' : 'Định mức cuộc gọi tối thiểu / ngày (cuộc)'}
                                 </label>
                                 <input
                                     type="number"
@@ -1147,13 +1241,13 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                     required
                                 />
                                 <span className="text-[11px] text-slate-400 mt-1 block">
-                                    Khuyến nghị: Corporate 10–15 cuộc/ngày; Retail 20–30 cuộc/ngày
+                                    {isEn ? 'Recommended: Corporate 10–15 calls/day; Retail 20–30 calls/day' : 'Khuyến nghị: Corporate 10–15 cuộc/ngày; Retail 20–30 cuộc/ngày'}
                                 </span>
                             </div>
 
                             <div>
                                 <label className="block font-bold text-slate-700 mb-1">
-                                    Chỉ tiêu Lead mới tìm kiếm trong tháng (Khách Hàng)
+                                    {isEn ? 'Monthly New Leads Target' : 'Chỉ tiêu Lead mới tìm kiếm trong tháng (Khách Hàng)'}
                                 </label>
                                 <input
                                     type="number"
@@ -1168,7 +1262,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
 
                             <div>
                                 <label className="block font-bold text-slate-700 mb-1">
-                                    Chỉ tiêu Cơ Hội (Deals / Opps) tạo mới trong tháng
+                                    {isEn ? 'Monthly New Deals / Opportunities Target' : 'Chỉ tiêu Cơ Hội (Deals / Opps) tạo mới trong tháng'}
                                 </label>
                                 <input
                                     type="number"
@@ -1187,14 +1281,14 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                     onClick={() => setQuotaModalOpen(false)}
                                     className="px-4 py-2 rounded-md text-slate-600 hover:bg-slate-100 font-bold transition cursor-pointer"
                                 >
-                                    Hủy
+                                    {isEn ? 'Cancel' : 'Hủy'}
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={savingQuota}
                                     className="px-5 py-2 rounded-md bg-teal-600 hover:bg-teal-700 text-white font-bold transition shadow-xs cursor-pointer"
                                 >
-                                    {savingQuota ? 'Đang lưu...' : 'Lưu Chỉ Tiêu'}
+                                    {savingQuota ? (isEn ? 'Saving...' : 'Đang lưu...') : (isEn ? 'Save Quotas' : 'Lưu Chỉ Tiêu')}
                                 </button>
                             </div>
                         </form>
@@ -1218,10 +1312,10 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                 </div>
                                 <div>
                                     <h3 className="text-base font-bold text-slate-900">
-                                        Mở Mã Khách Hàng Từ Cuộc Gọi
+                                        {isEn ? 'Convert Prospect to Customer' : 'Mở Mã Khách Hàng Từ Cuộc Gọi'}
                                     </h3>
                                     <p className="text-xs text-slate-500">
-                                        Chuyển đầu mối tiềm năng thành khách hàng chính thức trên ERP
+                                        {isEn ? 'Convert qualified prospect into an active ERP customer' : 'Chuyển đầu mối tiềm năng thành khách hàng chính thức trên ERP'}
                                     </p>
                                 </div>
                             </div>
@@ -1241,36 +1335,36 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                 </div>
                                 {convertingLog.prospectCompany && (
                                     <div className="text-slate-600 font-medium">
-                                        Công ty: {convertingLog.prospectCompany}
+                                        {isEn ? 'Company:' : 'Công ty:'} {convertingLog.prospectCompany}
                                     </div>
                                 )}
                                 <div className="font-mono text-teal-700">
-                                    SĐT: {convertingLog.phone} • Kênh: {convertingLog.channel}
+                                    {isEn ? 'Phone:' : 'SĐT:'} {convertingLog.phone} • {isEn ? 'Channel:' : 'Kênh:'} {convertingLog.channel}
                                 </div>
                             </div>
 
                             <div>
                                 <label className="block font-bold text-slate-700 mb-1">
-                                    Mã Số Thuế (nếu có hóa đơn VAT)
+                                    {isEn ? 'Tax ID (for VAT invoice, optional)' : 'Mã Số Thuế (nếu có hóa đơn VAT)'}
                                 </label>
                                 <input
                                     type="text"
                                     value={convertTaxId}
                                     onChange={e => setConvertTaxId(e.target.value)}
-                                    placeholder="VD: 0101234567"
+                                    placeholder={isEn ? 'e.g. 0101234567' : 'VD: 0101234567'}
                                     className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 font-mono outline-none focus:border-teal-500"
                                 />
                             </div>
 
                             <div>
                                 <label className="block font-bold text-slate-700 mb-1">
-                                    Địa Chỉ Giao Hàng / Văn Phòng
+                                    {isEn ? 'Delivery / Office Address' : 'Địa Chỉ Giao Hàng / Văn Phòng'}
                                 </label>
                                 <input
                                     type="text"
                                     value={convertAddress}
                                     onChange={e => setConvertAddress(e.target.value)}
-                                    placeholder="VD: Tòa nhà Keangnam, Mễ Trì, Nam Từ Liêm, HN"
+                                    placeholder={isEn ? 'e.g. Keangnam Tower, Hanoi' : 'VD: Tòa nhà Keangnam, Mễ Trì, Nam Từ Liêm, HN'}
                                     className="w-full p-2.5 rounded-md bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-teal-500"
                                 />
                             </div>
@@ -1281,14 +1375,14 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
                                     onClick={() => setConvertModalOpen(false)}
                                     className="px-4 py-2 rounded-md text-slate-600 hover:bg-slate-100 font-bold transition cursor-pointer"
                                 >
-                                    Hủy
+                                    {isEn ? 'Cancel' : 'Hủy'}
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={savingConvert}
                                     className="px-5 py-2 rounded-md bg-teal-600 hover:bg-teal-700 text-white font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
                                 >
-                                    {savingConvert ? 'Đang tạo...' : 'Tạo Khách Hàng Ngay'}
+                                    {savingConvert ? (isEn ? 'Creating...' : 'Đang tạo...') : (isEn ? 'Create Customer Now' : 'Tạo Khách Hàng Ngay')}
                                 </button>
                             </div>
                         </form>

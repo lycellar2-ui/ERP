@@ -15,6 +15,8 @@ import {
     getProductById, createProducerInline, getProductEditDetails,
     type ProductMediaRow, type ProductAwardRow, type ProductRow,
 } from './actions'
+import { useAppLocale } from '@/lib/i18n'
+import { PRODUCTS_I18N } from './i18n'
 
 // ── Form field ─────────────────────────────────────
 function Field({ label, required, error, children }: {
@@ -147,6 +149,9 @@ function formToInput(f: ProductFormState): ProductInput {
 
 // ── Drawer ─────────────────────────────────────────
 export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }: ProductDrawerProps) {
+    const { locale } = useAppLocale()
+    const L = PRODUCTS_I18N[locale]
+    const D = L.drawer
     const isEdit = !!editingId
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
@@ -314,21 +319,21 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                 const res = await uploadProductTastingNote(editingId, fd)
                 if (res.success && res.url) {
                     set('tastingNoteUrl', res.url)
-                    toast.success('Đã tải lên Tasting Note lên Cloudflare R2!')
+                    toast.success(D.toastUploadTnSuccess)
                 } else {
-                    toast.error(res.error || 'Lỗi khi tải lên Tasting Note')
+                    toast.error(res.error || D.toastUploadTnError)
                 }
             } else {
                 const res = await uploadProductAsset(fd, 'tasting-notes')
                 if (res.success && res.url) {
                     set('tastingNoteUrl', res.url)
-                    toast.success('Đã tải lên Tasting Note lên Cloudflare R2!')
+                    toast.success(D.toastUploadTnSuccess)
                 } else {
-                    toast.error(res.error || 'Lỗi khi tải lên Tasting Note')
+                    toast.error(res.error || D.toastUploadTnError)
                 }
             }
         } catch (err: any) {
-            toast.error(`Lỗi: ${err.message}`)
+            toast.error(`Error: ${err.message}`)
         } finally {
             setUploadingTastingNote(false)
         }
@@ -340,9 +345,9 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
             const res = await deleteProductTastingNote(editingId)
             if (res.success) {
                 set('tastingNoteUrl', null)
-                toast.success('Đã xóa Tasting Note')
+                toast.success(D.toastDeleteTnSuccess)
             } else {
-                toast.error(res.error || 'Lỗi khi xóa Tasting Note')
+                toast.error(res.error || D.toastDeleteTnError)
             }
         } else {
             set('tastingNoteUrl', null)
@@ -358,12 +363,12 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
             const res = await uploadProductAsset(fd, 'documents')
             if (res.success && res.url) {
                 set('selfDeclarationUrl', res.url)
-                toast.success('Đã tải lên Bản Tự Công Bố lên Cloudflare R2!')
+                toast.success(D.toastUploadTcbSuccess)
             } else {
-                toast.error(res.error || 'Lỗi tải file')
+                toast.error(res.error || D.toastUploadTcbError)
             }
         } catch (err: any) {
-            toast.error(`Lỗi: ${err.message}`)
+            toast.error(`Error: ${err.message}`)
         } finally {
             setUploadingSelfDecl(false)
         }
@@ -371,9 +376,9 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
 
     const validate = (): boolean => {
         const e: Record<string, string> = {}
-        if (!form.sku?.trim()) e.sku = 'SKU bắt buộc'
-        if (!form.name?.trim()) e.name = 'Tên sản phẩm bắt buộc'
-        if (!form.producerId?.trim()) e.producerId = 'Nhà sản xuất bắt buộc'
+        if (!form.sku?.trim()) e.sku = D.errSkuRequired
+        if (!form.name?.trim()) e.name = D.errNameRequired
+        if (!form.producerId?.trim()) e.producerId = D.errProducerRequired
         setErrors(e)
         return Object.keys(e).length === 0
     }
@@ -386,20 +391,20 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
         const savePromise = (async () => {
             const res = isEdit ? await updateProduct(editingId!, input) : await createProduct(input)
             if (!res.success) {
-                throw new Error((res as any).error ?? 'Lỗi lưu sản phẩm')
+                throw new Error((res as any).error ?? D.errSaveProduct)
             }
             return res
         })()
 
         toast.promise(savePromise, {
-            loading: isEdit ? 'Đang cập nhật sản phẩm...' : 'Đang tạo sản phẩm...',
+            loading: isEdit ? D.toastUpdating : D.toastCreating,
             success: () => {
                 onSaved()
-                return isEdit ? 'Đã cập nhật thành công!' : 'Tạo sản phẩm mới thành công!'
+                return isEdit ? D.toastUpdated : D.toastCreated
             },
             error: (err: any) => {
-                setErrors({ _global: err.message ?? 'Lỗi không xác định' })
-                return `Lỗi: ${err.message}`
+                setErrors({ _global: err.message ?? D.errSaveProduct })
+                return `${err.message}`
             },
             finally: () => setSaving(false)
         })
@@ -412,14 +417,14 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
             onClose={() => { if (previewDoc) setPreviewDoc(null); else onClose() }}
             size="md"
             className="bg-lys-bg"
-            title={isEdit ? 'Chỉnh Sửa Sản Phẩm' : 'Thêm Sản Phẩm Mới'}
-            description="Điền thông tin đầy đủ về chai rượu"
+            title={isEdit ? D.editTitle : D.createTitle}
+            description={D.description}
             footer={
                 <>
-                    <Button variant="secondary" onClick={onClose}>Hủy</Button>
+                    <Button variant="secondary" onClick={onClose}>{D.cancelBtn}</Button>
                     <Button onClick={handleSave} loading={saving} disabled={saving}>
                         {!saving && <Save size={14} aria-hidden />}
-                        {saving ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo sản phẩm'}
+                        {saving ? D.savingBtn : isEdit ? D.saveChangesBtn : D.createBtn}
                     </Button>
                 </>
             }
@@ -428,7 +433,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                     {loading && (
                         <div className="absolute inset-0 bg-slate-50/80 flex flex-col items-center justify-center gap-3 z-30">
                             <Loader2 size={32} className="animate-spin text-lys-teal" />
-                            <p className="text-xs" style={{ color: '#64748B' }}>Đang tải thông tin sản phẩm...</p>
+                            <p className="text-xs" style={{ color: '#64748B' }}>{D.loadingInfo}</p>
                         </div>
                     )}
 
@@ -443,11 +448,11 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                     {/* Section: Thông tin cơ bản */}
                     <div className="space-y-4">
                         <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
-                            ── Thông Tin Cơ Bản
+                            {D.secBasic}
                         </p>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Field label="SKU" required error={errors.sku}>
+                            <Field label={D.fieldSku} required error={errors.sku}>
                                 <Input
                                     value={form.sku ?? ''}
                                     onChange={e => set('sku', e.target.value.toUpperCase())}
@@ -456,7 +461,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                             </Field>
                         </div>
 
-                        <Field label="Tên sản phẩm" required error={errors.name}>
+                        <Field label={D.fieldName} required error={errors.name}>
                             <Input
                                 value={form.name ?? ''}
                                 onChange={e => set('name', e.target.value)}
@@ -465,16 +470,16 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                         </Field>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Field label="Loại rượu">
+                            <Field label={D.fieldWineType}>
                                 <Select value={form.wineType ?? ''} onChange={e => set('wineType', e.target.value || null)}>
-                                    <option value="">Chọn loại...</option>
-                                    <option value="WHITE">Vang trắng</option>
-                                    <option value="RED">Vang đỏ</option>
-                                    <option value="SPARKLING">Vang nổ</option>
-                                    <option value="ROSE">Vang hồng</option>
+                                    <option value="">{D.selectTypePlaceholder}</option>
+                                    <option value="WHITE">{L.wineTypes.WHITE}</option>
+                                    <option value="RED">{L.wineTypes.RED}</option>
+                                    <option value="SPARKLING">{L.wineTypes.SPARKLING}</option>
+                                    <option value="ROSE">{L.wineTypes.ROSE}</option>
                                 </Select>
                             </Field>
-                            <Field label="Độ cồn ABV (°)">
+                            <Field label={D.fieldAbv}>
                                 <Input
                                     type="number"
                                     value={form.abv ?? ''}
@@ -489,24 +494,24 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                     {/* Section: Đóng gói */}
                     <div className="space-y-4">
                         <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
-                            ── Quy Cách Đóng Gói
+                            {D.secPackaging}
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <Field label="Dung tích (ml)">
+                            <Field label={D.fieldVolume}>
                                 <Select value={form.volumeMl ?? 750} onChange={e => set('volumeMl', Number(e.target.value))}>
-                                    <option value={375}>375 ml (Nửa)  </option>
-                                    <option value={750}>750 ml (Chuẩn)</option>
-                                    <option value={1500}>1500 ml (Magnum)</option>
-                                    <option value={3000}>3000 ml (Double)</option>
+                                    <option value={375}>{D.volHalf}</option>
+                                    <option value={750}>{D.volStandard}</option>
+                                    <option value={1500}>{D.volMagnum}</option>
+                                    <option value={3000}>{D.volDouble}</option>
                                 </Select>
                             </Field>
-                            <Field label="Đóng gói">
+                            <Field label={D.fieldPackaging}>
                                 <Select value={form.packagingType ?? 'CARTON'} onChange={e => set('packagingType', e.target.value as any)}>
                                     <option value="CARTON">Carton</option>
-                                    <option value="OWC">OWC (Gỗ)</option>
+                                    <option value="OWC">{D.pkgOwc}</option>
                                 </Select>
                             </Field>
-                            <Field label="Chai/thùng">
+                            <Field label={D.fieldUnitsPerCase}>
                                 <Select value={form.bottlesPerCase ?? 12} onChange={e => set('bottlesPerCase', Number(e.target.value))}>
                                     <option value={1}>1</option>
                                     <option value={3}>3</option>
@@ -515,10 +520,10 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                     <option value={24}>24</option>
                                 </Select>
                             </Field>
-                            <Field label="Thuế suất VAT">
+                            <Field label={D.fieldVat}>
                                 <Select value={form.vatRate ?? 10} onChange={e => set('vatRate', Number(e.target.value))}>
-                                    <option value={10}>10% (Chuẩn)</option>
-                                    <option value={8}>8% (Ưu đãi)</option>
+                                    <option value={10}>{D.vat10}</option>
+                                    <option value={8}>{D.vat8}</option>
                                 </Select>
                             </Field>
                         </div>
@@ -527,50 +532,35 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                     {/* Section: Xuất xứ */}
                     <div className="space-y-4">
                         <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
-                            ── Xuất Xứ & Nhà Sản Xuất
+                            {D.secOrigin}
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <Field label="Quốc gia">
+                            <Field label={D.fieldCountry}>
                                 <Select value={form.countryCode ?? ''} onChange={e => set('countryCode', e.target.value || null)}>
-                                    <option value="">Chọn quốc gia...</option>
-                                    <option value="FR">Pháp (France)</option>
-                                    <option value="IT">Ý (Italy)</option>
-                                    <option value="ES">Tây Ban Nha (Spain)</option>
-                                    <option value="PT">Bồ Đào Nha (Portugal)</option>
-                                    <option value="DE">Đức (Germany)</option>
-                                    <option value="US">Mỹ (USA)</option>
-                                    <option value="AU">Úc (Australia)</option>
-                                    <option value="NZ">New Zealand</option>
-                                    <option value="AR">Argentina</option>
-                                    <option value="CL">Chile</option>
-                                    <option value="ZA">Nam Phi (South Africa)</option>
-                                    <option value="GE">Georgia</option>
-                                    <option value="HU">Hungary</option>
-                                    <option value="GR">Hy Lạp</option>
-                                    <option value="AT">Áo (Austria)</option>
-                                    <option value="RO">Romania</option>
-                                    <option value="MX">Mexico</option>
-                                    <option value="JP">Nhật Bản (Japan)</option>
+                                    <option value="">{D.selectCountryPlaceholder}</option>
+                                    {Object.entries(L.countriesFull).map(([code, label]) => (
+                                        <option key={code} value={code}>{label}</option>
+                                    ))}
                                 </Select>
                             </Field>
-                            <Field label="Nhà sản xuất" required error={errors.producerId}>
+                            <Field label={D.fieldProducer} required error={errors.producerId}>
                                 <div className="flex gap-1.5">
                                     <Select className="flex-1" value={form.producerId ?? ''} onChange={e => set('producerId', e.target.value || null)}>
-                                        <option value="">— Chọn nhà SX —</option>
+                                        <option value="">{D.selectProducerPlaceholder}</option>
                                         {producers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                     </Select>
                                     <button
                                         type="button"
                                         onClick={() => setShowNewProducer(true)}
                                         className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold transition-colors bg-white border border-[#E2E8F0] hover:border-[#0891B2] text-[#0891B2]"
-                                        title="Tạo nhà SX mới">
+                                        title={D.createProducerTitle}>
                                         +
                                     </button>
                                 </div>
                             </Field>
-                            <Field label="Nhà cung cấp (NCC)">
+                            <Field label={D.fieldSupplier}>
                                 <Select value={form.supplierId ?? ''} onChange={e => set('supplierId', e.target.value || null)}>
-                                    <option value="">— Chọn nhà cung cấp —</option>
+                                    <option value="">{D.selectSupplierPlaceholder}</option>
                                     {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                 </Select>
                             </Field>
@@ -579,25 +569,25 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                         {/* Inline producer creation */}
                         {showNewProducer && (
                             <div className="p-3 rounded-lg space-y-2" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                <p className="text-xs font-bold" style={{ color: '#0891B2' }}>Tạo Nhà SX Mới</p>
+                                <p className="text-xs font-bold" style={{ color: '#0891B2' }}>{D.createProducerTitle}</p>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <Input
                                         value={newProducerName}
                                         onChange={e => setNewProducerName(e.target.value)}
-                                        placeholder="Tên nhà sản xuất"
+                                        placeholder={D.newProducerPlaceholder}
                                     />
                                     <Select value={newProducerCountry} onChange={e => setNewProducerCountry(e.target.value)}>
-                                        <option value="FR">Pháp</option>
-                                        <option value="IT">Ý</option>
-                                        <option value="ES">Tây Ban Nha</option>
-                                        <option value="US">Mỹ</option>
-                                        <option value="AU">Úc</option>
-                                        <option value="CL">Chile</option>
-                                        <option value="AR">Argentina</option>
+                                        <option value="FR">{L.countries.FR}</option>
+                                        <option value="IT">{L.countries.IT}</option>
+                                        <option value="ES">{L.countries.ES}</option>
+                                        <option value="US">{L.countries.US}</option>
+                                        <option value="AU">{L.countries.AU}</option>
+                                        <option value="CL">{L.countries.CL}</option>
+                                        <option value="AR">{L.countries.AR}</option>
                                     </Select>
                                 </div>
                                 <div className="flex justify-end gap-2">
-                                    <button onClick={() => setShowNewProducer(false)} className="text-xs px-2 py-1" style={{ color: '#64748B' }}>Hủy</button>
+                                    <button onClick={() => setShowNewProducer(false)} className="text-xs px-2 py-1" style={{ color: '#64748B' }}>{D.cancelBtn}</button>
                                     <button
                                         disabled={!newProducerName.trim() || creatingProducer}
                                         onClick={async () => {
@@ -608,23 +598,23 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                                 set('producerId', p.id)
                                                 setShowNewProducer(false)
                                                 setNewProducerName('')
-                                                toast.success(`Đã tạo nhà SX "${p.name}"`)
+                                                toast.success(D.toastProducerCreated(p.name))
                                             } catch {
-                                                toast.error('Không thể tạo nhà SX')
+                                                toast.error(D.toastProducerError)
                                             }
                                             setCreatingProducer(false)
                                         }}
                                         className="text-xs px-3 py-1 rounded font-semibold disabled:opacity-50"
                                         style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                                        {creatingProducer ? 'Đang tạo...' : 'Tạo'}
+                                        {creatingProducer ? D.creatingProducer : D.createProducerBtn}
                                     </button>
                                 </div>
                             </div>
                         )}
 
-                        <Field label="Vùng / Appellation">
+                        <Field label={D.fieldAppellation}>
                             <Select value={form.regionId ?? ''} onChange={e => set('regionId', e.target.value || null)}>
-                                <option value="">— Chọn vùng / appellation —</option>
+                                <option value="">{D.selectAppellationPlaceholder}</option>
                                 {appellations.map(a => (
                                     <option key={a.id} value={a.id}>
                                         {a.name}{a.region?.name ? ` (${a.region.name})` : ''}
@@ -637,10 +627,10 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                     {/* Section: HS Code, Giá & Trạng thái */}
                     <div className="space-y-4">
                         <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
-                            ── Giá, Phân Loại & Trạng Thái
+                            {D.secPricingStatus}
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Field label="Giá bán lẻ (VND)">
+                            <Field label={D.fieldRetailPrice}>
                                 <Input
                                     type="number"
                                     value={form.retailPriceVnd ?? ''}
@@ -649,11 +639,11 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                     step={50000}
                                 />
                             </Field>
-                            <Field label="Trạng thái">
+                            <Field label={D.fieldStatus}>
                                 <Select value={form.status ?? 'ACTIVE'} onChange={e => set('status', e.target.value as any)}>
-                                    <option value="ACTIVE">Đang kinh doanh</option>
-                                    <option value="ALLOCATION_ONLY">Allocation Only</option>
-                                    <option value="DISCONTINUED">Ngừng kinh doanh</option>
+                                    <option value="ACTIVE">{L.detailStatuses.ACTIVE}</option>
+                                    <option value="ALLOCATION_ONLY">{L.detailStatuses.ALLOCATION_ONLY}</option>
+                                    <option value="DISCONTINUED">{L.detailStatuses.DISCONTINUED}</option>
                                 </Select>
                             </Field>
                         </div>
@@ -662,10 +652,10 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                     {/* Section: Drinking window */}
                     <div className="space-y-4">
                         <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
-                            ── Best Drinking Window
+                            {D.secDrinkingWindow}
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Field label="Uống từ năm">
+                            <Field label={D.fieldDrinkStart}>
                                 <Input
                                     type="number"
                                     value={form.peakDrinkStart ?? ''}
@@ -673,7 +663,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                     placeholder="2025"
                                 />
                             </Field>
-                            <Field label="Uống đến năm">
+                            <Field label={D.fieldDrinkEnd}>
                                 <Input
                                     type="number"
                                     value={form.peakDrinkEnd ?? ''}
@@ -688,20 +678,20 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <p className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#0891B2' }}>
-                                <FileText size={13} /> Tài Liệu & Tasting Note (Cloudflare R2)
+                                <FileText size={13} /> {D.secDocs}
                             </p>
-                            <span className="text-[10px] text-slate-500 font-medium">Lưu trữ bảo mật R2</span>
+                            <span className="text-[10px] text-slate-500 font-medium">{D.r2SecurityNote}</span>
                         </div>
 
                         {/* Tasting Note */}
                         <div className="p-3.5 rounded-lg border border-slate-200 bg-white space-y-3">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-semibold uppercase tracking-wide text-slate-700 flex items-center gap-1.5">
-                                    <Wine size={13} className="text-cyan-700" /> Tasting Note (Ghi chú nếm thử)
+                                    <Wine size={13} className="text-cyan-700" /> {D.tnCardTitle}
                                 </span>
                                 {form.tastingNoteUrl && (
                                     <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
-                                        <CheckCircle2 size={11} /> Đã có tài liệu
+                                        <CheckCircle2 size={11} /> {D.docAttachedBadge}
                                     </span>
                                 )}
                             </div>
@@ -727,17 +717,17 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                             type="button"
                                             onClick={() => setPreviewDoc({
                                                 url: form.tastingNoteUrl!,
-                                                title: `Tasting Note — ${form.name || form.sku || 'Sản phẩm'}`,
+                                                title: `Tasting Note — ${form.name || form.sku || 'SKU'}`,
                                             })}
                                             className="px-2.5 py-1.5 rounded text-xs font-medium bg-cyan-50 text-cyan-800 hover:bg-cyan-100 border border-cyan-300 flex items-center gap-1 transition-colors cursor-pointer"
                                         >
-                                            <Eye size={12} /> Xem trực tiếp
+                                            <Eye size={12} /> {D.viewDirectBtn}
                                         </button>
                                         <button
                                             type="button"
                                             onClick={handleDeleteTastingNote}
                                             className="px-2.5 py-1.5 rounded text-xs font-medium text-rose-700 hover:bg-rose-50 border border-rose-200 transition-colors"
-                                            title="Xóa tài liệu Tasting Note"
+                                            title={D.deleteTnTitle}
                                         >
                                             <Trash2 size={12} />
                                         </button>
@@ -747,13 +737,13 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                 <label className="flex flex-col items-center justify-center gap-1.5 px-4 py-4 rounded-lg border-2 border-dashed border-slate-200 hover:border-cyan-600 cursor-pointer bg-slate-50/50 hover:bg-cyan-50/20 transition-all text-center">
                                     {uploadingTastingNote ? (
                                         <div className="flex items-center gap-2 text-xs text-cyan-700">
-                                            <Loader2 size={16} className="animate-spin" /> Đang tải lên Cloudflare R2...
+                                            <Loader2 size={16} className="animate-spin" /> {D.uploadingR2}
                                         </div>
                                     ) : (
                                         <>
                                             <UploadCloud size={20} className="text-cyan-700" />
-                                            <span className="text-xs font-medium text-slate-700">Tải lên file Tasting Note (PDF, DOCX, Ảnh)</span>
-                                            <span className="text-[10px] text-slate-500">Kéo thả hoặc click để chọn file từ máy tính (Tối đa 35MB)</span>
+                                            <span className="text-xs font-medium text-slate-700">{D.uploadTnLabel}</span>
+                                            <span className="text-[10px] text-slate-500">{D.uploadTnHint}</span>
                                         </>
                                     )}
                                     <input
@@ -772,13 +762,13 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
 
                             <div className="pt-1">
                                 <details className="text-[11px] text-slate-500">
-                                    <summary className="cursor-pointer hover:text-cyan-800 select-none">Nhập đường link trực tiếp (URL)</summary>
+                                    <summary className="cursor-pointer hover:text-cyan-800 select-none">{D.directUrlLabel}</summary>
                                     <div className="pt-2">
                                         <Input
                                             type="url"
                                             value={form.tastingNoteUrl ?? ''}
                                             onChange={e => set('tastingNoteUrl', e.target.value || null)}
-                                            placeholder="https://... hoặc link file tasting note"
+                                            placeholder="https://..."
                                             className="text-xs py-1.5"
                                         />
                                     </div>
@@ -790,11 +780,11 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                         <div className="p-3.5 rounded-lg border border-slate-200 bg-white space-y-3">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-semibold uppercase tracking-wide text-slate-700 flex items-center gap-1.5">
-                                    <Paperclip size={13} className="text-cyan-700" /> Bản Tự Công Bố Sản Phẩm
+                                    <Paperclip size={13} className="text-cyan-700" /> {D.tcbCardTitle}
                                 </span>
                                 {form.selfDeclarationUrl && (
                                     <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
-                                        <CheckCircle2 size={11} /> Đã có tài liệu
+                                        <CheckCircle2 size={11} /> {D.docAttachedBadge}
                                     </span>
                                 )}
                             </div>
@@ -807,7 +797,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                         </div>
                                         <div className="min-w-0">
                                             <p className="text-xs font-medium text-slate-900 truncate max-w-[280px]">
-                                                {form.selfDeclarationUrl.split('/').pop() || 'Tự Công Bố'}
+                                                {form.selfDeclarationUrl.split('/').pop() || 'TCB'}
                                             </p>
                                             <p className="text-[10px] text-slate-500 truncate max-w-[280px]">
                                                 {form.selfDeclarationUrl}
@@ -820,17 +810,17 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                             type="button"
                                             onClick={() => setPreviewDoc({
                                                 url: form.selfDeclarationUrl!,
-                                                title: `Bản Tự Công Bố — ${form.name || form.sku || 'Sản phẩm'}`,
+                                                title: `TCB — ${form.name || form.sku || 'SKU'}`,
                                             })}
                                             className="px-2.5 py-1.5 rounded text-xs font-medium bg-cyan-50 text-cyan-800 hover:bg-cyan-100 border border-cyan-300 flex items-center gap-1 transition-colors cursor-pointer"
                                         >
-                                            <Eye size={12} /> Xem trực tiếp
+                                            <Eye size={12} /> {D.viewDirectBtn}
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => set('selfDeclarationUrl', null)}
                                             className="px-2.5 py-1.5 rounded text-xs font-medium text-rose-700 hover:bg-rose-50 border border-rose-200 transition-colors"
-                                            title="Xóa bản tự công bố"
+                                            title={D.deleteTcbTitle}
                                         >
                                             <Trash2 size={12} />
                                         </button>
@@ -840,12 +830,12 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                 <label className="flex flex-col items-center justify-center gap-1 px-4 py-3 rounded-lg border-2 border-dashed border-slate-200 hover:border-cyan-600 cursor-pointer bg-slate-50/50 hover:bg-cyan-50/20 transition-all text-center">
                                     {uploadingSelfDecl ? (
                                         <div className="flex items-center gap-2 text-xs text-cyan-700">
-                                            <Loader2 size={16} className="animate-spin" /> Đang tải lên Cloudflare R2...
+                                            <Loader2 size={16} className="animate-spin" /> {D.uploadingR2}
                                         </div>
                                     ) : (
                                         <>
                                             <UploadCloud size={16} className="text-cyan-700" />
-                                            <span className="text-xs font-medium text-slate-700">Tải lên Bản Tự Công Bố (PDF/Ảnh)</span>
+                                            <span className="text-xs font-medium text-slate-700">{D.uploadTcbLabel}</span>
                                         </>
                                     )}
                                     <input
@@ -864,13 +854,13 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
 
                             <div className="pt-1">
                                 <details className="text-[11px] text-slate-500">
-                                    <summary className="cursor-pointer hover:text-cyan-800 select-none">Nhập đường link trực tiếp (URL)</summary>
+                                    <summary className="cursor-pointer hover:text-cyan-800 select-none">{D.directUrlLabel}</summary>
                                     <div className="pt-2">
                                         <Input
                                             type="url"
                                             value={form.selfDeclarationUrl ?? ''}
                                             onChange={e => set('selfDeclarationUrl', e.target.value || null)}
-                                            placeholder="https://... hoặc link tự công bố"
+                                            placeholder="https://..."
                                             className="text-xs py-1.5"
                                         />
                                     </div>
@@ -882,18 +872,18 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                     {/* Section: Đặc tính sản phẩm (Wine Profile) */}
                     <div className="space-y-4">
                         <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
-                            ── Đặc Tính Sản Phẩm (Wine Profile)
+                            {D.secProfile}
                         </p>
                         
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Field label="Giống nho (Grapes)">
+                            <Field label={D.fieldGrapes}>
                                 <Input
                                     value={form.grapes ?? ''}
                                     onChange={e => set('grapes', e.target.value || null)}
                                     placeholder="Corvina, Rondinella, Corvinone..."
                                 />
                             </Field>
-                            <Field label="Nhiệt độ phục vụ">
+                            <Field label={D.fieldServingTemp}>
                                 <Input
                                     value={form.servingTemp ?? ''}
                                     onChange={e => set('servingTemp', e.target.value || null)}
@@ -903,14 +893,14 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Field label="Xuất xứ chi tiết">
+                            <Field label={D.fieldOriginDetail}>
                                 <Input
                                     value={form.originDetail ?? ''}
                                     onChange={e => set('originDetail', e.target.value || null)}
-                                    placeholder="Veneto, Ý"
+                                    placeholder="Veneto, Italy"
                                 />
                             </Field>
-                            <Field label="Chứng chỉ (Certification)">
+                            <Field label={D.fieldCertification}>
                                 <Input
                                     value={form.certification ?? ''}
                                     onChange={e => set('certification', e.target.value || null)}
@@ -920,57 +910,57 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Field label="Màu sắc (Color)">
+                            <Field label={D.fieldColor}>
                                 <Input
                                     value={form.color ?? ''}
                                     onChange={e => set('color', e.target.value || null)}
-                                    placeholder="Đỏ ruby sẫm màu với ánh tím..."
+                                    placeholder="Deep ruby red..."
                                 />
                             </Field>
-                            <Field label="Phong cách (Style)">
+                            <Field label={D.fieldStyle}>
                                 <Input
                                     value={form.style ?? ''}
                                     onChange={e => set('style', e.target.value || null)}
-                                    placeholder="Khô, đậm đà mạnh mẽ..."
+                                    placeholder="Dry, full-bodied..."
                                 />
                             </Field>
                         </div>
 
-                        <Field label="Hương thơm (Aromas / Nose)">
+                        <Field label={D.fieldAromas}>
                             <textarea
                                 className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all duration-150 resize-y min-h-[60px]"
                                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                                 value={form.aromas ?? ''}
                                 onChange={e => set('aromas', e.target.value || null)}
-                                placeholder="Quả sung khô, mứt anh đào, quả mâm xôi đen, thảo mộc khô..."
+                                placeholder="Dried fig, cherry jam, blackberry, dried herbs..."
                                 rows={2}
                             />
                         </Field>
 
-                        <Field label="Vị giác (Palate)">
+                        <Field label={D.fieldPalate}>
                             <textarea
                                 className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all duration-150 resize-y min-h-[60px]"
                                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}
                                 value={form.palate ?? ''}
                                 onChange={e => set('palate', e.target.value || null)}
-                                placeholder="Mềm mượt, đậm đà (full-bodied), tannin mịn màng..."
+                                placeholder="Velvety, full-bodied, silky tannins..."
                                 rows={2}
                             />
                         </Field>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Field label="Món ăn kèm (Food Pairings)">
+                            <Field label={D.fieldFoodPairings}>
                                 <Input
                                     value={form.foodPairings ?? ''}
                                     onChange={e => set('foodPairings', e.target.value || null)}
-                                    placeholder="Thịt bò nướng, cừu quay, phô mai lâu năm..."
+                                    placeholder="Grilled beef, roast lamb, aged cheese..."
                                 />
                             </Field>
-                            <Field label="Phù hợp với (Best Suited For)">
+                            <Field label={D.fieldBestSuited}>
                                 <Input
                                     value={form.bestSuitedFor ?? ''}
                                     onChange={e => set('bestSuitedFor', e.target.value || null)}
-                                    placeholder="Những ai say mê dòng vang đỏ Amarone..."
+                                    placeholder="Amarone & full-bodied red wine lovers..."
                                 />
                             </Field>
                         </div>
@@ -981,7 +971,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                     {/* Section: Hình ảnh sản phẩm */}
                     <div className="space-y-4">
                         <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
-                            ── Hình Ảnh Sản Phẩm
+                            {D.secMedia}
                         </p>
 
                         {isEdit ? (
@@ -989,8 +979,8 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                 {/* Upload button */}
                                 <label className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg cursor-pointer transition-all bg-white border-2 border-dashed border-[#E2E8F0] text-[#64748B] hover:border-[#0891B2] hover:text-[#0891B2]">
                                     {uploadingMedia
-                                        ? <><Loader2 size={16} className="animate-spin" /> Đang upload...</>
-                                        : <><UploadCloud size={16} /> Thêm hình ảnh (JPG, PNG, WEBP)</>
+                                        ? <><Loader2 size={16} className="animate-spin" /> {D.uploadingMedia}</>
+                                        : <><UploadCloud size={16} /> {D.addMediaBtn}</>
                                     }
                                     <input type="file" className="hidden" accept="image/jpeg,image/png,image/webp"
                                         disabled={uploadingMedia}
@@ -1002,7 +992,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                                 const compressed = await compressImage(file)
                                                 if (compressed !== file) {
                                                     const savedPct = Math.round((1 - compressed.size / file.size) * 100)
-                                                    if (savedPct > 5) toast.info(`Ảnh đã nén: ${(file.size / 1024 / 1024).toFixed(1)}MB → ${(compressed.size / 1024 / 1024).toFixed(1)}MB (-${savedPct}%)`)
+                                                    if (savedPct > 5) toast.info(D.toastCompressed((file.size / 1024 / 1024).toFixed(1), (compressed.size / 1024 / 1024).toFixed(1), savedPct))
                                                 }
 
                                                 // Direct upload to Cloudflare R2
@@ -1011,12 +1001,12 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                                 const res = await uploadProductMedia(editingId, fd)
                                                 if (res.success && res.media) {
                                                     setMediaList(prev => [res.media!, ...prev])
-                                                    toast.success('Upload ảnh lên Cloudflare R2 thành công!')
+                                                    toast.success(D.toastMediaUploaded)
                                                 } else {
-                                                    toast.error(`Lỗi upload ảnh: ${res.error}`)
+                                                    toast.error(`${D.toastMediaError}: ${res.error}`)
                                                 }
                                             } catch (err: any) {
-                                                toast.error(`Lỗi upload: ${err.message ?? err}`)
+                                                toast.error(`${D.toastMediaError}: ${err.message ?? err}`)
                                             } finally {
                                                 setUploadingMedia(false)
                                                 e.target.value = ''
@@ -1037,7 +1027,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                                 {m.isPrimary && (
                                                     <div className="absolute top-1.5 left-1.5 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-bold whitespace-nowrap shrink-0"
                                                         style={{ background: 'rgba(8,145,178,0.9)', color: '#0F172A' }}>
-                                                        <Star size={8} /> Ảnh chính
+                                                        <Star size={8} /> {D.primaryImageBadge}
                                                     </div>
                                                 )}
 
@@ -1053,32 +1043,32 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                                             }}
                                                             className="p-2 rounded-lg transition-colors"
                                                             style={{ background: 'rgba(8, 145, 178, 0.15)', color: '#0891B2' }}
-                                                            title="Đặt làm ảnh chính">
+                                                            title={D.setPrimaryTooltip}>
                                                             <Star size={14} />
                                                         </button>
                                                     )}
                                                     <button
                                                         onClick={() => {
                                                             confirm({
-                                                                title: 'Xóa Hình Ảnh',
-                                                                message: 'Bạn có chắc chắn muốn xóa hình ảnh này không?',
-                                                                confirmLabel: 'Xóa',
-                                                                cancelLabel: 'Bỏ qua',
+                                                                title: D.deleteMediaTitle,
+                                                                message: D.deleteMediaMsg,
+                                                                confirmLabel: L.table.deleteBtn,
+                                                                cancelLabel: D.cancelBtn,
                                                                 danger: true,
                                                                 onConfirm: async () => {
                                                                     const res = await deleteProductMedia(m.id)
                                                                     if (res.success) {
                                                                         setMediaList(prev => prev.filter(x => x.id !== m.id))
-                                                                        toast.success('Đã xóa hình ảnh')
+                                                                        toast.success(D.toastMediaDeleted)
                                                                     } else {
-                                                                        toast.error(res.error || 'Lỗi khi xóa hình')
+                                                                        toast.error(res.error || D.toastMediaError)
                                                                     }
                                                                 }
                                                             })
                                                         }}
                                                         className="p-2 rounded-lg transition-colors"
                                                         style={{ background: 'rgba(185,28,28,0.2)', color: '#B91C1C' }}
-                                                        title="Xóa">
+                                                        title={L.table.deleteBtn}>
                                                         <Trash2 size={14} />
                                                     </button>
                                                 </div>
@@ -1088,7 +1078,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                 ) : (
                                     <div className="flex flex-col items-center gap-2 py-6 rounded-lg" style={{ background: '#F8FAFC', border: '1px dashed #E2E8F0' }}>
                                         <ImageIcon size={24} style={{ color: '#94A3B8' }} />
-                                        <p className="text-xs" style={{ color: '#64748B' }}>Chưa có hình ảnh nào</p>
+                                        <p className="text-xs" style={{ color: '#64748B' }}>{D.emptyMedia}</p>
                                     </div>
                                 )}
                             </>
@@ -1096,7 +1086,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                             <div className="flex flex-col items-center gap-2 py-6 rounded-lg" style={{ background: '#FFFFFF', border: '1px dashed #E2E8F0' }}>
                                 <UploadCloud size={24} style={{ color: '#E2E8F0' }} />
                                 <p className="text-xs text-center" style={{ color: '#64748B' }}>
-                                    Lưu sản phẩm trước, sau đó mở chỉnh sửa để thêm hình ảnh
+                                    {D.saveBeforeMediaHint}
                                 </p>
                             </div>
                         )}
@@ -1106,14 +1096,14 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#B45309' }}>
-                                ── Giải Thưởng & Điểm Số
+                                {D.secAwards}
                             </p>
                             {isEdit && (
                                 <button
                                     onClick={() => setShowAwardForm(v => !v)}
                                     className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition-colors"
                                     style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309', border: '1px solid rgba(180,83,9,0.25)' }}>
-                                    <Plus size={10} /> Thêm
+                                    <Plus size={10} /> {D.addAwardBtn}
                                 </button>
                             )}
                         </div>
@@ -1124,7 +1114,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                 {showAwardForm && (
                                     <div className="p-4 rounded-lg space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            <Field label="Nguồn">
+                                            <Field label={D.fieldAwardSource}>
                                                 <Select value={awardSource} onChange={e => setAwardSource(e.target.value)}>
                                                     <option>Robert Parker</option>
                                                     <option>Wine Spectator</option>
@@ -1134,28 +1124,28 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                                     <option>Vivino</option>
                                                 </Select>
                                             </Field>
-                                            <Field label="Điểm">
+                                            <Field label={D.fieldAwardScore}>
                                                 <Input type="number" value={awardScore}
                                                     onChange={e => setAwardScore(e.target.value)}
                                                     placeholder="95" min={0} max={100} />
                                             </Field>
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                            <Field label="Huy chương">
+                                            <Field label={D.fieldAwardMedal}>
                                                 <Select value={awardMedal} onChange={e => setAwardMedal(e.target.value)}>
-                                                    <option value="">— Không —</option>
+                                                    <option value="">{D.noMedalOption}</option>
                                                     <option value="DOUBLE_GOLD">Double Gold</option>
                                                     <option value="GOLD">Gold</option>
                                                     <option value="SILVER">Silver</option>
                                                     <option value="BRONZE">Bronze</option>
                                                 </Select>
                                             </Field>
-                                            <Field label="Vintage">
+                                            <Field label={D.fieldAwardVintage}>
                                                 <Input type="number" value={awardVintage}
                                                     onChange={e => setAwardVintage(e.target.value)}
                                                     placeholder="2018" />
                                             </Field>
-                                            <Field label="Năm trao">
+                                            <Field label={D.fieldAwardYear}>
                                                 <Input type="number" value={awardYear}
                                                     onChange={e => setAwardYear(e.target.value)}
                                                     placeholder="2022" />
@@ -1163,7 +1153,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                         </div>
                                         <div className="flex gap-2 justify-end">
                                             <button onClick={() => setShowAwardForm(false)}
-                                                className="px-3 py-1.5 text-xs rounded" style={{ color: '#64748B' }}>Hủy</button>
+                                                className="px-3 py-1.5 text-xs rounded" style={{ color: '#64748B' }}>{D.cancelBtn}</button>
                                             <button
                                                 disabled={savingAward || !awardSource}
                                                 onClick={async () => {
@@ -1177,20 +1167,20 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                                         vintage: awardVintage ? Number(awardVintage) : undefined,
                                                         awardedYear: awardYear ? Number(awardYear) : undefined,
                                                     }), {
-                                                        loading: 'Đang lưu giải thưởng...',
+                                                        loading: D.toastSavingAward,
                                                         success: () => {
                                                             getProductAwards(editingId).then(setAwards)
                                                             setShowAwardForm(false)
                                                             setAwardScore(''); setAwardMedal(''); setAwardVintage(''); setAwardYear('')
-                                                            return 'Đã lưu giải thưởng'
+                                                            return D.toastAwardSaved
                                                         },
-                                                        error: 'Không thể lưu giải thưởng',
+                                                        error: D.toastAwardError,
                                                         finally: () => setSavingAward(false)
                                                     })
                                                 }}
                                                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded disabled:opacity-50"
                                                 style={{ background: '#D97706', color: '#FFFFFF' }}>
-                                                {savingAward ? <Loader2 size={10} className="animate-spin" /> : <Award size={10} />} Lưu
+                                                {savingAward ? <Loader2 size={10} className="animate-spin" /> : <Award size={10} />} {D.saveAwardBtn}
                                             </button>
                                         </div>
                                     </div>
@@ -1223,27 +1213,27 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                                     <p className="text-[10px]" style={{ color: '#64748B' }}>
                                                         {aw.vintage && `Vintage ${aw.vintage} `}
                                                         {aw.vintage && aw.awardedYear && ' · '}
-                                                        {aw.awardedYear && `Năm ${aw.awardedYear} `}
+                                                        {aw.awardedYear && `${D.awardYearPrefix} ${aw.awardedYear} `}
                                                     </p>
                                                 </div>
                                                 <button
                                                     onClick={() => {
                                                         confirm({
-                                                            title: 'Xóa Giải Thưởng',
-                                                            message: 'Bạn có chắc chắn muốn xóa giải thưởng này không?',
-                                                            confirmLabel: 'Xóa',
-                                                            cancelLabel: 'Bỏ qua',
+                                                            title: D.deleteAwardTitle,
+                                                            message: D.deleteAwardMsg,
+                                                            confirmLabel: L.table.deleteBtn,
+                                                            cancelLabel: D.cancelBtn,
                                                             danger: true,
                                                             onConfirm: async () => {
                                                                 await deleteProductAward(aw.id)
                                                                 setAwards(prev => prev.filter(a => a.id !== aw.id))
-                                                                toast.success('Đã xóa giải thưởng')
+                                                                toast.success(D.toastAwardDeleted)
                                                             }
                                                         })
                                                     }}
                                                     className="opacity-0 group-hover:opacity-100 p-1.5 rounded transition-all"
                                                     style={{ color: '#B91C1C' }}
-                                                    title="Xóa">
+                                                    title={L.table.deleteBtn}>
                                                     <Trash2 size={12} />
                                                 </button>
                                             </div>
@@ -1252,7 +1242,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                 ) : !showAwardForm && (
                                     <div className="flex flex-col items-center gap-2 py-6 rounded-lg" style={{ background: '#F8FAFC', border: '1px dashed #E2E8F0' }}>
                                         <Award size={24} style={{ color: '#94A3B8' }} />
-                                        <p className="text-xs" style={{ color: '#64748B' }}>Chưa có giải thưởng nào</p>
+                                        <p className="text-xs" style={{ color: '#64748B' }}>{D.emptyAwards}</p>
                                     </div>
                                 )}
                             </>
@@ -1260,7 +1250,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                             <div className="flex flex-col items-center gap-2 py-6 rounded-lg" style={{ background: '#FFFFFF', border: '1px dashed #E2E8F0' }}>
                                 <Award size={24} style={{ color: '#E2E8F0' }} />
                                 <p className="text-xs text-center" style={{ color: '#64748B' }}>
-                                    Lưu sản phẩm trước, sau đó mở chỉnh sửa để thêm giải thưởng
+                                    {D.saveBeforeAwardsHint}
                                 </p>
                             </div>
                         )}
@@ -1288,25 +1278,25 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 transition-colors"
-                                    title="Mở trong tab trình duyệt mới"
+                                    title={L.detailDrawer.openNewTab}
                                 >
                                     <ExternalLink size={12} />
-                                    <span className="hidden sm:inline">Mở tab mới</span>
+                                    <span className="hidden sm:inline">{L.detailDrawer.openNewTab}</span>
                                 </a>
                                 <a
                                     href={`${previewDoc.url}${previewDoc.url.includes('?') ? '&' : '?'}download=true`}
                                     download
                                     className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-cyan-700 hover:bg-cyan-800 transition-colors"
-                                    title="Tải file về máy"
+                                    title={L.detailDrawer.downloadTooltip}
                                 >
                                     <Download size={12} />
-                                    <span className="hidden sm:inline">Tải về</span>
+                                    <span className="hidden sm:inline">{L.detailDrawer.downloadBtn}</span>
                                 </a>
                                 <button
                                     type="button"
                                     onClick={() => setPreviewDoc(null)}
                                     className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-200/60 transition-colors cursor-pointer"
-                                    aria-label="Đóng xem trước"
+                                    aria-label={L.detailDrawer.closePreview}
                                 >
                                     <X size={16} />
                                 </button>

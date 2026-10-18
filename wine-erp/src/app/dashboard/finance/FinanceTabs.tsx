@@ -23,6 +23,7 @@ import {
 } from './actions'
 import { VAS_ACCOUNTS } from '@/lib/finance-integration'
 import { formatVND, formatDate } from '@/lib/utils'
+import { useAppLocale } from '@/lib/i18n'
 
 const card: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px' }
 
@@ -36,6 +37,16 @@ const DOC_TYPE_LABEL: Record<string, string> = {
     ADJUSTMENT: 'Điều chỉnh',
 }
 
+const DOC_TYPE_LABEL_EN: Record<string, string> = {
+    GOODS_RECEIPT: 'Goods Receipt',
+    SALES_INVOICE: 'Sales Invoice',
+    PAYMENT_IN: 'Cash In',
+    PAYMENT_OUT: 'Cash Out',
+    COGS: 'COGS',
+    EXPENSE: 'Expense',
+    ADJUSTMENT: 'Adjustment',
+}
+
 const DOC_TYPE_COLOR: Record<string, string> = {
     GOODS_RECEIPT: '#1D4ED8',
     SALES_INVOICE: '#15803D',
@@ -47,6 +58,7 @@ const DOC_TYPE_COLOR: Record<string, string> = {
 
 // ── Journal Entry Tab ─────────────────────────
 export function JournalEntryTab() {
+    const { isEn } = useAppLocale()
     const [entries, setEntries] = useState<JournalEntryRow[]>([])
     const [total, setTotal] = useState(0)
     const [loaded, setLoaded] = useState(false)
@@ -116,19 +128,21 @@ export function JournalEntryTab() {
         } finally { setExporting(false) }
     }
 
+    const docLabelMap = isEn ? DOC_TYPE_LABEL_EN : DOC_TYPE_LABEL
+
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
                 <p className="text-sm" style={{ color: '#475569' }}>
                     <BookOpen size={14} className="inline mr-1.5" />
-                    {total} bút toán
+                    {total} {isEn ? 'journal entries' : 'bút toán'}
                 </p>
                 <div className="flex gap-2">
                     <select value={docFilter} onChange={e => { setDocFilter(e.target.value); loadEntries(e.target.value) }}
                         className="text-xs px-3 py-1.5 rounded"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: docFilter ? '#0F172A' : '#64748B' }}>
-                        <option value="">Tất cả loại</option>
-                        {Object.entries(DOC_TYPE_LABEL).map(([k, v]) => (
+                        <option value="">{isEn ? 'All types' : 'Tất cả loại'}</option>
+                        {Object.entries(docLabelMap).map(([k, v]) => (
                             <option key={k} value={k}>{v}</option>
                         ))}
                     </select>
@@ -139,7 +153,7 @@ export function JournalEntryTab() {
                             border: '1px solid #E2E8F0', color: '#B45309',
                         }}>
                         <Download size={12} />
-                        Xuất Kế Toán
+                        {isEn ? 'Export Accounting' : 'Xuất Kế Toán'}
                     </button>
                 </div>
             </div>
@@ -150,10 +164,10 @@ export function JournalEntryTab() {
                     <div className="flex items-start justify-between">
                         <div>
                             <h4 className="text-sm font-bold" style={{ color: '#B45309' }}>
-                                Xuất Bút Toán cho PM Kế Toán
+                                {isEn ? 'Export Journal Entries for Accounting Software' : 'Xuất Bút Toán cho PM Kế Toán'}
                             </h4>
                             <p className="text-xs mt-1" style={{ color: '#64748B' }}>
-                                Xuất file Excel/JSON để import vào MISA, Fast, Bravo hoặc PM kế toán khác
+                                {isEn ? 'Export Excel/JSON to import into MISA, Fast, Bravo or other accounting software' : 'Xuất file Excel/JSON để import vào MISA, Fast, Bravo hoặc PM kế toán khác'}
                             </p>
                         </div>
                         <span className="inline-block text-xs px-2 py-1 rounded whitespace-nowrap shrink-0" style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309' }}>
@@ -162,15 +176,15 @@ export function JournalEntryTab() {
                     </div>
 
                     {/* Date range */}
-                    <div className="flex items-end gap-3">
+                    <div className="flex items-end gap-3 flex-wrap">
                         <div>
-                            <label className="text-xs font-semibold uppercase block mb-1" style={{ color: '#64748B' }}>Từ ngày</label>
+                            <label className="text-xs font-semibold uppercase block mb-1" style={{ color: '#64748B' }}>{isEn ? 'From Date' : 'Từ ngày'}</label>
                             <input type="date" value={exportFrom} onChange={e => setExportFrom(e.target.value)}
                                 className="px-3 py-2 text-sm outline-none rounded"
                                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }} />
                         </div>
                         <div>
-                            <label className="text-xs font-semibold uppercase block mb-1" style={{ color: '#64748B' }}>Đến ngày</label>
+                            <label className="text-xs font-semibold uppercase block mb-1" style={{ color: '#64748B' }}>{isEn ? 'To Date' : 'Đến ngày'}</label>
                             <input type="date" value={exportTo} onChange={e => setExportTo(e.target.value)}
                                 className="px-3 py-2 text-sm outline-none rounded"
                                 style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }} />
@@ -178,7 +192,7 @@ export function JournalEntryTab() {
                         <button onClick={loadExportStats} disabled={statsLoading}
                             className="px-3 py-2 text-xs font-semibold rounded"
                             style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                            {statsLoading ? '...' : 'Xem Trước'}
+                            {statsLoading ? '...' : (isEn ? 'Preview' : 'Xem Trước')}
                         </button>
                     </div>
 
@@ -187,19 +201,19 @@ export function JournalEntryTab() {
                         <div className="space-y-3">
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div className="p-3 rounded" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                    <p className="text-xs uppercase font-semibold" style={{ color: '#64748B' }}>Số bút toán</p>
+                                    <p className="text-xs uppercase font-semibold" style={{ color: '#64748B' }}>{isEn ? 'Entries Count' : 'Số bút toán'}</p>
                                     <p className="text-xl font-bold" style={{ color: '#0F172A' }}>
                                         {exportStats.count}
                                     </p>
                                 </div>
                                 <div className="p-3 rounded" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                    <p className="text-xs uppercase font-semibold" style={{ color: '#64748B' }}>Tổng Nợ (Debit)</p>
+                                    <p className="text-xs uppercase font-semibold" style={{ color: '#64748B' }}>{isEn ? 'Total Debit' : 'Tổng Nợ (Debit)'}</p>
                                     <p className="text-lg font-bold" style={{ color: '#15803D' }}>
                                         {formatVND(exportStats.totalDebit)}
                                     </p>
                                 </div>
                                 <div className="p-3 rounded" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                    <p className="text-xs uppercase font-semibold" style={{ color: '#64748B' }}>Tổng Có (Credit)</p>
+                                    <p className="text-xs uppercase font-semibold" style={{ color: '#64748B' }}>{isEn ? 'Total Credit' : 'Tổng Có (Credit)'}</p>
                                     <p className="text-lg font-bold" style={{ color: '#B91C1C' }}>
                                         {formatVND(exportStats.totalCredit)}
                                     </p>
@@ -212,7 +226,7 @@ export function JournalEntryTab() {
                                     {Object.entries(exportStats.docTypes as Record<string, number>).map(([type, count]) => (
                                         <span key={type} className="inline-block text-xs px-2 py-1 rounded whitespace-nowrap shrink-0"
                                             style={{ background: `${DOC_TYPE_COLOR[type] ?? '#64748B'}20`, color: DOC_TYPE_COLOR[type] ?? '#475569' }}>
-                                            {DOC_TYPE_LABEL[type] ?? type}: {count}
+                                            {docLabelMap[type] ?? type}: {count}
                                         </span>
                                     ))}
                                 </div>
@@ -223,7 +237,7 @@ export function JournalEntryTab() {
                                 <div className="flex items-center gap-2 p-2 rounded text-xs"
                                     style={{ background: 'rgba(185,28,28,0.1)', border: '1px solid rgba(185,28,28,0.3)', color: '#B91C1C' }}>
                                     <AlertTriangle size={14} className="shrink-0" />
-                                    <span>Nợ ≠ Có — Chênh lệch {formatVND(Math.abs(exportStats.totalDebit - exportStats.totalCredit))}</span>
+                                    <span>{isEn ? 'Debit ≠ Credit — Variance' : 'Nợ ≠ Có — Chênh lệch'} {formatVND(Math.abs(exportStats.totalDebit - exportStats.totalCredit))}</span>
                                 </div>
                             )}
 
@@ -237,7 +251,7 @@ export function JournalEntryTab() {
                                         cursor: exportStats.count > 0 ? 'pointer' : 'not-allowed',
                                     }}>
                                     <Download size={14} />
-                                    {exporting ? 'Đang xuất...' : `Xuất Excel (${exportStats.count} bút toán)`}
+                                    {exporting ? (isEn ? 'Exporting...' : 'Đang xuất...') : (isEn ? `Export Excel (${exportStats.count} entries)` : `Xuất Excel (${exportStats.count} bút toán)`)}
                                 </button>
                                 <button onClick={handleExportJSON} disabled={exporting || exportStats.count === 0}
                                     className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-md"
@@ -256,57 +270,81 @@ export function JournalEntryTab() {
             ) : entries.length === 0 ? (
                 <div className="text-center py-16 rounded-md" style={{ ...card, borderStyle: 'dashed' }}>
                     <BookOpen size={32} className="mx-auto mb-3" style={{ color: '#94A3B8' }} />
-                    <p className="text-sm" style={{ color: '#64748B' }}>Chưa có bút toán nào</p>
-                    <p className="text-xs mt-1" style={{ color: '#94A3B8' }}>Bút toán sẽ tự động sinh khi confirm GR, DO, AR/AP Payment</p>
+                    <p className="text-sm" style={{ color: '#64748B' }}>{isEn ? 'No journal entries found' : 'Chưa có bút toán nào'}</p>
+                    <p className="text-xs mt-1" style={{ color: '#94A3B8' }}>{isEn ? 'Journal entries are auto-generated on confirming GR, DO, or AR/AP Payment' : 'Bút toán sẽ tự động sinh khi confirm GR, DO, AR/AP Payment'}</p>
                 </div>
             ) : (
-                <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
-                    <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                        <thead>
-                            <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                {['Mã', 'Loại', 'Diễn giải', 'Kỳ', 'Nợ (Debit)', 'Có (Credit)', 'Dòng', 'Ngày'].map(h => (
-                                    <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {entries.map(e => {
-                                const typeColor = DOC_TYPE_COLOR[e.docType] ?? '#475569'
-                                return (
-                                    <tr key={e.id} className="hover:bg-[#0891B2]/4 transition-colors" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                        <td className="px-3 py-2.5">
-                                            <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{e.entryNo}</span>
-                                        </td>
-                                        <td className="px-3 py-2.5">
-                                            <span className="inline-block text-xs px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0"
-                                                style={{ color: typeColor, background: `${typeColor}20` }}>
-                                                {DOC_TYPE_LABEL[e.docType] ?? e.docType}
-                                            </span>
-                                        </td>
-                                        <td className="px-3 py-2.5 text-xs max-w-[200px] truncate" style={{ color: '#0F172A' }}>
-                                            {e.description ?? '—'}
-                                        </td>
-                                        <td className="px-3 py-2.5 text-xs" style={{ color: '#64748B' }}>
-                                            {e.periodLabel}
-                                        </td>
-                                        <td className="px-3 py-2.5 text-right">
-                                            <span className="text-xs font-bold" style={{ color: '#15803D' }}>
-                                                {e.totalDebit > 0 ? formatVND(e.totalDebit) : '—'}
-                                            </span>
-                                        </td>
-                                        <td className="px-3 py-2.5 text-right">
-                                            <span className="text-xs font-bold" style={{ color: '#B91C1C' }}>
-                                                {e.totalCredit > 0 ? formatVND(e.totalCredit) : '—'}
-                                            </span>
-                                        </td>
-                                        <td className="px-3 py-2.5 text-center text-xs" style={{ color: '#475569' }}>{e.lineCount}</td>
-                                        <td className="px-3 py-2.5 text-xs" style={{ color: '#64748B' }}>{formatDate(e.postedAt)}</td>
-                                    </tr>
-                                )
-                            })}
-                        </tbody>
-                    </table>
-                </div>
+                <>
+                    <div className="hidden md:block rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
+                        <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
+                                    {(isEn ? ['Entry No', 'Type', 'Description', 'Period', 'Debit', 'Credit', 'Lines', 'Date'] : ['Mã', 'Loại', 'Diễn giải', 'Kỳ', 'Nợ (Debit)', 'Có (Credit)', 'Dòng', 'Ngày']).map(h => (
+                                        <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {entries.map(e => {
+                                    const typeColor = DOC_TYPE_COLOR[e.docType] ?? '#475569'
+                                    return (
+                                        <tr key={e.id} className="hover:bg-[#0891B2]/4 transition-colors" style={{ borderBottom: '1px solid #E2E8F0' }}>
+                                            <td className="px-3 py-2.5">
+                                                <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{e.entryNo}</span>
+                                            </td>
+                                            <td className="px-3 py-2.5">
+                                                <span className="inline-block text-xs px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0"
+                                                    style={{ color: typeColor, background: `${typeColor}20` }}>
+                                                    {docLabelMap[e.docType] ?? e.docType}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-2.5 text-xs max-w-[200px] truncate" style={{ color: '#0F172A' }}>
+                                                {e.description ?? '—'}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#64748B' }}>
+                                                {e.periodLabel}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-right">
+                                                <span className="text-xs font-bold" style={{ color: '#15803D' }}>
+                                                    {e.totalDebit > 0 ? formatVND(e.totalDebit) : '—'}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-2.5 text-right">
+                                                <span className="text-xs font-bold" style={{ color: '#B91C1C' }}>
+                                                    {e.totalCredit > 0 ? formatVND(e.totalCredit) : '—'}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-2.5 text-center text-xs" style={{ color: '#475569' }}>{e.lineCount}</td>
+                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#64748B' }}>{formatDate(e.postedAt)}</td>
+                                        </tr>
+                                    )
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Mobile Cards for JournalEntryTab */}
+                    <div className="block md:hidden space-y-2.5">
+                        {entries.map(e => {
+                            const typeColor = DOC_TYPE_COLOR[e.docType] ?? '#475569'
+                            return (
+                                <div key={e.id} className="p-3.5 rounded-md space-y-2" style={card}>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-bold font-mono" style={{ color: '#0891B2' }}>{e.entryNo}</span>
+                                        <span className="inline-block text-xs px-2 py-0.5 rounded font-semibold" style={{ color: typeColor, background: `${typeColor}20` }}>
+                                            {docLabelMap[e.docType] ?? e.docType}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-slate-900">{e.description ?? '—'}</p>
+                                    <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+                                        <span className="text-slate-500">{formatDate(e.postedAt)} ({e.periodLabel})</span>
+                                        <span className="font-mono font-bold text-emerald-700">{formatVND(e.totalDebit)}</span>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </>
             )}
         </div>
     )
@@ -314,6 +352,7 @@ export function JournalEntryTab() {
 
 // ── P&L Tab ─────────────────────────────────
 export function ProfitLossTab() {
+    const { isEn } = useAppLocale()
     const now = new Date()
     const [year, setYear] = useState(now.getFullYear())
     const [month, setMonth] = useState(now.getMonth() + 1)
@@ -350,10 +389,10 @@ export function ProfitLossTab() {
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-3">
                     <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>
-                        Báo Cáo Lãi / Lỗ (P&L)
+                        {isEn ? 'Profit & Loss Statement (P&L)' : 'Báo Cáo Lãi / Lỗ (P&L)'}
                     </h3>
                     <span className="inline-block text-xs px-2 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309', border: '1px solid rgba(180,83,9,0.2)' }}>
-                        ước tính vận hành
+                        {isEn ? 'operational estimate' : 'ước tính vận hành'}
                     </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -361,7 +400,7 @@ export function ProfitLossTab() {
                         className="text-xs px-3 py-1.5 rounded"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                         {Array.from({ length: 12 }, (_, i) => (
-                            <option key={i + 1} value={i + 1}>Tháng {i + 1}</option>
+                            <option key={i + 1} value={i + 1}>{isEn ? `Month ${i + 1}` : `Tháng ${i + 1}`}</option>
                         ))}
                     </select>
                     <select value={year} onChange={e => { setYear(Number(e.target.value)); setData(null) }}
@@ -373,7 +412,7 @@ export function ProfitLossTab() {
                     </select>
                     <button onClick={loadPL} className="inline-block text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
                         style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                        Xem
+                        {isEn ? 'View' : 'Xem'}
                     </button>
                     {data && (
                         <button
@@ -406,10 +445,10 @@ export function ProfitLossTab() {
                     {/* Summary cards */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                         {[
-                            { label: 'Doanh thu', value: data.revenue, color: '#15803D', icon: TrendingUp },
-                            { label: 'Giá vốn (COGS)', value: data.cogs, color: '#B91C1C', icon: TrendingDown },
-                            { label: 'Lãi gộp', value: data.grossProfit, color: data.grossProfit >= 0 ? '#0E7490' : '#B91C1C', icon: TrendingUp },
-                            { label: 'Lãi ròng', value: data.netProfit, color: data.netProfit >= 0 ? '#15803D' : '#B91C1C', icon: TrendingUp },
+                            { label: isEn ? 'Revenue' : 'Doanh thu', value: data.revenue, color: '#15803D', icon: TrendingUp },
+                            { label: isEn ? 'COGS' : 'Giá vốn (COGS)', value: data.cogs, color: '#B91C1C', icon: TrendingDown },
+                            { label: isEn ? 'Gross Profit' : 'Lãi gộp', value: data.grossProfit, color: data.grossProfit >= 0 ? '#0E7490' : '#B91C1C', icon: TrendingUp },
+                            { label: isEn ? 'Net Profit' : 'Lãi ròng', value: data.netProfit, color: data.netProfit >= 0 ? '#15803D' : '#B91C1C', icon: TrendingUp },
                         ].map(s => (
                             <div key={s.label} className="p-3 rounded-md" style={card}>
                                 <p className="text-xs uppercase mb-1" style={{ color: '#64748B' }}>{s.label}</p>
@@ -425,9 +464,9 @@ export function ProfitLossTab() {
                         <table className="w-full" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                    <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold text-left" style={{ color: '#64748B' }}>Khoản mục</th>
+                                    <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold text-left" style={{ color: '#64748B' }}>{isEn ? 'Line Item' : 'Khoản mục'}</th>
                                     <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold text-right" style={{ color: '#64748B' }}>
-                                        Số tiền — T{month}/{year}
+                                        {isEn ? `Amount — M${month}/${year}` : `Số tiền — T${month}/{year}`}
                                     </th>
                                 </tr>
                             </thead>
@@ -455,12 +494,12 @@ export function ProfitLossTab() {
                     {comparison && (
                         <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
                             <div className="px-4 py-3" style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#B45309' }}>So Sánh</p>
+                                <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#B45309' }}>{isEn ? 'Comparison' : 'So Sánh'}</p>
                             </div>
                             <table className="w-full" style={{ borderCollapse: 'collapse' }}>
                                 <thead>
                                     <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                        <th className="px-4 py-2.5 text-xs text-left" style={{ color: '#64748B' }}>Khoản mục</th>
+                                        <th className="px-4 py-2.5 text-xs text-left" style={{ color: '#64748B' }}>{isEn ? 'Line Item' : 'Khoản mục'}</th>
                                         <th className="px-4 py-2.5 text-xs text-right" style={{ color: '#64748B' }}>T{month}/{year}</th>
                                         <th className="px-4 py-2.5 text-xs text-right" style={{ color: '#64748B' }}>vs {comparison.vsPrevMonth.period}</th>
                                         <th className="px-4 py-2.5 text-xs text-right" style={{ color: '#64748B' }}>vs {comparison.vsLastYear.period}</th>
@@ -468,11 +507,11 @@ export function ProfitLossTab() {
                                 </thead>
                                 <tbody>
                                     {[
-                                        { label: 'Doanh thu', curr: data.revenue, prevChg: comparison.vsPrevMonth.revenueChg, lyChg: comparison.vsLastYear.revenueChg },
-                                        { label: 'Giá vốn', curr: data.cogs, prevChg: comparison.vsPrevMonth.cogsChg, lyChg: comparison.vsLastYear.cogsChg },
-                                        { label: 'Lãi gộp', curr: data.grossProfit, prevChg: comparison.vsPrevMonth.grossProfitChg, lyChg: comparison.vsLastYear.grossProfitChg },
-                                        { label: 'Chi phí', curr: data.expenses, prevChg: comparison.vsPrevMonth.expensesChg, lyChg: comparison.vsLastYear.expensesChg },
-                                        { label: 'Lãi ròng', curr: data.netProfit, prevChg: comparison.vsPrevMonth.netProfitChg, lyChg: comparison.vsLastYear.netProfitChg },
+                                        { label: isEn ? 'Revenue' : 'Doanh thu', curr: data.revenue, prevChg: comparison.vsPrevMonth.revenueChg, lyChg: comparison.vsLastYear.revenueChg },
+                                        { label: isEn ? 'COGS' : 'Giá vốn', curr: data.cogs, prevChg: comparison.vsPrevMonth.cogsChg, lyChg: comparison.vsLastYear.cogsChg },
+                                        { label: isEn ? 'Gross Profit' : 'Lãi gộp', curr: data.grossProfit, prevChg: comparison.vsPrevMonth.grossProfitChg, lyChg: comparison.vsLastYear.grossProfitChg },
+                                        { label: isEn ? 'Expenses' : 'Chi phí', curr: data.expenses, prevChg: comparison.vsPrevMonth.expensesChg, lyChg: comparison.vsLastYear.expensesChg },
+                                        { label: isEn ? 'Net Profit' : 'Lãi ròng', curr: data.netProfit, prevChg: comparison.vsPrevMonth.netProfitChg, lyChg: comparison.vsLastYear.netProfitChg },
                                     ].map(r => {
                                         const chgBadge = (val: number | null) => {
                                             if (val === null) return <span className="text-xs" style={{ color: '#64748B' }}>—</span>
@@ -503,27 +542,28 @@ export function ProfitLossTab() {
 }
 
 const EXPENSE_CATS = [
-    { value: 'SALARY', label: 'Lương & BHXH', account: '642' },
-    { value: 'RENT', label: 'Thuê mặt bằng', account: '642' },
-    { value: 'UTILITIES', label: 'Điện nước, Internet', account: '642' },
-    { value: 'LOGISTICS', label: 'Vận chuyển', account: '641' },
-    { value: 'MARKETING', label: 'Quảng cáo', account: '641' },
-    { value: 'INSURANCE', label: 'Bảo hiểm', account: '635' },
-    { value: 'BANK_FEE', label: 'Phí ngân hàng', account: '635' },
-    { value: 'OTHER_EXPENSE', label: 'Chi phí khác', account: '811' },
+    { value: 'SALARY', label: 'Lương & BHXH', labelEn: 'Salary & Social Ins', account: '642' },
+    { value: 'RENT', label: 'Thuê mặt bằng', labelEn: 'Office Rent', account: '642' },
+    { value: 'UTILITIES', label: 'Điện nước, Internet', labelEn: 'Utilities & Internet', account: '642' },
+    { value: 'LOGISTICS', label: 'Vận chuyển', labelEn: 'Logistics', account: '641' },
+    { value: 'MARKETING', label: 'Quảng cáo', labelEn: 'Marketing', account: '641' },
+    { value: 'INSURANCE', label: 'Bảo hiểm', labelEn: 'Insurance', account: '635' },
+    { value: 'BANK_FEE', label: 'Phí ngân hàng', labelEn: 'Bank Fees', account: '635' },
+    { value: 'OTHER_EXPENSE', label: 'Chi phí khác', labelEn: 'Other Expenses', account: '811' },
 ]
 
-const EXP_STATUS: Record<string, { label: string; color: string }> = {
-    DRAFT: { label: 'Nháp', color: '#64748B' },
-    PENDING_APPROVAL: { label: 'Chờ duyệt', color: '#B45309' },
-    APPROVED: { label: 'Đã duyệt', color: '#15803D' },
-    REJECTED: { label: 'Từ chối', color: '#B91C1C' },
+const EXP_STATUS: Record<string, { label: string; labelEn: string; color: string }> = {
+    DRAFT: { label: 'Nháp', labelEn: 'Draft', color: '#64748B' },
+    PENDING_APPROVAL: { label: 'Chờ duyệt', labelEn: 'Pending', color: '#B45309' },
+    APPROVED: { label: 'Đã duyệt', labelEn: 'Approved', color: '#15803D' },
+    REJECTED: { label: 'Từ chối', labelEn: 'Rejected', color: '#B91C1C' },
 }
 
 const input: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '6px' }
 
 // ── Expense Tab ───────────────────────────────
 export function ExpenseTab({ userId }: { userId: string }) {
+    const { isEn } = useAppLocale()
     const [expenses, setExpenses] = useState<ExpenseRow[]>([])
     const [loaded, setLoaded] = useState(false)
     const [loading, setLoading] = useState(false)
@@ -586,11 +626,11 @@ export function ExpenseTab({ userId }: { userId: string }) {
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <p className="text-sm" style={{ color: '#475569' }}>{expenses.length} chi phí</p>
+                <p className="text-sm" style={{ color: '#475569' }}>{expenses.length} {isEn ? 'expenses' : 'chi phí'}</p>
                 <button onClick={() => setShowCreate(!showCreate)}
                     className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-md transition-all"
                     style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                    <Plus size={14} /> Thêm Chi Phí
+                    <Plus size={14} /> {isEn ? 'Add Expense' : 'Thêm Chi Phí'}
                 </button>
             </div>
 
@@ -598,42 +638,42 @@ export function ExpenseTab({ userId }: { userId: string }) {
                 <div className="p-4 rounded-md space-y-3" style={card}>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
-                            <label className="text-xs font-semibold uppercase block mb-1" style={{ color: '#64748B' }}>Danh mục</label>
+                            <label className="text-xs font-semibold uppercase block mb-1" style={{ color: '#64748B' }}>{isEn ? 'Category' : 'Danh mục'}</label>
                             <select value={cat} onChange={e => setCat(e.target.value)}
                                 className="w-full px-3 py-2 text-sm outline-none" style={input}>
                                 {EXPENSE_CATS.map(c => (
-                                    <option key={c.value} value={c.value}>{c.label} (TK {c.account})</option>
+                                    <option key={c.value} value={c.value}>{isEn ? c.labelEn : c.label} (TK {c.account})</option>
                                 ))}
                             </select>
                         </div>
                         <div>
-                            <label className="text-xs font-semibold uppercase block mb-1" style={{ color: '#64748B' }}>Số tiền (VND)</label>
+                            <label className="text-xs font-semibold uppercase block mb-1" style={{ color: '#64748B' }}>{isEn ? 'Amount (VND)' : 'Số tiền (VND)'}</label>
                             <input type="number" value={amount} onChange={e => setAmount(e.target.value)}
                                 placeholder="5000000" className="w-full px-3 py-2 text-sm outline-none" style={input} />
                         </div>
                         <div>
-                            <label className="text-xs font-semibold uppercase block mb-1" style={{ color: '#64748B' }}>Mô tả</label>
+                            <label className="text-xs font-semibold uppercase block mb-1" style={{ color: '#64748B' }}>{isEn ? 'Description' : 'Mô tả'}</label>
                             <input value={desc} onChange={e => setDesc(e.target.value)}
-                                placeholder="Tiền thuê VP tháng 3..." className="w-full px-3 py-2 text-sm outline-none" style={input} />
+                                placeholder={isEn ? 'March office rent...' : 'Tiền thuê VP tháng 3...'} className="w-full px-3 py-2 text-sm outline-none" style={input} />
                         </div>
                     </div>
                     <div>
-                        <label className="text-xs font-semibold uppercase block mb-1" style={{ color: '#64748B' }}>Link chứng từ / Hóa đơn (tùy chọn)</label>
-                        <input type="url" placeholder="https://drive.google.com/... hoặc link hình ảnh hóa đơn"
+                        <label className="text-xs font-semibold uppercase block mb-1" style={{ color: '#64748B' }}>{isEn ? 'Supporting Document Link (optional)' : 'Link chứng từ / Hóa đơn (tùy chọn)'}</label>
+                        <input type="url" placeholder="https://drive.google.com/..."
                             className="w-full px-3 py-2 text-sm outline-none" style={input} />
                     </div>
                     {Number(amount) > 5_000_000 && (
                         <p className="text-xs flex items-center gap-1" style={{ color: '#B45309' }}>
-                            <AlertTriangle size={12} /> Chi phí {'>'} 5.000.000₫ cần CEO phê duyệt
+                            <AlertTriangle size={12} /> {isEn ? 'Expenses > 5,000,000₫ require CEO approval' : 'Chi phí > 5.000.000₫ cần CEO phê duyệt'}
                         </p>
                     )}
                     <div className="flex justify-end gap-2">
                         <button onClick={() => setShowCreate(false)} className="px-3 py-1.5 text-xs"
-                            style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '6px' }}>Huỷ</button>
+                            style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '6px' }}>{isEn ? 'Cancel' : 'Huỷ'}</button>
                         <button onClick={handleCreate} disabled={saving || !amount || !desc}
                             className="px-4 py-1.5 text-xs font-semibold rounded-md"
                             style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                            {saving ? 'Đang lưu...' : 'Tạo Chi Phí'}
+                            {saving ? (isEn ? 'Saving...' : 'Đang lưu...') : (isEn ? 'Create Expense' : 'Tạo Chi Phí')}
                         </button>
                     </div>
                 </div>
@@ -643,54 +683,78 @@ export function ExpenseTab({ userId }: { userId: string }) {
                 <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin" style={{ color: '#0891B2' }} /></div>
             ) : expenses.length === 0 ? (
                 <div className="text-center py-16 rounded-md" style={{ ...card, borderStyle: 'dashed' }}>
-                    <p className="text-sm" style={{ color: '#64748B' }}>Chưa có chi phí nào</p>
+                    <p className="text-sm" style={{ color: '#64748B' }}>{isEn ? 'No expenses recorded' : 'Chưa có chi phí nào'}</p>
                 </div>
             ) : (
-                <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
-                    <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                        <thead>
-                            <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                {['Mã', 'Danh mục', 'TK', 'Số tiền', 'Mô tả', 'Kỳ', 'Trạng thái', 'Người tạo', ''].map(h => (
-                                    <th key={h} className="px-3 py-2.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {expenses.map(e => {
-                                const st = EXP_STATUS[e.status] ?? EXP_STATUS.DRAFT
-                                return (
-                                    <tr key={e.id} className="hover:bg-[#0891B2]/4 transition-colors" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                        <td className="px-3 py-2 text-xs font-bold" style={{ color: '#0891B2' }}>{e.expenseNo}</td>
-                                        <td className="px-3 py-2 text-xs" style={{ color: '#0F172A' }}>{e.categoryLabel}</td>
-                                        <td className="px-3 py-2 text-xs" style={{ color: '#64748B' }}>{e.account.split(' - ')[0]}</td>
-                                        <td className="px-3 py-2 text-sm font-bold" style={{ color: '#0F172A' }}>{formatVND(e.amount)}</td>
-                                        <td className="px-3 py-2 text-xs max-w-[180px] truncate" style={{ color: '#475569' }}>{e.description}</td>
-                                        <td className="px-3 py-2 text-xs" style={{ color: '#64748B' }}>{e.periodLabel}</td>
-                                        <td className="px-3 py-2">
-                                            <span className="inline-block text-xs px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0"
-                                                style={{ color: st.color, background: `${st.color}18` }}>{st.label}</span>
-                                        </td>
-                                        <td className="px-3 py-2 text-xs" style={{ color: '#475569' }}>{e.creatorName}</td>
-                                        <td className="px-3 py-2">
-                                            {e.status === 'PENDING_APPROVAL' && (
-                                                <div className="flex gap-1">
-                                                    <button onClick={() => handleApprove(e.id)} title="Duyệt"
-                                                        className="p-1 rounded" style={{ color: '#15803D', background: 'rgba(21,128,61,0.15)' }}>
-                                                        <CheckCircle2 size={14} />
-                                                    </button>
-                                                    <button onClick={() => handleReject(e.id)} title="Từ chối"
-                                                        className="p-1 rounded" style={{ color: '#B91C1C', background: 'rgba(185,28,28,0.15)' }}>
-                                                        <XCircle size={14} />
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </td>
-                                    </tr>
-                                )
-                            })}
-                        </tbody>
-                    </table>
-                </div>
+                <>
+                    <div className="hidden md:block rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
+                        <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
+                                    {(isEn ? ['Code', 'Category', 'Account', 'Amount', 'Description', 'Period', 'Status', 'Created By', ''] : ['Mã', 'Danh mục', 'TK', 'Số tiền', 'Mô tả', 'Kỳ', 'Trạng thái', 'Người tạo', '']).map(h => (
+                                        <th key={h} className="px-3 py-2.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {expenses.map(e => {
+                                    const st = EXP_STATUS[e.status] ?? EXP_STATUS.DRAFT
+                                    return (
+                                        <tr key={e.id} className="hover:bg-[#0891B2]/4 transition-colors" style={{ borderBottom: '1px solid #E2E8F0' }}>
+                                            <td className="px-3 py-2 text-xs font-bold" style={{ color: '#0891B2' }}>{e.expenseNo}</td>
+                                            <td className="px-3 py-2 text-xs" style={{ color: '#0F172A' }}>{e.categoryLabel}</td>
+                                            <td className="px-3 py-2 text-xs" style={{ color: '#64748B' }}>{e.account.split(' - ')[0]}</td>
+                                            <td className="px-3 py-2 text-sm font-bold" style={{ color: '#0F172A' }}>{formatVND(e.amount)}</td>
+                                            <td className="px-3 py-2 text-xs max-w-[180px] truncate" style={{ color: '#475569' }}>{e.description}</td>
+                                            <td className="px-3 py-2 text-xs" style={{ color: '#64748B' }}>{e.periodLabel}</td>
+                                            <td className="px-3 py-2">
+                                                <span className="inline-block text-xs px-2 py-0.5 rounded font-semibold whitespace-nowrap shrink-0"
+                                                    style={{ color: st.color, background: `${st.color}18` }}>{isEn ? st.labelEn : st.label}</span>
+                                            </td>
+                                            <td className="px-3 py-2 text-xs" style={{ color: '#475569' }}>{e.creatorName}</td>
+                                            <td className="px-3 py-2">
+                                                {e.status === 'PENDING_APPROVAL' && (
+                                                    <div className="flex gap-1">
+                                                        <button onClick={() => handleApprove(e.id)} title={isEn ? 'Approve' : 'Duyệt'}
+                                                            className="p-1 rounded" style={{ color: '#15803D', background: 'rgba(21,128,61,0.15)' }}>
+                                                            <CheckCircle2 size={14} />
+                                                        </button>
+                                                        <button onClick={() => handleReject(e.id)} title={isEn ? 'Reject' : 'Từ chối'}
+                                                            className="p-1 rounded" style={{ color: '#B91C1C', background: 'rgba(185,28,28,0.15)' }}>
+                                                            <XCircle size={14} />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Mobile Cards for ExpenseTab */}
+                    <div className="block md:hidden space-y-2.5">
+                        {expenses.map(e => {
+                            const st = EXP_STATUS[e.status] ?? EXP_STATUS.DRAFT
+                            return (
+                                <div key={e.id} className="p-3.5 rounded-md space-y-2" style={card}>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-bold font-mono" style={{ color: '#0891B2' }}>{e.expenseNo}</span>
+                                        <span className="inline-block text-xs px-2 py-0.5 rounded font-semibold" style={{ color: st.color, background: `${st.color}18` }}>
+                                            {isEn ? st.labelEn : st.label}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs font-semibold text-slate-900">{e.categoryLabel} • {e.description}</p>
+                                    <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+                                        <span className="text-slate-500">{e.creatorName} ({e.periodLabel})</span>
+                                        <span className="font-mono font-bold text-slate-900">{formatVND(e.amount)}</span>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </>
             )}
         </div>
     )
@@ -698,6 +762,7 @@ export function ExpenseTab({ userId }: { userId: string }) {
 
 // ── Period Close Tab ──────────────────────────
 export function PeriodCloseTab({ userId }: { userId: string }) {
+    const { isEn } = useAppLocale()
     const now = new Date()
     const [year, setYear] = useState(now.getFullYear())
     const [month, setMonth] = useState(now.getMonth() + 1)
@@ -750,12 +815,12 @@ export function PeriodCloseTab({ userId }: { userId: string }) {
     return (
         <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>Đóng Kỳ Kế Toán</h3>
+                <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>{isEn ? 'Accounting Period Close' : 'Đóng Kỳ Kế Toán'}</h3>
                 <div className="flex flex-wrap gap-2">
                     <select value={month} onChange={e => { setMonth(Number(e.target.value)); setChecklist(null) }}
                         className="text-xs px-3 py-1.5 rounded" style={{ ...input, width: 'auto' }}>
                         {Array.from({ length: 12 }, (_, i) => (
-                            <option key={i + 1} value={i + 1}>Tháng {i + 1}</option>
+                            <option key={i + 1} value={i + 1}>{isEn ? `Month ${i + 1}` : `Tháng ${i + 1}`}</option>
                         ))}
                     </select>
                     <select value={year} onChange={e => { setYear(Number(e.target.value)); setChecklist(null) }}
@@ -763,7 +828,7 @@ export function PeriodCloseTab({ userId }: { userId: string }) {
                         {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
                     <button onClick={load} className="inline-block text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
-                        style={{ background: '#0E7490', color: '#FFFFFF' }}>Kiểm Tra</button>
+                        style={{ background: '#0E7490', color: '#FFFFFF' }}>{isEn ? 'Check' : 'Kiểm Tra'}</button>
                 </div>
             </div>
 
@@ -772,7 +837,7 @@ export function PeriodCloseTab({ userId }: { userId: string }) {
                     style={{ background: 'rgba(21,128,61,0.1)', border: '1px solid rgba(21,128,61,0.3)' }}>
                     <Lock size={16} style={{ color: '#15803D' }} />
                     <span className="text-sm font-semibold" style={{ color: '#15803D' }}>
-                        Kỳ T{month}/{year} đã đóng — Không thể tạo chứng từ mới trong kỳ này
+                        {isEn ? `Period M${month}/${year} is closed — No new vouchers can be posted in this period` : `Kỳ T${month}/${year} đã đóng — Không thể tạo chứng từ mới trong kỳ này`}
                     </span>
                 </div>
             )}
@@ -798,7 +863,7 @@ export function PeriodCloseTab({ userId }: { userId: string }) {
                                         color: item.status === 'ok' ? '#15803D' : item.status === 'warning' ? '#B45309' : '#B91C1C',
                                         background: item.status === 'ok' ? 'rgba(21,128,61,0.15)' : item.status === 'warning' ? 'rgba(180,83,9,0.15)' : 'rgba(185,28,28,0.15)',
                                     }}>
-                                        {item.count > 0 ? `${item.count} mục` : 'OK'}
+                                        {item.count > 0 ? `${item.count} ${isEn ? 'items' : 'mục'}` : 'OK'}
                                     </span>
                                 </div>
                             </div>
@@ -815,7 +880,7 @@ export function PeriodCloseTab({ userId }: { userId: string }) {
                                     cursor: hasDanger ? 'not-allowed' : 'pointer',
                                 }}>
                                 <Lock size={14} />
-                                {closing ? 'Đang đóng kỳ...' : hasDanger ? 'Cần xử lý mục đỏ trước khi đóng' : `Đóng Kỳ T${month}/${year}`}
+                                {closing ? (isEn ? 'Closing period...' : 'Đang đóng kỳ...') : hasDanger ? (isEn ? 'Resolve red items before closing' : 'Cần xử lý mục đỏ trước khi đóng') : (isEn ? `Close Period M${month}/${year}` : `Đóng Kỳ T${month}/${year}`)}
                             </button>
                         </div>
                     )}
@@ -827,6 +892,7 @@ export function PeriodCloseTab({ userId }: { userId: string }) {
 
 // ── Balance Sheet Tab ────────────────────────────────
 export function BalanceSheetTab() {
+    const { isEn } = useAppLocale()
     const now = new Date()
     const [year, setYear] = useState(now.getFullYear())
     const [month, setMonth] = useState(now.getMonth() + 1)
@@ -859,10 +925,10 @@ export function BalanceSheetTab() {
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-3">
                     <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>
-                        Bảng Cân Đối Kế Toán (VAS)
+                        {isEn ? 'Balance Sheet (VAS)' : 'Bảng Cân Đối Kế Toán (VAS)'}
                     </h3>
                     <span className="inline-block text-xs px-2 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309', border: '1px solid rgba(180,83,9,0.2)' }}>
-                        ước tính vận hành
+                        {isEn ? 'operational estimate' : 'ước tính vận hành'}
                     </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -870,7 +936,7 @@ export function BalanceSheetTab() {
                         className="text-xs px-3 py-1.5 rounded"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                         {Array.from({ length: 12 }, (_, i) => (
-                            <option key={i + 1} value={i + 1}>Tháng {i + 1}</option>
+                            <option key={i + 1} value={i + 1}>{isEn ? `Month ${i + 1}` : `Tháng ${i + 1}`}</option>
                         ))}
                     </select>
                     <select value={year} onChange={e => { setYear(Number(e.target.value)); setData(null) }}
@@ -882,7 +948,7 @@ export function BalanceSheetTab() {
                     </select>
                     <button onClick={loadBS} className="inline-block text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
                         style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                        Xem
+                        {isEn ? 'View' : 'Xem'}
                     </button>
                     {data && (
                         <button onClick={async () => {
@@ -898,7 +964,7 @@ export function BalanceSheetTab() {
                             } catch { toast.error('Lỗi xuất Excel') }
                         }} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-medium"
                             style={{ border: '1px solid #E2E8F0', color: '#0891B2' }}>
-                            <Download size={12} /> CĐKT Excel
+                            <Download size={12} /> {isEn ? 'BS Excel' : 'CĐKT Excel'}
                         </button>
                     )}
                 </div>
@@ -917,17 +983,17 @@ export function BalanceSheetTab() {
                         }}>
                         {data.isBalanced ? <CircleCheck size={14} /> : <XCircle size={14} />}
                         {data.isBalanced
-                            ? `Cân đối — Tài Sản = Nợ + Vốn CSH (tại ${month}/${year})`
-                            : `Bảng không cân đối! Tài sản: ${formatVND(data.totalAssets)} ≠ Nợ+Vốn: ${formatVND(data.totalLiabilities + data.totalEquity)}`
+                            ? (isEn ? `Balanced — Assets = Liabilities + Equity (as of ${month}/${year})` : `Cân đối — Tài Sản = Nợ + Vốn CSH (tại ${month}/${year})`)
+                            : (isEn ? `Unbalanced! Assets: ${formatVND(data.totalAssets)} ≠ Liabilities+Equity: ${formatVND(data.totalLiabilities + data.totalEquity)}` : `Bảng không cân đối! Tài sản: ${formatVND(data.totalAssets)} ≠ Nợ+Vốn: ${formatVND(data.totalLiabilities + data.totalEquity)}`)
                         }
                     </div>
 
                     {/* Summary cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {[
-                            { label: 'Tài Sản', value: data.totalAssets, color: '#0891B2', prefix: 'A' },
-                            { label: 'Nợ Phải Trả', value: data.totalLiabilities, color: '#B45309', prefix: 'L' },
-                            { label: 'Vốn CSH', value: data.totalEquity, color: '#15803D', prefix: 'E' },
+                            { label: isEn ? 'Assets' : 'Tài Sản', value: data.totalAssets, color: '#0891B2', prefix: 'A' },
+                            { label: isEn ? 'Liabilities' : 'Nợ Phải Trả', value: data.totalLiabilities, color: '#B45309', prefix: 'L' },
+                            { label: isEn ? 'Equity' : 'Vốn CSH', value: data.totalEquity, color: '#15803D', prefix: 'E' },
                         ].map(s => (
                             <div key={s.prefix} className="p-4 rounded-md" style={card}>
                                 <p className="text-xs uppercase mb-1 font-semibold" style={{ color: '#64748B' }}>{s.label}</p>
@@ -943,10 +1009,10 @@ export function BalanceSheetTab() {
                         <table className="w-full" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                    <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold text-left" style={{ color: '#64748B' }}>Mã TK</th>
-                                    <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold text-left" style={{ color: '#64748B' }}>Khoản mục</th>
+                                    <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold text-left" style={{ color: '#64748B' }}>{isEn ? 'Account Code' : 'Mã TK'}</th>
+                                    <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold text-left" style={{ color: '#64748B' }}>{isEn ? 'Line Item' : 'Khoản mục'}</th>
                                     <th className="px-4 py-3 text-xs uppercase tracking-wider font-semibold text-right" style={{ color: '#64748B' }}>
-                                        Số dư cuối kỳ T{month}/{year}
+                                        {isEn ? `Closing Balance M${month}/${year}` : `Số dư cuối kỳ T${month}/{year}`}
                                     </th>
                                 </tr>
                             </thead>
@@ -988,17 +1054,17 @@ export function BalanceSheetTab() {
                     </div>
 
                     {/* Equation */}
-                    <div className="flex items-center justify-center gap-4 py-3 rounded-md text-sm" style={card}>
+                    <div className="flex items-center justify-center gap-4 py-3 rounded-md text-sm flex-wrap" style={card}>
                         <span style={{ color: '#0891B2', fontWeight: 700 }}>
-                            Tài sản <span>{formatVND(data.totalAssets)}</span>
+                            {isEn ? 'Assets' : 'Tài sản'} <span>{formatVND(data.totalAssets)}</span>
                         </span>
                         <span style={{ color: '#64748B', fontSize: 18 }}>=</span>
                         <span style={{ color: '#B45309', fontWeight: 700 }}>
-                            Nợ <span>{formatVND(data.totalLiabilities)}</span>
+                            {isEn ? 'Liabilities' : 'Nợ'} <span>{formatVND(data.totalLiabilities)}</span>
                         </span>
                         <span style={{ color: '#64748B', fontSize: 18 }}>+</span>
                         <span style={{ color: '#15803D', fontWeight: 700 }}>
-                            Vốn <span>{formatVND(data.totalEquity)}</span>
+                            {isEn ? 'Equity' : 'Vốn'} <span>{formatVND(data.totalEquity)}</span>
                         </span>
                     </div>
                 </div>
@@ -1009,6 +1075,7 @@ export function BalanceSheetTab() {
 
 // ── Bad Debt Write-off Tab ────────────────────────
 export function BadDebtTab({ userId }: { userId: string }) {
+    const { isEn } = useAppLocale()
     const [candidates, setCandidates] = useState<BadDebtCandidate[]>([])
     const [loaded, setLoaded] = useState(false)
     const [loading, setLoading] = useState(false)
@@ -1054,15 +1121,15 @@ export function BadDebtTab({ userId }: { userId: string }) {
             <div className="flex items-center justify-between">
                 <div>
                     <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>
-                        Nợ Khó Đòi — Bad Debt Write-off
+                        {isEn ? 'Bad Debt Write-off' : 'Nợ Khó Đòi — Bad Debt Write-off'}
                     </h3>
                     <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>
-                        Hóa đơn quá hạn &gt; 180 ngày. Xóa nợ sẽ ghi DR 642 / CR 131
+                        {isEn ? 'Invoices overdue > 180 days. Write-off posts DR 642 / CR 131' : 'Hóa đơn quá hạn > 180 ngày. Xóa nợ sẽ ghi DR 642 / CR 131'}
                     </p>
                 </div>
                 {candidates.length > 0 && (
                     <div className="text-right">
-                        <p className="text-xs" style={{ color: '#64748B' }}>{candidates.length} hóa đơn</p>
+                        <p className="text-xs" style={{ color: '#64748B' }}>{candidates.length} {isEn ? 'invoices' : 'hóa đơn'}</p>
                         <p className="text-sm font-bold" style={{ color: '#B91C1C' }}>
                             {formatVND(totalOutstanding)}
                         </p>
@@ -1075,8 +1142,8 @@ export function BadDebtTab({ userId }: { userId: string }) {
             ) : candidates.length === 0 ? (
                 <div className="text-center py-16 rounded-md" style={{ ...card, borderStyle: 'dashed' }}>
                     <CircleCheck size={32} className="mx-auto mb-3" style={{ color: '#15803D' }} />
-                    <p className="text-sm font-semibold" style={{ color: '#15803D' }}>Không có nợ khó đòi</p>
-                    <p className="text-xs mt-1" style={{ color: '#64748B' }}>Tất cả AR đều trong vòng 180 ngày</p>
+                    <p className="text-sm font-semibold" style={{ color: '#15803D' }}>{isEn ? 'No bad debt candidates' : 'Không có nợ khó đòi'}</p>
+                    <p className="text-xs mt-1" style={{ color: '#64748B' }}>{isEn ? 'All AR receivables are within 180 days' : 'Tất cả AR đều trong vòng 180 ngày'}</p>
                 </div>
             ) : (
                 <div className="space-y-3">
@@ -1085,7 +1152,7 @@ export function BadDebtTab({ userId }: { userId: string }) {
                         const isExpanded = writingOff === c.invoiceId
                         return (
                             <div key={c.invoiceId} className="rounded-md overflow-hidden" style={card}>
-                                <div className="flex items-center justify-between p-4">
+                                <div className="flex items-center justify-between p-4 flex-wrap gap-2">
                                     <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 rounded-md flex items-center justify-center text-xs font-bold"
                                             style={{ background: `${sColor}18`, color: sColor }}>
@@ -1101,7 +1168,7 @@ export function BadDebtTab({ userId }: { userId: string }) {
                                                 </span>
                                             </div>
                                             <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>
-                                                Hạn TT: {formatDate(c.dueDate)} · Gốc: {formatVND(c.amount)}
+                                                {isEn ? 'Due:' : 'Hạn TT:'} {formatDate(c.dueDate)} · {isEn ? 'Original:' : 'Gốc:'} {formatVND(c.amount)}
                                             </p>
                                         </div>
                                     </div>
@@ -1110,7 +1177,7 @@ export function BadDebtTab({ userId }: { userId: string }) {
                                             <p className="text-sm font-bold" style={{ color: sColor }}>
                                                 {formatVND(c.outstanding)}
                                             </p>
-                                            <p className="text-[10px]" style={{ color: '#64748B' }}>còn lại</p>
+                                            <p className="text-[10px]" style={{ color: '#64748B' }}>{isEn ? 'remaining' : 'còn lại'}</p>
                                         </div>
                                         <button
                                             onClick={() => setWritingOff(isExpanded ? null : c.invoiceId)}
@@ -1120,7 +1187,7 @@ export function BadDebtTab({ userId }: { userId: string }) {
                                                 color: '#B91C1C',
                                                 border: '1px solid rgba(185,28,28,0.3)',
                                             }}>
-                                            {isExpanded ? 'Hủy' : 'Xóa Nợ'}
+                                            {isExpanded ? (isEn ? 'Cancel' : 'Hủy') : (isEn ? 'Write Off' : 'Xóa Nợ')}
                                         </button>
                                     </div>
                                 </div>
@@ -1129,26 +1196,26 @@ export function BadDebtTab({ userId }: { userId: string }) {
                                     <div className="px-4 pb-4 pt-2 space-y-3" style={{ borderTop: '1px solid #E2E8F0' }}>
                                         <div>
                                             <label className="text-xs font-semibold uppercase block mb-1" style={{ color: '#64748B' }}>
-                                                Lý do xóa nợ <span style={{ color: '#B91C1C' }}>*</span>
+                                                {isEn ? 'Write-off Reason' : 'Lý do xóa nợ'} <span style={{ color: '#B91C1C' }}>*</span>
                                             </label>
                                             <input
                                                 value={reason}
                                                 onChange={e => setReason(e.target.value)}
-                                                placeholder="VD: Khách phá sản, không liên lạc được..."
+                                                placeholder={isEn ? 'e.g. Customer bankruptcy, unreachable...' : 'VD: Khách phá sản, không liên lạc được...'}
                                                 className="w-full px-3 py-2 text-sm outline-none"
                                                 style={{ ...input }} />
                                         </div>
-                                        <div className="flex items-center justify-between">
+                                        <div className="flex items-center justify-between flex-wrap gap-2">
                                             <p className="text-xs" style={{ color: '#64748B' }}>
-                                                Bút toán: DR 642 (CP quản lý) {formatVND(c.outstanding)} / CR 131 (Phải thu) {formatVND(c.outstanding)}
+                                                {isEn ? 'Journal:' : 'Bút toán:'} DR 642 {formatVND(c.outstanding)} / CR 131 {formatVND(c.outstanding)}
                                             </p>
                                             <button
                                                 onClick={() => handleWriteOff(c.invoiceId)}
                                                 disabled={processing || !reason.trim()}
                                                 className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-md disabled:opacity-50"
-                                                style={{ background: '#B91C1C', color: '#0F172A' }}>
+                                                style={{ background: '#B91C1C', color: '#FFFFFF' }}>
                                                 {processing ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={12} />}
-                                                Xác Nhận Xóa Nợ
+                                                {isEn ? 'Confirm Write-off' : 'Xác Nhận Xóa Nợ'}
                                             </button>
                                         </div>
                                     </div>
@@ -1167,6 +1234,7 @@ export function BadDebtTab({ userId }: { userId: string }) {
 // ═══════════════════════════════════════════════════
 
 export function CashFlowTab() {
+    const { isEn } = useAppLocale()
     const [cashPos, setCashPos] = useState<CashPositionData | null>(null)
     const [forecast, setForecast] = useState<CashFlowForecastData | null>(null)
     const [loading, setLoading] = useState(false)
@@ -1229,11 +1297,11 @@ export function CashFlowTab() {
                 <>
                     {/* ── Cash Position Section ── */}
                     <div>
-                        <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#B45309' }}>Vị Thế Tiền Mặt</h3>
-                            <div className="flex gap-2">
+                        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                            <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#B45309' }}>{isEn ? 'Cash Position' : 'Vị Thế Tiền Mặt'}</h3>
+                            <div className="flex gap-2 flex-wrap">
                                 <button onClick={load} className="inline-block text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
-                                    style={{ background: '#0E7490', color: '#FFFFFF' }}>Làm Mới</button>
+                                    style={{ background: '#0E7490', color: '#FFFFFF' }}>{isEn ? 'Refresh' : 'Làm Mới'}</button>
                                 <button onClick={async () => {
                                     setVatExporting(true)
                                     try {
@@ -1252,7 +1320,7 @@ export function CashFlowTab() {
                                     } finally { setSctExporting(false) }
                                 }} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded font-medium"
                                     style={{ border: '1px solid #E2E8F0', color: '#B45309' }}>
-                                    <Download size={12} /> {sctExporting ? '...' : 'TTĐB Excel'}
+                                    <Download size={12} /> {sctExporting ? '...' : 'SCT Excel'}
                                 </button>
                             </div>
                         </div>
@@ -1263,7 +1331,7 @@ export function CashFlowTab() {
                                 style={{ background: 'rgba(185,28,28,0.08)', border: '1px solid rgba(185,28,28,0.3)' }}>
                                 <AlertTriangle size={16} style={{ color: '#B91C1C' }} />
                                 <span className="text-sm font-semibold" style={{ color: '#B91C1C' }}>
-                                    Tiền mặt ({formatVND(cashPos.totalCash)}) dưới ngưỡng an toàn ({formatVND(cashPos.safetyThreshold)})
+                                    {isEn ? `Cash (${formatVND(cashPos.totalCash)}) is below safety threshold (${formatVND(cashPos.safetyThreshold)})` : `Tiền mặt (${formatVND(cashPos.totalCash)}) dưới ngưỡng an toàn (${formatVND(cashPos.safetyThreshold)})`}
                                 </span>
                             </div>
                         )}
@@ -1271,10 +1339,10 @@ export function CashFlowTab() {
                         {/* Cash cards */}
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                             {[
-                                { label: 'Tiền Gửi NH (TK 112)', value: cashPos.bankBalance, trend: cashPos.cashChange30d, color: '#0891B2' },
-                                { label: 'Phải Thu (AR)', value: cashPos.arReceivable, trend: cashPos.arChange30d, color: '#15803D' },
-                                { label: 'Phải Trả (AP)', value: cashPos.apPayable, trend: cashPos.apChange30d, color: '#B45309' },
-                                { label: 'Vốn Lưu Động Ròng', value: cashPos.netWorkingCapital, trend: null, color: cashPos.netWorkingCapital >= 0 ? '#0E7490' : '#B91C1C' },
+                                { label: isEn ? 'Bank Cash (Acc 112)' : 'Tiền Gửi NH (TK 112)', value: cashPos.bankBalance, trend: cashPos.cashChange30d, color: '#0891B2' },
+                                { label: isEn ? 'Receivables (AR)' : 'Phải Thu (AR)', value: cashPos.arReceivable, trend: cashPos.arChange30d, color: '#15803D' },
+                                { label: isEn ? 'Payables (AP)' : 'Phải Trả (AP)', value: cashPos.apPayable, trend: cashPos.apChange30d, color: '#B45309' },
+                                { label: isEn ? 'Net Working Capital' : 'Vốn Lưu Động Ròng', value: cashPos.netWorkingCapital, trend: null, color: cashPos.netWorkingCapital >= 0 ? '#0E7490' : '#B91C1C' },
                             ].map(c => (
                                 <div key={c.label} className="p-4 rounded-md" style={card}>
                                     <p className="text-xs uppercase mb-1.5 font-semibold" style={{ color: '#64748B' }}>{c.label}</p>
@@ -1292,13 +1360,13 @@ export function CashFlowTab() {
 
                         {/* Petty cash + total */}
                         {cashPos.pettyCash > 0 && (
-                            <div className="flex items-center gap-4 px-4 py-2.5 mt-3 rounded-md" style={card}>
-                                <span className="text-xs" style={{ color: '#64748B' }}>Quỹ tiền mặt (TK 111):</span>
+                            <div className="flex items-center gap-4 px-4 py-2.5 mt-3 rounded-md flex-wrap" style={card}>
+                                <span className="text-xs" style={{ color: '#64748B' }}>{isEn ? 'Petty Cash (Acc 111):' : 'Quỹ tiền mặt (TK 111):'}</span>
                                 <span className="text-sm font-bold" style={{ color: '#0891B2' }}>
                                     {formatVND(cashPos.pettyCash)}
                                 </span>
                                 <span className="text-xs" style={{ color: '#64748B' }}>|</span>
-                                <span className="text-xs" style={{ color: '#64748B' }}>Tổng tiền sẵn sàng:</span>
+                                <span className="text-xs" style={{ color: '#64748B' }}>{isEn ? 'Total Available Cash:' : 'Tổng tiền sẵn sàng:'}</span>
                                 <span className="text-sm font-bold" style={{ color: '#0F172A' }}>
                                     {formatVND(cashPos.totalCash)}
                                 </span>
@@ -1308,7 +1376,7 @@ export function CashFlowTab() {
 
                     {/* ── Cash Flow Forecast ── */}
                     <div>
-                        <h3 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: '#B45309' }}>Dự Báo Dòng Tiền 90 Ngày</h3>
+                        <h3 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: '#B45309' }}>{isEn ? '90-Day Cash Flow Forecast' : 'Dự Báo Dòng Tiền 90 Ngày'}</h3>
 
                         {/* Risk alerts */}
                         {(forecast.isRisk30 || forecast.isRisk60 || forecast.isRisk90) && (
@@ -1316,7 +1384,7 @@ export function CashFlowTab() {
                                 style={{ background: 'rgba(185,28,28,0.08)', border: '1px solid rgba(185,28,28,0.3)' }}>
                                 <AlertTriangle size={16} style={{ color: '#B91C1C' }} />
                                 <span className="text-sm font-semibold" style={{ color: '#B91C1C' }}>
-                                    Dự báo thiếu tiền trong {forecast.isRisk30 ? '30' : forecast.isRisk60 ? '60' : '90'} ngày tới!
+                                    {isEn ? `Cash shortfall projected in next ${forecast.isRisk30 ? '30' : forecast.isRisk60 ? '60' : '90'} days!` : `Dự báo thiếu tiền trong ${forecast.isRisk30 ? '30' : forecast.isRisk60 ? '60' : '90'} ngày tới!`}
                                 </span>
                             </div>
                         )}
@@ -1326,7 +1394,7 @@ export function CashFlowTab() {
                             <table className="w-full min-w-[550px]" style={{ borderCollapse: 'collapse' }}>
                                 <thead>
                                     <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                        {['Kho\u1EA3ng TG', 'AR Kỳ Vọng Thu', 'AP Phải Trả', 'Chi Phí ƯT', 'Dòng Tiền Ròng', 'Lũy Kế'].map(h => (
+                                        {(isEn ? ['Horizon', 'Expected AR In', 'AP Due Out', 'Est. Expenses', 'Net Cash Flow', 'Cumulative'] : ['Khoảng TG', 'AR Kỳ Vọng Thu', 'AP Phải Trả', 'Chi Phí ƯT', 'Dòng Tiền Ròng', 'Lũy Kế']).map(h => (
                                             <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold text-right first:text-left"
                                                 style={{ color: '#64748B' }}>{h}</th>
                                         ))}
@@ -1335,7 +1403,7 @@ export function CashFlowTab() {
                                 <tbody>
                                     {/* Current cash row */}
                                     <tr style={{ borderBottom: '1px solid #E2E8F0', background: 'rgba(8,145,178,0.06)' }}>
-                                        <td className="px-4 py-2.5 text-sm font-bold" style={{ color: '#0F172A' }}>Tiền hiện tại</td>
+                                        <td className="px-4 py-2.5 text-sm font-bold" style={{ color: '#0F172A' }}>{isEn ? 'Current Cash' : 'Tiền hiện tại'}</td>
                                         <td className="px-4 py-2.5 text-right" colSpan={4}></td>
                                         <td className="px-4 py-2.5 text-right text-sm font-bold" style={{ color: '#0891B2' }}>
                                             {formatVND(forecast.currentCash)}
@@ -1365,21 +1433,21 @@ export function CashFlowTab() {
                         {/* Visual bars */}
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
                             {[
-                                { label: '30 ngày', value: forecast.endingCash30, risk: forecast.isRisk30 },
-                                { label: '60 ngày', value: forecast.endingCash60, risk: forecast.isRisk60 },
-                                { label: '90 ngày', value: forecast.endingCash90, risk: forecast.isRisk90 },
+                                { label: isEn ? '30 days' : '30 ngày', value: forecast.endingCash30, risk: forecast.isRisk30 },
+                                { label: isEn ? '60 days' : '60 ngày', value: forecast.endingCash60, risk: forecast.isRisk60 },
+                                { label: isEn ? '90 days' : '90 ngày', value: forecast.endingCash90, risk: forecast.isRisk90 },
                             ].map(p => (
                                 <div key={p.label} className="p-3 rounded-md" style={{
                                     ...card,
                                     borderLeft: `3px solid ${p.risk ? '#B91C1C' : p.value > 500_000_000 ? '#15803D' : '#B45309'}`,
                                 }}>
-                                    <p className="text-xs uppercase mb-1" style={{ color: '#64748B' }}>Số dư {p.label}</p>
+                                    <p className="text-xs uppercase mb-1" style={{ color: '#64748B' }}>{isEn ? `Balance ${p.label}` : `Số dư ${p.label}`}</p>
                                     <p className="text-lg font-bold" style={{ color: p.risk ? '#B91C1C' : '#0F172A' }}>
                                         {formatVND(p.value)}
                                     </p>
                                     {p.risk && (
                                         <p className="text-xs mt-1 font-semibold flex items-center gap-1" style={{ color: '#B91C1C' }}>
-                                            <AlertTriangle size={11} className="shrink-0" /> Rủi ro thiếu tiền
+                                            <AlertTriangle size={11} className="shrink-0" /> {isEn ? 'Shortfall risk' : 'Rủi ro thiếu tiền'}
                                         </p>
                                     )}
                                 </div>
@@ -1390,28 +1458,28 @@ export function CashFlowTab() {
                     {/* ── Credit Hold ── */}
                     <div>
                         <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#B45309' }}>Credit Hold — Kiểm Soát Hạn Mức</h3>
+                            <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#B45309' }}>{isEn ? 'Credit Hold — Credit Limit Control' : 'Credit Hold — Kiểm Soát Hạn Mức'}</h3>
                             <button onClick={handleCreditCheck} disabled={creditRunning}
                                 className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all"
                                 style={{ background: '#0E7490', color: '#FFFFFF' }}>
                                 {creditRunning ? <Loader2 size={14} className="animate-spin" /> : <AlertTriangle size={14} />}
-                                {creditRunning ? 'Đang kiểm tra...' : 'Chạy Credit Check'}
+                                {creditRunning ? (isEn ? 'Checking...' : 'Đang kiểm tra...') : (isEn ? 'Run Credit Check' : 'Chạy Credit Check')}
                             </button>
                         </div>
 
                         {creditStats && (
-                            <div className="flex gap-3 mb-3">
+                            <div className="flex gap-3 mb-3 flex-wrap">
                                 <span className="inline-block text-xs px-3 py-1.5 rounded-md whitespace-nowrap shrink-0" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569' }}>
-                                    Đã kiểm tra: <b>{creditStats.checked}</b> KH
+                                    {isEn ? 'Checked:' : 'Đã kiểm tra:'} <b>{creditStats.checked}</b> {isEn ? 'customers' : 'KH'}
                                 </span>
                                 {creditStats.held > 0 && (
                                     <span className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(185,28,28,0.1)', border: '1px solid rgba(185,28,28,0.3)', color: '#B91C1C' }}>
-                                        <Lock size={11} /> Mới HOLD: {creditStats.held}
+                                        <Lock size={11} /> {isEn ? 'Newly HELD:' : 'Mới HOLD:'} {creditStats.held}
                                     </span>
                                 )}
                                 {creditStats.released > 0 && (
                                     <span className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(21,128,61,0.1)', border: '1px solid rgba(21,128,61,0.3)', color: '#15803D' }}>
-                                        <CheckCircle2 size={11} /> Đã thả: {creditStats.released}
+                                        <CheckCircle2 size={11} /> {isEn ? 'Released:' : 'Đã thả:'} {creditStats.released}
                                     </span>
                                 )}
                             </div>
@@ -1422,7 +1490,7 @@ export function CashFlowTab() {
                                 <table className="w-full min-w-[500px]" style={{ borderCollapse: 'collapse' }}>
                                     <thead>
                                         <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                            {['Khách Hàng', 'Credit Limit', 'AR Hiện Tại', 'Vượt', 'Trạng Thái'].map(h => (
+                                            {(isEn ? ['Customer', 'Credit Limit', 'Current AR', 'Over Limit', 'Status'] : ['Khách Hàng', 'Credit Limit', 'AR Hiện Tại', 'Vượt', 'Trạng Thái']).map(h => (
                                                 <th key={h} className="px-4 py-3 text-xs uppercase tracking-wider font-semibold text-left" style={{ color: '#64748B' }}>{h}</th>
                                             ))}
                                         </tr>
@@ -1447,7 +1515,7 @@ export function CashFlowTab() {
                                                         color: r.isOverLimit ? '#B91C1C' : '#15803D',
                                                         background: r.isOverLimit ? 'rgba(185,28,28,0.15)' : 'rgba(21,128,61,0.15)',
                                                     }}>
-                                                        {r.wasHeld ? <><Lock size={10} /> MỚI HOLD</> : r.isOverLimit ? <><Lock size={10} /> HOLD</> : <><CheckCircle2 size={10} /> OK</>}
+                                                        {r.wasHeld ? <><Lock size={10} /> {isEn ? 'NEW HOLD' : 'MỚI HOLD'}</> : r.isOverLimit ? <><Lock size={10} /> HOLD</> : <><CheckCircle2 size={10} /> OK</>}
                                                     </span>
                                                 </td>
                                             </tr>
@@ -1458,13 +1526,13 @@ export function CashFlowTab() {
                         ) : creditResults && creditResults.length === 0 ? (
                             <div className="text-center py-8 rounded-md" style={{ ...card, borderStyle: 'dashed' }}>
                                 <CircleCheck size={28} className="mx-auto mb-2" style={{ color: '#15803D' }} />
-                                <p className="text-sm font-semibold" style={{ color: '#15803D' }}>Tất cả khách hàng trong hạn mức</p>
+                                <p className="text-sm font-semibold" style={{ color: '#15803D' }}>{isEn ? 'All customers are within credit limits' : 'Tất cả khách hàng trong hạn mức'}</p>
                             </div>
                         ) : (
                             <div className="text-center py-8 rounded-md" style={{ ...card, borderStyle: 'dashed' }}>
                                 <AlertTriangle size={28} className="mx-auto mb-2" style={{ color: '#94A3B8' }} />
-                                <p className="text-sm" style={{ color: '#64748B' }}>Nhấn "Chạy Credit Check" để kiểm tra hạn mức tín dụng</p>
-                                <p className="text-xs mt-1" style={{ color: '#94A3B8' }}>Sẽ auto lock KH có AR vượt credit limit</p>
+                                <p className="text-sm" style={{ color: '#64748B' }}>{isEn ? 'Click "Run Credit Check" to inspect credit limits' : 'Nhấn "Chạy Credit Check" để kiểm tra hạn mức tín dụng'}</p>
+                                <p className="text-xs mt-1" style={{ color: '#94A3B8' }}>{isEn ? 'Automatically locks customers whose AR exceeds credit limit' : 'Sẽ auto lock KH có AR vượt credit limit'}</p>
                             </div>
                         )}
                     </div>
@@ -1476,6 +1544,7 @@ export function CashFlowTab() {
 
 // ── Trial Balance Tab — Bảng Cân Đối Phát Sinh ──
 export function TrialBalanceTab() {
+    const { isEn } = useAppLocale()
     const now = new Date()
     const [year, setYear] = useState(now.getFullYear())
     const [month, setMonth] = useState(now.getMonth() + 1)
@@ -1493,13 +1562,13 @@ export function TrialBalanceTab() {
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-3">
                     <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>
-                        Bảng Cân Đối Phát Sinh (CĐPS)
+                        {isEn ? 'Trial Balance' : 'Bảng Cân Đối Phát Sinh (CĐPS)'}
                     </h3>
                     <span className="inline-block text-xs px-2 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309', border: '1px solid rgba(180,83,9,0.2)' }}>
-                        ước tính vận hành
+                        {isEn ? 'operational estimate' : 'ước tính vận hành'}
                     </span>
                 </div>
                 <div className="flex gap-2">
@@ -1507,7 +1576,7 @@ export function TrialBalanceTab() {
                         className="text-xs px-3 py-1.5 rounded"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                         {Array.from({ length: 12 }, (_, i) => (
-                            <option key={i + 1} value={i + 1}>Tháng {i + 1}</option>
+                            <option key={i + 1} value={i + 1}>{isEn ? `Month ${i + 1}` : `Tháng ${i + 1}`}</option>
                         ))}
                     </select>
                     <select value={year} onChange={e => { setYear(Number(e.target.value)); setData(null) }}
@@ -1518,7 +1587,7 @@ export function TrialBalanceTab() {
                         ))}
                     </select>
                     <button onClick={load} className="inline-block text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
-                        style={{ background: '#0E7490', color: '#FFFFFF' }}>Tải lại</button>
+                        style={{ background: '#0E7490', color: '#FFFFFF' }}>{isEn ? 'Reload' : 'Tải lại'}</button>
                 </div>
             </div>
 
@@ -1529,18 +1598,18 @@ export function TrialBalanceTab() {
                     <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                <th rowSpan={2} className="px-3 py-2 text-xs uppercase font-semibold" style={{ color: '#64748B', borderRight: '1px solid #E2E8F0' }}>Tài Khoản</th>
-                                <th colSpan={2} className="px-3 py-1.5 text-xs uppercase font-semibold text-center" style={{ color: '#64748B', borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>Số Dư Đầu Kỳ</th>
-                                <th colSpan={2} className="px-3 py-1.5 text-xs uppercase font-semibold text-center" style={{ color: '#64748B', borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>Phát Sinh Trong Kỳ</th>
-                                <th colSpan={2} className="px-3 py-1.5 text-xs uppercase font-semibold text-center" style={{ color: '#64748B' }}>Số Dư Cuối Kỳ</th>
+                                <th rowSpan={2} className="px-3 py-2 text-xs uppercase font-semibold" style={{ color: '#64748B', borderRight: '1px solid #E2E8F0' }}>{isEn ? 'Account' : 'Tài Khoản'}</th>
+                                <th colSpan={2} className="px-3 py-1.5 text-xs uppercase font-semibold text-center" style={{ color: '#64748B', borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>{isEn ? 'Opening Balance' : 'Số Dư Đầu Kỳ'}</th>
+                                <th colSpan={2} className="px-3 py-1.5 text-xs uppercase font-semibold text-center" style={{ color: '#64748B', borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>{isEn ? 'Period Movement' : 'Phát Sinh Trong Kỳ'}</th>
+                                <th colSpan={2} className="px-3 py-1.5 text-xs uppercase font-semibold text-center" style={{ color: '#64748B' }}>{isEn ? 'Closing Balance' : 'Số Dư Cuối Kỳ'}</th>
                             </tr>
                             <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                <th className="px-2 py-1.5 text-xs text-center font-semibold" style={{ color: '#15803D' }}>Nợ</th>
-                                <th className="px-2 py-1.5 text-xs text-center font-semibold" style={{ color: '#B91C1C', borderRight: '1px solid #E2E8F0' }}>Có</th>
-                                <th className="px-2 py-1.5 text-xs text-center font-semibold" style={{ color: '#15803D' }}>Nợ</th>
-                                <th className="px-2 py-1.5 text-xs text-center font-semibold" style={{ color: '#B91C1C', borderRight: '1px solid #E2E8F0' }}>Có</th>
-                                <th className="px-2 py-1.5 text-xs text-center font-semibold" style={{ color: '#15803D' }}>Nợ</th>
-                                <th className="px-2 py-1.5 text-xs text-center font-semibold" style={{ color: '#B91C1C' }}>Có</th>
+                                <th className="px-2 py-1.5 text-xs text-center font-semibold" style={{ color: '#15803D' }}>{isEn ? 'Debit' : 'Nợ'}</th>
+                                <th className="px-2 py-1.5 text-xs text-center font-semibold" style={{ color: '#B91C1C', borderRight: '1px solid #E2E8F0' }}>{isEn ? 'Credit' : 'Có'}</th>
+                                <th className="px-2 py-1.5 text-xs text-center font-semibold" style={{ color: '#15803D' }}>{isEn ? 'Debit' : 'Nợ'}</th>
+                                <th className="px-2 py-1.5 text-xs text-center font-semibold" style={{ color: '#B91C1C', borderRight: '1px solid #E2E8F0' }}>{isEn ? 'Credit' : 'Có'}</th>
+                                <th className="px-2 py-1.5 text-xs text-center font-semibold" style={{ color: '#15803D' }}>{isEn ? 'Debit' : 'Nợ'}</th>
+                                <th className="px-2 py-1.5 text-xs text-center font-semibold" style={{ color: '#B91C1C' }}>{isEn ? 'Credit' : 'Có'}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1560,7 +1629,7 @@ export function TrialBalanceTab() {
                             ))}
                             {/* Totals row */}
                             <tr style={{ background: 'rgba(8,145,178,0.08)', borderTop: '2px solid #E2E8F0' }}>
-                                <td className="px-3 py-2.5 text-xs font-bold uppercase" style={{ color: '#0F172A', borderRight: '1px solid #E2E8F0' }}>Tổng Cộng</td>
+                                <td className="px-3 py-2.5 text-xs font-bold uppercase" style={{ color: '#0F172A', borderRight: '1px solid #E2E8F0' }}>{isEn ? 'Total' : 'Tổng Cộng'}</td>
                                 <td className="px-2 py-2.5 text-right text-xs font-bold" style={{ color: '#15803D' }}>{formatVND(data.totals.openingDebit)}</td>
                                 <td className="px-2 py-2.5 text-right text-xs font-bold font-mono" style={{ color: '#B91C1C', borderRight: '1px solid #E2E8F0' }}>{formatVND(data.totals.openingCredit)}</td>
                                 <td className="px-2 py-2.5 text-right text-xs font-bold" style={{ color: '#15803D' }}>{formatVND(data.totals.periodDebit)}</td>
@@ -1578,6 +1647,7 @@ export function TrialBalanceTab() {
 
 // ── Account Ledger Tab — Sổ Chi Tiết Tài Khoản ──
 export function AccountLedgerTab() {
+    const { isEn } = useAppLocale()
     const now = new Date()
     const [year, setYear] = useState(now.getFullYear())
     const [month, setMonth] = useState(now.getMonth() + 1)
@@ -1595,12 +1665,13 @@ export function AccountLedgerTab() {
     if (!data && !loading) load()
 
     const accountOptions = Object.entries(VAS_ACCOUNTS).sort(([a], [b]) => a.localeCompare(b))
+    const docLabelMap = isEn ? DOC_TYPE_LABEL_EN : DOC_TYPE_LABEL
 
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
                 <h3 className="text-sm font-semibold" style={{ color: '#0F172A' }}>
-                    Sổ Chi Tiết Tài Khoản
+                    {isEn ? 'Account Sub-ledger' : 'Sổ Chi Tiết Tài Khoản'}
                 </h3>
                 <div className="flex gap-2 flex-wrap">
                     <select value={accountCode} onChange={e => { setAccountCode(e.target.value); setData(null) }}
@@ -1614,7 +1685,7 @@ export function AccountLedgerTab() {
                         className="text-xs px-3 py-1.5 rounded"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
                         {Array.from({ length: 12 }, (_, i) => (
-                            <option key={i + 1} value={i + 1}>Tháng {i + 1}</option>
+                            <option key={i + 1} value={i + 1}>{isEn ? `Month ${i + 1}` : `Tháng ${i + 1}`}</option>
                         ))}
                     </select>
                     <select value={year} onChange={e => { setYear(Number(e.target.value)); setData(null) }}
@@ -1625,7 +1696,7 @@ export function AccountLedgerTab() {
                         ))}
                     </select>
                     <button onClick={load} className="inline-block text-xs px-3 py-1.5 rounded font-semibold whitespace-nowrap shrink-0"
-                        style={{ background: '#0E7490', color: '#FFFFFF' }}>Xem</button>
+                        style={{ background: '#0E7490', color: '#FFFFFF' }}>{isEn ? 'View' : 'Xem'}</button>
                 </div>
             </div>
 
@@ -1634,22 +1705,22 @@ export function AccountLedgerTab() {
             ) : data ? (
                 <div className="space-y-3">
                     {/* Account info */}
-                    <div className="flex items-center gap-4 p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                    <div className="flex items-center gap-4 p-3 rounded-md flex-wrap" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                         <div>
                             <span className="text-lg font-bold" style={{ color: '#0891B2' }}>{data.accountCode}</span>
                             <span className="text-sm ml-2" style={{ color: '#475569' }}>{data.accountName}</span>
                         </div>
                         <div className="ml-auto flex gap-6">
                             <div className="text-right">
-                                <p className="text-xs uppercase" style={{ color: '#64748B' }}>Dư đầu kỳ</p>
+                                <p className="text-xs uppercase" style={{ color: '#64748B' }}>{isEn ? 'Opening Balance' : 'Dư đầu kỳ'}</p>
                                 <p className="text-sm font-bold" style={{ color: data.openingBalance >= 0 ? '#15803D' : '#B91C1C' }}>
-                                    {formatVND(Math.abs(data.openingBalance))} {data.openingBalance >= 0 ? 'Nợ' : 'Có'}
+                                    {formatVND(Math.abs(data.openingBalance))} {data.openingBalance >= 0 ? (isEn ? 'DR' : 'Nợ') : (isEn ? 'CR' : 'Có')}
                                 </p>
                             </div>
                             <div className="text-right">
-                                <p className="text-xs uppercase" style={{ color: '#64748B' }}>Dư cuối kỳ</p>
+                                <p className="text-xs uppercase" style={{ color: '#64748B' }}>{isEn ? 'Closing Balance' : 'Dư cuối kỳ'}</p>
                                 <p className="text-sm font-bold" style={{ color: data.closingBalance >= 0 ? '#15803D' : '#B91C1C' }}>
-                                    {formatVND(Math.abs(data.closingBalance))} {data.closingBalance >= 0 ? 'Nợ' : 'Có'}
+                                    {formatVND(Math.abs(data.closingBalance))} {data.closingBalance >= 0 ? (isEn ? 'DR' : 'Nợ') : (isEn ? 'CR' : 'Có')}
                                 </p>
                             </div>
                         </div>
@@ -1658,14 +1729,14 @@ export function AccountLedgerTab() {
                     {/* Ledger table */}
                     {data.entries.length === 0 ? (
                         <div className="text-center py-12 rounded-md" style={{ ...card, borderStyle: 'dashed' }}>
-                            <p className="text-sm" style={{ color: '#64748B' }}>Không có phát sinh trong kỳ {month}/{year}</p>
+                            <p className="text-sm" style={{ color: '#64748B' }}>{isEn ? `No transactions in period ${month}/${year}` : `Không có phát sinh trong kỳ ${month}/${year}`}</p>
                         </div>
                     ) : (
                         <div className="rounded-md overflow-x-auto" style={{ border: '1px solid #E2E8F0' }}>
                             <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                                 <thead>
                                     <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                        {['Ngày', 'Số CT', 'Loại', 'Diễn giải', 'Nợ', 'Có', 'Số Dư'].map(h => (
+                                        {(isEn ? ['Date', 'Doc No', 'Type', 'Description', 'Debit', 'Credit', 'Balance'] : ['Ngày', 'Số CT', 'Loại', 'Diễn giải', 'Nợ', 'Có', 'Số Dư']).map(h => (
                                             <th key={h} className="px-3 py-2.5 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
                                         ))}
                                     </tr>
@@ -1674,7 +1745,7 @@ export function AccountLedgerTab() {
                                     {/* Opening balance row */}
                                     <tr style={{ background: 'rgba(8,145,178,0.05)', borderBottom: '1px solid #E2E8F0' }}>
                                         <td colSpan={4} className="px-3 py-2 text-xs font-bold italic" style={{ color: '#64748B' }}>
-                                            Số dư đầu kỳ
+                                            {isEn ? 'Opening balance' : 'Số dư đầu kỳ'}
                                         </td>
                                         <td className="px-3 py-2 text-right text-xs" style={{ color: '#15803D' }}></td>
                                         <td className="px-3 py-2 text-right text-xs" style={{ color: '#B91C1C' }}></td>
@@ -1688,7 +1759,7 @@ export function AccountLedgerTab() {
                                             <td className="px-3 py-2 text-xs font-bold" style={{ color: '#0891B2' }}>{e.entryNo}</td>
                                             <td className="px-3 py-2">
                                                 <span className="inline-block text-xs px-1.5 py-0.5 rounded whitespace-nowrap shrink-0" style={{ color: '#B45309', background: 'rgba(180,83,9,0.15)' }}>
-                                                    {DOC_TYPE_LABEL[e.docType] ?? e.docType}
+                                                    {docLabelMap[e.docType] ?? e.docType}
                                                 </span>
                                             </td>
                                             <td className="px-3 py-2 text-xs max-w-[250px] truncate" style={{ color: '#0F172A' }}>{e.description || '—'}</td>
@@ -1706,7 +1777,7 @@ export function AccountLedgerTab() {
                                     {/* Closing balance */}
                                     <tr style={{ background: 'rgba(8,145,178,0.08)', borderTop: '2px solid #E2E8F0' }}>
                                         <td colSpan={4} className="px-3 py-2.5 text-xs font-bold uppercase" style={{ color: '#0F172A' }}>
-                                            Số dư cuối kỳ
+                                            {isEn ? 'Closing balance' : 'Số dư cuối kỳ'}
                                         </td>
                                         <td className="px-3 py-2.5 text-right text-xs font-bold" style={{ color: '#15803D' }}>
                                             {formatVND(data.entries.reduce((s, e) => s + e.debit, 0))}

@@ -8,6 +8,8 @@ import { type TransferOrderRow, getTransferOrders, cancelTransferOrder, accounti
 import { CreateTransferDrawer } from './CreateTransferDrawer'
 import { TransferDetailDrawer } from './TransferDetailDrawer'
 import { formatDate } from '@/lib/utils'
+import { useAppLocale } from '@/lib/i18n'
+import { getTransfersDict, type TransfersDict } from './i18n'
 import {
     PageHeader,
     Button,
@@ -34,27 +36,32 @@ type SortField =
     | 'totalQty'
     | 'status'
 
-const STATUS_CFG: Record<string, { label: string; tone: 'neutral' | 'warning' | 'info' | 'brand' | 'success' | 'danger' }> = {
-    DRAFT: { label: 'Nháp', tone: 'neutral' },
-    PENDING_ACCOUNTING: { label: 'Chờ Kế Toán Duyệt', tone: 'warning' },
-    CONFIRMED: { label: 'Kế Toán Đã Duyệt', tone: 'info' },
-    IN_TRANSIT: { label: 'Đang Chuyển', tone: 'brand' },
-    RECEIVED: { label: 'Đã Nhận Hàng', tone: 'success' },
-    CANCELLED: { label: 'Đã Hủy', tone: 'danger' },
+function getStatusCfg(t: TransfersDict): Record<string, { label: string; tone: 'neutral' | 'warning' | 'info' | 'brand' | 'success' | 'danger' }> {
+    return {
+        DRAFT: { label: t.statusDraft, tone: 'neutral' },
+        PENDING_ACCOUNTING: { label: t.statusPendingAcc, tone: 'warning' },
+        CONFIRMED: { label: t.statusConfirmed, tone: 'info' },
+        IN_TRANSIT: { label: t.statusInTransit, tone: 'brand' },
+        RECEIVED: { label: t.statusReceived, tone: 'success' },
+        CANCELLED: { label: t.statusCancelled, tone: 'danger' },
+    }
 }
 
 function TransferMobileCard({
     r,
+    t,
     onSelect,
     onApprove,
     onCancel
 }: {
     r: TransferOrderRow
+    t: TransfersDict
     onSelect: (id: string) => void
     onApprove: (id: string, e: React.MouseEvent) => void
     onCancel: (id: string, e: React.MouseEvent) => void
 }) {
-    const st = STATUS_CFG[r.status] ?? STATUS_CFG.DRAFT
+    const statusMap = getStatusCfg(t)
+    const st = statusMap[r.status] ?? statusMap.DRAFT
 
     return (
         <div
@@ -72,14 +79,14 @@ function TransferMobileCard({
             {/* Warehouse transfer route */}
             <div className="p-2.5 rounded-md bg-slate-50 border border-slate-100 flex items-center justify-between text-xs gap-2">
                 <div className="min-w-0 flex-1">
-                    <span className="text-[10px] text-slate-400 block uppercase font-medium">Kho Xuất</span>
+                    <span className="text-[10px] text-slate-400 block uppercase font-medium">{t.colFromWarehouse}</span>
                     <p className="font-semibold text-slate-800 truncate" title={r.fromWarehouse}>
                         <span className="text-slate-500 mr-1">[{r.fromWarehouseCode}]</span>{r.fromWarehouse}
                     </p>
                 </div>
                 <ArrowRightLeft size={14} className="text-slate-400 shrink-0" />
                 <div className="min-w-0 flex-1 text-right">
-                    <span className="text-[10px] text-slate-400 block uppercase font-medium">Kho Nhận</span>
+                    <span className="text-[10px] text-slate-400 block uppercase font-medium">{t.colToWarehouse}</span>
                     <p className="font-semibold text-slate-800 truncate" title={r.toWarehouse}>
                         <span className="text-slate-500 mr-1">[{r.toWarehouseCode}]</span>{r.toWarehouse}
                     </p>
@@ -89,12 +96,12 @@ function TransferMobileCard({
             {/* Quantity & Requester */}
             <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
                 <div className="text-slate-600 truncate mr-2">
-                    <span className="text-slate-400">Lập: </span>
+                    <span className="text-slate-400">{t.requesterPrefix}</span>
                     <span className="font-medium text-slate-800">{r.requesterName}</span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-slate-500 text-[11px]">{r.lineCount} mã</span>
-                    <span className="font-mono font-bold text-emerald-700">{r.totalQty.toLocaleString()} chai</span>
+                    <span className="text-slate-500 text-[11px]">{r.lineCount} {t.unitLine}</span>
+                    <span className="font-mono font-bold text-emerald-700">{r.totalQty.toLocaleString()} {t.unitBottle}</span>
                 </div>
             </div>
 
@@ -105,9 +112,9 @@ function TransferMobileCard({
                         size="sm"
                         variant="primary"
                         onClick={e => onApprove(r.id, e)}
-                        title="Kế toán duyệt ngay phiếu chuyển kho này"
+                        title={t.approveTooltip}
                     >
-                        Duyệt
+                        {t.approveBtn}
                     </Button>
                 )}
                 <Button
@@ -115,14 +122,14 @@ function TransferMobileCard({
                     variant="secondary"
                     onClick={() => onSelect(r.id)}
                 >
-                    <Eye size={13} /> Xem
+                    <Eye size={13} /> {t.viewBtn}
                 </Button>
                 {(r.status === 'DRAFT' || r.status === 'PENDING_ACCOUNTING') && (
                     <Button
                         size="sm"
                         variant="ghost"
                         onClick={e => onCancel(r.id, e)}
-                        title="Hủy phiếu này"
+                        title={t.cancelTooltip}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
                         <Ban size={14} />
@@ -138,6 +145,9 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
     stats?: { total: number; inTransit: number; completed: number }
     currentUserRoles?: string[]
 }) {
+    const { locale } = useAppLocale()
+    const t = getTransfersDict(locale)
+    const statusMap = getStatusCfg(t)
     const [rows, setRows] = useState<TransferOrderRow[]>(initialRows)
     const [loading, setLoading] = useState(false)
     const [createOpen, setCreateOpen] = useState(false)
@@ -165,7 +175,7 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
             const data = await getTransferOrders()
             setRows(data)
         } catch (err: any) {
-            toast.error('Lỗi tải danh sách phiếu chuyển kho: ' + err.message)
+            toast.error(t.loadError + err.message)
         } finally {
             setLoading(false)
         }
@@ -176,17 +186,17 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
     const handleQuickApprove = (id: string, e: React.MouseEvent) => {
         e.stopPropagation()
         confirm({
-            title: 'Phê duyệt chuyển kho',
-            message: 'Bạn có chắc chắn muốn phê duyệt Phiếu Chuyển Kho này? Trạng thái sẽ chuyển sang Đã duyệt.',
-            confirmLabel: 'Phê duyệt',
+            title: t.confirmApproveTitle,
+            message: t.confirmApproveMsg,
+            confirmLabel: t.confirmApproveLabel,
             onConfirm: async () => {
                 try {
                     const res = await accountingApproveTransfer(id)
                     if (!res.success) throw new Error(res.error)
-                    toast.success('Đã phê duyệt phiếu chuyển kho thành công')
+                    toast.success(t.approveSuccess)
                     reload()
                 } catch (err: any) {
-                    toast.error('Lỗi duyệt phiếu: ' + err.message)
+                    toast.error(t.approveError + err.message)
                 }
             }
         })
@@ -195,18 +205,18 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
     const handleCancel = (id: string, e: React.MouseEvent) => {
         e.stopPropagation()
         confirm({
-            title: 'Hủy phiếu chuyển kho',
-            message: 'Bạn có chắc chắn muốn hủy Phiếu Chuyển Kho này? Thao tác này không thể hoàn tác.',
+            title: t.confirmCancelTitle,
+            message: t.confirmCancelMsg,
             danger: true,
-            confirmLabel: 'Hủy phiếu',
+            confirmLabel: t.confirmCancelLabel,
             onConfirm: async () => {
                 try {
                     const res = await cancelTransferOrder(id)
                     if (!res.success) throw new Error(res.error)
-                    toast.success('Đã hủy phiếu chuyển kho thành công')
+                    toast.success(t.cancelSuccess)
                     reload()
                 } catch (err: any) {
-                    toast.error('Lỗi hủy phiếu: ' + err.message)
+                    toast.error(t.cancelError + err.message)
                 }
             }
         })
@@ -286,14 +296,14 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
         <div className="space-y-4 max-w-screen-2xl">
             {/* Header */}
             <PageHeader
-                title="Chuyển Kho Nội Bộ (Phiếu Chuyển Kho)"
-                description="Quản lý phiếu luân chuyển hàng hóa giữa các kho, duyệt Kế toán & In chứng từ A4 ký 4 bên"
+                title={t.pageTitle}
+                description={t.pageSubtitle}
                 actions={
                     <div className="flex items-center gap-2">
                         <Link href="/dashboard/warehouse">
                             <Button variant="secondary" size="sm">
                                 <Zap size={14} className="text-amber-600" />
-                                Gợi Ý Điều Chuyển
+                                {t.suggestBtn}
                             </Button>
                         </Link>
                         <Button
@@ -302,7 +312,7 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                             onClick={reload}
                             disabled={loading}
                             loading={loading}
-                            title="Tải lại danh sách"
+                            title={t.reloadTitle}
                         >
                             <RefreshCw size={14} />
                         </Button>
@@ -312,7 +322,7 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                             onClick={() => setCreateOpen(true)}
                         >
                             <Plus size={15} />
-                            Lập Phiếu Chuyển Kho Mới
+                            {t.createBtn}
                         </Button>
                     </div>
                 }
@@ -323,27 +333,27 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                 left={
                     <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
                         {[
-                            { key: 'ALL', label: 'Tất Cả', count: statusCounts.ALL },
-                            { key: 'PENDING_ACCOUNTING', label: 'Chờ Kế Toán Duyệt', count: statusCounts.PENDING_ACCOUNTING },
-                            { key: 'CONFIRMED', label: 'Đã Duyệt', count: statusCounts.CONFIRMED },
-                            { key: 'IN_TRANSIT', label: 'Đang Chuyển', count: statusCounts.IN_TRANSIT },
-                            { key: 'RECEIVED', label: 'Hoàn Tất', count: statusCounts.RECEIVED },
-                        ].map(t => (
+                            { key: 'ALL', label: t.statusAll, count: statusCounts.ALL },
+                            { key: 'PENDING_ACCOUNTING', label: t.statusPendingAcc, count: statusCounts.PENDING_ACCOUNTING },
+                            { key: 'CONFIRMED', label: t.statusConfirmedShort, count: statusCounts.CONFIRMED },
+                            { key: 'IN_TRANSIT', label: t.statusInTransit, count: statusCounts.IN_TRANSIT },
+                            { key: 'RECEIVED', label: t.statusReceivedShort, count: statusCounts.RECEIVED },
+                        ].map(tItem => (
                             <button
-                                key={t.key}
+                                key={tItem.key}
                                 type="button"
-                                onClick={() => setStatusTab(t.key)}
+                                onClick={() => setStatusTab(tItem.key)}
                                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
-                                    statusTab === t.key
+                                    statusTab === tItem.key
                                         ? 'bg-lys-primary/10 text-lys-primary border-b-2 border-lys-primary font-bold'
                                         : 'bg-white text-lys-muted hover:text-lys-title hover:bg-lys-bg border border-lys-border'
                                 }`}
                             >
-                                <span>{t.label}</span>
+                                <span>{tItem.label}</span>
                                 <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
-                                    statusTab === t.key ? 'bg-lys-primary/15 text-lys-primary' : 'bg-slate-100 text-slate-700'
+                                    statusTab === tItem.key ? 'bg-lys-primary/15 text-lys-primary' : 'bg-slate-100 text-slate-700'
                                 }`}>
-                                    {t.count}
+                                    {tItem.count}
                                 </span>
                             </button>
                         ))}
@@ -356,7 +366,7 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                             type="text"
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            placeholder="Tìm mã phiếu, kho xuất, kho nhận..."
+                            placeholder={t.searchPlaceholder}
                             className="w-full pl-9 pr-3 py-1.5 rounded-md bg-white border border-lys-border text-xs text-lys-title outline-none focus:border-lys-primary"
                         />
                     </div>
@@ -368,11 +378,11 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                 {sortedRows.length === 0 ? (
                     <EmptyState
                         icon={ArrowRightLeft}
-                        title="Không tìm thấy phiếu chuyển kho nào"
-                        description="Lập phiếu chuyển kho mới để điều phối và cân bằng lượng tồn kho giữa các chi nhánh."
+                        title={t.emptyTitle}
+                        description={t.emptyDesc}
                         action={
                             <Button variant="secondary" size="sm" onClick={() => setCreateOpen(true)}>
-                                <Plus size={14} /> Lập Phiếu Chuyển Kho
+                                <Plus size={14} /> {t.createBtnShort}
                             </Button>
                         }
                     />
@@ -381,6 +391,7 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                         <TransferMobileCard
                             key={r.id}
                             r={r}
+                            t={t}
                             onSelect={id => setSelectedId(id)}
                             onApprove={(id, e) => handleQuickApprove(id, e)}
                             onCancel={(id, e) => handleCancel(id, e)}
@@ -394,15 +405,15 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                 <Table>
                     <THead>
                         <Tr>
-                            {renderSortHeader('transferNo', 'Mã Phiếu')}
-                            {renderSortHeader('fromWarehouse', 'Kho Xuất')}
-                            {renderSortHeader('toWarehouse', 'Kho Nhận')}
-                            {renderSortHeader('requesterName', 'Người Lập')}
-                            {renderSortHeader('transferDate', 'Ngày Chuyển')}
-                            {renderSortHeader('lineCount', 'Số Mặt Hàng', 'center')}
-                            {renderSortHeader('totalQty', 'Tổng Chai', 'center')}
-                            {renderSortHeader('status', 'Trạng Thái', 'center')}
-                            <th className="px-3 py-2.5 font-semibold uppercase text-[11px] text-right whitespace-nowrap text-lys-muted">Thao Tác</th>
+                            {renderSortHeader('transferNo', t.colTransferNo)}
+                            {renderSortHeader('fromWarehouse', t.colFromWarehouse)}
+                            {renderSortHeader('toWarehouse', t.colToWarehouse)}
+                            {renderSortHeader('requesterName', t.colRequester)}
+                            {renderSortHeader('transferDate', t.colTransferDate)}
+                            {renderSortHeader('lineCount', t.colLineCount, 'center')}
+                            {renderSortHeader('totalQty', t.colTotalQty, 'center')}
+                            {renderSortHeader('status', t.colStatus, 'center')}
+                            <th className="px-3 py-2.5 font-semibold uppercase text-[11px] text-right whitespace-nowrap text-lys-muted">{t.colAction}</th>
                         </Tr>
                     </THead>
                     <TBody>
@@ -410,18 +421,18 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                             <TableMessageRow colSpan={9}>
                                 <EmptyState
                                     icon={ArrowRightLeft}
-                                    title="Không tìm thấy phiếu chuyển kho nào"
-                                    description="Lập phiếu chuyển kho mới để điều phối và cân bằng lượng tồn kho giữa các chi nhánh."
+                                    title={t.emptyTitle}
+                                    description={t.emptyDesc}
                                     action={
                                         <Button variant="secondary" size="sm" onClick={() => setCreateOpen(true)}>
-                                            <Plus size={14} /> Lập Phiếu Chuyển Kho
+                                            <Plus size={14} /> {t.createBtnShort}
                                         </Button>
                                     }
                                 />
                             </TableMessageRow>
                         ) : (
                             sortedRows.map(r => {
-                                const st = STATUS_CFG[r.status] ?? STATUS_CFG.DRAFT
+                                const st = statusMap[r.status] ?? statusMap.DRAFT
                                 return (
                                     <Tr
                                         key={r.id}
@@ -444,10 +455,10 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                                             {formatDate(r.transferDate)}
                                         </Td>
                                         <Td align="center" className="font-mono font-bold text-lys-title whitespace-nowrap">
-                                            {r.lineCount} mã
+                                            {r.lineCount} {t.unitLine}
                                         </Td>
                                         <Td align="center" className="font-mono font-bold text-emerald-700 whitespace-nowrap">
-                                            {r.totalQty.toLocaleString()} chai
+                                            {r.totalQty.toLocaleString()} {t.unitBottle}
                                         </Td>
                                         <Td align="center" className="whitespace-nowrap">
                                             <Badge tone={st.tone}>{st.label}</Badge>
@@ -459,9 +470,9 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                                                         size="sm"
                                                         variant="primary"
                                                         onClick={e => handleQuickApprove(r.id, e)}
-                                                        title="Kế toán duyệt ngay phiếu chuyển kho này"
+                                                        title={t.approveTooltip}
                                                     >
-                                                        Duyệt
+                                                        {t.approveBtn}
                                                     </Button>
                                                 )}
                                                 <Button
@@ -469,14 +480,14 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                                                     variant="secondary"
                                                     onClick={() => setSelectedId(r.id)}
                                                 >
-                                                    <Eye size={13} /> Xem
+                                                    <Eye size={13} /> {t.viewBtn}
                                                 </Button>
                                                 {(r.status === 'DRAFT' || r.status === 'PENDING_ACCOUNTING') && (
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
                                                         onClick={e => handleCancel(r.id, e)}
-                                                        title="Hủy phiếu này"
+                                                        title={t.cancelTooltip}
                                                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                                     >
                                                         <Ban size={14} />

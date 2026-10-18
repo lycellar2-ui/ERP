@@ -2,8 +2,6 @@ import { getUsers, getRoles, getPermissions, getSettingsStats } from './actions'
 import { SettingsClient } from './SettingsClient'
 import { getCurrentUser } from '@/lib/session'
 
-export const dynamic = 'force-dynamic'
-
 export const metadata = { title: 'Cài Đặt & RBAC | Wine ERP' }
 
 export default async function SettingsPage() {
