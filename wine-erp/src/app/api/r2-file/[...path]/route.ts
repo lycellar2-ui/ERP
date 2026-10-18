@@ -72,6 +72,7 @@ export async function GET(
             if (obj.Body) {
                 const bytes = await obj.Body.transformToByteArray()
                 const contentType = obj.ContentType || inferMimeType(customFileName)
+                const isImage = contentType.startsWith('image/')
 
                 return new NextResponse(Buffer.from(bytes), {
                     status: 200,
@@ -79,7 +80,9 @@ export async function GET(
                         'Content-Type': contentType,
                         'Content-Length': String(bytes.byteLength),
                         'Content-Disposition': disposition,
-                        'Cache-Control': 'public, max-age=3600',
+                        'Cache-Control': isImage
+                            ? 'public, max-age=31536000, s-maxage=31536000, stale-while-revalidate=86400, immutable'
+                            : 'public, max-age=86400, s-maxage=86400',
                         'X-Frame-Options': 'SAMEORIGIN',
                     },
                 })
