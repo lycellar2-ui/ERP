@@ -121,7 +121,9 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             case 'SPECIAL_EVENT':
                 return { label: isEn ? 'Special Event' : 'Sự Kiện / Event', bg: 'rgba(180,140,210,0.15)', color: '#B48CD2', border: 'rgba(180,140,210,0.3)' }
             case 'PRICE_ADJUSTMENT':
-                return { label: isEn ? 'Special Pricing' : 'Cơ Chế Giá & Giá Đặc Biệt', bg: 'rgba(29,78,216,0.15)', color: '#1D4ED8', border: 'rgba(29,78,216,0.3)' }
+                return { label: isEn ? 'Pricing Mechanism (L2)' : 'Cơ Chế Giá (Level 2)', bg: 'rgba(8, 145, 178, 0.12)', color: '#0E7490', border: 'rgba(8, 145, 178, 0.3)' }
+            case 'SPECIAL_PRICE':
+                return { label: isEn ? 'Special SKU Price (L3)' : 'Giá Đặc Biệt SKU (Level 3)', bg: 'rgba(29,78,216,0.12)', color: '#1D4ED8', border: 'rgba(29,78,216,0.3)' }
             case 'BUDGET_REQUEST':
                 return { label: isEn ? 'Budget Request' : 'Xin Ngân Sách', bg: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: 'rgba(8, 145, 178, 0.25)' }
             case 'CAPITAL_EXPENDITURE':
@@ -135,7 +137,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             case 'PAYMENT_SCHEDULE':
                 return { label: isEn ? 'Payment Schedule' : 'Lịch Thanh Toán', bg: 'rgba(29,78,216,0.15)', color: '#1D4ED8', border: 'rgba(29,78,216,0.3)' }
             case 'PROMOTION_CAMPAIGN':
-                return { label: isEn ? 'Promotion' : 'Khuyến Mãi', bg: 'rgba(180,83,9,0.15)', color: '#B45309', border: 'rgba(180,83,9,0.3)' }
+                return { label: isEn ? 'Promotion (L4)' : 'Khuyến Mãi (Level 4)', bg: 'rgba(180,83,9,0.15)', color: '#B45309', border: 'rgba(180,83,9,0.3)' }
             default:
                 return { label: getCategoryLabel(cat, locale), bg: 'rgba(100,116,139,0.15)', color: '#475569', border: 'rgba(100,116,139,0.3)' }
         }
@@ -313,7 +315,8 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
 
         const isTasting = detail.category === 'TASTING' || detail.category === 'SPECIAL_EVENT' || detail.category === 'INTERNAL_TRAINING'
         const isTraining = detail.category === 'INTERNAL_TRAINING'
-        const isPriceAdjustment = detail.category === 'PRICE_ADJUSTMENT'
+        const isSpecialPriceCategory = (detail.category as string) === 'SPECIAL_PRICE'
+        const isPriceAdjustment = detail.category === 'PRICE_ADJUSTMENT' || isSpecialPriceCategory
 
         let titleVi = detail.title || ''
         let titleEn = ''
@@ -325,28 +328,35 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
 
         const catRaw = CATEGORY_LABELS[detail.category] || detail.category
         const catClean = catRaw.replace(/^[^\w\s\u00C0-\u1EF9]+/, '').trim().toUpperCase()
-        const docTitleVi = isPriceAdjustment ? 'TỜ TRÌNH CƠ CHẾ GIÁ & GIÁ ĐẶC BIỆT' : `TỜ TRÌNH ${catClean}`
-        const docTitleEn = isPriceAdjustment ? 'PROPOSAL FOR SPECIAL PRICING MECHANISM & COMMERCIAL POLICY'
-            : detail.category === 'INTERNAL_TRAINING' ? 'INTERNAL TRAINING & SAMPLES PROPOSAL'
-            : detail.category === 'BUDGET_REQUEST' ? 'BUDGET ALLOCATION PROPOSAL'
-            : detail.category === 'CAPITAL_EXPENDITURE' ? 'CAPITAL EXPENDITURE PROPOSAL'
-            : detail.category === 'NEW_SUPPLIER' ? 'NEW SUPPLIER PROPOSAL'
-            : detail.category === 'NEW_PRODUCT' ? 'NEW PRODUCT PROPOSAL'
-            : detail.category === 'POLICY_CHANGE' ? 'POLICY CHANGE PROPOSAL'
-            : detail.category === 'STAFF_REQUISITION' ? 'STAFF REQUISITION PROPOSAL'
-            : detail.category === 'PAYMENT_SCHEDULE' ? 'PAYMENT SCHEDULE PROPOSAL'
-            : detail.category === 'PROMOTION_CAMPAIGN' ? 'MARKETING & PROMOTION PROPOSAL'
-            : detail.category === 'CONTRACT_SIGNING' ? 'CONTRACT EXECUTION PROPOSAL'
-            : `OFFICIAL SUBMISSION PROPOSAL — ${detail.category.replace(/_/g, ' ')}`
+        const docTitleVi = isSpecialPriceCategory
+            ? 'TỜ TRÌNH GIÁ ĐẶC BIỆT THEO MÃ (LEVEL 3)'
+            : detail.category === 'PRICE_ADJUSTMENT'
+                ? 'TỜ TRÌNH CƠ CHẾ GIÁ KHÁCH HÀNG (LEVEL 2)'
+                : `TỜ TRÌNH ${catClean}`
+        const docTitleEn = isSpecialPriceCategory
+            ? 'PROPOSAL FOR SPECIAL SKU PRICING (LEVEL 3)'
+            : detail.category === 'PRICE_ADJUSTMENT'
+                ? 'PROPOSAL FOR CUSTOMER PRICING MECHANISM (LEVEL 2)'
+                : detail.category === 'INTERNAL_TRAINING' ? 'INTERNAL TRAINING & SAMPLES PROPOSAL'
+                : detail.category === 'BUDGET_REQUEST' ? 'BUDGET ALLOCATION PROPOSAL'
+                : detail.category === 'CAPITAL_EXPENDITURE' ? 'CAPITAL EXPENDITURE PROPOSAL'
+                : detail.category === 'NEW_SUPPLIER' ? 'NEW SUPPLIER PROPOSAL'
+                : detail.category === 'NEW_PRODUCT' ? 'NEW PRODUCT PROPOSAL'
+                : detail.category === 'POLICY_CHANGE' ? 'POLICY CHANGE PROPOSAL'
+                : detail.category === 'STAFF_REQUISITION' ? 'STAFF REQUISITION PROPOSAL'
+                : detail.category === 'PAYMENT_SCHEDULE' ? 'PAYMENT SCHEDULE PROPOSAL'
+                : detail.category === 'PROMOTION_CAMPAIGN' ? 'MARKETING & PROMOTION PROPOSAL'
+                : detail.category === 'CONTRACT_SIGNING' ? 'CONTRACT EXECUTION PROPOSAL'
+                : `OFFICIAL SUBMISSION PROPOSAL — ${detail.category.replace(/_/g, ' ')}`
 
         const scopeTextVi = 
-            detail.scope?.startsWith('ENTIRE_PORTFOLIO') ? 'Chiết khấu toàn bộ danh mục sản phẩm' :
-            detail.scope?.startsWith('SPECIFIC_PRODUCTS') ? 'Áp dụng cho một số sản phẩm cụ thể' :
+            (detail.scope?.includes('ENTIRE_PORTFOLIO') || detail.scope?.includes('BASE_TYPE:')) ? 'Cơ chế chiết khấu % toàn bộ danh mục sản phẩm (Level 2)' :
+            detail.scope?.startsWith('SPECIFIC_PRODUCTS') ? 'Giá đặc biệt riêng theo từng mã sản phẩm (Level 3)' :
             detail.scope?.startsWith('MIXED') ? 'Kết hợp chiết khấu danh mục và giá riêng cho một số sản phẩm' : 'N/A'
 
         const scopeTextEn = 
-            detail.scope?.startsWith('ENTIRE_PORTFOLIO') ? 'Overall discount across entire portfolio' :
-            detail.scope?.startsWith('SPECIFIC_PRODUCTS') ? 'Special pricing on specific SKUs' :
+            (detail.scope?.includes('ENTIRE_PORTFOLIO') || detail.scope?.includes('BASE_TYPE:')) ? 'Portfolio-wide % discount mechanism (Level 2)' :
+            detail.scope?.startsWith('SPECIFIC_PRODUCTS') ? 'Special pricing on specific SKUs (Level 3)' :
             detail.scope?.startsWith('MIXED') ? 'Mixed (Portfolio discount + Specific SKU pricing)' : 'N/A'
 
         const scopeText = lang === 'VI' ? scopeTextVi : lang === 'EN' ? scopeTextEn : `${scopeTextVi} / ${scopeTextEn}`
@@ -1921,9 +1931,10 @@ function CreateDrawer({ onClose, userId, onCreated }: {
         startDate: '',
         endDate: '',
         customerId: '',
-        scope: 'ENTIRE_PORTFOLIO',
+        scope: initialCategory === 'SPECIAL_PRICE' ? 'SPECIFIC_PRODUCTS' : 'ENTIRE_PORTFOLIO',
         discountPct: '',
     })
+    const [basePriceListType, setBasePriceListType] = useState<'BY_CHANNEL' | 'WHOLESALE' | 'RETAIL' | 'HORECA'>('BY_CHANNEL')
     const [additionalBranches, setAdditionalBranches] = useState<string[]>([])
     const [priceLines, setPriceLines] = useState<{ productId: string; proposedPrice: number; quantity: number }[]>([])
     const [saving, setSaving] = useState(false)
@@ -2030,12 +2041,15 @@ function CreateDrawer({ onClose, userId, onCreated }: {
         if (!form.title || !form.content) { toast.warning(locale === 'en' ? 'Please enter title and content' : 'Vui lòng nhập tiêu đề và nội dung'); return }
         if (form.category === 'PRICE_ADJUSTMENT') {
             if (!form.customerId) { toast.warning(locale === 'en' ? 'Please select applicable customer' : 'Vui lòng chọn khách hàng áp dụng'); return }
-            if ((form.scope === 'ENTIRE_PORTFOLIO' || form.scope === 'MIXED') && !form.discountPct) {
-                toast.warning(locale === 'en' ? 'Please enter portfolio discount percentage' : 'Vui lòng nhập % chiết khấu toàn danh mục')
+            if (form.discountPct === '' || isNaN(parseFloat(form.discountPct))) {
+                toast.warning(locale === 'en' ? 'Please enter portfolio discount percentage (Level 2)' : 'Vui lòng nhập % chiết khấu toàn danh mục (Level 2)')
                 return
             }
-            if ((form.scope === 'SPECIFIC_PRODUCTS' || form.scope === 'MIXED') && priceLines.length === 0) {
-                toast.warning(locale === 'en' ? 'Please add proposed pricing products' : 'Vui lòng thêm sản phẩm đề xuất giá')
+        }
+        if (form.category === 'SPECIAL_PRICE') {
+            if (!form.customerId) { toast.warning(locale === 'en' ? 'Please select applicable customer' : 'Vui lòng chọn khách hàng áp dụng'); return }
+            if (priceLines.length === 0) {
+                toast.warning(locale === 'en' ? 'Please add at least 1 SKU with special price (Level 3)' : 'Vui lòng thêm ít nhất 1 mã sản phẩm áp giá đặc biệt (Level 3)')
                 return
             }
             if (priceLines.some(line => !line.productId)) {
@@ -2090,8 +2104,10 @@ function CreateDrawer({ onClose, userId, onCreated }: {
         setSaving(true)
 
         let finalScope = form.scope
-        if (form.category === 'PRICE_ADJUSTMENT' && additionalBranches.length > 0) {
-            finalScope = `${form.scope} | BRANCHES:${additionalBranches.join(',')}`
+        if (form.category === 'PRICE_ADJUSTMENT') {
+            finalScope = `BASE_TYPE:${basePriceListType} | ENTIRE_PORTFOLIO${additionalBranches.length > 0 ? ` | BRANCHES:${additionalBranches.join(',')}` : ''}`
+        } else if (form.category === 'SPECIAL_PRICE') {
+            finalScope = `SPECIFIC_PRODUCTS${additionalBranches.length > 0 ? ` | BRANCHES:${additionalBranches.join(',')}` : ''}`
         } else if (isPromotionCategory) {
             const activeGiftId = promoConfig.giftType === 'SAME_PRODUCT' ? promoConfig.buyProductId : promoConfig.giftProductId
             finalScope = JSON.stringify({
@@ -2111,7 +2127,6 @@ function CreateDrawer({ onClose, userId, onCreated }: {
         if (isPromotionCategory) {
             const activeGiftId = promoConfig.giftType === 'SAME_PRODUCT' ? promoConfig.buyProductId : promoConfig.giftProductId
             const buyProd = products.find(p => p.id === promoConfig.buyProductId)
-            const giftProd = products.find(p => p.id === activeGiftId)
             finalPriceItems = [
                 {
                     productId: promoConfig.buyProductId,
@@ -2139,10 +2154,10 @@ function CreateDrawer({ onClose, userId, onCreated }: {
             title: finalTitle,
             scope: finalScope,
             estimatedAmount: finalEstimated,
-            discountPct: form.discountPct ? parseFloat(form.discountPct) : undefined,
+            discountPct: form.category === 'PRICE_ADJUSTMENT' && form.discountPct !== '' ? parseFloat(form.discountPct) : undefined,
             startDate: form.startDate || undefined,
             endDate: form.endDate || undefined,
-            priceItems: (isTastingCategory || isTrainingCategory || form.category === 'PRICE_ADJUSTMENT' || isPromotionCategory) && finalPriceItems.length > 0
+            priceItems: (isTastingCategory || isTrainingCategory || form.category === 'SPECIAL_PRICE' || isPromotionCategory) && finalPriceItems.length > 0
                 ? finalPriceItems 
                 : undefined,
             createdBy: userId,
@@ -2588,20 +2603,44 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                         </div>
                     )}
 
-                    {/* Price adjustment custom fields */}
-                    {form.category === 'PRICE_ADJUSTMENT' && (
+                    {/* Level 2 (PRICE_ADJUSTMENT) or Level 3 (SPECIAL_PRICE) custom fields */}
+                    {(form.category === 'PRICE_ADJUSTMENT' || form.category === 'SPECIAL_PRICE') && (
                         <div className="space-y-4 p-3.5 sm:p-4 rounded-md border border-slate-200 bg-white">
+                            <div className="pb-2.5 border-b border-slate-100 flex items-center justify-between gap-2 flex-wrap">
+                                <div>
+                                    <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wide" style={{ color: form.category === 'PRICE_ADJUSTMENT' ? '#0E7490' : '#1D4ED8' }}>
+                                        {form.category === 'PRICE_ADJUSTMENT'
+                                            ? (locale === 'en' ? 'LEVEL 2: CUSTOMER PRICING MECHANISM (% PORTFOLIO DISCOUNT)' : 'LUỒNG LEVEL 2: TỜ TRÌNH CƠ CHẾ GIÁ KHÁCH HÀNG (GIẢM % TOÀN KHO)')
+                                            : (locale === 'en' ? 'LEVEL 3: SPECIAL SKU PRICING (PER-PRODUCT DEAL)' : 'LUỒNG LEVEL 3: TỜ TRÌNH GIÁ ĐẶC BIỆT THEO MÃ (GIÁ RIÊNG TỪNG CHAI)')}
+                                    </h4>
+                                    <p className="text-[11px] text-slate-500 mt-0.5">
+                                        {form.category === 'PRICE_ADJUSTMENT'
+                                            ? (locale === 'en' ? 'Applies a percentage discount across all SKUs on top of the selected base price list (Level 1).' : 'Áp dụng tỷ lệ chiết khấu % cho toàn bộ mã sản phẩm dựa trên bảng giá nền (Level 1).')
+                                            : (locale === 'en' ? 'Locks a fixed special net price for specific SKUs (overrides Level 2 & Level 1).' : 'Áp dụng đơn giá đặc biệt cố định cho từng mã SKU cụ thể (ưu tiên đè lên Level 2 & Level 1).')}
+                                    </p>
+                                </div>
+                            </div>
+
                             <div>
                                 <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#475569' }}>Khách hàng chính áp dụng *</label>
                                 <SearchableCustomerCombobox
                                     customers={usableCustomers}
                                     selectedCustomerId={form.customerId}
                                     onSelect={(cust: any) => {
+                                        const isLevel2 = form.category === 'PRICE_ADJUSTMENT'
                                         setForm(f => ({
                                             ...f,
                                             customerId: cust.id,
-                                            title: !f.title && cust.name ? `Đề xuất cơ chế giá & giá đặc biệt cho khách hàng ${cust.name}` : f.title,
-                                            titleEn: !f.titleEn && cust.name ? `Special pricing & commercial policy proposal for ${cust.name}` : f.titleEn,
+                                            title: !f.title && cust.name
+                                                ? (isLevel2
+                                                    ? `Tờ trình cơ chế giá khách hàng (Level 2) — ${cust.name}`
+                                                    : `Tờ trình giá đặc biệt theo mã (Level 3) — ${cust.name}`)
+                                                : f.title,
+                                            titleEn: !f.titleEn && cust.name
+                                                ? (isLevel2
+                                                    ? `Customer Pricing Mechanism Proposal (Level 2) — ${cust.name}`
+                                                    : `Special SKU Pricing Proposal (Level 3) — ${cust.name}`)
+                                                : f.titleEn,
                                         }))
                                         setAdditionalBranches([])
                                     }}
@@ -2690,38 +2729,70 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#475569' }}>Phạm vi áp dụng *</label>
-                                <select 
-                                    value={form.scope} 
-                                    onChange={e => setForm(f => ({ ...f, scope: e.target.value }))} 
-                                    style={{ ...inputStyle, background: '#FFFFFF' }}
-                                    className="text-base sm:text-sm"
-                                >
-                                    <option value="ENTIRE_PORTFOLIO">Toàn bộ danh mục (% chiết khấu)</option>
-                                    <option value="SPECIFIC_PRODUCTS">Một số sản phẩm cụ thể (gõ giá riêng)</option>
-                                    <option value="MIXED">Kết hợp cả hai (chiết khấu danh mục + giá riêng một số chai)</option>
-                                </select>
-                            </div>
+                            {/* LEVEL 2: Portfolio % Discount & Base Price List Type */}
+                            {form.category === 'PRICE_ADJUSTMENT' && (
+                                <div className="space-y-3 p-3 rounded-lg border border-cyan-200 bg-cyan-50/30">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#475569' }}>
+                                                Bảng giá nền tham chiếu (Level 1) *
+                                            </label>
+                                            <select
+                                                value={basePriceListType}
+                                                onChange={e => setBasePriceListType(e.target.value as any)}
+                                                style={{ ...inputStyle, background: '#FFFFFF' }}
+                                                className="text-base sm:text-sm font-medium"
+                                            >
+                                                <option value="BY_CHANNEL">Tự động theo Kênh Khách Hàng (Mặc định)</option>
+                                                <option value="WHOLESALE">Bảng Giá Bán Buôn (Wholesale)</option>
+                                                <option value="RETAIL">Bảng Giá Bán Lẻ (Retail)</option>
+                                                <option value="HORECA">Bảng Giá HORECA</option>
+                                            </select>
+                                        </div>
 
-                            {(form.scope === 'ENTIRE_PORTFOLIO' || form.scope === 'MIXED') && (
-                                <div>
-                                    <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#475569' }}>% Chiết khấu toàn danh mục *</label>
-                                    <input 
-                                        type="number" 
-                                        placeholder="VD: 15" 
-                                        value={form.discountPct} 
-                                        onChange={e => setForm(f => ({ ...f, discountPct: e.target.value }))} 
-                                        style={{ ...inputStyle, background: '#FFFFFF' }}
-                                        className="text-base sm:text-sm"
-                                    />
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#475569' }}>
+                                                % Chiết khấu toàn bộ danh mục (Level 2) *
+                                            </label>
+                                            <input 
+                                                type="number" 
+                                                step="0.5"
+                                                min="0"
+                                                max="100"
+                                                placeholder="VD: 5 hoặc 10" 
+                                                value={form.discountPct} 
+                                                onChange={e => setForm(f => ({ ...f, discountPct: e.target.value }))} 
+                                                style={{ ...inputStyle, background: '#FFFFFF', fontWeight: 'bold', color: '#0E7490' }}
+                                                className="text-base sm:text-sm"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                                        <span className="text-[11px] text-slate-500 font-medium mr-1">Chọn nhanh mức giảm:</span>
+                                        {[5, 8, 10, 12, 15, 20].map(pct => (
+                                            <button
+                                                key={pct}
+                                                type="button"
+                                                onClick={() => setForm(f => ({ ...f, discountPct: String(pct) }))}
+                                                className={`px-2.5 py-1 rounded text-xs font-bold border transition cursor-pointer ${
+                                                    Number(form.discountPct) === pct
+                                                        ? 'bg-[#0E7490] text-white border-[#0E7490]'
+                                                        : 'bg-white text-slate-700 border-slate-200 hover:border-[#0E7490]'
+                                                }`}
+                                            >
+                                                Giảm {pct}%
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
 
-                            {(form.scope === 'SPECIFIC_PRODUCTS' || form.scope === 'MIXED') && (
+                            {/* LEVEL 3: Specific SKU Special Price Table */}
+                            {form.category === 'SPECIAL_PRICE' && (
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between flex-wrap gap-2">
-                                        <label className="text-xs font-semibold uppercase block" style={{ color: '#475569' }}>Đề xuất giá theo chai *</label>
+                                        <label className="text-xs font-semibold uppercase block" style={{ color: '#475569' }}>Danh sách mã SKU áp giá đặc biệt (Level 3) *</label>
                                         <div className="flex items-center gap-3 flex-wrap">
                                             <button 
                                                 type="button" 
@@ -2735,7 +2806,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                                 onClick={() => setPriceLines([...priceLines, { productId: '', proposedPrice: 0, quantity: 1 }])}
                                                 className="text-xs flex items-center gap-1 text-[#0891B2] font-semibold hover:underline"
                                             >
-                                                <Plus size={12} /> Thêm dòng
+                                                <Plus size={12} /> Thêm dòng SKU
                                             </button>
                                         </div>
                                     </div>
@@ -2788,7 +2859,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
                                                         <div className="w-full sm:w-28 min-w-0 flex-shrink-0">
                                                             <div className="flex items-center justify-between gap-1 mb-1">
-                                                                <label className="text-[10px] font-semibold truncate" style={{ color: '#64748B' }}>Giá đề xuất</label>
+                                                                <label className="text-[10px] font-semibold truncate" style={{ color: '#64748B' }}>Giá đặc biệt</label>
                                                                 {line.proposedPrice > 0 && wholesale > 0 && (
                                                                     <span className={`text-[9px] font-bold shrink-0 ${diffPct < 0 ? 'text-red-700' : 'text-green-700'}`}>
                                                                         {diffPct > 0 ? '+' : ''}{diffPct.toFixed(1)}%
@@ -2828,7 +2899,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                         })}
                                         {priceLines.length === 0 && (
                                             <p className="text-center text-xs py-4 text-gray-400 border border-dashed border-slate-200 rounded-md">
-                                                Bấm nút <strong className="text-[#0891B2]">"Thêm dòng"</strong> hoặc <strong className="text-[#B45309]">"Chọn nhanh hàng loạt"</strong> để chọn sản phẩm đề xuất.
+                                                Bấm nút <strong className="text-[#0891B2]">"Thêm dòng SKU"</strong> hoặc <strong className="text-[#B45309]">"Chọn nhanh hàng loạt"</strong> để chọn sản phẩm áp giá đặc biệt.
                                             </p>
                                         )}
                                     </div>
@@ -3185,11 +3256,13 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                             </div>
                         </div>
 
-                        {/* Special pricing details */}
-                        {detail.category === 'PRICE_ADJUSTMENT' && (
+                        {/* Special pricing & mechanism details */}
+                        {(detail.category === 'PRICE_ADJUSTMENT' || (detail.category as string) === 'SPECIAL_PRICE') && (
                             <div className="p-4 rounded-md space-y-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                <p className="text-xs font-semibold uppercase" style={{ color: '#0891B2' }}>
-                                    {locale === 'en' ? 'Special Pricing & Mechanism Information' : 'Thông Tin Áp Dụng Cơ Chế Giá & Giá Đặc Biệt'}
+                                <p className="text-xs font-semibold uppercase" style={{ color: (detail.category as string) === 'SPECIAL_PRICE' ? '#1D4ED8' : '#0891B2' }}>
+                                    {(detail.category as string) === 'SPECIAL_PRICE'
+                                        ? (locale === 'en' ? 'Special SKU Pricing Information (Level 3)' : 'Thông Tin Tờ Trình Giá Đặc Biệt Theo Mã (Level 3)')
+                                        : (locale === 'en' ? 'Customer Pricing Mechanism Information (Level 2)' : 'Thông Tin Tờ Trình Cơ Chế Giá Khách Hàng (Level 2)')}
                                 </p>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                                     <div className="p-2.5 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
@@ -3199,8 +3272,8 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                     <div className="p-2.5 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                         <p style={{ color: '#64748B' }}>{locale === 'en' ? 'Scope of Application' : 'Phạm vi áp dụng'}</p>
                                         <p className="font-bold mt-0.5" style={{ color: '#0F172A' }}>
-                                            {detail.scope?.startsWith('ENTIRE_PORTFOLIO') ? (locale === 'en' ? 'Entire Portfolio' : 'Toàn danh mục') : 
-                                             detail.scope?.startsWith('SPECIFIC_PRODUCTS') ? (locale === 'en' ? 'Specific Products' : 'Một số sản phẩm') : 
+                                            {(detail.scope?.includes('ENTIRE_PORTFOLIO') || detail.scope?.includes('BASE_TYPE:')) ? (locale === 'en' ? 'Entire Portfolio — Level 2' : 'Giảm % toàn danh mục — Level 2') : 
+                                             detail.scope?.startsWith('SPECIFIC_PRODUCTS') ? (locale === 'en' ? 'Specific SKUs — Level 3' : 'Giá đặc biệt theo mã — Level 3') : 
                                              detail.scope?.startsWith('MIXED') ? (locale === 'en' ? 'Mixed' : 'Kết hợp') : 'N/A'}
                                         </p>
                                     </div>

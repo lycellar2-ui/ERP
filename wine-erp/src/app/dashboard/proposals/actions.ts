@@ -17,18 +17,69 @@ const CATEGORY_ROUTING: Record<string, number[]> = {
     INTERNAL_TRAINING: [1, 2, 3],     // Trưởng Bộ Phận → Kế toán trưởng → CEO
     BUDGET_REQUEST: [1, 2, 3],        // TP → KT Trưởng → CEO
     CAPITAL_EXPENDITURE: [1, 2, 3],
-    PRICE_ADJUSTMENT: [1, 2, 3],
+    PRICE_ADJUSTMENT: [1, 2, 3],      // Level 2: Cơ chế giá giảm % toàn kho
+    SPECIAL_PRICE: [1, 2, 3],         // Level 3: Giá đặc biệt theo từng SKU
     NEW_SUPPLIER: [1, 3],             // TP Mua hàng → CEO
     NEW_PRODUCT: [1, 3],
     POLICY_CHANGE: [3],               // Trực tiếp CEO
     STAFF_REQUISITION: [1, 3],
     PAYMENT_SCHEDULE: [2, 3],         // KT Trưởng → CEO
-    PROMOTION_CAMPAIGN: [1, 2, 3],
+    PROMOTION_CAMPAIGN: [1, 2, 3],    // Level 4: CTKM
     SPECIAL_EVENT: [1, 2, 3],
     LICENSE_RENEWAL: [2, 3],
     CONTRACT_SIGNING: [2, 3],
     DEBT_WRITE_OFF: [2, 3],
     OTHER: [1, 3],
+}
+
+// Helper: Resolve whether a PRICE_ADJUSTMENT DB row is Level 2 (PRICE_ADJUSTMENT) or Level 3 (SPECIAL_PRICE)
+export function resolveProposalCategory(p: {
+    category: string
+    scope?: string | null
+    discountPct?: any
+}): string {
+    if (p.category !== 'PRICE_ADJUSTMENT') return p.category
+    const scopeStr = p.scope || ''
+    if (scopeStr.includes('SPECIFIC_PRODUCTS') || scopeStr.includes('LEVEL_3_SKU')) {
+        return 'SPECIAL_PRICE'
+    }
+    if (p.discountPct !== null && p.discountPct !== undefined) {
+        return 'PRICE_ADJUSTMENT'
+    }
+    if (scopeStr.includes('ENTIRE_PORTFOLIO') || scopeStr.includes('BASE_TYPE:')) {
+        return 'PRICE_ADJUSTMENT'
+    }
+    return 'SPECIAL_PRICE'
+}
+
+async function resolveDynamicStepsForCategory(effectiveCategory: string): Promise<{ level: number; role: string }[]> {
+    let config = await prisma.approvalConfig.findUnique({
+        where: { configKey: `proposal.${effectiveCategory}` },
+    })
+    if (!config && effectiveCategory === 'SPECIAL_PRICE') {
+        config = await prisma.approvalConfig.findUnique({
+            where: { configKey: 'proposal.PRICE_ADJUSTMENT' },
+        })
+    }
+
+    let steps: { level: number; role: string }[] = [
+        { level: 1, role: 'SALES_MGR' },
+        { level: 2, role: 'KE_TOAN' },
+        { level: 3, role: 'CEO' },
+    ]
+
+    if (config?.value && typeof config.value === 'object') {
+        const val = config.value as any
+        if (Array.isArray(val.steps) && val.steps.length > 0) {
+            steps = val.steps
+        } else if (Array.isArray(val.levels) && val.levels.length > 0) {
+            steps = (val.levels as number[]).map(l => ({
+                level: l,
+                role: l === 1 ? 'SALES_MGR' : l === 2 ? 'KE_TOAN' : 'CEO',
+            }))
+        }
+    }
+    return steps
 }
 
 // ─── Generate proposal number ────────────────────
@@ -73,7 +124,9 @@ export async function getProposals(filters?: {
     return cached(cacheKey, async () => {
         const where: any = {}
         if (filters?.status) where.status = filters.status
-        if (filters?.category) where.category = filters.category
+        if (filters?.category) {
+            where.category = filters.category === 'SPECIAL_PRICE' ? 'PRICE_ADJUSTMENT' : filters.category
+        }
         if (filters?.priority) where.priority = filters.priority
         if (filters?.createdBy) where.createdBy = filters.createdBy
 
@@ -88,30 +141,38 @@ export async function getProposals(filters?: {
             orderBy: { createdAt: 'desc' },
         })
 
-        return proposals.map(p => ({
-            id: p.id,
-            proposalNo: p.proposalNo,
-            category: p.category,
-            priority: p.priority,
-            title: p.title,
-            estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : null,
-            currency: p.currency,
-            deadline: p.deadline,
-            startDate: p.startDate,
-            endDate: p.endDate,
-            status: p.status,
-            currentLevel: p.currentLevel,
-            creatorName: p.creator.name ?? p.creator.email,
-            departmentName: p.department?.name ?? null,
-            customerName: p.customer?.name ?? null,
-            scope: p.scope,
-            discountPct: p.discountPct ? Number(p.discountPct) : null,
-            attachmentCount: p._count.attachments,
-            commentCount: p._count.comments,
-            submittedAt: p.submittedAt,
-            resolvedAt: p.resolvedAt,
-            createdAt: p.createdAt,
-        }))
+        const mapped = proposals.map(p => {
+            const displayCategory = resolveProposalCategory(p)
+            return {
+                id: p.id,
+                proposalNo: p.proposalNo,
+                category: displayCategory as any,
+                priority: p.priority,
+                title: p.title,
+                estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : null,
+                currency: p.currency,
+                deadline: p.deadline,
+                startDate: p.startDate,
+                endDate: p.endDate,
+                status: p.status,
+                currentLevel: p.currentLevel,
+                creatorName: p.creator.name ?? p.creator.email,
+                departmentName: p.department?.name ?? null,
+                customerName: p.customer?.name ?? null,
+                scope: p.scope,
+                discountPct: p.discountPct ? Number(p.discountPct) : null,
+                attachmentCount: p._count.attachments,
+                commentCount: p._count.comments,
+                submittedAt: p.submittedAt,
+                resolvedAt: p.resolvedAt,
+                createdAt: p.createdAt,
+            }
+        })
+
+        if (filters?.category === 'SPECIAL_PRICE' || filters?.category === 'PRICE_ADJUSTMENT') {
+            return mapped.filter(m => m.category === filters.category)
+        }
+        return mapped
     }, 30_000)
 }
 
@@ -154,7 +215,7 @@ export async function getProposalDetail(id: string) {
 
     let branchCustomers: { id: string; code: string; name: string }[] = []
     if (p.scope && p.scope.includes('BRANCHES:')) {
-        const branchIds = p.scope.split('BRANCHES:')[1]?.split(',').map(s => s.trim()).filter(Boolean) || []
+        const branchIds = p.scope.split('BRANCHES:')[1]?.split('|')[0]?.split(',').map(s => s.trim()).filter(Boolean) || []
         if (branchIds.length > 0) {
             branchCustomers = await prisma.customer.findMany({
                 where: { id: { in: branchIds } },
@@ -163,8 +224,15 @@ export async function getProposalDetail(id: string) {
         }
     }
 
+    const effectiveCategory = resolveProposalCategory(p)
+    const dynamicSteps = await resolveDynamicStepsForCategory(effectiveCategory)
+    const requiredLevels = dynamicSteps.length > 0
+        ? dynamicSteps.map(s => s.level)
+        : (CATEGORY_ROUTING[effectiveCategory] ?? [1, 3])
+
     return {
         ...p,
+        category: effectiveCategory as any,
         branchCustomers,
         estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : null,
         discountPct: p.discountPct ? Number(p.discountPct) : null,
@@ -177,7 +245,7 @@ export async function getProposalDetail(id: string) {
                 wholesalePrice: item.product.marginPrice ? Number(item.product.marginPrice.wholesalePrice) : 0
             }
         })) || [],
-        requiredLevels: CATEGORY_ROUTING[p.category] ?? [1, 3],
+        requiredLevels,
     }
 }
 
@@ -203,10 +271,23 @@ export async function createProposal(input: {
 }): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
         const proposalNo = await generateProposalNo()
+        const isSpecialPriceL3 = input.category === 'SPECIAL_PRICE'
+        const dbCategory = isSpecialPriceL3 ? 'PRICE_ADJUSTMENT' : input.category
+        let normalizedScope = input.scope ?? null
+        if (isSpecialPriceL3) {
+            if (!normalizedScope || !normalizedScope.includes('SPECIFIC_PRODUCTS')) {
+                normalizedScope = normalizedScope ? `SPECIFIC_PRODUCTS | ${normalizedScope}` : 'SPECIFIC_PRODUCTS'
+            }
+        } else if (input.category === 'PRICE_ADJUSTMENT') {
+            if (!normalizedScope || (!normalizedScope.includes('ENTIRE_PORTFOLIO') && !normalizedScope.includes('BASE_TYPE:'))) {
+                normalizedScope = normalizedScope ? `ENTIRE_PORTFOLIO | ${normalizedScope}` : 'ENTIRE_PORTFOLIO'
+            }
+        }
+
         const proposal = await prisma.proposal.create({
             data: {
                 proposalNo,
-                category: input.category as any,
+                category: dbCategory as any,
                 priority: (input.priority as any) ?? 'NORMAL',
                 title: input.title,
                 content: input.content,
@@ -222,8 +303,8 @@ export async function createProposal(input: {
                 status: 'DRAFT',
                 currentLevel: 0,
                 customerId: input.customerId ?? null,
-                scope: input.scope ?? null,
-                discountPct: input.discountPct ?? null,
+                scope: normalizedScope,
+                discountPct: isSpecialPriceL3 ? null : (input.discountPct ?? null),
                 priceItems: input.priceItems && input.priceItems.length > 0 ? {
                     createMany: {
                         data: input.priceItems.map(item => ({
@@ -269,6 +350,9 @@ export async function updateProposal(id: string, input: {
             return { success: false, error: 'Chỉ có thể sửa tờ trình ở trạng thái Nháp hoặc Trả lại' }
         }
 
+        const isSpecialPriceL3 = input.category === 'SPECIAL_PRICE'
+        const dbCategory = isSpecialPriceL3 ? 'PRICE_ADJUSTMENT' : input.category
+
         await prisma.$transaction(async (tx) => {
             await tx.proposal.update({
                 where: { id },
@@ -278,14 +362,14 @@ export async function updateProposal(id: string, input: {
                     ...(input.justification !== undefined && { justification: input.justification }),
                     ...(input.expectedOutcome !== undefined && { expectedOutcome: input.expectedOutcome }),
                     ...(input.estimatedAmount !== undefined && { estimatedAmount: input.estimatedAmount }),
-                    ...(input.category && { category: input.category as any }),
+                    ...(dbCategory && { category: dbCategory as any }),
                     ...(input.priority && { priority: input.priority as any }),
                     ...(input.deadline !== undefined && { deadline: input.deadline ? new Date(input.deadline) : null }),
                     ...(input.startDate !== undefined && { startDate: input.startDate ? new Date(input.startDate) : null }),
                     ...(input.endDate !== undefined && { endDate: input.endDate ? new Date(input.endDate) : null }),
                     ...(input.customerId !== undefined && { customerId: input.customerId }),
                     ...(input.scope !== undefined && { scope: input.scope }),
-                    ...(input.discountPct !== undefined && { discountPct: input.discountPct }),
+                    ...(input.discountPct !== undefined && { discountPct: isSpecialPriceL3 ? null : input.discountPct }),
                 },
             })
 
@@ -325,29 +409,8 @@ export async function submitProposal(id: string, userId: string): Promise<{ succ
             return { success: false, error: 'Chỉ có thể trình tờ trình ở trạng thái Nháp hoặc Trả lại' }
         }
 
-        // Read dynamic routing configuration from database
-        const config = await prisma.approvalConfig.findUnique({
-            where: { configKey: `proposal.${proposal.category}` }
-        })
-
-        let steps: { level: number; role: string }[] = [
-            { level: 1, role: 'SALES_MGR' },
-            { level: 2, role: 'KE_TOAN' },
-            { level: 3, role: 'CEO' }
-        ]
-
-        if (config?.value && typeof config.value === 'object') {
-            const val = config.value as any
-            if (Array.isArray(val.steps) && val.steps.length > 0) {
-                steps = val.steps
-            } else if (Array.isArray(val.levels) && val.levels.length > 0) {
-                steps = (val.levels as number[]).map(l => ({
-                    level: l,
-                    role: l === 1 ? 'SALES_MGR' : l === 2 ? 'KE_TOAN' : 'CEO'
-                }))
-            }
-        }
-
+        const effectiveCategory = resolveProposalCategory(proposal)
+        const steps = await resolveDynamicStepsForCategory(effectiveCategory)
         const firstStep = steps[0] ?? { level: 1, role: 'SALES_MGR' }
 
         await prisma.proposal.update({
@@ -364,7 +427,7 @@ export async function submitProposal(id: string, userId: string): Promise<{ succ
             action: 'STATUS_CHANGE',
             entityType: 'Proposal',
             entityId: id,
-            newValue: { status: 'SUBMITTED', level: firstStep.level },
+            newValue: { status: 'SUBMITTED', level: firstStep.level, effectiveCategory },
         })
 
         await triggerNotificationForRole(firstStep.role, {
@@ -398,28 +461,8 @@ export async function processProposalApproval(input: {
             return { success: false, error: 'Tờ trình không ở trạng thái chờ duyệt' }
         }
 
-        // Read dynamic steps
-        const config = await prisma.approvalConfig.findUnique({
-            where: { configKey: `proposal.${proposal.category}` }
-        })
-
-        let steps: { level: number; role: string }[] = [
-            { level: 1, role: 'SALES_MGR' },
-            { level: 2, role: 'KE_TOAN' },
-            { level: 3, role: 'CEO' }
-        ]
-
-        if (config?.value && typeof config.value === 'object') {
-            const val = config.value as any
-            if (Array.isArray(val.steps) && val.steps.length > 0) {
-                steps = val.steps
-            } else if (Array.isArray(val.levels) && val.levels.length > 0) {
-                steps = (val.levels as number[]).map(l => ({
-                    level: l,
-                    role: l === 1 ? 'SALES_MGR' : l === 2 ? 'KE_TOAN' : 'CEO'
-                }))
-            }
-        }
+        const effectiveCategory = resolveProposalCategory(proposal)
+        const steps = await resolveDynamicStepsForCategory(effectiveCategory)
 
         const currentLevel = proposal.currentLevel
         const currentIdx = steps.findIndex(s => s.level === currentLevel)
@@ -623,7 +666,7 @@ export async function getPendingProposalsForCEO() {
         return proposals.map(p => ({
             id: p.id,
             proposalNo: p.proposalNo,
-            category: p.category,
+            category: resolveProposalCategory(p) as any,
             priority: p.priority,
             title: p.title,
             estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : null,

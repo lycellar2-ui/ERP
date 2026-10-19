@@ -1,0 +1,23 @@
+{
+  "name": "wine-erp-remotion-studio",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "remotion preview src/index.ts",
+    "build": "remotion render src/index.ts OrderTutorial out/order-tutorial.mp4",
+    "render": "remotion render src/index.ts OrderTutorial out/order-tutorial.mp4"
+  },
+  "dependencies": {
+    "lucide-react": "^0.576.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "remotion": "^4.0.235"
+  },
+  "devDependencies": {
+    "@remotion/cli": "^4.0.235",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5.5.0"
+  }
+}

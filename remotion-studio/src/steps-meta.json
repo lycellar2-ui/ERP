@@ -1,0 +1,74 @@
+{
+  "createBtn": {
+    "x": 1440,
+    "y": 58,
+    "width": 144,
+    "height": 36,
+    "cx": 1512,
+    "cy": 76
+  },
+  "custInput": {
+    "x": 691,
+    "y": 194,
+    "width": 344,
+    "height": 36,
+    "cx": 863,
+    "cy": 212
+  },
+  "custOption": {
+    "x": 711,
+    "y": 251,
+    "width": 90,
+    "height": 20,
+    "cx": 756,
+    "cy": 261
+  },
+  "addLineBtn": {
+    "x": 1475,
+    "y": 449,
+    "width": 105,
+    "height": 26,
+    "cx": 1527,
+    "cy": 462
+  },
+  "prodInput": {
+    "x": 674,
+    "y": 545,
+    "width": 299,
+    "height": 30,
+    "cx": 824,
+    "cy": 560
+  },
+  "prodOption": {
+    "x": 687,
+    "y": 588,
+    "width": 55,
+    "height": 16,
+    "cx": 714,
+    "cy": 596
+  },
+  "qtyInput": {
+    "x": 1077,
+    "y": 559,
+    "width": 56,
+    "height": 26,
+    "cx": 1105,
+    "cy": 572
+  },
+  "submitBtn": {
+    "x": 1475,
+    "y": 852,
+    "width": 105,
+    "height": 36,
+    "cx": 1527,
+    "cy": 870
+  },
+  "printBtn": {
+    "x": 661,
+    "y": 852,
+    "width": 124,
+    "height": 36,
+    "cx": 723,
+    "cy": 870
+  }
+}

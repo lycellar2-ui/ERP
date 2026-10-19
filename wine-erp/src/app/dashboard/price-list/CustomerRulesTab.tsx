@@ -665,7 +665,13 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                 href="/dashboard/proposals?category=PRICE_ADJUSTMENT&action=create"
                                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-[#0E7490] hover:bg-[#155E75] text-white transition shadow-xs"
                             >
-                                <FileText size={13} /> {cr.filters.createProposal}
+                                <FileText size={13} /> {isEn ? '+ Level 2 Mechanism Proposal' : '+ Tờ trình Cơ chế giá (Level 2)'}
+                            </Link>
+                            <Link
+                                href="/dashboard/proposals?category=SPECIAL_PRICE&action=create"
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-[#1D4ED8] hover:bg-[#1E40AF] text-white transition shadow-xs"
+                            >
+                                <FileText size={13} /> {isEn ? '+ Level 3 Special Price Proposal' : '+ Tờ trình Giá đặc biệt (Level 3)'}
                             </Link>
                         </div>
                     )}

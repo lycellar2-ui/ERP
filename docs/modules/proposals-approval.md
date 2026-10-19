@@ -66,7 +66,8 @@ Hệ thống hỗ trợ **cấu hình hoàn toàn động** tại trang **Ma Tr�
 |---|---|---|---|
 | **Đào Tạo Nội Bộ** | `INTERNAL_TRAINING` | Cấp 1 (TP Bộ Phận) ➔ Cấp 2 (KT.Trưởng) ➔ Cấp 3 (CEO) | Tất cả nhân viên |
 | **Tờ Trình Tasting (Thử Rượu)** | `TASTING` | Cấp 1 (TP.KD) ➔ Cấp 2 (KT.Trưởng) ➔ Cấp 3 (CEO) | Sales Rep, Sales Admin, CBO, Admin |
-| **Cơ Chế Giá** | `PRICE_ADJUSTMENT` | Cấp 1 (TP.KD) ➔ Cấp 2 (KT.Trưởng) ➔ Cấp 3 (CEO) | Sales Rep, Sales Admin, CBO, Admin |
+| **Tờ Trình Cơ Chế Giá Khách Hàng (Level 2 - Giảm % Toàn Kho)** | `PRICE_ADJUSTMENT` | Cấp 1 (TP.KD) ➔ Cấp 2 (KT.Trưởng) ➔ Cấp 3 (CEO) (Cấu hình 1–3 cấp tại `proposal.PRICE_ADJUSTMENT`) | Sales Rep, Sales Admin, CBO, Admin |
+| **Tờ Trình Giá Đặc Biệt Theo Mã (Level 3 - Giá Riêng Từng Chai)** | `SPECIAL_PRICE` | Cấp 1 (TP.KD) ➔ Cấp 2 (KT.Trưởng) ➔ Cấp 3 (CEO) (Cấu hình 1–3 cấp tại `proposal.SPECIAL_PRICE`) | Sales Rep, Sales Admin, CBO, Admin |
 | **Xin Ngân Sách** | `BUDGET_REQUEST` | Cấp 1 (TP) ➔ Cấp 2 (KT) ➔ Cấp 3 (CEO) | Tất cả |
 | **Mua Sắm TSCĐ** | `CAPITAL_EXPENDITURE` | Cấp 1 (TP) ➔ Cấp 2 (KT) ➔ Cấp 3 (CEO) | Tất cả |
 | **NCC Mới** | `NEW_SUPPLIER` | Cấp 1 (Thu Mua) ➔ Cấp 2 (CEO) | Thu Mua, Admin |
@@ -219,7 +220,8 @@ Hệ thống hỗ trợ **cấu hình hoàn toàn động** tại trang **Ma Tr�
 | Chuyển đổi ngôn ngữ giao diện VI / EN (Sidebar + Proposals List + Form + Detail + Title Splitting) | ✅ Hoàn thành (04/10/2026) |
 | Tờ trình CTKM 1 mã (Mua X tặng Y, Kênh bán buôn/DN/bán lẻ/Horeca, Quota, Gợi ý quà tặng SO) | ✅ Hoàn thành (09/10/2026) |
 | Đồng bộ Tờ trình Cơ chế giá (`PRICE_ADJUSTMENT`) chuẩn Thang Giá 4 Tầng: Tách biệt Level 2 (Giảm % toàn kho + Thời hạn hiệu lực + Kế thừa Công ty mẹ -> Chi nhánh con qua `ApprovalConfig`) và Level 3 (Giá đặc biệt theo từng SKU qua `CustomerPriceRule`) | ✅ Hoàn thành (18/10/2026) |
+| Tách bạch 2 luồng tờ trình độc lập trên Giao diện Tờ Trình & Ma Trận Phân Quyền: `PRICE_ADJUSTMENT` (Tờ trình Cơ chế giá khách hàng — Level 2 giảm % toàn kho) và `SPECIAL_PRICE` (Tờ trình Giá đặc biệt theo mã — Level 3 giá riêng từng chai) | ✅ Hoàn thành (19/10/2026) |
 
 ---
 
-*Last updated: 2026-10-18 21:40 | Wine ERP v11.5*
+*Last updated: 2026-10-19 13:45 | Wine ERP v11.5*
