@@ -4235,3 +4235,30 @@ Qua đợt kiểm tra chuyên sâu toàn bộ 38 routes và tất cả component
 > ⚠️ **RULE 143: (1) TUYỆT ĐỐI KHÔNG đặt phần tử con có `background: '#FFFFFF'` không viền hoặc thanh tiến độ / skeleton có `background: '#FFFFFF'` bên trong Card/Drawer nền trắng (`#FFFFFF`) — thẻ con BẮT BUỘC phải dùng `background: '#F8FAFC'` kèm `border: '1px solid #E2E8F0'`, và rãnh progress bar / skeleton phải dùng `#E2E8F0`; (2) Mọi nút hành động chính (Primary Button) và Tab/Pill đang chọn có chữ trắng BẮT BUỘC phải dùng `bg-[#0E7490] hover:bg-[#155E75] text-white` (`bg-lys-teal-strong`), CẤM dùng `bg-slate-900`/`bg-slate-800` hoặc `bg-[#0891B2] text-white`; (3) CẤM dùng `onMouseEnter`/`onMouseLeave` để đổi màu DOM style inline — luôn dùng class `hover:` của Tailwind CSS.**
 
 
+
+---
+
+## BUG-144: Next.js 16 Server Actions Bắt Buộc Async — Lỗi Xuất Hàm Đồng Bộ Trong Tệp 'use server'
+
+**Ngày:** 2026-10-22
+**Severity:** 🔴 High — Server 500 Error / Crash Turbopack khi truy cập `/dashboard`
+
+### Triệu chứng
+- Khi truy cập `/dashboard`, Next.js 16 ném lỗi biên dịch Ecmascript:
+  ```
+  ⨯ ./src/app/dashboard/proposals/actions.ts:36:17
+  Server Actions must be async functions.
+  > 36 | export function resolveProposalCategory(p: { ...
+  ```
+- Toàn bộ các yêu cầu HTTP GET `/dashboard` bị trả về mã lỗi 500 Internal Server Error.
+
+### Nguyên nhân gốc rễ
+- Trong Next.js 16, khi một tệp khai báo chỉ thị `'use server'` ở đầu tệp, trình biên dịch (Turbopack) sẽ coi tất cả các hàm được `export` từ tệp đó là Server Action endpoints.
+- Server Actions bắt buộc phải là các hàm bất đồng bộ (`async`).
+- Hàm `resolveProposalCategory` trong `src/app/dashboard/proposals/actions.ts` và hàm `resolveEffectiveLevel2Policy` trong `src/app/dashboard/price-list/customer-rules-actions.ts` là các hàm helper đồng bộ chỉ được dùng nội bộ trong chính tệp đó nhưng lại được khai báo thừa `export`.
+
+### Cách khắc phục
+- Xóa bỏ từ khóa `export` tại `function resolveProposalCategory` và `function resolveEffectiveLevel2Policy`, đưa hàm trở về phạm vi nội bộ (internal helper) của tệp Server Actions.
+
+### Bài học
+> ⚠️ **RULE 144: Trong các tệp có chỉ thị `'use server'` (Server Actions), TUYỆT ĐỐI KHÔNG `export` các hàm đồng bộ (synchronous functions). Nếu hàm chỉ làm nhiệm vụ tính toán, chuyển đổi hoặc logic nội bộ (helper), BẮT BUỘC giữ nguyên dạng hàm nội bộ không export (`function helperName(...)`). Nếu hàm cần tái sử dụng ở client hoặc component khác, BẮT BUỘC khai báo `export async function` hoặc chuyển sang một tệp thư viện thuần túy (`lib/`) không chứa chỉ thị `'use server'`.**

@@ -27,11 +27,64 @@ export type PriceListLineRow = {
 
 // ── List Price Lists ─────────────────────────────
 export async function getPriceLists(): Promise<PriceListRow[]> {
-    return cached('priceList:list', async () => {
-        const lists = await prisma.priceList.findMany({
+    return cached('priceList:list:v2', async () => {
+        let lists = await prisma.priceList.findMany({
             include: { _count: { select: { lines: true } } },
             orderBy: { createdAt: 'desc' },
         })
+
+        // Auto-bootstrap Wholesale & Retail Price Lists from ProductMarginPrice if missing
+        const hasWholesale = lists.some(pl => pl.channel === 'WHOLESALE_DISTRIBUTOR')
+        const hasRetail = lists.some(pl => pl.channel === 'DIRECT_INDIVIDUAL')
+        if (!hasWholesale || !hasRetail) {
+            const marginRows = await prisma.productMarginPrice.findMany({
+                select: { productId: true, wholesalePrice: true, retailPrice: true },
+            })
+            if (!hasWholesale) {
+                const wsList = await prisma.priceList.create({
+                    data: {
+                        name: 'Bảng Giá Bán Buôn (Đại Lý)',
+                        channel: 'WHOLESALE_DISTRIBUTOR' as any,
+                        effectiveDate: new Date(),
+                    },
+                })
+                const wsLines = marginRows
+                    .filter(r => Number(r.wholesalePrice) > 0)
+                    .map(r => ({
+                        priceListId: wsList.id,
+                        productId: r.productId,
+                        unitPrice: Number(r.wholesalePrice),
+                        currency: 'VND',
+                    }))
+                if (wsLines.length > 0) {
+                    await prisma.priceListLine.createMany({ data: wsLines, skipDuplicates: true })
+                }
+            }
+            if (!hasRetail) {
+                const rtList = await prisma.priceList.create({
+                    data: {
+                        name: 'Bảng Giá Bán Lẻ Niêm Yết',
+                        channel: 'DIRECT_INDIVIDUAL' as any,
+                        effectiveDate: new Date(),
+                    },
+                })
+                const rtLines = marginRows
+                    .filter(r => Number(r.retailPrice) > 0)
+                    .map(r => ({
+                        priceListId: rtList.id,
+                        productId: r.productId,
+                        unitPrice: Number(r.retailPrice),
+                        currency: 'VND',
+                    }))
+                if (rtLines.length > 0) {
+                    await prisma.priceListLine.createMany({ data: rtLines, skipDuplicates: true })
+                }
+            }
+            lists = await prisma.priceList.findMany({
+                include: { _count: { select: { lines: true } } },
+                orderBy: { createdAt: 'desc' },
+            })
+        }
 
         return lists.map(pl => ({
             id: pl.id,

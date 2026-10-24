@@ -450,7 +450,7 @@ function evaluateSingleCustomerL2(
     }
 }
 
-export function resolveEffectiveLevel2Policy(
+function resolveEffectiveLevel2Policy(
     customer: {
         id: string
         basePriceType?: string | null
