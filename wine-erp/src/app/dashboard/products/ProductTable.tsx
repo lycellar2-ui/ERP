@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Edit2, ImageOff, Trash2, Wine } from 'lucide-react'
+import { Edit2, ImageOff, Tag, Trash2, Wine } from 'lucide-react'
 import { ProductRow, ProductFilters } from './actions'
 import { ProductStatusBadge } from './ProductsClient'
 import { WineTypeBadge } from '@/components/WineTypeBadge'
@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 import { useAppLocale } from '@/lib/i18n'
 import { PRODUCTS_I18N } from './i18n'
 
-const COL_COUNT = 7
+const COL_COUNT = 8
 
 function stockClass(stock: number) {
     if (stock === 0) return 'text-tone-danger-fg'
@@ -29,16 +29,19 @@ interface RowProps {
     onEdit: () => void
     onDelete: () => void
     onView: () => void
+    onQuickPrice?: () => void
     onPrefetchDetails?: () => void
     canEdit: boolean
 }
 
-function ProductTableRow({ row, onEdit, onDelete, onView, onPrefetchDetails, canEdit }: RowProps) {
+function ProductTableRow({ row, onEdit, onDelete, onView, onQuickPrice, onPrefetchDetails, canEdit }: RowProps) {
     const { locale, formatNumber } = useAppLocale()
     const L = PRODUCTS_I18N[locale].table
     const countryCode = row.country ? `[${row.country}]` : ''
     const [isVertical, setIsVertical] = useState(false)
     const imgRef = useRef<HTMLImageElement>(null)
+    const hasWholesale = row.wholesalePrice != null && row.wholesalePrice > 0
+    const hasRetail = row.retailPrice != null && row.retailPrice > 0
 
     useEffect(() => {
         const img = imgRef.current
@@ -119,6 +122,44 @@ function ProductTableRow({ row, onEdit, onDelete, onView, onPrefetchDetails, can
                 <p className="text-[11px] mt-0.5 text-lys-muted">{countryCode && `${countryCode} `}{row.appellationName ?? row.country}</p>
             </Td>
 
+            <Td className="whitespace-nowrap" onClick={e => { if (canEdit && onQuickPrice) { e.stopPropagation(); onQuickPrice() } }}>
+                {hasWholesale || hasRetail ? (
+                    <div
+                        className={cn('space-y-0.5', canEdit && 'cursor-pointer group/price rounded px-1.5 py-0.5 -mx-1.5 hover:bg-slate-100 transition-colors')}
+                        title={canEdit ? L.editPriceTooltip : undefined}
+                    >
+                        <div className="flex items-center gap-1.5 text-xs">
+                            <span className="text-[10px] font-medium text-lys-muted">{L.wholesalePrefix}</span>
+                            {hasWholesale ? (
+                                <span className="font-semibold type-number text-lys-teal-strong">{formatNumber(row.wholesalePrice!)} ₫</span>
+                            ) : (
+                                <span className="text-[11px] font-medium text-amber-600">{L.unpricedBadge}</span>
+                            )}
+                        </div>
+                        {hasRetail && (
+                            <div className="flex items-center gap-1.5 text-[11px] text-lys-secondary">
+                                <span className="text-[10px] text-lys-muted">{L.retailPrefix}</span>
+                                <span className="type-number">{formatNumber(row.retailPrice!)} ₫</span>
+                            </div>
+                        )}
+                    </div>
+                ) : canEdit && onQuickPrice ? (
+                    <button
+                        type="button"
+                        onClick={e => { e.stopPropagation(); onQuickPrice() }}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold transition-colors cursor-pointer"
+                        style={{ background: '#FEF3C7', color: '#B45309', border: '1px solid #FDE68A' }}
+                    >
+                        <Tag size={11} />
+                        {L.setPriceBtn}
+                    </button>
+                ) : (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium" style={{ background: '#FEF3C7', color: '#B45309' }}>
+                        {L.unpricedBadge}
+                    </span>
+                )}
+            </Td>
+
             <Td align="center" className="type-number text-lys-secondary whitespace-nowrap">
                 {row.abvPercent != null ? `${row.abvPercent}°` : '—'}
             </Td>
@@ -156,11 +197,12 @@ function formatLabel(fmt: string) {
     }
 }
 
-function ProductMobileCard({ row, onEdit, onDelete, onView, onPrefetchDetails, canEdit }: RowProps) {
+function ProductMobileCard({ row, onEdit, onDelete, onView, onQuickPrice, onPrefetchDetails, canEdit }: RowProps) {
     const { locale, formatNumber } = useAppLocale()
     const L = PRODUCTS_I18N[locale].table
     const countryCode = row.country ? `[${row.country}]` : ''
     const pkgLabel = row.packagingType === 'OWC' ? L.owcCase : L.cartonCase
+    const hasWholesale = row.wholesalePrice != null && row.wholesalePrice > 0
 
     return (
         <div className="p-3 flex gap-3 items-center cursor-pointer active:bg-lys-subtle" onClick={onView} onTouchStart={onPrefetchDetails}>
@@ -200,6 +242,22 @@ function ProductMobileCard({ row, onEdit, onDelete, onView, onPrefetchDetails, c
                 <div className="text-[11px] text-lys-secondary">
                     {L.stockPrefix} <span className={cn('font-semibold text-xs type-number', stockClass(row.totalStock))}>{formatNumber(row.totalStock)}</span>
                 </div>
+                {hasWholesale ? (
+                    <span className="text-[11px] font-semibold type-number text-lys-teal-strong">
+                        {formatNumber(row.wholesalePrice!)} ₫
+                    </span>
+                ) : canEdit && onQuickPrice ? (
+                    <button
+                        type="button"
+                        onClick={e => { e.stopPropagation(); onQuickPrice() }}
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                        style={{ background: '#FEF3C7', color: '#B45309', border: '1px solid #FDE68A' }}
+                    >
+                        <Tag size={10} /> {L.setPriceBtn}
+                    </button>
+                ) : (
+                    <span className="text-[10px] font-medium text-amber-700">{L.unpricedBadge}</span>
+                )}
                 <WineTypeBadge type={row.wineType} />
                 <ProductStatusBadge status={row.status} />
                 {canEdit && (
@@ -230,13 +288,14 @@ interface ProductTableProps {
     onEdit: (id: string) => void
     onDelete: (id: string, name: string) => void
     onView: (id: string) => void
+    onQuickPrice?: (row: ProductRow) => void
     onPrefetchDetails?: (id: string) => void
     canEdit?: boolean
     onRefresh: () => void
     onPrefetch?: (page: number) => void
 }
 
-export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sortDir, onPageChange, onSort, onEdit, onDelete, onView, onPrefetchDetails, canEdit = false, onPrefetch }: ProductTableProps) {
+export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sortDir, onPageChange, onSort, onEdit, onDelete, onView, onQuickPrice, onPrefetchDetails, canEdit = false, onPrefetch }: ProductTableProps) {
     const { locale } = useAppLocale()
     const L = PRODUCTS_I18N[locale].table
     const refetching = loading && rows.length > 0
@@ -247,6 +306,7 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
         onEdit: () => onEdit(row.id),
         onDelete: () => onDelete(row.id, row.productName),
         onView: () => onView(row.id),
+        onQuickPrice: onQuickPrice ? () => onQuickPrice(row) : undefined,
         onPrefetchDetails: () => onPrefetchDetails?.(row.id),
         canEdit,
     })
@@ -278,9 +338,10 @@ export function ProductTable({ rows, total, loading, page, pageSize, sortBy, sor
                 <Table>
                         <THead>
                             <tr>
-                                <Th className="w-[340px]" sort={sortFor('name')} onSort={() => onSort('name')}>{L.colProduct}</Th>
+                                <Th className="w-[320px]" sort={sortFor('name')} onSort={() => onSort('name')}>{L.colProduct}</Th>
                                 <Th className="w-[90px]">{L.colType}</Th>
-                                <Th className="w-[220px]">{L.colProducerRegion}</Th>
+                                <Th className="w-[200px]">{L.colProducerRegion}</Th>
+                                <Th className="w-[160px]">{L.colPricing}</Th>
                                 <Th className="w-[70px]" align="center" sort={sortFor('abv')} onSort={() => onSort('abv')}>{L.colAbv}</Th>
                                 <Th className="w-[90px]" align="center">{L.colStock}</Th>
                                 <Th className="w-[125px]">{L.colStatus}</Th>

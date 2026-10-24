@@ -88,6 +88,7 @@ interface ProductFormState {
     producerId?: string | null
     supplierId?: string | null   // → supplierId
     regionId?: string | null   // → appellationId
+    wholesalePriceVnd?: number | null
     retailPriceVnd?: number | null
     peakDrinkStart?: number | null
     peakDrinkEnd?: number | null
@@ -130,6 +131,8 @@ function formToInput(f: ProductFormState): ProductInput {
         isAllocationEligible: f.isAllocationEligible ?? false,
         status: (f.status ?? 'ACTIVE') as any,
         vatRate: f.vatRate ?? 10,
+        wholesalePrice: f.wholesalePriceVnd ?? null,
+        retailPrice: f.retailPriceVnd ?? null,
         selfDeclarationUrl: f.selfDeclarationUrl ?? null,
         tastingNoteUrl: f.tastingNoteUrl ?? null,
         profile: {
@@ -217,6 +220,8 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                 supplierId: null,
                 regionId: null,
                 classification: initialData.classification ?? null,
+                wholesalePriceVnd: initialData.wholesalePrice ?? null,
+                retailPriceVnd: initialData.retailPrice ?? null,
                 status: initialData.status,
                 vatRate: (initialData as any).vatRate ?? 10,
                 selfDeclarationUrl: initialData.selfDeclarationUrl ?? null,
@@ -282,6 +287,8 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                 supplierId: data.supplierId,
                 regionId: data.appellationId,
                 classification: data.classification,
+                wholesalePriceVnd: (data as any).wholesalePrice ?? f.wholesalePriceVnd ?? initialData?.wholesalePrice ?? null,
+                retailPriceVnd: (data as any).retailPrice ?? f.retailPriceVnd ?? initialData?.retailPrice ?? null,
                 originDetail: data.profile?.originDetail ?? null,
                 certification: data.profile?.certification ?? null,
                 color: data.profile?.color ?? null,
@@ -626,17 +633,33 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
 
                     {/* Section: HS Code, Giá & Trạng thái */}
                     <div className="space-y-4">
-                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
-                            {D.secPricingStatus}
-                        </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#0891B2' }}>
+                                {D.secPricingStatus}
+                            </p>
+                            <p className="text-[11px] mt-1" style={{ color: '#64748B' }}>
+                                {D.pricingAutoSyncHint}
+                            </p>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <Field label={D.fieldWholesalePrice}>
+                                <Input
+                                    type="number"
+                                    value={form.wholesalePriceVnd ?? ''}
+                                    onChange={e => set('wholesalePriceVnd', e.target.value !== '' ? Number(e.target.value) : null)}
+                                    placeholder="850000"
+                                    step={10000}
+                                    min={0}
+                                />
+                            </Field>
                             <Field label={D.fieldRetailPrice}>
                                 <Input
                                     type="number"
                                     value={form.retailPriceVnd ?? ''}
-                                    onChange={e => set('retailPriceVnd', e.target.value ? Number(e.target.value) : null)}
-                                    placeholder="5200000"
-                                    step={50000}
+                                    onChange={e => set('retailPriceVnd', e.target.value !== '' ? Number(e.target.value) : null)}
+                                    placeholder="1250000"
+                                    step={10000}
+                                    min={0}
                                 />
                             </Field>
                             <Field label={D.fieldStatus}>

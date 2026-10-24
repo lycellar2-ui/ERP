@@ -58,6 +58,7 @@ export type ProductFilters = {
     status?: string
     country?: string
     producerId?: string
+    priceStatus?: 'UNPRICED' | 'PRICED'
     sortBy?: 'name' | 'abv' | 'stock' | 'created'
     sortDir?: 'asc' | 'desc'
     page?: number
@@ -72,7 +73,7 @@ export async function getProducts(filters: ProductFilters = {}): Promise<{
     await requirePermission('MDM', 'READ')
     const cacheKey = `products:list:${JSON.stringify(filters)}`
     return cached(cacheKey, async () => {
-        const { search, wineType, status, country, producerId, sortBy, sortDir, page = 1, pageSize = 20 } = filters
+        const { search, wineType, status, country, producerId, priceStatus, sortBy, sortDir, page = 1, pageSize = 20 } = filters
 
         const where: any = {
             deletedAt: null,
@@ -98,6 +99,19 @@ export async function getProducts(filters: ProductFilters = {}): Promise<{
 
         if (producerId) {
             where.producerId = producerId
+        }
+        if (priceStatus === 'UNPRICED') {
+            where.AND = [
+                ...(where.AND ?? []),
+                {
+                    OR: [
+                        { wholesalePrice: null },
+                        { wholesalePrice: { lte: 0 } },
+                    ],
+                },
+            ]
+        } else if (priceStatus === 'PRICED') {
+            where.wholesalePrice = { gt: 0 }
         }
 
         // Dynamic sort
@@ -196,6 +210,7 @@ export type ProductStats = {
     total: number
     active: number
     outOfStock: number
+    unpriced: number
     topTypes: { type: string; label: string; count: number }[]
 }
 
@@ -204,7 +219,7 @@ export async function getProductStats(): Promise<ProductStats> {
     return cached('products:stats', async () => {
         // Count products that have NO available stock lots (efficient subquery)
         // Instead of loading ALL products + their lots and filtering in JS
-        const [total, active, wineTypeCounts, withStockCount] = await Promise.all([
+        const [total, active, wineTypeCounts, withStockCount, unpriced] = await Promise.all([
             prisma.product.count({ where: { deletedAt: null } }),
             prisma.product.count({ where: { deletedAt: null, status: 'ACTIVE' } }),
             prisma.product.groupBy({
@@ -219,6 +234,16 @@ export async function getProductStats(): Promise<ProductStats> {
                     deletedAt: null,
                     status: 'ACTIVE',
                     stockLots: { some: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } } },
+                },
+            }),
+            prisma.product.count({
+                where: {
+                    deletedAt: null,
+                    status: 'ACTIVE',
+                    OR: [
+                        { marginPrice: null },
+                        { marginPrice: { wholesalePrice: { lte: 0 } } },
+                    ],
                 },
             }),
         ])
@@ -239,7 +264,7 @@ export async function getProductStats(): Promise<ProductStats> {
                 count: t._count.id,
             }))
 
-        return { total, active, outOfStock, topTypes }
+        return { total, active, outOfStock, unpriced, topTypes }
     }, 30_000) // 30s cache
 }
 
@@ -326,6 +351,7 @@ export async function exportProductsData() {
         include: {
             producer: { select: { name: true, country: true } },
             appellation: { select: { name: true } },
+            marginPrice: { select: { wholesalePrice: true, retailPrice: true } },
             stockLots: { select: { qtyAvailable: true }, where: { status: 'AVAILABLE' } },
             awards: { select: { source: true, score: true, medal: true }, orderBy: { source: 'asc' } },
         },
@@ -335,7 +361,8 @@ export async function exportProductsData() {
         SKU: p.skuCode,
         'Tên SP': p.productName,
         'Nhà SX': p.producer.name,
-
+        'Giá Bán Buôn': p.marginPrice && Number(p.marginPrice.wholesalePrice) > 0 ? Number(p.marginPrice.wholesalePrice) : '',
+        'Giá Bán Lẻ': p.marginPrice && Number(p.marginPrice.retailPrice) > 0 ? Number(p.marginPrice.retailPrice) : '',
         Loại: p.wineType,
         'Quốc Gia': p.country,
         ABV: p.abvPercent ? Number(p.abvPercent) : '',
@@ -350,6 +377,169 @@ export async function exportProductsData() {
         'Trạng Thái': p.status,
         'Giải Thưởng': p.awards.map(a => `${a.source}${a.score ? ` ${a.score}pt` : ''}${a.medal ? ` ${a.medal}` : ''}`).join('; '),
     }))
+}
+
+// ─── Helper: Sync Product Margin Price & Active Channel PriceListLines ───
+async function syncProductChannelPrices(
+    productId: string,
+    skuCode: string,
+    wholesalePrice?: number | null,
+    retailPrice?: number | null
+) {
+    const hasWholesale = wholesalePrice !== undefined && wholesalePrice !== null
+    const hasRetail = retailPrice !== undefined && retailPrice !== null
+    if (!hasWholesale && !hasRetail) return
+
+    const existingMargin = await prisma.productMarginPrice.findUnique({
+        where: { productId },
+    })
+
+    const nextWholesale = hasWholesale ? Number(wholesalePrice) : Number(existingMargin?.wholesalePrice ?? 0)
+    const nextRetail = hasRetail ? Number(retailPrice) : Number(existingMargin?.retailPrice ?? 0)
+    const nextCost = Number(existingMargin?.costPrice ?? 0)
+
+    await prisma.productMarginPrice.upsert({
+        where: { productId },
+        create: {
+            productId,
+            skuCode,
+            costPrice: nextCost,
+            wholesalePrice: nextWholesale,
+            retailPrice: nextRetail,
+        },
+        update: {
+            skuCode,
+            wholesalePrice: nextWholesale,
+            retailPrice: nextRetail,
+        },
+    })
+
+    const now = new Date()
+
+    if (hasWholesale && nextWholesale > 0) {
+        let wholesaleList = await prisma.priceList.findFirst({
+            where: {
+                channel: 'WHOLESALE_DISTRIBUTOR',
+                OR: [{ expiryDate: null }, { expiryDate: { gte: now } }],
+            },
+            orderBy: { effectiveDate: 'desc' },
+        })
+        if (!wholesaleList) {
+            wholesaleList = await prisma.priceList.create({
+                data: {
+                    name: 'Bảng giá Bán Buôn (Wholesale)',
+                    channel: 'WHOLESALE_DISTRIBUTOR',
+                    effectiveDate: now,
+                },
+            })
+        }
+        await prisma.priceListLine.upsert({
+            where: {
+                priceListId_productId: {
+                    priceListId: wholesaleList.id,
+                    productId,
+                },
+            },
+            create: {
+                priceListId: wholesaleList.id,
+                productId,
+                unitPrice: nextWholesale,
+                currency: 'VND',
+            },
+            update: {
+                unitPrice: nextWholesale,
+                currency: 'VND',
+            },
+        })
+    }
+
+    if (hasRetail && nextRetail > 0) {
+        let retailList = await prisma.priceList.findFirst({
+            where: {
+                channel: 'DIRECT_INDIVIDUAL',
+                OR: [{ expiryDate: null }, { expiryDate: { gte: now } }],
+            },
+            orderBy: { effectiveDate: 'desc' },
+        })
+        if (!retailList) {
+            retailList = await prisma.priceList.create({
+                data: {
+                    name: 'Bảng giá Bán Lẻ (Retail)',
+                    channel: 'DIRECT_INDIVIDUAL',
+                    effectiveDate: now,
+                },
+            })
+        }
+        await prisma.priceListLine.upsert({
+            where: {
+                priceListId_productId: {
+                    priceListId: retailList.id,
+                    productId,
+                },
+            },
+            create: {
+                priceListId: retailList.id,
+                productId,
+                unitPrice: nextRetail,
+                currency: 'VND',
+            },
+            update: {
+                unitPrice: nextRetail,
+                currency: 'VND',
+            },
+        })
+    }
+}
+
+export async function updateProductQuickPrices(input: {
+    productId: string
+    wholesalePrice?: number | null
+    retailPrice?: number | null
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        await requirePermission('MDM', 'WRITE')
+        const product = await prisma.product.findUnique({
+            where: { id: input.productId },
+            select: { id: true, skuCode: true, productName: true, marginPrice: true },
+        })
+        if (!product) return { success: false, error: 'Không tìm thấy sản phẩm' }
+
+        await syncProductChannelPrices(
+            product.id,
+            product.skuCode,
+            input.wholesalePrice,
+            input.retailPrice
+        )
+
+        const user = await getCurrentUser().catch(() => null)
+        logAudit({
+            userId: user?.id,
+            userName: user?.name,
+            action: 'UPDATE',
+            entityType: 'ProductPrice',
+            entityId: product.id,
+            oldValue: {
+                skuCode: product.skuCode,
+                wholesalePrice: product.marginPrice ? Number(product.marginPrice.wholesalePrice) : null,
+                retailPrice: product.marginPrice ? Number(product.marginPrice.retailPrice) : null,
+            },
+            newValue: {
+                skuCode: product.skuCode,
+                wholesalePrice: input.wholesalePrice ?? null,
+                retailPrice: input.retailPrice ?? null,
+            },
+        })
+
+        revalidateCache('products')
+        revalidateCache('priceList')
+        revalidateCache('pricing')
+        revalidatePath('/dashboard/products')
+        revalidatePath('/dashboard/price-list')
+        revalidatePath('/dashboard/sales')
+        return { success: true }
+    } catch (err: any) {
+        return { success: false, error: err.message ?? 'Không thể cập nhật giá sản phẩm' }
+    }
 }
 
 // ─── Schema ───────────────────────────────────────
@@ -373,6 +563,8 @@ const productSchema = z.object({
     isAllocationEligible: z.boolean().optional().default(false),
     status: z.enum(['ACTIVE', 'DISCONTINUED', 'ALLOCATION_ONLY']).default('ACTIVE'),
     vatRate: z.number().default(10),
+    wholesalePrice: z.number().nonnegative().nullable().optional(),
+    retailPrice: z.number().nonnegative().nullable().optional(),
     selfDeclarationUrl: z.string().nullable().optional(),
     tastingNoteUrl: z.string().nullable().optional(),
     profile: z.object({
@@ -449,10 +641,17 @@ export async function createProduct(input: ProductInput) {
                 } : undefined
             },
         })
+        if (data.wholesalePrice !== undefined || data.retailPrice !== undefined) {
+            await syncProductChannelPrices(product.id, product.skuCode, data.wholesalePrice, data.retailPrice)
+        }
         const user = await getCurrentUser().catch(() => null)
-        logAudit({ userId: user?.id, userName: user?.name, action: 'CREATE', entityType: 'Product', entityId: product.id, newValue: { skuCode: data.skuCode, productName: data.productName, wineType: data.wineType, country: data.country, status: data.status } })
+        logAudit({ userId: user?.id, userName: user?.name, action: 'CREATE', entityType: 'Product', entityId: product.id, newValue: { skuCode: data.skuCode, productName: data.productName, wineType: data.wineType, country: data.country, status: data.status, wholesalePrice: data.wholesalePrice ?? null, retailPrice: data.retailPrice ?? null } })
         revalidateCache('products')
+        revalidateCache('priceList')
+        revalidateCache('pricing')
         revalidatePath('/dashboard/products')
+        revalidatePath('/dashboard/price-list')
+        revalidatePath('/dashboard/sales')
         return { success: true, id: product.id }
     } catch (err: any) {
         if (err?.issues) {
@@ -491,7 +690,7 @@ export async function updateProduct(id: string, input: Partial<ProductInput>) {
                 profile: { select: { id: true } }
             }
         })
-        await prisma.product.update({
+        const updatedProduct = await prisma.product.update({
             where: { id },
             data: {
                 ...(data.skuCode && { skuCode: data.skuCode }),
@@ -546,11 +745,18 @@ export async function updateProduct(id: string, input: Partial<ProductInput>) {
                 })
             },
         })
+        if (data.wholesalePrice !== undefined || data.retailPrice !== undefined) {
+            await syncProductChannelPrices(updatedProduct.id, updatedProduct.skuCode, data.wholesalePrice, data.retailPrice)
+        }
         const user = await getCurrentUser().catch(() => null)
         const oldPlain = oldProduct ? JSON.parse(JSON.stringify(oldProduct)) : null
         logAuditWithDiff({ userId: user?.id, userName: user?.name, action: 'UPDATE', entityType: 'Product', entityId: id, oldObj: oldPlain, newObj: { ...oldPlain, ...data } })
         revalidateCache('products')
+        revalidateCache('priceList')
+        revalidateCache('pricing')
         revalidatePath('/dashboard/products')
+        revalidatePath('/dashboard/price-list')
+        revalidatePath('/dashboard/sales')
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }
@@ -578,6 +784,23 @@ export type ImportResult = {
     total: number
 }
 
+function parseExcelPriceValue(val: any): number | null {
+    if (val === undefined || val === null || val === '') return null
+    if (typeof val === 'number') return Number.isFinite(val) && val >= 0 ? Math.round(val) : null
+    let str = String(val).trim()
+    if (!str) return null
+    str = str.replace(/[₫đVNDvnd\s]/g, '')
+    if (/^\d{1,3}(\.\d{3})+$/.test(str)) {
+        str = str.replace(/\./g, '')
+    } else if (/^\d{1,3}(,\d{3})+$/.test(str)) {
+        str = str.replace(/,/g, '')
+    } else {
+        str = str.replace(/,/g, '')
+    }
+    const num = Number(str)
+    return Number.isFinite(num) && num >= 0 ? Math.round(num) : null
+}
+
 export async function bulkImportProducts(rows: Record<string, any>[]): Promise<ImportResult> {
     await requirePermission('MDM', 'WRITE')
     const result: ImportResult = { success: 0, errors: [], total: rows.length }
@@ -600,13 +823,30 @@ export async function bulkImportProducts(rows: Record<string, any>[]): Promise<I
     for (let i = 0; i < rows.length; i++) {
         const r = rows[i]
         try {
-            const sku = String(r['SKU'] ?? r['skuCode'] ?? '').trim()
-            const name = String(r['Tên SP'] ?? r['productName'] ?? '').trim()
-            if (!sku || !name) { result.errors.push({ row: i + 2, message: 'Thiếu SKU hoặc Tên SP' }); continue }
+            const sku = String(r['SKU'] ?? r['Mã SKU'] ?? r['skuCode'] ?? '').trim()
+            if (!sku) { result.errors.push({ row: i + 2, message: 'Thiếu SKU' }); continue }
 
-            // Check duplicate SKU
+            const wholesalePrice = parseExcelPriceValue(
+                r['Giá Bán Buôn'] ?? r['Giá Bán Buôn (VND)'] ?? r['Giá Wholesale'] ?? r['Giá Buôn'] ?? r['wholesalePrice']
+            )
+            const retailPrice = parseExcelPriceValue(
+                r['Giá Bán Lẻ'] ?? r['Giá Bán Lẻ (VND)'] ?? r['Giá Retail'] ?? r['Giá Lẻ'] ?? r['retailPrice']
+            )
+
+            // Check duplicate SKU — if price columns provided, update prices directly
             const existing = await prisma.product.findFirst({ where: { skuCode: sku, deletedAt: null } })
-            if (existing) { result.errors.push({ row: i + 2, message: `SKU '${sku}' đã tồn tại — bỏ qua` }); continue }
+            if (existing) {
+                if (wholesalePrice !== null || retailPrice !== null) {
+                    await syncProductChannelPrices(existing.id, existing.skuCode, wholesalePrice, retailPrice)
+                    result.success++
+                    continue
+                }
+                result.errors.push({ row: i + 2, message: `SKU '${sku}' đã tồn tại — bỏ qua` })
+                continue
+            }
+
+            const name = String(r['Tên SP'] ?? r['Tên Sản Phẩm'] ?? r['productName'] ?? '').trim()
+            if (!name) { result.errors.push({ row: i + 2, message: `Thiếu Tên SP cho SKU '${sku}'` }); continue }
 
             // Wine type
             const rawType = String(r['Loại'] ?? r['wineType'] ?? 'RED').trim()
@@ -628,7 +868,7 @@ export async function bulkImportProducts(rows: Record<string, any>[]): Promise<I
 
             const country = String(r['Quốc Gia'] ?? r['country'] ?? 'FR').trim().toUpperCase()
 
-            await prisma.product.create({
+            const created = await prisma.product.create({
                 data: {
                     skuCode: sku,
                     productName: name,
@@ -647,6 +887,9 @@ export async function bulkImportProducts(rows: Record<string, any>[]): Promise<I
                     status: 'ACTIVE',
                 },
             })
+            if (wholesalePrice !== null || retailPrice !== null) {
+                await syncProductChannelPrices(created.id, created.skuCode, wholesalePrice, retailPrice)
+            }
             result.success++
         } catch (err: any) {
             result.errors.push({ row: i + 2, message: err.message ?? 'Lỗi không xác định' })
@@ -655,7 +898,11 @@ export async function bulkImportProducts(rows: Record<string, any>[]): Promise<I
 
     if (result.success > 0) {
         revalidateCache('products')
+        revalidateCache('priceList')
+        revalidateCache('pricing')
         revalidatePath('/dashboard/products')
+        revalidatePath('/dashboard/price-list')
+        revalidatePath('/dashboard/sales')
     }
     return result
 }
@@ -1540,6 +1787,11 @@ export async function getProductEditDetails(id: string) {
                     producer: { select: { id: true, name: true } },
                     appellation: { select: { id: true, name: true } },
                     profile: true,
+                    marginPrice: { select: { wholesalePrice: true, retailPrice: true } },
+                    priceLines: {
+                        include: { priceList: { select: { channel: true, effectiveDate: true } } },
+                        orderBy: { priceList: { effectiveDate: 'desc' } },
+                    },
                 },
             }),
             prisma.productMedia.findMany({
@@ -1553,6 +1805,17 @@ export async function getProductEditDetails(id: string) {
         ])
 
         if (!p) return null
+
+        const wsLine = p.priceLines.find(pl => pl.priceList.channel === 'WHOLESALE_DISTRIBUTOR')
+        const rtLine = p.priceLines.find(pl => pl.priceList.channel === 'DIRECT_INDIVIDUAL')
+
+        const wholesalePrice = p.marginPrice && Number(p.marginPrice.wholesalePrice) > 0
+            ? Number(p.marginPrice.wholesalePrice)
+            : (wsLine ? Number(wsLine.unitPrice) : null)
+
+        const retailPrice = p.marginPrice && Number(p.marginPrice.retailPrice) > 0
+            ? Number(p.marginPrice.retailPrice)
+            : (rtLine ? Number(rtLine.unitPrice) : null)
 
         return {
             product: {
@@ -1576,6 +1839,8 @@ export async function getProductEditDetails(id: string) {
                 storageTempMax: p.storageTempMax ? Number(p.storageTempMax) : null,
                 isAllocationEligible: p.isAllocationEligible,
                 classification: p.classification,
+                wholesalePrice,
+                retailPrice,
                 profile: p.profile ? {
                     originDetail: p.profile.originDetail,
                     certification: p.profile.certification,
@@ -2009,7 +2274,7 @@ export async function getProductsPageData(filters: ProductFilters = {}) {
     const [user, productsRes, stats, countries, producers] = await Promise.all([
         getCurrentUser().catch(() => null),
         getProducts(filters).catch(() => ({ rows: [] as ProductRow[], total: 0 })),
-        getProductStats().catch(() => ({ total: 0, active: 0, outOfStock: 0, topTypes: [] })),
+        getProductStats().catch(() => ({ total: 0, active: 0, outOfStock: 0, unpriced: 0, topTypes: [] })),
         getProductCountries().catch(() => []),
         getProducers().catch(() => []),
     ])

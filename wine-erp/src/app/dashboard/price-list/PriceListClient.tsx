@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useCallback, useEffect, useMemo } from 'react'
-import { Plus, Tag, Search, Trash2, DollarSign, Package, Settings, Pencil, Check, X } from 'lucide-react'
-import { PriceListRow, getPriceLists, getPriceListDetail, createPriceList, upsertPriceListLine, removePriceListLine, getProductsForPriceList, deletePriceList } from './actions'
+import { Plus, Tag, Search, Trash2, DollarSign, Package, Settings, Pencil, Check, X, Upload, Download } from 'lucide-react'
+import { PriceListRow, getPriceLists, getPriceListDetail, createPriceList, upsertPriceListLine, removePriceListLine, getProductsForPriceList, deletePriceList, exportPriceListExcelData, bulkImportPriceListLines } from './actions'
+import { ExcelImportDialog } from '@/components/ExcelImportDialog'
 import { cn } from '@/lib/utils'
 import { useAppLocale } from '@/lib/i18n'
 import { getPriceListI18n } from './i18n'
@@ -50,9 +51,12 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
 
     // Filter & inline edit inside Price List detail
     const [lineSearch, setLineSearch] = useState('')
+    const [skuFilterMode, setSkuFilterMode] = useState<'PRICED' | 'UNPRICED' | 'ALL'>('PRICED')
     const [editingLineId, setEditingLineId] = useState<string | null>(null)
     const [editingPrice, setEditingPrice] = useState<string>('')
     const [inlineSaving, setInlineSaving] = useState(false)
+    const [importOpen, setImportOpen] = useState(false)
+    const [exportingExcel, setExportingExcel] = useState(false)
 
     // Create Price List form state
     const [formName, setFormName] = useState('')
@@ -155,10 +159,31 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
             toast.success(i18n.general.toastSavedInline)
             setEditingLineId(null)
             await loadDetail(selectedId)
+            await reload()
         } else {
             toast.error(i18n.general.errorUpdatePrice + res.error)
         }
         setInlineSaving(false)
+    }
+
+    const handleExportPriceListExcel = async () => {
+        if (!selectedId || !detail) return
+        setExportingExcel(true)
+        try {
+            const rows = await exportPriceListExcelData(selectedId)
+            const XLSX = await import('xlsx')
+            const ws = XLSX.utils.json_to_sheet(rows)
+            ws['!cols'] = [{ wch: 22 }, { wch: 42 }, { wch: 18 }, { wch: 16 }]
+            const wb = XLSX.utils.book_new()
+            XLSX.utils.book_append_sheet(wb, ws, 'Bang_Gia')
+            const safeName = detail.name.replace(/[^a-zA-Z0-9_-]/g, '_')
+            XLSX.writeFile(wb, `bang_gia_${safeName}_${new Date().toISOString().slice(0, 10)}.xlsx`)
+            toast.success(i18n.general.toastExported)
+        } catch (err: any) {
+            toast.error(i18n.general.errorPrefix + (err?.message ?? 'Export failed'))
+        } finally {
+            setExportingExcel(false)
+        }
     }
 
     const handleRemoveLine = (lineId: string) => {
@@ -210,14 +235,40 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
         : products
 
     const filteredDetailLines = useMemo(() => {
-        if (!detail?.lines) return []
+        if (!detail) return []
+        const pricedRows = (detail.lines ?? []).map(l => ({
+            id: l.id,
+            productId: l.productId,
+            skuCode: l.skuCode,
+            productName: l.productName,
+            unitPrice: l.unitPrice as number | null,
+            currency: l.currency,
+            isUnpriced: false,
+        }))
+        const unpricedRows = (detail.unpricedProducts ?? []).map(u => ({
+            id: `unpriced:${u.productId}`,
+            productId: u.productId,
+            skuCode: u.skuCode,
+            productName: u.productName,
+            unitPrice: null as number | null,
+            currency: 'VND',
+            isUnpriced: true,
+        }))
+
+        const sourceRows =
+            skuFilterMode === 'UNPRICED'
+                ? unpricedRows
+                : skuFilterMode === 'ALL'
+                    ? [...unpricedRows, ...pricedRows]
+                    : pricedRows
+
         const q = lineSearch.trim().toLowerCase()
-        if (!q) return detail.lines
-        return detail.lines.filter(l =>
+        if (!q) return sourceRows
+        return sourceRows.filter(l =>
             l.skuCode.toLowerCase().includes(q) ||
             l.productName.toLowerCase().includes(q)
         )
-    }, [detail?.lines, lineSearch])
+    }, [detail, skuFilterMode, lineSearch])
 
     return (
         <div className="flex flex-col gap-4 max-w-screen-2xl">
@@ -311,30 +362,92 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                         ) : detail ? (
                             <div className="flex flex-col gap-3 bg-white border border-lys-border rounded-lg overflow-hidden shadow-xs">
                                 {/* Detail Header & Toolbar */}
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-lys-border bg-slate-50/60">
-                                    <div>
-                                        <div className="flex items-center gap-2.5 flex-wrap">
-                                            <h3 className="text-base font-bold text-lys-primary">{detail.name}</h3>
-                                            {renderChannelBadge(detail.channel)}
+                                <div className="flex flex-col gap-3 p-4 border-b border-lys-border bg-slate-50/60">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                        <div>
+                                            <div className="flex items-center gap-2.5 flex-wrap">
+                                                <h3 className="text-base font-bold text-lys-primary">{detail.name}</h3>
+                                                {renderChannelBadge(detail.channel)}
+                                            </div>
+                                            <p className="type-caption mt-1">
+                                                {i18n.general.effectiveLabel} {formatDate(detail.effectiveDate)}
+                                                {detail.expiryDate ? ` → ${formatDate(detail.expiryDate)}` : ` ${i18n.general.noExpiry}`}
+                                                {' · '}{i18n.general.totalProducts} <strong>{detail.lines.length}</strong> {i18n.general.productsUnit}
+                                            </p>
                                         </div>
-                                        <p className="type-caption mt-1">
-                                            {i18n.general.effectiveLabel} {formatDate(detail.effectiveDate)}
-                                            {detail.expiryDate ? ` → ${formatDate(detail.expiryDate)}` : ` ${i18n.general.noExpiry}`}
-                                            {' · '}{i18n.general.totalProducts} <strong>{detail.lines.length}</strong> {i18n.general.productsUnit}
-                                        </p>
+
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                onClick={handleExportPriceListExcel}
+                                                loading={exportingExcel}
+                                                disabled={exportingExcel}
+                                            >
+                                                {!exportingExcel && <Download size={14} aria-hidden />}
+                                                {i18n.general.exportExcelBtn}
+                                            </Button>
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                onClick={() => setImportOpen(true)}
+                                            >
+                                                <Upload size={14} aria-hidden />
+                                                {i18n.general.importExcelBtn}
+                                            </Button>
+                                            <Button size="sm" onClick={openAddProduct} className="shrink-0">
+                                                <Plus size={14} aria-hidden /> {i18n.general.addSkuBtn}
+                                            </Button>
+                                        </div>
                                     </div>
 
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-200/70">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            <button
+                                                type="button"
+                                                onClick={() => setSkuFilterMode('PRICED')}
+                                                className={cn(
+                                                    'px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer',
+                                                    skuFilterMode === 'PRICED'
+                                                        ? 'bg-[#0891B2] text-white'
+                                                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                                                )}
+                                            >
+                                                {i18n.general.filterPriced} ({detail.lines.length})
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSkuFilterMode('UNPRICED')}
+                                                className={cn(
+                                                    'px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer',
+                                                    skuFilterMode === 'UNPRICED'
+                                                        ? 'bg-amber-600 text-white'
+                                                        : 'bg-amber-50 border border-amber-200 text-amber-800 hover:bg-amber-100'
+                                                )}
+                                            >
+                                                {i18n.general.filterUnpriced} ({detail.unpricedProducts?.length ?? 0})
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSkuFilterMode('ALL')}
+                                                className={cn(
+                                                    'px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer',
+                                                    skuFilterMode === 'ALL'
+                                                        ? 'bg-slate-800 text-white'
+                                                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                                                )}
+                                            >
+                                                {i18n.general.filterAll} ({detail.lines.length + (detail.unpricedProducts?.length ?? 0)})
+                                            </button>
+                                        </div>
+
                                         <SearchInput
                                             value={lineSearch}
                                             onChange={e => setLineSearch(e.target.value)}
                                             placeholder={i18n.general.searchSkuPlaceholder}
                                             aria-label={i18n.general.searchSkuAria}
-                                            className="w-full sm:w-56"
+                                            className="w-full sm:w-64"
                                         />
-                                        <Button size="sm" onClick={openAddProduct} className="shrink-0">
-                                            <Plus size={14} aria-hidden /> {i18n.general.addSkuBtn}
-                                        </Button>
                                     </div>
                                 </div>
 
@@ -375,8 +488,9 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                                                             if (e.key === 'Enter') handleSaveInlinePrice(line.productId)
                                                                             if (e.key === 'Escape') setEditingLineId(null)
                                                                         }}
+                                                                        placeholder="850000"
                                                                         autoFocus
-                                                                        className="w-28 px-2 py-1 text-right text-xs font-mono font-bold border border-[#0891B2] rounded bg-white text-slate-900 outline-none"
+                                                                        className="w-32 px-2 py-1 text-right text-xs font-mono font-bold border border-[#0891B2] rounded bg-white text-slate-900 outline-none"
                                                                     />
                                                                     <button
                                                                         type="button"
@@ -396,17 +510,30 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                                                         <X size={13} />
                                                                     </button>
                                                                 </div>
+                                                            ) : line.isUnpriced ? (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setEditingLineId(line.id)
+                                                                        setEditingPrice('')
+                                                                    }}
+                                                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition-colors cursor-pointer"
+                                                                    style={{ background: '#FEF3C7', color: '#B45309', border: '1px solid #FDE68A' }}
+                                                                >
+                                                                    <Tag size={12} />
+                                                                    {i18n.general.setPriceInlineBtn}
+                                                                </button>
                                                             ) : (
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => {
                                                                         setEditingLineId(line.id)
-                                                                        setEditingPrice(String(line.unitPrice))
+                                                                        setEditingPrice(String(line.unitPrice ?? ''))
                                                                     }}
                                                                     className="inline-flex items-center gap-1.5 type-number font-bold text-lys-primary hover:text-[#0891B2] transition-colors"
                                                                     title={i18n.general.clickToQuickEdit}
                                                                 >
-                                                                    <span>{formatCurrency(line.unitPrice)}</span>
+                                                                    <span>{formatCurrency(line.unitPrice ?? 0)}</span>
                                                                     <Pencil size={12} className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-[#0891B2] transition-opacity" />
                                                                 </button>
                                                             )}
@@ -420,7 +547,7 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                                                         className="h-7 w-7 p-0 text-slate-500 hover:text-[#0891B2]"
                                                                         onClick={() => {
                                                                             setEditingLineId(line.id)
-                                                                            setEditingPrice(String(line.unitPrice))
+                                                                            setEditingPrice(line.unitPrice ? String(line.unitPrice) : '')
                                                                         }}
                                                                         aria-label={i18n.general.editPrice}
                                                                         title={i18n.general.editPrice}
@@ -428,16 +555,18 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                                                         <Pencil size={13} aria-hidden />
                                                                     </Button>
                                                                 )}
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    className="h-7 w-7 p-0 text-tone-danger-fg hover:bg-tone-danger-bg hover:text-tone-danger-fg"
-                                                                    onClick={() => handleRemoveLine(line.id)}
-                                                                    aria-label={i18n.general.deleteLineTitle}
-                                                                    title={i18n.general.removeFromList}
-                                                                >
-                                                                    <Trash2 size={13} aria-hidden />
-                                                                </Button>
+                                                                {!line.isUnpriced && (
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        className="h-7 w-7 p-0 text-tone-danger-fg hover:bg-tone-danger-bg hover:text-tone-danger-fg"
+                                                                        onClick={() => handleRemoveLine(line.id)}
+                                                                        aria-label={i18n.general.deleteLineTitle}
+                                                                        title={i18n.general.removeFromList}
+                                                                    >
+                                                                        <Trash2 size={13} aria-hidden />
+                                                                    </Button>
+                                                                )}
                                                             </div>
                                                         </Td>
                                                     </Tr>
@@ -474,22 +603,24 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                                                 className="h-7 w-7 p-0 text-slate-500 hover:text-[#0891B2]"
                                                                 onClick={() => {
                                                                     setEditingLineId(line.id)
-                                                                    setEditingPrice(String(line.unitPrice))
+                                                                    setEditingPrice(line.unitPrice ? String(line.unitPrice) : '')
                                                                 }}
                                                                 aria-label={i18n.general.editPrice}
                                                             >
                                                                 <Pencil size={13} aria-hidden />
                                                             </Button>
                                                         )}
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="h-7 w-7 p-0 text-tone-danger-fg hover:bg-tone-danger-bg"
-                                                            onClick={() => handleRemoveLine(line.id)}
-                                                            aria-label={i18n.general.deleteLineTitle}
-                                                        >
-                                                            <Trash2 size={13} aria-hidden />
-                                                        </Button>
+                                                        {!line.isUnpriced && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-7 w-7 p-0 text-tone-danger-fg hover:bg-tone-danger-bg"
+                                                                onClick={() => handleRemoveLine(line.id)}
+                                                                aria-label={i18n.general.deleteLineTitle}
+                                                            >
+                                                                <Trash2 size={13} aria-hidden />
+                                                            </Button>
+                                                        )}
                                                     </div>
                                                 </div>
 
@@ -524,16 +655,28 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                                                 <X size={13} />
                                                             </button>
                                                         </div>
+                                                    ) : line.isUnpriced ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setEditingLineId(line.id)
+                                                                setEditingPrice('')
+                                                            }}
+                                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold"
+                                                            style={{ background: '#FEF3C7', color: '#B45309', border: '1px solid #FDE68A' }}
+                                                        >
+                                                            <Tag size={11} /> {i18n.general.setPriceInlineBtn}
+                                                        </button>
                                                     ) : (
                                                         <button
                                                             type="button"
                                                             onClick={() => {
                                                                 setEditingLineId(line.id)
-                                                                setEditingPrice(String(line.unitPrice))
+                                                                setEditingPrice(String(line.unitPrice ?? ''))
                                                             }}
                                                             className="type-number font-bold text-sm text-slate-900 hover:text-[#0891B2]"
                                                         >
-                                                            {formatCurrency(line.unitPrice)}
+                                                            {formatCurrency(line.unitPrice ?? 0)}
                                                         </button>
                                                     )}
                                                 </div>
@@ -630,6 +773,25 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                     </Field>
                 </div>
             </Modal>
+            <ExcelImportDialog
+                open={importOpen}
+                onClose={() => setImportOpen(false)}
+                title={`${i18n.general.importModalTitle}${detail ? ` — ${detail.name}` : ''}`}
+                templateFileName="template_cap_nhat_gia_kenh.xlsx"
+                templateColumns={[
+                    { header: 'SKU', sample: 'MOUTON-2018-750', required: true },
+                    { header: 'Tên Sản Phẩm', sample: 'Château Mouton Rothschild 2018' },
+                    { header: 'Giá Bán (VND)', sample: '850000', required: true },
+                ]}
+                onImport={async rows => {
+                    if (!selectedId) return { success: 0, errors: [{ row: 0, message: 'Chưa chọn bảng giá' }], total: rows.length }
+                    return bulkImportPriceListLines(selectedId, rows)
+                }}
+                onComplete={async () => {
+                    if (selectedId) await loadDetail(selectedId)
+                    await reload()
+                }}
+            />
             {confirmDialog}
         </div>
     )

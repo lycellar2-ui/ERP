@@ -71,6 +71,13 @@ Một SKU có thể có nhiều bảng giá khác nhau:
 
 Mỗi bảng giá có Ngày hiệu lực và Ngày hết hiệu lực (không xóa — lưu lịch sử giá).
 
+**Đồng Bộ Giá 2 Chiều & Nhập Giá Nhanh Sau Khi Tạo Mã (`/dashboard/products` & `/dashboard/price-list`):**
+- **Tạo/Sửa Sản Phẩm (`ProductDrawer.tsx`)**: Form tạo mới và chỉnh sửa SKU có đầy đủ 2 ô **Giá bán buôn / Đại lý (`wholesalePrice`)** và **Giá bán lẻ niêm yết (`retailPrice`)**. Khi lưu, hàm `syncProductChannelPrices` tự động đồng bộ vào bảng `product_margin_prices` (`ProductMarginPrice`) và dòng bảng giá (`PriceListLine`) của bảng giá đang hiệu lực thuộc kênh `WHOLESALE_DISTRIBUTOR` / `DIRECT_INDIVIDUAL` (tự động khởi tạo bảng giá mặc định nếu chưa có).
+- **Cột Giá Bán & Modal Nhập Giá Nhanh trên Danh Mục Sản Phẩm (`ProductTable.tsx` & `ProductsClient.tsx`)**: Hiển thị trực tiếp Giá Bán Buôn & Giá Bán Lẻ trên từng dòng SKU, kèm bộ lọc **Chưa có giá bán buôn (`UNPRICED`)** và nút **Nhập giá** mở popup cập nhật nhanh (`updateProductQuickPrices`) ngay trên bảng mà không cần mở toàn bộ Drawer.
+- **Bộ Lọc "SKU Chưa Có Giá" & Upload Giá Excel Hàng Loạt (`/dashboard/price-list`)**:
+  - Trong chi tiết từng Bảng Giá Kênh (`PriceListClient.tsx`), nhân viên có thể lọc ngay tab **SKU chưa có giá (`unpricedProducts`)** để gõ giá trực tiếp (inline) cho các mã vừa tạo mới.
+  - Hỗ trợ **Xuất Excel / Mẫu (`exportPriceListExcelData`)** tải xuống toàn bộ danh mục SKU (ưu tiên xếp các mã chưa có giá lên đầu) và **Upload Giá Excel (`bulkImportPriceListLines`)** để cập nhật giá hàng loạt theo mã SKU, đồng thời tự động đồng bộ ngược về `ProductMarginPrice`.
+
 ### D. 🖼️ Quản Lý Hình Ảnh & Media (Wine Media Library)
 Rượu vang cao cấp cần hình ảnh chuyên nghiệp cho Sales đem chào KH, cho Catalog, cho Web. Hệ thống ERP sẽ là **thư viện media trung tâm** luôn up-to-date, không cần lưu trong Google Drive phân tán.
 

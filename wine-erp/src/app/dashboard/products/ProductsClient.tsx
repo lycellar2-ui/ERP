@@ -2,9 +2,9 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
-import { Plus, Upload, Download, SlidersHorizontal, X, Package, FileText } from 'lucide-react'
+import { Plus, Upload, Download, SlidersHorizontal, X, Package, FileText, Tag, Save, Loader2 } from 'lucide-react'
 import { Button, PageHeader, SearchInput, Select, StatusBadge, Toolbar, useConfirmDialog } from '@/components/ui'
-import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts, getProductViewDetails, getProductsPageData, getProductStats, getProductCountries, getProducers, getProductEditDetails, getAppellations, getSuppliers } from './actions'
+import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts, getProductViewDetails, getProductsPageData, getProductStats, getProductCountries, getProducers, getProductEditDetails, getAppellations, getSuppliers, updateProductQuickPrices } from './actions'
 import { ProductTable } from './ProductTable'
 import { TastingNotesCatalog } from './TastingNotesCatalog'
 import dynamic from 'next/dynamic'
@@ -55,6 +55,11 @@ export function ProductsClient({
     const [statusFilter, setStatusFilter] = useState('')
     const [countryFilter, setCountryFilter] = useState('')
     const [producerFilter, setProducerFilter] = useState('')
+    const [priceStatusFilter, setPriceStatusFilter] = useState<'' | 'UNPRICED' | 'PRICED'>('')
+    const [quickPriceTarget, setQuickPriceTarget] = useState<ProductRow | null>(null)
+    const [qpWholesale, setQpWholesale] = useState<string>('')
+    const [qpRetail, setQpRetail] = useState<string>('')
+    const [qpSaving, setQpSaving] = useState(false)
     const [exporting, setExporting] = useState(false)
     const [showMobileFilters, setShowMobileFilters] = useState(false)
     const { confirm, dialog: confirmDialog } = useConfirmDialog()
@@ -63,7 +68,7 @@ export function ProductsClient({
     const { data: queryData, isLoading, isFetching } = useQuery({
         queryKey: ['products', filters],
         queryFn: () => getProductsPageData(filters),
-        initialData: filters.page === 1 && !filters.search && !filters.wineType && !filters.status && !filters.country && !filters.producerId
+        initialData: filters.page === 1 && !filters.search && !filters.wineType && !filters.status && !filters.country && !filters.producerId && !filters.priceStatus
             ? initialData
             : undefined,
         staleTime: 30_000,
@@ -73,7 +78,7 @@ export function ProductsClient({
 
     const rows = queryData?.rows ?? []
     const total = queryData?.total ?? 0
-    const stats = queryData?.stats ?? { total: 0, active: 0, outOfStock: 0, topTypes: [] }
+    const stats = queryData?.stats ?? { total: 0, active: 0, outOfStock: 0, unpriced: 0, topTypes: [] }
     const countries = queryData?.countries ?? []
     const producers = queryData?.producers ?? []
 
@@ -208,9 +213,37 @@ export function ProductsClient({
         statusFilter,
         countryFilter,
         producerFilter,
+        priceStatusFilter,
     ].filter(Boolean).length
 
-    const hasFilters = !!(search || typeFilter || statusFilter || countryFilter || producerFilter)
+    const hasFilters = !!(search || typeFilter || statusFilter || countryFilter || producerFilter || priceStatusFilter)
+
+    const handleOpenQuickPrice = (row: ProductRow) => {
+        setQuickPriceTarget(row)
+        setQpWholesale(row.wholesalePrice && row.wholesalePrice > 0 ? String(row.wholesalePrice) : '')
+        setQpRetail(row.retailPrice && row.retailPrice > 0 ? String(row.retailPrice) : '')
+    }
+
+    const handleSaveQuickPrice = async () => {
+        if (!quickPriceTarget) return
+        setQpSaving(true)
+        const ws = qpWholesale.trim() !== '' ? Number(qpWholesale) : null
+        const rt = qpRetail.trim() !== '' ? Number(qpRetail) : null
+        const res = await updateProductQuickPrices({
+            productId: quickPriceTarget.id,
+            wholesalePrice: ws,
+            retailPrice: rt,
+        })
+        setQpSaving(false)
+        if (res.success) {
+            toast.success(L.table.quickPriceSaved)
+            delete detailCache.current[quickPriceTarget.id]
+            setQuickPriceTarget(null)
+            reloadPageData()
+        } else {
+            toast.error(res.error ?? 'Error')
+        }
+    }
 
     return (
         <div className="flex flex-col gap-4 max-w-screen-2xl">
@@ -222,6 +255,19 @@ export function ProductsClient({
                         <span>{L.header.active} <strong className="type-number text-sm ml-1 text-tone-success-fg">{formatNumber(stats.active)}</strong></span>
                         <span className="text-lys-border-strong">|</span>
                         <span>{L.header.outOfStock} <strong className="type-number text-sm ml-1 text-tone-danger-fg">{formatNumber(stats.outOfStock)}</strong></span>
+                        <span className="text-lys-border-strong">|</span>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const next = priceStatusFilter === 'UNPRICED' ? '' : 'UNPRICED'
+                                setPriceStatusFilter(next)
+                                applyFilter({ priceStatus: next || undefined })
+                            }}
+                            className="inline-flex items-center hover:underline cursor-pointer"
+                        >
+                            <span>{L.header.unpriced}</span>
+                            <strong className="type-number text-sm ml-1 text-amber-600">{formatNumber(stats.unpriced ?? 0)}</strong>
+                        </button>
                         <span className="hidden xl:inline text-lys-border-strong">|</span>
                         <span className="hidden xl:inline">{L.header.featured} <strong className="type-number text-sm ml-1 text-lys-primary">{topTypeLabel}</strong></span>
                     </div>
@@ -344,12 +390,26 @@ export function ProductsClient({
                                         <option key={p.id} value={p.id}>{p.name}</option>
                                     ))}
                                 </Select>
+                                <Select
+                                    aria-label={L.filters.priceStatusLabel}
+                                    value={priceStatusFilter}
+                                    onChange={e => {
+                                        const val = e.target.value as '' | 'UNPRICED' | 'PRICED'
+                                        setPriceStatusFilter(val)
+                                        applyFilter({ priceStatus: val || undefined })
+                                    }}
+                                    className="md:w-44"
+                                >
+                                    <option value="">{L.filters.allPrices}</option>
+                                    <option value="UNPRICED">{L.filters.unpricedOnly}</option>
+                                    <option value="PRICED">{L.filters.pricedOnly}</option>
+                                </Select>
                                 {hasFilters && (
                                     <Button
                                         variant="ghost"
                                         onClick={() => {
-                                            setSearch(''); setTypeFilter(''); setStatusFilter(''); setCountryFilter(''); setProducerFilter('')
-                                            applyFilter({ search: undefined, wineType: undefined, status: undefined, country: undefined, producerId: undefined })
+                                            setSearch(''); setTypeFilter(''); setStatusFilter(''); setCountryFilter(''); setProducerFilter(''); setPriceStatusFilter('')
+                                            applyFilter({ search: undefined, wineType: undefined, status: undefined, country: undefined, producerId: undefined, priceStatus: undefined })
                                         }}
                                     >
                                         <X size={14} aria-hidden /> {L.filters.clearFilters}
@@ -368,6 +428,7 @@ export function ProductsClient({
                         onEdit={id => { setEditingId(id); setDrawerOpen(true) }}
                         onDelete={handleDelete}
                         onView={id => { setViewId(id); setViewOpen(true) }}
+                        onQuickPrice={canEdit ? handleOpenQuickPrice : undefined}
                         onPrefetchDetails={prefetchProductDetails}
                         canEdit={canEdit}
                         onRefresh={reloadPageData}
@@ -408,7 +469,8 @@ export function ProductsClient({
                     { header: 'SKU', sample: 'MOUTON-2018-750', required: true },
                     { header: L.importDialog.colName, sample: 'Château Mouton Rothschild 2018', required: true },
                     { header: L.importDialog.colProducer, sample: 'Château Mouton Rothschild', required: true },
-
+                    { header: L.importDialog.colWholesalePrice, sample: '850000' },
+                    { header: L.importDialog.colRetailPrice, sample: '1250000' },
                     { header: L.importDialog.colType, sample: 'RED', required: true },
                     { header: L.importDialog.colCountry, sample: 'FR', required: true },
                     { header: 'ABV', sample: '13.5' },
@@ -421,6 +483,94 @@ export function ProductsClient({
                 onImport={bulkImportProducts}
                 onComplete={reloadPageData}
             />
+
+            {/* Quick Channel Price Update Modal */}
+            {quickPriceTarget && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                    style={{ background: 'rgba(15,23,42,0.45)' }}
+                    onClick={() => !qpSaving && setQuickPriceTarget(null)}
+                >
+                    <div
+                        className="w-full max-w-md rounded-xl p-5 shadow-xl space-y-4"
+                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider" style={{ color: '#0891B2' }}>
+                                    <Tag size={13} />
+                                    {L.table.quickPriceModalTitle}
+                                </div>
+                                <h3 className="text-sm font-bold mt-1 truncate" style={{ color: '#0F172A' }}>
+                                    {quickPriceTarget.productName}
+                                </h3>
+                                <p className="text-xs font-mono mt-0.5" style={{ color: '#64748B' }}>
+                                    {quickPriceTarget.skuCode}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setQuickPriceTarget(null)}
+                                className="p-1 rounded-lg hover:bg-slate-100"
+                                style={{ color: '#64748B' }}
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-xs font-semibold mb-1" style={{ color: '#334155' }}>
+                                    {L.table.quickPriceWholesaleLabel}
+                                </label>
+                                <input
+                                    type="number"
+                                    value={qpWholesale}
+                                    onChange={e => setQpWholesale(e.target.value)}
+                                    placeholder="850000"
+                                    step={10000}
+                                    min={0}
+                                    autoFocus
+                                    onKeyDown={e => { if (e.key === 'Enter') handleSaveQuickPrice() }}
+                                    className="w-full px-3 py-2 rounded-lg text-sm font-mono outline-none"
+                                    style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', color: '#0F172A' }}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold mb-1" style={{ color: '#334155' }}>
+                                    {L.table.quickPriceRetailLabel}
+                                </label>
+                                <input
+                                    type="number"
+                                    value={qpRetail}
+                                    onChange={e => setQpRetail(e.target.value)}
+                                    placeholder="1250000"
+                                    step={10000}
+                                    min={0}
+                                    onKeyDown={e => { if (e.key === 'Enter') handleSaveQuickPrice() }}
+                                    className="w-full px-3 py-2 rounded-lg text-sm font-mono outline-none"
+                                    style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', color: '#0F172A' }}
+                                />
+                            </div>
+                            <p className="text-[11px] leading-relaxed" style={{ color: '#64748B' }}>
+                                {L.table.quickPriceSyncHint}
+                            </p>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t" style={{ borderColor: '#F1F5F9' }}>
+                            <Button variant="secondary" onClick={() => setQuickPriceTarget(null)} disabled={qpSaving}>
+                                {L.drawer.cancelBtn}
+                            </Button>
+                            <Button onClick={handleSaveQuickPrice} loading={qpSaving} disabled={qpSaving}>
+                                {!qpSaving && <Save size={14} />}
+                                {L.table.quickPriceSaveBtn}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {confirmDialog}
         </div>
     )
