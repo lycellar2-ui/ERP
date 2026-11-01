@@ -1619,6 +1619,7 @@ model ShowroomCountSpot {
   name      String
   sortOrder Int                    @default(0)
   entries   ShowroomCountEntry[]
+  checks    ShowroomCountCheck[]
   updatedAt DateTime               @default(now()) @updatedAt
 
   @@map("showroom_count_spots")
@@ -1633,6 +1634,7 @@ model ShowroomCountItem {
   isExtra   Boolean                @default(false) // Vintage người kiểm thêm tay
   sortOrder Int                    @default(0)
   entries   ShowroomCountEntry[]
+  checks    ShowroomCountCheck[]
   createdAt DateTime               @default(now())
 
   @@unique([kind, code, vintage])
@@ -1651,6 +1653,22 @@ model ShowroomCountEntry {
 
   @@unique([spotId, itemId, countedBy])
   @@map("showroom_count_entries")
+}
+
+// Dấu "đã kiểm lại" (lần 2) do một người KHÁC người đếm tích. qtyAtCheck = tổng lúc tích;
+// nếu tổng hiện tại khác → coi như chưa kiểm lại (số đã đổi sau khi kiểm).
+model ShowroomCountCheck {
+  id         String            @id @default(cuid())
+  spotId     String
+  spot       ShowroomCountSpot @relation(fields: [spotId], references: [id], onDelete: Cascade)
+  itemId     String
+  item       ShowroomCountItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  checkedBy  String
+  qtyAtCheck Int
+  checkedAt  DateTime          @default(now())
+
+  @@unique([spotId, itemId])
+  @@map("showroom_count_checks")
 }
 
 // ── Sample Wine Inventory (Tồn kho Hàng Mẫu) ──

@@ -242,4 +242,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-11-01 11:20 | Wine ERP v12.34 - Showroom Quick Count: per-person counts, counter view, catalog fixes*
+*Last updated: 2026-11-01 11:50 | Wine ERP v12.35 - Showroom Quick Count: second-round recheck tick*

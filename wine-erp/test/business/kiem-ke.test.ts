@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { parseQty, normalizeVintage, cleanLabel, summarize, buildCsv, type ShowroomData } from '@/app/kiem-ke/logic'
+import { parseQty, normalizeVintage, cleanLabel, summarize, buildCsv, checkState, canRecheck, type ShowroomData } from '@/app/kiem-ke/logic'
 
 // ─── Setup Mocks ──────────────────────────────────
 
@@ -7,12 +7,13 @@ const mockPrisma = {
     showroomCountSpot: { findMany: vi.fn(), findUnique: vi.fn(), updateMany: vi.fn() },
     showroomCountItem: { findMany: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn(), upsert: vi.fn() },
     showroomCountEntry: { findMany: vi.fn(), findUnique: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn(), create: vi.fn() },
+    showroomCountCheck: { findMany: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn() },
     $transaction: vi.fn(),
 }
 
 vi.mock('@/lib/db', () => ({ prisma: mockPrisma }))
 
-const { saveShowroomCount, addShowroomVintage, renameShowroomSpots } = await import('@/app/kiem-ke/actions')
+const { saveShowroomCount, addShowroomVintage, renameShowroomSpots, setShowroomRecheck } = await import('@/app/kiem-ke/actions')
 
 beforeEach(() => vi.clearAllMocks())
 
@@ -33,6 +34,12 @@ const data: ShowroomData = {
         { spotId: 't2-1', itemId: 'a', qty: 5, countedBy: 'Minh', countedAt: '2026-11-01T03:00:00.000Z' },
         { spotId: 't2-1', itemId: 'c', qty: 0, countedBy: 'Minh', countedAt: '2026-11-01T03:05:00.000Z' },
         { spotId: 'posm-1', itemId: 'p', qty: 12, countedBy: 'Lan', countedAt: '2026-11-01T04:00:00.000Z' },
+    ],
+    checks: [
+        // Minh rechecked Lan's 3 → still valid
+        { spotId: 't1-1', itemId: 'a', checkedBy: 'Minh', qtyAtCheck: 3, checkedAt: '2026-11-01T05:00:00.000Z' },
+        // Lan rechecked Minh's spot when it was 4; it is now 5 → no longer valid
+        { spotId: 't2-1', itemId: 'a', checkedBy: 'Lan', qtyAtCheck: 4, checkedAt: '2026-11-01T05:10:00.000Z' },
     ],
 }
 
@@ -175,5 +182,59 @@ describe('kiem-ke actions', () => {
         const r = await renameShowroomSpots([{ id: 't1-1', name: '  ' }])
         expect(r.success).toBe(false)
         expect(mockPrisma.$transaction).not.toHaveBeenCalled()
+    })
+})
+
+describe('kiem-ke second-round recheck', () => {
+    it('a recheck counts only while the total is unchanged', () => {
+        expect(checkState(3, undefined)).toBe('none')
+        expect(checkState(3, { qtyAtCheck: 3 })).toBe('ok')
+        expect(checkState(5, { qtyAtCheck: 4 })).toBe('changed')
+    })
+
+    it('the checker must be someone other than the counter', () => {
+        expect(canRecheck(['Lan'], 'Lan')).toBe(false)
+        expect(canRecheck(['Lan'], 'Minh')).toBe(true)
+        expect(canRecheck(['Lan', 'Minh'], 'Lan')).toBe(true)
+    })
+
+    it('reports recheck progress overall, per spot and per checker', () => {
+        const s = summarize(data)
+        // cells: t1-1/a, t2-1/a, t2-1/c, posm-1/p → only t1-1/a is a valid recheck
+        expect(s.cells).toBe(4)
+        expect(s.rechecked).toBe(1)
+        expect(s.spots.find(x => x.spot.id === 't1-1')).toMatchObject({ cells: 1, rechecked: 1 })
+        expect(s.spots.find(x => x.spot.id === 't2-1')).toMatchObject({ cells: 2, rechecked: 0 })
+        expect(s.people.find(p => p.name === 'Minh')!.rechecks).toBe(1)
+    })
+
+    it('CSV detail names the rechecker or flags a changed count', () => {
+        const rows = buildCsv(data).split('\r\n')
+        expect(rows.find(r => r.startsWith('Lan,Tầng 1 - Kệ to,L20019'))!.endsWith(',Minh')).toBe(true)
+        expect(rows.find(r => r.startsWith('Minh,Tầng 2 - Kệ hàng lẻ,L20019'))!.endsWith(',Số đổi sau khi Lan kiểm lại')).toBe(true)
+    })
+
+    it('refuses a recheck by the only counter', async () => {
+        mockPrisma.showroomCountEntry.findMany.mockResolvedValue([{ qty: 3, countedBy: 'Lan' }])
+        const r = await setShowroomRecheck({ spotId: 't1-1', itemId: 'a', checkedBy: 'Lan', checked: true })
+        expect(r.success).toBe(false)
+        expect(mockPrisma.showroomCountCheck.upsert).not.toHaveBeenCalled()
+    })
+
+    it('stores the total at the time of the recheck', async () => {
+        mockPrisma.showroomCountEntry.findMany.mockResolvedValue([{ qty: 3, countedBy: 'Lan' }, { qty: 2, countedBy: 'Hoa' }])
+        const r = await setShowroomRecheck({ spotId: 't1-1', itemId: 'a', checkedBy: 'Minh', checked: true })
+        expect(r.success).toBe(true)
+        expect(mockPrisma.showroomCountCheck.upsert).toHaveBeenCalledWith(expect.objectContaining({
+            where: { spotId_itemId: { spotId: 't1-1', itemId: 'a' } },
+            create: { spotId: 't1-1', itemId: 'a', checkedBy: 'Minh', qtyAtCheck: 5 },
+        }))
+    })
+
+    it('cannot recheck a row nobody counted; unticking removes the mark', async () => {
+        mockPrisma.showroomCountEntry.findMany.mockResolvedValue([])
+        expect((await setShowroomRecheck({ spotId: 't1-1', itemId: 'b', checkedBy: 'Minh', checked: true })).success).toBe(false)
+        expect((await setShowroomRecheck({ spotId: 't1-1', itemId: 'a', checkedBy: 'Minh', checked: false })).success).toBe(true)
+        expect(mockPrisma.showroomCountCheck.deleteMany).toHaveBeenCalledWith({ where: { spotId: 't1-1', itemId: 'a' } })
     })
 })

@@ -4,17 +4,20 @@
 // Writes only to the three showroom_count_* tables; never touches Product, StockLot or StockCount data.
 
 import { prisma } from '@/lib/db'
-import { cleanLabel, normalizeVintage, parseQty, type ShowroomData } from './logic'
+import { canRecheck, cleanLabel, normalizeVintage, parseQty, type ShowroomData } from './logic'
 
 type Result<T = undefined> = { success: true; data?: T } | { success: false; error: string }
 
 export async function getShowroomCount(): Promise<Result<ShowroomData>> {
     try {
-        const [spots, items, entries] = await Promise.all([
+        const [spots, items, entries, checks] = await Promise.all([
             prisma.showroomCountSpot.findMany({ orderBy: { sortOrder: 'asc' } }),
             prisma.showroomCountItem.findMany({ orderBy: [{ kind: 'asc' }, { sortOrder: 'asc' }] }),
             prisma.showroomCountEntry.findMany({
                 select: { spotId: true, itemId: true, qty: true, countedBy: true, countedAt: true },
+            }),
+            prisma.showroomCountCheck.findMany({
+                select: { spotId: true, itemId: true, checkedBy: true, qtyAtCheck: true, checkedAt: true },
             }),
         ])
         return {
@@ -23,6 +26,7 @@ export async function getShowroomCount(): Promise<Result<ShowroomData>> {
                 spots: spots.map(({ id, groupName, kind, name, sortOrder }) => ({ id, groupName, kind, name, sortOrder })),
                 items: items.map(({ id, kind, code, name, vintage, isExtra, sortOrder }) => ({ id, kind, code, name, vintage, isExtra, sortOrder })),
                 entries,
+                checks,
             })),
         }
     } catch (err) {
@@ -104,6 +108,42 @@ export async function addShowroomVintage(input: {
     } catch (err) {
         console.error('[kiem-ke] addShowroomVintage', err)
         return { success: false, error: 'Chưa thêm được vintage. Thử lại.' }
+    }
+}
+
+/**
+ * Tích / bỏ tích "đã kiểm lại" cho một mã tại một vị trí (kiểm lần 2).
+ * Người tích phải khác người đã đếm; lưu tổng lúc tích để phát hiện số bị sửa sau đó.
+ */
+export async function setShowroomRecheck(input: {
+    spotId: string
+    itemId: string
+    checkedBy: string
+    checked: boolean
+}): Promise<Result> {
+    const checkedBy = cleanLabel(input.checkedBy)
+    if (!checkedBy) return { success: false, error: 'Thiếu tên người kiểm lại.' }
+    const where = { spotId: String(input.spotId), itemId: String(input.itemId) }
+    try {
+        if (!input.checked) {
+            await prisma.showroomCountCheck.deleteMany({ where })
+            return { success: true }
+        }
+        const entries = await prisma.showroomCountEntry.findMany({ where, select: { qty: true, countedBy: true } })
+        if (!entries.length) return { success: false, error: 'Dòng này chưa có ai đếm nên chưa kiểm lại được.' }
+        if (!canRecheck(entries.map(e => e.countedBy), checkedBy)) {
+            return { success: false, error: 'Người kiểm lại phải khác người đã đếm.' }
+        }
+        const qtyAtCheck = entries.reduce((t, e) => t + e.qty, 0)
+        await prisma.showroomCountCheck.upsert({
+            where: { spotId_itemId: where },
+            create: { ...where, checkedBy, qtyAtCheck },
+            update: { checkedBy, qtyAtCheck, checkedAt: new Date() },
+        })
+        return { success: true }
+    } catch (err) {
+        console.error('[kiem-ke] setShowroomRecheck', err)
+        return { success: false, error: 'Chưa lưu được dấu kiểm lại. Thử lại.' }
     }
 }
 

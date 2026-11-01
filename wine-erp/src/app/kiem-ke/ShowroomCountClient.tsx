@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, Minus, Plus, Search } from 'lucide-react'
-import { addShowroomVintage, getShowroomCount, renameShowroomSpots, saveShowroomCount } from './actions'
+import { addShowroomVintage, getShowroomCount, renameShowroomSpots, saveShowroomCount, setShowroomRecheck } from './actions'
 import {
-    buildCsv, cleanLabel, normalizeSearch, normalizeVintage, sortItems, summarize,
-    type ShowroomData, type ShowroomEntry, type ShowroomItem, type ShowroomSpot,
+    buildCsv, canRecheck, checkState, cleanLabel, normalizeSearch, normalizeVintage, sortItems, summarize,
+    type ShowroomCheck, type ShowroomData, type ShowroomEntry, type ShowroomItem, type ShowroomSpot,
 } from './logic'
+
+type CountFilter = 'all' | 'done' | 'todo' | 'recheck'
 
 type View = 'spots' | 'count' | 'sum'
 type SumMode = 'wine' | 'spot' | 'people' | 'missing' | 'posm'
@@ -25,13 +27,13 @@ const when = (iso: string) => {
 const unitOf = (spot?: ShowroomSpot) => (spot?.kind === 'POSM' ? ['món', 'cái'] : ['mã', 'chai'])
 
 export function ShowroomCountClient({ initial, initialError }: { initial: ShowroomData | null; initialError: string | null }) {
-    const [data, setData] = useState<ShowroomData>(initial ?? { spots: [], items: [], entries: [] })
+    const [data, setData] = useState<ShowroomData>(initial ?? { spots: [], items: [], entries: [], checks: [] })
     const [loadError, setLoadError] = useState<string | null>(initialError)
     const [who, setWho] = useState<string | null>(null)
     const [view, setView] = useState<View>('spots')
     const [spotId, setSpotId] = useState<string | null>(null)
     const [q, setQ] = useState('')
-    const [filter, setFilter] = useState<'all' | 'done' | 'todo'>('all')
+    const [filter, setFilter] = useState<CountFilter>('all')
     const [homeQ, setHomeQ] = useState('')
     const [sumMode, setSumMode] = useState<SumMode>('wine')
     const [sumQ, setSumQ] = useState('')
@@ -195,6 +197,12 @@ export function ShowroomCountClient({ initial, initialError }: { initial: Showro
                         qtyOf={qtyOf} setQty={setQty}
                         entryOf={(itemId: string) => mineOf(spotId, itemId)}
                         othersOf={(itemId: string) => othersOf(spotId, itemId)}
+                        checkOf={(itemId: string) => data.checks.find(c => c.spotId === spotId && c.itemId === itemId)}
+                        onRecheck={async (itemId: string, checked: boolean) => {
+                            const res = await setShowroomRecheck({ spotId, itemId, checkedBy: who, checked })
+                            if (res.success) await refresh()
+                            return res.success ? null : res.error
+                        }}
                         saving={saving} errors={errors}
                         spotSummary={summary.spots.find(s => s.spot.id === spotId)}
                         errorNote={errorNote}
@@ -393,6 +401,7 @@ function SpotsView(props: {
                                             <span className="font-semibold leading-tight">{s.name}</span>
                                             <span className={`mt-auto text-[13px] font-semibold ${ss?.touched ? 'text-tone-success-fg' : 'text-lys-muted'}`}>
                                                 {ss?.touched ? `${ss.lines} ${u1} · ${fmt(ss.qty)} ${u2}` : 'Chưa đếm'}
+                                                {ss?.cells ? <span className="block font-medium text-lys-muted">✓ kiểm lại {ss.rechecked}/{ss.cells}</span> : null}
                                             </span>
                                         </button>
                                     )
@@ -417,13 +426,15 @@ function SpotsView(props: {
 
 function CountView(props: {
     spot: ShowroomSpot; items: ShowroomItem[]; allWine: ShowroomItem[]
-    q: string; setQ: (v: string) => void; filter: 'all' | 'done' | 'todo'; setFilter: (f: 'all' | 'done' | 'todo') => void
+    q: string; setQ: (v: string) => void; filter: CountFilter; setFilter: (f: CountFilter) => void
     qtyOf: (spotId: string, itemId: string) => number | null
     setQty: (spotId: string, itemId: string, qty: number | null, delay?: number) => void
     entryOf: (itemId: string) => ShowroomEntry | undefined
     othersOf: (itemId: string) => ShowroomEntry[]
+    checkOf: (itemId: string) => ShowroomCheck | undefined
+    onRecheck: (itemId: string, checked: boolean) => Promise<string | null>
     saving: Set<string>; errors: Map<string, string>
-    spotSummary?: { lines: number; qty: number }
+    spotSummary?: { lines: number; qty: number; cells: number; rechecked: number }
     errorNote: React.ReactNode; who: string
     onBack: () => void; onAdded: (code: string) => Promise<void>
 }) {
@@ -431,18 +442,32 @@ function CountView(props: {
     const posm = spot.kind === 'POSM'
     const [u1, u2] = unitOf(spot)
     const [addCode, setAddCode] = useState<string | null>(null)
+    const [recheckMsg, setRecheckMsg] = useState<Map<string, string>>(new Map())
+    const [rechecking, setRechecking] = useState<string | null>(null)
     const shown = useMemo(() => {
         const q = normalizeSearch(props.q.trim())
         return props.items.filter(i => {
             const n = props.qtyOf(spot.id, i.id)
             const others = props.othersOf(i.id)
+            const counted = n !== null || others.length > 0
             const any = (n !== null && n > 0) || others.some(e => e.qty > 0)
             if (props.filter === 'done' && !any) return false
-            if (props.filter === 'todo' && (n !== null || others.length > 0)) return false
+            if (props.filter === 'todo' && counted) return false
+            if (props.filter === 'recheck') {
+                const total = (n ?? 0) + others.reduce((t, e) => t + e.qty, 0)
+                if (!counted || checkState(total, props.checkOf(i.id)) === 'ok') return false
+            }
             return !q || normalizeSearch(`${i.name} ${i.code} ${i.vintage}`).includes(q)
         })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [props.items, props.q, props.filter, props.qtyOf, props.othersOf, spot.id])
+    }, [props.items, props.q, props.filter, props.qtyOf, props.othersOf, props.checkOf, spot.id])
+
+    const recheck = async (itemId: string, checked: boolean) => {
+        setRechecking(itemId)
+        const err = await props.onRecheck(itemId, checked)
+        setRechecking(null)
+        setRecheckMsg(m => { const n = new Map(m); if (err) n.set(itemId, err); else n.delete(itemId); return n })
+    }
 
     return (
         <div className="space-y-3">
@@ -451,14 +476,15 @@ function CountView(props: {
                 <div>
                     <div className="text-[11px] font-semibold uppercase tracking-widest text-lys-muted">
                         {spot.groupName}{props.spotSummary?.lines ? ` · ${props.spotSummary.lines} ${u1} · ${fmt(props.spotSummary.qty)} ${u2}` : ''}
+                        {props.spotSummary?.cells ? ` · kiểm lại ${props.spotSummary.rechecked}/${props.spotSummary.cells}` : ''}
                     </div>
                     <h1 className="mt-1 text-2xl font-extrabold">{spot.name}</h1>
                 </div>
                 <SearchBox id="search" value={props.q} onChange={props.setQ} placeholder={posm ? 'Tìm vật phẩm…' : 'Tìm tên rượu, mã, vintage…'} />
-                <div role="group" aria-label="Lọc" className="flex gap-1 rounded-lg border border-lys-border bg-lys-surface p-1">
-                    {([['all', 'Tất cả'], ['done', 'Đã có số'], ['todo', 'Chưa đếm']] as const).map(([v, l]) => (
+                <div role="group" aria-label="Lọc" className="grid grid-cols-4 gap-1 rounded-lg border border-lys-border bg-lys-surface p-1">
+                    {([['all', 'Tất cả'], ['done', 'Có số'], ['todo', 'Chưa đếm'], ['recheck', 'Chưa kiểm lại']] as const).map(([v, l]) => (
                         <button key={v} aria-pressed={props.filter === v} onClick={() => props.setFilter(v)}
-                            className={`flex-1 rounded-md py-2 text-sm ${props.filter === v ? 'bg-lys-teal-strong font-semibold text-white' : 'text-lys-muted'}`}>{l}</button>
+                            className={`rounded-md px-1 py-2 text-[13px] leading-tight ${props.filter === v ? 'bg-lys-teal-strong font-semibold text-white' : 'text-lys-muted'}`}>{l}</button>
                     ))}
                 </div>
             </div>
@@ -494,12 +520,54 @@ function CountView(props: {
                                     Người khác đã đếm ở đây: {others.map(e => `${e.countedBy} ${e.qty}`).join(' · ')} — tổng vị trí <b>{total}</b>
                                 </div>
                             )}
+                            {(n !== null || others.length > 0) && (
+                                <Recheck
+                                    check={props.checkOf(item.id)}
+                                    total={total}
+                                    canCheck={canRecheck([...(n !== null ? [props.who] : []), ...others.map(e => e.countedBy)], props.who)}
+                                    busy={rechecking === item.id}
+                                    error={recheckMsg.get(item.id)}
+                                    onChange={checked => recheck(item.id, checked)}
+                                />
+                            )}
                         </div>
                     )
                 })}
             </div>
             {!posm && <AddVintage spot={spot} wines={props.allWine} code={addCode} setCode={setAddCode} who={props.who} onAdded={props.onAdded} />}
             <p className="text-sm text-lys-muted">Số tự lưu sau khi bạn ngừng gõ. Để trống nghĩa là chưa đếm; nhập 0 nghĩa là đã kiểm và không có {u2} nào.</p>
+        </div>
+    )
+}
+
+/** Dấu kiểm lần 2: người khác người đếm tích "đúng"; nếu số bị sửa sau đó thì dấu tự mất hiệu lực. */
+function Recheck({ check, total, canCheck, busy, error, onChange }: {
+    check?: ShowroomCheck; total: number; canCheck: boolean; busy: boolean; error?: string; onChange: (checked: boolean) => void
+}) {
+    const state = checkState(total, check)
+    return (
+        <div className="col-span-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+            {state === 'ok' ? (
+                <>
+                    <span className="rounded-md bg-tone-success-fg px-2 py-1 font-semibold text-white">✓ Đã kiểm lại · {check!.checkedBy} · {when(check!.checkedAt)}</span>
+                    <button disabled={busy} onClick={() => onChange(false)} className="py-1 font-semibold text-lys-muted underline disabled:opacity-50">Bỏ tích</button>
+                </>
+            ) : (
+                <>
+                    {state === 'changed' && (
+                        <span className="text-tone-warning-fg">Số đã đổi sau khi {check!.checkedBy} kiểm lại (lúc đó {check!.qtyAtCheck}).</span>
+                    )}
+                    {canCheck ? (
+                        <button disabled={busy} onClick={() => onChange(true)}
+                            className="rounded-md border border-tone-success-fg px-2.5 py-1.5 font-semibold text-tone-success-fg disabled:opacity-50">
+                            ☐ Kiểm lại: đúng {total}
+                        </button>
+                    ) : (
+                        <span className="text-lys-muted">Cần người khác kiểm lại dòng này</span>
+                    )}
+                </>
+            )}
+            {error && <span className="w-full text-tone-danger-fg">{error}</span>}
         </div>
     )
 }
@@ -575,8 +643,9 @@ function SummaryView(props: {
         <div className="space-y-4">
             {props.header}
             {props.errorNote}
-            <div className="grid grid-cols-3 gap-2">
-                {[[fmt(s.bottles), 'chai đã đếm'], [String(s.wineFound.length), `/${s.wineCount} dòng có hàng`], [`${s.spots.filter(x => x.touched).length}/${s.spots.length}`, 'vị trí đã kiểm']].map(([n, l]) => (
+            <div className="grid grid-cols-2 gap-2">
+                {[[fmt(s.bottles), 'chai đã đếm'], [String(s.wineFound.length), `/${s.wineCount} dòng có hàng`],
+                  [`${s.spots.filter(x => x.touched).length}/${s.spots.length}`, 'vị trí đã kiểm'], [`${s.rechecked}/${s.cells}`, 'dòng đã kiểm lại (lần 2)']].map(([n, l]) => (
                     <div key={l} className="rounded-xl border border-lys-border bg-lys-surface px-3 py-2.5">
                         <div className="text-2xl font-bold">{n}</div><div className="text-xs text-lys-muted">{l}</div>
                     </div>
@@ -634,7 +703,7 @@ function SummaryView(props: {
                                 <div>
                                     <div className="font-bold">{p.name}</div>
                                     <div className="mt-1 text-xs text-lys-muted">
-                                        {p.lines.length} dòng · {[...new Set(p.lines.map(l => l.spot.name))].join(', ')}
+                                        {p.lines.length} dòng{p.rechecks ? ` · đã kiểm lại ${p.rechecks} dòng của người khác` : ''} · {[...new Set(p.lines.map(l => l.spot.name))].join(', ')}
                                     </div>
                                 </div>
                                 <div className="self-center text-right">
@@ -697,7 +766,7 @@ function SummaryView(props: {
                                 <button key={spot.id} onClick={() => props.onOpen(spot.id)} className={`${row} w-full text-left`}>
                                     <div>
                                         <div className="font-medium">{spot.name}</div>
-                                        <div className="mt-1 text-xs text-lys-muted">{ss?.touched ? `${ss.lines} dòng có hàng · ${ss.people.join(', ')} · ${ss.lastAt ? when(ss.lastAt) : ''}` : 'Chưa kiểm'}</div>
+                                        <div className="mt-1 text-xs text-lys-muted">{ss?.touched ? `${ss.lines} dòng có hàng · kiểm lại ${ss.rechecked}/${ss.cells} · ${ss.people.join(', ')} · ${ss.lastAt ? when(ss.lastAt) : ''}` : 'Chưa kiểm'}</div>
                                     </div>
                                     <div className={`self-center text-[21px] font-bold ${ss?.touched ? '' : 'text-lys-dim'}`}>{ss?.touched ? fmt(ss.qty) : '–'}</div>
                                 </button>

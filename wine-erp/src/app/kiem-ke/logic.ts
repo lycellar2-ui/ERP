@@ -4,7 +4,21 @@
 export type ShowroomSpot = { id: string; groupName: string; kind: string; name: string; sortOrder: number }
 export type ShowroomItem = { id: string; kind: string; code: string; name: string; vintage: string; isExtra: boolean; sortOrder: number }
 export type ShowroomEntry = { spotId: string; itemId: string; qty: number; countedBy: string; countedAt: string }
-export type ShowroomData = { spots: ShowroomSpot[]; items: ShowroomItem[]; entries: ShowroomEntry[] }
+export type ShowroomCheck = { spotId: string; itemId: string; checkedBy: string; qtyAtCheck: number; checkedAt: string }
+export type ShowroomData = { spots: ShowroomSpot[]; items: ShowroomItem[]; entries: ShowroomEntry[]; checks: ShowroomCheck[] }
+
+export type CheckState = 'none' | 'ok' | 'changed'
+
+/** "ok" chỉ khi tổng hiện tại còn đúng bằng tổng lúc người kiểm lại tích; đổi số sau đó → "changed". */
+export function checkState(currentTotal: number, check?: Pick<ShowroomCheck, 'qtyAtCheck'>): CheckState {
+    if (!check) return 'none'
+    return check.qtyAtCheck === currentTotal ? 'ok' : 'changed'
+}
+
+/** Người kiểm lại phải khác người đếm: cần ít nhất một dòng đếm của người khác. */
+export function canRecheck(counters: string[], checker: string): boolean {
+    return counters.some(c => c !== checker)
+}
 
 export const MAX_QTY = 100_000
 
@@ -50,9 +64,13 @@ export type PersonSummary = {
     wine: number
     posm: number
     lines: Array<{ spot: ShowroomSpot; item: ShowroomItem; qty: number; at: string }>
+    rechecks?: number
 }
 
-export type SpotSummary = { spot: ShowroomSpot; lines: number; qty: number; people: string[]; lastAt: string | null; touched: boolean }
+export type SpotSummary = {
+    spot: ShowroomSpot; lines: number; qty: number; people: string[]; lastAt: string | null; touched: boolean
+    cells: number; rechecked: number // dòng (mã) có số tại vị trí / số dòng đã kiểm lại còn đúng
+}
 
 /**
  * Gộp số đếm theo mặt hàng, theo vị trí và theo người kiểm.
@@ -65,7 +83,7 @@ export function summarize(data: ShowroomData) {
     const items = new Map<string, ItemSummary>()
     for (const item of data.items) items.set(item.id, { item, total: 0, checked: 0, byGroup: {}, parts: [] })
     const spots = new Map<string, SpotSummary>()
-    for (const spot of data.spots) spots.set(spot.id, { spot, lines: 0, qty: 0, people: [], lastAt: null, touched: false })
+    for (const spot of data.spots) spots.set(spot.id, { spot, lines: 0, qty: 0, people: [], lastAt: null, touched: false, cells: 0, rechecked: 0 })
 
     for (const e of data.entries) {
         const spot = spotById.get(e.spotId)
@@ -88,6 +106,23 @@ export function summarize(data: ShowroomData) {
         ss.qty += e.qty
     }
 
+    // Recheck progress per spot: one "cell" per spot + item that has any count.
+    const cellTotals = new Map<string, number>()
+    for (const e of data.entries) cellTotals.set(`${e.spotId}|${e.itemId}`, (cellTotals.get(`${e.spotId}|${e.itemId}`) ?? 0) + e.qty)
+    const checkByCell = new Map((data.checks ?? []).map(c => [`${c.spotId}|${c.itemId}`, c]))
+    const checkers = new Map<string, number>()
+    let cells = 0, rechecked = 0
+    for (const [cell, total] of cellTotals) {
+        const ss = spots.get(cell.split('|')[0])
+        if (!ss) continue
+        ss.cells++; cells++
+        const c = checkByCell.get(cell)
+        if (checkState(total, c) === 'ok') {
+            ss.rechecked++; rechecked++
+            checkers.set(c!.checkedBy, (checkers.get(c!.checkedBy) ?? 0) + 1)
+        }
+    }
+
     const all = sortItems(data.items).map(i => items.get(i.id)!)
     const wine = all.filter(s => s.item.kind !== 'POSM')
     const posm = data.items.filter(i => i.kind === 'POSM').sort((a, b) => a.sortOrder - b.sortOrder).map(i => items.get(i.id)!)
@@ -99,8 +134,10 @@ export function summarize(data: ShowroomData) {
         posm,
         posmTotal: posm.reduce((t, s) => t + s.total, 0),
         spots: [...spots.values()],
+        cells,
+        rechecked,
         people: [...people.values()]
-            .map(p => ({ ...p, lines: p.lines.sort((a, b) => a.spot.sortOrder - b.spot.sortOrder || a.item.code.localeCompare(b.item.code)) }))
+            .map(p => ({ ...p, rechecks: checkers.get(p.name) ?? 0, lines: p.lines.sort((a, b) => a.spot.sortOrder - b.spot.sortOrder || a.item.code.localeCompare(b.item.code)) }))
             .sort((a, b) => a.name.localeCompare(b.name, 'vi')),
     }
 }
@@ -135,10 +172,17 @@ export function buildCsv(data: ShowroomData, exportedAt: Date = new Date()): str
     }
     const s = summarize(data)
     if (s.people.length) {
-        lines.push([], ['CHI TIẾT THEO NGƯỜI KIỂM'], ['Người kiểm', 'Vị trí', 'Mã hàng', 'Tên hàng', 'Vintage', 'Số lượng', 'Thời gian'])
+        const checks = new Map((data.checks ?? []).map(c => [`${c.spotId}|${c.itemId}`, c]))
+        const recheckCell = (spotId: string, itemId: string) => {
+            const c = checks.get(`${spotId}|${itemId}`)
+            const st = checkState(qty.get(`${spotId}|${itemId}`) ?? 0, c)
+            return st === 'ok' ? c!.checkedBy : st === 'changed' ? `Số đổi sau khi ${c!.checkedBy} kiểm lại` : ''
+        }
+        lines.push([], ['CHI TIẾT THEO NGƯỜI KIỂM'], ['Người kiểm', 'Vị trí', 'Mã hàng', 'Tên hàng', 'Vintage', 'Số lượng', 'Thời gian', 'Kiểm lại bởi'])
         for (const p of s.people) for (const l of p.lines) {
             lines.push([p.name, label(l.spot), l.item.kind === 'POSM' ? '' : l.item.code, l.item.name,
-                l.item.kind === 'POSM' ? '' : l.item.vintage || 'NV', l.qty, new Date(l.at).toLocaleString('vi-VN')])
+                l.item.kind === 'POSM' ? '' : l.item.vintage || 'NV', l.qty, new Date(l.at).toLocaleString('vi-VN'),
+                recheckCell(l.spot.id, l.item.id)])
         }
     }
     lines.push([], ['Người kiểm', s.people.map(p => p.name).join(', ')], ['Xuất lúc', exportedAt.toLocaleString('vi-VN')])
