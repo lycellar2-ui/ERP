@@ -61,7 +61,7 @@ INSERT INTO showroom_count_items (id, kind, code, name, vintage, "sortOrder") VA
 ('w_L10036_NV', 'WINE', 'L10036', 'La Jara Offbeat ZERO Sparkling Rosé', '', 34),
 ('w_L10037_NV', 'WINE', 'L10037', 'Sartori Reius Amarone della Valpolicella Classico', '', 35),
 ('w_L10038_NV', 'WINE', 'L10038', 'Sartori Brolo di Sotto Valpolicella Classico', '', 36),
-('w_L10046_NV', 'WINE', 'L10046', 'Terre di Monteforte Vulcanico Soave', '', 37),
+('w_L10046_2025', 'WINE', 'L10046', 'Terre di Monteforte Vulcanico Soave', '2025', 37),
 ('w_L10045_NV', 'WINE', 'L10045', 'Terre di Monteforte Vulcanico Rosso Veneto', '', 38),
 ('w_L10039_NV', 'WINE', 'L10039', 'Anselmi "San Vincenzo" Bianco Veneto', '', 39),
 ('w_L10042_2021', 'WINE', 'L10042', 'Petra "Zingari" Rosso Toscana', '2021', 40),
