@@ -33,7 +33,7 @@ const CATEGORY_ROUTING: Record<string, number[]> = {
 }
 
 // Helper: Resolve whether a PRICE_ADJUSTMENT DB row is Level 2 (PRICE_ADJUSTMENT) or Level 3 (SPECIAL_PRICE)
-export function resolveProposalCategory(p: {
+function resolveProposalCategory(p: {
     category: string
     scope?: string | null
     discountPct?: any
@@ -888,4 +888,3 @@ export async function syncProposalToCustomerPriceRules(proposalId: string) {
     revalidateCache('proposals')
     return { count: createdCount }
 }
-

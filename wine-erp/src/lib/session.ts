@@ -1,5 +1,6 @@
 import { cache } from 'react'
 import { headers } from 'next/headers'
+import { unstable_rethrow } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase'
 import { prisma } from '@/lib/db'
 import { cached, revalidateCache } from '@/lib/cache'
@@ -83,7 +84,10 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Ses
             if (verifiedEmail) {
                 return await fetchUserByEmail(verifiedEmail)
             }
-        } catch {
+        } catch (err) {
+            // During build, headers() throws Next's "dynamic usage" signal to mark the page dynamic —
+            // it must propagate, otherwise the page is prerendered without a session and requireAuth fails.
+            unstable_rethrow(err)
             // headers() may throw outside of a Next.js request context; safely fall back
         }
 
@@ -98,7 +102,8 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Ses
         }
 
         return await fetchUserByEmail(authUser.email)
-    } catch {
+    } catch (err) {
+        unstable_rethrow(err) // same: let Next's dynamic/redirect signals (e.g. from cookies()) through
         if (process.env.NODE_ENV === 'development') {
             return await fetchUserByEmail('admin@lyscellars.com')
         }
