@@ -961,6 +961,15 @@ function SummaryView(props: {
                     </div>
                 ))}
             </div>
+            <div className="space-y-2 rounded-xl border border-lys-border bg-lys-surface p-3">
+                <b className="text-sm">Tải biên bản kiểm kê (có chỗ ký) — In / Lưu PDF</b>
+                <div className="grid grid-cols-2 gap-2">
+                    {props.groups.map(g => (
+                        <a key={g.name} href={`/kiem-ke/bien-ban?g=${encodeURIComponent(g.name)}`} target="_blank" rel="noopener"
+                            className="rounded-lg bg-lys-teal-strong py-2.5 text-center font-semibold text-white">Biên bản {g.name}</a>
+                    ))}
+                </div>
+            </div>
             <button onClick={props.onExport} className="w-full rounded-lg border border-lys-teal-strong py-3 font-semibold text-lys-teal-strong">Tải kết quả (.csv)</button>
         </div>
     )

@@ -215,3 +215,98 @@ export function buildCsv(data: ShowroomData, exportedAt: Date = new Date()): str
     lines.push([], ['Người kiểm', s.people.map(p => p.name).join(', ')], ['Xuất lúc', exportedAt.toLocaleString('vi-VN')])
     return '﻿' + lines.map(r => r.map(csvCell).join(',')).join('\r\n')
 }
+
+export type GroupReport = {
+    group: string
+    kind: string
+    spots: Array<{
+        spot: ShowroomSpot; lines: number; qty: number; people: string[]
+        cells: number; rechecked: number; checkers: string[]
+    }>
+    rows: Array<{ item: ShowroomItem; bySpot: number[]; total: number }>
+    spotTotals: number[]
+    total: number
+    people: string[]
+    checkers: string[]
+    firstAt: string | null
+    lastAt: string | null
+    cells: number
+    rechecked: number
+    unchecked: Array<{ spot: ShowroomSpot; item: ShowroomItem; total: number }>
+    notes: Array<{ spot: ShowroomSpot; item: ShowroomItem | null; note: string; writtenBy: string; updatedAt: string }>
+}
+
+/**
+ * Số liệu biên bản kiểm kê cho một nhóm vị trí (Tầng 1, Tầng 2, Hàng mẫu, POSM):
+ * mỗi vị trí một cột, chỉ các dòng có hàng; kèm tiến độ kiểm lại lần 2 và ghi chú.
+ */
+export function buildGroupReport(data: ShowroomData, group: string): GroupReport | null {
+    const spots = data.spots.filter(s => s.groupName === group).sort((a, b) => a.sortOrder - b.sortOrder)
+    if (!spots.length) return null
+    const col = new Map(spots.map((s, i) => [s.id, i]))
+    const itemById = new Map(data.items.map(i => [i.id, i]))
+    const cell = new Map<string, number>()
+    const stats = spots.map(spot => ({ spot, lines: 0, qty: 0, people: [] as string[], cells: 0, rechecked: 0, checkers: [] as string[] }))
+    const people = new Set<string>()
+    let firstAt: string | null = null, lastAt: string | null = null
+    for (const e of data.entries) {
+        const c = col.get(e.spotId)
+        if (c === undefined || !itemById.has(e.itemId)) continue
+        const key = `${e.spotId}|${e.itemId}`
+        cell.set(key, (cell.get(key) ?? 0) + e.qty)
+        people.add(e.countedBy)
+        if (!stats[c].people.includes(e.countedBy)) stats[c].people.push(e.countedBy)
+        if (!firstAt || e.countedAt < firstAt) firstAt = e.countedAt
+        if (!lastAt || e.countedAt > lastAt) lastAt = e.countedAt
+    }
+
+    const checks = new Map((data.checks ?? []).map(c => [`${c.spotId}|${c.itemId}`, c]))
+    const checkers = new Set<string>()
+    const unchecked: GroupReport['unchecked'] = []
+    const byItem = new Map<string, number[]>()
+    for (const [key, total] of cell) {
+        const [spotId, itemId] = key.split('|')
+        const st = stats[col.get(spotId)!]
+        st.cells++
+        const c = checks.get(key)
+        if (checkState(total, c) === 'ok') {
+            st.rechecked++
+            checkers.add(c!.checkedBy)
+            if (!st.checkers.includes(c!.checkedBy)) st.checkers.push(c!.checkedBy)
+        } else {
+            unchecked.push({ spot: st.spot, item: itemById.get(itemId)!, total })
+        }
+        if (total <= 0) continue
+        st.lines++
+        st.qty += total
+        const row = byItem.get(itemId) ?? spots.map(() => 0)
+        row[col.get(spotId)!] = total
+        byItem.set(itemId, row)
+    }
+
+    const order = (a: ShowroomItem, b: ShowroomItem) =>
+        a.kind === 'POSM' ? a.sortOrder - b.sortOrder : a.code.localeCompare(b.code) || a.vintage.localeCompare(b.vintage)
+    const rows = [...byItem].map(([id, bySpot]) => ({ item: itemById.get(id)!, bySpot, total: bySpot.reduce((t, n) => t + n, 0) }))
+        .sort((a, b) => order(a.item, b.item))
+    const spotTotals = stats.map(s => s.qty)
+    const vi = (a: string, b: string) => a.localeCompare(b, 'vi')
+    return {
+        group,
+        kind: spots[0].kind,
+        spots: stats.map(s => ({ ...s, people: s.people.sort(vi), checkers: s.checkers.sort(vi) })),
+        rows,
+        spotTotals,
+        total: spotTotals.reduce((t, n) => t + n, 0),
+        people: [...people].sort(vi),
+        checkers: [...checkers].sort(vi),
+        firstAt,
+        lastAt,
+        cells: stats.reduce((t, s) => t + s.cells, 0),
+        rechecked: stats.reduce((t, s) => t + s.rechecked, 0),
+        unchecked: unchecked.sort((a, b) => a.spot.sortOrder - b.spot.sortOrder || order(a.item, b.item)),
+        notes: (data.notes ?? [])
+            .filter(n => col.has(n.spotId))
+            .map(n => ({ spot: stats[col.get(n.spotId)!].spot, item: itemById.get(n.itemId) ?? null, note: n.note, writtenBy: n.writtenBy, updatedAt: n.updatedAt }))
+            .sort((a, b) => a.spot.sortOrder - b.spot.sortOrder || a.updatedAt.localeCompare(b.updatedAt)),
+    }
+}

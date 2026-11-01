@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { parseQty, normalizeVintage, cleanLabel, cleanNote, MAX_NOTE, summarize, buildCsv, checkState, canRecheck, type ShowroomData } from '@/app/kiem-ke/logic'
+import { parseQty, normalizeVintage, cleanLabel, cleanNote, MAX_NOTE, summarize, buildGroupReport, buildCsv, checkState, canRecheck, type ShowroomData } from '@/app/kiem-ke/logic'
 
 // ─── Setup Mocks ──────────────────────────────────
 
@@ -285,5 +285,29 @@ describe('kiem-ke notes', () => {
         expect(at).toBeGreaterThan(0)
         expect(rows[at + 2].startsWith('Tầng 1 - Kệ to,,(cả vị trí),,Lan,còn 2 thùng,')).toBe(true)
         expect(rows[at + 3].startsWith('Tầng 2 - Kệ hàng lẻ,L20040,Chablis,2022,Minh,"hộp rách, 1 chai",')).toBe(true)
+    })
+})
+
+describe('kiem-ke group report (biên bản)', () => {
+    it('one column per spot of the group, only rows with stock, totals and recheck progress', () => {
+        const d: ShowroomData = { ...data, spots: [...data.spots, { id: 't1-2', groupName: 'Tầng 1', kind: 'WINE', name: 'Kệ nhỏ', sortOrder: 3 }],
+            entries: [...data.entries, { spotId: 't1-2', itemId: 'b', qty: 2, countedBy: 'Hoa', countedAt: '2026-11-01T01:00:00.000Z' }],
+            notes: [{ spotId: 't1-1', itemId: '', note: 'còn 2 thùng', writtenBy: 'Lan', updatedAt: '2026-11-01T06:00:00.000Z' }] }
+        const r = buildGroupReport(d, 'Tầng 1')!
+        expect(r.spots.map(s => s.spot.id)).toEqual(['t1-1', 't1-2'])
+        expect(r.rows.map(x => [x.item.code, x.bySpot, x.total])).toEqual([['L10001', [0, 2], 2], ['L20019', [3, 0], 3]])
+        expect(r.total).toBe(5)
+        expect(r.people).toEqual(['Hoa', 'Lan'])
+        expect([r.rechecked, r.cells]).toEqual([1, 2])
+        expect(r.unchecked.map(u => u.item.code)).toEqual(['L10001'])
+        expect(r.notes[0]).toMatchObject({ item: null, note: 'còn 2 thùng' })
+        expect(r.firstAt).toBe('2026-11-01T01:00:00.000Z')
+    })
+
+    it('a zero count is a checked cell but not a row; unknown group gives null', () => {
+        const r = buildGroupReport(data, 'Tầng 2')!
+        expect(r.rows.map(x => x.item.code)).toEqual(['L20019'])
+        expect(r.cells).toBe(2)
+        expect(buildGroupReport(data, 'Tầng 9')).toBeNull()
     })
 })
