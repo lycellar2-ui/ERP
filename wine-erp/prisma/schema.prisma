@@ -1620,6 +1620,7 @@ model ShowroomCountSpot {
   sortOrder Int                    @default(0)
   entries   ShowroomCountEntry[]
   checks    ShowroomCountCheck[]
+  notes     ShowroomCountNote[]
   updatedAt DateTime               @default(now()) @updatedAt
 
   @@map("showroom_count_spots")
@@ -1669,6 +1670,21 @@ model ShowroomCountCheck {
 
   @@unique([spotId, itemId])
   @@map("showroom_count_checks")
+}
+
+// Ghi chú của người kiểm, riêng từng người; itemId = "" là ghi chú chung cho cả vị trí.
+// Tách khỏi số đếm để ghi chú được cả dòng chưa có số (vd "không thấy chai này").
+model ShowroomCountNote {
+  id        String            @id @default(cuid())
+  spotId    String
+  spot      ShowroomCountSpot @relation(fields: [spotId], references: [id], onDelete: Cascade)
+  itemId    String            @default("")
+  note      String
+  writtenBy String
+  updatedAt DateTime          @default(now()) @updatedAt
+
+  @@unique([spotId, itemId, writtenBy])
+  @@map("showroom_count_notes")
 }
 
 // ── Sample Wine Inventory (Tồn kho Hàng Mẫu) ──

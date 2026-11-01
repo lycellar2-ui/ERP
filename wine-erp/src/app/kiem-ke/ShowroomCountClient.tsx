@@ -2,20 +2,21 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, Minus, Plus, Search } from 'lucide-react'
-import { addShowroomVintage, getShowroomCount, renameShowroomSpots, saveShowroomCount, setShowroomRecheck } from './actions'
+import { addShowroomVintage, getShowroomCount, renameShowroomSpots, saveShowroomCount, saveShowroomNote, setShowroomRecheck } from './actions'
 import {
-    buildCsv, canRecheck, checkState, cleanLabel, normalizeSearch, normalizeVintage, sortItems, summarize,
-    type ShowroomCheck, type ShowroomData, type ShowroomEntry, type ShowroomItem, type ShowroomSpot,
+    buildCsv, canRecheck, checkState, cleanLabel, MAX_NOTE, normalizeSearch, normalizeVintage, sortItems, summarize,
+    type ShowroomCheck, type ShowroomData, type ShowroomEntry, type ShowroomItem, type ShowroomNote, type ShowroomSpot,
 } from './logic'
 
 type CountFilter = 'all' | 'done' | 'todo' | 'recheck'
 
 type View = 'spots' | 'count' | 'sum'
-type SumMode = 'wine' | 'spot' | 'people' | 'missing' | 'posm'
-const SUM_MODES: SumMode[] = ['wine', 'spot', 'people', 'missing', 'posm']
+type SumMode = 'wine' | 'spot' | 'people' | 'missing' | 'posm' | 'notes'
+const SUM_MODES: SumMode[] = ['wine', 'spot', 'people', 'missing', 'posm', 'notes']
 
 const WHO_KEY = 'kk_who'
 const PENDING_KEY = 'kk_pending' // numbers typed but not yet confirmed by the server
+const NOTE_DRAFT = 'kk_note|' // + who|spotId|itemId → note being typed, not saved yet
 const POLL_MS = 10_000
 const SAVE_DELAY_MS = 800
 
@@ -89,6 +90,11 @@ export function ShowroomCountClient({ initial, initialError }: { initial: Showro
     }, [data.entries])
     const mineOf = (sId: string, itemId: string) => byCell.get(k(sId, itemId))?.find(e => e.countedBy === who)
     const othersOf = (sId: string, itemId: string) => (byCell.get(k(sId, itemId)) ?? []).filter(e => e.countedBy !== who)
+    const notesByCell = useMemo(() => {
+        const m = new Map<string, ShowroomNote[]>()
+        for (const n of data.notes ?? []) { const key = k(n.spotId, n.itemId); m.set(key, [...(m.get(key) ?? []), n]) }
+        return m
+    }, [data.notes])
     const spotById = useMemo(() => new Map(data.spots.map(s => [s.id, s])), [data.spots])
     const groups = useMemo(() => {
         const out: Array<{ name: string; kind: string; spots: ShowroomSpot[] }> = []
@@ -256,6 +262,12 @@ export function ShowroomCountClient({ initial, initialError }: { initial: Showro
                             if (res.success) await refresh()
                             return res.success ? null : res.error
                         }}
+                        notesOf={(itemId: string) => notesByCell.get(k(spotId, itemId)) ?? []}
+                        onSaveNote={async (itemId: string, note: string) => {
+                            const res = await saveShowroomNote({ spotId, itemId, note, writtenBy: who })
+                            if (res.success) await refresh()
+                            return res.success ? null : res.error
+                        }}
                         saving={saving} errors={errors}
                         spotSummary={summary.spots.find(s => s.spot.id === spotId)}
                         errorNote={errorNote}
@@ -270,6 +282,8 @@ export function ShowroomCountClient({ initial, initialError }: { initial: Showro
                         errorNote={errorNote}
                         summary={summary}
                         groups={groups}
+                        notes={data.notes ?? []}
+                        items={data.items}
                         mode={sumMode} setMode={setSumMode}
                         q={sumQ} setQ={setSumQ}
                         onOpen={(id) => { openSpot(id); setFilter('done') }}
@@ -486,6 +500,8 @@ function CountView(props: {
     othersOf: (itemId: string) => ShowroomEntry[]
     checkOf: (itemId: string) => ShowroomCheck | undefined
     onRecheck: (itemId: string, checked: boolean) => Promise<string | null>
+    notesOf: (itemId: string) => ShowroomNote[]
+    onSaveNote: (itemId: string, note: string) => Promise<string | null>
     saving: Set<string>; errors: Map<string, string>
     spotSummary?: { lines: number; qty: number; cells: number; rechecked: number }
     errorNote: React.ReactNode; who: string
@@ -498,6 +514,32 @@ function CountView(props: {
     const [inlineFor, setInlineFor] = useState<string | null>(null)
     const [recheckMsg, setRecheckMsg] = useState<Map<string, string>>(new Map())
     const [rechecking, setRechecking] = useState<string | null>(null)
+    // Rows whose note editor is open; a draft left from before a reload reopens its editor.
+    const [noteOpen, setNoteOpen] = useState<Set<string>>(() => {
+        const open = new Set<string>()
+        try {
+            const prefix = `${NOTE_DRAFT}${props.who}|${spot.id}|`
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i)
+                if (key?.startsWith(prefix)) open.add(key.slice(prefix.length))
+            }
+        } catch { /* storage unavailable */ }
+        return open
+    })
+    const toggleNote = (itemId: string, open: boolean) => setNoteOpen(o => { const n = new Set(o); if (open) n.add(itemId); else n.delete(itemId); return n })
+    const noteButton = (itemId: string) => (
+        <button onClick={() => toggleNote(itemId, !noteOpen.has(itemId))} aria-expanded={noteOpen.has(itemId)}
+            className="py-1 font-semibold text-lys-teal-strong">
+            {props.notesOf(itemId).some(x => x.writtenBy === props.who) ? 'Sửa ghi chú' : '+ Ghi chú'}
+        </button>
+    )
+    const noteEditor = (itemId: string, placeholder?: string) => noteOpen.has(itemId) && (
+        <div className="col-span-2">
+            <NoteEditor draftKey={`${NOTE_DRAFT}${props.who}|${spot.id}|${itemId}`} placeholder={placeholder}
+                saved={props.notesOf(itemId).find(x => x.writtenBy === props.who)?.note ?? ''}
+                onSave={note => props.onSaveNote(itemId, note)} onClose={() => toggleNote(itemId, false)} />
+        </div>
+    )
     const shown = useMemo(() => {
         const q = normalizeSearch(props.q.trim())
         return props.items.filter(i => {
@@ -564,8 +606,10 @@ function CountView(props: {
                                         {item.isExtra && <span>thêm tay</span>}
                                         <button onClick={() => setInlineFor(f => f === item.id ? null : item.id)} aria-expanded={inlineFor === item.id}
                                             className="py-1 font-semibold text-lys-teal-strong">+ vintage khác</button>
+                                        {noteButton(item.id)}
                                     </div>
                                 )}
+                                {posm && <div className="mt-1 text-xs">{noteButton(item.id)}</div>}
                             </div>
                             <Stepper value={n} label={`Số lượng ${item.name} ${item.vintage}`} onChange={(v, delay) => props.setQty(spot.id, item.id, v, delay)} />
                             {inlineFor === item.id && (
@@ -576,6 +620,8 @@ function CountView(props: {
                                 </div>
                             )}
                             {stamp &&<div className={`col-span-2 text-xs ${err ? 'text-tone-danger-fg' : 'text-lys-muted'}`}>{stamp}</div>}
+                            <Notes notes={props.notesOf(item.id)} who={props.who} editing={noteOpen.has(item.id)} />
+                            {noteEditor(item.id)}
                             {others.length > 0 && (
                                 <div className="col-span-2 rounded-md bg-tone-warning-bg px-2 py-1 text-xs text-tone-warning-fg">
                                     Người khác đã đếm ở đây: {others.map(e => `${e.countedBy} ${e.qty}`).join(' · ')} — tổng vị trí <b>{total}</b>
@@ -594,6 +640,12 @@ function CountView(props: {
                         </div>
                     )
                 })}
+            </div>
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 rounded-xl border border-lys-border bg-lys-surface p-3">
+                <b className="text-sm">Ghi chú chung cho vị trí này</b>
+                <div className="text-xs">{noteButton('')}</div>
+                <Notes notes={props.notesOf('')} who={props.who} editing={noteOpen.has('')} />
+                {noteEditor('', 'Ví dụ: còn 2 thùng chưa mở ở góc kệ')}
             </div>
             {!posm && <AddVintage spot={spot} wines={props.allWine} code={addCode} setCode={setAddCode} who={props.who} onAdded={props.onAdded} />}
             <p className="text-sm text-lys-muted">Số tự lưu sau khi bạn ngừng gõ. Để trống nghĩa là chưa đếm; nhập 0 nghĩa là đã kiểm và không có {u2} nào.</p>
@@ -629,6 +681,53 @@ function Recheck({ check, total, canCheck, busy, error, onChange }: {
                 </>
             )}
             {error && <span className="w-full text-tone-danger-fg">{error}</span>}
+        </div>
+    )
+}
+
+/** Ghi chú đã lưu của mọi người cho một dòng; ghi chú của mình ẩn khi đang sửa. */
+function Notes({ notes, who, editing }: { notes: ShowroomNote[]; who: string; editing: boolean }) {
+    const shown = notes.filter(n => !(editing && n.writtenBy === who))
+    if (!shown.length) return null
+    return (
+        <div className="col-span-2 space-y-1">
+            {shown.map(n => (
+                <div key={n.writtenBy} className="whitespace-pre-wrap break-words rounded-md border-l-[3px] border-lys-teal-strong bg-lys-bg px-2 py-1 text-[13px]">
+                    <span className="font-semibold">{n.writtenBy === who ? 'Bạn' : n.writtenBy}:</span> {n.note}
+                    <span className="text-xs text-lys-muted"> · {when(n.updatedAt)}</span>
+                </div>
+            ))}
+        </div>
+    )
+}
+
+/** Ô ghi chú: bản đang gõ nằm trong localStorage tới khi lưu xong, nên reload không mất. Lưu rỗng = xoá ghi chú. */
+function NoteEditor({ draftKey, saved, onSave, onClose, placeholder = 'Ví dụ: hộp rách, nhãn bẩn, để lẫn vị trí khác…' }: {
+    draftKey: string; saved: string; onSave: (note: string) => Promise<string | null>; onClose: () => void; placeholder?: string
+}) {
+    const [text, setText] = useState(() => { try { return localStorage.getItem(draftKey) ?? saved } catch { return saved } })
+    const [busy, setBusy] = useState(false)
+    const [msg, setMsg] = useState('')
+    const keepDraft = (v: string) => { try { if (v === saved) localStorage.removeItem(draftKey); else localStorage.setItem(draftKey, v) } catch { /* private mode */ } }
+    const close = () => { try { localStorage.removeItem(draftKey) } catch { /* private mode */ } onClose() }
+    const save = async (v: string) => {
+        setBusy(true)
+        const err = await onSave(v)
+        setBusy(false)
+        if (err) { setMsg(err); return }
+        close()
+    }
+    return (
+        <div className="space-y-2 rounded-lg border border-lys-teal-strong bg-tone-brand-bg p-2">
+            <textarea autoFocus rows={2} maxLength={MAX_NOTE} value={text} placeholder={placeholder} aria-label="Ghi chú"
+                onChange={e => { setText(e.target.value); keepDraft(e.target.value) }}
+                className="w-full rounded-md border border-lys-border bg-lys-surface px-3 py-2 text-base" />
+            <div className="flex gap-2">
+                <button disabled={busy} onClick={() => save(text)} className="flex-1 rounded-lg bg-lys-teal-strong py-2.5 font-semibold text-white disabled:opacity-50">Lưu ghi chú</button>
+                {saved && <button disabled={busy} onClick={() => save('')} className="rounded-lg border border-tone-danger-fg px-3 py-2.5 font-semibold text-tone-danger-fg disabled:opacity-50">Xoá</button>}
+                <button disabled={busy} onClick={close} className="rounded-lg border border-lys-teal-strong px-3 py-2.5 font-semibold text-lys-teal-strong">Hủy</button>
+            </div>
+            {msg && <p className="text-sm text-tone-danger-fg">{msg}</p>}
         </div>
     )
 }
@@ -694,6 +793,7 @@ function AddVintage({ spot, wines, code, setCode, who, onAdded, inline = false }
 function SummaryView(props: {
     header: React.ReactNode; errorNote: React.ReactNode; summary: Summary
     groups: Array<{ name: string; kind: string; spots: ShowroomSpot[] }>
+    notes: ShowroomNote[]; items: ShowroomItem[]
     mode: SumMode; setMode: (m: SumMode) => void; q: string; setQ: (v: string) => void
     onOpen: (spotId: string) => void; onExport: () => void
 }) {
@@ -704,6 +804,7 @@ function SummaryView(props: {
     const hit = (i: ShowroomItem) => !q || normalizeSearch(`${i.name} ${i.code} ${i.vintage}`).includes(q)
     const modes: Array<[SumMode, string]> = [['wine', 'Theo rượu'], ['spot', 'Vị trí'], ['people', `Người kiểm (${s.people.length})`], ['missing', `Chưa thấy (${s.wineMissing.length})`]]
     if (s.posm.length) modes.push(['posm', 'POSM'])
+    modes.push(['notes', `Ghi chú (${props.notes.length})`])
     const row = 'grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 border-t border-lys-border p-3 first:border-t-0'
 
     return (
@@ -732,7 +833,7 @@ function SummaryView(props: {
                 ))}
             </div>
             {props.mode !== 'spot' && <SearchBox id="sumSearch" value={props.q} onChange={props.setQ}
-                placeholder={props.mode === 'posm' ? 'Tìm vật phẩm…' : props.mode === 'people' ? 'Tìm người kiểm, rượu, mã…' : 'Tìm tên rượu, mã, vintage…'} />}
+                placeholder={props.mode === 'posm' ? 'Tìm vật phẩm…' : props.mode === 'people' ? 'Tìm người kiểm, rượu, mã…' : props.mode === 'notes' ? 'Tìm ghi chú, người ghi, rượu…' : 'Tìm tên rượu, mã, vintage…'} />}
 
             <div className="overflow-hidden rounded-xl border border-lys-border bg-lys-surface">
                 {props.mode === 'wine' && (() => {
@@ -822,6 +923,24 @@ function SummaryView(props: {
                         ))}
                     </>
                 )}
+                {props.mode === 'notes' && (() => {
+                    const itemById = new Map(props.items.map(i => [i.id, i]))
+                    const list = props.groups.flatMap(g => g.spots)
+                        .flatMap(spot => props.notes.filter(n => n.spotId === spot.id).map(n => ({ n, spot, item: itemById.get(n.itemId) })))
+                        .filter(({ n, item }) => !q || normalizeSearch(`${n.note} ${n.writtenBy} ${item ? `${item.name} ${item.code} ${item.vintage}` : ''}`).includes(q))
+                    if (!list.length) return <p className="p-6 text-center text-lys-muted"><b className="block text-lys-primary">{q ? 'Không có ghi chú nào khớp' : 'Chưa có ghi chú'}</b>{q ? '' : 'Bấm “+ Ghi chú” ở từng dòng khi đếm.'}</p>
+                    return list.map(({ n, spot, item }) => (
+                        <button key={`${n.spotId}|${n.itemId}|${n.writtenBy}`} onClick={() => props.onOpen(spot.id)} className="block w-full border-t border-lys-border p-3 text-left first:border-t-0">
+                            <div className="text-xs text-lys-muted">{spot.name} · {n.writtenBy} · {when(n.updatedAt)}</div>
+                            <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[13px]">
+                                {item
+                                    ? <>{item.kind !== 'POSM' && <><Code c={item.code} /><Vintage v={item.vintage} /></>}<span>{item.name}</span></>
+                                    : <span className="font-semibold">Cả vị trí</span>}
+                            </div>
+                            <div className="mt-1 whitespace-pre-wrap break-words text-sm">{n.note}</div>
+                        </button>
+                    ))
+                })()}
                 {props.mode === 'spot' && props.groups.map(g => (
                     <div key={g.name}>
                         <div className="flex justify-between bg-tone-brand-bg px-3 py-2.5 text-[13px] font-bold uppercase tracking-wide text-tone-brand-fg">

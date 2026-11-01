@@ -242,4 +242,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-11-01 12:30 | Wine ERP v12.36 - Fix production build (BUG-144 committed, BUG-145 session rethrow)*
+*Last updated: 2026-11-01 12:50 | Wine ERP v12.37 - Kiểm kê showroom: ghi chú người kiểm (showroom_count_notes)*

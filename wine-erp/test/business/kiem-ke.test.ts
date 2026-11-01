@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { parseQty, normalizeVintage, cleanLabel, summarize, buildCsv, checkState, canRecheck, type ShowroomData } from '@/app/kiem-ke/logic'
+import { parseQty, normalizeVintage, cleanLabel, cleanNote, MAX_NOTE, summarize, buildCsv, checkState, canRecheck, type ShowroomData } from '@/app/kiem-ke/logic'
 
 // ─── Setup Mocks ──────────────────────────────────
 
@@ -8,12 +8,13 @@ const mockPrisma = {
     showroomCountItem: { findMany: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn(), upsert: vi.fn() },
     showroomCountEntry: { findMany: vi.fn(), findUnique: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn(), create: vi.fn() },
     showroomCountCheck: { findMany: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn() },
+    showroomCountNote: { findMany: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn() },
     $transaction: vi.fn(),
 }
 
 vi.mock('@/lib/db', () => ({ prisma: mockPrisma }))
 
-const { saveShowroomCount, addShowroomVintage, renameShowroomSpots, setShowroomRecheck } = await import('@/app/kiem-ke/actions')
+const { saveShowroomCount, addShowroomVintage, renameShowroomSpots, setShowroomRecheck, saveShowroomNote } = await import('@/app/kiem-ke/actions')
 
 beforeEach(() => vi.clearAllMocks())
 
@@ -236,5 +237,53 @@ describe('kiem-ke second-round recheck', () => {
         expect((await setShowroomRecheck({ spotId: 't1-1', itemId: 'b', checkedBy: 'Minh', checked: true })).success).toBe(false)
         expect((await setShowroomRecheck({ spotId: 't1-1', itemId: 'a', checkedBy: 'Minh', checked: false })).success).toBe(true)
         expect(mockPrisma.showroomCountCheck.deleteMany).toHaveBeenCalledWith({ where: { spotId: 't1-1', itemId: 'a' } })
+    })
+})
+
+describe('kiem-ke notes', () => {
+    it('trims a note, treats blank as delete and caps the length', () => {
+        expect(cleanNote('  hộp rách \r\n nhãn bẩn ')).toBe('hộp rách \n nhãn bẩn')
+        expect(cleanNote('   ')).toBeNull()
+        expect(cleanNote('x'.repeat(MAX_NOTE + 1))).toBe('invalid')
+    })
+
+    it('saves one note per person per row, even on a row without a count', async () => {
+        mockPrisma.showroomCountSpot.findUnique.mockResolvedValue({ kind: 'WINE' })
+        mockPrisma.showroomCountItem.findUnique.mockResolvedValue({ kind: 'WINE' })
+        const r = await saveShowroomNote({ spotId: 't1-1', itemId: 'b', note: ' không thấy chai ', writtenBy: 'Lan' })
+        expect(r.success).toBe(true)
+        expect(mockPrisma.showroomCountNote.upsert).toHaveBeenCalledWith({
+            where: { spotId_itemId_writtenBy: { spotId: 't1-1', itemId: 'b', writtenBy: 'Lan' } },
+            create: { spotId: 't1-1', itemId: 'b', writtenBy: 'Lan', note: 'không thấy chai' },
+            update: { note: 'không thấy chai' },
+        })
+        expect(mockPrisma.showroomCountEntry.upsert).not.toHaveBeenCalled()
+    })
+
+    it('a spot-wide note uses an empty itemId; a blank note deletes only the writer\'s own', async () => {
+        mockPrisma.showroomCountSpot.findUnique.mockResolvedValue({ kind: 'WINE' })
+        expect((await saveShowroomNote({ spotId: 't1-1', itemId: '', note: 'còn 2 thùng', writtenBy: 'Lan' })).success).toBe(true)
+        expect(mockPrisma.showroomCountItem.findUnique).not.toHaveBeenCalled()
+        expect((await saveShowroomNote({ spotId: 't1-1', itemId: 'a', note: '', writtenBy: 'Minh' })).success).toBe(true)
+        expect(mockPrisma.showroomCountNote.deleteMany).toHaveBeenCalledWith({ where: { spotId: 't1-1', itemId: 'a', writtenBy: 'Minh' } })
+    })
+
+    it('rejects a note without a name or for a missing row', async () => {
+        expect((await saveShowroomNote({ spotId: 't1-1', itemId: 'a', note: 'x', writtenBy: ' ' })).success).toBe(false)
+        mockPrisma.showroomCountSpot.findUnique.mockResolvedValue({ kind: 'WINE' })
+        mockPrisma.showroomCountItem.findUnique.mockResolvedValue(null)
+        expect((await saveShowroomNote({ spotId: 't1-1', itemId: 'gone', note: 'x', writtenBy: 'Lan' })).success).toBe(false)
+        expect(mockPrisma.showroomCountNote.upsert).not.toHaveBeenCalled()
+    })
+
+    it('CSV lists notes with spot, wine and writer', () => {
+        const rows = buildCsv({ ...data, notes: [
+            { spotId: 't2-1', itemId: 'c', note: 'hộp rách, 1 chai', writtenBy: 'Minh', updatedAt: '2026-11-01T06:00:00.000Z' },
+            { spotId: 't1-1', itemId: '', note: 'còn 2 thùng', writtenBy: 'Lan', updatedAt: '2026-11-01T06:05:00.000Z' },
+        ] }).split('\r\n')
+        const at = rows.indexOf('GHI CHÚ')
+        expect(at).toBeGreaterThan(0)
+        expect(rows[at + 2].startsWith('Tầng 1 - Kệ to,,(cả vị trí),,Lan,còn 2 thùng,')).toBe(true)
+        expect(rows[at + 3].startsWith('Tầng 2 - Kệ hàng lẻ,L20040,Chablis,2022,Minh,"hộp rách, 1 chai",')).toBe(true)
     })
 })

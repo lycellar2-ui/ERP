@@ -1034,5 +1034,6 @@ showroom_count_spots   (id "t1-1"…, groupName, kind WINE|POSM, name — đổi
 showroom_count_items   (kind, code, name, vintage "" = NV, isExtra = vintage thêm tay)  UNIQUE(kind, code, vintage)
 showroom_count_entries (spotId → spots, itemId → items, qty Int ≥ 0, countedBy text, countedAt) UNIQUE(spotId, itemId, countedBy) — mỗi người một dòng
 showroom_count_checks  (spotId, itemId, checkedBy ≠ người đếm, qtyAtCheck, checkedAt) UNIQUE(spotId, itemId) — dấu kiểm lại lần 2
+showroom_count_notes   (spotId, itemId '' = cả vị trí, note ≤500, writtenBy, updatedAt) UNIQUE(spotId, itemId, writtenBy) — ghi chú người kiểm
 ```
 Độc lập với Product/StockLot/StockCountSession — chỉ ghi nhận số đếm, không ảnh hưởng tồn kho. Tạo bằng `prisma/sql/create_showroom_count_tables.sql`.

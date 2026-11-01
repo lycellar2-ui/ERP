@@ -4,13 +4,13 @@
 // Writes only to the three showroom_count_* tables; never touches Product, StockLot or StockCount data.
 
 import { prisma } from '@/lib/db'
-import { canRecheck, cleanLabel, normalizeVintage, parseQty, type ShowroomData } from './logic'
+import { canRecheck, cleanLabel, cleanNote, MAX_NOTE, normalizeVintage, parseQty, type ShowroomData } from './logic'
 
 type Result<T = undefined> = { success: true; data?: T } | { success: false; error: string }
 
 export async function getShowroomCount(): Promise<Result<ShowroomData>> {
     try {
-        const [spots, items, entries, checks] = await Promise.all([
+        const [spots, items, entries, checks, notes] = await Promise.all([
             prisma.showroomCountSpot.findMany({ orderBy: { sortOrder: 'asc' } }),
             prisma.showroomCountItem.findMany({ orderBy: [{ kind: 'asc' }, { sortOrder: 'asc' }] }),
             prisma.showroomCountEntry.findMany({
@@ -18,6 +18,9 @@ export async function getShowroomCount(): Promise<Result<ShowroomData>> {
             }),
             prisma.showroomCountCheck.findMany({
                 select: { spotId: true, itemId: true, checkedBy: true, qtyAtCheck: true, checkedAt: true },
+            }),
+            prisma.showroomCountNote.findMany({
+                select: { spotId: true, itemId: true, note: true, writtenBy: true, updatedAt: true },
             }),
         ])
         return {
@@ -27,6 +30,7 @@ export async function getShowroomCount(): Promise<Result<ShowroomData>> {
                 items: items.map(({ id, kind, code, name, vintage, isExtra, sortOrder }) => ({ id, kind, code, name, vintage, isExtra, sortOrder })),
                 entries,
                 checks,
+                notes,
             })),
         }
     } catch (err) {
@@ -144,6 +148,43 @@ export async function setShowroomRecheck(input: {
     } catch (err) {
         console.error('[kiem-ke] setShowroomRecheck', err)
         return { success: false, error: 'Chưa lưu được dấu kiểm lại. Thử lại.' }
+    }
+}
+
+/**
+ * Ghi chú riêng của từng người cho một dòng (itemId) hoặc cả vị trí (itemId = "").
+ * Ghi chú rỗng = xoá. Không phụ thuộc số đếm: ghi được cả dòng chưa có số.
+ */
+export async function saveShowroomNote(input: {
+    spotId: string
+    itemId: string
+    note: string
+    writtenBy: string
+}): Promise<Result> {
+    const note = cleanNote(input.note)
+    if (note === 'invalid') return { success: false, error: `Ghi chú tối đa ${MAX_NOTE} ký tự.` }
+    const writtenBy = cleanLabel(input.writtenBy)
+    if (!writtenBy) return { success: false, error: 'Thiếu tên người kiểm.' }
+    const key = { spotId: String(input.spotId), itemId: String(input.itemId ?? ''), writtenBy }
+    try {
+        if (note === null) {
+            await prisma.showroomCountNote.deleteMany({ where: key })
+            return { success: true }
+        }
+        const [spot, item] = await Promise.all([
+            prisma.showroomCountSpot.findUnique({ where: { id: key.spotId }, select: { kind: true } }),
+            key.itemId ? prisma.showroomCountItem.findUnique({ where: { id: key.itemId }, select: { kind: true } }) : null,
+        ])
+        if (!spot || (key.itemId && !item)) return { success: false, error: 'Vị trí hoặc mặt hàng không còn tồn tại. Tải lại trang.' }
+        await prisma.showroomCountNote.upsert({
+            where: { spotId_itemId_writtenBy: key },
+            create: { ...key, note },
+            update: { note },
+        })
+        return { success: true }
+    } catch (err) {
+        console.error('[kiem-ke] saveShowroomNote', err)
+        return { success: false, error: 'Chưa lưu được ghi chú, kiểm tra mạng rồi bấm Lưu lại.' }
     }
 }
 

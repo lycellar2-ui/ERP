@@ -5,7 +5,12 @@ export type ShowroomSpot = { id: string; groupName: string; kind: string; name: 
 export type ShowroomItem = { id: string; kind: string; code: string; name: string; vintage: string; isExtra: boolean; sortOrder: number }
 export type ShowroomEntry = { spotId: string; itemId: string; qty: number; countedBy: string; countedAt: string }
 export type ShowroomCheck = { spotId: string; itemId: string; checkedBy: string; qtyAtCheck: number; checkedAt: string }
-export type ShowroomData = { spots: ShowroomSpot[]; items: ShowroomItem[]; entries: ShowroomEntry[]; checks: ShowroomCheck[] }
+/** itemId = "" → ghi chú chung cho cả vị trí. */
+export type ShowroomNote = { spotId: string; itemId: string; note: string; writtenBy: string; updatedAt: string }
+export type ShowroomData = {
+    spots: ShowroomSpot[]; items: ShowroomItem[]; entries: ShowroomEntry[]; checks: ShowroomCheck[]
+    notes?: ShowroomNote[]
+}
 
 export type CheckState = 'none' | 'ok' | 'changed'
 
@@ -35,6 +40,15 @@ export function normalizeVintage(raw: unknown): string | null {
     const s = String(raw ?? '').trim().toUpperCase()
     if (s === '' || s === 'NV') return ''
     return /^(19|20)\d\d$/.test(s) ? s : null
+}
+
+export const MAX_NOTE = 500
+
+/** Ghi chú: bỏ khoảng trắng đầu/cuối, tối đa MAX_NOTE ký tự; "" → null (xoá ghi chú); quá dài → "invalid". */
+export function cleanNote(raw: unknown): string | null | 'invalid' {
+    const s = String(raw ?? '').replace(/\r\n?/g, '\n').trim()
+    if (!s) return null
+    return s.length <= MAX_NOTE ? s : 'invalid'
 }
 
 /** Tên người kiểm / tên vị trí: bỏ khoảng trắng thừa, 1–60 ký tự. */
@@ -183,6 +197,19 @@ export function buildCsv(data: ShowroomData, exportedAt: Date = new Date()): str
             lines.push([p.name, label(l.spot), l.item.kind === 'POSM' ? '' : l.item.code, l.item.name,
                 l.item.kind === 'POSM' ? '' : l.item.vintage || 'NV', l.qty, new Date(l.at).toLocaleString('vi-VN'),
                 recheckCell(l.spot.id, l.item.id)])
+        }
+    }
+    const itemById = new Map(data.items.map(i => [i.id, i]))
+    const spotById = new Map(data.spots.map(sp => [sp.id, sp]))
+    const notes = (data.notes ?? []).filter(n => spotById.has(n.spotId))
+        .sort((a, b) => spotById.get(a.spotId)!.sortOrder - spotById.get(b.spotId)!.sortOrder || a.updatedAt.localeCompare(b.updatedAt))
+    if (notes.length) {
+        lines.push([], ['GHI CHÚ'], ['Vị trí', 'Mã hàng', 'Tên hàng', 'Vintage', 'Người ghi', 'Ghi chú', 'Thời gian'])
+        for (const n of notes) {
+            const it = itemById.get(n.itemId)
+            const wine = it && it.kind !== 'POSM'
+            lines.push([label(spotById.get(n.spotId)!), wine ? it.code : '', it ? it.name : '(cả vị trí)', wine ? it.vintage || 'NV' : '',
+                n.writtenBy, n.note, new Date(n.updatedAt).toLocaleString('vi-VN')])
         }
     }
     lines.push([], ['Người kiểm', s.people.map(p => p.name).join(', ')], ['Xuất lúc', exportedAt.toLocaleString('vi-VN')])
