@@ -242,4 +242,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-11-01 13:20 | Wine ERP v12.38 - Kiểm kê showroom: biên bản in theo khu vực (/kiem-ke/bien-ban)*
+*Last updated: 2026-11-01 13:40 | Wine ERP v12.39 - Kiểm kê showroom: biên bản A4 dọc gọn, chốt vintage 7 mã NV*
