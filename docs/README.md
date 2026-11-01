@@ -242,4 +242,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-10-24 21:05 | Wine ERP v12.32 - Channel Pricing Sync, Quick SKU Price Entry & Bulk Excel Price Upload*
+*Last updated: 2026-11-01 10:05 | Wine ERP v12.33 - Public Showroom Quick Count (/kiem-ke)*

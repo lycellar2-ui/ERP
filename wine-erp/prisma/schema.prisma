@@ -1608,6 +1608,51 @@ model StockCountLine {
   @@map("stock_count_lines")
 }
 
+// ── Showroom Quick Count (Kiểm kê nhanh showroom — trang công khai /kiem-ke) ──
+// Bảng độc lập, không nối Product/Location: chỉ ghi nhận số đếm thực tế theo vị trí.
+// Tạo bằng prisma/create-showroom-count-tables.ts (CREATE TABLE IF NOT EXISTS).
+
+model ShowroomCountSpot {
+  id        String                 @id // t1-1, t2-3, mau-1, posm-1
+  groupName String                 // Tầng 1, Tầng 2, Hàng mẫu, POSM
+  kind      String                 @default("WINE") // WINE | POSM
+  name      String
+  sortOrder Int                    @default(0)
+  entries   ShowroomCountEntry[]
+  updatedAt DateTime               @default(now()) @updatedAt
+
+  @@map("showroom_count_spots")
+}
+
+model ShowroomCountItem {
+  id        String                 @id @default(cuid())
+  kind      String                 @default("WINE") // WINE | POSM
+  code      String                 // L20019 hoặc P01
+  name      String
+  vintage   String                 @default("") // "" = NV
+  isExtra   Boolean                @default(false) // Vintage người kiểm thêm tay
+  sortOrder Int                    @default(0)
+  entries   ShowroomCountEntry[]
+  createdAt DateTime               @default(now())
+
+  @@unique([kind, code, vintage])
+  @@map("showroom_count_items")
+}
+
+model ShowroomCountEntry {
+  id        String            @id @default(cuid())
+  spotId    String
+  spot      ShowroomCountSpot @relation(fields: [spotId], references: [id], onDelete: Cascade)
+  itemId    String
+  item      ShowroomCountItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  qty       Int               // 0 = đã kiểm, không có hàng
+  countedBy String
+  countedAt DateTime          @default(now())
+
+  @@unique([spotId, itemId])
+  @@map("showroom_count_entries")
+}
+
 // ── Sample Wine Inventory (Tồn kho Hàng Mẫu) ──
 
 enum SampleOriginType {

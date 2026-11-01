@@ -66,7 +66,8 @@ export async function middleware(request: NextRequest) {
     }
 
     const authOnlyPaths = ['/login', '/forgot-password', '/reset-password']
-    const publicPaths = [...authOnlyPaths, '/verify']
+    // '/kiem-ke': trang kiểm kê nhanh showroom, dùng tạm không cần đăng nhập (chỉ ghi vào bảng showroom_count_*)
+    const publicPaths = [...authOnlyPaths, '/verify', '/kiem-ke']
     if (!isProduction && (
         request.nextUrl.pathname.startsWith('/dashboard/sales') ||
         request.nextUrl.pathname.startsWith('/dashboard/price-list') ||

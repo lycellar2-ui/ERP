@@ -798,3 +798,14 @@ getGRVarianceReport(filters?: { warehouseId?, dateFrom?, dateTo? })
 
 
 
+
+
+## Kiểm kê nhanh showroom (trang công khai `/kiem-ke`)
+
+Công cụ tạm để nhân viên showroom đếm hàng trên điện thoại, **không cần đăng nhập** (`/kiem-ke` nằm trong `publicPaths` của `src/middleware.ts`).
+
+- **Code**: `src/app/kiem-ke/` — `page.tsx` (SSR dữ liệu ban đầu), `ShowroomCountClient.tsx` (UI mobile), `actions.ts` (server actions), `logic.ts` (hàm thuần: kiểm tra input, gộp tổng, xuất CSV). Test: `test/business/kiem-ke.test.ts`.
+- **Dữ liệu**: 3 bảng độc lập `showroom_count_spots`, `showroom_count_items`, `showroom_count_entries` — **không** nối Product/StockLot/StockCountSession và không sinh phiếu điều chỉnh. Tạo bảng: `npx prisma db execute --file prisma/sql/create_showroom_count_tables.sql`; nạp vị trí + danh mục (172 dòng rượu mã+vintage, 38 POSM, 16 vị trí từ `Phieu kiem hang.xlsx`): `prisma/sql/seed_showroom_count.sql` (ON CONFLICT DO NOTHING, chạy lại an toàn).
+- **Luồng**: nhập tên người kiểm (lưu localStorage) → chọn vị trí (Tầng 1 / Tầng 2 / Hàng mẫu / POSM) → đếm bằng −/+ hoặc gõ số, tự lưu sau 0,8s; để trống = chưa đếm, 0 = đã kiểm không có hàng. "+ vintage khác" tạo `ShowroomCountItem.isExtra` (hiện ở mọi vị trí). Trang tự tải lại dữ liệu mỗi 10s để nhiều người đếm cùng lúc.
+- **Tổng hợp**: theo rượu (tổng + theo tầng + từng vị trí), theo vị trí, "Chưa thấy", POSM (tính riêng, không cộng vào số chai); tải CSV mỗi vị trí một cột như phiếu giấy.
+- **Giới hạn**: không có xoá/làm đợt mới trên giao diện (tránh người ngoài xoá dữ liệu) — muốn làm đợt mới thì xoá `showroom_count_entries` bằng SQL. Ai có link đều ghi được số.
