@@ -442,6 +442,7 @@ function CountView(props: {
     const posm = spot.kind === 'POSM'
     const [u1, u2] = unitOf(spot)
     const [addCode, setAddCode] = useState<string | null>(null)
+    const [inlineFor, setInlineFor] = useState<string | null>(null)
     const [recheckMsg, setRecheckMsg] = useState<Map<string, string>>(new Map())
     const [rechecking, setRechecking] = useState<string | null>(null)
     const shown = useMemo(() => {
@@ -508,13 +509,20 @@ function CountView(props: {
                                     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-lys-muted">
                                         <Vintage v={item.vintage} /><Code c={item.code} />
                                         {item.isExtra && <span>thêm tay</span>}
-                                        <button onClick={() => { setAddCode(item.code); setTimeout(() => document.getElementById('addVin')?.focus(), 30) }}
+                                        <button onClick={() => setInlineFor(f => f === item.id ? null : item.id)} aria-expanded={inlineFor === item.id}
                                             className="py-1 font-semibold text-lys-teal-strong">+ vintage khác</button>
                                     </div>
                                 )}
                             </div>
                             <Stepper value={n} label={`Số lượng ${item.name} ${item.vintage}`} onChange={(v, delay) => props.setQty(spot.id, item.id, v, delay)} />
-                            {stamp && <div className={`col-span-2 text-xs ${err ? 'text-tone-danger-fg' : 'text-lys-muted'}`}>{stamp}</div>}
+                            {inlineFor === item.id && (
+                                // Opens right under the row: the bottom-of-list form was off-screen on phones.
+                                <div className="col-span-2">
+                                    <AddVintage inline spot={spot} wines={props.allWine} code={item.code}
+                                        setCode={c => { if (c === null) setInlineFor(null) }} who={props.who} onAdded={props.onAdded} />
+                                </div>
+                            )}
+                            {stamp &&<div className={`col-span-2 text-xs ${err ? 'text-tone-danger-fg' : 'text-lys-muted'}`}>{stamp}</div>}
                             {others.length > 0 && (
                                 <div className="col-span-2 rounded-md bg-tone-warning-bg px-2 py-1 text-xs text-tone-warning-fg">
                                     Người khác đã đếm ở đây: {others.map(e => `${e.countedBy} ${e.qty}`).join(' · ')} — tổng vị trí <b>{total}</b>
@@ -586,8 +594,9 @@ function Stepper({ value, label, onChange }: { value: number | null; label: stri
     )
 }
 
-function AddVintage({ spot, wines, code, setCode, who, onAdded }: {
+function AddVintage({ spot, wines, code, setCode, who, onAdded, inline = false }: {
     spot: ShowroomSpot; wines: ShowroomItem[]; code: string | null; setCode: (c: string | null) => void; who: string; onAdded: (code: string) => Promise<void>
+    inline?: boolean // opened from a row: the wine is fixed, only the year is asked
 }) {
     const codes = useMemo(() => [...new Map(wines.map(w => [w.code, w.name])).entries()], [wines])
     const [vin, setVin] = useState('')
@@ -606,14 +615,19 @@ function AddVintage({ spot, wines, code, setCode, who, onAdded }: {
         await onAdded(code)
     }
     return (
-        <div className="space-y-2 rounded-xl border border-lys-border bg-lys-surface p-3">
-            <b>Thêm vintage khác</b>
+        <div className={`space-y-2 rounded-xl border p-3 ${inline ? 'border-lys-teal-strong bg-tone-brand-bg' : 'border-lys-border bg-lys-surface'}`}>
+            <b className="text-sm">{inline ? <>Thêm vintage khác cho <Code c={code} /></> : 'Thêm vintage khác'}</b>
             <div className="flex gap-2">
-                <select aria-label="Chọn rượu" value={code} onChange={e => setCode(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-lys-border bg-lys-surface p-2.5 text-sm">
-                    {codes.map(([c, n]) => <option key={c} value={c}>{c} · {n}</option>)}
-                </select>
-                <input id="addVin" inputMode="numeric" maxLength={4} placeholder="Năm" aria-label="Vintage" value={vin} onChange={e => setVin(e.target.value)}
-                    className="w-24 rounded-lg border border-lys-border px-3 text-base" />
+                {inline ? (
+                    <span className="min-w-0 flex-1 self-center text-sm text-lys-secondary">{codes.find(([c]) => c === code)?.[1]}</span>
+                ) : (
+                    <select aria-label="Chọn rượu" value={code} onChange={e => setCode(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-lys-border bg-lys-surface p-2.5 text-sm">
+                        {codes.map(([c, n]) => <option key={c} value={c}>{c} · {n}</option>)}
+                    </select>
+                )}
+                <input id={inline ? `addVin-${code}` : 'addVin'} autoFocus={inline} inputMode="numeric" maxLength={4} placeholder="Năm" aria-label="Vintage"
+                    value={vin} onChange={e => setVin(e.target.value.replace(/\D/g, ''))} onKeyDown={e => e.key === 'Enter' && add()}
+                    className="w-24 rounded-lg border border-lys-border bg-lys-surface px-3 py-2.5 text-base" />
             </div>
             <div className="flex gap-2">
                 <button disabled={busy} onClick={add} className="flex-1 rounded-lg bg-lys-teal-strong py-3 font-semibold text-white disabled:opacity-50">Thêm vào vị trí này</button>
