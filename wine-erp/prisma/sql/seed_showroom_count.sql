@@ -7,18 +7,19 @@ INSERT INTO showroom_count_spots (id, "groupName", kind, name, "sortOrder") VALU
 ('t1-2', 'Tầng 1', 'WINE', 'Phòng ngoài T1 - kệ nhỏ', 1),
 ('t1-3', 'Tầng 1', 'WINE', 'Phòng trong T1 - Tủ lạnh', 2),
 ('t1-4', 'Tầng 1', 'WINE', 'Phòng trong T1 - kệ to', 3),
-('t1-5', 'Tầng 1', 'WINE', 'Phòng trong T1 - kệ cạnh tủ lạnh', 4),
-('t1-6', 'Tầng 1', 'WINE', 'Phòng trong T1 - Kệ WC', 5),
-('t2-1', 'Tầng 2', 'WINE', 'Khu vực cạnh cửa ra vào', 6),
-('t2-2', 'Tầng 2', 'WINE', 'Khu vực cửa sổ', 7),
-('t2-3', 'Tầng 2', 'WINE', 'Khu vực tường lớn', 8),
-('t2-4', 'Tầng 2', 'WINE', 'Kệ hàng lẻ', 9),
-('t2-5', 'Tầng 2', 'WINE', 'Khu vực bồn rửa', 10),
-('t2-6', 'Tầng 2', 'WINE', 'Khu vực cửa phụ', 11),
-('t2-7', 'Tầng 2', 'WINE', 'Khu vực cầu thang', 12),
-('t2-8', 'Tầng 2', 'WINE', 'Kệ cạnh hàng lẻ', 13),
-('mau-1', 'Hàng mẫu', 'WINE', 'Hàng mẫu', 14),
-('posm-1', 'POSM', 'POSM', 'Kho T2', 15)
+('t1-5', 'Tầng 1', 'WINE', 'Phòng trong T1 - kệ cạnh tủ lạnh (trên)', 4),
+('t1-7', 'Tầng 1', 'WINE', 'Phòng trong T1 - kệ cạnh tủ lạnh (dưới)', 5),
+('t1-6', 'Tầng 1', 'WINE', 'Phòng trong T1 - Kệ WC', 6),
+('t2-1', 'Tầng 2', 'WINE', 'Khu vực cạnh cửa ra vào', 7),
+('t2-2', 'Tầng 2', 'WINE', 'Khu vực cửa sổ', 8),
+('t2-3', 'Tầng 2', 'WINE', 'Khu vực tường lớn', 9),
+('t2-4', 'Tầng 2', 'WINE', 'Kệ hàng lẻ', 10),
+('t2-5', 'Tầng 2', 'WINE', 'Khu vực bồn rửa', 11),
+('t2-6', 'Tầng 2', 'WINE', 'Khu vực cửa phụ', 12),
+('t2-7', 'Tầng 2', 'WINE', 'Khu vực cầu thang', 13),
+('t2-8', 'Tầng 2', 'WINE', 'Kệ cạnh hàng lẻ', 14),
+('mau-1', 'Hàng mẫu', 'WINE', 'Hàng mẫu', 15),
+('posm-1', 'POSM', 'POSM', 'Kho T2', 16)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO showroom_count_items (id, kind, code, name, vintage, "sortOrder") VALUES

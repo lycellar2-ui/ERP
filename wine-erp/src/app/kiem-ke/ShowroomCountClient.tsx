@@ -15,6 +15,7 @@ type SumMode = 'wine' | 'spot' | 'people' | 'missing' | 'posm'
 const SUM_MODES: SumMode[] = ['wine', 'spot', 'people', 'missing', 'posm']
 
 const WHO_KEY = 'kk_who'
+const PENDING_KEY = 'kk_pending' // numbers typed but not yet confirmed by the server
 const POLL_MS = 10_000
 const SAVE_DELAY_MS = 800
 
@@ -133,6 +134,58 @@ export function ShowroomCountClient({ initial, initialError }: { initial: Showro
         }
     }, [who])
     useEffect(() => { flushRef.current = flush }, [flush])
+
+    // ── Reload safety ──
+    // A number typed less than SAVE_DELAY_MS ago (or whose save failed) lives only in memory.
+    // Keep those numbers in localStorage, resend them after a reload, save at once when the page is
+    // hidden/closed, and let the browser ask before leaving while a save is still pending.
+    const replayed = useRef(false)
+    useEffect(() => {
+        if (!who || replayed.current) return
+        replayed.current = true
+        try {
+            const raw = localStorage.getItem(PENDING_KEY)
+            const pending = raw ? JSON.parse(raw) as { who: string; items: Array<[string, number | null]> } : null
+            if (pending?.who !== who || !pending.items?.length) return
+            setOverrides(new Map(pending.items))
+            for (const [key] of pending.items) {
+                const [sId, itemId] = key.split('|')
+                timers.current.set(key, setTimeout(() => flushRef.current(sId, itemId), 300))
+            }
+        } catch { /* storage unavailable: nothing to replay */ }
+    }, [who])
+
+    useEffect(() => {
+        if (!who || !replayed.current) return
+        try {
+            if (overrides.size) localStorage.setItem(PENDING_KEY, JSON.stringify({ who, items: [...overrides] }))
+            else localStorage.removeItem(PENDING_KEY)
+        } catch { /* private mode: in-memory only */ }
+    }, [overrides, who])
+
+    useEffect(() => {
+        const flushAll = () => {
+            for (const [key, t] of [...timers.current]) {
+                clearTimeout(t)
+                const [sId, itemId] = key.split('|')
+                flushRef.current(sId, itemId)
+            }
+        }
+        const onHide = () => { if (document.visibilityState === 'hidden') flushAll() }
+        const onBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (!timers.current.size && !inflight.current.size) return
+            flushAll()
+            e.preventDefault()
+        }
+        document.addEventListener('visibilitychange', onHide)
+        window.addEventListener('pagehide', flushAll)
+        window.addEventListener('beforeunload', onBeforeUnload)
+        return () => {
+            document.removeEventListener('visibilitychange', onHide)
+            window.removeEventListener('pagehide', flushAll)
+            window.removeEventListener('beforeunload', onBeforeUnload)
+        }
+    }, [])
 
     const setQty = (sId: string, itemId: string, qty: number | null, delay = SAVE_DELAY_MS) => {
         const key = k(sId, itemId)
