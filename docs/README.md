@@ -242,4 +242,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-11-01 11:50 | Wine ERP v12.35 - Showroom Quick Count: second-round recheck tick*
+*Last updated: 2026-11-01 12:30 | Wine ERP v12.36 - Fix production build (BUG-144 committed, BUG-145 session rethrow)*

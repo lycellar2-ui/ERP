@@ -4262,3 +4262,27 @@ Qua đợt kiểm tra chuyên sâu toàn bộ 38 routes và tất cả component
 
 ### Bài học
 > ⚠️ **RULE 144: Trong các tệp có chỉ thị `'use server'` (Server Actions), TUYỆT ĐỐI KHÔNG `export` các hàm đồng bộ (synchronous functions). Nếu hàm chỉ làm nhiệm vụ tính toán, chuyển đổi hoặc logic nội bộ (helper), BẮT BUỘC giữ nguyên dạng hàm nội bộ không export (`function helperName(...)`). Nếu hàm cần tái sử dụng ở client hoặc component khác, BẮT BUỘC khai báo `export async function` hoặc chuyển sang một tệp thư viện thuần túy (`lib/`) không chứa chỉ thị `'use server'`.**
+
+## BUG-145: Build Production Vỡ Khi Prerender Trang Cần Đăng Nhập — `try/catch` Nuốt Tín Hiệu Dynamic Của `headers()`
+
+**Ngày:** 2026-11-01
+**Severity:** 🔴 High — Vercel build thất bại, không deploy được
+
+### Triệu chứng
+- `next build` dừng ở bước "Generating static pages":
+  ```
+  Error occurred prerendering page "/dashboard/settings/approval-matrix"
+  Error: Bạn chưa đăng nhập. Vui lòng đăng nhập lại.
+  ```
+  (lần lượt cả `/dashboard/settings`…). Dev server chạy bình thường nên không phát hiện sớm.
+- Cùng đợt, build Vercel còn vỡ ở BUG-144 vì bản sửa `proposals/actions.ts` chưa được commit.
+
+### Nguyên nhân gốc rễ
+- Lúc build, `headers()` / `cookies()` ném một lỗi nội bộ của Next.js để đánh dấu route là dynamic (render theo request).
+- `getCurrentUser()` trong `src/lib/session.ts` bọc `headers()` và cả khối Supabase trong `try { } catch { }` rỗng → nuốt tín hiệu đó → Next coi trang là static, prerender không có session → `requireAuth()` ném lỗi.
+
+### Cách khắc phục
+- Gọi `unstable_rethrow(err)` (từ `next/navigation`) ở đầu cả hai khối `catch` trong `getCurrentUser()` để các lỗi nội bộ của Next (dynamic usage, redirect, notFound) đi tiếp; lỗi thật vẫn rơi về fallback như cũ.
+
+### Bài học
+> ⚠️ **RULE 145: Mọi `try/catch` bao quanh `headers()`, `cookies()`, `redirect()`, `notFound()` hoặc code gọi chúng PHẢI gọi `unstable_rethrow(err)` đầu khối `catch`. Không bao giờ để `catch {}` rỗng nuốt lỗi nội bộ của Next.js. Trước khi push lên main, chạy `npm run build` (không chỉ `next dev`) để bắt lỗi prerender.**
