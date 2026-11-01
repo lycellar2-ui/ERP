@@ -242,4 +242,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-11-01 10:05 | Wine ERP v12.33 - Public Showroom Quick Count (/kiem-ke)*
+*Last updated: 2026-11-01 11:20 | Wine ERP v12.34 - Showroom Quick Count: per-person counts, counter view, catalog fixes*

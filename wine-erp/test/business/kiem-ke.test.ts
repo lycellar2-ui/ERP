@@ -81,6 +81,29 @@ describe('kiem-ke summary', () => {
         expect(t2).toMatchObject({ lines: 1, qty: 5, people: ['Minh'], lastAt: '2026-11-01T03:05:00.000Z', touched: true })
     })
 
+    it('adds up two people counting the same spot instead of overwriting', () => {
+        const two: ShowroomData = { ...data, entries: [...data.entries,
+            { spotId: 't1-1', itemId: 'a', qty: 4, countedBy: 'Minh', countedAt: '2026-11-01T02:10:00.000Z' }] }
+        const s = summarize(two)
+        const a = s.wineFound.find(x => x.item.id === 'a')!
+        expect(a.total).toBe(12)
+        expect(a.byGroup['Tầng 1']).toBe(7)
+        expect(a.parts).toContainEqual(expect.objectContaining({ qty: 3, by: 'Lan' }))
+        expect(a.parts).toContainEqual(expect.objectContaining({ qty: 4, by: 'Minh' }))
+        expect(buildCsv(two).split('\r\n')).toContain('L20019,Chateauneuf du Pape,2021,7,5,12')
+    })
+
+    it('lists what each person counted', () => {
+        const s = summarize(data)
+        expect(s.people.map(p => p.name)).toEqual(['Lan', 'Minh'])
+        const lan = s.people[0]
+        expect(lan).toMatchObject({ wine: 3, posm: 12 })
+        expect(lan.lines.map(l => [l.spot.id, l.item.id, l.qty])).toEqual([['t1-1', 'a', 3], ['posm-1', 'p', 12]])
+        const csv = buildCsv(data).split('\r\n')
+        expect(csv).toContain('CHI TIẾT THEO NGƯỜI KIỂM')
+        expect(csv.some(r => r.startsWith('Minh,Tầng 2 - Kệ hàng lẻ,L20040,Chablis,2022,0,'))).toBe(true)
+    })
+
     it('exports a sheet with one column per spot and a POSM section', () => {
         const csv = buildCsv(data, new Date('2026-11-01T05:00:00Z'))
         const rows = csv.replace(/^﻿/, '').split('\r\n')
@@ -109,8 +132,8 @@ describe('kiem-ke actions', () => {
         const r = await saveShowroomCount({ spotId: 't1-1', itemId: 'a', qty: 4, countedBy: 'Lan' })
         expect(r.success).toBe(true)
         expect(mockPrisma.showroomCountEntry.upsert).toHaveBeenCalledWith(expect.objectContaining({
-            where: { spotId_itemId: { spotId: 't1-1', itemId: 'a' } },
-            create: { spotId: 't1-1', itemId: 'a', qty: 4, countedBy: 'Lan' },
+            where: { spotId_itemId_countedBy: { spotId: 't1-1', itemId: 'a', countedBy: 'Lan' } },
+            create: { spotId: 't1-1', itemId: 'a', countedBy: 'Lan', qty: 4 },
         }))
     })
 
@@ -125,7 +148,8 @@ describe('kiem-ke actions', () => {
     it('blank quantity deletes the entry', async () => {
         const r = await saveShowroomCount({ spotId: 't1-1', itemId: 'a', qty: null, countedBy: 'Lan' })
         expect(r.success).toBe(true)
-        expect(mockPrisma.showroomCountEntry.deleteMany).toHaveBeenCalledWith({ where: { spotId: 't1-1', itemId: 'a' } })
+        // only this person's own number is removed
+        expect(mockPrisma.showroomCountEntry.deleteMany).toHaveBeenCalledWith({ where: { spotId: 't1-1', itemId: 'a', countedBy: 'Lan' } })
     })
 
     it('adds an unlisted vintage and records 0 at the current spot', async () => {

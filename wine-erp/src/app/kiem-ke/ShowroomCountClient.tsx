@@ -9,7 +9,8 @@ import {
 } from './logic'
 
 type View = 'spots' | 'count' | 'sum'
-type SumMode = 'wine' | 'spot' | 'missing' | 'posm'
+type SumMode = 'wine' | 'spot' | 'people' | 'missing' | 'posm'
+const SUM_MODES: SumMode[] = ['wine', 'spot', 'people', 'missing', 'posm']
 
 const WHO_KEY = 'kk_who'
 const POLL_MS = 10_000
@@ -47,7 +48,21 @@ export function ShowroomCountClient({ initial, initialError }: { initial: Showro
 
     useEffect(() => {
         try { setWho(localStorage.getItem(WHO_KEY) || '') } catch { setWho('') }
+        // F5 returns to the same screen: view/spot/tab live in the URL (?v=count&s=t1-1, ?v=sum&m=people)
+        const p = new URLSearchParams(window.location.search)
+        const v = p.get('v'), s = p.get('s'), m = p.get('m') as SumMode | null
+        if (v === 'count' && s) { setSpotId(s); setView('count') }
+        else if (v === 'sum') { setView('sum'); if (m && SUM_MODES.includes(m)) setSumMode(m) }
     }, [])
+
+    useEffect(() => {
+        if (who === null) return
+        const p = new URLSearchParams()
+        if (view === 'count' && spotId) { p.set('v', 'count'); p.set('s', spotId) }
+        if (view === 'sum') { p.set('v', 'sum'); p.set('m', sumMode) }
+        const qs = p.toString()
+        window.history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname)
+    }, [who, view, spotId, sumMode])
 
     const refresh = useCallback(async () => {
         const res = await getShowroomCount()
@@ -63,7 +78,14 @@ export function ShowroomCountClient({ initial, initialError }: { initial: Showro
         return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVis) }
     }, [refresh])
 
-    const entryMap = useMemo(() => new Map(data.entries.map(e => [k(e.spotId, e.itemId), e])), [data.entries])
+    // Every person keeps their own number per spot + item; group them per cell.
+    const byCell = useMemo(() => {
+        const m = new Map<string, ShowroomEntry[]>()
+        for (const e of data.entries) { const key = k(e.spotId, e.itemId); m.set(key, [...(m.get(key) ?? []), e]) }
+        return m
+    }, [data.entries])
+    const mineOf = (sId: string, itemId: string) => byCell.get(k(sId, itemId))?.find(e => e.countedBy === who)
+    const othersOf = (sId: string, itemId: string) => (byCell.get(k(sId, itemId)) ?? []).filter(e => e.countedBy !== who)
     const spotById = useMemo(() => new Map(data.spots.map(s => [s.id, s])), [data.spots])
     const groups = useMemo(() => {
         const out: Array<{ name: string; kind: string; spots: ShowroomSpot[] }> = []
@@ -79,7 +101,7 @@ export function ShowroomCountClient({ initial, initialError }: { initial: Showro
 
     const qtyOf = (sId: string, itemId: string) => {
         const key = k(sId, itemId)
-        return overrides.has(key) ? overrides.get(key)! : entryMap.get(key)?.qty ?? null
+        return overrides.has(key) ? overrides.get(key)! : mineOf(sId, itemId)?.qty ?? null
     }
 
     const flush = useCallback(async (sId: string, itemId: string) => {
@@ -95,7 +117,7 @@ export function ShowroomCountClient({ initial, initialError }: { initial: Showro
         setSaving(s => { const n = new Set(s); n.delete(key); return n })
         if (res.success) {
             setData(d => {
-                const rest = d.entries.filter(e => !(e.spotId === sId && e.itemId === itemId))
+                const rest = d.entries.filter(e => !(e.spotId === sId && e.itemId === itemId && e.countedBy === who))
                 const next: ShowroomEntry[] = qty === null ? rest : [...rest, { spotId: sId, itemId, qty, countedBy: who, countedAt: new Date().toISOString() }]
                 return { ...d, entries: next }
             })
@@ -123,7 +145,12 @@ export function ShowroomCountClient({ initial, initialError }: { initial: Showro
     }
 
     if (who === null) return null
-    if (!who) return <Welcome onDone={name => { try { localStorage.setItem(WHO_KEY, name) } catch { /* private mode */ } setWho(name) }} />
+    if (!who) return (
+        <Welcome
+            previous={(() => { try { return localStorage.getItem(WHO_KEY) ?? '' } catch { return '' } })()}
+            onDone={name => { try { localStorage.setItem(WHO_KEY, name) } catch { /* private mode */ } setOverrides(new Map()); setWho(name) }}
+        />
+    )
 
     const summary = summarize({ ...data, entries: mergedEntries(data.entries, overrides, who) })
     const header = (title: string, eyebrow: string) => (
@@ -166,7 +193,8 @@ export function ShowroomCountClient({ initial, initialError }: { initial: Showro
                         allWine={wineItems}
                         q={q} setQ={setQ} filter={filter} setFilter={setFilter}
                         qtyOf={qtyOf} setQty={setQty}
-                        entryOf={(itemId: string) => entryMap.get(k(spotId, itemId))}
+                        entryOf={(itemId: string) => mineOf(spotId, itemId)}
+                        othersOf={(itemId: string) => othersOf(spotId, itemId)}
                         saving={saving} errors={errors}
                         spotSummary={summary.spots.find(s => s.spot.id === spotId)}
                         errorNote={errorNote}
@@ -206,11 +234,13 @@ export function ShowroomCountClient({ initial, initialError }: { initial: Showro
 
 function mergedEntries(entries: ShowroomEntry[], overrides: Map<string, number | null>, who: string): ShowroomEntry[] {
     if (!overrides.size) return entries
-    const map = new Map(entries.map(e => [k(e.spotId, e.itemId), e]))
+    // Overrides are this person's unsaved numbers; other people's rows stay untouched.
+    const map = new Map(entries.map(e => [`${k(e.spotId, e.itemId)}|${e.countedBy}`, e]))
     for (const [key, qty] of overrides) {
         const [spotId, itemId] = key.split('|')
-        if (qty === null) map.delete(key)
-        else map.set(key, { spotId, itemId, qty, countedBy: map.get(key)?.countedBy ?? who, countedAt: map.get(key)?.countedAt ?? new Date().toISOString() })
+        const mine = `${key}|${who}`
+        if (qty === null) map.delete(mine)
+        else map.set(mine, { spotId, itemId, qty, countedBy: who, countedAt: map.get(mine)?.countedAt ?? new Date().toISOString() })
     }
     return [...map.values()]
 }
@@ -226,8 +256,8 @@ function downloadCsv(csv: string) {
 
 // ───────────────────────── Screens ─────────────────────────
 
-function Welcome({ onDone }: { onDone: (name: string) => void }) {
-    const [name, setName] = useState('')
+function Welcome({ previous, onDone }: { previous: string; onDone: (name: string) => void }) {
+    const [name, setName] = useState(previous)
     const [err, setErr] = useState('')
     const go = () => { const n = cleanLabel(name); if (!n) { setErr('Nhập tên của bạn (tối đa 60 ký tự).'); return } onDone(n) }
     return (
@@ -260,6 +290,10 @@ function Vintage({ v }: { v: string }) {
     return v
         ? <span className="rounded bg-tone-brand-bg px-1.5 py-0.5 text-[13px] font-bold text-tone-brand-fg">{v}</span>
         : <span className="rounded border border-dashed border-lys-border px-1.5 py-0.5 text-[13px] text-lys-muted">NV</span>
+}
+
+function Code({ c }: { c: string }) {
+    return <span className="text-[14px] font-extrabold tracking-wide text-lys-primary">{c}</span>
 }
 
 type Summary = ReturnType<typeof summarize>
@@ -316,18 +350,19 @@ function SpotsView(props: {
                         return (
                             <div key={item.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 border-t border-lys-border p-3 first:border-t-0">
                                 <div>
-                                    <div className="font-medium leading-snug">{item.name}</div>
+                                    <div className="text-sm font-medium leading-snug">{item.name}</div>
                                     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-lys-muted">
-                                        {item.kind === 'POSM' ? 'POSM' : <><Vintage v={item.vintage} /><span>{item.code}</span></>}
+                                        {item.kind === 'POSM' ? 'POSM' : <><Vintage v={item.vintage} /><Code c={item.code} /></>}
                                     </div>
                                 </div>
                                 <div className={`self-center text-[21px] font-bold ${where.length ? '' : 'text-lys-dim'}`}>{where.length ? fmt(total) : '–'}</div>
                                 <div className="col-span-2 mt-1 flex flex-wrap gap-1.5">
                                     {where.length
                                         ? where.map(e => (
-                                            <button key={e.spotId} onClick={() => { props.setHomeQ(''); props.onOpen(e.spotId, item.code) }}
+                                            <button key={`${e.spotId}|${e.countedBy}`} onClick={() => { props.setHomeQ(''); props.onOpen(e.spotId, item.code) }}
                                                 className="rounded-full border border-lys-border bg-lys-bg px-2.5 py-1 text-[13px]">
                                                 {props.spotById.get(e.spotId)?.name ?? e.spotId}: <b className="text-lys-teal-strong">{e.qty}</b>
+                                                <span className="text-lys-muted"> · {e.countedBy}</span>
                                             </button>))
                                         : <span className="text-sm text-lys-muted">Chưa đếm ở vị trí nào</span>}
                                 </div>
@@ -386,6 +421,7 @@ function CountView(props: {
     qtyOf: (spotId: string, itemId: string) => number | null
     setQty: (spotId: string, itemId: string, qty: number | null, delay?: number) => void
     entryOf: (itemId: string) => ShowroomEntry | undefined
+    othersOf: (itemId: string) => ShowroomEntry[]
     saving: Set<string>; errors: Map<string, string>
     spotSummary?: { lines: number; qty: number }
     errorNote: React.ReactNode; who: string
@@ -399,12 +435,14 @@ function CountView(props: {
         const q = normalizeSearch(props.q.trim())
         return props.items.filter(i => {
             const n = props.qtyOf(spot.id, i.id)
-            if (props.filter === 'done' && !(n !== null && n > 0)) return false
-            if (props.filter === 'todo' && n !== null) return false
+            const others = props.othersOf(i.id)
+            const any = (n !== null && n > 0) || others.some(e => e.qty > 0)
+            if (props.filter === 'done' && !any) return false
+            if (props.filter === 'todo' && (n !== null || others.length > 0)) return false
             return !q || normalizeSearch(`${i.name} ${i.code} ${i.vintage}`).includes(q)
         })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [props.items, props.q, props.filter, props.qtyOf, spot.id])
+    }, [props.items, props.q, props.filter, props.qtyOf, props.othersOf, spot.id])
 
     return (
         <div className="space-y-3">
@@ -432,14 +470,17 @@ function CountView(props: {
                     const n = props.qtyOf(spot.id, item.id)
                     const entry = props.entryOf(item.id)
                     const err = props.errors.get(key)
-                    const stamp = err ?? (props.saving.has(key) ? 'Đang lưu…' : entry ? `${entry.countedBy} · ${when(entry.countedAt)}` : '')
+                    const stamp = err ?? (props.saving.has(key) ? 'Đang lưu…' : entry ? `Bạn (${entry.countedBy}) · ${when(entry.countedAt)}` : '')
+                    // Other people's own numbers for this spot: they add up, nobody overwrites anybody.
+                    const others = props.othersOf(item.id)
+                    const total = (n ?? 0) + others.reduce((t, e) => t + e.qty, 0)
                     return (
-                        <div key={item.id} className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 border-t border-lys-border p-3 first:border-t-0 ${n !== null && n > 0 ? 'bg-tone-success-bg' : ''}`}>
+                        <div key={item.id} className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 border-t border-lys-border p-3 first:border-t-0 ${total > 0 ? 'bg-tone-success-bg' : ''}`}>
                             <div>
-                                <div className="font-medium leading-snug">{item.name}</div>
+                                <div className="text-sm font-medium leading-snug">{item.name}</div>
                                 {!posm && (
                                     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-lys-muted">
-                                        <Vintage v={item.vintage} /><span className="text-[13px]">{item.code}</span>
+                                        <Vintage v={item.vintage} /><Code c={item.code} />
                                         {item.isExtra && <span>thêm tay</span>}
                                         <button onClick={() => { setAddCode(item.code); setTimeout(() => document.getElementById('addVin')?.focus(), 30) }}
                                             className="py-1 font-semibold text-lys-teal-strong">+ vintage khác</button>
@@ -448,6 +489,11 @@ function CountView(props: {
                             </div>
                             <Stepper value={n} label={`Số lượng ${item.name} ${item.vintage}`} onChange={(v, delay) => props.setQty(spot.id, item.id, v, delay)} />
                             {stamp && <div className={`col-span-2 text-xs ${err ? 'text-tone-danger-fg' : 'text-lys-muted'}`}>{stamp}</div>}
+                            {others.length > 0 && (
+                                <div className="col-span-2 rounded-md bg-tone-warning-bg px-2 py-1 text-xs text-tone-warning-fg">
+                                    Người khác đã đếm ở đây: {others.map(e => `${e.countedBy} ${e.qty}`).join(' · ')} — tổng vị trí <b>{total}</b>
+                                </div>
+                            )}
                         </div>
                     )
                 })}
@@ -521,7 +567,7 @@ function SummaryView(props: {
     const groupTotal = (name: string) => s.wineFound.reduce((t, x) => t + (x.byGroup[name] ?? 0), 0)
     const q = normalizeSearch(props.q.trim())
     const hit = (i: ShowroomItem) => !q || normalizeSearch(`${i.name} ${i.code} ${i.vintage}`).includes(q)
-    const modes: Array<[SumMode, string]> = [['wine', 'Theo rượu'], ['spot', 'Vị trí'], ['missing', `Chưa thấy (${s.wineMissing.length})`]]
+    const modes: Array<[SumMode, string]> = [['wine', 'Theo rượu'], ['spot', 'Vị trí'], ['people', `Người kiểm (${s.people.length})`], ['missing', `Chưa thấy (${s.wineMissing.length})`]]
     if (s.posm.length) modes.push(['posm', 'POSM'])
     const row = 'grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 border-t border-lys-border p-3 first:border-t-0'
 
@@ -543,13 +589,14 @@ function SummaryView(props: {
                     </div>
                 ))}
             </div>
-            <div role="group" aria-label="Kiểu tổng hợp" className="flex gap-1 rounded-lg border border-lys-border bg-lys-surface p-1">
+            <div role="group" aria-label="Kiểu tổng hợp" className="grid grid-cols-3 gap-1 rounded-lg border border-lys-border bg-lys-surface p-1">
                 {modes.map(([v, l]) => (
                     <button key={v} aria-pressed={props.mode === v} onClick={() => props.setMode(v)}
-                        className={`flex-1 rounded-md px-1 py-2 text-sm ${props.mode === v ? 'bg-lys-teal-strong font-semibold text-white' : 'text-lys-muted'}`}>{l}</button>
+                        className={`rounded-md px-1 py-2 text-sm ${props.mode === v ? 'bg-lys-teal-strong font-semibold text-white' : 'text-lys-muted'}`}>{l}</button>
                 ))}
             </div>
-            {props.mode !== 'spot' && <SearchBox id="sumSearch" value={props.q} onChange={props.setQ} placeholder={props.mode === 'posm' ? 'Tìm vật phẩm…' : 'Tìm tên rượu, mã, vintage…'} />}
+            {props.mode !== 'spot' && <SearchBox id="sumSearch" value={props.q} onChange={props.setQ}
+                placeholder={props.mode === 'posm' ? 'Tìm vật phẩm…' : props.mode === 'people' ? 'Tìm người kiểm, rượu, mã…' : 'Tìm tên rượu, mã, vintage…'} />}
 
             <div className="overflow-hidden rounded-xl border border-lys-border bg-lys-surface">
                 {props.mode === 'wine' && (() => {
@@ -559,14 +606,55 @@ function SummaryView(props: {
                         <details key={x.item.id} className="border-t border-lys-border p-3 first:border-t-0">
                             <summary className="grid cursor-pointer list-none grid-cols-[minmax(0,1fr)_auto] gap-x-3">
                                 <div>
-                                    <div className="font-medium leading-snug">{x.item.name}</div>
-                                    <div className="mt-1 flex items-center gap-2 text-xs text-lys-muted"><Vintage v={x.item.vintage} /><span className="text-[13px]">{x.item.code}</span></div>
+                                    <div className="text-sm font-medium leading-snug">{x.item.name}</div>
+                                    <div className="mt-1 flex items-center gap-2 text-xs text-lys-muted"><Vintage v={x.item.vintage} /><Code c={x.item.code} /></div>
                                     <div className="mt-1 text-xs text-lys-muted">{Object.entries(x.byGroup).map(([g, n]) => `${g}: ${n}`).join(' · ')}</div>
                                 </div>
                                 <div className="self-center text-[21px] font-bold">{fmt(x.total)}</div>
                             </summary>
                             <div className="mt-2 space-y-1 rounded-lg bg-lys-bg px-3 py-2 text-[13px]">
-                                {x.parts.map(p => <div key={p.spot.id} className="flex justify-between gap-3"><span>{p.spot.name}</span><b>{p.qty}</b></div>)}
+                                {x.parts.map(p => (
+                                    <div key={`${p.spot.id}|${p.by}`} className="flex justify-between gap-3">
+                                        <span>{p.spot.name} <span className="text-lys-muted">· {p.by}</span></span><b>{p.qty}</b>
+                                    </div>
+                                ))}
+                            </div>
+                        </details>
+                    ))
+                })()}
+                {props.mode === 'people' && (() => {
+                    // Who counted what, so each person's numbers can be re-checked.
+                    const list = s.people
+                        .map(p => normalizeSearch(p.name).includes(q) ? p : { ...p, lines: p.lines.filter(l => hit(l.item)) })
+                        .filter(p => !q || p.lines.length)
+                    if (!list.length) return <p className="p-6 text-center text-lys-muted"><b className="block text-lys-primary">{q ? 'Không có dòng nào khớp' : 'Chưa ai đếm'}</b></p>
+                    return list.map(p => (
+                        <details key={p.name} className="border-t border-lys-border p-3 first:border-t-0">
+                            <summary className="grid cursor-pointer list-none grid-cols-[minmax(0,1fr)_auto] gap-x-3">
+                                <div>
+                                    <div className="font-bold">{p.name}</div>
+                                    <div className="mt-1 text-xs text-lys-muted">
+                                        {p.lines.length} dòng · {[...new Set(p.lines.map(l => l.spot.name))].join(', ')}
+                                    </div>
+                                </div>
+                                <div className="self-center text-right">
+                                    <div className="text-[21px] font-bold">{fmt(p.wine)}</div>
+                                    <div className="text-xs text-lys-muted">chai{p.posm ? ` · ${fmt(p.posm)} POSM` : ''}</div>
+                                </div>
+                            </summary>
+                            <div className="mt-2 divide-y divide-lys-border rounded-lg bg-lys-bg px-3 text-[13px]">
+                                {p.lines.map(l => (
+                                    <div key={`${l.spot.id}|${l.item.id}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 py-2">
+                                        <div>
+                                            <div className="text-xs text-lys-muted">{l.spot.name} · {when(l.at)}</div>
+                                            <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                                                {l.item.kind !== 'POSM' && <><Code c={l.item.code} /><Vintage v={l.item.vintage} /></>}
+                                                <span>{l.item.name}</span>
+                                            </div>
+                                        </div>
+                                        <b className="self-center text-base">{l.qty}</b>
+                                    </div>
+                                ))}
                             </div>
                         </details>
                     ))
@@ -577,8 +665,8 @@ function SummaryView(props: {
                     return list.map(x => (
                         <div key={x.item.id} className={row}>
                             <div>
-                                <div className="font-medium leading-snug">{x.item.name}</div>
-                                <div className="mt-1 flex items-center gap-2 text-xs text-lys-muted"><Vintage v={x.item.vintage} /><span className="text-[13px]">{x.item.code}</span></div>
+                                <div className="text-sm font-medium leading-snug">{x.item.name}</div>
+                                <div className="mt-1 flex items-center gap-2 text-xs text-lys-muted"><Vintage v={x.item.vintage} /><Code c={x.item.code} /></div>
                             </div>
                             <span className="self-center whitespace-nowrap rounded-md border border-lys-border px-2 py-1 text-xs text-lys-muted">{x.checked ? 'Đã kiểm = 0' : 'Chưa đếm'}</span>
                         </div>
@@ -590,8 +678,8 @@ function SummaryView(props: {
                         {s.posm.filter(x => hit(x.item)).map(x => (
                             <div key={x.item.id} className={row}>
                                 <div>
-                                    <div className="font-medium leading-snug">{x.item.name}</div>
-                                    <div className="mt-1 text-xs text-lys-muted">{x.total ? x.parts.map(p => `${p.spot.name}: ${p.qty}`).join(' · ') : x.checked ? 'Đã kiểm = 0' : 'Chưa đếm'}</div>
+                                    <div className="text-sm font-medium leading-snug">{x.item.name}</div>
+                                    <div className="mt-1 text-xs text-lys-muted">{x.total ? x.parts.map(p => `${p.spot.name}: ${p.qty} (${p.by})`).join(' · ') : x.checked ? 'Đã kiểm = 0' : 'Chưa đếm'}</div>
                                 </div>
                                 <div className={`self-center text-[21px] font-bold ${x.checked ? '' : 'text-lys-dim'}`}>{x.checked ? fmt(x.total) : '–'}</div>
                             </div>

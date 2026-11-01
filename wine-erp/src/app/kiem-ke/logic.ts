@@ -42,14 +42,26 @@ export type ItemSummary = {
     total: number
     checked: number
     byGroup: Record<string, number>
-    parts: Array<{ spot: ShowroomSpot; qty: number }>
+    parts: Array<{ spot: ShowroomSpot; qty: number; by: string }>
+}
+
+export type PersonSummary = {
+    name: string
+    wine: number
+    posm: number
+    lines: Array<{ spot: ShowroomSpot; item: ShowroomItem; qty: number; at: string }>
 }
 
 export type SpotSummary = { spot: ShowroomSpot; lines: number; qty: number; people: string[]; lastAt: string | null; touched: boolean }
 
-/** Gộp số đếm theo mặt hàng và theo vị trí. Số 0 vẫn tính là "đã kiểm" nhưng không cộng vào tổng. */
+/**
+ * Gộp số đếm theo mặt hàng, theo vị trí và theo người kiểm.
+ * Mỗi người có số riêng nên tổng = cộng các người. Số 0 vẫn tính là "đã kiểm" nhưng không cộng vào tổng.
+ */
 export function summarize(data: ShowroomData) {
     const spotById = new Map(data.spots.map(s => [s.id, s]))
+    const itemById = new Map(data.items.map(i => [i.id, i]))
+    const people = new Map<string, PersonSummary>()
     const items = new Map<string, ItemSummary>()
     for (const item of data.items) items.set(item.id, { item, total: 0, checked: 0, byGroup: {}, parts: [] })
     const spots = new Map<string, SpotSummary>()
@@ -60,6 +72,10 @@ export function summarize(data: ShowroomData) {
         const is = items.get(e.itemId)
         const ss = spots.get(e.spotId)
         if (!spot || !is || !ss) continue
+        const p = people.get(e.countedBy) ?? { name: e.countedBy, wine: 0, posm: 0, lines: [] }
+        people.set(e.countedBy, p)
+        p.lines.push({ spot, item: itemById.get(e.itemId)!, qty: e.qty, at: e.countedAt })
+        if (spot.kind === 'POSM') p.posm += e.qty; else p.wine += e.qty
         is.checked++
         ss.touched = true
         if (!ss.people.includes(e.countedBy)) ss.people.push(e.countedBy)
@@ -67,7 +83,7 @@ export function summarize(data: ShowroomData) {
         if (e.qty <= 0) continue
         is.total += e.qty
         is.byGroup[spot.groupName] = (is.byGroup[spot.groupName] ?? 0) + e.qty
-        is.parts.push({ spot, qty: e.qty })
+        is.parts.push({ spot, qty: e.qty, by: e.countedBy })
         ss.lines++
         ss.qty += e.qty
     }
@@ -83,6 +99,9 @@ export function summarize(data: ShowroomData) {
         posm,
         posmTotal: posm.reduce((t, s) => t + s.total, 0),
         spots: [...spots.values()],
+        people: [...people.values()]
+            .map(p => ({ ...p, lines: p.lines.sort((a, b) => a.spot.sortOrder - b.spot.sortOrder || a.item.code.localeCompare(b.item.code)) }))
+            .sort((a, b) => a.name.localeCompare(b.name, 'vi')),
     }
 }
 
@@ -93,7 +112,9 @@ function csvCell(v: unknown): string {
 
 /** Bảng giống phiếu kiểm hàng: mỗi vị trí một cột, rượu trước rồi POSM. Có BOM để Excel đọc đúng tiếng Việt. */
 export function buildCsv(data: ShowroomData, exportedAt: Date = new Date()): string {
-    const qty = new Map(data.entries.map(e => [`${e.spotId}|${e.itemId}`, e.qty]))
+    // Several people may count the same spot: the cell is their sum; the detail section lists each person.
+    const qty = new Map<string, number>()
+    for (const e of data.entries) qty.set(`${e.spotId}|${e.itemId}`, (qty.get(`${e.spotId}|${e.itemId}`) ?? 0) + e.qty)
     const ordered = [...data.spots].sort((a, b) => a.sortOrder - b.sortOrder)
     const wineSpots = ordered.filter(s => s.kind !== 'POSM')
     const posmSpots = ordered.filter(s => s.kind === 'POSM')
@@ -112,7 +133,14 @@ export function buildCsv(data: ShowroomData, exportedAt: Date = new Date()): str
         lines.push([], ['KIỂM POSM'], ['', 'Tên hàng', '', ...posmSpots.map(s => s.name), 'Cộng'])
         for (const item of posmItems) lines.push(['', item.name, '', ...rowFor(item, posmSpots)])
     }
-    const people = [...new Set(data.entries.map(e => e.countedBy))]
-    lines.push([], ['Người kiểm', people.join(', ')], ['Xuất lúc', exportedAt.toLocaleString('vi-VN')])
+    const s = summarize(data)
+    if (s.people.length) {
+        lines.push([], ['CHI TIẾT THEO NGƯỜI KIỂM'], ['Người kiểm', 'Vị trí', 'Mã hàng', 'Tên hàng', 'Vintage', 'Số lượng', 'Thời gian'])
+        for (const p of s.people) for (const l of p.lines) {
+            lines.push([p.name, label(l.spot), l.item.kind === 'POSM' ? '' : l.item.code, l.item.name,
+                l.item.kind === 'POSM' ? '' : l.item.vintage || 'NV', l.qty, new Date(l.at).toLocaleString('vi-VN')])
+        }
+    }
+    lines.push([], ['Người kiểm', s.people.map(p => p.name).join(', ')], ['Xuất lúc', exportedAt.toLocaleString('vi-VN')])
     return '﻿' + lines.map(r => r.map(csvCell).join(',')).join('\r\n')
 }

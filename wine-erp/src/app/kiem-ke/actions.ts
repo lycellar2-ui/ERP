@@ -31,7 +31,10 @@ export async function getShowroomCount(): Promise<Result<ShowroomData>> {
     }
 }
 
-/** qty = null xoá dòng (chưa đếm); 0 = đã kiểm, không có hàng. */
+/**
+ * qty = null xoá dòng (chưa đếm); 0 = đã kiểm, không có hàng.
+ * Mỗi người kiểm có dòng riêng (spot + item + countedBy) nên hai người cùng đếm một vị trí không ghi đè nhau.
+ */
 export async function saveShowroomCount(input: {
     spotId: string
     itemId: string
@@ -43,9 +46,9 @@ export async function saveShowroomCount(input: {
     const countedBy = cleanLabel(input.countedBy)
     if (!countedBy) return { success: false, error: 'Thiếu tên người kiểm.' }
     try {
-        const where = { spotId_itemId: { spotId: String(input.spotId), itemId: String(input.itemId) } }
+        const key = { spotId: String(input.spotId), itemId: String(input.itemId), countedBy }
         if (qty === null) {
-            await prisma.showroomCountEntry.deleteMany({ where: { spotId: String(input.spotId), itemId: String(input.itemId) } })
+            await prisma.showroomCountEntry.deleteMany({ where: key })
         } else {
             const [spot, item] = await Promise.all([
                 prisma.showroomCountSpot.findUnique({ where: { id: String(input.spotId) }, select: { kind: true } }),
@@ -54,9 +57,9 @@ export async function saveShowroomCount(input: {
             if (!spot || !item) return { success: false, error: 'Vị trí hoặc mặt hàng không còn tồn tại. Tải lại trang.' }
             if ((spot.kind === 'POSM') !== (item.kind === 'POSM')) return { success: false, error: 'Mặt hàng không thuộc khu vực này.' }
             await prisma.showroomCountEntry.upsert({
-                where,
-                create: { spotId: String(input.spotId), itemId: String(input.itemId), qty, countedBy },
-                update: { qty, countedBy, countedAt: new Date() },
+                where: { spotId_itemId_countedBy: key },
+                create: { ...key, qty },
+                update: { qty, countedAt: new Date() },
             })
         }
         return { success: true }
@@ -92,7 +95,7 @@ export async function addShowroomVintage(input: {
             update: {},
         })
         const existing = await prisma.showroomCountEntry.findUnique({
-            where: { spotId_itemId: { spotId: String(input.spotId), itemId: item.id } },
+            where: { spotId_itemId_countedBy: { spotId: String(input.spotId), itemId: item.id, countedBy } },
         })
         if (!existing) {
             await prisma.showroomCountEntry.create({ data: { spotId: String(input.spotId), itemId: item.id, qty: 0, countedBy } })

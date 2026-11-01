@@ -1646,10 +1646,10 @@ model ShowroomCountEntry {
   itemId    String
   item      ShowroomCountItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
   qty       Int               // 0 = đã kiểm, không có hàng
-  countedBy String
+  countedBy String            // Mỗi người giữ số riêng; tổng vị trí = cộng các người
   countedAt DateTime          @default(now())
 
-  @@unique([spotId, itemId])
+  @@unique([spotId, itemId, countedBy])
   @@map("showroom_count_entries")
 }
 
