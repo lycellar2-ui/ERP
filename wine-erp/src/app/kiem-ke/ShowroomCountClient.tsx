@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Camera, ChevronLeft, KeyRound, Mic, Minus, Plus, Search, Sparkles } from 'lucide-react'
+import { Camera, ChevronLeft, KeyRound, Mic, Minus, Plus, Search, Sparkles, X } from 'lucide-react'
 import {
     addShowroomVintage, auditShowroomWithAi, getShowroomAiKeyStatus, getShowroomCount,
     identifyShowroomWineImageWithAi, parseShowroomVoiceWithAi, renameShowroomSpots,
@@ -563,11 +563,21 @@ function Welcome({ previous, onDone }: { previous: string; onDone: (name: string
 
 function SearchBox({ id, value, onChange, placeholder }: { id: string; value: string; onChange: (v: string) => void; placeholder: string }) {
     return (
-        <label className="relative block">
+        <div className="relative block">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-lys-dim" />
-            <input id={id} type="search" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} aria-label={placeholder}
-                className="w-full rounded-lg border border-lys-border bg-lys-surface py-3 pl-9 pr-3 text-base" />
-        </label>
+            <input id={id} type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} aria-label={placeholder}
+                className="w-full rounded-lg border border-lys-border bg-lys-surface py-3 pl-9 pr-10 text-base" />
+            {value && (
+                <button
+                    type="button"
+                    aria-label="Xóa tìm kiếm"
+                    onClick={() => onChange('')}
+                    className="absolute right-2 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-lys-muted hover:bg-lys-bg hover:text-lys-primary active:bg-lys-border"
+                >
+                    <X className="size-4" />
+                </button>
+            )}
+        </div>
     )
 }
 
@@ -2618,13 +2628,25 @@ function AiVoicePanel({
                     : 'Đọc tự nhiên: "xa bli 2023 5 chai" hoặc "Kệ to 4 chai L20019" (ngừng nói AI tự phân tích).'}
             </p>
             <div className="flex gap-2">
-                <input
-                    value={text}
-                    onChange={e => setText(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && analyze()}
-                    placeholder={t2 ? 'Nói hoặc gõ: L10039 3 chai, L20019 2 thùng…' : 'Nói hoặc gõ: L20019 5 chai…'}
-                    className="min-w-0 flex-1 rounded-lg border border-lys-border bg-lys-bg px-3 py-2.5 text-sm"
-                />
+                <div className="relative min-w-0 flex-1">
+                    <input
+                        value={text}
+                        onChange={e => setText(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && analyze()}
+                        placeholder={t2 ? 'Nói hoặc gõ: L10039 3 chai, L20019 2 thùng…' : 'Nói hoặc gõ: L20019 5 chai…'}
+                        className="w-full rounded-lg border border-lys-border bg-lys-bg py-2.5 pl-3 pr-9 text-sm"
+                    />
+                    {text && (
+                        <button
+                            type="button"
+                            aria-label="Xóa nội dung"
+                            onClick={() => setText('')}
+                            className="absolute right-1.5 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full text-lys-muted hover:bg-lys-surface hover:text-lys-primary"
+                        >
+                            <X className="size-3.5" />
+                        </button>
+                    )}
+                </div>
                 <button
                     type="button"
                     onClick={toggleMic}

@@ -279,14 +279,25 @@ export async function renameShowroomSpots(input: Array<{ id: string; name: strin
 // AI Cho Kiểm Kê Showroom (Gemini 3.0 / 2.5 Flash + Auto Model Discovery)
 // ═══════════════════════════════════════════════════════════════════
 
-const GEMINI_FLASH_MODELS = [
+const VOICE_FLASH_MODELS = [
     'gemini-3.5-flash-lite',
-    'gemini-3-flash-preview',
     'gemini-flash-lite-latest',
+    'gemini-3-flash-preview',
     'gemini-3.1-flash-lite',
     'gemini-3.8-flash',
     'gemini-3.5-flash',
 ] as const
+
+const VISION_FLASH_MODELS = [
+    'gemini-3.8-flash',
+    'gemini-3-flash-preview',
+    'gemini-3.7-flash',
+    'gemini-3.5-flash',
+    'gemini-3.6-flash',
+    'gemini-3.5-flash-lite',
+] as const
+
+const GEMINI_FLASH_MODELS = VOICE_FLASH_MODELS
 
 let cachedWorkingGeminiModel: string | null = null
 let cachedApiKeyRecord: { key: string; source: 'db' | 'env'; expiresAt: number } | null = null
@@ -420,12 +431,15 @@ async function callGeminiFlash(params: {
     maxOutputTokens?: number
     temperature?: number
     disableThinking?: boolean
+    preferredModels?: readonly string[]
 }): Promise<{ ok: true; text: string; model: string } | { ok: false; error: string }> {
     let lastError = 'Không kết nối được Gemini API.'
-    const queue: string[] = [
-        ...(cachedWorkingGeminiModel ? [cachedWorkingGeminiModel] : []),
-        ...GEMINI_FLASH_MODELS,
-    ]
+    const queue: string[] = params.preferredModels
+        ? [...params.preferredModels, ...(cachedWorkingGeminiModel ? [cachedWorkingGeminiModel] : [])]
+        : [
+            ...(cachedWorkingGeminiModel ? [cachedWorkingGeminiModel] : []),
+            ...GEMINI_FLASH_MODELS,
+        ]
     const tried = new Set<string>()
     let discovered = false
 
@@ -880,6 +894,7 @@ Quy tắc suy luận thông minh:
             maxOutputTokens: 1536,
             temperature: 0.1,
             disableThinking: true,
+            preferredModels: VOICE_FLASH_MODELS,
         })
         if (!res.ok) return { success: false, error: res.error }
 
@@ -1036,6 +1051,7 @@ Quy tắc phân tích hình ảnh chuyên sâu:
             jsonMode: true,
             maxOutputTokens: 8192,
             temperature: 0.1,
+            preferredModels: VISION_FLASH_MODELS,
         })
         if (!res.ok) return { success: false, error: res.error }
 
@@ -1216,6 +1232,7 @@ Hãy viết một báo cáo rà soát ngắn gọn, súc tích bằng tiếng Vi
             parts: [{ text: prompt }],
             maxOutputTokens: 8192,
             temperature: 0.2,
+            preferredModels: VISION_FLASH_MODELS,
         })
         if (!res.ok) return { success: false, error: res.error }
 
