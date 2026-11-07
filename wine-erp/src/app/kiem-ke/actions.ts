@@ -7,7 +7,7 @@ import crypto from 'crypto'
 import { prisma } from '@/lib/db'
 import {
     auditAnomalies, canRecheck, cleanLabel, cleanNote, isCaseSpot, isLooseShelfSpot, MAX_NOTE,
-    normalizeVintage, normalizeVoiceTranscript, packSizeOf, parseQty, parseVoiceLocally, summarize,
+    normalizeVintage, normalizeVoiceTranscript, packSizeOf, parseQty, summarize,
     type AiCandidateOption, type AiVisionMatch, type AiVisionShelfItem, type AiVoiceMatch, type ShowroomData,
 } from './logic'
 
@@ -280,11 +280,11 @@ export async function renameShowroomSpots(input: Array<{ id: string; name: strin
 // ═══════════════════════════════════════════════════════════════════
 
 const GEMINI_FLASH_MODELS = [
-    'gemini-3-flash-preview',
-    'gemini-3.1-flash-lite',
-    'gemini-3.5-flash',
     'gemini-3.8-flash',
+    'gemini-3-flash-preview',
     'gemini-3.7-flash',
+    'gemini-3.5-flash',
+    'gemini-3.1-flash-lite',
     'gemini-3.6-flash',
 ] as const
 
@@ -334,10 +334,11 @@ async function discoverAvailableGeminiModels(apiKey: string): Promise<{ ok: bool
             )
             .map(m => String(m.name).replace(/^models\//, ''))
 
-        // Ưu tiên dòng Gemini 3.x Flash / Flash-Lite đang hoạt động nhanh nhất
+        // Ưu tiên cao nhất cho gemini-3.8-flash, sau đó tới dòng Gemini 3.x Flash khác
         const sorted = raw.sort((a, b) => {
             const score = (name: string) => {
                 let s = 0
+                if (/3\.8-flash$/i.test(name)) s += 200
                 if (/flash/i.test(name)) s += 100
                 if (/3\.|3-/i.test(name)) s += 50
                 if (!/tts|image|exp/i.test(name)) s += 30
@@ -783,17 +784,6 @@ export async function parseShowroomVoiceWithAi(input: {
         }
         const defaultSpot = allSpots.find(s => s.id === String(input.spotId)) ?? allSpots[0]
         if (!defaultSpot) return { success: false, error: 'Không tìm thấy vị trí kiểm kê.' }
-        if (!hasAudio && rawTranscript) {
-            const fast = parseVoiceLocally({
-                transcript: rawTranscript,
-                spotId: defaultSpot.id,
-                spots: allSpots,
-                items: allItems,
-            })
-            if (fast) {
-                return { success: true, data: fast }
-            }
-        }
         const spotById = new Map(allSpots.map(s => [s.id, s]))
         const { enrichCandidate } = buildCatalogEnricher(allItems)
 
