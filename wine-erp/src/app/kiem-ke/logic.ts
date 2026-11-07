@@ -2,14 +2,74 @@
 // Kept out of the 'use server' file so they can be unit-tested and reused on the client.
 
 export type ShowroomSpot = { id: string; groupName: string; kind: string; name: string; sortOrder: number }
-export type ShowroomItem = { id: string; kind: string; code: string; name: string; vintage: string; isExtra: boolean; sortOrder: number }
-export type ShowroomEntry = { spotId: string; itemId: string; qty: number; countedBy: string; countedAt: string }
+export type ShowroomItem = {
+    id: string; kind: string; code: string; name: string; vintage: string; isExtra: boolean; sortOrder: number
+    packSize?: number | null
+}
+export type ShowroomEntry = {
+    spotId: string; itemId: string; qty: number; countedBy: string; countedAt: string
+    cases?: number | null; loose?: number | null
+}
 export type ShowroomCheck = { spotId: string; itemId: string; checkedBy: string; qtyAtCheck: number; checkedAt: string }
 /** itemId = "" → ghi chú chung cho cả vị trí. */
 export type ShowroomNote = { spotId: string; itemId: string; note: string; writtenBy: string; updatedAt: string }
 export type ShowroomData = {
     spots: ShowroomSpot[]; items: ShowroomItem[]; entries: ShowroomEntry[]; checks: ShowroomCheck[]
     notes?: ShowroomNote[]
+}
+
+/** Danh sách mã rượu đóng thùng 12 chai (xác nhận từ bảng kiểm kê Tầng 2 & bộ chứng từ nhập khẩu Purchasing). */
+export const PACK_12_CODES = new Set([
+    'L10023', 'L10024', 'L10025', 'L10026', 'L10027', 'L10028', 'L10029',
+    'L10032', 'L10033', 'L10039', 'L10042',
+    'L30001', 'L30002', 'L30003', 'L30004', 'L30005',
+    'L40001', 'L40002', 'L40003', 'L40004', 'L40009',
+    'L40010', 'L40011', 'L40012', 'L40013', 'L40014',
+    'L60001', 'L60002',
+    'L70001', 'L70002', 'L70005',
+])
+
+/** Quy cách đóng gói (số chai/thùng): 6 hoặc 12 đối với rượu; null đối với POSM. */
+export function packSizeOf(item: Pick<ShowroomItem, 'kind' | 'code' | 'packSize'>): number | null {
+    if (item.kind === 'POSM') return null
+    if (item.packSize === 6 || item.packSize === 12) return item.packSize
+    return PACK_12_CODES.has(item.code) ? 12 : 6
+}
+
+/** Chỉ bật chế độ nhập Số thùng + Số chai lẻ cho khu vực Tầng 2. */
+export function isCaseSpot(spot?: Pick<ShowroomSpot, 'groupName' | 'kind'> | null): boolean {
+    return Boolean(spot && spot.kind !== 'POSM' && spot.groupName === 'Tầng 2')
+}
+
+/**
+ * Tính tổng số chai từ số thùng + số chai lẻ.
+ * Giữ nguyên số chai lẻ người dùng nhập (không tự quy đổi chai lẻ >= packSize thành thùng vì thực tế có thể là chai lẻ ngoài thùng).
+ * Khi cả cases và loose đều null → chưa đếm (qty = null).
+ */
+export function calcCaseLooseTotal(
+    cases: number | null,
+    loose: number | null,
+    packSize: number
+): { cases: number | null; loose: number | null; qty: number | null } {
+    if (cases === null && loose === null) return { cases: null, loose: null, qty: null }
+    const c = cases ?? 0
+    const l = loose ?? 0
+    return { cases, loose, qty: c * packSize + l }
+}
+
+/** Lấy số thùng và số chai lẻ của một dòng đếm (giữ nguyên số chai lẻ đã lưu). */
+export function entryCaseLoose(
+    entry: Pick<ShowroomEntry, 'qty' | 'cases' | 'loose'>,
+    packSize: number
+): { cases: number; loose: number; qty: number } {
+    if (entry.cases !== undefined && entry.cases !== null || entry.loose !== undefined && entry.loose !== null) {
+        return { cases: entry.cases ?? 0, loose: entry.loose ?? 0, qty: entry.qty }
+    }
+    return {
+        cases: packSize > 0 ? Math.floor(entry.qty / packSize) : 0,
+        loose: packSize > 0 ? entry.qty % packSize : entry.qty,
+        qty: entry.qty,
+    }
 }
 
 export type CheckState = 'none' | 'ok' | 'changed'
@@ -70,19 +130,21 @@ export type ItemSummary = {
     total: number
     checked: number
     byGroup: Record<string, number>
-    parts: Array<{ spot: ShowroomSpot; qty: number; by: string }>
+    t2Cases: number
+    t2Loose: number
+    parts: Array<{ spot: ShowroomSpot; qty: number; cases?: number | null; loose?: number | null; by: string }>
 }
 
 export type PersonSummary = {
     name: string
     wine: number
     posm: number
-    lines: Array<{ spot: ShowroomSpot; item: ShowroomItem; qty: number; at: string }>
+    lines: Array<{ spot: ShowroomSpot; item: ShowroomItem; qty: number; cases?: number | null; loose?: number | null; at: string }>
     rechecks?: number
 }
 
 export type SpotSummary = {
-    spot: ShowroomSpot; lines: number; qty: number; people: string[]; lastAt: string | null; touched: boolean
+    spot: ShowroomSpot; lines: number; qty: number; cases: number; loose: number; people: string[]; lastAt: string | null; touched: boolean
     cells: number; rechecked: number // dòng (mã) có số tại vị trí / số dòng đã kiểm lại còn đúng
 }
 
@@ -95,18 +157,24 @@ export function summarize(data: ShowroomData) {
     const itemById = new Map(data.items.map(i => [i.id, i]))
     const people = new Map<string, PersonSummary>()
     const items = new Map<string, ItemSummary>()
-    for (const item of data.items) items.set(item.id, { item, total: 0, checked: 0, byGroup: {}, parts: [] })
+    for (const item of data.items) items.set(item.id, { item, total: 0, checked: 0, byGroup: {}, t2Cases: 0, t2Loose: 0, parts: [] })
     const spots = new Map<string, SpotSummary>()
-    for (const spot of data.spots) spots.set(spot.id, { spot, lines: 0, qty: 0, people: [], lastAt: null, touched: false, cells: 0, rechecked: 0 })
+    for (const spot of data.spots) spots.set(spot.id, { spot, lines: 0, qty: 0, cases: 0, loose: 0, people: [], lastAt: null, touched: false, cells: 0, rechecked: 0 })
+
+    let t2Cases = 0, t2Loose = 0, t2Bottles = 0
 
     for (const e of data.entries) {
         const spot = spotById.get(e.spotId)
         const is = items.get(e.itemId)
         const ss = spots.get(e.spotId)
-        if (!spot || !is || !ss) continue
+        const item = itemById.get(e.itemId)
+        if (!spot || !is || !ss || !item) continue
         const p = people.get(e.countedBy) ?? { name: e.countedBy, wine: 0, posm: 0, lines: [] }
         people.set(e.countedBy, p)
-        p.lines.push({ spot, item: itemById.get(e.itemId)!, qty: e.qty, at: e.countedAt })
+        const t2 = isCaseSpot(spot)
+        const pack = packSizeOf(item) ?? 6
+        const cl = t2 ? entryCaseLoose(e, pack) : null
+        p.lines.push({ spot, item, qty: e.qty, cases: cl?.cases ?? null, loose: cl?.loose ?? null, at: e.countedAt })
         if (spot.kind === 'POSM') p.posm += e.qty; else p.wine += e.qty
         is.checked++
         ss.touched = true
@@ -115,9 +183,18 @@ export function summarize(data: ShowroomData) {
         if (e.qty <= 0) continue
         is.total += e.qty
         is.byGroup[spot.groupName] = (is.byGroup[spot.groupName] ?? 0) + e.qty
-        is.parts.push({ spot, qty: e.qty, by: e.countedBy })
+        is.parts.push({ spot, qty: e.qty, cases: cl?.cases ?? null, loose: cl?.loose ?? null, by: e.countedBy })
         ss.lines++
         ss.qty += e.qty
+        if (cl) {
+            ss.cases += cl.cases
+            ss.loose += cl.loose
+            is.t2Cases += cl.cases
+            is.t2Loose += cl.loose
+            t2Cases += cl.cases
+            t2Loose += cl.loose
+            t2Bottles += e.qty
+        }
     }
 
     // Recheck progress per spot: one "cell" per spot + item that has any count.
@@ -145,6 +222,9 @@ export function summarize(data: ShowroomData) {
         wineMissing: wine.filter(s => s.total === 0),
         wineCount: wine.length,
         bottles: wine.reduce((t, s) => t + s.total, 0),
+        t2Cases,
+        t2Loose,
+        t2Bottles,
         posm,
         posmTotal: posm.reduce((t, s) => t + s.total, 0),
         spots: [...spots.values()],
@@ -219,12 +299,15 @@ export function buildCsv(data: ShowroomData, exportedAt: Date = new Date()): str
 export type GroupReport = {
     group: string
     kind: string
+    isCaseGroup: boolean
     spots: Array<{
-        spot: ShowroomSpot; lines: number; qty: number; people: string[]
+        spot: ShowroomSpot; lines: number; qty: number; cases: number; loose: number; people: string[]
         cells: number; rechecked: number; checkers: string[]
     }>
-    rows: Array<{ item: ShowroomItem; bySpot: number[]; total: number }>
+    rows: Array<{ item: ShowroomItem; packSize: number | null; bySpot: number[]; cases: number; loose: number; total: number }>
     spotTotals: number[]
+    totalCases: number
+    totalLoose: number
     total: number
     people: string[]
     checkers: string[]
@@ -243,17 +326,26 @@ export type GroupReport = {
 export function buildGroupReport(data: ShowroomData, group: string): GroupReport | null {
     const spots = data.spots.filter(s => s.groupName === group).sort((a, b) => a.sortOrder - b.sortOrder)
     if (!spots.length) return null
+    const isCaseGroup = isCaseSpot(spots[0])
     const col = new Map(spots.map((s, i) => [s.id, i]))
     const itemById = new Map(data.items.map(i => [i.id, i]))
     const cell = new Map<string, number>()
-    const stats = spots.map(spot => ({ spot, lines: 0, qty: 0, people: [] as string[], cells: 0, rechecked: 0, checkers: [] as string[] }))
+    const cellCases = new Map<string, number>()
+    const cellLoose = new Map<string, number>()
+    const stats = spots.map(spot => ({ spot, lines: 0, qty: 0, cases: 0, loose: 0, people: [] as string[], cells: 0, rechecked: 0, checkers: [] as string[] }))
     const people = new Set<string>()
     let firstAt: string | null = null, lastAt: string | null = null
     for (const e of data.entries) {
         const c = col.get(e.spotId)
-        if (c === undefined || !itemById.has(e.itemId)) continue
+        const item = itemById.get(e.itemId)
+        if (c === undefined || !item) continue
         const key = `${e.spotId}|${e.itemId}`
         cell.set(key, (cell.get(key) ?? 0) + e.qty)
+        if (isCaseGroup && e.qty > 0) {
+            const cl = entryCaseLoose(e, packSizeOf(item) ?? 6)
+            cellCases.set(key, (cellCases.get(key) ?? 0) + cl.cases)
+            cellLoose.set(key, (cellLoose.get(key) ?? 0) + cl.loose)
+        }
         people.add(e.countedBy)
         if (!stats[c].people.includes(e.countedBy)) stats[c].people.push(e.countedBy)
         if (!firstAt || e.countedAt < firstAt) firstAt = e.countedAt
@@ -264,6 +356,8 @@ export function buildGroupReport(data: ShowroomData, group: string): GroupReport
     const checkers = new Set<string>()
     const unchecked: GroupReport['unchecked'] = []
     const byItem = new Map<string, number[]>()
+    const casesByItem = new Map<string, number>()
+    const looseByItem = new Map<string, number>()
     for (const [key, total] of cell) {
         const [spotId, itemId] = key.split('|')
         const st = stats[col.get(spotId)!]
@@ -279,6 +373,12 @@ export function buildGroupReport(data: ShowroomData, group: string): GroupReport
         if (total <= 0) continue
         st.lines++
         st.qty += total
+        const cs = cellCases.get(key) ?? 0
+        const ls = cellLoose.get(key) ?? 0
+        st.cases += cs
+        st.loose += ls
+        casesByItem.set(itemId, (casesByItem.get(itemId) ?? 0) + cs)
+        looseByItem.set(itemId, (looseByItem.get(itemId) ?? 0) + ls)
         const row = byItem.get(itemId) ?? spots.map(() => 0)
         row[col.get(spotId)!] = total
         byItem.set(itemId, row)
@@ -286,16 +386,30 @@ export function buildGroupReport(data: ShowroomData, group: string): GroupReport
 
     const order = (a: ShowroomItem, b: ShowroomItem) =>
         a.kind === 'POSM' ? a.sortOrder - b.sortOrder : a.code.localeCompare(b.code) || a.vintage.localeCompare(b.vintage)
-    const rows = [...byItem].map(([id, bySpot]) => ({ item: itemById.get(id)!, bySpot, total: bySpot.reduce((t, n) => t + n, 0) }))
-        .sort((a, b) => order(a.item, b.item))
+    const rows = [...byItem].map(([id, bySpot]) => {
+        const item = itemById.get(id)!
+        return {
+            item,
+            packSize: packSizeOf(item),
+            bySpot,
+            cases: casesByItem.get(id) ?? 0,
+            loose: looseByItem.get(id) ?? 0,
+            total: bySpot.reduce((t, n) => t + n, 0),
+        }
+    }).sort((a, b) => order(a.item, b.item))
     const spotTotals = stats.map(s => s.qty)
+    const totalCases = stats.reduce((t, s) => t + s.cases, 0)
+    const totalLoose = stats.reduce((t, s) => t + s.loose, 0)
     const vi = (a: string, b: string) => a.localeCompare(b, 'vi')
     return {
         group,
         kind: spots[0].kind,
+        isCaseGroup,
         spots: stats.map(s => ({ ...s, people: s.people.sort(vi), checkers: s.checkers.sort(vi) })),
         rows,
         spotTotals,
+        totalCases,
+        totalLoose,
         total: spotTotals.reduce((t, n) => t + n, 0),
         people: [...people].sort(vi),
         checkers: [...checkers].sort(vi),

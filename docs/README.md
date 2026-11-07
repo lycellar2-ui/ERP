@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 144 Rules rút ra từ 108 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 145 Rules rút ra từ 109 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -242,4 +242,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-11-01 13:40 | Wine ERP v12.39 - Kiểm kê showroom: biên bản A4 dọc gọn, chốt vintage 7 mã NV*
+*Last updated: 2026-11-07 11:00 | Wine ERP v12.40 - Sửa lỗi font tiếng Việt (mojibake) trên modal in đơn bán hàng*

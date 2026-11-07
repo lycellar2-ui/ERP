@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { parseQty, normalizeVintage, cleanLabel, cleanNote, MAX_NOTE, summarize, buildGroupReport, buildCsv, checkState, canRecheck, type ShowroomData } from '@/app/kiem-ke/logic'
+import { parseQty, normalizeVintage, cleanLabel, cleanNote, MAX_NOTE, summarize, buildGroupReport, buildCsv, checkState, canRecheck, packSizeOf, isCaseSpot, calcCaseLooseTotal, type ShowroomData } from '@/app/kiem-ke/logic'
 
 // ─── Setup Mocks ──────────────────────────────────
 
 const mockPrisma = {
     showroomCountSpot: { findMany: vi.fn(), findUnique: vi.fn(), updateMany: vi.fn() },
-    showroomCountItem: { findMany: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn(), upsert: vi.fn() },
-    showroomCountEntry: { findMany: vi.fn(), findUnique: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn(), create: vi.fn() },
+    showroomCountItem: { findMany: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn(), upsert: vi.fn(), updateMany: vi.fn() },
+    showroomCountEntry: { findMany: vi.fn(), findUnique: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn(), create: vi.fn(), update: vi.fn() },
     showroomCountCheck: { findMany: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn() },
     showroomCountNote: { findMany: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn() },
     $transaction: vi.fn(),
@@ -14,7 +14,7 @@ const mockPrisma = {
 
 vi.mock('@/lib/db', () => ({ prisma: mockPrisma }))
 
-const { saveShowroomCount, addShowroomVintage, renameShowroomSpots, setShowroomRecheck, saveShowroomNote } = await import('@/app/kiem-ke/actions')
+const { saveShowroomCount, addShowroomVintage, renameShowroomSpots, setShowroomRecheck, saveShowroomNote, setShowroomItemPackSize } = await import('@/app/kiem-ke/actions')
 
 beforeEach(() => vi.clearAllMocks())
 
@@ -309,5 +309,90 @@ describe('kiem-ke group report (biên bản)', () => {
         expect(r.rows.map(x => x.item.code)).toEqual(['L20019'])
         expect(r.cells).toBe(2)
         expect(buildGroupReport(data, 'Tầng 9')).toBeNull()
+    })
+})
+
+
+describe('kiem-ke Tầng 2 cases & loose bottles', () => {
+    it('identifies packaging size (6 vs 12) and enables case+loose only on Tầng 2', () => {
+        expect(packSizeOf({ kind: 'WINE', code: 'L30001' })).toBe(12)
+        expect(packSizeOf({ kind: 'WINE', code: 'L60001' })).toBe(12)
+        expect(packSizeOf({ kind: 'WINE', code: 'L60002' })).toBe(12)
+        expect(packSizeOf({ kind: 'WINE', code: 'L60003' })).toBe(6)
+        expect(packSizeOf({ kind: 'WINE', code: 'L60004' })).toBe(6)
+        expect(packSizeOf({ kind: 'WINE', code: 'L60005' })).toBe(6)
+        expect(packSizeOf({ kind: 'WINE', code: 'L10032' })).toBe(12)
+        expect(packSizeOf({ kind: 'WINE', code: 'L10033' })).toBe(12)
+        expect(packSizeOf({ kind: 'WINE', code: 'L10034' })).toBe(6)
+        expect(packSizeOf({ kind: 'WINE', code: 'L10039' })).toBe(12)
+        expect(packSizeOf({ kind: 'WINE', code: 'L10042' })).toBe(12)
+        expect(packSizeOf({ kind: 'WINE', code: 'L40010' })).toBe(12)
+        expect(packSizeOf({ kind: 'WINE', code: 'L40014' })).toBe(12)
+        expect(packSizeOf({ kind: 'WINE', code: 'L70001' })).toBe(12)
+        expect(packSizeOf({ kind: 'WINE', code: 'L70003' })).toBe(6)
+        expect(packSizeOf({ kind: 'WINE', code: 'L70005' })).toBe(12)
+        expect(packSizeOf({ kind: 'WINE', code: 'L80001' })).toBe(6)
+        expect(packSizeOf({ kind: 'WINE', code: 'L20019' })).toBe(6)
+        expect(packSizeOf({ kind: 'WINE', code: 'L20019', packSize: 12 })).toBe(12)
+        expect(packSizeOf({ kind: 'POSM', code: 'P01' })).toBeNull()
+
+        expect(isCaseSpot({ groupName: 'Tầng 2', kind: 'WINE' })).toBe(true)
+        expect(isCaseSpot({ groupName: 'Tầng 1', kind: 'WINE' })).toBe(false)
+        expect(isCaseSpot({ groupName: 'Hàng mẫu', kind: 'WINE' })).toBe(false)
+        expect(isCaseSpot({ groupName: 'POSM', kind: 'POSM' })).toBe(false)
+    })
+
+    it('calculates total while preserving exact loose bottles even when loose >= packSize', () => {
+        expect(calcCaseLooseTotal(null, null, 6)).toEqual({ cases: null, loose: null, qty: null })
+        expect(calcCaseLooseTotal(2, 8, 6)).toEqual({ cases: 2, loose: 8, qty: 20 })
+        expect(calcCaseLooseTotal(3, null, 12)).toEqual({ cases: 3, loose: null, qty: 36 })
+        expect(calcCaseLooseTotal(null, 5, 12)).toEqual({ cases: null, loose: 5, qty: 5 })
+        expect(calcCaseLooseTotal(0, 0, 6)).toEqual({ cases: 0, loose: 0, qty: 0 })
+    })
+
+    it('summarizes cases, loose bottles and totals for Tầng 2 in summary and group report', () => {
+        const d: ShowroomData = {
+            ...data,
+            entries: [
+                { spotId: 't2-1', itemId: 'a', qty: 20, cases: 2, loose: 8, countedBy: 'Minh', countedAt: '2026-11-01T03:00:00.000Z' },
+                { spotId: 't2-1', itemId: 'c', qty: 15, cases: 2, loose: 3, countedBy: 'Lan', countedAt: '2026-11-01T03:10:00.000Z' },
+            ],
+        }
+        const s = summarize(d)
+        expect(s.t2Cases).toBe(4)
+        expect(s.t2Loose).toBe(11)
+        expect(s.t2Bottles).toBe(35)
+        const spot = s.spots.find(x => x.spot.id === 't2-1')!
+        expect(spot).toMatchObject({ cases: 4, loose: 11, qty: 35 })
+
+        const r = buildGroupReport(d, 'Tầng 2')!
+        expect(r.isCaseGroup).toBe(true)
+        expect(r.totalCases).toBe(4)
+        expect(r.totalLoose).toBe(11)
+        expect(r.total).toBe(35)
+        expect(r.rows.find(x => x.item.id === 'a')).toMatchObject({ cases: 2, loose: 8, total: 20, packSize: 6 })
+    })
+
+    it('saves cases and loose bottles on ShowroomCountEntry and updates packSize when toggled', async () => {
+        mockPrisma.showroomCountSpot.findUnique.mockResolvedValue({ kind: 'WINE' })
+        mockPrisma.showroomCountItem.findUnique.mockResolvedValue({ kind: 'WINE' })
+        const r = await saveShowroomCount({ spotId: 't2-1', itemId: 'a', qty: 20, cases: 2, loose: 8, countedBy: 'Minh' })
+        expect(r.success).toBe(true)
+        expect(mockPrisma.showroomCountEntry.upsert).toHaveBeenCalledWith(expect.objectContaining({
+            create: { spotId: 't2-1', itemId: 'a', countedBy: 'Minh', qty: 20, cases: 2, loose: 8 },
+        }))
+
+        mockPrisma.showroomCountItem.findMany.mockResolvedValue([{ id: 'a' }])
+        mockPrisma.showroomCountEntry.findMany.mockResolvedValue([{ id: 'e1', cases: 2, loose: 8 }])
+        const rPack = await setShowroomItemPackSize({ code: 'L20019', packSize: 12 })
+        expect(rPack.success).toBe(true)
+        expect(mockPrisma.showroomCountItem.updateMany).toHaveBeenCalledWith({
+            where: { id: { in: ['a'] } },
+            data: { packSize: 12 },
+        })
+        expect(mockPrisma.showroomCountEntry.update).toHaveBeenCalledWith({
+            where: { id: 'e1' },
+            data: { qty: 32 },
+        })
     })
 })

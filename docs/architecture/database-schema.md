@@ -1031,8 +1031,8 @@ historical_monthly_sales (Lưu trữ sản lượng bán & tasting lịch sử t
 ### H. Showroom Quick Count (Kiểm kê nhanh showroom — `/kiem-ke`, công khai)
 ```
 showroom_count_spots   (id "t1-1"…, groupName, kind WINE|POSM, name — đổi tên được, sortOrder)
-showroom_count_items   (kind, code, name, vintage "" = NV, isExtra = vintage thêm tay)  UNIQUE(kind, code, vintage)
-showroom_count_entries (spotId → spots, itemId → items, qty Int ≥ 0, countedBy text, countedAt) UNIQUE(spotId, itemId, countedBy) — mỗi người một dòng
+showroom_count_items   (kind, code, name, vintage "" = NV, packSize 6|12 cho WINE, isExtra = vintage thêm tay)  UNIQUE(kind, code, vintage)
+showroom_count_entries (spotId → spots, itemId → items, qty Int ≥ 0, cases Int?, loose Int?, countedBy text, countedAt) UNIQUE(spotId, itemId, countedBy) — mỗi người một dòng
 showroom_count_checks  (spotId, itemId, checkedBy ≠ người đếm, qtyAtCheck, checkedAt) UNIQUE(spotId, itemId) — dấu kiểm lại lần 2
 showroom_count_notes   (spotId, itemId '' = cả vị trí, note ≤500, writtenBy, updatedAt) UNIQUE(spotId, itemId, writtenBy) — ghi chú người kiểm
 ```

@@ -1,10 +1,10 @@
 'use server'
 
 // Public showroom quick count (/kiem-ke) — no login by design (temporary tool for showroom staff).
-// Writes only to the three showroom_count_* tables; never touches Product, StockLot or StockCount data.
+// Writes only to the showroom_count_* tables; never touches Product, StockLot or StockCount data.
 
 import { prisma } from '@/lib/db'
-import { canRecheck, cleanLabel, cleanNote, MAX_NOTE, normalizeVintage, parseQty, type ShowroomData } from './logic'
+import { canRecheck, cleanLabel, cleanNote, MAX_NOTE, normalizeVintage, packSizeOf, parseQty, type ShowroomData } from './logic'
 
 type Result<T = undefined> = { success: true; data?: T } | { success: false; error: string }
 
@@ -14,7 +14,7 @@ export async function getShowroomCount(): Promise<Result<ShowroomData>> {
             prisma.showroomCountSpot.findMany({ orderBy: { sortOrder: 'asc' } }),
             prisma.showroomCountItem.findMany({ orderBy: [{ kind: 'asc' }, { sortOrder: 'asc' }] }),
             prisma.showroomCountEntry.findMany({
-                select: { spotId: true, itemId: true, qty: true, countedBy: true, countedAt: true },
+                select: { spotId: true, itemId: true, qty: true, cases: true, loose: true, countedBy: true, countedAt: true },
             }),
             prisma.showroomCountCheck.findMany({
                 select: { spotId: true, itemId: true, checkedBy: true, qtyAtCheck: true, checkedAt: true },
@@ -27,7 +27,9 @@ export async function getShowroomCount(): Promise<Result<ShowroomData>> {
             success: true,
             data: JSON.parse(JSON.stringify({
                 spots: spots.map(({ id, groupName, kind, name, sortOrder }) => ({ id, groupName, kind, name, sortOrder })),
-                items: items.map(({ id, kind, code, name, vintage, isExtra, sortOrder }) => ({ id, kind, code, name, vintage, isExtra, sortOrder })),
+                items: items.map(({ id, kind, code, name, vintage, packSize, isExtra, sortOrder }) => ({
+                    id, kind, code, name, vintage, packSize: packSizeOf({ kind, code, packSize }), isExtra, sortOrder,
+                })),
                 entries,
                 checks,
                 notes,
@@ -42,15 +44,24 @@ export async function getShowroomCount(): Promise<Result<ShowroomData>> {
 /**
  * qty = null xoá dòng (chưa đếm); 0 = đã kiểm, không có hàng.
  * Mỗi người kiểm có dòng riêng (spot + item + countedBy) nên hai người cùng đếm một vị trí không ghi đè nhau.
+ * Tại Tầng 2 có thêm cases (số thùng) và loose (số chai lẻ thực tế).
  */
 export async function saveShowroomCount(input: {
     spotId: string
     itemId: string
     qty: number | null
+    cases?: number | null
+    loose?: number | null
     countedBy: string
 }): Promise<Result> {
     const qty = parseQty(input.qty)
     if (qty === 'invalid') return { success: false, error: 'Số lượng phải là số nguyên từ 0 trở lên.' }
+    const hasCaseLoose = input.cases !== undefined || input.loose !== undefined
+    const cases = hasCaseLoose ? parseQty(input.cases ?? null) : null
+    const loose = hasCaseLoose ? parseQty(input.loose ?? null) : null
+    if (cases === 'invalid' || loose === 'invalid') {
+        return { success: false, error: 'Số thùng và số chai lẻ phải là số nguyên từ 0 trở lên.' }
+    }
     const countedBy = cleanLabel(input.countedBy)
     if (!countedBy) return { success: false, error: 'Thiếu tên người kiểm.' }
     try {
@@ -64,10 +75,11 @@ export async function saveShowroomCount(input: {
             ])
             if (!spot || !item) return { success: false, error: 'Vị trí hoặc mặt hàng không còn tồn tại. Tải lại trang.' }
             if ((spot.kind === 'POSM') !== (item.kind === 'POSM')) return { success: false, error: 'Mặt hàng không thuộc khu vực này.' }
+            const extra = hasCaseLoose ? { cases, loose } : {}
             await prisma.showroomCountEntry.upsert({
                 where: { spotId_itemId_countedBy: key },
-                create: { ...key, qty },
-                update: { qty, countedAt: new Date() },
+                create: { ...key, qty, ...extra },
+                update: { qty, ...extra, countedAt: new Date() },
             })
         }
         return { success: true }
@@ -99,7 +111,15 @@ export async function addShowroomVintage(input: {
 
         const item = await prisma.showroomCountItem.upsert({
             where: { kind_code_vintage: { kind: 'WINE', code: base.code, vintage } },
-            create: { kind: 'WINE', code: base.code, name: base.name, vintage, isExtra: true, sortOrder: base.sortOrder },
+            create: {
+                kind: 'WINE',
+                code: base.code,
+                name: base.name,
+                vintage,
+                ...(base.packSize ? { packSize: base.packSize } : {}),
+                isExtra: true,
+                sortOrder: base.sortOrder,
+            },
             update: {},
         })
         const existing = await prisma.showroomCountEntry.findUnique({
@@ -112,6 +132,48 @@ export async function addShowroomVintage(input: {
     } catch (err) {
         console.error('[kiem-ke] addShowroomVintage', err)
         return { success: false, error: 'Chưa thêm được vintage. Thử lại.' }
+    }
+}
+
+/** Cập nhật quy cách đóng gói (6 hoặc 12 chai/thùng) cho một mã rượu và tính lại tổng chai cho các dòng đã nhập số thùng. */
+export async function setShowroomItemPackSize(input: {
+    code: string
+    packSize: number
+}): Promise<Result> {
+    if (input.packSize !== 6 && input.packSize !== 12) {
+        return { success: false, error: 'Quy cách đóng gói chỉ nhận 6 hoặc 12 chai/thùng.' }
+    }
+    const code = String(input.code).trim()
+    if (!code) return { success: false, error: 'Thiếu mã hàng.' }
+    try {
+        const items = await prisma.showroomCountItem.findMany({
+            where: { kind: 'WINE', code },
+            select: { id: true },
+        })
+        if (!items.length) return { success: false, error: 'Không tìm thấy mã hàng.' }
+        const itemIds = items.map(i => i.id)
+        await prisma.showroomCountItem.updateMany({
+            where: { id: { in: itemIds } },
+            data: { packSize: input.packSize },
+        })
+        const entries = await prisma.showroomCountEntry.findMany({
+            where: { itemId: { in: itemIds }, cases: { not: null } },
+            select: { id: true, cases: true, loose: true },
+        })
+        if (entries.length) {
+            await prisma.$transaction(
+                entries.map(e =>
+                    prisma.showroomCountEntry.update({
+                        where: { id: e.id },
+                        data: { qty: (e.cases ?? 0) * input.packSize + (e.loose ?? 0) },
+                    })
+                )
+            )
+        }
+        return { success: true }
+    } catch (err) {
+        console.error('[kiem-ke] setShowroomItemPackSize', err)
+        return { success: false, error: 'Chưa cập nhật được quy cách. Thử lại.' }
     }
 }
 

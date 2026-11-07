@@ -1632,6 +1632,7 @@ model ShowroomCountItem {
   code      String                 // L20019 hoặc P01
   name      String
   vintage   String                 @default("") // "" = NV
+  packSize  Int?                   // Quy cách đóng gói: 6 hoặc 12 chai/thùng (null cho POSM)
   isExtra   Boolean                @default(false) // Vintage người kiểm thêm tay
   sortOrder Int                    @default(0)
   entries   ShowroomCountEntry[]
@@ -1649,6 +1650,8 @@ model ShowroomCountEntry {
   itemId    String
   item      ShowroomCountItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
   qty       Int               // 0 = đã kiểm, không có hàng
+  cases     Int?              // Số thùng nguyên (chỉ bật cho Tầng 2)
+  loose     Int?              // Số chai lẻ (chỉ bật cho Tầng 2, giữ nguyên số lẻ thực tế)
   countedBy String            // Mỗi người giữ số riêng; tổng vị trí = cộng các người
   countedAt DateTime          @default(now())
 

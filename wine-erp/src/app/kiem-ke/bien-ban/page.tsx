@@ -30,6 +30,7 @@ export default async function BienBanPage({ searchParams }: { searchParams: Prom
 
     const now = new Date().toISOString()
     const posm = report.kind === 'POSM'
+    const t2 = report.isCaseGroup
     const unit = posm ? 'cái' : 'chai'
     const signers: Array<[string, string]> = [
         ...report.people.map((p): [string, string] => ['Người kiểm kê', p]),
@@ -66,7 +67,13 @@ export default async function BienBanPage({ searchParams }: { searchParams: Prom
                     <p>
                         Showroom — {report.group} ({report.spots.length} vị trí) · Thời gian kiểm: {report.firstAt && report.lastAt ? `${time(report.firstAt)} – ${time(report.lastAt)} ngày ${date(report.lastAt)}` : 'chưa có số đếm'}<br />
                         Người kiểm kê: {report.people.join(', ') || '—'}{report.checkers.length ? ` · Người kiểm lại: ${report.checkers.join(', ')}` : ''}<br />
-                        Kết quả: <b>{fmt(report.total)} {unit}</b>, {report.rows.length} dòng hàng · Đã kiểm lại lần 2: {report.rechecked}/{report.cells} dòng
+                        Kết quả:{' '}
+                        {t2 ? (
+                            <b>{fmt(report.totalCases)} thùng + {fmt(report.totalLoose)} chai lẻ = Tổng {fmt(report.total)} {unit}</b>
+                        ) : (
+                            <b>{fmt(report.total)} {unit}</b>
+                        )}
+                        , {report.rows.length} dòng hàng · Đã kiểm lại lần 2: {report.rechecked}/{report.cells} dòng
                     </p>
                 </section>
 
@@ -75,23 +82,25 @@ export default async function BienBanPage({ searchParams }: { searchParams: Prom
                     <table className="w-full border-collapse">
                         <thead><tr>
                             <th className={th}>#</th><th className={th}>Vị trí</th><th className={th}>Số dòng</th>
-                            <th className={th}>Số {unit}</th><th className={th}>Người đếm</th><th className={th}>Đã kiểm lại</th><th className={th}>Người kiểm lại</th>
+                            {t2 && <><th className={th}>Số thùng</th><th className={th}>Chai lẻ</th></>}
+                            <th className={th}>{t2 ? `Tổng (${unit})` : `Số ${unit}`}</th><th className={th}>Người đếm</th><th className={th}>Đã kiểm lại</th><th className={th}>Người kiểm lại</th>
                         </tr></thead>
                         <tbody>
                             {report.spots.map((s, i) => (
                                 <tr key={s.spot.id}>
                                     <td className={num}>{i + 1}</td><td className={td}>{s.spot.name}</td><td className={num}>{s.lines}</td>
+                                    {t2 && <><td className={num}>{fmt(s.cases)}</td><td className={num}>{fmt(s.loose)}</td></>}
                                     <td className={num}>{fmt(s.qty)}</td><td className={td}>{s.people.join(', ')}</td>
                                     <td className={num}>{s.cells ? `${s.rechecked}/${s.cells}` : ''}</td><td className={td}>{s.checkers.join(', ')}</td>
                                 </tr>
                             ))}
                             <tr className="font-bold">
                                 <td className={td} /><td className={td}>Cộng {report.group}</td><td className={num}>{report.rows.length}</td>
+                                {t2 && <><td className={num}>{fmt(report.totalCases)}</td><td className={num}>{fmt(report.totalLoose)}</td></>}
                                 <td className={num}>{fmt(report.total)}</td><td className={td} /><td className={num}>{report.rechecked}/{report.cells}</td><td className={td} />
                             </tr>
                         </tbody>
                     </table>
-                    
                 </section>
 
                 <section>
@@ -103,7 +112,9 @@ export default async function BienBanPage({ searchParams }: { searchParams: Prom
                             {!posm && <th className={`${th} w-14`}>Mã</th>}
                             <th className={th}>Tên hàng</th>
                             {!posm && <th className={`${th} w-9`}>Vintage</th>}
+                            {t2 && <th className={`${th} w-10 text-right`}>Q.Cách</th>}
                             {report.spots.map((s, i) => <th key={s.spot.id} className={`${th} w-8 text-right`}>({i + 1})</th>)}
+                            {t2 && <><th className={`${th} w-10 text-right`}>Thùng</th><th className={`${th} w-10 text-right`}>Lẻ</th></>}
                             <th className={`${th} text-right`}>Cộng</th>
                         </tr></thead>
                         <tbody>
@@ -113,13 +124,16 @@ export default async function BienBanPage({ searchParams }: { searchParams: Prom
                                     {!posm && <td className={`${td} font-bold`}>{r.item.code}</td>}
                                     <td className={td}>{r.item.name}</td>
                                     {!posm && <td className={td}>{r.item.vintage || 'NV'}</td>}
+                                    {t2 && <td className={num}>{r.packSize ? `${r.packSize}c/T` : ''}</td>}
                                     {r.bySpot.map((n, j) => <td key={j} className={num}>{n || ''}</td>)}
+                                    {t2 && <><td className={num}>{r.cases || ''}</td><td className={num}>{r.loose || ''}</td></>}
                                     <td className={`${num} w-10 font-bold`}>{fmt(r.total)}</td>
                                 </tr>
                             ))}
                             <tr className="font-bold">
-                                <td className={td} colSpan={posm ? 2 : 4}>Cộng</td>
+                                <td className={td} colSpan={posm ? 2 : t2 ? 5 : 4}>Cộng</td>
                                 {report.spotTotals.map((n, j) => <td key={j} className={num}>{fmt(n)}</td>)}
+                                {t2 && <><td className={num}>{fmt(report.totalCases)}</td><td className={num}>{fmt(report.totalLoose)}</td></>}
                                 <td className={num}>{fmt(report.total)}</td>
                             </tr>
                         </tbody>
@@ -145,7 +159,15 @@ export default async function BienBanPage({ searchParams }: { searchParams: Prom
 
                 <section className="break-inside-avoid">
                     <h2 className="mb-1 font-bold">V. Kết luận và chữ ký</h2>
-                    <p>Các bên thống nhất số lượng thực tế tại {report.group} showroom là <b>{fmt(report.total)} {unit}</b>, chi tiết theo mục III. Biên bản lập thành 02 bản, mỗi bên giữ 01 bản.</p>
+                    <p>
+                        Các bên thống nhất số lượng thực tế tại {report.group} showroom là{' '}
+                        {t2 ? (
+                            <b>{fmt(report.totalCases)} thùng + {fmt(report.totalLoose)} chai lẻ = Tổng {fmt(report.total)} {unit}</b>
+                        ) : (
+                            <b>{fmt(report.total)} {unit}</b>
+                        )}
+                        , chi tiết theo mục III. Biên bản lập thành 02 bản, mỗi bên giữ 01 bản.
+                    </p>
                     <p className="mt-1 text-right">Ngày ......./......./{date(now).slice(-4)}</p>
                     <div className="mt-2 grid grid-cols-4 gap-x-3 gap-y-4 text-center">
                         {signers.map(([role, name], i) => (
