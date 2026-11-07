@@ -847,7 +847,11 @@ function SpotsView(props: {
                                                             ? `${ss.lines} ${u1} · ${fmt(ss.cases)} thùng + ${fmt(ss.loose)} lẻ · Tổng ${fmt(ss.qty)} ${u2}`
                                                             : `${ss.lines} ${u1} · ${fmt(ss.qty)} ${u2}`
                                                         : 'Chưa đếm'}
-                                                    {ss?.cells ? <span className="block font-medium text-lys-muted">✓ kiểm lại {ss.rechecked}/{ss.cells}</span> : null}
+                                                    {ss?.cells ? (
+                                                        <span className={`block ${ss.rechecked < ss.cells ? 'font-bold text-tone-danger-fg' : 'font-medium text-lys-muted'}`}>
+                                                            {ss.rechecked < ss.cells ? 'kiểm lại' : '✓ kiểm lại'} {ss.rechecked}/{ss.cells}
+                                                        </span>
+                                                    ) : null}
                                                 </span>
                                             </button>
                                         )
@@ -966,7 +970,14 @@ function CountView(props: {
                                 ? ` · ${props.spotSummary.lines} ${u1} · ${fmt(props.spotSummary.cases)} thùng + ${fmt(props.spotSummary.loose)} lẻ · Tổng ${fmt(props.spotSummary.qty)} ${u2}`
                                 : ` · ${props.spotSummary.lines} ${u1} · ${fmt(props.spotSummary.qty)} ${u2}`
                             : ''}
-                        {props.spotSummary?.cells ? ` · kiểm lại ${props.spotSummary.rechecked}/${props.spotSummary.cells}` : ''}
+                        {props.spotSummary?.cells ? (
+                            <>
+                                {' · '}
+                                <span className={props.spotSummary.rechecked < props.spotSummary.cells ? 'font-bold text-tone-danger-fg' : ''}>
+                                    kiểm lại {props.spotSummary.rechecked}/{props.spotSummary.cells}
+                                </span>
+                            </>
+                        ) : ''}
                     </div>
                     <h1 className="mt-1 text-2xl font-extrabold">{spot.name}</h1>
                 </div>
@@ -1049,10 +1060,19 @@ function CountView(props: {
                     </button>
                 </div>
                 <div role="group" aria-label="Lọc" className="grid grid-cols-4 gap-1 rounded-lg border border-lys-border bg-lys-surface p-1">
-                    {([['all', 'Tất cả'], ['done', 'Có số'], ['todo', 'Chưa đếm'], ['recheck', 'Chưa kiểm lại']] as const).map(([v, l]) => (
-                        <button key={v} aria-pressed={props.filter === v} onClick={() => props.setFilter(v)}
-                            className={`rounded-md px-1 py-2 text-[13px] leading-tight ${props.filter === v ? 'bg-lys-teal-strong font-semibold text-white' : 'text-lys-muted'}`}>{l}</button>
-                    ))}
+                    {([['all', 'Tất cả'], ['done', 'Có số'], ['todo', 'Chưa đếm'], ['recheck', 'Chưa kiểm lại']] as const).map(([v, l]) => {
+                        const unverified = v === 'recheck' && (props.spotSummary?.cells ?? 0) > (props.spotSummary?.rechecked ?? 0)
+                        return (
+                            <button key={v} aria-pressed={props.filter === v} onClick={() => props.setFilter(v)}
+                                className={`rounded-md px-1 py-2 text-[13px] leading-tight ${
+                                    props.filter === v
+                                        ? 'bg-lys-teal-strong font-semibold text-white'
+                                        : unverified
+                                            ? 'font-bold text-tone-danger-fg'
+                                            : 'text-lys-muted'
+                                }`}>{l}</button>
+                        )
+                    })}
                 </div>
             </div>
             {aiPanel === 'key' && (
@@ -1329,7 +1349,7 @@ function Recheck({ check, total, canCheck, busy, error, onChange }: {
                             ☐ Kiểm lại: đúng {total}
                         </button>
                     ) : (
-                        <span className="text-lys-muted">Cần người khác kiểm lại dòng này</span>
+                        <span className="font-semibold text-tone-danger-fg">Cần người khác kiểm lại dòng này</span>
                     )}
                 </>
             )}
@@ -1762,9 +1782,15 @@ function SummaryView(props: {
                                         <div>
                                             <div className="font-medium">{spot.name}</div>
                                             <div className="mt-1 text-xs text-lys-muted">
-                                                {ss?.touched
-                                                    ? `${ss.lines} dòng có hàng${t2Spot ? ` · ${fmt(ss.cases)} thùng + ${fmt(ss.loose)} chai lẻ` : ''} · kiểm lại ${ss.rechecked}/${ss.cells} · ${ss.people.join(', ')} · ${ss.lastAt ? when(ss.lastAt) : ''}`
-                                                    : 'Chưa kiểm'}
+                                                {ss?.touched ? (
+                                                    <>
+                                                        {ss.lines} dòng có hàng{t2Spot ? ` · ${fmt(ss.cases)} thùng + ${fmt(ss.loose)} chai lẻ` : ''} ·{' '}
+                                                        <span className={ss.rechecked < ss.cells ? 'font-bold text-tone-danger-fg' : ''}>
+                                                            kiểm lại {ss.rechecked}/{ss.cells}
+                                                        </span>
+                                                        {' · '}{ss.people.join(', ')}{ss.lastAt ? ` · ${when(ss.lastAt)}` : ''}
+                                                    </>
+                                                ) : 'Chưa kiểm'}
                                             </div>
                                         </div>
                                         <div className={`self-center text-[21px] font-bold ${ss?.touched ? '' : 'text-lys-dim'}`}>{ss?.touched ? fmt(ss.qty) : '–'}</div>
