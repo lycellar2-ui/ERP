@@ -329,3 +329,8 @@ scanner.start(
   undefined
 )
 ```
+
+### Vercel Build Performance Optimization (`next.config.ts` & `tsconfig.json`):
+- `typescript.ignoreBuildErrors: true` in `next.config.ts` (type-checking is enforced locally via `npx tsc --noEmit`, saving ~75s of single-threaded `tsc` execution on Vercel's 2-vCPU build container).
+- `experimental.optimizePackageImports: ['lucide-react', 'recharts', '@tanstack/react-query']` in `next.config.ts`.
+- `"exclude": ["node_modules", "scripts", "scratch", "prisma", "test"]` in `tsconfig.json`.

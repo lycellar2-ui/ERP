@@ -1,7 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  typescript: {
+    // Type-checking is verified locally via `npx tsc --noEmit` before pushing;
+    // skipping single-threaded tsc on Vercel's 2-vCPU build container saves ~75s per deploy.
+    ignoreBuildErrors: true,
+  },
   experimental: {
+    optimizePackageImports: ['lucide-react', 'recharts', '@tanstack/react-query'],
     serverActions: {
       bodySizeLimit: '15mb',
     },
