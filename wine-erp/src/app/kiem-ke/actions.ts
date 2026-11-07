@@ -277,10 +277,11 @@ export async function renameShowroomSpots(input: Array<{ id: string; name: strin
 // ═══════════════════════════════════════════════════════════════════
 
 const GEMINI_FLASH_MODELS = [
-    'gemini-3.0-flash',
-    'gemini-3-flash-preview',
-    'gemini-2.5-flash',
+    'gemini-3.8-flash',
+    'gemini-3.8-pro',
     'gemini-3.1-pro-preview',
+    'gemini-3.0-flash',
+    'gemini-2.5-flash',
     'gemini-flash-latest',
 ] as const
 
