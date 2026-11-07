@@ -697,7 +697,9 @@ function buildCatalogEnricher(allItems: Array<{
  * - Trả về danh sách niên vụ / mã tương tự để người kiểm đổi 1 chạm nếu cần.
  */
 export async function parseShowroomVoiceWithAi(input: {
-    transcript: string
+    transcript?: string
+    audioBase64?: string
+    audioMimeType?: string
     spotId: string
     clientKey?: string
 }): Promise<Result<{
@@ -707,8 +709,11 @@ export async function parseShowroomVoiceWithAi(input: {
     suggestedMode: 'add' | 'replace'
 }>> {
     const rawTranscript = String(input.transcript ?? '').trim()
-    if (!rawTranscript) return { success: false, error: 'Chưa có nội dung giọng nói để phân tích.' }
-    const normalizedTranscript = normalizeVoiceTranscript(rawTranscript)
+    const hasAudio = Boolean(input.audioBase64 && input.audioBase64.length > 50)
+    if (!rawTranscript && !hasAudio) {
+        return { success: false, error: 'Chưa có nội dung giọng nói để phân tích.' }
+    }
+    const normalizedTranscript = rawTranscript ? normalizeVoiceTranscript(rawTranscript) : ''
     const { key } = await resolveShowroomGeminiKey(input.clientKey)
     if (!key) {
         return { success: false, error: 'NO_API_KEY: Chưa cài đặt Gemini API Key. Hãy nhập API Key ở mục Cài đặt AI.' }
@@ -740,8 +745,9 @@ Vị trí mặc định đang đứng: "${defaultSpot.id}" ("${defaultSpot.group
 Danh sách tất cả vị trí kiểm kê (spotId|groupName|spotName|mode):
 ${spotLines}
 
-Câu gốc thu âm: "${rawTranscript}"
-Câu đã chuẩn hoá mã & phiên âm: "${normalizedTranscript}"
+${hasAudio
+    ? 'Hãy nghe kỹ file ghi âm tiếng Việt đính kèm, chép lại câu người kiểm vừa đọc vào trường "transcribedText", sau đó bóc tách danh sách mã rượu và số lượng.'
+    : `Câu gốc thu âm: "${rawTranscript}"\nCâu đã chuẩn hoá mã & phiên âm: "${normalizedTranscript}"`}
 
 Danh mục mặt hàng hiện có (id|code|vintage|pack=số_chai_mỗi_thùng|name):
 ${catalogLines}
@@ -771,6 +777,7 @@ Quy tắc suy luận thông minh:
    - Nếu vị trí đích thuộc Tầng 1 / POSM: "cases": null, "loose": null, "qty" = tổng số chai/cái.
 5. Chỉ trả về JSON thuần theo cấu trúc:
 {
+  "transcribedText": "Câu tiếng Việt nghe được từ file âm thanh (hoặc câu chuẩn hóa)",
   "summaryText": "Tóm tắt ngắn gọn kết quả nhận diện bằng tiếng Việt",
   "suggestedMode": "add",
   "matches": [
@@ -796,9 +803,20 @@ Quy tắc suy luận thông minh:
   ]
 }`
 
+        const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [{ text: prompt }]
+        if (hasAudio && input.audioBase64) {
+            const cleanAudio = input.audioBase64.replace(/^data:[^;]+;base64,/, '')
+            parts.push({
+                inlineData: {
+                    mimeType: input.audioMimeType || 'audio/webm',
+                    data: cleanAudio,
+                },
+            })
+        }
+
         const res = await callGeminiFlash({
             apiKey: key,
-            parts: [{ text: prompt }],
+            parts,
             jsonMode: true,
             maxOutputTokens: 1800,
             temperature: 0.1,
@@ -807,17 +825,19 @@ Quy tắc suy luận thông minh:
 
         const clean = res.text.replace(/```json/gi, '').replace(/```/g, '').trim()
         const parsed = JSON.parse(clean) as {
+            transcribedText?: string
             summaryText?: string
             suggestedMode?: 'add' | 'replace'
             matches?: Array<AiVoiceMatch & { alternatives?: AiCandidateOption[] }>
         }
+        const finalTranscript = normalizedTranscript || (parsed.transcribedText ? normalizeVoiceTranscript(parsed.transcribedText) : '')
         const rawMatches = Array.isArray(parsed.matches)
             ? parsed.matches.filter(m => m && (m.code || m.itemId) && typeof m.qty === 'number' && m.qty >= 0)
             : []
         if (!rawMatches.length) {
             return {
                 success: false,
-                error: `AI chưa tìm thấy mã rượu khớp với câu "${normalizedTranscript}". Hãy đọc mã (vd: L10039) hoặc tên rượu kèm số lượng.`,
+                error: `AI chưa tìm thấy mã rượu khớp với câu "${finalTranscript || rawTranscript || 'vừa đọc'}". Hãy đọc mã (vd: L10039) hoặc tên rượu kèm số lượng.`,
             }
         }
         const suggestedMode: 'add' | 'replace' = parsed.suggestedMode === 'replace' ? 'replace' : 'add'
@@ -863,7 +883,7 @@ Quy tắc suy luận thông minh:
             success: true,
             data: {
                 summaryText: parsed.summaryText || `Đã nhận diện ${matches.length} dòng kiểm kê.`,
-                normalizedTranscript,
+                normalizedTranscript: finalTranscript || normalizedTranscript,
                 suggestedMode,
                 matches,
             },

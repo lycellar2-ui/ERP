@@ -2263,11 +2263,15 @@ function AiVoicePanel({
     const [result, setResult] = useState<{ summaryText: string; matches: AiVoiceMatch[] } | null>(null)
     const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set())
     const recRef = useRef<SpeechRecognitionInstance | null>(null)
+    const mediaRecRef = useRef<MediaRecorder | null>(null)
+    const mediaStreamRef = useRef<MediaStream | null>(null)
     const latestTranscriptRef = useRef('')
 
     useEffect(() => {
         return () => {
             try { recRef.current?.stop() } catch { /* ignore */ }
+            try { mediaRecRef.current?.stop() } catch { /* ignore */ }
+            try { mediaStreamRef.current?.getTracks().forEach(t => t.stop()) } catch { /* ignore */ }
         }
     }, [])
 
@@ -2276,15 +2280,17 @@ function AiVoicePanel({
         return normalizeVoiceTranscript(text)
     }, [text])
 
-    const analyze = useCallback(async (overrideText?: string) => {
+    const analyze = useCallback(async (overrideText?: string, audioPayload?: { base64: string; mimeType: string }) => {
         const raw = (overrideText ?? text).trim()
-        if (!raw) return
+        if (!raw && !audioPayload) return
         setBusy(true)
         setErr('')
         setResult(null)
         setAppliedIds(new Set())
         const res = await parseShowroomVoiceWithAi({
-            transcript: raw,
+            transcript: raw || undefined,
+            audioBase64: audioPayload?.base64,
+            audioMimeType: audioPayload?.mimeType,
             spotId: targetSpotId,
             clientKey: clientAiKey,
         })
@@ -2298,6 +2304,9 @@ function AiVoicePanel({
             return
         }
         if (res.data) {
+            if (res.data.normalizedTranscript && !raw) {
+                setText(res.data.normalizedTranscript)
+            }
             setResult({
                 summaryText: res.data.summaryText,
                 matches: res.data.matches,
@@ -2312,9 +2321,51 @@ function AiVoicePanel({
         }
     }, [text, targetSpotId, clientAiKey, onNeedKey, spots])
 
+    const startMediaRecorderFallback = async () => {
+        if (!navigator.mediaDevices?.getUserMedia) {
+            setErr('Trình duyệt này chưa cấp quyền Micro. Hãy bấm biểu tượng ổ khóa trên thanh địa chỉ → Cho phép Micro, hoặc bấm nút micro trên bàn phím điện thoại.')
+            return
+        }
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+            mediaStreamRef.current = stream
+            const mimeType = typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/webm')
+                ? 'audio/webm'
+                : 'audio/mp4'
+            const recorder = new MediaRecorder(stream)
+            const chunks: BlobPart[] = []
+            recorder.ondataavailable = (ev) => {
+                if (ev.data.size > 0) chunks.push(ev.data)
+            }
+            recorder.onstop = () => {
+                setListening(false)
+                try { stream.getTracks().forEach(t => t.stop()) } catch { /* ignore */ }
+                const blob = new Blob(chunks, { type: mimeType })
+                if (blob.size < 200) return
+                const reader = new FileReader()
+                reader.onloadend = () => {
+                    const base64 = String(reader.result ?? '')
+                    if (base64) void analyze('', { base64, mimeType })
+                }
+                reader.readAsDataURL(blob)
+            }
+            mediaRecRef.current = recorder
+            setListening(true)
+            recorder.start()
+        } catch {
+            setListening(false)
+            setErr('Trình duyệt đang chặn quyền Micro (not-allowed). Hãy bấm biểu tượng ổ khóa cạnh thanh địa chỉ trình duyệt → Cho phép Micro (Microphone), rồi tải lại trang.')
+        }
+    }
+
     const toggleMic = () => {
         if (listening) {
             try { recRef.current?.stop() } catch { /* ignore */ }
+            try {
+                if (mediaRecRef.current && mediaRecRef.current.state !== 'inactive') {
+                    mediaRecRef.current.stop()
+                }
+            } catch { /* ignore */ }
             setListening(false)
             return
         }
@@ -2324,7 +2375,7 @@ function AiVoicePanel({
         }
         const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition
         if (!Ctor) {
-            setErr('Trình duyệt này không hỗ trợ thu âm trực tiếp. Bạn có thể bấm nút micro trên bàn phím điện thoại hoặc gõ nhanh vào ô bên dưới.')
+            void startMediaRecorderFallback()
             return
         }
         setErr('')
@@ -2344,6 +2395,10 @@ function AiVoicePanel({
         }
         rec.onerror = (e) => {
             setListening(false)
+            if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+                void startMediaRecorderFallback()
+                return
+            }
             if (e.error && e.error !== 'no-speech') {
                 setErr(`Không thu âm được (${e.error}). Hãy thử lại hoặc dùng micro trên bàn phím.`)
             }
