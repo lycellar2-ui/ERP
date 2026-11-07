@@ -277,23 +277,28 @@ export async function renameShowroomSpots(input: Array<{ id: string; name: strin
 // ═══════════════════════════════════════════════════════════════════
 
 const GEMINI_FLASH_MODELS = [
-    'gemini-3.8-flash',
-    'gemini-3.8-pro',
-    'gemini-3.1-pro-preview',
-    'gemini-3.0-flash',
     'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
+    'gemini-3-flash-preview',
+    'gemini-3.8-flash',
+    'gemini-2.5-pro',
+    'gemini-3.1-pro-preview',
     'gemini-flash-latest',
+    'gemini-flash-lite-latest',
 ] as const
 
 let cachedWorkingGeminiModel: string | null = null
 
-async function discoverAvailableGeminiModels(apiKey: string): Promise<string[]> {
+async function discoverAvailableGeminiModels(apiKey: string): Promise<{ ok: boolean; status: number; models: string[]; errorText?: string }> {
     try {
         const res = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`,
             { method: 'GET' }
         )
-        if (!res.ok) return []
+        if (!res.ok) {
+            const errText = await res.text()
+            return { ok: false, status: res.status, models: [], errorText: errText }
+        }
         const data = (await res.json()) as {
             models?: Array<{ name?: string; supportedGenerationMethods?: string[] }>
         }
@@ -301,24 +306,25 @@ async function discoverAvailableGeminiModels(apiKey: string): Promise<string[]> 
             .filter(m =>
                 m.name &&
                 m.supportedGenerationMethods?.includes('generateContent') &&
-                !/embedding|imagen|veo|tts|aqa|bison|gecko|learnlm/i.test(m.name)
+                !/embedding|imagen|veo|tts|aqa|bison|gecko|learnlm|robotics|computer-use/i.test(m.name)
             )
             .map(m => String(m.name).replace(/^models\//, ''))
 
-        // Ưu tiên dòng flash mới nhất (nhanh, đa phương thức), sau đó tới pro
-        return raw.sort((a, b) => {
+        // Ưu tiên dòng flash và flash-lite (nhanh, chịu tải cao, ít bị 503), sau đó tới pro
+        const sorted = raw.sort((a, b) => {
             const score = (name: string) => {
                 let s = 0
                 if (/flash/i.test(name)) s += 100
-                if (!/lite/i.test(name)) s += 20
-                if (/3\.|3-/i.test(name)) s += 50
-                else if (/2\.5/i.test(name)) s += 30
+                if (/2\.5/i.test(name)) s += 40
+                else if (/3\.|3-/i.test(name)) s += 35
+                if (!/preview|exp/i.test(name)) s += 25
                 return s
             }
             return score(b) - score(a)
         })
-    } catch {
-        return []
+        return { ok: true, status: 200, models: sorted }
+    } catch (err) {
+        return { ok: false, status: 0, models: [], errorText: err instanceof Error ? err.message : String(err) }
     }
 }
 
@@ -418,22 +424,26 @@ async function callGeminiFlash(params: {
                     return { ok: false, error: 'API Key không hợp lệ hoặc không có quyền truy cập Gemini API.' }
                 }
 
-                // Nếu thông báo lỗi 404 gợi ý model mới (vd: "Please update your code to use models/gemini-3.0-flash"), tự động thêm vào đầu hàng đợi
+                // Nếu thông báo lỗi 404 gợi ý model mới, tự động thêm vào đầu hàng đợi
                 const suggestedMatch = body.match(/use\s+models\/([a-zA-Z0-9._-]+)/i)
                 if (suggestedMatch?.[1] && !tried.has(suggestedMatch[1])) {
                     queue.unshift(suggestedMatch[1])
                 }
 
-                // Nếu hết danh sách tĩnh mà vẫn gặp 404, tự động hỏi danh sách models từ Google API của chính Key này
-                if (res.status === 404 && queue.length === 0 && !discovered) {
+                // Nếu gặp 404 hoặc 503/429 (quá tải cục bộ ở 1 model), tự động lấy danh sách tất cả model khả dụng của Key để xoay vòng sang model rảnh hơn (như flash-lite)
+                if ((res.status === 404 || res.status === 503 || res.status === 429) && !discovered) {
                     discovered = true
-                    const available = await discoverAvailableGeminiModels(params.apiKey)
-                    for (const m of available.slice(0, 4)) {
+                    const disc = await discoverAvailableGeminiModels(params.apiKey)
+                    for (const m of disc.models.slice(0, 6)) {
                         if (!tried.has(m)) queue.push(m)
                     }
                 }
 
-                lastError = `Lỗi Gemini (${res.status}): ${body.slice(0, 180)}`
+                if (res.status === 503 || res.status === 429) {
+                    lastError = 'Máy chủ Gemini của Google đang quá tải tạm thời (503). Hãy bấm thử lại sau vài giây.'
+                } else {
+                    lastError = `Lỗi Gemini (${res.status}): ${body.slice(0, 180)}`
+                }
                 continue
             }
             const data = await res.json()
@@ -507,13 +517,23 @@ export async function saveShowroomAiKey(input: { apiKey: string }): Promise<Resu
         if (raw.length < 20) {
             return { success: false, error: 'API Key quá ngắn. Vui lòng dán đúng Gemini API Key (bắt đầu bằng AIza...).' }
         }
-        const test = await callGeminiFlash({
-            apiKey: raw,
-            parts: [{ text: 'Trả lời OK' }],
-            maxOutputTokens: 8,
-        })
-        if (!test.ok) {
-            return { success: false, error: test.error }
+        // Xác thực Key trực tiếp qua endpoint danh sách models của Google (nhanh <100ms và không bị chặn bởi lỗi quá tải 503 của từng model lẻ)
+        const disc = await discoverAvailableGeminiModels(raw)
+        if (!disc.ok) {
+            if (disc.status === 400 || disc.status === 401 || disc.status === 403) {
+                return { success: false, error: 'API Key không hợp lệ hoặc không có quyền truy cập Gemini API.' }
+            }
+            // Nếu mạng hoặc endpoint models trục trặc, thử gọi generateContent dự phòng
+            const fallbackTest = await callGeminiFlash({
+                apiKey: raw,
+                parts: [{ text: 'OK' }],
+                maxOutputTokens: 4,
+            })
+            if (!fallbackTest.ok && !fallbackTest.error.includes('503')) {
+                return { success: false, error: fallbackTest.error }
+            }
+        } else if (disc.models.length > 0) {
+            cachedWorkingGeminiModel = disc.models[0]
         }
         const { encrypted, iv } = encryptKey(raw)
         const now = new Date()
