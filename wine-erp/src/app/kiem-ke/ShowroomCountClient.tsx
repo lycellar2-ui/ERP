@@ -2136,21 +2136,6 @@ function AiKeySetupCard({
     )
 }
 
-type SpeechRecognitionInstance = {
-    lang: string
-    continuous: boolean
-    interimResults: boolean
-    onstart?: (() => void) | null
-    onaudiostart?: (() => void) | null
-    onspeechstart?: (() => void) | null
-    onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null
-    onerror: ((e: { error?: string }) => void) | null
-    onend: (() => void) | null
-    start: () => void
-    stop: () => void
-    abort?: () => void
-}
-
 function SpotPickerBar({
     spots,
     targetSpotId,
@@ -2304,80 +2289,26 @@ function AiVoicePanel({
     const t2 = isCaseSpot(targetSpot)
     const [saveMode, setSaveMode] = useState<'add' | 'replace'>(isLooseShelf ? 'add' : 'replace')
     const [text, setText] = useState('')
-    const [listening, setListening] = useState(false)
     const [busy, setBusy] = useState(false)
     const [err, setErr] = useState('')
     const [result, setResult] = useState<{ summaryText: string; matches: AiVoiceMatch[] } | null>(null)
     const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set())
-    const recRef = useRef<SpeechRecognitionInstance | null>(null)
-    const mediaRecRef = useRef<MediaRecorder | null>(null)
-    const mediaStreamRef = useRef<MediaStream | null>(null)
-    const audioCtxRef = useRef<AudioContext | null>(null)
-    const latestTranscriptRef = useRef('')
-    const analyzedOnceRef = useRef(false)
-    const postSpeechTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-    const startWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-    const lastAbortAtRef = useRef<number>(0)
-
-    const clearPostSpeechTimer = () => {
-        if (postSpeechTimerRef.current) {
-            clearTimeout(postSpeechTimerRef.current)
-            postSpeechTimerRef.current = null
-        }
-    }
-
-    const clearStartWatchdog = () => {
-        if (startWatchdogRef.current) {
-            clearTimeout(startWatchdogRef.current)
-            startWatchdogRef.current = null
-        }
-    }
-
-    const releaseActiveRecognition = () => {
-        clearPostSpeechTimer()
-        clearStartWatchdog()
-        const r = recRef.current
-        recRef.current = null
-        if (r) {
-            r.onstart = null
-            r.onaudiostart = null
-            r.onspeechstart = null
-            r.onresult = null
-            r.onerror = null
-            r.onend = null
-            // Trên iOS Safari, gọi r.stop() khi continuous=true sẽ giữ phiên SFSpeechRecognitionTask ở trạng thái Stopping
-            // khiến lần bấm nói thứ 2 bị treo không bật được micro. Bắt buộc gọi r.abort() để giải phóng ngay khóa âm thanh.
-            try { r.abort?.() } catch { /* ignore */ }
-            try { r.stop() } catch { /* ignore */ }
-            lastAbortAtRef.current = Date.now()
-        }
-    }
-
-    useEffect(() => {
-        return () => {
-            releaseActiveRecognition()
-            try { mediaRecRef.current?.stop() } catch { /* ignore */ }
-            try { mediaStreamRef.current?.getTracks().forEach(t => t.stop()) } catch { /* ignore */ }
-            try { void audioCtxRef.current?.close() } catch { /* ignore */ }
-        }
-    }, [])
+    const voiceInputRef = useRef<HTMLInputElement | null>(null)
 
     const normalizedPreview = useMemo(() => {
         if (!text.trim()) return ''
         return normalizeVoiceTranscript(text)
     }, [text])
 
-    const analyze = useCallback(async (overrideText?: string, audioPayload?: { base64: string; mimeType: string }) => {
+    const analyze = useCallback(async (overrideText?: string) => {
         const raw = (overrideText ?? text).trim()
-        if (!raw && !audioPayload) return
+        if (!raw) return
         setBusy(true)
         setErr('')
         setResult(null)
         setAppliedIds(new Set())
         const res = await parseShowroomVoiceWithAi({
-            transcript: raw || undefined,
-            audioBase64: audioPayload?.base64,
-            audioMimeType: audioPayload?.mimeType,
+            transcript: raw,
             spotId: targetSpotId,
             clientKey: clientAiKey,
         })
@@ -2391,9 +2322,6 @@ function AiVoicePanel({
             return
         }
         if (res.data) {
-            if (res.data.normalizedTranscript && !raw) {
-                setText(res.data.normalizedTranscript)
-            }
             setResult({
                 summaryText: res.data.summaryText,
                 matches: res.data.matches,
@@ -2407,201 +2335,6 @@ function AiVoicePanel({
             }
         }
     }, [text, targetSpotId, clientAiKey, onNeedKey, spots])
-
-    const startMediaRecorderFallback = async () => {
-        if (!navigator.mediaDevices?.getUserMedia) {
-            setErr('Trình duyệt này chưa cấp quyền Micro. Hãy bấm biểu tượng ổ khóa trên thanh địa chỉ → Cho phép Micro, hoặc bấm nút micro trên bàn phím điện thoại.')
-            return
-        }
-        try {
-            try { mediaStreamRef.current?.getTracks().forEach(t => t.stop()) } catch { /* ignore */ }
-            try { void audioCtxRef.current?.close() } catch { /* ignore */ }
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-            mediaStreamRef.current = stream
-            const mimeType = typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/webm')
-                ? 'audio/webm'
-                : 'audio/mp4'
-            const recorder = new MediaRecorder(stream)
-            const chunks: BlobPart[] = []
-            let silenceInterval: ReturnType<typeof setInterval> | null = null
-            recorder.ondataavailable = (ev) => {
-                if (ev.data.size > 0) chunks.push(ev.data)
-            }
-            recorder.onstop = () => {
-                if (silenceInterval) clearInterval(silenceInterval)
-                setListening(false)
-                try { stream.getTracks().forEach(t => t.stop()) } catch { /* ignore */ }
-                try { void audioCtxRef.current?.close() } catch { /* ignore */ }
-                audioCtxRef.current = null
-                const blob = new Blob(chunks, { type: mimeType })
-                if (blob.size < 200) return
-                const reader = new FileReader()
-                reader.onloadend = () => {
-                    const base64 = String(reader.result ?? '')
-                    if (base64) void analyze('', { base64, mimeType })
-                }
-                reader.readAsDataURL(blob)
-            }
-            mediaRecRef.current = recorder
-            recorder.start()
-            setListening(true)
-
-            // Tự động phát hiện khi người dùng đã nói và ngừng nói 1.3s để tự ngắt thu âm gửi AI
-            try {
-                const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
-                if (AudioCtx) {
-                    const ctx = new AudioCtx()
-                    audioCtxRef.current = ctx
-                    const source = ctx.createMediaStreamSource(stream)
-                    const analyser = ctx.createAnalyser()
-                    analyser.fftSize = 512
-                    source.connect(analyser)
-                    const data = new Uint8Array(analyser.fftSize)
-                    let heardSpeech = false
-                    let lastVoiceAt = Date.now()
-                    const startedAt = Date.now()
-                    silenceInterval = setInterval(() => {
-                        if (recorder.state !== 'recording') {
-                            if (silenceInterval) clearInterval(silenceInterval)
-                            return
-                        }
-                        analyser.getByteTimeDomainData(data)
-                        let sumSq = 0
-                        for (let i = 0; i < data.length; i++) {
-                            const v = (data[i] - 128) / 128
-                            sumSq += v * v
-                        }
-                        const rms = Math.sqrt(sumSq / data.length)
-                        const now = Date.now()
-                        if (rms > 0.035) {
-                            heardSpeech = true
-                            lastVoiceAt = now
-                        } else if (heardSpeech && now - lastVoiceAt > 1300) {
-                            if (silenceInterval) clearInterval(silenceInterval)
-                            try { recorder.stop() } catch { /* ignore */ }
-                        } else if (!heardSpeech && now - startedAt > 8000) {
-                            if (silenceInterval) clearInterval(silenceInterval)
-                            try { recorder.stop() } catch { /* ignore */ }
-                        }
-                    }, 100)
-                }
-            } catch { /* ignore WebAudio fallback error */ }
-        } catch {
-            setListening(false)
-            setErr('Trình duyệt đang chặn quyền Micro (not-allowed). Hãy bấm biểu tượng ổ khóa cạnh thanh địa chỉ trình duyệt → Cho phép Micro (Microphone), rồi tải lại trang.')
-        }
-    }
-
-    const toggleMic = () => {
-        if (listening) {
-            releaseActiveRecognition()
-            try {
-                if (mediaRecRef.current && mediaRecRef.current.state !== 'inactive') {
-                    mediaRecRef.current.stop()
-                }
-            } catch { /* ignore */ }
-            setListening(false)
-            const spokenNow = latestTranscriptRef.current.trim()
-            if (spokenNow.length >= 2 && !analyzedOnceRef.current) {
-                analyzedOnceRef.current = true
-                void analyze(spokenNow)
-            }
-            return
-        }
-
-        const w = window as unknown as {
-            SpeechRecognition?: new () => SpeechRecognitionInstance
-            webkitSpeechRecognition?: new () => SpeechRecognitionInstance
-        }
-        const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition
-        if (!Ctor) {
-            void startMediaRecorderFallback()
-            return
-        }
-
-        // Giải phóng hoàn toàn phiên cũ (nếu còn treo ngầm trên iOS WebKit) trước khi mở phiên mới
-        releaseActiveRecognition()
-        setErr('')
-        setText('')
-        latestTranscriptRef.current = ''
-        analyzedOnceRef.current = false
-        setListening(true)
-
-        const startNewSession = () => {
-            const rec = new Ctor()
-            rec.lang = 'vi-VN'
-            rec.continuous = true
-            rec.interimResults = true
-
-            rec.onresult = (e) => {
-                if (recRef.current !== rec) return
-                const parts: string[] = []
-                for (let i = 0; i < e.results.length; i++) {
-                    parts.push(e.results[i][0]?.transcript ?? '')
-                }
-                const joined = parts.join(' ').trim()
-                latestTranscriptRef.current = joined
-                setText(joined)
-
-                // Mỗi khi người dùng phát âm thêm từ mới, reset bộ đếm 1.2s; khi ngừng nói hẳn 1.2s mới tự động chốt câu
-                clearPostSpeechTimer()
-                if (joined.length >= 2) {
-                    postSpeechTimerRef.current = setTimeout(() => {
-                        if (!analyzedOnceRef.current && latestTranscriptRef.current.trim().length >= 2) {
-                            analyzedOnceRef.current = true
-                            const finalSpoken = latestTranscriptRef.current.trim()
-                            releaseActiveRecognition()
-                            setListening(false)
-                            void analyze(finalSpoken)
-                        }
-                    }, 1200)
-                }
-            }
-            rec.onerror = (e) => {
-                if (recRef.current !== rec) return
-                releaseActiveRecognition()
-                setListening(false)
-                if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-                    void startMediaRecorderFallback()
-                    return
-                }
-                if (e.error === 'no-speech') {
-                    setErr('Chưa nghe rõ giọng nói. Hãy bấm "Bấm nói" và đọc sát micro hơn.')
-                    return
-                }
-                if (e.error && e.error !== 'aborted') {
-                    setErr(`Không thu âm được (${e.error}). Hãy bấm "Bấm nói" thử lại.`)
-                }
-            }
-            rec.onend = () => {
-                if (recRef.current !== rec) return
-                clearPostSpeechTimer()
-                clearStartWatchdog()
-                recRef.current = null
-                setListening(false)
-                const spoken = latestTranscriptRef.current.trim()
-                if (spoken.length >= 2 && !analyzedOnceRef.current) {
-                    analyzedOnceRef.current = true
-                    void analyze(spoken)
-                }
-            }
-            recRef.current = rec
-            try {
-                rec.start()
-            } catch {
-                releaseActiveRecognition()
-                setListening(false)
-                void startMediaRecorderFallback()
-            }
-        }
-
-        const elapsedSinceAbort = Date.now() - lastAbortAtRef.current
-        if (elapsedSinceAbort < 220) {
-            setTimeout(startNewSession, 220 - elapsedSinceAbort)
-        } else {
-            startNewSession()
-        }
-    }
 
     const updateMatchCandidate = async (idx: number, cand: AiCandidateOption) => {
         const currentMatch = result?.matches[idx]
@@ -2714,40 +2447,33 @@ function AiVoicePanel({
 
             <p className="text-xs text-lys-muted">
                 {t2
-                    ? 'Đọc tự nhiên: "lờ một không không ba chín 3 chai", "Kệ hàng lẻ cộng thêm 2 chai San Vincenzo 2024" hoặc "L10042 3 thùng 2 lẻ" (ngừng nói AI tự phân tích).'
-                    : 'Đọc tự nhiên: "xa bli 2023 5 chai" hoặc "Kệ to 4 chai L20019" (ngừng nói AI tự phân tích).'}
+                    ? 'Bấm biểu tượng Micro trên bàn phím điện thoại (hoặc gõ nhanh): "L10007 3 thùng", "L10001 vintage 2022 1 thùng", "Kệ hàng lẻ cộng thêm 2 chai San Vincenzo 2024".'
+                    : 'Bấm biểu tượng Micro trên bàn phím điện thoại (hoặc gõ nhanh): "xa bli 2023 5 chai" hoặc "Kệ to 4 chai L20019".'}
             </p>
-            <div className="flex gap-2">
-                <div className="relative min-w-0 flex-1">
-                    <input
-                        value={text}
-                        onChange={e => setText(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && analyze()}
-                        placeholder={t2 ? 'Nói hoặc gõ: L10039 3 chai, L20019 2 thùng…' : 'Nói hoặc gõ: L20019 5 chai…'}
-                        className="w-full rounded-lg border border-lys-border bg-lys-bg py-2.5 pl-3 pr-9 text-sm"
-                    />
-                    {text && (
-                        <button
-                            type="button"
-                            aria-label="Xóa nội dung"
-                            onClick={() => setText('')}
-                            className="absolute right-1.5 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full text-lys-muted hover:bg-lys-surface hover:text-lys-primary"
-                        >
-                            <X className="size-3.5" />
-                        </button>
-                    )}
-                </div>
-                <button
-                    type="button"
-                    onClick={toggleMic}
-                    className={`shrink-0 rounded-lg border px-3 py-2.5 text-xs font-bold ${
-                        listening
-                            ? 'border-tone-danger-fg bg-tone-danger-fg text-white'
-                            : 'border-lys-teal-strong bg-tone-brand-bg text-lys-teal-strong'
-                    }`}
-                >
-                    {listening ? 'Đang nghe…' : 'Bấm nói'}
-                </button>
+            <div className="relative">
+                <input
+                    ref={voiceInputRef}
+                    autoFocus
+                    enterKeyHint="send"
+                    value={text}
+                    onChange={e => setText(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && analyze()}
+                    placeholder={t2 ? 'Bấm micro bàn phím hoặc gõ: L10039 3 chai, L20019 2 thùng…' : 'Bấm micro bàn phím hoặc gõ: L20019 5 chai…'}
+                    className="w-full rounded-lg border border-lys-border bg-lys-bg py-2.5 pl-3 pr-9 text-sm"
+                />
+                {text && (
+                    <button
+                        type="button"
+                        aria-label="Xóa nội dung"
+                        onClick={() => {
+                            setText('')
+                            voiceInputRef.current?.focus()
+                        }}
+                        className="absolute right-1.5 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full text-lys-muted hover:bg-lys-surface hover:text-lys-primary"
+                    >
+                        <X className="size-3.5" />
+                    </button>
+                )}
             </div>
             {normalizedPreview && normalizedPreview.toLowerCase() !== text.trim().toLowerCase() && (
                 <div className="rounded-md bg-lys-bg px-2.5 py-1.5 text-xs text-lys-secondary">
