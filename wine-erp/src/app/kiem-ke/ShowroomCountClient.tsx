@@ -273,7 +273,8 @@ export function ShowroomCountClient({ initial, initialError }: { initial: Showro
 
     const setQty = (sId: string, itemId: string, qty: number | null, delay = SAVE_DELAY_MS) => {
         const key = k(sId, itemId)
-        setOverrides(o => new Map(o).set(key, { qty }))
+        const normQty = qty !== null && qty <= 0 ? null : qty
+        setOverrides(o => new Map(o).set(key, { qty: normQty }))
         setErrors(e => { if (!e.has(key)) return e; const n = new Map(e); n.delete(key); return n })
         clearTimeout(timers.current.get(key))
         timers.current.set(key, setTimeout(() => flush(sId, itemId), delay))
@@ -282,7 +283,9 @@ export function ShowroomCountClient({ initial, initialError }: { initial: Showro
     const setCaseLoose = (sId: string, item: ShowroomItem, cases: number | null, loose: number | null, delay = SAVE_DELAY_MS) => {
         const key = k(sId, item.id)
         const pack = packSizeOf(item) ?? 6
-        const next = calcCaseLooseTotal(cases, loose, pack)
+        const normCases = cases !== null && cases <= 0 ? null : cases
+        const normLoose = loose !== null && loose <= 0 ? null : loose
+        const next = calcCaseLooseTotal(normCases, normLoose, pack)
         setOverrides(o => new Map(o).set(key, next))
         setErrors(e => { if (!e.has(key)) return e; const n = new Map(e); n.delete(key); return n })
         clearTimeout(timers.current.get(key))
@@ -1221,8 +1224,8 @@ function CountView(props: {
             {!posm && <AddVintage spot={spot} wines={props.allWine} code={addCode} setCode={setAddCode} who={props.who} onAdded={props.onAdded} />}
             <p className="text-sm text-lys-muted">
                 {t2
-                    ? 'Nhập số thùng và số chai lẻ thực tế (giữ nguyên số chai lẻ, hệ thống tự cộng tổng chai). Quy cách đóng gói được cấu hình riêng ở tab "Quy cách".'
-                    : `Số tự lưu sau khi bạn ngừng gõ. Để trống nghĩa là chưa đếm; nhập 0 nghĩa là đã kiểm và không có ${u2} nào.`}
+                    ? 'Nhập số thùng và số chai lẻ thực tế (giữ nguyên số chai lẻ, hệ thống tự cộng tổng chai). Khi trừ về 0 sẽ tự động xoá lượt nhập.'
+                    : 'Số tự lưu sau khi bạn ngừng gõ. Khi trừ về 0 hoặc để trống, hệ thống tự động xoá lượt nhập.'}
             </p>
         </div>
     )
@@ -1246,13 +1249,13 @@ function CaseLooseStepper({
 }) {
     const stepCases = (delta: number) => {
         const next = delta < 0
-            ? (cases === null ? null : cases <= 0 ? null : cases - 1)
+            ? (cases === null || cases <= 1 ? null : cases - 1)
             : (cases ?? 0) + 1
         onChange(next, loose, 600)
     }
     const stepLoose = (delta: number) => {
         const next = delta < 0
-            ? (loose === null ? null : loose <= 0 ? null : loose - 1)
+            ? (loose === null || loose <= 1 ? null : loose - 1)
             : (loose ?? 0) + 1
         onChange(cases, next, 600)
     }
@@ -1385,10 +1388,14 @@ function NoteEditor({ draftKey, saved, onSave, onClose, placeholder = 'Ví dụ:
 function Stepper({ value, label, onChange }: { value: number | null; label: string; onChange: (v: number | null, delay?: number) => void }) {
     return (
         <div className="flex items-center overflow-hidden rounded-lg border border-lys-border bg-lys-surface">
-            <button aria-label="Bớt 1" onClick={() => onChange(value === null ? null : value <= 0 ? null : value - 1, 600)}
+            <button aria-label="Bớt 1" onClick={() => onChange(value === null || value <= 1 ? null : value - 1, 600)}
                 className="flex h-11 w-10 items-center justify-center text-lys-teal-strong"><Minus className="size-5" /></button>
-            <input inputMode="numeric" aria-label={label} value={value ?? ''} onFocus={e => e.target.select()}
-                onChange={e => { const t = e.target.value.replace(/\D/g, '').slice(0, 6); onChange(t === '' ? null : parseInt(t, 10)) }}
+            <input inputMode="numeric" aria-label={label} placeholder="0" value={value ?? ''} onFocus={e => e.target.select()}
+                onChange={e => {
+                    const t = e.target.value.replace(/\D/g, '').slice(0, 6)
+                    const parsed = t === '' ? null : parseInt(t, 10)
+                    onChange(parsed !== null && parsed <= 0 ? null : parsed)
+                }}
                 className="w-14 bg-transparent py-2.5 text-center text-[21px] font-bold" />
             <button aria-label="Thêm 1" onClick={() => onChange((value ?? 0) + 1, 600)}
                 className="flex h-11 w-10 items-center justify-center text-lys-teal-strong"><Plus className="size-5" /></button>
