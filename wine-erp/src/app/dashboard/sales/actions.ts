@@ -567,6 +567,7 @@ export async function getCustomersForSO() {
                 salesRepId: true,
                 receiverName: true,
                 receiverPhone: true,
+                deliveryNotes: true,
                 purchasingName: true,
                 purchasingPhone: true,
                 contacts: {

@@ -68,6 +68,7 @@ interface Customer {
     purchasingPhone?: string | null
     receiverName?: string | null
     receiverPhone?: string | null
+    deliveryNotes?: string | null
     contacts?: {
         id?: string
         name?: string | null
@@ -1169,6 +1170,21 @@ export function EditSODrawer({ open, soId, onClose, onSaved, userRoles = [] }: E
                                     />
                                 </div>
                             </div>
+
+                            {/* Customer Delivery Notice Banner */}
+                            {selectedCustomer?.deliveryNotes && (
+                                <div className="flex items-start gap-2.5 p-2.5 rounded-lg bg-amber-50 border border-amber-300 text-xs">
+                                    <Truck size={15} className="text-amber-700 shrink-0 mt-0.5" />
+                                    <div className="min-w-0 flex-1">
+                                        <span className="font-bold text-amber-900 text-[11px] uppercase tracking-wide block">
+                                            {isEn ? 'Customer Delivery Notice' : 'Lưu ý giao hàng cố định của khách'}
+                                        </span>
+                                        <p className="text-amber-950 font-medium text-xs leading-relaxed mt-0.5">
+                                            {selectedCustomer.deliveryNotes}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Compact Order Info & Credit Status */}
                             {selectedCustomer && (

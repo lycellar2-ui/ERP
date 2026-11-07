@@ -975,6 +975,17 @@ function SODetailDrawer({
                                             </span>
                                         </div>
                                     )}
+                                    {(detail.customer as any)?.deliveryNotes && (
+                                        <div className="p-2.5 rounded-md bg-amber-50/90 border border-amber-300 text-xs mt-1">
+                                            <div className="flex items-center gap-1 text-[11px] font-bold text-amber-900 uppercase tracking-wide mb-0.5">
+                                                <Truck size={13} className="text-amber-700 shrink-0" />
+                                                <span>{isEn ? 'Delivery Notice (Customer):' : 'Lưu ý giao hàng của khách:'}</span>
+                                            </div>
+                                            <p className="text-amber-950 font-medium text-[11px] leading-relaxed">
+                                                {(detail.customer as any).deliveryNotes}
+                                            </p>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between py-1 border-b border-slate-200/20">
                                         <span style={{ color: '#64748B' }}>{isEn ? 'Payment Terms:' : 'Kỳ hạn thanh toán:'}</span>
                                         <span className="font-semibold" style={{ color: '#B45309' }}>{detail.paymentTerm}</span>
