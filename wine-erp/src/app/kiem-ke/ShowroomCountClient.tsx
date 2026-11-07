@@ -665,7 +665,7 @@ function SpotsView(props: {
                                     : 'border-lys-border bg-lys-surface text-lys-primary'
                             }`}
                         >
-                            <Mic className="size-3.5 text-lys-teal-strong" />
+                            <Mic className={`size-3.5 shrink-0 ${aiPanel === 'voice' ? 'text-white' : 'text-lys-teal-strong'}`} />
                             <span>Nói để nhập theo vị trí</span>
                         </button>
                         <button
@@ -677,7 +677,7 @@ function SpotsView(props: {
                                     : 'border-lys-border bg-lys-surface text-lys-primary'
                             }`}
                         >
-                            <Camera className="size-3.5 text-lys-teal-strong" />
+                            <Camera className={`size-3.5 shrink-0 ${aiPanel === 'vision' ? 'text-white' : 'text-lys-teal-strong'}`} />
                             <span>Chụp kệ hàng lẻ (Liệt kê DS)</span>
                         </button>
                         <button
@@ -987,33 +987,51 @@ function CountView(props: {
                 <div className="flex flex-wrap gap-1.5">
                     <button
                         type="button"
-                        onClick={() => setAiPanel(p => p === 'voice' ? 'none' : (props.aiStatus.configured ? 'voice' : 'key'))}
+                        onClick={() => {
+                            setAiPanel(p => {
+                                const next = p === 'voice' ? 'none' : (props.aiStatus.configured ? 'voice' : 'key')
+                                if (next !== 'none') window.scrollTo({ top: 0, behavior: 'smooth' })
+                                return next
+                            })
+                        }}
                         className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-semibold transition-colors ${
                             aiPanel === 'voice'
                                 ? 'border-lys-teal-strong bg-lys-teal-strong text-white'
                                 : 'border-lys-border bg-lys-surface text-lys-primary'
                         }`}
                     >
-                        <Mic className="size-3.5 text-lys-teal-strong" />
+                        <Mic className={`size-3.5 shrink-0 ${aiPanel === 'voice' ? 'text-white' : 'text-lys-teal-strong'}`} />
                         <span>Nói để nhập (AI)</span>
                     </button>
                     {!posm && (
                         <button
                             type="button"
-                            onClick={() => setAiPanel(p => p === 'vision' ? 'none' : (props.aiStatus.configured ? 'vision' : 'key'))}
+                            onClick={() => {
+                                setAiPanel(p => {
+                                    const next = p === 'vision' ? 'none' : (props.aiStatus.configured ? 'vision' : 'key')
+                                    if (next !== 'none') window.scrollTo({ top: 0, behavior: 'smooth' })
+                                    return next
+                                })
+                            }}
                             className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-semibold transition-colors ${
                                 aiPanel === 'vision'
                                     ? 'border-lys-teal-strong bg-lys-teal-strong text-white'
                                     : 'border-lys-border bg-lys-surface text-lys-primary'
                             }`}
                         >
-                            <Camera className="size-3.5 text-lys-teal-strong" />
+                            <Camera className={`size-3.5 shrink-0 ${aiPanel === 'vision' ? 'text-white' : 'text-lys-teal-strong'}`} />
                             <span>{looseShelf ? 'Chụp kệ hàng lẻ (Liệt kê DS)' : 'Chụp nhãn / kệ hàng lẻ'}</span>
                         </button>
                     )}
                     <button
                         type="button"
-                        onClick={() => setAiPanel(p => p === 'key' ? 'none' : 'key')}
+                        onClick={() => {
+                            setAiPanel(p => {
+                                const next = p === 'key' ? 'none' : 'key'
+                                if (next !== 'none') window.scrollTo({ top: 0, behavior: 'smooth' })
+                                return next
+                            })
+                        }}
                         aria-label="Cài đặt Gemini API Key"
                         className={`inline-flex items-center justify-center gap-1 rounded-lg border px-2.5 py-2 text-xs font-semibold ${
                             aiPanel === 'key'
@@ -1023,7 +1041,7 @@ function CountView(props: {
                                     : 'border-tone-warning-fg bg-tone-warning-bg text-tone-warning-fg'
                         }`}
                     >
-                        <KeyRound className="size-3.5" />
+                        <KeyRound className="size-3.5 shrink-0" />
                         <span>{props.aiStatus.configured ? 'AI sẵn sàng' : 'Setup Key'}</span>
                     </button>
                 </div>
@@ -1126,7 +1144,7 @@ function CountView(props: {
 
                     return (
                         <div key={item.id} className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 border-t border-lys-border p-3 first:border-t-0 ${total > 0 ? 'bg-tone-success-bg' : ''}`}>
-                            <div className={t2 ? 'col-span-2' : ''}>
+                            <div className={t2 ? 'col-span-2 min-w-0' : 'min-w-0'}>
                                 <div className="text-sm font-medium leading-snug">{item.name}</div>
                                 {!posm && (
                                     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-lys-muted">
@@ -1142,7 +1160,7 @@ function CountView(props: {
                             </div>
 
                             {t2 && cl ? (
-                                <div className="col-span-2">
+                                <div className="col-span-2 min-w-0">
                                     <CaseLooseStepper
                                         cases={cl.cases}
                                         loose={cl.loose}
@@ -1239,45 +1257,45 @@ function CaseLooseStepper({
         onChange(cases, next, 600)
     }
     return (
-        <div className="grid grid-cols-[1fr_1fr_auto] items-stretch gap-2 rounded-lg border border-lys-border bg-lys-bg p-2">
-            <div className="flex flex-col gap-1">
-                <span className="text-[11px] font-semibold text-lys-muted">Số thùng (×{packSize})</span>
-                <div className="flex items-center overflow-hidden rounded-lg border border-lys-border bg-lys-surface">
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-stretch gap-1.5 rounded-lg border border-lys-border bg-lys-bg p-2 sm:gap-2">
+            <div className="flex min-w-0 flex-col gap-1">
+                <span className="truncate text-[11px] font-semibold text-lys-muted">Số thùng (×{packSize})</span>
+                <div className="flex min-w-0 items-center overflow-hidden rounded-lg border border-lys-border bg-lys-surface">
                     <button type="button" aria-label={`Bớt 1 thùng ${itemLabel}`} onClick={() => stepCases(-1)}
-                        className="flex h-10 w-8 shrink-0 items-center justify-center text-lys-teal-strong"><Minus className="size-4" /></button>
-                    <input inputMode="numeric" aria-label={`Số thùng ${itemLabel}`} placeholder="0" value={cases ?? ''} onFocus={e => e.target.select()}
+                        className="flex h-10 w-8 shrink-0 items-center justify-center text-lys-teal-strong active:bg-lys-bg"><Minus className="size-4" /></button>
+                    <input size={1} inputMode="numeric" aria-label={`Số thùng ${itemLabel}`} placeholder="0" value={cases ?? ''} onFocus={e => e.target.select()}
                         onChange={e => {
                             const t = e.target.value.replace(/\D/g, '').slice(0, 5)
                             onChange(t === '' ? null : parseInt(t, 10), loose)
                         }}
-                        className="min-w-0 flex-1 bg-transparent py-1.5 text-center text-[18px] font-bold" />
+                        className="w-0 min-w-0 flex-1 bg-transparent py-1.5 text-center text-[18px] font-bold" />
                     <button type="button" aria-label={`Thêm 1 thùng ${itemLabel}`} onClick={() => stepCases(1)}
-                        className="flex h-10 w-8 shrink-0 items-center justify-center text-lys-teal-strong"><Plus className="size-4" /></button>
+                        className="flex h-10 w-8 shrink-0 items-center justify-center text-lys-teal-strong active:bg-lys-bg"><Plus className="size-4" /></button>
                 </div>
             </div>
 
-            <div className="flex flex-col gap-1">
-                <span className="text-[11px] font-semibold text-lys-muted">Chai lẻ</span>
-                <div className="flex items-center overflow-hidden rounded-lg border border-lys-border bg-lys-surface">
+            <div className="flex min-w-0 flex-col gap-1">
+                <span className="truncate text-[11px] font-semibold text-lys-muted">Chai lẻ</span>
+                <div className="flex min-w-0 items-center overflow-hidden rounded-lg border border-lys-border bg-lys-surface">
                     <button type="button" aria-label={`Bớt 1 chai lẻ ${itemLabel}`} onClick={() => stepLoose(-1)}
-                        className="flex h-10 w-8 shrink-0 items-center justify-center text-lys-teal-strong"><Minus className="size-4" /></button>
-                    <input inputMode="numeric" aria-label={`Số chai lẻ ${itemLabel}`} placeholder="0" value={loose ?? ''} onFocus={e => e.target.select()}
+                        className="flex h-10 w-8 shrink-0 items-center justify-center text-lys-teal-strong active:bg-lys-bg"><Minus className="size-4" /></button>
+                    <input size={1} inputMode="numeric" aria-label={`Số chai lẻ ${itemLabel}`} placeholder="0" value={loose ?? ''} onFocus={e => e.target.select()}
                         onChange={e => {
                             const t = e.target.value.replace(/\D/g, '').slice(0, 5)
                             onChange(cases, t === '' ? null : parseInt(t, 10))
                         }}
-                        className="min-w-0 flex-1 bg-transparent py-1.5 text-center text-[18px] font-bold" />
+                        className="w-0 min-w-0 flex-1 bg-transparent py-1.5 text-center text-[18px] font-bold" />
                     <button type="button" aria-label={`Thêm 1 chai lẻ ${itemLabel}`} onClick={() => stepLoose(1)}
-                        className="flex h-10 w-8 shrink-0 items-center justify-center text-lys-teal-strong"><Plus className="size-4" /></button>
+                        className="flex h-10 w-8 shrink-0 items-center justify-center text-lys-teal-strong active:bg-lys-bg"><Plus className="size-4" /></button>
                 </div>
             </div>
 
-            <div className="flex min-w-[78px] flex-col items-end justify-between rounded-lg border border-lys-border bg-lys-surface px-2.5 py-1.5 text-right">
+            <div className="flex min-w-[70px] shrink-0 flex-col items-end justify-between rounded-lg border border-lys-border bg-lys-surface px-2 py-1.5 text-right sm:min-w-[78px] sm:px-2.5">
                 <span className="text-[11px] font-semibold text-lys-muted">Tổng chai</span>
-                <div className={`text-[20px] font-extrabold leading-none ${total !== null ? 'text-lys-teal-strong' : 'text-lys-dim'}`}>
+                <div className={`text-[19px] font-extrabold leading-none sm:text-[20px] ${total !== null ? 'text-lys-teal-strong' : 'text-lys-dim'}`}>
                     {total !== null ? fmt(total) : '–'}
                 </div>
-                <span className="text-[10px] text-lys-muted">
+                <span className="whitespace-nowrap text-[10px] text-lys-muted">
                     {total !== null ? `${cases ?? 0}T + ${loose ?? 0} lẻ` : 'chưa đếm'}
                 </span>
             </div>
