@@ -613,13 +613,18 @@ function buildCatalogEnricher(allItems: Array<{
         const exactById = input.itemId ? byId.get(input.itemId) : undefined
         const cleanVintage = String(input.vintage ?? '').trim()
 
-        let matchedItem = exactById && (!cleanCode || exactById.code.toUpperCase() === cleanCode)
+        let matchedItem = exactById &&
+            (!cleanCode || exactById.code.toUpperCase() === cleanCode) &&
+            (!cleanVintage || exactById.vintage.trim() === cleanVintage)
             ? exactById
             : undefined
 
         if (!matchedItem && sameCodeItems.length > 0) {
             if (cleanVintage) {
                 matchedItem = sameCodeItems.find(x => x.vintage.trim() === cleanVintage)
+            }
+            if (!matchedItem && !cleanVintage && exactById && exactById.code.toUpperCase() === cleanCode) {
+                matchedItem = exactById
             }
             if (!matchedItem) {
                 matchedItem = sameCodeItems[0]

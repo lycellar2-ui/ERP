@@ -603,6 +603,9 @@ const VIET_PHONETIC_WINES: Array<[RegExp, string]> = [
     [/(?:^|(?<=\s))(ca\s*béc\s*nê|ca\s*be\s*nê)(?=\s|$|[,.;])/gi, 'Cabernet'],
     [/(?:^|(?<=\s))(ríp\s*pát\s*xô|ri\s*pa\s*sô)(?=\s|$|[,.;])/gi, 'Ripasso'],
     [/(?:^|(?<=\s))(ru\s*bi\s*côn\s*nê|ru\s*bi\s*côn)(?=\s|$|[,.;])/gi, 'Rubicone'],
+    // Phiên âm tiếng Việt của từ "vintage" / "non-vintage" khi thu âm bằng giọng nói
+    [/(?:^|(?<=\s))(nôn\s*vin\s*tết|nôn\s*phim\s*tết|non\s*vintage|không\s*niên\s*vụ)(?=\s|$|[,.;])/gi, 'vintage NV'],
+    [/(?:^|(?<=\s))(phim\s*tết|phim\s*tét|phiên\s*tết|phim\s*tech|phim\s*text|vin\s*tết|vin\s*tét|vin\s*tịt|vin\s*tịch|vin\s*tệch|vin\s*tech|vin\s*text|vintết|vintet|vintịt|vinh\s*tết|vinh\s*tét|vinh\s*tịt|vinh\s*tịch|viên\s*tết|vìn\s*tết|vanh\s*tết|bình\s*tết|pin\s*tết)(?=\s|$|[,.;])/gi, 'vintage'],
 ]
 
 /**
@@ -663,6 +666,48 @@ export function normalizeVoiceTranscript(raw: string): string {
         /(?:^|(?<=\s))(?:lờ|eo|mã\s*lờ|mã\s*l|mã\s*số|mã|l)\s*([1-8]00)\s+([1-9])(?=\s|$)/gi,
         'L$10$2'
     )
+
+    // Chuẩn hóa năm niên vụ đọc bằng chữ tiếng Việt: "hai không hai hai", "hai nghìn không trăm hai mươi tư"...
+    const spokenUnitMap: Record<string, string> = {
+        'không': '0',
+        'một': '1', 'mốt': '1',
+        'hai': '2',
+        'ba': '3',
+        'bốn': '4', 'tư': '4',
+        'năm': '5', 'lăm': '5',
+        'sáu': '6',
+        'bảy': '7', 'bẩy': '7',
+        'tám': '8',
+        'chín': '9',
+    }
+    // "hai không hai hai" / "hai không hai mươi tư" / "hai nghìn không trăm hai mươi hai" → 2022 / 2024
+    s = s.replace(
+        /(?:^|(?<=\s))hai\s+(?:nghìn\s+không\s+trăm|ngàn\s+không\s+trăm|không)\s+(?:(mười)\s*(một|hai|ba|bốn|tư|năm|lăm|sáu|bảy|bẩy|tám|chín)?|(hai)\s*(?:mươi\s*)?(không|một|mốt|hai|ba|bốn|tư|năm|lăm|sáu|bảy|bẩy|tám|chín)?)(?=\s|$|[,.;])/gi,
+        (full, teen, teenUnit, twenty, twentyUnit) => {
+            if (teen) {
+                const u = teenUnit ? (spokenUnitMap[String(teenUnit).toLowerCase()] ?? '0') : '0'
+                return `201${u}`
+            }
+            if (twenty) {
+                const u = twentyUnit ? (spokenUnitMap[String(twentyUnit).toLowerCase()] ?? '0') : '0'
+                return `202${u}`
+            }
+            return full
+        }
+    )
+
+    // Chuẩn hóa năm 2 chữ số đứng sau "vintage / niên vụ / đời / năm": "vintage 22" → "vintage 2022", "niên vụ 21" → "vintage 2021"
+    s = s.replace(
+        /(?:^|(?<=\s))(?:vintage|niên\s*vụ|đời|năm)\s+(1\d|2[0-9])(?=\s|$|[,.;])/gi,
+        'vintage 20$1'
+    )
+    // Chuẩn hóa trường hợp đọc mã SKU rồi đọc luôn 2 số cuối của năm trước số lượng: "L10001 22 1 thùng" → "L10001 vintage 2022 1 thùng"
+    s = s.replace(
+        /\b(L[1-8]\d{4})\s+(1[5-9]|2[0-6])(?=\s+(?:\d+|một|hai|ba|bốn|tư|năm|sáu|bảy|bẩy|tám|chín|mười)\s*(?:thùng|chai|lẻ))/gi,
+        '$1 vintage 20$2'
+    )
+    // Chuẩn hóa "20 22", "20 23", "20 24" bị tách dấu cách → "2022", "2023", "2024"
+    s = s.replace(/(?:^|(?<=\s))20\s+([12]\d)(?=\s|$|[,.;])/g, '20$1')
 
     return s.replace(/\s+/g, ' ').trim()
 }
