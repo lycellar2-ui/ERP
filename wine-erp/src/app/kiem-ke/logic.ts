@@ -636,8 +636,10 @@ export function normalizeVoiceTranscript(raw: string): string {
     }
 
     const singleDigitToken = '(?:không|linh|một|mốt|hai|ba|bốn|tư|năm|lăm|sáu|bảy|bẩy|tám|chín|\\d)'
+    // Nếu chữ số thứ 5 đứng ngay trước "thùng / chai / lẻ / cái" (vd: "lờ một không không bảy ba thùng")
+    // thì chữ số thứ 5 là số lượng ("3 thùng"), còn 4 chữ số đầu ("1007") là đọc tắt của mã L10007.
     const fiveSpokenDigitsRe = new RegExp(
-        `(?:^|(?<=\\s))(?:lờ|eo|mã\\s*lờ|mã\\s*l|mã\\s*số|mã|l)\\s*(${singleDigitToken}(?:\\s+${singleDigitToken}){4})(?=\\s|$)`,
+        `(?:^|(?<=\\s))(?:lờ|eo|mã\\s*lờ|mã\\s*l|mã\\s*số|mã|l)\\s*(${singleDigitToken}(?:\\s+${singleDigitToken}){4})(?!\\s+(?:thùng|chai|lẻ|cái)\\b)(?=\\s|$)`,
         'gi'
     )
     s = s.replace(fiveSpokenDigitsRe, (full, seq: string) => {
@@ -652,18 +654,48 @@ export function normalizeVoiceTranscript(raw: string): string {
         return full
     })
 
+    // Trường hợp đọc tắt 4 chữ số của mã 01..09 (bỏ bớt 1 số không): "lờ một không không bảy ba thùng" → "L10007 ba thùng"
+    const fourSpokenDigitsRe = new RegExp(
+        `(?:^|(?<=\\s))(?:lờ|eo|mã\\s*lờ|mã\\s*l|mã\\s*số|mã|l)\\s*(${singleDigitToken}(?:\\s+${singleDigitToken}){3})(?=\\s|$)`,
+        'gi'
+    )
+    s = s.replace(fourSpokenDigitsRe, (full, seq: string) => {
+        const digits = seq
+            .trim()
+            .split(/\s+/)
+            .map(tok => digitWords[tok.toLowerCase()] ?? tok)
+            .join('')
+        const m = digits.match(/^([1-8]00)([1-9])$/)
+        if (m) {
+            return `L${m[1]}0${m[2]}`
+        }
+        return full
+    })
+
+    // Trường hợp bộ STT tự ghép dính mã đọc tắt 4 số với số lượng đứng trước đơn vị:
+    // vd: "l10073 thùng" / "10073 thùng" / "l 100 73 thùng" (ý là L10007 3 thùng)
+    s = s.replace(
+        /(?:^|(?<=\s))(?:lờ|eo|mã\s*lờ|mã\s*l|mã\s*số|mã|l)?\s*([1-8]00)\s*([1-9])([1-9])(?=\s+(?:thùng|chai|lẻ|cái)\b)/gi,
+        'L$10$2 $3'
+    )
+
     // Chuẩn hóa trường hợp đọc "mã 10039", "eo 200 19", "L 100 39", "lờ 10 039" (5 chữ số bắt đầu từ 1..8) thành L10039
+    // Không gộp nếu cụm số thứ 2 đứng ngay trước "thùng / chai / lẻ / cái" (tránh gộp nhầm số lượng vào mã)
     s = s.replace(
-        /(?:^|(?<=\s))(?:lờ|eo|mã\s*lờ|mã\s*l|mã\s*số|mã|l)?\s*([1-8]\d{2})\s*(\d{2})(?=\s|$)/gi,
+        /(?:^|(?<=\s))(?:lờ|eo|mã\s*lờ|mã\s*l|mã\s*số|mã|l)?\s*([1-8]\d{2})(\d{2})(?=\s|$)/gi,
         'L$1$2'
     )
     s = s.replace(
-        /(?:^|(?<=\s))(?:lờ|eo|mã\s*lờ|mã\s*l|mã\s*số|mã|l)?\s*([1-8]\d)\s*(\d{3})(?=\s|$)/gi,
+        /(?:^|(?<=\s))(?:lờ|eo|mã\s*lờ|mã\s*l|mã\s*số|mã|l)?\s*([1-8]\d{2})\s+(\d{2})(?!\s+(?:thùng|chai|lẻ|cái)\b)(?=\s|$)/gi,
         'L$1$2'
     )
-    // Trường hợp bộ thu âm viết tắt "l600 1", "l100 5", "mã 300 2" (thiếu 1 số 0 ở hàng chục) → L60001, L10005, L30002
     s = s.replace(
-        /(?:^|(?<=\s))(?:lờ|eo|mã\s*lờ|mã\s*l|mã\s*số|mã|l)\s*([1-8]00)\s+([1-9])(?=\s|$)/gi,
+        /(?:^|(?<=\s))(?:lờ|eo|mã\s*lờ|mã\s*l|mã\s*số|mã|l)?\s*([1-8]\d)\s+(\d{3})(?!\s+(?:thùng|chai|lẻ|cái)\b)(?=\s|$)/gi,
+        'L$1$2'
+    )
+    // Trường hợp bộ thu âm viết tắt "l600 1", "l1007", "l100 5", "mã 300 2" (thiếu 1 số 0 ở hàng chục) → L60001, L10007, L10005, L30002
+    s = s.replace(
+        /(?:^|(?<=\s))(?:lờ|eo|mã\s*lờ|mã\s*l|mã\s*số|mã|l)\s*([1-8]00)\s*([1-9])(?=\s|$)/gi,
         'L$10$2'
     )
 

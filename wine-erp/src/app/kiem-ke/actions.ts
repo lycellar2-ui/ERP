@@ -678,7 +678,7 @@ function buildCatalogEnricher(allItems: Array<{
         const cleanVintage = String(input.vintage ?? '').trim()
 
         let matchedItem = exactById &&
-            (!cleanCode || exactById.code.toUpperCase() === cleanCode) &&
+            (!cleanCode || cleanCode === 'POSM' || exactById.code.toUpperCase() === cleanCode) &&
             (!cleanVintage || exactById.vintage.trim() === cleanVintage)
             ? exactById
             : undefined
@@ -695,7 +695,22 @@ function buildCatalogEnricher(allItems: Array<{
             }
         }
 
-        const resolvedCode = matchedItem?.code || cleanCode
+        // Tuyệt đối không cho phép mã SKU không tồn tại trong danh mục (vd L10073) ghép bừa với tên/itemId của rượu khác
+        if (!matchedItem) {
+            return {
+                itemId: '',
+                code: '',
+                name: '',
+                vintage: '',
+                isNewVintage: false,
+                packSize: 6,
+                availableVintages: [] as string[],
+                alternatives: [] as AiCandidateOption[],
+                warning: undefined,
+            }
+        }
+
+        const resolvedCode = matchedItem.code
         const resolvedSiblings = byCode.get(resolvedCode.toUpperCase()) ?? sameCodeItems
         const availableVintages = Array.from(
             new Set(resolvedSiblings.map(x => x.vintage.trim()).filter(Boolean))
@@ -748,9 +763,9 @@ function buildCatalogEnricher(allItems: Array<{
         }
 
         return {
-            itemId: matchedItem?.id ?? input.itemId ?? '',
+            itemId: matchedItem.id,
             code: resolvedCode,
-            name: matchedItem?.name || String(input.name ?? '').trim(),
+            name: matchedItem.name,
             vintage: resolvedVintage,
             isNewVintage: Boolean(input.isNewVintage || isNewVintage),
             packSize: resolvedPack,
@@ -834,6 +849,7 @@ Quy tắc suy luận thông minh:
    - Nếu người dùng nhắc tên vị trí/kệ (ví dụ: "kệ hàng lẻ", "cạnh cửa ra vào", "cửa sổ", "tường lớn", "bồn rửa", "cầu thang", "tủ lạnh", "kệ to", "gầm cầu thang"...), tự động chọn đúng "spotId" của vị trí đó (chú ý phân biệt Tầng 1 và Tầng 2 theo vị trí mặc định "${defaultSpot.groupName}").
    - Nếu không nhắc vị trí, dùng "${defaultSpot.id}".
 3. ĐỐI CHIẾU MÃ RƯỢU, TÊN RƯỢU & NIÊN VỤ (CỰC KỲ QUAN TRỌNG):
+   - TUYỆT ĐỐI CHỈ chọn mã "code" và "itemId" CÓ THẬT trong Danh mục mặt hàng bên trên (và "code" phải khớp đúng dòng "itemId" đó). KHÔNG ĐƯỢC tự bịa ra mã không có trong danh mục (ví dụ không có L10073). Nếu người dùng đọc "lờ một không không bảy ba thùng" (4 chữ số mã 1007 + 3 thùng), hãy hiểu là mã L10007 với số lượng 3 thùng!
    - Hỗ trợ nhận diện tiếng lóng/viết tắt kho:
      + "San Vincenzo" -> L10039; "Capitel Foscarino" -> L10040; "Capitel Croce" -> L10042; "Realda" -> L10041.
      + "Collavini Pinot Grigio" -> L10016; "Collavini Chardonnay" -> L10015; "Collavini Merlot" -> L10018; "Broy" -> L10021; "Ribolla Gialla" -> L10020/L10023.
@@ -916,7 +932,9 @@ Quy tắc suy luận thông minh:
             }
         }
         const suggestedMode: 'add' | 'replace' = parsed.suggestedMode === 'replace' ? 'replace' : 'add'
-        const matches: AiVoiceMatch[] = rawMatches.map(m => {
+        const invalidCodes: string[] = []
+        const matches: AiVoiceMatch[] = []
+        for (const m of rawMatches) {
             const sp = (m.spotId && spotById.get(m.spotId)) || defaultSpot
             const enriched = enrichCandidate({
                 itemId: m.itemId,
@@ -928,13 +946,17 @@ Quy tắc suy luận thông minh:
                 warning: m.warning,
                 rawAlternatives: m.alternatives,
             })
+            if (!enriched.itemId || !enriched.code) {
+                if (m.code) invalidCodes.push(String(m.code).trim().toUpperCase())
+                continue
+            }
             const spIsCase = isCaseSpot(sp)
             const cases = spIsCase ? Math.max(0, Math.round(Number(m.cases ?? 0))) : null
             const loose = spIsCase ? Math.max(0, Math.round(Number(m.loose ?? (cases === 0 ? m.qty : 0)))) : null
             const qty = spIsCase
                 ? (cases ?? 0) * enriched.packSize + (loose ?? 0)
                 : Math.max(0, Math.round(Number(m.qty ?? 0)))
-            return {
+            matches.push({
                 ...m,
                 spotId: sp.id,
                 spotName: `${sp.groupName} · ${sp.name}`,
@@ -952,8 +974,20 @@ Quy tắc suy luận thông minh:
                 availableVintages: enriched.availableVintages,
                 alternatives: enriched.alternatives,
                 suggestedMode,
+            })
+        }
+        if (!matches.length) {
+            if (invalidCodes.length > 0) {
+                return {
+                    success: false,
+                    error: `Không có mã rượu ${invalidCodes.join(', ')} trong danh mục kiểm kê (nghe được: "${finalTranscript || rawTranscript}"). Vui lòng đọc rõ lại mã rượu và số lượng.`,
+                }
             }
-        })
+            return {
+                success: false,
+                error: `AI chưa tìm thấy mã rượu khớp với câu "${finalTranscript || rawTranscript || 'vừa đọc'}". Hãy đọc mã (vd: L10007) hoặc tên rượu kèm số lượng.`,
+            }
+        }
         return {
             success: true,
             data: {
@@ -1104,7 +1138,7 @@ Quy tắc phân tích hình ảnh chuyên sâu:
                     availableVintages: enriched.availableVintages,
                     alternatives: enriched.alternatives,
                 }
-            })
+            }).filter(x => Boolean(x.itemId && x.code))
             : parsed.code
                 ? (() => {
                     const enriched = enrichCandidate({

@@ -451,6 +451,12 @@ describe('kiem-ke Tầng 2 cases & loose bottles', () => {
             .toBe('L20040 2023 2 chai')
         expect(normalizeVoiceTranscript('L10001 22 1 thùng'))
             .toBe('L10001 vintage 2022 1 thùng')
+        expect(normalizeVoiceTranscript('lờ một không không bảy ba thùng'))
+            .toBe('L10007 3 thùng')
+        expect(normalizeVoiceTranscript('l1007 3 thùng'))
+            .toBe('L10007 3 thùng')
+        expect(normalizeVoiceTranscript('l10073 thùng'))
+            .toBe('L10007 3 thùng')
 
         const fast = parseVoiceLocally({
             transcript: 'l 10001 phim Tết 2022 một thùng',

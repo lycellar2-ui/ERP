@@ -2532,19 +2532,8 @@ function AiVoicePanel({
             rec.lang = 'vi-VN'
             rec.continuous = true
             rec.interimResults = true
-            let micStarted = false
-
-            const markMicActive = () => {
-                micStarted = true
-                clearStartWatchdog()
-            }
-
-            rec.onstart = markMicActive
-            rec.onaudiostart = markMicActive
-            rec.onspeechstart = markMicActive
 
             rec.onresult = (e) => {
-                markMicActive()
                 if (recRef.current !== rec) return
                 const parts: string[] = []
                 for (let i = 0; i < e.results.length; i++) {
@@ -2581,7 +2570,7 @@ function AiVoicePanel({
                     return
                 }
                 if (e.error && e.error !== 'aborted') {
-                    void startMediaRecorderFallback()
+                    setErr(`Không thu âm được (${e.error}). Hãy bấm "Bấm nói" thử lại.`)
                 }
             }
             rec.onend = () => {
@@ -2599,15 +2588,6 @@ function AiVoicePanel({
             recRef.current = rec
             try {
                 rec.start()
-                // Watchdog cho iOS Safari: nếu sau 1000ms WebKit SpeechRecognition bị kẹt không bật micro,
-                // tự động hủy phiên kẹt và chuyển sang thu âm trực tiếp MediaRecorder + Gemini 3.5 Flash Lite
-                clearStartWatchdog()
-                startWatchdogRef.current = setTimeout(() => {
-                    if (!micStarted && recRef.current === rec) {
-                        releaseActiveRecognition()
-                        void startMediaRecorderFallback()
-                    }
-                }, 1000)
             } catch {
                 releaseActiveRecognition()
                 setListening(false)
