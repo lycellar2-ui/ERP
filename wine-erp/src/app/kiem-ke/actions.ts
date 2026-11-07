@@ -409,7 +409,7 @@ async function callGeminiFlash(params: {
                     contents: [{ role: 'user', parts: params.parts }],
                     generationConfig: {
                         temperature: params.temperature ?? 0.1,
-                        maxOutputTokens: params.maxOutputTokens ?? 1024,
+                        maxOutputTokens: Math.max(params.maxOutputTokens ?? 4096, 4096),
                         ...(params.jsonMode ? { responseMimeType: 'application/json' } : {}),
                     },
                 }),
@@ -447,7 +447,12 @@ async function callGeminiFlash(params: {
                 continue
             }
             const data = await res.json()
-            const text = data.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? '').join('') ?? ''
+            const partsList: Array<{ text?: string; thought?: boolean }> = data.candidates?.[0]?.content?.parts ?? []
+            const text = partsList
+                .filter(p => !p.thought)
+                .map(p => p.text ?? '')
+                .join('')
+                .trim()
             cachedWorkingGeminiModel = model
             return { ok: true, text, model }
         } catch (err) {
@@ -818,7 +823,7 @@ Quy tắc suy luận thông minh:
             apiKey: key,
             parts,
             jsonMode: true,
-            maxOutputTokens: 1800,
+            maxOutputTokens: 8192,
             temperature: 0.1,
         })
         if (!res.ok) return { success: false, error: res.error }
@@ -976,7 +981,7 @@ Quy tắc phân tích hình ảnh chuyên sâu:
                 { inlineData: { mimeType: input.mimeType || 'image/jpeg', data: base64Clean } },
             ],
             jsonMode: true,
-            maxOutputTokens: 2400,
+            maxOutputTokens: 8192,
             temperature: 0.1,
         })
         if (!res.ok) return { success: false, error: res.error }
@@ -1156,7 +1161,7 @@ Hãy viết một báo cáo rà soát ngắn gọn, súc tích bằng tiếng Vi
         const res = await callGeminiFlash({
             apiKey: key,
             parts: [{ text: prompt }],
-            maxOutputTokens: 1500,
+            maxOutputTokens: 8192,
             temperature: 0.2,
         })
         if (!res.ok) return { success: false, error: res.error }
