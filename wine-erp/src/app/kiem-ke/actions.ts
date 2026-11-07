@@ -386,6 +386,7 @@ async function callGeminiFlash(params: {
     jsonMode?: boolean
     maxOutputTokens?: number
     temperature?: number
+    disableThinking?: boolean
 }): Promise<{ ok: true; text: string; model: string } | { ok: false; error: string }> {
     let lastError = 'Không kết nối được Gemini API.'
     const queue: string[] = [
@@ -402,6 +403,7 @@ async function callGeminiFlash(params: {
 
         try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(params.apiKey)}`
+            const supportsZeroThinking = params.disableThinking && /^gemini-2\.5-flash/i.test(model)
             const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -411,6 +413,7 @@ async function callGeminiFlash(params: {
                         temperature: params.temperature ?? 0.1,
                         maxOutputTokens: Math.max(params.maxOutputTokens ?? 4096, 4096),
                         ...(params.jsonMode ? { responseMimeType: 'application/json' } : {}),
+                        ...(supportsZeroThinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
                     },
                 }),
             })
@@ -830,6 +833,7 @@ Quy tắc suy luận thông minh:
             jsonMode: true,
             maxOutputTokens: 8192,
             temperature: 0.1,
+            disableThinking: true,
         })
         if (!res.ok) return { success: false, error: res.error }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { parseQty, normalizeVintage, cleanLabel, cleanNote, MAX_NOTE, summarize, buildGroupReport, buildCsv, checkState, canRecheck, packSizeOf, isCaseSpot, isLooseShelfSpot, calcCaseLooseTotal, auditAnomalies, normalizeVoiceTranscript, type ShowroomData } from '@/app/kiem-ke/logic'
+import { parseQty, normalizeVintage, cleanLabel, cleanNote, MAX_NOTE, summarize, buildGroupReport, buildCsv, checkState, canRecheck, packSizeOf, isCaseSpot, isLooseShelfSpot, calcCaseLooseTotal, auditAnomalies, normalizeVoiceTranscript, parseVoiceLocally, type ShowroomData } from '@/app/kiem-ke/logic'
 
 // ─── Setup Mocks ──────────────────────────────────
 
@@ -444,12 +444,30 @@ describe('kiem-ke Tầng 2 cases & loose bottles', () => {
         expect(normalizeVoiceTranscript('kệ hàng lẻ 3 chai xa bli 2023 và 2 chai san vin xen dô'))
             .toMatch(/Chablis.*San Vincenzo/)
         expect(normalizeVoiceTranscript('l 10001 phim Tết 2022 một thùng'))
-            .toBe('L10001 vintage 2022 một thùng')
+            .toBe('L10001 vintage 2022 1 thùng')
         expect(normalizeVoiceTranscript('L10039 vin tết 24 3 chai'))
             .toBe('L10039 vintage 2024 3 chai')
         expect(normalizeVoiceTranscript('L20040 hai không hai ba 2 chai'))
             .toBe('L20040 2023 2 chai')
         expect(normalizeVoiceTranscript('L10001 22 1 thùng'))
             .toBe('L10001 vintage 2022 1 thùng')
+
+        const fast = parseVoiceLocally({
+            transcript: 'l 10001 phim Tết 2022 một thùng',
+            spotId: 't2-1',
+            spots: data.spots,
+            items: [
+                ...data.items,
+                { id: 'b22', kind: 'WINE', code: 'L10001', name: 'Amarone, "Classico"', vintage: '2022', isExtra: false, sortOrder: 0 },
+            ],
+        })
+        expect(fast).not.toBeNull()
+        expect(fast?.matches[0]).toMatchObject({
+            code: 'L10001',
+            vintage: '2022',
+            cases: 1,
+            loose: 0,
+            qty: 6,
+        })
     })
 })

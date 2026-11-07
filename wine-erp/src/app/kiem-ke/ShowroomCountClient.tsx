@@ -11,7 +11,7 @@ import {
 import {
     auditAnomalies, buildCsv, calcCaseLooseTotal, canRecheck, checkState, cleanLabel, entryCaseLoose,
     isCaseSpot, isLooseShelfSpot, MAX_NOTE, normalizeSearch, normalizeVintage, normalizeVoiceTranscript,
-    packSizeOf, sortItems, summarize,
+    packSizeOf, parseVoiceLocally, sortItems, summarize,
     type AiCandidateOption, type AiVisionShelfItem, type AiVoiceMatch, type ShowroomAnomaly,
     type ShowroomCheck, type ShowroomData, type ShowroomEntry, type ShowroomItem, type ShowroomNote,
     type ShowroomSpot,
@@ -2135,6 +2135,7 @@ type SpeechRecognitionInstance = {
     onend: (() => void) | null
     start: () => void
     stop: () => void
+    abort?: () => void
 }
 
 function SpotPickerBar({
@@ -2299,10 +2300,20 @@ function AiVoicePanel({
     const mediaRecRef = useRef<MediaRecorder | null>(null)
     const mediaStreamRef = useRef<MediaStream | null>(null)
     const latestTranscriptRef = useRef('')
+    const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const analyzedOnceRef = useRef(false)
+
+    const clearSilenceTimer = () => {
+        if (silenceTimerRef.current) {
+            clearTimeout(silenceTimerRef.current)
+            silenceTimerRef.current = null
+        }
+    }
 
     useEffect(() => {
         return () => {
-            try { recRef.current?.stop() } catch { /* ignore */ }
+            clearSilenceTimer()
+            try { recRef.current?.abort?.(); recRef.current?.stop() } catch { /* ignore */ }
             try { mediaRecRef.current?.stop() } catch { /* ignore */ }
             try { mediaStreamRef.current?.getTracks().forEach(t => t.stop()) } catch { /* ignore */ }
         }
@@ -2316,8 +2327,33 @@ function AiVoicePanel({
     const analyze = useCallback(async (overrideText?: string, audioPayload?: { base64: string; mimeType: string }) => {
         const raw = (overrideText ?? text).trim()
         if (!raw && !audioPayload) return
-        setBusy(true)
         setErr('')
+
+        // Tăng tốc 1: Nếu có văn bản và khớp được tức thì ngay trên máy (< 5ms), hiển thị kết quả luôn không cần chờ mạng/Gemini
+        if (raw && !audioPayload) {
+            const fast = parseVoiceLocally({
+                transcript: raw,
+                spotId: targetSpotId,
+                spots,
+                items: allItems,
+            })
+            if (fast) {
+                setBusy(false)
+                setAppliedIds(new Set())
+                setResult({
+                    summaryText: fast.summaryText,
+                    matches: fast.matches,
+                })
+                setSaveMode(fast.suggestedMode)
+                const firstSpot = fast.matches[0]?.spotId
+                if (firstSpot && spots.some(s => s.id === firstSpot)) {
+                    setTargetSpotId(firstSpot)
+                }
+                return
+            }
+        }
+
+        setBusy(true)
         setResult(null)
         setAppliedIds(new Set())
         const res = await parseShowroomVoiceWithAi({
@@ -2352,7 +2388,7 @@ function AiVoicePanel({
                 setTargetSpotId(firstSpot)
             }
         }
-    }, [text, targetSpotId, clientAiKey, onNeedKey, spots])
+    }, [text, targetSpotId, clientAiKey, onNeedKey, spots, allItems])
 
     const startMediaRecorderFallback = async () => {
         if (!navigator.mediaDevices?.getUserMedia) {
@@ -2360,6 +2396,7 @@ function AiVoicePanel({
             return
         }
         try {
+            try { mediaStreamRef.current?.getTracks().forEach(t => t.stop()) } catch { /* ignore */ }
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
             mediaStreamRef.current = stream
             const mimeType = typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/webm')
@@ -2383,8 +2420,8 @@ function AiVoicePanel({
                 reader.readAsDataURL(blob)
             }
             mediaRecRef.current = recorder
-            setListening(true)
             recorder.start()
+            setListening(true)
         } catch {
             setListening(false)
             setErr('Trình duyệt đang chặn quyền Micro (not-allowed). Hãy bấm biểu tượng ổ khóa cạnh thanh địa chỉ trình duyệt → Cho phép Micro (Microphone), rồi tải lại trang.')
@@ -2392,6 +2429,7 @@ function AiVoicePanel({
     }
 
     const toggleMic = () => {
+        clearSilenceTimer()
         if (listening) {
             try { recRef.current?.stop() } catch { /* ignore */ }
             try {
@@ -2400,8 +2438,26 @@ function AiVoicePanel({
                 }
             } catch { /* ignore */ }
             setListening(false)
+            const spokenNow = latestTranscriptRef.current.trim()
+            if (spokenNow.length >= 2 && !analyzedOnceRef.current) {
+                analyzedOnceRef.current = true
+                void analyze(spokenNow)
+            }
             return
         }
+
+        // Hủy sạch phiên thu âm cũ (nếu còn treo trên trình duyệt di động) để thu âm lần 2, 3 liên tiếp luôn mượt
+        if (recRef.current) {
+            try {
+                recRef.current.onresult = null
+                recRef.current.onerror = null
+                recRef.current.onend = null
+                recRef.current.abort?.()
+                recRef.current.stop()
+            } catch { /* ignore */ }
+            recRef.current = null
+        }
+
         const w = window as unknown as {
             SpeechRecognition?: new () => SpeechRecognitionInstance
             webkitSpeechRecognition?: new () => SpeechRecognitionInstance
@@ -2412,7 +2468,9 @@ function AiVoicePanel({
             return
         }
         setErr('')
+        setText('')
         latestTranscriptRef.current = ''
+        analyzedOnceRef.current = false
         const rec = new Ctor()
         rec.lang = 'vi-VN'
         rec.continuous = false
@@ -2425,28 +2483,53 @@ function AiVoicePanel({
             const joined = parts.join(' ').trim()
             latestTranscriptRef.current = joined
             setText(joined)
+
+            // Tăng tốc 3: Khi câu đang nói đã đủ cấu trúc [Mã/Tên + Số thùng/chai], tự động chốt sau 600ms ngừng lời thay vì đợi 1.8s mặc định của trình duyệt
+            clearSilenceTimer()
+            const norm = normalizeVoiceTranscript(joined)
+            const looksComplete = /\b(?:L[1-8]\d{4}|Chablis|San Vincenzo|Sabazio|Realda|Amarone)\b.*\b\d+\s*(?:thùng|chai|lẻ)\b/i.test(norm)
+                || /\b\d+\s*(?:thùng|chai|lẻ)\b.*\b(?:L[1-8]\d{4}|Chablis|San Vincenzo|Sabazio|Realda|Amarone)\b/i.test(norm)
+            if (looksComplete) {
+                silenceTimerRef.current = setTimeout(() => {
+                    if (!analyzedOnceRef.current && latestTranscriptRef.current.trim().length >= 2) {
+                        analyzedOnceRef.current = true
+                        setListening(false)
+                        try { rec.stop() } catch { /* ignore */ }
+                        void analyze(latestTranscriptRef.current.trim())
+                    }
+                }, 600)
+            }
         }
         rec.onerror = (e) => {
+            clearSilenceTimer()
             setListening(false)
             if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
                 void startMediaRecorderFallback()
                 return
             }
-            if (e.error && e.error !== 'no-speech') {
+            if (e.error && e.error !== 'no-speech' && e.error !== 'aborted') {
                 setErr(`Không thu âm được (${e.error}). Hãy thử lại hoặc dùng micro trên bàn phím.`)
             }
         }
         rec.onend = () => {
+            clearSilenceTimer()
             setListening(false)
             // Tự động phân tích ngay khi người dùng ngừng nói để tiết kiệm thao tác bấm
             const spoken = latestTranscriptRef.current.trim()
-            if (spoken.length >= 2) {
+            if (spoken.length >= 2 && !analyzedOnceRef.current) {
+                analyzedOnceRef.current = true
                 void analyze(spoken)
             }
         }
         recRef.current = rec
-        setListening(true)
-        rec.start()
+        try {
+            rec.start()
+            setListening(true)
+        } catch {
+            recRef.current = null
+            setListening(false)
+            void startMediaRecorderFallback()
+        }
     }
 
     const updateMatchCandidate = async (idx: number, cand: AiCandidateOption) => {

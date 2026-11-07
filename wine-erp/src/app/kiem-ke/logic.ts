@@ -709,5 +709,220 @@ export function normalizeVoiceTranscript(raw: string): string {
     // Chuẩn hóa "20 22", "20 23", "20 24" bị tách dấu cách → "2022", "2023", "2024"
     s = s.replace(/(?:^|(?<=\s))20\s+([12]\d)(?=\s|$|[,.;])/g, '20$1')
 
+    // Chuẩn hóa số lượng đọc bằng chữ trước đơn vị "thùng / chai / lẻ / cái": "một thùng" → "1 thùng", "hai chai" → "2 chai"
+    const qtyWords: Record<string, string> = {
+        'một': '1',
+        'hai': '2',
+        'ba': '3',
+        'bốn': '4', 'tư': '4',
+        'năm': '5', 'lăm': '5',
+        'sáu': '6',
+        'bảy': '7', 'bẩy': '7',
+        'tám': '8',
+        'chín': '9',
+        'mười': '10',
+    }
+    s = s.replace(
+        /(?:^|(?<=\s))(một|hai|ba|bốn|tư|năm|lăm|sáu|bảy|bẩy|tám|chín|mười)(?=\s+(?:thùng|chai|lẻ|cái)\b)/gi,
+        (full, w: string) => qtyWords[w.toLowerCase()] ?? full
+    )
+
     return s.replace(/\s+/g, ' ').trim()
+}
+
+const LOCAL_SPOT_ALIASES: Array<[RegExp, string]> = [
+    [/kệ\s*cạnh\s*hàng\s*lẻ/i, 't2-8'],
+    [/kệ\s*hàng\s*lẻ|kệ\s*lẻ/i, 't2-4'],
+    [/cửa\s*ra\s*vào/i, 't2-1'],
+    [/cửa\s*sổ/i, 't2-2'],
+    [/tường\s*lớn/i, 't2-3'],
+    [/bồn\s*rửa/i, 't2-5'],
+    [/bàn\s*lớn|gầm\s*bàn/i, 't2-6'],
+    [/khu\s*vực\s*cầu\s*thang/i, 't2-7'],
+    [/tủ\s*lạnh/i, 't1-1'],
+    [/kệ\s*nhỏ\s*ngoài/i, 't1-2'],
+    [/kệ\s*to/i, 't1-3'],
+    [/kệ\s*nhỏ\s*trong/i, 't1-4'],
+    [/gầm\s*cầu\s*thang/i, 't1-5'],
+    [/phòng\s*vip/i, 't1-6'],
+]
+
+const LOCAL_WINE_ALIASES: Array<[RegExp, string]> = [
+    [/\bsan\s*vincenzo\b/i, 'L10039'],
+    [/\bfoscarino\b/i, 'L10040'],
+    [/\brealda\b/i, 'L10041'],
+    [/\bsabazio\b|\bcroce\b/i, 'L10042'],
+    [/\bchablis\b/i, 'L20040'],
+    [/\blamura\b/i, 'L10029'],
+    [/\bsaltari\b|\bamarone\b/i, 'L10001'],
+]
+
+/**
+ * Bộ phân tích giọng nói tức thì ngay trên trình duyệt (< 5ms, không cần chờ mạng/Gemini)
+ * cho các câu đọc rõ Mã SKU (vd: "L10029 1 chai", "L60001 5 thùng 3 chai", "L10001 vintage 2022 1 thùng")
+ * hoặc tên rượu thông dụng. Nếu câu phức tạp hoặc mơ hồ thì trả về null để chuyển sang Gemini.
+ */
+export function parseVoiceLocally(params: {
+    transcript: string
+    spotId: string
+    spots: ShowroomSpot[]
+    items: ShowroomItem[]
+}): {
+    matches: AiVoiceMatch[]
+    summaryText: string
+    normalizedTranscript: string
+    suggestedMode: 'add' | 'replace'
+} | null {
+    const normalizedTranscript = normalizeVoiceTranscript(params.transcript)
+    if (!normalizedTranscript) return null
+
+    const wineItems = params.items.filter(i => i.kind !== 'POSM')
+    if (!wineItems.length) return null
+
+    // 1. Nhận diện chế độ Cộng dồn hay Ghi đè
+    const isReplace = /(?:sửa\s*lại|sửa\s*thành|đặt\s*lại|ghi\s*đè|chốt\s*tổng|tất\s*cả\s*là)/i.test(normalizedTranscript)
+    const suggestedMode: 'add' | 'replace' = isReplace ? 'replace' : 'add'
+
+    // 2. Nhận diện vị trí nếu có nhắc trong câu
+    let targetSpot = params.spots.find(s => s.id === params.spotId) ?? params.spots[0]
+    if (!targetSpot) return null
+    for (const [re, sid] of LOCAL_SPOT_ALIASES) {
+        if (re.test(normalizedTranscript)) {
+            const found = params.spots.find(s => s.id === sid)
+            if (found) {
+                targetSpot = found
+                break
+            }
+        }
+    }
+
+    // 3. Tách câu thành từng vế (theo dấu phẩy, "và", hoặc tách trước mỗi mã L100xx)
+    const preSplit = normalizedTranscript
+        .replace(/\s+(?:và|với|rồi|cùng)\s+/gi, ' | ')
+        .replace(/[,;]+/g, ' | ')
+        .replace(/(?<=\b(?:thùng|chai|lẻ)\b)\s+(?=L[1-8]\d{4}\b)/gi, ' | ')
+
+    const clauses = preSplit.split('|').map(c => c.trim()).filter(Boolean)
+    if (!clauses.length) return null
+
+    const byCode = new Map<string, ShowroomItem[]>()
+    for (const it of wineItems) {
+        const k = it.code.trim().toUpperCase()
+        byCode.set(k, [...(byCode.get(k) ?? []), it])
+    }
+
+    const matches: AiVoiceMatch[] = []
+    const t2 = isCaseSpot(targetSpot)
+
+    for (const clause of clauses) {
+        // Tìm mã SKU L10001..L89999 hoặc tên rượu phổ biến
+        const skuMatch = clause.match(/\b(L[1-8]\d{4})\b/i)
+        let code = skuMatch ? skuMatch[1].toUpperCase() : ''
+        if (!code) {
+            for (const [re, aliasCode] of LOCAL_WINE_ALIASES) {
+                if (re.test(clause)) {
+                    code = aliasCode
+                    break
+                }
+            }
+        }
+        if (!code) return null
+
+        const siblings = byCode.get(code)
+        if (!siblings || !siblings.length) return null
+
+        // Xóa phần mã SKU và phần năm vintage để bóc số lượng không bị lẫn số
+        let rest = clause.replace(new RegExp(`\\b${code}\\b`, 'gi'), ' ')
+
+        // Tìm năm niên vụ (2010..2029 hoặc NV)
+        let spokenVintage = ''
+        const nvMatch = rest.match(/\bvintage\s+NV\b|\bNV\b/i)
+        const yearMatch = rest.match(/(?:\bvintage\s+|\bniên\s*vụ\s+|\bnăm\s+|\bđời\s+)?\b(19\d\d|20[0-2]\d)\b/i)
+        if (nvMatch) {
+            spokenVintage = 'NV'
+            rest = rest.replace(nvMatch[0], ' ')
+        } else if (yearMatch) {
+            spokenVintage = yearMatch[1]
+            rest = rest.replace(yearMatch[0], ' ')
+        }
+
+        // Bóc số thùng và số chai lẻ
+        const caseM = rest.match(/\b(\d+)\s*thùng\b/i)
+        const looseAfterM = rest.match(/\blẻ\s*(\d+)\s*(?:chai)?\b/i)
+        const bottleM = rest.match(/\b(\d+)\s*(?:chai\s*lẻ|chai|lẻ)\b/i)
+
+        let cases = caseM ? parseInt(caseM[1], 10) : 0
+        let loose = 0
+        if (looseAfterM) {
+            loose = parseInt(looseAfterM[1], 10)
+        } else if (bottleM) {
+            loose = parseInt(bottleM[1], 10)
+        } else if (!caseM) {
+            // Trường hợp đọc ngắn "L10039 3"
+            const bareNum = rest.match(/\b(\d{1,3})\b/)
+            if (bareNum) loose = parseInt(bareNum[1], 10)
+        }
+
+        if (cases <= 0 && loose <= 0) return null
+
+        const cleanVin = spokenVintage === 'NV' ? '' : spokenVintage
+        let matchedItem = cleanVin
+            ? siblings.find(x => x.vintage.trim() === cleanVin)
+            : undefined
+        const isNewVintage = Boolean(spokenVintage && spokenVintage !== 'NV' && !matchedItem)
+        if (!matchedItem) {
+            matchedItem = siblings[0]
+        }
+
+        const resolvedVintage = spokenVintage === 'NV' ? '' : (spokenVintage || matchedItem.vintage || '')
+        const pack = packSizeOf(matchedItem) ?? 6
+        const qty = t2 ? cases * pack + loose : cases * pack + loose
+        const availableVintages = Array.from(new Set(siblings.map(x => x.vintage.trim()).filter(Boolean))).sort()
+        const alternatives: AiCandidateOption[] = siblings.map(sib => ({
+            itemId: sib.id,
+            code: sib.code,
+            name: sib.name,
+            vintage: sib.vintage,
+            packSize: packSizeOf(sib) ?? 6,
+        }))
+
+        const warning = !spokenVintage && availableVintages.length > 1
+            ? `Mã ${code} có ${availableVintages.length} niên vụ (${availableVintages.join(', ')}) — hãy chạm chọn đúng năm trên nhãn chai.`
+            : undefined
+
+        matches.push({
+            spotId: targetSpot.id,
+            spotName: `${targetSpot.groupName} · ${targetSpot.name}`,
+            itemId: matchedItem.id,
+            code: matchedItem.code,
+            name: matchedItem.name,
+            vintage: resolvedVintage,
+            packSize: pack,
+            cases: t2 ? cases : null,
+            loose: t2 ? loose : null,
+            qty,
+            isNewVintage,
+            confidence: 'Cao',
+            suggestedMode,
+            availableVintages,
+            alternatives,
+            warning,
+        })
+    }
+
+    if (!matches.length) return null
+
+    const summaryParts = matches.map(m => {
+        const qtyDesc = m.cases
+            ? `${m.cases} thùng${m.loose ? ` ${m.loose} lẻ` : ''} (${m.qty} chai)`
+            : `${m.qty} chai`
+        return `${m.code}${m.vintage ? ` (${m.vintage})` : ''}: ${qtyDesc}`
+    })
+
+    return {
+        matches,
+        summaryText: `Nhận diện tức thì: ${summaryParts.join(' · ')}`,
+        normalizedTranscript,
+        suggestedMode,
+    }
 }
