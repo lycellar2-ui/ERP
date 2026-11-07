@@ -370,12 +370,12 @@ export function ShowroomCountClient({ initial, initialError }: { initial: Showro
             const cur = caseLooseOf(sp.id, targetItem)
             const inCases = params.cases ?? 0
             const inLoose = params.loose ?? (params.cases ? 0 : params.qty)
-            const nextCases = params.mode === 'add' ? (cur.cases ?? 0) + inCases : inCases
-            const nextLoose = params.mode === 'add' ? (cur.loose ?? 0) + inLoose : inLoose
+            const nextCases = params.mode === 'add' ? Math.max(0, (cur.cases ?? 0) + inCases) : inCases
+            const nextLoose = params.mode === 'add' ? Math.max(0, (cur.loose ?? 0) + inLoose) : inLoose
             setCaseLoose(sp.id, targetItem, nextCases, nextLoose, 100)
         } else {
             const curQty = qtyOf(sp.id, targetItem.id)
-            const nextQty = params.mode === 'add' ? (curQty ?? 0) + params.qty : params.qty
+            const nextQty = params.mode === 'add' ? Math.max(0, (curQty ?? 0) + params.qty) : params.qty
             setQty(sp.id, targetItem.id, nextQty, 100)
         }
     }
@@ -960,7 +960,7 @@ function CountView(props: {
 
     return (
         <div className="space-y-3">
-            <div className="sticky top-0 z-10 -mx-4 space-y-2 bg-lys-bg px-4 py-2">
+            <div className={`${aiPanel === 'none' ? 'sticky top-0 z-10' : ''} -mx-4 space-y-2 bg-lys-bg px-4 py-2`}>
                 <button onClick={props.onBack} className="flex items-center gap-1 py-1 font-semibold text-lys-teal-strong"><ChevronLeft className="size-4" />Các vị trí</button>
                 <div>
                     <div className="text-[11px] font-semibold uppercase tracking-widest text-lys-muted">
@@ -2449,36 +2449,57 @@ function AiVoicePanel({
         rec.start()
     }
 
-    const updateMatchCandidate = (idx: number, cand: AiCandidateOption) => {
+    const updateMatchCandidate = async (idx: number, cand: AiCandidateOption) => {
+        const currentMatch = result?.matches[idx]
+        const wasApplied = appliedIds.has(`${idx}`)
+        if (currentMatch && wasApplied) {
+            const rowSpotId = currentMatch.spotId || targetSpotId
+            // Hoàn tác số lượng đã lưu ở mã/vintage cũ trước khi chuyển sang mã/vintage mới
+            await onApplyMatch(
+                {
+                    ...currentMatch,
+                    cases: currentMatch.cases !== null ? -(currentMatch.cases ?? 0) : null,
+                    loose: currentMatch.loose !== null ? -(currentMatch.loose ?? 0) : null,
+                    qty: -currentMatch.qty,
+                },
+                rowSpotId,
+                'add'
+            )
+        }
+        const nextPack = cand.packSize || currentMatch?.packSize || 6
+        const updatedMatch: AiVoiceMatch | null = currentMatch
+            ? {
+                ...currentMatch,
+                itemId: cand.itemId,
+                code: cand.code,
+                name: cand.name,
+                vintage: cand.vintage,
+                packSize: nextPack,
+                qty: currentMatch.cases !== null
+                    ? (currentMatch.cases ?? 0) * nextPack + (currentMatch.loose ?? 0)
+                    : currentMatch.qty,
+                isNewVintage: false,
+                warning: undefined,
+            }
+            : null
+
         setResult(prev => {
-            if (!prev) return prev
+            if (!prev || !updatedMatch) return prev
             return {
                 ...prev,
-                matches: prev.matches.map((m, i) => {
-                    if (i !== idx) return m
-                    const nextPack = cand.packSize || m.packSize || 6
-                    const nextQty = m.cases !== null
-                        ? (m.cases ?? 0) * nextPack + (m.loose ?? 0)
-                        : m.qty
-                    return {
-                        ...m,
-                        itemId: cand.itemId,
-                        code: cand.code,
-                        name: cand.name,
-                        vintage: cand.vintage,
-                        packSize: nextPack,
-                        qty: nextQty,
-                        isNewVintage: false,
-                        warning: undefined,
-                    }
-                }),
+                matches: prev.matches.map((m, i) => (i === idx ? updatedMatch : m)),
             }
         })
-        setAppliedIds(s => {
-            const n = new Set(s)
-            n.delete(`${idx}`)
-            return n
-        })
+        if (updatedMatch && wasApplied) {
+            const rowSpotId = updatedMatch.spotId || targetSpotId
+            await onApplyMatch(updatedMatch, rowSpotId, saveMode)
+        } else {
+            setAppliedIds(s => {
+                const n = new Set(s)
+                n.delete(`${idx}`)
+                return n
+            })
+        }
     }
 
     const updateMatchQty = (idx: number, nextCases: number | null, nextLooseOrQty: number) => {
@@ -2624,15 +2645,26 @@ function AiVoicePanel({
                                                 </span>
                                             )}
                                         </div>
-                                        <div className="mt-1 text-xs text-lys-muted">
-                                            {cur.label}
-                                            {saveMode === 'add' && cur.totalQty > 0 && (
-                                                <span className="ml-1 font-bold text-lys-teal-strong">
-                                                    → Sau khi cộng: {cur.totalQty + m.qty} chai
+                                        <div className="mt-1 text-xs">
+                                            {done ? (
+                                                <span className="font-bold text-tone-success-fg">
+                                                    ✓ Đã lưu vào kệ · Tổng trên kệ hiện tại:{' '}
+                                                    {rowT2
+                                                        ? `${cur.totalCases} thùng + ${cur.totalLoose} lẻ = ${cur.totalQty} chai`
+                                                        : `${cur.totalQty} chai`}
+                                                </span>
+                                            ) : (
+                                                <span className="text-lys-muted">
+                                                    {cur.label}
+                                                    {saveMode === 'add' && cur.totalQty > 0 && (
+                                                        <span className="ml-1 font-bold text-lys-teal-strong">
+                                                            → Sau khi cộng: {cur.totalQty + m.qty} chai
+                                                        </span>
+                                                    )}
                                                 </span>
                                             )}
                                         </div>
-                                        {saveMode === 'replace' && cur.totalQty > 0 && (
+                                        {!done && saveMode === 'replace' && cur.totalQty > 0 && (
                                             <div className="mt-1 rounded bg-tone-warning-bg px-2 py-1 text-[11px] font-semibold text-tone-warning-fg">
                                                 Kệ đang có {cur.totalQty} chai — Bấm &quot;+ Cộng dồn&quot; ở trên nếu bạn đang đếm thêm.
                                             </div>
@@ -2646,7 +2678,7 @@ function AiVoicePanel({
                                             currentCode={m.code}
                                             currentVintage={m.vintage}
                                             alternatives={m.alternatives}
-                                            onSelect={(cand) => updateMatchCandidate(idx, cand)}
+                                            onSelect={(cand) => { void updateMatchCandidate(idx, cand) }}
                                         />
                                     </div>
                                 </div>
@@ -2875,27 +2907,45 @@ function AiVisionPanel({
         })
     }
 
-    const updateDraftCandidate = (idx: number, cand: AiCandidateOption) => {
-        setDraftItems(list => list.map((it, i) => {
-            if (i !== idx) return it
-            const nextPack = cand.packSize || it.packSize || 6
-            return {
-                ...it,
+    const updateDraftCandidate = async (idx: number, cand: AiCandidateOption) => {
+        const currentItem = draftItems[idx]
+        const wasApplied = appliedKeys.has(`${idx}`)
+        if (currentItem && wasApplied) {
+            await onApplyShelfItem(
+                {
+                    ...currentItem,
+                    cases: -currentItem.cases,
+                    loose: -currentItem.loose,
+                    qty: -currentItem.qty,
+                },
+                targetSpotId,
+                'add'
+            )
+        }
+        const nextPack = cand.packSize || currentItem?.packSize || 6
+        const updatedItem: AiVisionShelfItem | null = currentItem
+            ? {
+                ...currentItem,
                 itemId: cand.itemId,
                 code: cand.code,
                 name: cand.name,
                 vintage: cand.vintage,
                 packSize: nextPack,
-                qty: it.cases * nextPack + it.loose,
+                qty: currentItem.cases * nextPack + currentItem.loose,
                 isNewVintage: false,
                 warning: undefined,
             }
-        }))
-        setAppliedKeys(s => {
-            const n = new Set(s)
-            n.delete(`${idx}`)
-            return n
-        })
+            : null
+        setDraftItems(list => list.map((it, i) => (i === idx && updatedItem ? updatedItem : it)))
+        if (updatedItem && wasApplied) {
+            await onApplyShelfItem(updatedItem, targetSpotId, saveMode)
+        } else {
+            setAppliedKeys(s => {
+                const n = new Set(s)
+                n.delete(`${idx}`)
+                return n
+            })
+        }
     }
 
     const removeDraftItem = (idx: number) => {
@@ -3054,15 +3104,26 @@ function AiVisionPanel({
                                             {it.positionNote && (
                                                 <div className="mt-0.5 text-xs text-lys-secondary">{it.positionNote}</div>
                                             )}
-                                            <div className="mt-0.5 text-xs text-lys-muted">
-                                                {cur.label}
-                                                {saveMode === 'add' && cur.totalQty > 0 && (
-                                                    <span className="ml-1 font-bold text-lys-teal-strong">
-                                                        → Sau khi cộng: {cur.totalQty + it.qty} chai
+                                            <div className="mt-0.5 text-xs">
+                                                {done ? (
+                                                    <span className="font-bold text-tone-success-fg">
+                                                        ✓ Đã lưu vào kệ · Tổng trên kệ hiện tại:{' '}
+                                                        {isT2
+                                                            ? `${cur.totalCases} thùng + ${cur.totalLoose} lẻ = ${cur.totalQty} chai`
+                                                            : `${cur.totalQty} chai`}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-lys-muted">
+                                                        {cur.label}
+                                                        {saveMode === 'add' && cur.totalQty > 0 && (
+                                                            <span className="ml-1 font-bold text-lys-teal-strong">
+                                                                → Sau khi cộng: {cur.totalQty + it.qty} chai
+                                                            </span>
+                                                        )}
                                                     </span>
                                                 )}
                                             </div>
-                                            {saveMode === 'replace' && cur.totalQty > 0 && (
+                                            {!done && saveMode === 'replace' && cur.totalQty > 0 && (
                                                 <div className="mt-1 rounded bg-tone-warning-bg px-2 py-1 text-[11px] font-semibold text-tone-warning-fg">
                                                     Kệ đang có {cur.totalQty} chai — Chọn &quot;+ Cộng dồn&quot; nếu bạn chụp thêm góc kệ khác.
                                                 </div>
