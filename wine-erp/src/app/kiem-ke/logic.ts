@@ -815,14 +815,53 @@ export function parseVoiceLocally(params: {
     const t2 = isCaseSpot(targetSpot)
 
     for (const clause of clauses) {
-        // Tìm mã SKU L10001..L89999 hoặc tên rượu phổ biến
+        // Tìm mã SKU L10001..L89999 hoặc tên rượu trong danh mục
         const skuMatch = clause.match(/\b(L[1-8]\d{4})\b/i)
         let code = skuMatch ? skuMatch[1].toUpperCase() : ''
+        let extraCandidateItems: ShowroomItem[] = []
         if (!code) {
             for (const [re, aliasCode] of LOCAL_WINE_ALIASES) {
                 if (re.test(clause)) {
                     code = aliasCode
                     break
+                }
+            }
+        }
+        if (!code) {
+            // Tìm kiếm theo từ khóa tên rượu trong danh mục (vd: "Richland", "Saint Clair", "Sandy Cove", "Collavini"...)
+            const stopWords = new Set([
+                'ke', 'hang', 'le', 'canh', 'cua', 'ra', 'vao', 'so', 'tuong', 'lon', 'bon', 'rua', 'ban', 'cau', 'thang',
+                'tu', 'lanh', 'nho', 'ngoai', 'to', 'trong', 'gam', 'phong', 'vip', 'tang', 'khu', 'vuc',
+                'cong', 'them', 'sua', 'lai', 'thanh', 'dat', 'ghi', 'de', 'chot', 'tong', 'tat', 'ca', 'la',
+                'thung', 'chai', 'cai', 'ma', 'vintage', 'nien', 'vu', 'nam', 'doi', 'nv',
+                'cho', 'toi', 'minh', 'may', 'nhung', 'vang', 'ruou', 'phap', 'vung', 'loai', 'dong', 'kiem', 'dem',
+            ])
+            const words = normalizeSearch(clause)
+                .replace(/[^a-z0-9\s]/g, ' ')
+                .split(/\s+/)
+                .filter(w => w.length >= 4 && !/^\d+$/.test(w) && !stopWords.has(w))
+            if (words.length > 0) {
+                const scored = wineItems
+                    .map(it => {
+                        const normTokens = new Set(
+                            normalizeSearch(it.name)
+                                .replace(/[^a-z0-9\s]/g, ' ')
+                                .split(/\s+/)
+                                .filter(Boolean)
+                        )
+                        let hits = 0
+                        for (const w of words) {
+                            if (normTokens.has(w)) hits++
+                        }
+                        return { it, hits }
+                    })
+                    .filter(x => x.hits > 0)
+                    .sort((a, b) => b.hits - a.hits || a.it.code.localeCompare(b.it.code))
+                if (scored.length > 0 && scored[0].hits >= words.length) {
+                    const topScore = scored[0].hits
+                    const topMatches = scored.filter(x => x.hits === topScore).map(x => x.it)
+                    code = topMatches[0].code.toUpperCase()
+                    extraCandidateItems = topMatches.slice(0, 6)
                 }
             }
         }
@@ -878,17 +917,27 @@ export function parseVoiceLocally(params: {
         const pack = packSizeOf(matchedItem) ?? 6
         const qty = t2 ? cases * pack + loose : cases * pack + loose
         const availableVintages = Array.from(new Set(siblings.map(x => x.vintage.trim()).filter(Boolean))).sort()
-        const alternatives: AiCandidateOption[] = siblings.map(sib => ({
-            itemId: sib.id,
-            code: sib.code,
-            name: sib.name,
-            vintage: sib.vintage,
-            packSize: packSizeOf(sib) ?? 6,
-        }))
+        const altMap = new Map<string, AiCandidateOption>()
+        for (const sib of [...siblings, ...extraCandidateItems]) {
+            const key = `${sib.code}|${sib.vintage}`
+            if (!altMap.has(key)) {
+                altMap.set(key, {
+                    itemId: sib.id,
+                    code: sib.code,
+                    name: sib.name,
+                    vintage: sib.vintage,
+                    packSize: packSizeOf(sib) ?? 6,
+                })
+            }
+        }
+        const alternatives = Array.from(altMap.values()).slice(0, 6)
+        const distinctCodes = new Set(alternatives.map(a => a.code))
 
-        const warning = !spokenVintage && availableVintages.length > 1
-            ? `Mã ${code} có ${availableVintages.length} niên vụ (${availableVintages.join(', ')}) — hãy chạm chọn đúng năm trên nhãn chai.`
-            : undefined
+        const warning = distinctCodes.size > 1
+            ? `Có ${distinctCodes.size} mã khớp tên vừa đọc (${Array.from(distinctCodes).join(', ')}) — hãy chạm chọn đúng mã bên dưới.`
+            : (!spokenVintage && availableVintages.length > 1
+                ? `Mã ${code} có ${availableVintages.length} niên vụ (${availableVintages.join(', ')}) — hãy chạm chọn đúng năm trên nhãn chai.`
+                : undefined)
 
         matches.push({
             spotId: targetSpot.id,

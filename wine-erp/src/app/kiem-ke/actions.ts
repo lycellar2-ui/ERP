@@ -7,7 +7,7 @@ import crypto from 'crypto'
 import { prisma } from '@/lib/db'
 import {
     auditAnomalies, canRecheck, cleanLabel, cleanNote, isCaseSpot, isLooseShelfSpot, MAX_NOTE,
-    normalizeVintage, normalizeVoiceTranscript, packSizeOf, parseQty, summarize,
+    normalizeVintage, normalizeVoiceTranscript, packSizeOf, parseQty, parseVoiceLocally, summarize,
     type AiCandidateOption, type AiVisionMatch, type AiVisionShelfItem, type AiVoiceMatch, type ShowroomData,
 } from './logic'
 
@@ -133,6 +133,7 @@ export async function addShowroomVintage(input: {
         if (!existing) {
             await prisma.showroomCountEntry.create({ data: { spotId: String(input.spotId), itemId: item.id, qty: 0, countedBy } })
         }
+        invalidateShowroomCatalogCache()
         return { success: true, data: { itemId: item.id } }
     } catch (err) {
         console.error('[kiem-ke] addShowroomVintage', err)
@@ -175,6 +176,7 @@ export async function setShowroomItemPackSize(input: {
                 )
             )
         }
+        invalidateShowroomCatalogCache()
         return { success: true }
     } catch (err) {
         console.error('[kiem-ke] setShowroomItemPackSize', err)
@@ -265,6 +267,7 @@ export async function renameShowroomSpots(input: Array<{ id: string; name: strin
     }
     try {
         await prisma.$transaction(updates.map(u => prisma.showroomCountSpot.updateMany({ where: { id: u.id }, data: { name: u.name } })))
+        invalidateShowroomCatalogCache()
         return { success: true }
     } catch (err) {
         console.error('[kiem-ke] renameShowroomSpots', err)
@@ -277,17 +280,38 @@ export async function renameShowroomSpots(input: Array<{ id: string; name: strin
 // ═══════════════════════════════════════════════════════════════════
 
 const GEMINI_FLASH_MODELS = [
-    'gemini-2.5-flash',
-    'gemini-2.5-flash-lite',
     'gemini-3-flash-preview',
+    'gemini-3.1-flash-lite',
+    'gemini-3.5-flash',
     'gemini-3.8-flash',
-    'gemini-2.5-pro',
-    'gemini-3.1-pro-preview',
-    'gemini-flash-latest',
-    'gemini-flash-lite-latest',
+    'gemini-3.7-flash',
+    'gemini-3.6-flash',
 ] as const
 
 let cachedWorkingGeminiModel: string | null = null
+let cachedApiKeyRecord: { key: string; source: 'db' | 'env'; expiresAt: number } | null = null
+let cachedCatalogRecord: {
+    spots: Awaited<ReturnType<typeof prisma.showroomCountSpot.findMany>>
+    items: Awaited<ReturnType<typeof prisma.showroomCountItem.findMany>>
+    expiresAt: number
+} | null = null
+
+function invalidateShowroomCatalogCache() {
+    cachedCatalogRecord = null
+}
+
+async function getCachedShowroomCatalog() {
+    const now = Date.now()
+    if (cachedCatalogRecord && cachedCatalogRecord.expiresAt > now) {
+        return { spots: cachedCatalogRecord.spots, items: cachedCatalogRecord.items }
+    }
+    const [spots, items] = await Promise.all([
+        prisma.showroomCountSpot.findMany({ orderBy: { sortOrder: 'asc' } }),
+        prisma.showroomCountItem.findMany({ orderBy: [{ sortOrder: 'asc' }, { code: 'asc' }] }),
+    ])
+    cachedCatalogRecord = { spots, items, expiresAt: now + 60_000 }
+    return { spots, items }
+}
 
 async function discoverAvailableGeminiModels(apiKey: string): Promise<{ ok: boolean; status: number; models: string[]; errorText?: string }> {
     try {
@@ -310,14 +334,13 @@ async function discoverAvailableGeminiModels(apiKey: string): Promise<{ ok: bool
             )
             .map(m => String(m.name).replace(/^models\//, ''))
 
-        // Ưu tiên dòng flash và flash-lite (nhanh, chịu tải cao, ít bị 503), sau đó tới pro
+        // Ưu tiên dòng Gemini 3.x Flash / Flash-Lite đang hoạt động nhanh nhất
         const sorted = raw.sort((a, b) => {
             const score = (name: string) => {
                 let s = 0
                 if (/flash/i.test(name)) s += 100
-                if (/2\.5/i.test(name)) s += 40
-                else if (/3\.|3-/i.test(name)) s += 35
-                if (!/preview|exp/i.test(name)) s += 25
+                if (/3\.|3-/i.test(name)) s += 50
+                if (!/tts|image|exp/i.test(name)) s += 30
                 return s
             }
             return score(b) - score(a)
@@ -361,13 +384,20 @@ function maskKeyString(plain: string): string {
 }
 
 async function resolveShowroomGeminiKey(clientKey?: string): Promise<{ key: string | null; source: 'db' | 'env' | 'client' | 'none' }> {
+    const now = Date.now()
+    if (cachedApiKeyRecord && cachedApiKeyRecord.expiresAt > now) {
+        return { key: cachedApiKeyRecord.key, source: cachedApiKeyRecord.source }
+    }
     try {
         const row = await prisma.aiApiKey.findFirst({
             where: { provider: 'gemini', isActive: true },
         })
         if (row?.encryptedKey && row?.iv) {
             const plain = decryptKey(row.encryptedKey, row.iv).trim()
-            if (plain) return { key: plain, source: 'db' }
+            if (plain) {
+                cachedApiKeyRecord = { key: plain, source: 'db', expiresAt: now + 300_000 }
+                return { key: plain, source: 'db' }
+            }
         }
     } catch { /* fallback to client or env */ }
 
@@ -375,7 +405,9 @@ async function resolveShowroomGeminiKey(clientKey?: string): Promise<{ key: stri
         return { key: clientKey.trim(), source: 'client' }
     }
     if (process.env.GEMINI_API_KEY?.trim()) {
-        return { key: process.env.GEMINI_API_KEY.trim(), source: 'env' }
+        const envKey = process.env.GEMINI_API_KEY.trim()
+        cachedApiKeyRecord = { key: envKey, source: 'env', expiresAt: now + 300_000 }
+        return { key: envKey, source: 'env' }
     }
     return { key: null, source: 'none' }
 }
@@ -403,20 +435,33 @@ async function callGeminiFlash(params: {
 
         try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(params.apiKey)}`
-            const supportsZeroThinking = params.disableThinking && /^gemini-2\.5-flash/i.test(model)
-            const res = await fetch(url, {
+            const supportsZeroThinking = Boolean(
+                params.disableThinking &&
+                /^gemini-(?:3|2\.5)/i.test(model) &&
+                !/3\.5-flash-lite/i.test(model)
+            )
+            const buildBody = (withZeroThinking: boolean) => JSON.stringify({
+                contents: [{ role: 'user', parts: params.parts }],
+                generationConfig: {
+                    temperature: params.temperature ?? 0.1,
+                    maxOutputTokens: params.maxOutputTokens ?? (params.disableThinking ? 1024 : 4096),
+                    ...(params.jsonMode ? { responseMimeType: 'application/json' } : {}),
+                    ...(withZeroThinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+                },
+            })
+            let res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ role: 'user', parts: params.parts }],
-                    generationConfig: {
-                        temperature: params.temperature ?? 0.1,
-                        maxOutputTokens: Math.max(params.maxOutputTokens ?? 4096, 4096),
-                        ...(params.jsonMode ? { responseMimeType: 'application/json' } : {}),
-                        ...(supportsZeroThinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
-                    },
-                }),
+                body: buildBody(supportsZeroThinking),
             })
+            // Nếu model không hỗ trợ thinkingConfig (trả về 400), tự gọi lại ngay không kèm thinkingConfig
+            if (res.status === 400 && supportsZeroThinking) {
+                res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: buildBody(false),
+                })
+            }
             if (!res.ok) {
                 const body = await res.text()
                 if (
@@ -515,6 +560,7 @@ export async function getShowroomAiKeyStatus(): Promise<Result<ShowroomAiStatus>
 export async function saveShowroomAiKey(input: { apiKey: string }): Promise<Result<ShowroomAiStatus>> {
     const raw = String(input.apiKey ?? '').trim()
     try {
+        cachedApiKeyRecord = null
         if (!raw) {
             await prisma.aiApiKey.deleteMany({ where: { provider: 'gemini' } })
             return {
@@ -727,17 +773,27 @@ export async function parseShowroomVoiceWithAi(input: {
         return { success: false, error: 'Chưa có nội dung giọng nói để phân tích.' }
     }
     const normalizedTranscript = rawTranscript ? normalizeVoiceTranscript(rawTranscript) : ''
-    const { key } = await resolveShowroomGeminiKey(input.clientKey)
-    if (!key) {
-        return { success: false, error: 'NO_API_KEY: Chưa cài đặt Gemini API Key. Hãy nhập API Key ở mục Cài đặt AI.' }
-    }
     try {
-        const [allSpots, allItems] = await Promise.all([
-            prisma.showroomCountSpot.findMany({ orderBy: { sortOrder: 'asc' } }),
-            prisma.showroomCountItem.findMany({ orderBy: [{ sortOrder: 'asc' }, { code: 'asc' }] }),
+        const [{ key }, { spots: allSpots, items: allItems }] = await Promise.all([
+            resolveShowroomGeminiKey(input.clientKey),
+            getCachedShowroomCatalog(),
         ])
+        if (!key) {
+            return { success: false, error: 'NO_API_KEY: Chưa cài đặt Gemini API Key. Hãy nhập API Key ở mục Cài đặt AI.' }
+        }
         const defaultSpot = allSpots.find(s => s.id === String(input.spotId)) ?? allSpots[0]
         if (!defaultSpot) return { success: false, error: 'Không tìm thấy vị trí kiểm kê.' }
+        if (!hasAudio && rawTranscript) {
+            const fast = parseVoiceLocally({
+                transcript: rawTranscript,
+                spotId: defaultSpot.id,
+                spots: allSpots,
+                items: allItems,
+            })
+            if (fast) {
+                return { success: true, data: fast }
+            }
+        }
         const spotById = new Map(allSpots.map(s => [s.id, s]))
         const { enrichCandidate } = buildCatalogEnricher(allItems)
 
@@ -831,7 +887,7 @@ Quy tắc suy luận thông minh:
             apiKey: key,
             parts,
             jsonMode: true,
-            maxOutputTokens: 8192,
+            maxOutputTokens: 1536,
             temperature: 0.1,
             disableThinking: true,
         })
@@ -920,18 +976,16 @@ export async function identifyShowroomWineImageWithAi(input: {
     clientKey?: string
 }): Promise<Result<AiVisionMatch & { sceneWarning?: string }>> {
     if (!input.imageBase64) return { success: false, error: 'Chưa có ảnh chụp.' }
-    const { key } = await resolveShowroomGeminiKey(input.clientKey)
-    if (!key) {
-        return { success: false, error: 'NO_API_KEY: Chưa cài đặt Gemini API Key. Hãy nhập API Key ở mục Cài đặt AI.' }
-    }
     try {
-        const [spot, items] = await Promise.all([
-            prisma.showroomCountSpot.findUnique({ where: { id: String(input.spotId) } }),
-            prisma.showroomCountItem.findMany({
-                where: { kind: 'WINE' },
-                orderBy: [{ code: 'asc' }, { vintage: 'asc' }],
-            }),
+        const [{ key }, { spots: allSpots, items: allCatalogItems }] = await Promise.all([
+            resolveShowroomGeminiKey(input.clientKey),
+            getCachedShowroomCatalog(),
         ])
+        if (!key) {
+            return { success: false, error: 'NO_API_KEY: Chưa cài đặt Gemini API Key. Hãy nhập API Key ở mục Cài đặt AI.' }
+        }
+        const spot = allSpots.find(s => s.id === String(input.spotId)) ?? null
+        const items = allCatalogItems.filter(i => i.kind === 'WINE')
         const isLooseShelf = isLooseShelfSpot(spot)
         const isT2 = isCaseSpot(spot)
         const { enrichCandidate } = buildCatalogEnricher(items)
