@@ -611,11 +611,17 @@ export async function getCustomersForSO() {
     const isSalesRepOnly = hasRole(user, 'Sales Rep', 'SALES_REP') && 
         !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')
 
+    const sanitized = allCustomers.map(c => ({
+        ...c,
+        creditLimit: Number(c.creditLimit ?? 0),
+        parent: c.parent ? { ...c.parent, creditLimit: Number(c.parent.creditLimit ?? 0) } : null,
+    }))
+
     if (isSalesRepOnly) {
-        return allCustomers.filter(c => c.salesRepId === user.id || c.salesRepId === null)
+        return JSON.parse(JSON.stringify(sanitized.filter(c => c.salesRepId === user.id || c.salesRepId === null)))
     }
 
-    return allCustomers
+    return JSON.parse(JSON.stringify(sanitized))
 }
 
 // ── Products with stock for SO lines ─────────────

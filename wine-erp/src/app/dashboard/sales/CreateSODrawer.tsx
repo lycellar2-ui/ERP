@@ -49,17 +49,17 @@ const getPriceBadgeStyle = (source: string) => {
 const getPriceBadgeLabel = (resolved: any, defaultChannel: string) => {
     switch (resolved.source) {
         case 'SPECIAL_PRICE':
-            return 'GiÃ¡ Äáº·c Biá»‡t (Campaign)'
+            return 'Giá Đặc Biệt (Campaign)'
         case 'FIXED_PRICE':
-            return 'GiÃ¡ Cá»‘ Äá»‹nh RiÃªng'
+            return 'Giá Cố Định Riêng'
         case 'FIXED_DISCOUNT':
-            return `Chiáº¿t Kháº¥u Cá»‘ Äá»‹nh (-${resolved.discountPct}%)`
+            return `Chiết Khấu Cố Định (-${resolved.discountPct}%)`
         case 'CHANNEL_BASE':
             return `Giá Kênh ${defaultChannel}`
         case 'RETAIL_FALLBACK':
-            return 'GiÃ¡ BÃ¡n Láº» Máº·c Äá»‹nh'
+            return 'Giá Bán Lẻ Mặc Định'
         default:
-            return 'GiÃ¡ Máº·c Äá»‹nh'
+            return 'Giá Mặc Định'
     }
 }
 
@@ -725,10 +725,10 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
     const creditWarning = selectedCustomer && (finalTotal > creditAvailable || isCreditHold)
 
     const handleSave = async () => {
-        if (!customerId) return toast.error(isEn ? 'Please select a customer' : 'Vui lÃ²ng chá»n khÃ¡ch hÃ ng')
-        if (!legalEntityId) return toast.error(isEn ? 'Please select a legal entity' : 'Vui lÃ²ng chá»n phÃ¡p nhÃ¢n xuáº¥t tuyáº¿n')
+        if (!customerId) return toast.error(isEn ? 'Please select a customer' : 'Vui lòng chọn khách hàng')
+        if (!legalEntityId) return toast.error(isEn ? 'Please select a legal entity' : 'Vui lòng chọn pháp nhân xuất tuyến')
         if (lines.length === 0) return toast.error(isEn ? 'Add at least 1 product' : 'Thêm ít nhất 1 sản phẩm')
-        if (lines.some(l => !l.productId)) return toast.error(isEn ? 'Please select a product for all lines' : 'Vui lÃ²ng chá»n sáº£n pháº©m cho táº¥t cáº£ cÃ¡c dÃ²ng')
+        if (lines.some(l => !l.productId)) return toast.error(isEn ? 'Please select a product for all lines' : 'Vui lòng chọn sản phẩm cho tất cả các dòng')
 
         setSaving(true)
         const promise = createSalesOrder({
@@ -738,7 +738,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
             channel,
             orderType,
             proposalId: proposalId || undefined,
-            paymentTerm: orderType === 'TASTING' ? (paymentTerm || 'TASTING - KhÃ´ng thu tiá»n') : paymentTerm,
+            paymentTerm: orderType === 'TASTING' ? (paymentTerm || 'TASTING - Không thu tiền') : paymentTerm,
             orderDiscount: orderType === 'TASTING' ? 0 : orderDiscount,
             notes,
             lines: lines.map(l => ({
@@ -758,7 +758,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
         })
 
         toast.promise(promise, {
-            loading: isEn ? 'Creating sales order...' : 'Äang táº¡o Ä‘Æ¡n hÃ ng...',
+            loading: isEn ? 'Creating sales order...' : 'Đang tạo đơn hàng...',
             success: (result) => {
                 setTimeout(() => { onSaved(result.soId); resetForm() }, 500)
                 return isEn ? `Successfully created ${result.soNo}` : `Tạo thành công ${result.soNo}`
@@ -953,7 +953,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             </select>
                                         </div>
 
-                                        {/* Field 2: Sá» Tá»œ TRÃŒNH (Explicit dedicated field) */}
+                                        {/* Field 2: SỐ TỜ TRÌNH (Explicit dedicated field) */}
                                         <div className="md:col-span-6">
                                             <label className="block text-[11px] font-black uppercase text-amber-950 mb-1">
                                                 {t.proposalNoLabel}
@@ -1839,15 +1839,15 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             {entities.find(e => e.id === legalEntityId)?.name || "CÔNG TY CỔ PHẦN THƯƠNG MẠI THẮNG ÂN"}
                                         </h2>
                                         <p className="text-[10px] text-slate-700 leading-snug mt-0.5">
-                                            Äá»‹a chá»‰: {(entities.find(e => e.id === legalEntityId) as any)?.address || "Sá»‘ 10 ngÃµ 52 Giang VÄƒn Minh, PhÆ°á»ng Äá»™i Cáº¥n, Q. Ba ÄÃ¬nh, TP. HÃ  Ná»™i"}<br />
+                                            Địa chỉ: {(entities.find(e => e.id === legalEntityId) as any)?.address || 'Số 10 ngõ 52 Giang Văn Minh, Phường Đội Cấn, Q. Ba Đình, TP. Hà Nội'}<br />
                                             MST: {(entities.find(e => e.id === legalEntityId) as any)?.taxId || "0316123456"} &nbsp;|&nbsp; 
-                                            SÄT: {(entities.find(e => e.id === legalEntityId) as any)?.phone || "024.3933.8888"} &nbsp;|&nbsp; 
+                                            SĐT: {(entities.find(e => e.id === legalEntityId) as any)?.phone || '024.3933.8888'} &nbsp;|&nbsp; 
                                             Email: {(entities.find(e => e.id === legalEntityId) as any)?.email || "orders@lyscellars.com"}
                                         </p>
                                     </div>
                                     <div className="text-right">
                                         <h1 className="text-xl font-bold uppercase tracking-wider mb-0.5 text-black">
-                                            {orderType === 'TASTING' ? 'ÄÆ N HÃ€NG TASTING' : 'ÄÆ N BÃN HÃ€NG'}
+                                            {orderType === 'TASTING' ? 'ĐƠN HÀNG TASTING' : 'ĐƠN BÁN HÀNG'}
                                         </h1>
                                         <p className="text-xs font-bold font-mono text-slate-900">DỰ THẢO</p>
                                         <p className="text-[9px] text-slate-600 mt-0.5">Ngày lập: {new Date().toLocaleDateString('vi-VN')}</p>
@@ -1868,7 +1868,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                     <td className="font-mono text-slate-900 py-0.5">{selectedCustomer?.code}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td className="text-slate-600 pr-2 py-0.5">SÄT liÃªn há»‡:</td>
+                                                    <td className="text-slate-600 pr-2 py-0.5">SĐT liên hệ:</td>
                                                     <td className="font-semibold font-mono text-slate-900 py-0.5">
                                                         {selectedCustomer?.purchasingPhone || (selectedCustomer as any)?.contacts?.find((c: any) => c.isPrimary)?.phone || (selectedCustomer as any)?.contacts?.[0]?.phone || '—'}
                                                     </td>
@@ -1890,17 +1890,17 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                         <table className="w-full text-[10px]">
                                             <tbody>
                                                 <tr>
-                                                    <td className="text-slate-600 pr-2 w-20 py-0.5">NgÆ°á»i nháº­n:</td>
+                                                    <td className="text-slate-600 pr-2 w-20 py-0.5">Người nhận:</td>
                                                     <td className="font-semibold text-slate-900 py-0.5">{selectedCustomer?.receiverName || selectedCustomer?.name}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td className="text-slate-600 pr-2 py-0.5">SÄT nháº­n hÃ ng:</td>
+                                                    <td className="text-slate-600 pr-2 py-0.5">SĐT nhận hàng:</td>
                                                     <td className="font-bold font-mono text-slate-900 py-0.5">
                                                         {selectedCustomer?.receiverPhone || selectedCustomer?.purchasingPhone || (selectedCustomer as any)?.contacts?.find((c: any) => c.isPrimary)?.phone || '—'}
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td className="text-slate-600 pr-2 w-20 py-0.5">Äá»‹a chá»‰ giao:</td>
+                                                    <td className="text-slate-600 pr-2 w-20 py-0.5">Địa chỉ giao:</td>
                                                     <td className="py-0.5 text-slate-900">{selectedCustomer?.addresses?.find(a => a.id === shippingAddressId)?.address || selectedCustomer?.addresses?.[0]?.address || 'Nhận tại kho'}</td>
                                                 </tr>
                                                 <tr>
@@ -1943,9 +1943,9 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             <td className="px-2 py-1.5 w-24 border-r border-slate-300">Mã AX</td>
                                             <td className="px-2 py-1.5 border-r border-slate-300">Tên sản phẩm</td>
                                             <td className="px-2 py-1.5 text-right w-10 border-r border-slate-300">SL</td>
-                                            <td className="px-2 py-1.5 text-right w-24 border-r border-slate-300">ÄÆ¡n giÃ¡</td>
+                                            <td className="px-2 py-1.5 text-right w-24 border-r border-slate-300">Đơn giá</td>
                                             <td className="px-2 py-1.5 text-center w-12 border-r border-slate-300">CK %</td>
-                                            <td className="px-2 py-1.5 text-right w-28">ThÃ nh tiá»n</td>
+                                            <td className="px-2 py-1.5 text-right w-28">Thành tiền</td>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1981,7 +1981,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                 </td>
                                             </tr>
                                             <tr className="border-b border-slate-200">
-                                                <td className="py-1 text-slate-600">Cá»™ng tiá»n hÃ ng (chÆ°a VAT):</td>
+                                                <td className="py-1 text-slate-600">Cộng tiền hàng (chưa VAT):</td>
                                                 <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(subtotal)}</td>
                                             </tr>
                                             {orderDiscount > 0 && (
@@ -1999,7 +1999,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                         </tr>
                                                     ))}
                                                     <tr className="border-b border-slate-200 font-semibold">
-                                                        <td className="py-1 text-slate-700">Tá»•ng tiá»n thuáº¿ VAT:</td>
+                                                        <td className="py-1 text-slate-700">Tổng tiền thuế VAT:</td>
                                                         <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(Math.round(vatAmount))}</td>
                                                     </tr>
                                                 </>
@@ -2050,19 +2050,19 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                 <div className="grid grid-cols-4 gap-2 text-center text-xs mt-4 pt-2 border-t border-dashed border-slate-300 pb-4 break-inside-avoid print:break-inside-avoid">
                                     <div className="flex flex-col pb-12">
                                         <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Sale Admin duyệt</p>
-                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(KÃ½, ghi rÃµ há» tÃªn)</p>
+                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(Ký, ghi rõ họ tên)</p>
                                     </div>
                                     <div className="flex flex-col pb-12">
                                         <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Kế toán kiểm soát</p>
-                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(KÃ½, ghi rÃµ há» tÃªn)</p>
+                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(Ký, ghi rõ họ tên)</p>
                                     </div>
                                     <div className="flex flex-col pb-12">
                                         <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Thủ kho</p>
-                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(KÃ½, ghi rÃµ há» tÃªn)</p>
+                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(Ký, ghi rõ họ tên)</p>
                                     </div>
                                     <div className="flex flex-col pb-12">
-                                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">NgÆ°á»i nháº­n hÃ ng</p>
-                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(KÃ½, ghi rÃµ há» tÃªn)</p>
+                                        <p className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">Người nhận hàng</p>
+                                        <p className="text-slate-400 italic text-[9px] mt-0.5">(Ký, ghi rõ họ tên)</p>
                                     </div>
                                 </div>
 
