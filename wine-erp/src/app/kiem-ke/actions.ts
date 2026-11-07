@@ -273,10 +273,53 @@ export async function renameShowroomSpots(input: Array<{ id: string; name: strin
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// AI Cho Kiểm Kê Showroom (Gemini 2.5 Flash — API Key Setup, Voice, Vision, Audit)
+// AI Cho Kiểm Kê Showroom (Gemini 3.0 / 2.5 Flash + Auto Model Discovery)
 // ═══════════════════════════════════════════════════════════════════
 
-const GEMINI_FLASH_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash'] as const
+const GEMINI_FLASH_MODELS = [
+    'gemini-3.0-flash',
+    'gemini-3-flash-preview',
+    'gemini-2.5-flash',
+    'gemini-3.1-pro-preview',
+    'gemini-flash-latest',
+] as const
+
+let cachedWorkingGeminiModel: string | null = null
+
+async function discoverAvailableGeminiModels(apiKey: string): Promise<string[]> {
+    try {
+        const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`,
+            { method: 'GET' }
+        )
+        if (!res.ok) return []
+        const data = (await res.json()) as {
+            models?: Array<{ name?: string; supportedGenerationMethods?: string[] }>
+        }
+        const raw = (data.models ?? [])
+            .filter(m =>
+                m.name &&
+                m.supportedGenerationMethods?.includes('generateContent') &&
+                !/embedding|imagen|veo|tts|aqa|bison|gecko|learnlm/i.test(m.name)
+            )
+            .map(m => String(m.name).replace(/^models\//, ''))
+
+        // Ưu tiên dòng flash mới nhất (nhanh, đa phương thức), sau đó tới pro
+        return raw.sort((a, b) => {
+            const score = (name: string) => {
+                let s = 0
+                if (/flash/i.test(name)) s += 100
+                if (!/lite/i.test(name)) s += 20
+                if (/3\.|3-/i.test(name)) s += 50
+                else if (/2\.5/i.test(name)) s += 30
+                return s
+            }
+            return score(b) - score(a)
+        })
+    } catch {
+        return []
+    }
+}
 
 function deriveVaultKey(): Buffer {
     const secret = process.env.ENCRYPTION_KEY || 'lyscellars-showroom-default-secret-2026'
@@ -338,7 +381,18 @@ async function callGeminiFlash(params: {
     temperature?: number
 }): Promise<{ ok: true; text: string; model: string } | { ok: false; error: string }> {
     let lastError = 'Không kết nối được Gemini API.'
-    for (const model of GEMINI_FLASH_MODELS) {
+    const queue: string[] = [
+        ...(cachedWorkingGeminiModel ? [cachedWorkingGeminiModel] : []),
+        ...GEMINI_FLASH_MODELS,
+    ]
+    const tried = new Set<string>()
+    let discovered = false
+
+    while (queue.length > 0) {
+        const model = queue.shift()!
+        if (tried.has(model)) continue
+        tried.add(model)
+
         try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(params.apiKey)}`
             const res = await fetch(url, {
@@ -355,14 +409,35 @@ async function callGeminiFlash(params: {
             })
             if (!res.ok) {
                 const body = await res.text()
-                if (res.status === 400 || res.status === 401 || res.status === 403) {
+                if (
+                    res.status === 401 ||
+                    res.status === 403 ||
+                    (res.status === 400 && /API_KEY_INVALID|API key not valid/i.test(body))
+                ) {
                     return { ok: false, error: 'API Key không hợp lệ hoặc không có quyền truy cập Gemini API.' }
                 }
-                lastError = `Lỗi Gemini (${res.status}): ${body.slice(0, 160)}`
+
+                // Nếu thông báo lỗi 404 gợi ý model mới (vd: "Please update your code to use models/gemini-3.0-flash"), tự động thêm vào đầu hàng đợi
+                const suggestedMatch = body.match(/use\s+models\/([a-zA-Z0-9._-]+)/i)
+                if (suggestedMatch?.[1] && !tried.has(suggestedMatch[1])) {
+                    queue.unshift(suggestedMatch[1])
+                }
+
+                // Nếu hết danh sách tĩnh mà vẫn gặp 404, tự động hỏi danh sách models từ Google API của chính Key này
+                if (res.status === 404 && queue.length === 0 && !discovered) {
+                    discovered = true
+                    const available = await discoverAvailableGeminiModels(params.apiKey)
+                    for (const m of available.slice(0, 4)) {
+                        if (!tried.has(m)) queue.push(m)
+                    }
+                }
+
+                lastError = `Lỗi Gemini (${res.status}): ${body.slice(0, 180)}`
                 continue
             }
             const data = await res.json()
             const text = data.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? '').join('') ?? ''
+            cachedWorkingGeminiModel = model
             return { ok: true, text, model }
         } catch (err) {
             lastError = err instanceof Error ? err.message : String(err)
