@@ -2301,10 +2301,20 @@ function AiVoicePanel({
     const mediaStreamRef = useRef<MediaStream | null>(null)
     const latestTranscriptRef = useRef('')
     const analyzedOnceRef = useRef(false)
+    const postSpeechTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+    const clearPostSpeechTimer = () => {
+        if (postSpeechTimerRef.current) {
+            clearTimeout(postSpeechTimerRef.current)
+            postSpeechTimerRef.current = null
+        }
+    }
 
     useEffect(() => {
         return () => {
+            clearPostSpeechTimer()
             try { recRef.current?.abort?.(); recRef.current?.stop() } catch { /* ignore */ }
+            recRef.current = null
             try { mediaRecRef.current?.stop() } catch { /* ignore */ }
             try { mediaStreamRef.current?.getTracks().forEach(t => t.stop()) } catch { /* ignore */ }
         }
@@ -2395,8 +2405,11 @@ function AiVoicePanel({
     }
 
     const toggleMic = () => {
+        clearPostSpeechTimer()
         if (listening) {
-            try { recRef.current?.stop() } catch { /* ignore */ }
+            const activeRec = recRef.current
+            recRef.current = null
+            try { activeRec?.stop() } catch { /* ignore */ }
             try {
                 if (mediaRecRef.current && mediaRecRef.current.state !== 'inactive') {
                     mediaRecRef.current.stop()
@@ -2409,18 +2422,6 @@ function AiVoicePanel({
                 void analyze(spokenNow)
             }
             return
-        }
-
-        // Hủy sạch phiên thu âm cũ (nếu còn treo trên trình duyệt di động) để thu âm lần 2, 3 liên tiếp luôn mượt
-        if (recRef.current) {
-            try {
-                recRef.current.onresult = null
-                recRef.current.onerror = null
-                recRef.current.onend = null
-                recRef.current.abort?.()
-                recRef.current.stop()
-            } catch { /* ignore */ }
-            recRef.current = null
         }
 
         const w = window as unknown as {
@@ -2438,7 +2439,8 @@ function AiVoicePanel({
         analyzedOnceRef.current = false
         const rec = new Ctor()
         rec.lang = 'vi-VN'
-        rec.continuous = false
+        // Bật continuous = true để mic không tự ngắt khi người dùng hít thở hoặc nghỉ 0.3s đầu câu
+        rec.continuous = true
         rec.interimResults = true
         rec.onresult = (e) => {
             const parts: string[] = []
@@ -2448,18 +2450,41 @@ function AiVoicePanel({
             const joined = parts.join(' ').trim()
             latestTranscriptRef.current = joined
             setText(joined)
+
+            // Mỗi khi người dùng phát âm thêm từ mới, reset bộ đếm 1.2s; khi ngừng nói hẳn 1.2s mới tự động chốt câu
+            clearPostSpeechTimer()
+            if (joined.length >= 2) {
+                postSpeechTimerRef.current = setTimeout(() => {
+                    if (!analyzedOnceRef.current && latestTranscriptRef.current.trim().length >= 2) {
+                        analyzedOnceRef.current = true
+                        const r = recRef.current
+                        recRef.current = null
+                        setListening(false)
+                        try { r?.stop() } catch { /* ignore */ }
+                        void analyze(latestTranscriptRef.current.trim())
+                    }
+                }, 1200)
+            }
         }
         rec.onerror = (e) => {
+            clearPostSpeechTimer()
+            recRef.current = null
             setListening(false)
             if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
                 void startMediaRecorderFallback()
                 return
             }
-            if (e.error && e.error !== 'no-speech' && e.error !== 'aborted') {
-                setErr(`Không thu âm được (${e.error}). Hãy thử lại hoặc dùng micro trên bàn phím.`)
+            if (e.error === 'no-speech') {
+                setErr('Chưa nghe rõ giọng nói. Hãy bấm "Bấm nói" và đọc sát micro hơn.')
+                return
+            }
+            if (e.error && e.error !== 'aborted') {
+                setErr(`Không thu âm được (${e.error}). Hãy bấm "Bấm nói" thử lại.`)
             }
         }
         rec.onend = () => {
+            clearPostSpeechTimer()
+            recRef.current = null
             setListening(false)
             const spoken = latestTranscriptRef.current.trim()
             if (spoken.length >= 2 && !analyzedOnceRef.current) {
