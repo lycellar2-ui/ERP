@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { parseQty, normalizeVintage, cleanLabel, cleanNote, MAX_NOTE, summarize, buildGroupReport, buildCsv, checkState, canRecheck, packSizeOf, isCaseSpot, calcCaseLooseTotal, type ShowroomData } from '@/app/kiem-ke/logic'
+import { parseQty, normalizeVintage, cleanLabel, cleanNote, MAX_NOTE, summarize, buildGroupReport, buildCsv, checkState, canRecheck, packSizeOf, isCaseSpot, isLooseShelfSpot, calcCaseLooseTotal, auditAnomalies, normalizeVoiceTranscript, type ShowroomData } from '@/app/kiem-ke/logic'
 
 // ─── Setup Mocks ──────────────────────────────────
 
@@ -9,12 +9,13 @@ const mockPrisma = {
     showroomCountEntry: { findMany: vi.fn(), findUnique: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn(), create: vi.fn(), update: vi.fn() },
     showroomCountCheck: { findMany: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn() },
     showroomCountNote: { findMany: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn() },
+    aiApiKey: { findFirst: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn() },
     $transaction: vi.fn(),
 }
 
 vi.mock('@/lib/db', () => ({ prisma: mockPrisma }))
 
-const { saveShowroomCount, addShowroomVintage, renameShowroomSpots, setShowroomRecheck, saveShowroomNote, setShowroomItemPackSize } = await import('@/app/kiem-ke/actions')
+const { saveShowroomCount, addShowroomVintage, renameShowroomSpots, setShowroomRecheck, saveShowroomNote, setShowroomItemPackSize, getShowroomAiKeyStatus, saveShowroomAiKey } = await import('@/app/kiem-ke/actions')
 
 beforeEach(() => vi.clearAllMocks())
 
@@ -340,6 +341,10 @@ describe('kiem-ke Tầng 2 cases & loose bottles', () => {
         expect(isCaseSpot({ groupName: 'Tầng 1', kind: 'WINE' })).toBe(false)
         expect(isCaseSpot({ groupName: 'Hàng mẫu', kind: 'WINE' })).toBe(false)
         expect(isCaseSpot({ groupName: 'POSM', kind: 'POSM' })).toBe(false)
+
+        expect(isLooseShelfSpot({ id: 't2-4', name: 'Kệ hàng lẻ' })).toBe(true)
+        expect(isLooseShelfSpot({ id: 't2-8', name: 'Kệ cạnh hàng lẻ' })).toBe(true)
+        expect(isLooseShelfSpot({ id: 't2-1', name: 'Khu vực cạnh cửa ra vào' })).toBe(false)
     })
 
     it('calculates total while preserving exact loose bottles even when loose >= packSize', () => {
@@ -394,5 +399,49 @@ describe('kiem-ke Tầng 2 cases & loose bottles', () => {
             where: { id: 'e1' },
             data: { qty: 32 },
         })
+    })
+
+    it('detects anomalies (multi-counter at same spot, loose >= 2x packSize, high qty without recheck)', () => {
+        const d: ShowroomData = {
+            ...data,
+            entries: [
+                { spotId: 't2-1', itemId: 'a', qty: 18, cases: 3, loose: 0, countedBy: 'Minh', countedAt: '2026-11-01T03:00:00.000Z' },
+                { spotId: 't2-1', itemId: 'a', qty: 18, cases: 3, loose: 0, countedBy: 'Lan', countedAt: '2026-11-01T03:05:00.000Z' },
+                { spotId: 't2-1', itemId: 'c', qty: 14, cases: 0, loose: 14, countedBy: 'Minh', countedAt: '2026-11-01T03:10:00.000Z' },
+                { spotId: 't1-1', itemId: 'b', qty: 30, countedBy: 'Lan', countedAt: '2026-11-01T03:15:00.000Z' },
+            ],
+            checks: [],
+        }
+        const anomalies = auditAnomalies(d)
+        expect(anomalies.some(a => a.type === 'DUPLICATE_COUNT' && a.item.id === 'a' && a.severity === 'high')).toBe(true)
+        expect(anomalies.some(a => a.type === 'CASE_LOOSE_SUSPICIOUS' && a.item.id === 'c')).toBe(true)
+        expect(anomalies.some(a => a.type === 'UNCHECKED_HIGH_QTY' && a.item.id === 'b')).toBe(true)
+    })
+
+    it('rejects too-short API keys and allows clearing the Gemini API key', async () => {
+        const shortRes = await saveShowroomAiKey({ apiKey: 'short' })
+        expect(shortRes.success).toBe(false)
+
+        mockPrisma.aiApiKey.deleteMany.mockResolvedValue({ count: 1 })
+        const clearRes = await saveShowroomAiKey({ apiKey: '' })
+        expect(clearRes.success).toBe(true)
+        if (clearRes.success && clearRes.data) {
+            expect(clearRes.data.configured).toBe(false)
+        }
+
+        mockPrisma.aiApiKey.findFirst.mockResolvedValue(null)
+        const statusRes = await getShowroomAiKeyStatus()
+        expect(statusRes.success).toBe(true)
+    })
+
+    it('normalizes Vietnamese spoken SKU digits and wine phonetics in normalizeVoiceTranscript', () => {
+        expect(normalizeVoiceTranscript('lờ một không không ba chín 3 thùng 2 chai lẻ'))
+            .toContain('L10039')
+        expect(normalizeVoiceTranscript('mã 10042 2 thùng'))
+            .toContain('L10042')
+        expect(normalizeVoiceTranscript('eo 200 19 5 chai'))
+            .toContain('L20019')
+        expect(normalizeVoiceTranscript('kệ hàng lẻ 3 chai xa bli 2023 và 2 chai san vin xen dô'))
+            .toMatch(/Chablis.*San Vincenzo/)
     })
 })

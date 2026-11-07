@@ -91,6 +91,7 @@
 82. [BUG-135: Lỗi Tải Báo Cáo Tồn Kho & Nhịp Độ Bán Hàng Trên Vercel Production — dbPool.end() BeforeExit Freeze & Unhandled Server Action Exception](#bug-135-lỗi-tải-báo-cáo-tồn-kho--nhịp-độ-bán-hàng-trên-vercel-production--dbpoolend-beforeexit-freeze--unhandled-server-action-exception)
 83. [BUG-136: Build Fail Trên Vercel — Non-Async Function & Object/Type Exports Trong File 'use server' (Turbopack Server Actions)](#bug-136-build-fail-trên-vercel--non-async-function--objecttype-exports-trong-file-use-server-turbopack-server-actions)
 84. [BUG-137: Audit Toàn Diện UI/UX Toàn Hệ Thống — Skeleton Trắng-Trên-Trắng, Thiếu Header Title, Native Alert/Confirm, Class Dark Mode & Độ Tương Phản WCAG AA](#bug-137-audit-toàn-diện-uiux-toàn-hệ-thống--skeleton-trắng-trên-trắng-thiếu-header-title-native-alertconfirm-class-dark-mode--độ-tương-phản-wcag-aa)
+85. [BUG-146: Vỡ Font / Lỗi Hiển Thị Tiếng Việt (Mojibake) Trong Modal Xem Trước Bản In (Print Preview) Đơn Bán Hàng CreateSODrawer](#bug-146-vỡ-font--lỗi-hiển-thị-tiếng-việt-mojibake-trong-modal-xem-trước-bản-in-print-preview-đơn-bán-hàng-createsodrawer)
 
 ---
 
@@ -4286,3 +4287,32 @@ Qua đợt kiểm tra chuyên sâu toàn bộ 38 routes và tất cả component
 
 ### Bài học
 > ⚠️ **RULE 145: Mọi `try/catch` bao quanh `headers()`, `cookies()`, `redirect()`, `notFound()` hoặc code gọi chúng PHẢI gọi `unstable_rethrow(err)` đầu khối `catch`. Không bao giờ để `catch {}` rỗng nuốt lỗi nội bộ của Next.js. Trước khi push lên main, chạy `npm run build` (không chỉ `next dev`) để bắt lỗi prerender.**
+
+## BUG-146: Vỡ Font / Lỗi Hiển Thị Tiếng Việt (Mojibake) Trong Modal Xem Trước Bản In (Print Preview) Đơn Bán Hàng CreateSODrawer
+
+**Ngày:** 2026-11-07
+**Severity:** 🟡 Medium — Ảnh hưởng thẩm mỹ và tính chuyên nghiệp của bản in đơn bán hàng
+
+### Triệu chứng
+- Khi nhân viên mở modal xem trước bản in (Print Preview) trong drawer Tạo Đơn Bán Hàng (`CreateSODrawer`), các tiêu đề và nhãn xuất hiện dạng ký tự lạ (mojibake):
+  - `Ä  Æ N B Ã N H Ã‰NG` thay vì `ĐƠN BÁN HÀNG`
+  - `SÄ T liÃªn há»‡:` thay vì `SĐT liên hệ:`
+  - `NgÆ°á» i nháº­n:` thay vì `Người nhận:`
+  - `SÄ T nháº­n hÃ ng:` thay vì `SĐT nhận hàng:`
+  - `Ä á»‹a chá»‰ giao:` thay vì `Địa chỉ giao:`
+  - `Ä Æ¡n giÃ¡` thay vì `Đơn giá`
+  - `ThÃ nh tiá» n` thay vì `Thành tiền`
+  - `Cá»™ng tiá» n hÃ ng (chÆ°a VAT):` thay vì `Cộng tiền hàng (chưa VAT):`
+  - `Tá»•ng tiá» n thuáº¿ VAT:` thay vì `Tổng tiền thuế VAT:`
+  - `(KÃ½, ghi rÃµ há»  tÃªn)` thay vì `(Ký, ghi rõ họ tên)`
+  - `NgÆ°á» i nháº­n hÃ ng` thay vì `Người nhận hàng`
+
+### Nguyên nhân gốc rễ
+- Trong quá trình cập nhật giao diện trước đó, một số nhãn tiếng Việt và phần mẫu in trong `src/app/dashboard/sales/CreateSODrawer.tsx` đã bị dán đè chuỗi ký tự lỗi giải mã double UTF-8 / Windows-1252 trực tiếp vào source code.
+
+### Cách khắc phục
+- Rà soát và khôi phục toàn bộ các chuỗi tiếng Việt chuẩn UTF-8 trong `CreateSODrawer.tsx` khớp hoàn toàn với bản chuẩn trong `EditSODrawer.tsx`.
+- Quét toàn bộ codebase để đảm bảo không còn tệp nào khác bị lỗi tương tự.
+
+### Bài học
+> ⚠️ **RULE 146: Tuyệt đối không để chuỗi ký tự mojibake (double UTF-8 / Windows-1252) lọt vào source code. Mọi bản mẫu in (print template / preview) và nhãn giao diện tiếng Việt phải luôn được lưu chuẩn UTF-8 nguyên vẹn.**

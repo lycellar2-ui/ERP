@@ -687,3 +687,9 @@ model SalesOpportunity {
 - POST `/api/ai/seed-prompts` — 3 default prompt templates (pipeline, crm, catalog)
 
 
+
+### Showroom Inventory AI (`/kiem-ke`):
+- `saveShowroomAiKey` / `getShowroomAiKeyStatus` (`src/app/kiem-ke/actions.ts`): Cài đặt và lưu Gemini API Key mã hóa AES-256-GCM vào bảng `ai_api_keys` (provider `gemini`) kèm fallback `localStorage`.
+- `parseShowroomVoiceWithAi` + `normalizeVoiceTranscript` (`src/app/kiem-ke/logic.ts` & `actions.ts`): Chuẩn hóa số đọc rời tiếng Việt (`"lờ một không không ba chín"` -> `L10039`), phiên âm tên rượu Pháp/Ý, tự động phân tích ngay khi ngừng nói, nhận diện vị trí kệ và chế độ Cộng dồn (`add`) / Ghi đè (`replace`), kèm danh sách 1-chạm đổi niên vụ/mã tương tự (`alternatives`).
+- `identifyShowroomWineImageWithAi`: Quét ảnh Kệ hàng lẻ (liệt kê danh sách chai hàng trước & cổ chai hàng sau, cảnh báo khuất niên vụ), đọc mã bút dạ viết tay trên vỏ thùng carton Tầng 2, quy cách 6/12 chai và cảnh báo thùng mở nắp.
+- `auditShowroomWithAi`: Rà soát chéo toàn bộ số liệu kiểm kê kết hợp bộ lọc bất thường (`auditAnomalies`) trước khi xuất biên bản ký.

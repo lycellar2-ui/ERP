@@ -121,6 +121,13 @@ export function normalizeSearch(s: string): string {
     return s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase()
 }
 
+/** Nhận diện vị trí Kệ hàng lẻ / Kệ cạnh hàng lẻ (ưu tiên chế độ chụp ảnh liệt kê danh sách chai lẻ). */
+export function isLooseShelfSpot(spot?: Pick<ShowroomSpot, 'id' | 'name'> | null): boolean {
+    if (!spot) return false
+    const norm = normalizeSearch(spot.name)
+    return spot.id === 't2-4' || spot.id === 't2-8' || norm.includes('hang le') || norm.includes('ke le')
+}
+
 export function sortItems(items: ShowroomItem[]): ShowroomItem[] {
     return [...items].sort((a, b) => a.code.localeCompare(b.code) || a.vintage.localeCompare(b.vintage))
 }
@@ -423,4 +430,233 @@ export function buildGroupReport(data: ShowroomData, group: string): GroupReport
             .map(n => ({ spot: stats[col.get(n.spotId)!].spot, item: itemById.get(n.itemId) ?? null, note: n.note, writtenBy: n.writtenBy, updatedAt: n.updatedAt }))
             .sort((a, b) => a.spot.sortOrder - b.spot.sortOrder || a.updatedAt.localeCompare(b.updatedAt)),
     }
+}
+
+export type ShowroomAnomaly = {
+    type: 'DUPLICATE_COUNT' | 'CASE_LOOSE_SUSPICIOUS' | 'UNCHECKED_HIGH_QTY'
+    severity: 'high' | 'medium'
+    spot: ShowroomSpot
+    item: ShowroomItem
+    message: string
+    detail: string
+}
+
+/**
+ * Phát hiện các dấu hiệu bất thường trong dữ liệu kiểm kê:
+ * 1) Hai người cùng nhập số ở một vị trí mà chưa kiểm lại (đặc biệt khi 2 số bằng nhau -> dễ do người thứ 2 định kiểm lại nhưng lại nhập số đếm làm cộng đôi).
+ * 2) Ở Tầng 2: số chai lẻ lớn gấp >= 2 lần quy cách thùng hoặc số thùng trên 1 kệ quá lớn (>= 30 thùng -> dễ do gõ tổng chai vào ô số thùng).
+ * 3) Dòng có số lượng lớn (>= 24 chai) nhưng chưa có người thứ 2 tích kiểm lại.
+ */
+export function auditAnomalies(data: ShowroomData): ShowroomAnomaly[] {
+    const spotById = new Map(data.spots.map(s => [s.id, s]))
+    const itemById = new Map(data.items.map(i => [i.id, i]))
+    const checkByCell = new Map((data.checks ?? []).map(c => [`${c.spotId}|${c.itemId}`, c]))
+    const byCell = new Map<string, ShowroomEntry[]>()
+    for (const e of data.entries) {
+        if (e.qty <= 0) continue
+        const key = `${e.spotId}|${e.itemId}`
+        byCell.set(key, [...(byCell.get(key) ?? []), e])
+    }
+
+    const out: ShowroomAnomaly[] = []
+    for (const [key, list] of byCell) {
+        const [spotId, itemId] = key.split('|')
+        const spot = spotById.get(spotId)
+        const item = itemById.get(itemId)
+        if (!spot || !item) continue
+        const total = list.reduce((t, e) => t + e.qty, 0)
+        const isCheckedOk = checkState(total, checkByCell.get(key)) === 'ok'
+
+        if (list.length >= 2 && !isCheckedOk) {
+            const sameQty = list.every(e => e.qty === list[0].qty)
+            out.push({
+                type: 'DUPLICATE_COUNT',
+                severity: sameQty ? 'high' : 'medium',
+                spot,
+                item,
+                message: sameQty
+                    ? `Nghi ngờ đếm trùng (cộng đôi): ${list.map(e => `${e.countedBy}=${e.qty}`).join(', ')} → Tổng ${total}`
+                    : `Nhiều người cùng nhập số tại 1 kệ: ${list.map(e => `${e.countedBy}=${e.qty}`).join(', ')} → Tổng ${total}`,
+                detail: sameQty
+                    ? 'Hai người nhập đúng cùng một số lượng. Nếu người thứ 2 chỉ kiểm lại thì cần xóa dòng trùng và bấm "Kiểm lại: đúng".'
+                    : 'Kiểm tra xem hai người đếm hai khu khác nhau trong cùng vị trí hay vô tình đếm trùng.',
+            })
+        }
+
+        if (isCaseSpot(spot)) {
+            const pack = packSizeOf(item) ?? 6
+            for (const e of list) {
+                const cl = entryCaseLoose(e, pack)
+                if (cl.cases >= 35) {
+                    out.push({
+                        type: 'CASE_LOOSE_SUSPICIOUS',
+                        severity: 'high',
+                        spot,
+                        item,
+                        message: `Số thùng rất lớn (${cl.cases} thùng = ${e.qty} chai) do ${e.countedBy} nhập`,
+                        detail: `Kiểm tra xem ${e.countedBy} có gõ nhầm tổng số chai vào ô "Số thùng" hay không.`,
+                    })
+                } else if (cl.loose >= pack * 2 && cl.cases === 0) {
+                    out.push({
+                        type: 'CASE_LOOSE_SUSPICIOUS',
+                        severity: 'medium',
+                        spot,
+                        item,
+                        message: `Nhập 0 thùng + ${cl.loose} chai lẻ (quy cách thùng ${pack}) do ${e.countedBy} nhập`,
+                        detail: 'Kiểm tra xem đây là chai lẻ thực tế hay chưa tách số thùng nguyên.',
+                    })
+                }
+            }
+        }
+
+        if (total >= 24 && !isCheckedOk && list.length === 1) {
+            out.push({
+                type: 'UNCHECKED_HIGH_QTY',
+                severity: 'medium',
+                spot,
+                item,
+                message: `Số lượng lớn (${total} ${spot.kind === 'POSM' ? 'cái' : 'chai'}) chưa được kiểm lại lần 2`,
+                detail: `Đếm bởi ${list[0].countedBy}. Nên có người thứ 2 kiểm chéo và tích xác nhận.`,
+            })
+        }
+    }
+
+    return out.sort((a, b) => (a.severity === 'high' ? -1 : 1) - (b.severity === 'high' ? -1 : 1) || a.spot.sortOrder - b.spot.sortOrder)
+}
+
+export type AiCandidateOption = {
+    itemId: string
+    code: string
+    name: string
+    vintage: string
+    packSize: number
+}
+
+export type AiVoiceMatch = {
+    spotId?: string
+    spotName?: string
+    itemId: string
+    code: string
+    name: string
+    vintage: string
+    packSize: number | null
+    cases: number | null
+    loose: number | null
+    qty: number
+    isNewVintage?: boolean
+    suggestedMode?: 'add' | 'replace'
+    availableVintages?: string[]
+    alternatives?: AiCandidateOption[]
+    warning?: string
+    reason?: string
+}
+
+export type AiVisionShelfItem = {
+    itemId: string | null
+    code: string
+    name: string
+    vintage: string
+    isNewVintage: boolean
+    packSize: number
+    cases: number
+    loose: number
+    qty: number
+    confidence: string
+    positionNote: string
+    warning?: string
+    availableVintages?: string[]
+    alternatives?: AiCandidateOption[]
+}
+
+export type AiVisionMatch = {
+    spotId?: string
+    summaryText?: string
+    sceneWarning?: string
+    items?: AiVisionShelfItem[]
+    itemId: string | null
+    code: string
+    name: string
+    vintage: string
+    isNewVintage: boolean
+    detectedPackSize: number | null
+    estimatedCases: number | null
+    estimatedLoose: number | null
+    confidence: string
+    note: string
+}
+
+const VIET_PHONETIC_WINES: Array<[RegExp, string]> = [
+    [/(?:^|(?<=\s))(xa\s*bli|cha\s*bli|sáp\s*li|xap\s*li)(?=\s|$|[,.;])/gi, 'Chablis'],
+    [/(?:^|(?<=\s))(pô\s*ma|po\s*ma)(?=\s|$|[,.;])/gi, 'Pommard'],
+    [/(?:^|(?<=\s))(buốc\s*gôn|booc\s*gôn|bốc\s*gôn)(?=\s|$|[,.;])/gi, 'Bourgogne'],
+    [/(?:^|(?<=\s))(cha\s*tô\s*nớp|sa\s*tô\s*nớp|chato\s*nop)(?=\s|$|[,.;])/gi, 'Chateauneuf du Pape'],
+    [/(?:^|(?<=\s))(a\s*ma\s*rôn|ama\s*rôn|a\s*ma\s*rô\s*nê)(?=\s|$|[,.;])/gi, 'Amarone'],
+    [/(?:^|(?<=\s))(prô\s*sê\s*cô|pro\s*se\s*co|pờ\s*rô\s*sê\s*cô)(?=\s|$|[,.;])/gi, 'Prosecco'],
+    [/(?:^|(?<=\s))(pi\s*nô\s*gri\s*giô|pi\s*nô)(?=\s|$|[,.;])/gi, 'Pinot'],
+    [/(?:^|(?<=\s))(san\s*vin\s*xen\s*dô|san\s*vin\s*xen\s*zô|san\s*vin\s*sen)(?=\s|$|[,.;])/gi, 'San Vincenzo'],
+    [/(?:^|(?<=\s))(rê\s*an\s*đa|ri\s*an\s*đa)(?=\s|$|[,.;])/gi, 'Realda'],
+    [/(?:^|(?<=\s))(ca\s*la\s*bri\s*a|ca\s*la\s*bi\s*a)(?=\s|$|[,.;])/gi, 'Calabria'],
+    [/(?:^|(?<=\s))(môn\s*tê\s*pun|môn\s*tê)(?=\s|$|[,.;])/gi, 'Montepulciano'],
+    [/(?:^|(?<=\s))(sô\s*vinh\s*giông|xô\s*vi\s*nhông)(?=\s|$|[,.;])/gi, 'Sauvignon'],
+    [/(?:^|(?<=\s))(sác\s*đô\s*nây|cha\s*đô\s*nay)(?=\s|$|[,.;])/gi, 'Chardonnay'],
+    [/(?:^|(?<=\s))(ca\s*béc\s*nê|ca\s*be\s*nê)(?=\s|$|[,.;])/gi, 'Cabernet'],
+    [/(?:^|(?<=\s))(ríp\s*pát\s*xô|ri\s*pa\s*sô)(?=\s|$|[,.;])/gi, 'Ripasso'],
+    [/(?:^|(?<=\s))(ru\s*bi\s*côn\s*nê|ru\s*bi\s*côn)(?=\s|$|[,.;])/gi, 'Rubicone'],
+]
+
+/**
+ * Chuẩn hóa câu thu âm tiếng Việt trước khi đưa vào AI:
+ * - Ghép các số đọc rời ("lờ một không không ba chín", "eo 100 39", "mã 10039") thành đúng mã SKU chuẩn (vd: "L10039").
+ * - Phiên âm các tên rượu Pháp/Ý bị bộ nhận diện giọng nói tiếng Việt viết lệch về tên gốc.
+ */
+export function normalizeVoiceTranscript(raw: string): string {
+    let s = String(raw ?? '').trim()
+    if (!s) return ''
+
+    for (const [pattern, replacement] of VIET_PHONETIC_WINES) {
+        s = s.replace(pattern, replacement)
+    }
+
+    // Chuyển chữ số tiếng Việt đứng sau "lờ / eo / l / mã" thành đúng 5 chữ số của mã SKU (L10001..L80005)
+    const digitWords: Record<string, string> = {
+        'không': '0', 'linh': '0', 'lẻ': '0',
+        'một': '1', 'mốt': '1',
+        'hai': '2',
+        'ba': '3',
+        'bốn': '4', 'tư': '4',
+        'năm': '5', 'lăm': '5',
+        'sáu': '6',
+        'bảy': '7', 'bẩy': '7',
+        'tám': '8',
+        'chín': '9',
+    }
+
+    const singleDigitToken = '(?:không|linh|một|mốt|hai|ba|bốn|tư|năm|lăm|sáu|bảy|bẩy|tám|chín|\\d)'
+    const fiveSpokenDigitsRe = new RegExp(
+        `(?:^|(?<=\\s))(?:lờ|eo|mã\\s*lờ|mã\\s*l|mã\\s*số|mã|l)\\s*(${singleDigitToken}(?:\\s+${singleDigitToken}){4})(?=\\s|$)`,
+        'gi'
+    )
+    s = s.replace(fiveSpokenDigitsRe, (full, seq: string) => {
+        const digits = seq
+            .trim()
+            .split(/\s+/)
+            .map(tok => digitWords[tok.toLowerCase()] ?? tok)
+            .join('')
+        if (/^[1-8]\d{4}$/.test(digits)) {
+            return `L${digits}`
+        }
+        return full
+    })
+
+    // Chuẩn hóa trường hợp đọc "mã 10039", "eo 200 19", "L 100 39", "lờ 10 039" (5 chữ số bắt đầu từ 1..8) thành L10039
+    s = s.replace(
+        /(?:^|(?<=\s))(?:lờ|eo|mã\s*lờ|mã\s*l|mã\s*số|mã|l)?\s*([1-8]\d{2})\s*(\d{2})(?=\s|$)/gi,
+        'L$1$2'
+    )
+    s = s.replace(
+        /(?:^|(?<=\s))(?:lờ|eo|mã\s*lờ|mã\s*l|mã\s*số|mã|l)?\s*([1-8]\d)\s*(\d{3})(?=\s|$)/gi,
+        'L$1$2'
+    )
+
+    return s.replace(/\s+/g, ' ').trim()
 }
