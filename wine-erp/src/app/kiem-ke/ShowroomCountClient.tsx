@@ -2617,7 +2617,6 @@ function AiVoicePanel({
                         const done = appliedIds.has(`${idx}`)
                         const rowSpot = spots.find(s => s.id === (m.spotId || targetSpotId)) ?? targetSpot
                         const rowT2 = isCaseSpot(rowSpot)
-                        const rowLooseShelf = isLooseShelfSpot(rowSpot)
                         const cur = describeSpotCurrentCount({
                             entries,
                             allItems,
@@ -2684,8 +2683,8 @@ function AiVoicePanel({
                                 </div>
 
                                 <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                                    <div className="flex items-center gap-2">
-                                        {rowT2 && !rowLooseShelf && (
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                        {rowT2 && (
                                             <div className="flex items-center overflow-hidden rounded-md border border-lys-border bg-lys-bg text-xs">
                                                 <button
                                                     type="button"
@@ -3151,8 +3150,8 @@ function AiVisionPanel({
                                     </div>
 
                                     <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                                        <div className="flex items-center gap-2">
-                                            {isT2 && !isLooseShelf && (
+                                        <div className="flex flex-wrap items-center gap-1.5">
+                                            {isT2 && (
                                                 <div className="flex items-center overflow-hidden rounded-md border border-lys-border bg-lys-bg text-xs">
                                                     <button
                                                         type="button"

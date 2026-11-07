@@ -658,6 +658,11 @@ export function normalizeVoiceTranscript(raw: string): string {
         /(?:^|(?<=\s))(?:lờ|eo|mã\s*lờ|mã\s*l|mã\s*số|mã|l)?\s*([1-8]\d)\s*(\d{3})(?=\s|$)/gi,
         'L$1$2'
     )
+    // Trường hợp bộ thu âm viết tắt "l600 1", "l100 5", "mã 300 2" (thiếu 1 số 0 ở hàng chục) → L60001, L10005, L30002
+    s = s.replace(
+        /(?:^|(?<=\s))(?:lờ|eo|mã\s*lờ|mã\s*l|mã\s*số|mã|l)\s*([1-8]00)\s+([1-9])(?=\s|$)/gi,
+        'L$10$2'
+    )
 
     return s.replace(/\s+/g, ' ').trim()
 }
