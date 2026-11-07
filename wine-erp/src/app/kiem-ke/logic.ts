@@ -544,6 +544,7 @@ export type AiVoiceMatch = {
     loose: number | null
     qty: number
     isNewVintage?: boolean
+    confidence?: string
     suggestedMode?: 'add' | 'replace'
     availableVintages?: string[]
     alternatives?: AiCandidateOption[]

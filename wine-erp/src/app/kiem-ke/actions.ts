@@ -538,8 +538,8 @@ function buildCatalogEnricher(allItems: Array<{
         )
 
         const resolvedVintage = cleanVintage || matchedItem?.vintage || ''
-        const resolvedPack = matchedItem
-            ? packSizeOf(matchedItem)
+        const resolvedPack: number = matchedItem
+            ? (packSizeOf(matchedItem) ?? 6)
             : (input.packSize === 12 ? 12 : 6)
 
         const altMap = new Map<string, AiCandidateOption>()
@@ -551,7 +551,7 @@ function buildCatalogEnricher(allItems: Array<{
                 code: sib.code,
                 name: sib.name,
                 vintage: sib.vintage,
-                packSize: packSizeOf(sib),
+                packSize: packSizeOf(sib) ?? 6,
             })
         }
         // 2. Đưa các mã tương tự mà AI gợi ý vào danh sách 1-chạm
@@ -566,7 +566,7 @@ function buildCatalogEnricher(allItems: Array<{
                         code: altItem.code,
                         name: altItem.name,
                         vintage: altItem.vintage,
-                        packSize: packSizeOf(altItem),
+                        packSize: packSizeOf(altItem) ?? 6,
                     })
                 }
             }
@@ -733,7 +733,7 @@ Quy tắc suy luận thông minh:
                 name: m.name,
                 vintage: m.vintage,
                 isNewVintage: m.isNewVintage,
-                packSize: m.packSize,
+                packSize: m.packSize ?? undefined,
                 warning: m.warning,
                 rawAlternatives: m.alternatives,
             })

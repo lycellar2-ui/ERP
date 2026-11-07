@@ -2017,7 +2017,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
     }
 
     const usableCustomers = useMemo(() => {
-        return customers.filter(c => !isParentCustomer(c))
+        return customers.filter((c: any) => !isParentCustomer(c))
     }, [customers])
 
     const selectedCustForProposal = useMemo(() => {
