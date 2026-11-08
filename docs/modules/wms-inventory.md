@@ -782,6 +782,7 @@ Cần thiết vì kho có thể có vùng mù sóng.
 | **Nghiệp Vụ Nhập/Xuất Kho POSM Độc Lập (`PosmTransaction`)** | `schema.prisma`, `actions-posm.ts` | Tự động sinh số phiếu atomic `PIR-YYYY-XXXX` (Nhập) và `PIO-YYYY-XXXX` (Xuất); hỗ trợ các lý do: mua mới, hãng tài trợ, hoàn trả sự kiện, cấp phát Sales/PG thị trường, trang bị HORECA, quà tặng CTKM đơn hàng, hư hỏng/bể vỡ |
 | **Kiểm Soát Tồn Kho & Cảnh Báo Xuất Âm Thông Minh** | `actions-posm.ts`, `PosmInventoryTab.tsx` | Hiển thị cảnh báo màu vàng khi số lượng xuất lớn hơn tồn thực tế nhưng vẫn cho phép thủ kho xác nhận xuất trước và nhập kho bù sau theo đúng thực tế vận hành tại sự kiện |
 | **Tích Hợp Giao Diện Trực Quan Phân Hệ WMS** | `WarehouseClient.tsx`, `PosmInventoryTab.tsx`, `i18n.ts` | Tích hợp thành Tab chuyên biệt "Vật Phẩm POSM" trong WMS, hỗ trợ thẻ chức năng trên Menu Grid, Sub-tab Master Data, Sổ Nhật ký giao dịch và bộ chỉ số KPI giá trị tồn kho dự toán |
+| **Biểu Mẫu & Phiếu Xuất Kho POSM In Ấn (`Printable Voucher`)** | `PosmInventoryTab.tsx`, `actions-posm.ts` | Mẫu phiếu xuất kho chuẩn 02-VT (TT 200/2014/TT-BTC) kiêm biên bản bàn giao cấp phát; hỗ trợ tùy chọn "Xác Nhận & In Phiếu" ngay khi tạo phiếu PIO, nút "In Phiếu" trên danh sách lịch sử giao dịch và tích hợp lệnh `window.print()` chuẩn khổ A4 |
 
 #### Phase 22: Kiểm Tra Định Kỳ & Sổ Theo Dõi Nhiệt Độ Độ Ẩm Kho (Warehouse Inspection Checklist, Live Watermarked Camera & Offline Draft Sync) (11/10/2026)
 

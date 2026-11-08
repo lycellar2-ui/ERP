@@ -355,6 +355,16 @@ export async function createPosmTransaction(data: {
                 requestedBy: requestedBy?.trim() || null,
                 notes: notes?.trim() || null,
             },
+            include: {
+                posmProduct: {
+                    select: {
+                        posmCode: true,
+                        name: true,
+                        category: true,
+                        unit: true,
+                    },
+                },
+            },
         })
 
         await tx.posmProduct.update({
@@ -362,11 +372,65 @@ export async function createPosmTransaction(data: {
             data: { qtyOnHand: newQty },
         })
 
-        return transaction
+        return {
+            id: transaction.id,
+            docNo: transaction.docNo,
+            type: transaction.type,
+            reason: transaction.reason,
+            posmProductId: transaction.posmProductId,
+            posmProductCode: transaction.posmProduct.posmCode,
+            posmProductName: transaction.posmProduct.name,
+            category: transaction.posmProduct.category,
+            unit: transaction.posmProduct.unit,
+            qty: Number(transaction.qty),
+            unitCost: Number(transaction.unitCost),
+            totalCost: Number(transaction.totalCost),
+            recipient: transaction.recipient,
+            requestedBy: transaction.requestedBy,
+            performedAt: transaction.performedAt,
+            notes: transaction.notes,
+        }
     })
 }
 
-// ── 7. Fetch POSM Transactions History ────────────────────────
+// ── 7. Get Single POSM Transaction (For Voucher Printing) ─────
+export async function getPosmTransactionById(id: string): Promise<PosmTransactionItem | null> {
+    await requireAuth()
+    const tx = await prisma.posmTransaction.findUnique({
+        where: { id },
+        include: {
+            posmProduct: {
+                select: {
+                    posmCode: true,
+                    name: true,
+                    category: true,
+                    unit: true,
+                },
+            },
+        },
+    })
+    if (!tx) return null
+    return {
+        id: tx.id,
+        docNo: tx.docNo,
+        type: tx.type,
+        reason: tx.reason,
+        posmProductId: tx.posmProductId,
+        posmProductCode: tx.posmProduct.posmCode,
+        posmProductName: tx.posmProduct.name,
+        category: tx.posmProduct.category,
+        unit: tx.posmProduct.unit,
+        qty: Number(tx.qty),
+        unitCost: Number(tx.unitCost),
+        totalCost: Number(tx.totalCost),
+        recipient: tx.recipient,
+        requestedBy: tx.requestedBy,
+        performedAt: tx.performedAt,
+        notes: tx.notes,
+    }
+}
+
+// ── 8. Fetch POSM Transactions History ────────────────────────
 export async function getPosmTransactions(filters?: {
     posmProductId?: string
     type?: string
