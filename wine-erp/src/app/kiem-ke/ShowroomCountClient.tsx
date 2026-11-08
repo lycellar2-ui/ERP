@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Camera, ChevronLeft, KeyRound, Mic, Minus, Plus, Search, Sparkles, X } from 'lucide-react'
 import {
-    addShowroomVintage, auditShowroomWithAi, getShowroomAiKeyStatus, getShowroomCount,
+    addShowroomPosmItem, addShowroomVintage, auditShowroomWithAi, getShowroomAiKeyStatus, getShowroomCount,
     identifyShowroomWineImageWithAi, parseShowroomVoiceWithAi, renameShowroomSpots,
     saveShowroomAiKey, saveShowroomCount, saveShowroomNote, setShowroomItemPackSize,
     setShowroomRecheck, type ShowroomAiStatus,
@@ -791,7 +791,7 @@ function SpotsView(props: {
                                 <div>
                                     <div className="text-sm font-medium leading-snug">{item.name}</div>
                                     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-lys-muted">
-                                        {item.kind === 'POSM' ? 'POSM' : <><Vintage v={item.vintage} /><Code c={item.code} />{pack && <PackBadge packSize={pack} />}</>}
+                                        {item.kind === 'POSM' ? <><span>POSM</span>{item.code && <Code c={item.code} />}</> : <><Vintage v={item.vintage} /><Code c={item.code} />{pack && <PackBadge packSize={pack} />}</>}
                                     </div>
                                 </div>
                                 <div className={`self-center text-[21px] font-bold ${where.length ? '' : 'text-lys-dim'}`}>{where.length ? fmt(total) : '–'}</div>
@@ -1149,7 +1149,7 @@ function CountView(props: {
             )}
             {props.errorNote}
             <div className="overflow-hidden rounded-xl border border-lys-border bg-lys-surface">
-                {!shown.length && <p className="p-6 text-center text-lys-muted"><b className="block text-lys-primary">{posm ? 'Không thấy vật phẩm nào' : 'Không thấy rượu nào'}</b>{posm ? 'Thử từ khóa khác.' : 'Thử từ khóa khác, hoặc thêm vintage chưa có ở bên dưới.'}</p>}
+                {!shown.length && <p className="p-6 text-center text-lys-muted"><b className="block text-lys-primary">{posm ? 'Không thấy vật phẩm nào' : 'Không thấy rượu nào'}</b>{posm ? 'Thử từ khóa khác, hoặc thêm mã POSM chưa có ở bên dưới.' : 'Thử từ khóa khác, hoặc thêm vintage chưa có ở bên dưới.'}</p>}
                 {shown.map(item => {
                     const key = `${spot.id}|${item.id}`
                     const n = props.qtyOf(spot.id, item.id)
@@ -1179,7 +1179,13 @@ function CountView(props: {
                                         {noteButton(item.id)}
                                     </div>
                                 )}
-                                {posm && <div className="mt-1 text-xs">{noteButton(item.id)}</div>}
+                                {posm && (
+                                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-lys-muted">
+                                        {item.code && <Code c={item.code} />}
+                                        {item.isExtra && <span>thêm tay</span>}
+                                        {noteButton(item.id)}
+                                    </div>
+                                )}
                             </div>
 
                             {t2 && cl ? (
@@ -1241,7 +1247,11 @@ function CountView(props: {
                 <Notes notes={props.notesOf('')} who={props.who} editing={noteOpen.has('')} />
                 {noteEditor('', 'Ví dụ: còn 2 thùng chưa mở ở góc kệ')}
             </div>
-            {!posm && <AddVintage spot={spot} wines={props.allWine} code={addCode} setCode={setAddCode} who={props.who} onAdded={props.onAdded} />}
+            {posm ? (
+                <AddPosmItem spot={spot} who={props.who} onAdded={props.onAdded} />
+            ) : (
+                <AddVintage spot={spot} wines={props.allWine} code={addCode} setCode={setAddCode} who={props.who} onAdded={props.onAdded} />
+            )}
             <p className="text-sm text-lys-muted">
                 {t2
                     ? 'Nhập số thùng và số chai lẻ thực tế (giữ nguyên số chai lẻ, hệ thống tự cộng tổng chai). Khi trừ về 0 sẽ tự động xoá lượt nhập.'
@@ -1419,6 +1429,112 @@ function Stepper({ value, label, onChange }: { value: number | null; label: stri
                 className="w-14 bg-transparent py-2.5 text-center text-[21px] font-bold" />
             <button aria-label="Thêm 1" onClick={() => onChange((value ?? 0) + 1, 600)}
                 className="flex h-11 w-10 items-center justify-center text-lys-teal-strong"><Plus className="size-5" /></button>
+        </div>
+    )
+}
+
+function AddPosmItem({ spot, who, onAdded }: {
+    spot: ShowroomSpot; who: string; onAdded: (code: string) => Promise<void>
+}) {
+    const [open, setOpen] = useState(false)
+    const [code, setCode] = useState('')
+    const [name, setName] = useState('')
+    const [qty, setQty] = useState('')
+    const [msg, setMsg] = useState('')
+    const [busy, setBusy] = useState(false)
+
+    if (!open) {
+        return (
+            <button
+                type="button"
+                onClick={() => setOpen(true)}
+                className="w-full rounded-lg border border-lys-teal-strong py-3 font-semibold text-lys-teal-strong"
+            >
+                + Thêm mã / vật phẩm POSM mới
+            </button>
+        )
+    }
+
+    const add = async () => {
+        if (!name.trim()) {
+            setMsg('Vui lòng nhập tên vật phẩm POSM.')
+            return
+        }
+        setBusy(true)
+        const parsedQty = qty.trim() === '' ? null : parseInt(qty.trim(), 10)
+        const res = await addShowroomPosmItem({
+            code: code.trim() || undefined,
+            name: name.trim(),
+            qty: parsedQty,
+            spotId: spot.id,
+            countedBy: who,
+        })
+        setBusy(false)
+        if (!res.success) {
+            setMsg(res.error)
+            return
+        }
+        setMsg('')
+        setCode('')
+        setName('')
+        setQty('')
+        setOpen(false)
+        await onAdded(res.data?.code ?? '')
+    }
+
+    return (
+        <div className="space-y-2.5 rounded-xl border border-lys-teal-strong bg-lys-surface p-3">
+            <b className="block text-sm text-lys-primary">Thêm mã / vật phẩm POSM mới</b>
+            <div className="grid grid-cols-[120px_minmax(0,1fr)] gap-2">
+                <input
+                    value={code}
+                    onChange={e => setCode(e.target.value.toUpperCase())}
+                    placeholder="Mã (vd: P18)"
+                    aria-label="Mã POSM"
+                    className="rounded-lg border border-lys-border bg-lys-bg px-3 py-2.5 text-sm font-semibold uppercase"
+                />
+                <input
+                    autoFocus
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && add()}
+                    placeholder="Tên vật phẩm POSM (bắt buộc)…"
+                    aria-label="Tên vật phẩm POSM"
+                    className="min-w-0 rounded-lg border border-lys-border bg-lys-bg px-3 py-2.5 text-sm"
+                />
+            </div>
+            <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-lys-muted">Số lượng hiện tại ở vị trí này (tùy chọn):</span>
+                <input
+                    inputMode="numeric"
+                    value={qty}
+                    onChange={e => setQty(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    onKeyDown={e => e.key === 'Enter' && add()}
+                    placeholder="0"
+                    aria-label="Số lượng POSM"
+                    className="w-24 rounded-lg border border-lys-border bg-lys-bg px-3 py-2 text-center text-base font-bold"
+                />
+            </div>
+            <p className="text-xs text-lys-muted">Nếu để trống ô Mã, hệ thống sẽ tự tạo mã tiếp theo (P18, P19…).</p>
+            <div className="flex gap-2">
+                <button
+                    type="button"
+                    disabled={busy}
+                    onClick={add}
+                    className="flex-1 rounded-lg bg-lys-teal-strong py-3 font-semibold text-white disabled:opacity-50"
+                >
+                    {busy ? 'Đang thêm…' : 'Thêm vào POSM'}
+                </button>
+                <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => { setOpen(false); setMsg('') }}
+                    className="flex-1 rounded-lg border border-lys-teal-strong py-3 font-semibold text-lys-teal-strong"
+                >
+                    Hủy
+                </button>
+            </div>
+            {msg && <p className="text-sm text-tone-danger-fg">{msg}</p>}
         </div>
     )
 }
