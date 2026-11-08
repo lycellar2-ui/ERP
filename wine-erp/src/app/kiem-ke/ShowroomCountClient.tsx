@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Camera, ChevronLeft, KeyRound, Mic, Minus, Plus, Search, Sparkles, X } from 'lucide-react'
 import {
-    addShowroomPosmItem, addShowroomVintage, auditShowroomWithAi, getShowroomAiKeyStatus, getShowroomCount,
+    addShowroomPosmItem, addShowroomVintage, addShowroomWineItem, auditShowroomWithAi, getShowroomAiKeyStatus, getShowroomCount,
     identifyShowroomWineImageWithAi, parseShowroomVoiceWithAi, renameShowroomSpots,
     saveShowroomAiKey, saveShowroomCount, saveShowroomNote, setShowroomItemPackSize,
     setShowroomRecheck, type ShowroomAiStatus,
@@ -1250,7 +1250,10 @@ function CountView(props: {
             {posm ? (
                 <AddPosmItem spot={spot} who={props.who} onAdded={props.onAdded} />
             ) : (
-                <AddVintage spot={spot} wines={props.allWine} code={addCode} setCode={setAddCode} who={props.who} onAdded={props.onAdded} />
+                <div className="space-y-2">
+                    <AddWineItem spot={spot} who={props.who} onAdded={props.onAdded} />
+                    <AddVintage spot={spot} wines={props.allWine} code={addCode} setCode={setAddCode} who={props.who} onAdded={props.onAdded} />
+                </div>
             )}
             <p className="text-sm text-lys-muted">
                 {t2
@@ -1524,6 +1527,132 @@ function AddPosmItem({ spot, who, onAdded }: {
                     className="flex-1 rounded-lg bg-lys-teal-strong py-3 font-semibold text-white disabled:opacity-50"
                 >
                     {busy ? 'Đang thêm…' : 'Thêm vào POSM'}
+                </button>
+                <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => { setOpen(false); setMsg('') }}
+                    className="flex-1 rounded-lg border border-lys-teal-strong py-3 font-semibold text-lys-teal-strong"
+                >
+                    Hủy
+                </button>
+            </div>
+            {msg && <p className="text-sm text-tone-danger-fg">{msg}</p>}
+        </div>
+    )
+}
+
+function AddWineItem({ spot, who, onAdded }: {
+    spot: ShowroomSpot; who: string; onAdded: (code: string) => Promise<void>
+}) {
+    const isSampleGroup = spot.groupName === 'Hàng mẫu'
+    const [open, setOpen] = useState(false)
+    const [code, setCode] = useState('')
+    const [name, setName] = useState('')
+    const [vin, setVin] = useState('')
+    const [qty, setQty] = useState('')
+    const [msg, setMsg] = useState('')
+    const [busy, setBusy] = useState(false)
+
+    if (!open) {
+        return (
+            <button
+                type="button"
+                onClick={() => setOpen(true)}
+                className="w-full rounded-lg border border-lys-teal-strong py-3 font-semibold text-lys-teal-strong"
+            >
+                {isSampleGroup ? '+ Thêm mã hàng mẫu mới chưa có trong danh sách' : '+ Thêm mã rượu mới chưa có trong danh sách'}
+            </button>
+        )
+    }
+
+    const add = async () => {
+        if (!name.trim()) {
+            setMsg('Vui lòng nhập tên rượu / hàng mẫu.')
+            return
+        }
+        if (normalizeVintage(vin) === null) {
+            setMsg('Vintage là năm 4 chữ số, ví dụ 2022. Để trống nếu là NV.')
+            return
+        }
+        setBusy(true)
+        const parsedQty = qty.trim() === '' ? null : parseInt(qty.trim(), 10)
+        const res = await addShowroomWineItem({
+            code: code.trim() || undefined,
+            name: name.trim(),
+            vintage: vin.trim(),
+            qty: parsedQty,
+            spotId: spot.id,
+            countedBy: who,
+        })
+        setBusy(false)
+        if (!res.success) {
+            setMsg(res.error)
+            return
+        }
+        setMsg('')
+        setCode('')
+        setName('')
+        setVin('')
+        setQty('')
+        setOpen(false)
+        await onAdded(res.data?.code ?? '')
+    }
+
+    return (
+        <div className="space-y-2.5 rounded-xl border border-lys-teal-strong bg-lys-surface p-3">
+            <b className="block text-sm text-lys-primary">
+                {isSampleGroup ? 'Thêm mã hàng mẫu mới' : 'Thêm mã rượu mới'}
+            </b>
+            <div className="grid grid-cols-[110px_minmax(0,1fr)_84px] gap-2">
+                <input
+                    value={code}
+                    onChange={e => setCode(e.target.value.toUpperCase())}
+                    placeholder="Mã (vd: M01)"
+                    aria-label="Mã hàng mẫu / rượu"
+                    className="rounded-lg border border-lys-border bg-lys-bg px-2.5 py-2.5 text-sm font-semibold uppercase"
+                />
+                <input
+                    autoFocus
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && add()}
+                    placeholder="Tên rượu / hàng mẫu (bắt buộc)…"
+                    aria-label="Tên rượu / hàng mẫu"
+                    className="min-w-0 rounded-lg border border-lys-border bg-lys-bg px-3 py-2.5 text-sm"
+                />
+                <input
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={vin}
+                    onChange={e => setVin(e.target.value.replace(/\D/g, ''))}
+                    onKeyDown={e => e.key === 'Enter' && add()}
+                    placeholder="Năm/NV"
+                    aria-label="Vintage"
+                    className="rounded-lg border border-lys-border bg-lys-bg px-2.5 py-2.5 text-center text-sm font-semibold"
+                />
+            </div>
+            <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-lys-muted">Số chai tại vị trí này (tùy chọn):</span>
+                <input
+                    inputMode="numeric"
+                    value={qty}
+                    onChange={e => setQty(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    onKeyDown={e => e.key === 'Enter' && add()}
+                    placeholder="0"
+                    aria-label="Số chai"
+                    className="w-24 rounded-lg border border-lys-border bg-lys-bg px-3 py-2 text-center text-base font-bold"
+                />
+            </div>
+            <p className="text-xs text-lys-muted">Nếu để trống ô Mã, hệ thống sẽ tự tạo mã hàng mẫu tiếp theo (M01, M02…).</p>
+            <div className="flex gap-2">
+                <button
+                    type="button"
+                    disabled={busy}
+                    onClick={add}
+                    className="flex-1 rounded-lg bg-lys-teal-strong py-3 font-semibold text-white disabled:opacity-50"
+                >
+                    {busy ? 'Đang thêm…' : 'Thêm vào danh sách'}
                 </button>
                 <button
                     type="button"

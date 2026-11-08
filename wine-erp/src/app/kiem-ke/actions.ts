@@ -209,6 +209,80 @@ export async function addShowroomPosmItem(input: {
     }
 }
 
+/** Thêm mã rượu / hàng mẫu mới chưa có trong danh mục và tùy chọn ghi nhận luôn số lượng tại vị trí đang đếm. */
+export async function addShowroomWineItem(input: {
+    code?: string
+    name: string
+    vintage?: string
+    packSize?: number
+    qty?: number | null
+    spotId: string
+    countedBy: string
+}): Promise<Result<{ itemId: string; code: string; name: string; vintage: string }>> {
+    const name = cleanLabel(input.name, 140)
+    if (!name) return { success: false, error: 'Vui lòng nhập tên rượu / hàng mẫu.' }
+    const vintage = normalizeVintage(input.vintage ?? '')
+    if (vintage === null) return { success: false, error: 'Vintage là năm 4 chữ số, ví dụ 2022. Để trống nếu là NV.' }
+    const countedBy = cleanLabel(input.countedBy)
+    if (!countedBy) return { success: false, error: 'Thiếu tên người kiểm.' }
+    const parsedQty = input.qty === undefined || input.qty === null ? null : parseQty(input.qty)
+    if (parsedQty === 'invalid') return { success: false, error: 'Số lượng phải là số nguyên từ 0 trở lên.' }
+
+    try {
+        const spot = await prisma.showroomCountSpot.findUnique({ where: { id: String(input.spotId) }, select: { kind: true } })
+        if (!spot || spot.kind === 'POSM') return { success: false, error: 'Chỉ thêm mã rượu / hàng mẫu ở khu vực đếm rượu.' }
+
+        const existingWines = await prisma.showroomCountItem.findMany({
+            where: { kind: 'WINE' },
+            select: { id: true, code: true, sortOrder: true },
+            orderBy: { sortOrder: 'asc' },
+        })
+
+        let code = cleanLabel(input.code ?? '', 30).toUpperCase().replace(/\s+/g, '')
+        if (!code) {
+            let maxSampleNum = 0
+            for (const w of existingWines) {
+                const m = w.code.match(/^M(\d+)$/i)
+                if (m) maxSampleNum = Math.max(maxSampleNum, parseInt(m[1], 10))
+            }
+            code = `M${String(maxSampleNum + 1).padStart(2, '0')}`
+        }
+
+        const maxSort = existingWines.reduce((m, x) => Math.max(m, x.sortOrder), 0)
+        const packSize = input.packSize === 12 ? 12 : 6
+        const item = await prisma.showroomCountItem.upsert({
+            where: { kind_code_vintage: { kind: 'WINE', code, vintage } },
+            create: {
+                kind: 'WINE',
+                code,
+                name,
+                vintage,
+                packSize,
+                isExtra: true,
+                sortOrder: maxSort + 1,
+            },
+            update: {
+                name,
+            },
+        })
+
+        if (parsedQty !== null && parsedQty > 0) {
+            const key = { spotId: String(input.spotId), itemId: item.id, countedBy }
+            await prisma.showroomCountEntry.upsert({
+                where: { spotId_itemId_countedBy: key },
+                create: { ...key, qty: parsedQty },
+                update: { qty: parsedQty, countedAt: new Date() },
+            })
+        }
+
+        invalidateShowroomCatalogCache()
+        return { success: true, data: { itemId: item.id, code: item.code, name: item.name, vintage: item.vintage } }
+    } catch (err) {
+        console.error('[kiem-ke] addShowroomWineItem', err)
+        return { success: false, error: 'Chưa thêm được mã mới. Thử lại.' }
+    }
+}
+
 /** Cập nhật quy cách đóng gói (6 hoặc 12 chai/thùng) cho một mã rượu và tính lại tổng chai cho các dòng đã nhập số thùng. */
 export async function setShowroomItemPackSize(input: {
     code: string
