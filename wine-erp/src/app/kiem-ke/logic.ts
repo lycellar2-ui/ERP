@@ -111,10 +111,10 @@ export function cleanNote(raw: unknown): string | null | 'invalid' {
     return s.length <= MAX_NOTE ? s : 'invalid'
 }
 
-/** Tên người kiểm / tên vị trí: bỏ khoảng trắng thừa, 1–60 ký tự. */
-export function cleanLabel(raw: unknown): string | null {
+/** Tên người kiểm / tên vị trí / tên mặt hàng: bỏ khoảng trắng thừa, 1–maxLen ký tự. */
+export function cleanLabel(raw: unknown, maxLen = 60): string | null {
     const s = String(raw ?? '').replace(/\s+/g, ' ').trim()
-    return s.length >= 1 && s.length <= 60 ? s : null
+    return s.length >= 1 && s.length <= maxLen ? s : null
 }
 
 export function normalizeSearch(s: string): string {

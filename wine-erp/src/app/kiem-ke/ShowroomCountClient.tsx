@@ -452,7 +452,7 @@ export function ShowroomCountClient({ initial, initialError }: { initial: Showro
                         onApplyAiCount={applyAiCountItem}
                         onOpenSpot={openSpot}
                         onBack={() => { setView('spots'); window.scrollTo(0, 0) }}
-                        onAdded={async (code) => { await refresh(); setQ(code) }}
+                        onAdded={async (code) => { await refresh(); setFilter('all'); setQ(code) }}
                     />
                 )}
                 {view === 'sum' && (

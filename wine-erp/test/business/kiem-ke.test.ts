@@ -15,7 +15,7 @@ const mockPrisma = {
 
 vi.mock('@/lib/db', () => ({ prisma: mockPrisma }))
 
-const { saveShowroomCount, addShowroomVintage, renameShowroomSpots, setShowroomRecheck, saveShowroomNote, setShowroomItemPackSize, getShowroomAiKeyStatus, saveShowroomAiKey } = await import('@/app/kiem-ke/actions')
+const { saveShowroomCount, addShowroomVintage, addShowroomPosmItem, addShowroomWineItem, renameShowroomSpots, setShowroomRecheck, saveShowroomNote, setShowroomItemPackSize, getShowroomAiKeyStatus, saveShowroomAiKey } = await import('@/app/kiem-ke/actions')
 
 beforeEach(() => vi.clearAllMocks())
 
@@ -475,5 +475,39 @@ describe('kiem-ke Tầng 2 cases & loose bottles', () => {
             loose: 0,
             qty: 6,
         })
+    })
+
+    it('adds new sample/wine items and POSM items even when code is omitted', async () => {
+        mockPrisma.showroomCountSpot.findUnique.mockResolvedValue({ kind: 'WINE' })
+        mockPrisma.showroomCountItem.findMany.mockResolvedValue([{ id: 'a', code: 'L20019', sortOrder: 10 }])
+        mockPrisma.showroomCountItem.upsert.mockResolvedValue({ id: 'm1', code: 'M01', name: 'Rượu mẫu thử nghiệm', vintage: '2023' })
+        const resWine = await addShowroomWineItem({
+            name: 'Rượu mẫu thử nghiệm',
+            vintage: '2023',
+            qty: 2,
+            spotId: 't1-1',
+            countedBy: 'Lan',
+        })
+        expect(resWine.success).toBe(true)
+        if (resWine.success && resWine.data) {
+            expect(resWine.data.code).toBe('M01')
+        }
+        expect(mockPrisma.showroomCountEntry.upsert).toHaveBeenCalledWith(expect.objectContaining({
+            create: { spotId: 't1-1', itemId: 'm1', countedBy: 'Lan', qty: 2 },
+        }))
+
+        mockPrisma.showroomCountSpot.findUnique.mockResolvedValue({ kind: 'POSM' })
+        mockPrisma.showroomCountItem.findMany.mockResolvedValue([{ id: 'p1', code: 'P17', name: 'Mở rượu', sortOrder: 17 }])
+        mockPrisma.showroomCountItem.upsert.mockResolvedValue({ id: 'p18', code: 'P18', name: 'Túi giấy đôi' })
+        const resPosm = await addShowroomPosmItem({
+            name: 'Túi giấy đôi',
+            qty: 5,
+            spotId: 'posm-1',
+            countedBy: 'Lan',
+        })
+        expect(resPosm.success).toBe(true)
+        if (resPosm.success && resPosm.data) {
+            expect(resPosm.data.code).toBe('P18')
+        }
     })
 })

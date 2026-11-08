@@ -166,7 +166,7 @@ export async function addShowroomPosmItem(input: {
             orderBy: { sortOrder: 'asc' },
         })
 
-        let code = cleanLabel(input.code ?? '', 30).toUpperCase().replace(/\s+/g, '')
+        let code = (cleanLabel(input.code ?? '', 30) ?? '').toUpperCase().replace(/\s+/g, '')
         if (!code) {
             let maxNum = 17
             for (const p of existingPosm) {
@@ -238,7 +238,7 @@ export async function addShowroomWineItem(input: {
             orderBy: { sortOrder: 'asc' },
         })
 
-        let code = cleanLabel(input.code ?? '', 30).toUpperCase().replace(/\s+/g, '')
+        let code = (cleanLabel(input.code ?? '', 30) ?? '').toUpperCase().replace(/\s+/g, '')
         if (!code) {
             let maxSampleNum = 0
             for (const w of existingWines) {
