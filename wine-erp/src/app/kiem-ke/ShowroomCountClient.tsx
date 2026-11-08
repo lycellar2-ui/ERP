@@ -970,14 +970,16 @@ function CountView(props: {
 
     return (
         <div className="space-y-3">
-            <div className={`${aiPanel === 'none' ? 'sticky top-0 z-10' : ''} -mx-4 space-y-2 bg-lys-bg px-4 py-2`}>
-                <button onClick={props.onBack} className="flex items-center gap-1 py-1 font-semibold text-lys-teal-strong"><ChevronLeft className="size-4" />Các vị trí</button>
-                <div>
-                    <div className="text-[11px] font-semibold uppercase tracking-widest text-lys-muted">
+            <div className="sticky top-0 z-20 -mx-4 space-y-2 border-b border-lys-border bg-lys-bg/95 px-4 pb-2.5 pt-2 shadow-xs backdrop-blur-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <button onClick={props.onBack} className="flex items-center gap-1 py-0.5 text-sm font-semibold text-lys-teal-strong">
+                        <ChevronLeft className="size-4" />Các vị trí
+                    </button>
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-lys-muted">
                         {spot.groupName}
                         {props.spotSummary?.lines
                             ? t2
-                                ? ` · ${props.spotSummary.lines} ${u1} · ${fmt(props.spotSummary.cases)} thùng + ${fmt(props.spotSummary.loose)} lẻ · Tổng ${fmt(props.spotSummary.qty)} ${u2}`
+                                ? ` · ${props.spotSummary.lines} ${u1}`
                                 : ` · ${props.spotSummary.lines} ${u1} · ${fmt(props.spotSummary.qty)} ${u2}`
                             : ''}
                         {props.spotSummary?.cells ? (
@@ -989,34 +991,32 @@ function CountView(props: {
                             </>
                         ) : ''}
                     </div>
-                    <h1 className="mt-1 text-2xl font-extrabold">{spot.name}</h1>
                 </div>
+                <h1 className="text-xl font-extrabold leading-tight text-lys-primary">{spot.name}</h1>
                 {t2 && (
-                    <div className="grid grid-cols-3 gap-2 rounded-lg border border-lys-border bg-lys-surface px-3 py-2 text-center">
+                    <div className="grid grid-cols-3 gap-2 rounded-lg border border-lys-border bg-lys-surface px-3 py-1.5 text-center">
                         <div>
-                            <div className="text-[11px] font-semibold uppercase text-lys-muted">Số thùng</div>
-                            <div className="text-lg font-extrabold text-lys-primary">{fmt(props.spotSummary?.cases ?? 0)}</div>
+                            <div className="text-[10px] font-semibold uppercase text-lys-muted">Số thùng</div>
+                            <div className="text-base font-extrabold text-lys-primary">{fmt(props.spotSummary?.cases ?? 0)}</div>
                         </div>
                         <div className="border-x border-lys-border">
-                            <div className="text-[11px] font-semibold uppercase text-lys-muted">Chai lẻ</div>
-                            <div className="text-lg font-extrabold text-lys-primary">{fmt(props.spotSummary?.loose ?? 0)}</div>
+                            <div className="text-[10px] font-semibold uppercase text-lys-muted">Chai lẻ</div>
+                            <div className="text-base font-extrabold text-lys-primary">{fmt(props.spotSummary?.loose ?? 0)}</div>
                         </div>
                         <div>
-                            <div className="text-[11px] font-semibold uppercase text-lys-muted">Tổng chai</div>
-                            <div className="text-lg font-extrabold text-lys-teal-strong">{fmt(props.spotSummary?.qty ?? 0)}</div>
+                            <div className="text-[10px] font-semibold uppercase text-lys-muted">Tổng chai</div>
+                            <div className="text-base font-extrabold text-lys-teal-strong">{fmt(props.spotSummary?.qty ?? 0)}</div>
                         </div>
                     </div>
                 )}
                 <SearchBox id="search" value={props.q} onChange={props.setQ} placeholder={posm ? 'Tìm vật phẩm…' : 'Tìm tên rượu, mã, vintage…'} />
+            </div>
+            <div className="space-y-2">
                 <div className="flex flex-wrap gap-1.5">
                     <button
                         type="button"
                         onClick={() => {
-                            setAiPanel(p => {
-                                const next = p === 'voice' ? 'none' : (props.aiStatus.configured ? 'voice' : 'key')
-                                if (next !== 'none') window.scrollTo({ top: 0, behavior: 'smooth' })
-                                return next
-                            })
+                            setAiPanel(p => p === 'voice' ? 'none' : (props.aiStatus.configured ? 'voice' : 'key'))
                         }}
                         className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-semibold transition-colors ${
                             aiPanel === 'voice'
@@ -1031,11 +1031,7 @@ function CountView(props: {
                         <button
                             type="button"
                             onClick={() => {
-                                setAiPanel(p => {
-                                    const next = p === 'vision' ? 'none' : (props.aiStatus.configured ? 'vision' : 'key')
-                                    if (next !== 'none') window.scrollTo({ top: 0, behavior: 'smooth' })
-                                    return next
-                                })
+                                setAiPanel(p => p === 'vision' ? 'none' : (props.aiStatus.configured ? 'vision' : 'key'))
                             }}
                             className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-semibold transition-colors ${
                                 aiPanel === 'vision'
@@ -1050,11 +1046,7 @@ function CountView(props: {
                     <button
                         type="button"
                         onClick={() => {
-                            setAiPanel(p => {
-                                const next = p === 'key' ? 'none' : 'key'
-                                if (next !== 'none') window.scrollTo({ top: 0, behavior: 'smooth' })
-                                return next
-                            })
+                            setAiPanel(p => p === 'key' ? 'none' : 'key')
                         }}
                         aria-label="Cài đặt Gemini API Key"
                         className={`inline-flex items-center justify-center gap-1 rounded-lg border px-2.5 py-2 text-xs font-semibold ${
