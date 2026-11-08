@@ -996,7 +996,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
             {/* Sub-tab 1: Daily Temp & Humidity Log */}
             {activeSubTab === 'daily' && (
                 <div className="bg-white border border-slate-200 rounded-b-xl shadow-2xs overflow-hidden">
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-hidden">
                         <table className="w-full text-left text-xs text-slate-600">
                             <thead className="bg-slate-50 text-slate-700 uppercase font-semibold text-[11px] border-b border-slate-200">
                                 <tr>
@@ -1152,7 +1152,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
             {/* Sub-tab 2: Periodic Audit Log */}
             {activeSubTab === 'periodic' && (
                 <div className="bg-white border border-slate-200 rounded-b-xl shadow-2xs overflow-hidden">
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-hidden">
                         <table className="w-full text-left text-xs text-slate-600">
                             <thead className="bg-slate-50 text-slate-700 uppercase font-semibold text-[11px] border-b border-slate-200">
                                 <tr>
@@ -1337,7 +1337,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
                         )}
                     </div>
 
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-hidden">
                         <table className="w-full text-left text-xs text-slate-600">
                             <thead className="bg-slate-50 text-slate-700 uppercase font-semibold text-[11px] border-b border-slate-200">
                                 <tr>

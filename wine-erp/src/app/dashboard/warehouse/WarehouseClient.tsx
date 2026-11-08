@@ -38,6 +38,7 @@ import { SampleInventoryTab } from './SampleInventoryTab'
 import { ReplenishmentTab } from './ReplenishmentTab'
 import { PosmInventoryTab } from './PosmInventoryTab'
 import { InspectionTab } from './InspectionTab'
+import { formatFriendlyLocationName } from '../stock-count/location-names'
 
 const WINE_TYPE_COLOR: Record<string, string> = {
     RED: '#C74B50', WHITE: '#E2C275', ROSE: '#D4607A',
@@ -146,7 +147,7 @@ function StockTable({ lots, sortConfig, onSort, canSeeCost = true }: {
     onSort: (key: string) => void
     canSeeCost?: boolean
 }) {
-    const { locale, formatCurrency, formatDate: formatDateLocale } = useAppLocale()
+    const { locale, formatCurrency } = useAppLocale()
     const t = WAREHOUSE_I18N[locale].table
 
     if (lots.length === 0) {
@@ -160,28 +161,25 @@ function StockTable({ lots, sortConfig, onSort, canSeeCost = true }: {
     }
 
     const headers = [
-        { key: 'skuCode', label: t.thSku, align: 'left' as const },
-        { key: 'productName', label: t.thProduct, align: 'left' as const },
-        { key: 'vintage', label: t.thVintage, align: 'center' as const },
-        { key: 'lotNo', label: t.thLot, align: 'left' as const },
-        { key: 'locationCode', label: t.thLocation, align: 'left' as const },
-        { key: 'receivedDate', label: t.thReceivedDate, align: 'left' as const },
-        { key: 'qtyBook', label: t.thBookQty, align: 'center' as const },
-        { key: 'qtyOnHand', label: t.thOnHandQty, align: 'center' as const },
-        { key: 'qtyAvailable', label: t.thAvailable, align: 'center' as const },
-        ...(canSeeCost ? [{ key: 'value', label: t.thLotValue, align: 'right' as const }] : []),
-        { key: 'status', label: t.thStatus, align: 'center' as const },
+        { key: 'skuCode', label: t.thSku, align: 'left' as const, width: 'w-[88px]' },
+        { key: 'productName', label: t.thProduct, align: 'left' as const, width: '' },
+        { key: 'vintage', label: t.thVintage, align: 'center' as const, width: 'w-[84px]' },
+        { key: 'locationCode', label: t.thLocation, align: 'left' as const, width: 'w-[190px]' },
+        { key: 'qtyBook', label: t.thBookQty, align: 'center' as const, width: 'w-[92px]' },
+        { key: 'qtyOnHand', label: t.thOnHandQty, align: 'center' as const, width: 'w-[92px]' },
+        { key: 'qtyAvailable', label: t.thAvailable, align: 'center' as const, width: 'w-[105px]' },
+        ...(canSeeCost ? [{ key: 'value', label: t.thLotValue, align: 'right' as const, width: 'w-[135px]' }] : []),
     ]
 
     return (
-        <div className="rounded-lg overflow-hidden shadow-xs border border-slate-200" style={{ background: '#FFFFFF' }}>
-            {/* Desktop Table View (Compact Row Height for Maximum Row Density) */}
-            <div className="hidden md:block overflow-x-auto overflow-y-auto" style={{ maxHeight: 'calc(100vh - 290px)' }}>
-                <table className="w-full text-left border-collapse text-xs">
+        <div className="rounded-lg overflow-hidden shadow-xs border border-slate-200 bg-white">
+            {/* Desktop Table View (Zero Horizontal Scroll, Ultra-Clean) */}
+            <div className="hidden md:block overflow-x-hidden overflow-y-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+                <table className="w-full table-fixed text-left border-collapse text-xs">
                     <thead>
-                        <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0, zIndex: 10 }}>
+                        <tr className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
                             {headers.map(h => (
-                                <th key={h.key} className={`px-3 py-2 text-[11px] uppercase tracking-wider font-extrabold cursor-pointer select-none whitespace-nowrap text-${h.align}`}
+                                <th key={h.key} className={`px-3 py-2.5 text-[11px] uppercase tracking-wider font-extrabold cursor-pointer select-none whitespace-nowrap text-${h.align} ${h.width}`}
                                     style={{ color: sortConfig.key === h.key ? '#B47816' : '#64748B' }}
                                     onClick={() => onSort(h.key)}>
                                     <span className="inline-flex items-center gap-1">
@@ -198,59 +196,48 @@ function StockTable({ lots, sortConfig, onSort, canSeeCost = true }: {
                         {lots.map(lot => {
                             const countryTag = lot.country ? `[${lot.country}]` : ''
                             const wineColor = WINE_TYPE_COLOR[lot.wineType] ?? '#64748B'
-                            const statusCfg = getLotStatusConfig(lot.status, locale)
-                            const baseQty = lot.qtyOnHand > 0 ? lot.qtyOnHand : (lot.qtyReceived > 0 ? lot.qtyReceived : 1)
-                            const pctRemaining = Math.min(100, Math.max(0, (lot.qtyAvailable / baseQty) * 100))
                             const lotValue = lot.qtyAvailable * lot.unitLandedCost
                             const bookQty = lot.qtyBook ?? lot.qtyReceived
                             const onHandQty = lot.qtyOnHand ?? lot.qtyAvailable
                             const variance = lot.variance ?? (onHandQty - bookQty)
+                            const friendlyLoc = formatFriendlyLocationName({ locationCode: lot.locationCode })
 
                             return (
-                                <tr key={lot.id} className="group transition-colors hover:bg-amber-50/40">
-                                    <td className="px-3 py-1.5 font-mono font-extrabold text-slate-800 whitespace-nowrap">
+                                <tr key={lot.id} className="group transition-colors hover:bg-slate-50/80">
+                                    <td className="px-3 py-2 font-mono font-extrabold text-slate-800 whitespace-nowrap">
                                         {lot.skuCode}
                                     </td>
-                                    <td className="px-3 py-1.5">
-                                        <div className="flex items-center gap-1.5">
-                                            {countryTag && <span className="shrink-0 text-[10px] font-mono font-semibold text-slate-500">{countryTag}</span>}
-                                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: wineColor }} />
-                                            <p className="font-bold text-slate-900 truncate max-w-[240px] text-xs">{lot.productName}</p>
+                                    <td className="px-3 py-2 min-w-0">
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                            {countryTag && <span className="shrink-0 text-[10px] font-mono font-semibold text-slate-400">{countryTag}</span>}
+                                            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: wineColor }} />
+                                            <p className="font-bold text-slate-900 truncate text-xs" title={lot.productName}>{lot.productName}</p>
                                         </div>
                                     </td>
-                                    <td className="px-3 py-1.5 text-center whitespace-nowrap">
+                                    <td className="px-2 py-2 text-center whitespace-nowrap">
                                         {lot.vintage ? (
-                                            <span className="text-xs font-bold px-2 py-0.5 rounded-md font-mono inline-block whitespace-nowrap shrink-0" style={{ background: 'rgba(180,83,9,0.15)', color: '#B47816' }}>
+                                            <span className="text-xs font-bold px-2 py-0.5 rounded-md font-mono inline-block bg-amber-50 text-amber-800 border border-amber-200/80">
                                                 {lot.vintage}
                                             </span>
                                         ) : (
-                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-md font-mono inline-block bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap shrink-0">NV</span>
+                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-md font-mono inline-block bg-slate-100 text-slate-600 border border-slate-200">NV</span>
                                         )}
                                     </td>
-                                    <td className="px-3 py-1.5 font-mono text-[11px] text-slate-500 whitespace-nowrap">
-                                        {lot.lotNo}
-                                    </td>
-                                    <td className="px-3 py-1.5 whitespace-nowrap">
-                                        <span className="inline-block text-xs font-bold px-2 py-0.5 rounded-md font-mono whitespace-nowrap shrink-0" style={{ background: '#F1F5F9', color: '#334155' }}>
-                                            {lot.locationCode}
+                                    <td className="px-3 py-2 whitespace-nowrap overflow-hidden">
+                                        <span className="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-md truncate max-w-full bg-slate-100 text-slate-700 border border-slate-200/80" title={friendlyLoc}>
+                                            {friendlyLoc}
                                         </span>
                                     </td>
-                                    <td className="px-3 py-1.5 whitespace-nowrap">
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="text-xs text-slate-600 font-mono">{formatDateLocale(lot.receivedDate)}</span>
-                                            <DaysInStockBadge receivedDate={lot.receivedDate} />
-                                        </div>
-                                    </td>
-                                    {/* Cột 1: Tồn Sổ Sách */}
-                                    <td className="px-3 py-1.5 text-center whitespace-nowrap">
-                                        <span className="text-xs font-bold font-mono text-slate-700 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-md inline-block whitespace-nowrap shrink-0">
+                                    {/* Cột 1: Sổ Sách */}
+                                    <td className="px-2 py-2 text-center whitespace-nowrap">
+                                        <span className="text-xs font-bold font-mono text-slate-700">
                                             {bookQty.toLocaleString()}
                                         </span>
                                     </td>
-                                    {/* Cột 2: Tồn On-hand & Cảnh báo lệch */}
-                                    <td className="px-3 py-1.5 text-center whitespace-nowrap">
+                                    {/* Cột 2: Thực Tế */}
+                                    <td className="px-2 py-2 text-center whitespace-nowrap">
                                         <div className="flex flex-col items-center">
-                                            <span className="text-xs font-black font-mono text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md inline-block whitespace-nowrap shrink-0">
+                                            <span className="text-xs font-bold font-mono text-slate-900">
                                                 {onHandQty.toLocaleString()}
                                             </span>
                                             {variance !== 0 && (
@@ -262,44 +249,30 @@ function StockTable({ lots, sortConfig, onSort, canSeeCost = true }: {
                                             )}
                                         </div>
                                     </td>
-                                    {/* Cột 3: Tồn Khả Dụng & Đã giữ chỗ */}
-                                    <td className="px-3 py-1.5 text-center whitespace-nowrap">
-                                        <div className="flex items-center gap-1.5 justify-center">
-                                            <div className="text-center min-w-[45px]">
-                                                <span className="text-xs font-bold font-mono" style={{ color: pctRemaining < 20 ? '#B91C1C' : pctRemaining < 50 ? '#B47816' : '#16A34A' }}>
-                                                    {lot.qtyAvailable.toLocaleString()}
+                                    {/* Cột 3: Khả Dụng */}
+                                    <td className="px-2 py-2 text-center whitespace-nowrap">
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-xs font-extrabold font-mono px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                {lot.qtyAvailable.toLocaleString()}
+                                            </span>
+                                            {lot.qtyReserved > 0 && (
+                                                <span className="text-[9px] text-blue-600 font-bold mt-0.5">
+                                                    {t.reservedLabel(lot.qtyReserved)}
                                                 </span>
-                                                {lot.qtyReserved > 0 && (
-                                                    <span className="block text-[9px] text-blue-600 font-bold whitespace-nowrap">
-                                                        {t.reservedLabel(lot.qtyReserved)}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="w-7 h-1.5 rounded-full overflow-hidden shrink-0" style={{ background: '#E2E8F0' }}>
-                                                <div className="h-full rounded-full" style={{
-                                                    width: `${pctRemaining}%`,
-                                                    background: pctRemaining < 20 ? '#B91C1C' : pctRemaining < 50 ? '#B47816' : '#16A34A',
-                                                }} />
-                                            </div>
+                                            )}
                                         </div>
                                     </td>
                                     {canSeeCost && (
-                                        <td className="px-3 py-1.5 text-right whitespace-nowrap">
+                                        <td className="px-3 py-2 text-right whitespace-nowrap">
                                             {lotValue > 0 ? (
-                                                <span className="text-xs font-mono font-semibold text-slate-900">
+                                                <span className="text-xs font-mono font-semibold text-slate-800">
                                                     {formatCurrency(lotValue)}
                                                 </span>
                                             ) : (
-                                                <span className="text-xs text-[#94A3B8]">—</span>
+                                                <span className="text-xs text-slate-400">—</span>
                                             )}
                                         </td>
                                     )}
-                                    <td className="px-3 py-1.5 text-center whitespace-nowrap">
-                                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 whitespace-nowrap"
-                                            style={{ color: statusCfg.color, background: `${statusCfg.color}15`, border: `1px solid ${statusCfg.color}30` }}>
-                                            {statusCfg.label}
-                                        </span>
-                                    </td>
                                 </tr>
                             )
                         })}
@@ -307,70 +280,61 @@ function StockTable({ lots, sortConfig, onSort, canSeeCost = true }: {
                 </table>
             </div>
 
-            {/* Mobile Card List View (< 768px) */}
-            <div className="block md:hidden p-3 space-y-3">
+            {/* Mobile Card List View (< 768px) — Clean, No Lot Number */}
+            <div className="block md:hidden p-2.5 space-y-2.5 bg-slate-50/60">
                 {lots.map(lot => {
-                    const countryTag = lot.country ? `[${lot.country}]` : ''
                     const wineColor = WINE_TYPE_COLOR[lot.wineType] ?? '#64748B'
-                    const statusCfg = getLotStatusConfig(lot.status, locale)
                     const bookQty = lot.qtyBook ?? lot.qtyReceived
                     const onHandQty = lot.qtyOnHand ?? lot.qtyAvailable
                     const variance = lot.variance ?? (onHandQty - bookQty)
+                    const friendlyLoc = formatFriendlyLocationName({ locationCode: lot.locationCode })
 
                     return (
-                        <div key={lot.id} className="p-4 rounded-lg space-y-2.5 shadow-2xs bg-white border border-slate-200 text-slate-900">
-                            <div className="flex items-center justify-between">
-                                <span className="inline-block text-xs font-bold font-mono px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
-                                    {lot.lotNo}
-                                </span>
-                                <span className="inline-block text-xs font-bold font-mono px-2.5 py-1 rounded-lg bg-slate-50 text-emerald-700 border border-slate-200 whitespace-nowrap shrink-0">
-                                    {lot.locationCode}
+                        <div key={lot.id} className="p-3 rounded-lg space-y-2 shadow-2xs bg-white border border-slate-200 text-slate-900">
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: wineColor }} />
+                                    <span className="text-xs font-extrabold font-mono text-slate-900">{lot.skuCode}</span>
+                                    <span className="text-[11px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                                        {lot.vintage ?? 'NV'}
+                                    </span>
+                                </div>
+                                <span className="inline-block text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 truncate max-w-[180px]">
+                                    {friendlyLoc}
                                 </span>
                             </div>
-                            <div>
-                                <h4 className="text-xs font-black text-slate-900 leading-tight">{lot.productName}</h4>
-                                <p className="text-[11px] mt-1 flex items-center gap-1.5 text-slate-500 font-medium">
-                                    {countryTag && <span className="font-mono text-slate-500 font-semibold">{countryTag}</span>}
-                                    <span className="w-2 h-2 rounded-full" style={{ background: wineColor }} />
-                                    SKU: <strong className="text-slate-800 font-mono">{lot.skuCode}</strong> {lot.vintage ? `· Vintage: ${lot.vintage}` : '· NV'}
-                                </p>
-                            </div>
-                            <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-slate-100 text-xs">
-                                <div className="text-center bg-slate-50 p-1.5 rounded-lg border border-slate-200">
-                                    <span className="text-slate-500 text-[10px] uppercase font-bold block">{t.tagBook}</span>
-                                    <span className="font-bold font-mono text-xs text-slate-800">
+
+                            <h4 className="text-xs font-bold text-slate-900 leading-snug">{lot.productName}</h4>
+
+                            <div className="grid grid-cols-3 gap-1.5 pt-1.5 border-t border-slate-100 text-xs">
+                                <div className="text-center bg-slate-50 py-1 px-1.5 rounded border border-slate-200/80">
+                                    <span className="text-slate-500 text-[9px] uppercase font-bold block">Sổ sách</span>
+                                    <span className="font-bold font-mono text-xs text-slate-700">
                                         {bookQty.toLocaleString()}
                                     </span>
                                 </div>
-                                <div className="text-center bg-emerald-50 p-1.5 rounded-lg border border-emerald-200">
-                                    <span className="text-emerald-700 text-[10px] uppercase font-bold block">{t.tagOnHand}</span>
-                                    <span className="font-extrabold font-mono text-xs text-emerald-800">
+                                <div className="text-center bg-slate-50 py-1 px-1.5 rounded border border-slate-200/80">
+                                    <span className="text-slate-600 text-[9px] uppercase font-bold block">Thực tế</span>
+                                    <span className="font-bold font-mono text-xs text-slate-900">
                                         {onHandQty.toLocaleString()}
                                     </span>
                                     {variance !== 0 && (
-                                        <span className={`text-[9px] font-bold block ${variance < 0 ? 'text-rose-600' : 'text-amber-700'}`}>
+                                        <span className={`text-[9px] font-bold ml-1 ${variance < 0 ? 'text-rose-600' : 'text-amber-700'}`}>
                                             ({variance > 0 ? `+${variance}` : variance})
                                         </span>
                                     )}
                                 </div>
-                                <div className="text-center bg-amber-50 p-1.5 rounded-lg border border-amber-200">
-                                    <span className="text-amber-700 text-[10px] uppercase font-bold block">{t.tagAvailable}</span>
-                                    <span className="font-extrabold font-mono text-xs text-amber-900">
+                                <div className="text-center bg-emerald-50 py-1 px-1.5 rounded border border-emerald-200">
+                                    <span className="text-emerald-700 text-[9px] uppercase font-bold block">Khả dụng</span>
+                                    <span className="font-extrabold font-mono text-xs text-emerald-800">
                                         {lot.qtyAvailable.toLocaleString()}
                                     </span>
                                     {lot.qtyReserved > 0 && (
-                                        <span className="text-[9px] text-blue-600 block font-semibold">
+                                        <span className="text-[9px] text-blue-600 ml-1 font-semibold">
                                             {t.reservedLabel(lot.qtyReserved)}
                                         </span>
                                     )}
                                 </div>
-                            </div>
-                            <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
-                                <span className="text-slate-500 font-mono">{formatDateLocale(lot.receivedDate)}</span>
-                                <span className="inline-block font-bold px-2 py-0.5 rounded-full text-[10px] uppercase border whitespace-nowrap shrink-0"
-                                    style={{ color: statusCfg.color, background: `${statusCfg.color}15`, borderColor: `${statusCfg.color}30` }}>
-                                    {statusCfg.label}
-                                </span>
                             </div>
                         </div>
                     )
@@ -397,57 +361,57 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-lg shadow-xs" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: '#0F172A' }}>
-                    <ShieldAlert size={16} style={{ color: '#B91C1C' }} /> {t.title}
+            <div className="flex items-center justify-between p-4 rounded-lg shadow-xs bg-white border border-slate-200">
+                <h3 className="text-sm font-bold flex items-center gap-2 text-slate-900">
+                    <ShieldAlert size={16} className="text-rose-600" /> {t.title}
                     {lots.length > 0 && (
-                        <span className="inline-block ml-2 text-xs px-2.5 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0"
-                            style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C' }}>
+                        <span className="inline-block ml-2 text-xs px-2.5 py-0.5 rounded-full font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap shrink-0">
                             {t.lotsCount(lots.length)}
                         </span>
                     )}
                 </h3>
-                <button onClick={onRefresh} className="inline-block text-xs px-3 py-1.5 rounded-lg font-bold transition-all hover:bg-slate-100 cursor-pointer whitespace-nowrap shrink-0"
-                    style={{ border: '1px solid #CBD5E1', color: '#475569', background: '#F1F5F9' }}>
+                <button onClick={onRefresh} className="inline-block text-xs px-3 py-1.5 rounded-lg font-bold transition-all hover:bg-slate-100 cursor-pointer border border-slate-300 text-slate-600 bg-slate-50 whitespace-nowrap shrink-0">
                     {t.refresh}
                 </button>
             </div>
 
             {lots.length === 0 ? (
-                <div className="flex flex-col items-center py-12 gap-2 rounded-lg shadow-xs" style={{ border: '1px dashed #CBD5E1', background: '#FFFFFF' }}>
-                    <CheckCircle2 size={28} style={{ color: '#16A34A' }} />
-                    <p className="text-xs font-semibold" style={{ color: '#0F172A' }}>{t.empty}</p>
+                <div className="flex flex-col items-center py-12 gap-2 rounded-lg shadow-xs border border-dashed border-slate-300 bg-white">
+                    <CheckCircle2 size={28} className="text-emerald-600" />
+                    <p className="text-xs font-semibold text-slate-900">{t.empty}</p>
                 </div>
             ) : (
-                <div className="rounded-lg overflow-hidden shadow-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                <div className="rounded-lg overflow-hidden shadow-sm bg-white border border-slate-200">
                     {/* Desktop Table View (>= 768px) */}
-                    <div className="hidden md:block overflow-x-auto">
-                        <table className="w-full text-left text-xs" style={{ borderCollapse: 'collapse' }}>
+                    <div className="hidden md:block overflow-x-hidden">
+                        <table className="w-full text-left text-xs border-collapse">
                             <thead>
-                                <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-                                    {[t.thLot, t.thProduct, t.thQty, t.thLocation, t.thReceivedDate, ''].map((h, idx) => (
-                                        <th key={idx} className="px-4 py-3 font-semibold uppercase tracking-wider text-[10px]" style={{ color: '#64748B' }}>{h}</th>
+                                <tr className="bg-slate-50 border-b border-slate-200">
+                                    {[t.thProduct, t.thLocation, t.thQty, t.thReceivedDate, 'Thao tác'].map((h, idx) => (
+                                        <th key={idx} className={`px-4 py-3 font-bold uppercase tracking-wider text-[11px] text-slate-500 ${idx === 4 ? 'text-right' : ''}`}>{h}</th>
                                     ))}
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-slate-100">
                                 {lots.map((lot: any) => (
-                                    <tr key={lot.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                                        <td className="px-4 py-3 font-mono text-xs text-slate-600">{lot.lotNo}</td>
-                                        <td className="px-4 py-3 font-semibold" style={{ color: '#0F172A' }}>{lot.product?.productName || lot.productId}</td>
-                                        <td className="px-4 py-3 font-mono font-bold" style={{ color: '#0F172A' }}>{Number(lot.qtyAvailable).toLocaleString()}</td>
-                                        <td className="px-4 py-3 font-mono text-[#64748B]">{lot.location?.locationCode || '—'}</td>
-                                        <td className="px-4 py-3 text-[#64748B]">{formatDateLocale(lot.receivedDate)}</td>
+                                    <tr key={lot.id} className="hover:bg-slate-50">
+                                        <td className="px-4 py-3 font-semibold text-slate-900">
+                                            {lot.product?.skuCode && <span className="font-mono font-bold text-slate-600 mr-2">{lot.product.skuCode}</span>}
+                                            {lot.product?.productName || lot.productId}
+                                        </td>
+                                        <td className="px-4 py-3 font-medium text-slate-700">
+                                            {lot.location?.locationCode ? formatFriendlyLocationName({ locationCode: lot.location.locationCode }) : '—'}
+                                        </td>
+                                        <td className="px-4 py-3 font-mono font-bold text-rose-700">{Number(lot.qtyAvailable).toLocaleString()} chai</td>
+                                        <td className="px-4 py-3 text-slate-500">{formatDateLocale(lot.receivedDate)}</td>
                                         <td className="px-4 py-3">
                                             <div className="flex gap-2 justify-end">
                                                 <button onClick={() => handleRelease(lot.id, 'RESTORE')} disabled={processing === lot.id}
-                                                    className="px-2.5 py-1 rounded-lg text-xs font-bold shadow-xs transition-all hover:brightness-105"
-                                                    style={{ background: 'rgba(22,163,74,0.12)', color: '#16A34A', border: '1px solid rgba(22,163,74,0.25)' }}>
+                                                    className="px-2.5 py-1 rounded-lg text-xs font-bold shadow-xs transition-all hover:brightness-105 bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-pointer">
                                                     {processing === lot.id ? '...' : t.restore}
                                                 </button>
                                                 <button onClick={() => handleRelease(lot.id, 'WRITE_OFF')} disabled={processing === lot.id}
-                                                    className="px-2.5 py-1 rounded-lg text-xs font-bold shadow-xs transition-all hover:brightness-105"
-                                                    style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.25)' }}>
+                                                    className="px-2.5 py-1 rounded-lg text-xs font-bold shadow-xs transition-all hover:brightness-105 bg-rose-50 text-rose-700 border border-rose-200 cursor-pointer">
                                                     <Trash2 size={11} className="inline mr-0.5" />{t.writeOff}
                                                 </button>
                                             </div>
@@ -459,42 +423,38 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
                     </div>
 
                     {/* Mobile Card View (< 768px) */}
-                    <div className="block md:hidden p-3 space-y-3">
+                    <div className="block md:hidden p-3 space-y-2.5">
                         {lots.map((lot: any) => (
                             <div key={lot.id} className="p-3.5 rounded-lg border border-slate-200 bg-white shadow-xs space-y-2.5">
-                                <div className="flex items-center justify-between">
-                                    <span className="inline-block text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shrink-0">
-                                        {t.thLot}: {lot.lotNo}
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="inline-block text-xs font-mono font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                                        {t.quarantineCountBadge(Number(lot.qtyAvailable))}
                                     </span>
-                                    <span className="inline-block text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
-                                        {lot.location?.locationCode || t.unassigned}
+                                    <span className="inline-block text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                        {lot.location?.locationCode ? formatFriendlyLocationName({ locationCode: lot.location.locationCode }) : t.unassigned}
                                     </span>
                                 </div>
                                 <div>
                                     <p className="font-bold text-slate-900 text-xs leading-snug">
+                                        {lot.product?.skuCode && <span className="font-mono text-slate-600 mr-1.5">[{lot.product.skuCode}]</span>}
                                         {lot.product?.productName || lot.productId}
                                     </p>
-                                    <div className="flex items-center justify-between text-xs text-slate-500 mt-1">
-                                        <span>{t.thReceivedDate}: {formatDateLocale(lot.receivedDate)}</span>
-                                        <span className="font-mono font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
-                                            {t.quarantineCountBadge(Number(lot.qtyAvailable))}
-                                        </span>
-                                    </div>
+                                    <p className="text-[11px] text-slate-500 mt-0.5">
+                                        {t.thReceivedDate}: {formatDateLocale(lot.receivedDate)}
+                                    </p>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
                                     <button
                                         onClick={() => handleRelease(lot.id, 'RESTORE')}
                                         disabled={processing === lot.id}
-                                        className="w-full flex items-center justify-center py-2 text-xs font-bold rounded-lg transition-all min-h-[40px]"
-                                        style={{ background: 'rgba(22,163,74,0.12)', color: '#16A34A', border: '1px solid rgba(22,163,74,0.25)' }}
+                                        className="w-full flex items-center justify-center py-2 text-xs font-bold rounded-lg transition-all min-h-[40px] bg-emerald-50 text-emerald-700 border border-emerald-200"
                                     >
                                         {processing === lot.id ? '...' : t.restore}
                                     </button>
                                     <button
                                         onClick={() => handleRelease(lot.id, 'WRITE_OFF')}
                                         disabled={processing === lot.id}
-                                        className="w-full flex items-center justify-center py-2 text-xs font-bold rounded-lg transition-all min-h-[40px]"
-                                        style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.25)' }}
+                                        className="w-full flex items-center justify-center py-2 text-xs font-bold rounded-lg transition-all min-h-[40px] bg-rose-50 text-rose-700 border border-rose-200"
                                     >
                                         <Trash2 size={12} className="inline mr-1" />
                                         {t.writeOff}
@@ -721,8 +681,8 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
         },
         {
             key: 'inventory',
-            title: 'Tồn Kho & Biệt Trữ',
-            subtitle: 'Tra cứu tồn khả dụng, giữ chỗ & hàng cách ly/hủy',
+            title: 'Tồn Kho & Hàng Lỗi / Hỏng',
+            subtitle: 'Tra cứu tồn thực tế, khả dụng & hàng lỗi/vỡ chờ xử lý',
             icon: Package,
             color: '#0F172A',
             bg: 'rgba(15,23,42,0.06)',
@@ -846,7 +806,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
     // Filter + sort lots
     const filteredLots = lots
         .filter(l =>
-            (!search || l.productName.toLowerCase().includes(search.toLowerCase()) || l.skuCode.toLowerCase().includes(search.toLowerCase()) || l.lotNo.toLowerCase().includes(search.toLowerCase())) &&
+            (!search || l.productName.toLowerCase().includes(search.toLowerCase()) || l.skuCode.toLowerCase().includes(search.toLowerCase()) || formatFriendlyLocationName({ locationCode: l.locationCode }).toLowerCase().includes(search.toLowerCase())) &&
             (!wineFilter || l.wineType === wineFilter) &&
             (!statusFilter || l.status === statusFilter)
         )
@@ -1372,7 +1332,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                                     )}
                                 >
                                     <ShieldAlert size={14} className={inventorySubTab === 'quarantine' ? 'text-rose-600' : 'text-slate-400'} />
-                                    <span>Hàng Biệt Trữ / Cách Ly</span>
+                                    <span>Hàng Lỗi / Hỏng (Chờ Xử Lý)</span>
                                     {stats.quarantinedCount > 0 && (
                                         <span className="inline-block text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-rose-600 text-white font-mono">
                                             {stats.quarantinedCount}
@@ -1435,10 +1395,10 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                                                         const headers = canSeeCost
                                                             ? (locale === 'en'
                                                                 ? ['Stock Lot', 'Product Name', 'SKU', 'Vintage', 'Location', 'Book Qty', 'On-hand Qty', 'Available Qty', 'Reserved Qty', 'Variance', 'Cost (VND)', 'Lot Value (VND)', 'Received Date', 'Status']
-                                                                : ['Lô Hàng', 'Sản Phẩm', 'SKU', 'Vintage', 'Vị Trí', 'Tồn Sổ Sách', 'Tồn On-hand', 'Khả Dụng', 'Đã Giữ Chỗ', 'Chênh Lệch', 'Giá Vốn (VND)', 'Giá Trị Lô (VND)', 'Ngày Nhập', 'Trạng Thái'])
+                                                                : ['Lô Hàng', 'Sản Phẩm', 'SKU', 'Vintage', 'Vị Trí', 'Tồn Sổ Sách', 'Tồn Thực Tế', 'Khả Dụng', 'Đã Giữ Chỗ', 'Chênh Lệch', 'Giá Vốn (VND)', 'Giá Trị Lô (VND)', 'Ngày Nhập', 'Trạng Thái'])
                                                             : (locale === 'en'
                                                                 ? ['Stock Lot', 'Product Name', 'SKU', 'Vintage', 'Location', 'Book Qty', 'On-hand Qty', 'Available Qty', 'Reserved Qty', 'Variance', 'Received Date', 'Status']
-                                                                : ['Lô Hàng', 'Sản Phẩm', 'SKU', 'Vintage', 'Vị Trí', 'Tồn Sổ Sách', 'Tồn On-hand', 'Khả Dụng', 'Đã Giữ Chỗ', 'Chênh Lệch', 'Ngày Nhập', 'Trạng Thái'])
+                                                                : ['Lô Hàng', 'Sản Phẩm', 'SKU', 'Vintage', 'Vị Trí', 'Tồn Sổ Sách', 'Tồn Thực Tế', 'Khả Dụng', 'Đã Giữ Chỗ', 'Chênh Lệch', 'Ngày Nhập', 'Trạng Thái'])
                                                         const rows = filteredLots.map(l => [
                                                             l.lotNo, l.productName, l.skuCode, l.vintage ?? 'NV', l.locationCode,
                                                             l.qtyBook ?? l.qtyReceived, l.qtyOnHand ?? l.qtyAvailable, l.qtyAvailable, l.qtyReserved ?? 0, l.variance ?? 0,

@@ -13,6 +13,7 @@ import {
     getWarehouseNXTReport, getStockMovements, getProductSearchOptions, getProductStockByLocation
 } from './actions-nxt'
 import { formatVND, formatDate, formatNumber } from '@/lib/utils'
+import { formatFriendlyLocationName } from '../stock-count/location-names'
 
 interface WarehouseOption {
     id: string
@@ -463,44 +464,44 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                 <p className="text-sm font-semibold text-slate-500">Không tìm thấy dữ liệu nhập xuất tồn phù hợp bộ lọc</p>
                             </div>
                         ) : (
-                            <div className="overflow-x-auto" style={{ maxHeight: 'calc(100vh - 380px)', overflowY: 'auto' }}>
+                            <div className="overflow-x-hidden" style={{ maxHeight: 'calc(100vh - 380px)', overflowY: 'auto' }}>
                                 <table className="w-full text-left border-collapse">
                                     <thead>
                                         <tr className="bg-slate-100/80 border-b border-slate-200 text-slate-700 sticky top-0 z-10">
-                                            <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold">STT</th>
-                                            <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-emerald-700 cursor-pointer select-none" onClick={() => toggleSort('skuCode')}>
+                                            <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold">STT</th>
+                                            <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold text-emerald-700 cursor-pointer select-none" onClick={() => toggleSort('skuCode')}>
                                                 <div className="flex items-center gap-1">
                                                     Mã SKU {sortField === 'skuCode' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
                                                 </div>
                                             </th>
-                                            <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold cursor-pointer select-none" onClick={() => toggleSort('productName')}>
+                                            <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold cursor-pointer select-none" onClick={() => toggleSort('productName')}>
                                                 <div className="flex items-center gap-1">
                                                     Tên Sản Phẩm {sortField === 'productName' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
                                                 </div>
                                             </th>
-                                            <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-center">ĐVT</th>
-                                            <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-right text-amber-700 cursor-pointer select-none" onClick={() => toggleSort('openingQty')}>
+                                            <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold text-center">ĐVT</th>
+                                            <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold text-right text-amber-700 cursor-pointer select-none" onClick={() => toggleSort('openingQty')}>
                                                 <div className="flex items-center justify-end gap-1">
                                                     Tồn Đầu Kỳ {sortField === 'openingQty' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
                                                 </div>
                                             </th>
-                                            <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-right text-emerald-700 cursor-pointer select-none" onClick={() => toggleSort('inQty')}>
+                                            <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold text-right text-emerald-700 cursor-pointer select-none" onClick={() => toggleSort('inQty')}>
                                                 <div className="flex items-center justify-end gap-1">
                                                     Nhập Trong Kỳ {sortField === 'inQty' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
                                                 </div>
                                             </th>
-                                            <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-right text-rose-700 cursor-pointer select-none" onClick={() => toggleSort('outQty')}>
+                                            <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold text-right text-rose-700 cursor-pointer select-none" onClick={() => toggleSort('outQty')}>
                                                 <div className="flex items-center justify-end gap-1">
                                                     Xuất Trong Kỳ {sortField === 'outQty' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
                                                 </div>
                                             </th>
-                                            <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-right text-teal-700 cursor-pointer select-none" onClick={() => toggleSort('closingQty')}>
+                                            <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold text-right text-teal-700 cursor-pointer select-none" onClick={() => toggleSort('closingQty')}>
                                                 <div className="flex items-center justify-end gap-1">
                                                     Tồn Cuối Kỳ {sortField === 'closingQty' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
                                                 </div>
                                             </th>
-                                            <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-right">Giá Vốn BK</th>
-                                            <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-center">Thao Tác</th>
+                                            <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold text-right">Giá Vốn BK</th>
+                                            <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold text-center">Thao Tác</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
@@ -508,28 +509,28 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                             <tr key={item.productId}
                                                 className="group transition-colors hover:bg-slate-50 cursor-pointer"
                                                 onClick={() => handleDrillDown(item)}>
-                                                <td className="px-3.5 py-3 text-xs text-slate-500 font-medium">{idx + 1}</td>
-                                                <td className="px-3.5 py-3">
+                                                <td className="px-2.5 py-2.5 text-xs text-slate-500 font-medium">{idx + 1}</td>
+                                                <td className="px-2.5 py-2.5">
                                                     <span className="inline-block text-xs font-bold font-mono px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
                                                         {item.skuCode}
                                                     </span>
                                                 </td>
-                                                <td className="px-3.5 py-3">
+                                                <td className="px-2.5 py-2.5">
                                                     <div className="min-w-0">
                                                         <p className="text-xs font-bold text-slate-900 truncate">{item.productName}</p>
                                                         <p className="text-[10px] text-slate-500 font-medium">{item.wineType} · {item.country}</p>
                                                     </div>
                                                 </td>
-                                                <td className="px-3.5 py-3 text-xs text-center text-slate-500 font-medium">{item.unit}</td>
+                                                <td className="px-2.5 py-2.5 text-xs text-center text-slate-500 font-medium">{item.unit}</td>
                                                 
                                                 {/* Tồn Đầu Kỳ */}
-                                                <td className="px-3.5 py-3 text-right">
+                                                <td className="px-2.5 py-2.5 text-right">
                                                     <p className="text-xs font-bold font-mono text-amber-600">{item.openingQty.toLocaleString()}</p>
                                                     <p className="text-[10px] font-mono text-slate-400">{formatVND(item.openingValue)}</p>
                                                 </td>
 
                                                 {/* Nhập Trong Kỳ */}
-                                                <td className="px-3.5 py-3 text-right">
+                                                <td className="px-2.5 py-2.5 text-right">
                                                     <p className={`text-xs font-bold font-mono ${item.inQty > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
                                                         {item.inQty > 0 ? `+${item.inQty.toLocaleString()}` : '—'}
                                                     </p>
@@ -537,7 +538,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                                 </td>
 
                                                 {/* Xuất Trong Kỳ */}
-                                                <td className="px-3.5 py-3 text-right">
+                                                <td className="px-2.5 py-2.5 text-right">
                                                     <p className={`text-xs font-bold font-mono ${item.outQty > 0 ? 'text-rose-600' : 'text-slate-400'}`}>
                                                         {item.outQty > 0 ? `-${item.outQty.toLocaleString()}` : '—'}
                                                     </p>
@@ -545,18 +546,18 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                                 </td>
 
                                                 {/* Tồn Cuối Kỳ */}
-                                                <td className="px-3.5 py-3 text-right">
+                                                <td className="px-2.5 py-2.5 text-right">
                                                     <p className="text-xs font-bold font-mono text-teal-600">{item.closingQty.toLocaleString()}</p>
                                                     <p className="text-[10px] font-mono font-bold text-teal-700">{formatVND(item.closingValue)}</p>
                                                 </td>
 
                                                 {/* Đơn giá vốn Landed Cost */}
-                                                <td className="px-3.5 py-3 text-right text-xs font-mono text-slate-600 font-medium">
+                                                <td className="px-2.5 py-2.5 text-right text-xs font-mono text-slate-600 font-medium">
                                                     {formatVND(item.unitCost)}
                                                 </td>
 
                                                 {/* Thao tác Drill-down */}
-                                                <td className="px-3.5 py-3 text-center" onClick={e => e.stopPropagation()}>
+                                                <td className="px-2.5 py-2.5 text-center" onClick={e => e.stopPropagation()}>
                                                     <button
                                                         onClick={() => handleDrillDown(item)}
                                                         className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg font-bold transition-all bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white cursor-pointer">
@@ -570,22 +571,22 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                     {summaryStats && (
                                         <tfoot className="sticky bottom-0 z-10 bg-slate-100 border-t-2 border-slate-300">
                                             <tr>
-                                                <td colSpan={4} className="px-3.5 py-3 text-xs font-extrabold tracking-wider text-right text-slate-900">
+                                                <td colSpan={4} className="px-2.5 py-2.5 text-xs font-extrabold tracking-wider text-right text-slate-900">
                                                     TỔNG CỘNG TOÀN KHO ({summaryStats.totalProducts} SKU):
                                                 </td>
-                                                <td className="px-3.5 py-3 text-right">
+                                                <td className="px-2.5 py-2.5 text-right">
                                                     <p className="text-xs font-extrabold font-mono text-amber-600">{summaryStats.totalOpeningQty.toLocaleString()}</p>
                                                     <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalOpeningValue)}</p>
                                                 </td>
-                                                <td className="px-3.5 py-3 text-right">
+                                                <td className="px-2.5 py-2.5 text-right">
                                                     <p className="text-xs font-extrabold font-mono text-emerald-600">+{summaryStats.totalInQty.toLocaleString()}</p>
                                                     <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalInValue)}</p>
                                                 </td>
-                                                <td className="px-3.5 py-3 text-right">
+                                                <td className="px-2.5 py-2.5 text-right">
                                                     <p className="text-xs font-extrabold font-mono text-rose-600">-{summaryStats.totalOutQty.toLocaleString()}</p>
                                                     <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalOutValue)}</p>
                                                 </td>
-                                                <td className="px-3.5 py-3 text-right">
+                                                <td className="px-2.5 py-2.5 text-right">
                                                     <p className="text-xs font-extrabold font-mono text-teal-700">{summaryStats.totalClosingQty.toLocaleString()}</p>
                                                     <p className="text-[10px] font-mono font-bold text-teal-700">{formatVND(summaryStats.totalClosingValue)}</p>
                                                 </td>
@@ -748,12 +749,12 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                 </div>
                             ) : (
                                 <div className="rounded-lg overflow-hidden bg-white border border-slate-200 shadow-sm">
-                                    <div className="overflow-x-auto" style={{ maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
+                                    <div className="overflow-x-hidden" style={{ maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
                                         <table className="w-full text-left border-collapse">
                                             <thead>
                                                 <tr className="bg-slate-100/80 border-b border-slate-200 text-slate-700 sticky top-0 z-10">
                                                     {['Ngày', 'Loại', 'Số CT', 'Kho / Vị Trí', 'Nhập', 'Xuất', 'Tồn Lũy Kế', 'Đơn Giá', 'Tham Chiếu'].map(h => (
-                                                        <th key={h} className="px-3.5 py-2.5 text-[10px] uppercase tracking-wider font-extrabold">{h}</th>
+                                                        <th key={h} className="px-2.5 py-2 text-[10px] uppercase tracking-wider font-extrabold">{h}</th>
                                                     ))}
                                                 </tr>
                                             </thead>
@@ -775,37 +776,37 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                                     const Icon = cfg.icon
                                                     return (
                                                         <tr key={m.id} className="transition-colors hover:bg-slate-50">
-                                                            <td className="px-3.5 py-2.5 text-xs text-slate-600 font-medium">{formatDate(m.date)}</td>
-                                                            <td className="px-3.5 py-2.5">
+                                                            <td className="px-2.5 py-2 text-xs text-slate-600 font-medium">{formatDate(m.date)}</td>
+                                                            <td className="px-2.5 py-2">
                                                                 <span className="inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
                                                                     style={{ color: cfg.color, background: cfg.bg }}>
                                                                     <Icon size={10} /> {cfg.label}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-3.5 py-2.5 text-xs font-bold font-mono text-emerald-700">{m.docNo}</td>
-                                                            <td className="px-3.5 py-2.5 text-xs text-slate-700 font-medium">
+                                                            <td className="px-2.5 py-2 text-xs font-bold font-mono text-emerald-700">{m.docNo}</td>
+                                                            <td className="px-2.5 py-2 text-xs text-slate-700 font-medium">
                                                                 <div>{m.warehouseName}</div>
-                                                                <div className="text-[10px] font-mono text-slate-400">Vị trí: {m.locationCode} · Lô: {m.lotNo}</div>
+                                                                <div className="text-[10px] font-mono text-slate-400">Vị trí: {formatFriendlyLocationName({ locationCode: m.locationCode })}</div>
                                                             </td>
-                                                            <td className="px-3.5 py-2.5 text-center">
+                                                            <td className="px-2.5 py-2 text-center">
                                                                 {m.qtyIn > 0 ? (
                                                                     <span className="text-xs font-bold font-mono text-emerald-600">+{m.qtyIn.toLocaleString()}</span>
                                                                 ) : <span className="text-slate-400">—</span>}
                                                             </td>
-                                                            <td className="px-3.5 py-2.5 text-center">
+                                                            <td className="px-2.5 py-2 text-center">
                                                                 {m.qtyOut > 0 ? (
                                                                     <span className="text-xs font-bold font-mono text-rose-600">-{m.qtyOut.toLocaleString()}</span>
                                                                 ) : <span className="text-slate-400">—</span>}
                                                             </td>
-                                                            <td className="px-3.5 py-2.5 text-center">
+                                                            <td className="px-2.5 py-2 text-center">
                                                                 <span className="text-xs font-bold font-mono text-teal-600">
                                                                     {m.balance.toLocaleString()}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-3.5 py-2.5 text-xs font-mono text-slate-600 font-medium">
+                                                            <td className="px-2.5 py-2 text-xs font-mono text-slate-600 font-medium">
                                                                 {formatVND(m.unitCost)}
                                                             </td>
-                                                            <td className="px-3.5 py-2.5 text-xs text-slate-500">{m.reference}</td>
+                                                            <td className="px-2.5 py-2 text-xs text-slate-500">{m.reference}</td>
                                                         </tr>
                                                     )
                                                 })}
@@ -832,7 +833,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                         <div key={i} className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs space-y-1.5">
                                             <div className="flex items-center justify-between">
                                                 <span className="inline-block text-xs font-bold px-2 py-0.5 rounded-md font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
-                                                    {loc.locationCode}
+                                                    {formatFriendlyLocationName({ locationCode: loc.locationCode })}
                                                 </span>
                                                 <span className="text-xs font-bold font-mono text-emerald-600">
                                                     {loc.qtyAvailable.toLocaleString()} chai
@@ -840,7 +841,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                             </div>
                                             <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium">
                                                 <span>{loc.warehouseName}</span>
-                                                <span className="font-mono text-amber-600 font-bold">Lô: {loc.lotNo}</span>
+                                                <span className="font-mono text-amber-700 font-bold">Niên vụ: {loc.vintage ?? 'NV'}</span>
                                             </div>
                                             <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
                                                 <span>Khu {loc.zone} · Giá vốn: {formatVND(loc.unitCost)}</span>

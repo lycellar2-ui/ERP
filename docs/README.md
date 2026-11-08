@@ -242,4 +242,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-11-08 18:35 | Wine ERP v12.42 - Fixed DO concurrency collision (atomic & retry loop) + 35/35 Vitest suites passing (337/337 tests) + Type check 0 errors*
+*Last updated: 2026-11-08 22:42 | Wine ERP v12.43 - Friendly location names across WMS & DO pick flow + Synced 3-warehouse actual stock (25,146 bottles / 545 lots)*

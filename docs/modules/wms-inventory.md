@@ -94,8 +94,8 @@ Mỗi lô hàng nhập về được tạo 1 **Stock Lot** — đơn vị truy x
 
 **Luồng xuất kho từ SO:**
 1. SO Approved + Allocated → Hệ thống tạo **Delivery Order (DO / Pick List)** cho thủ kho.
-2. Pick List chỉ định: SKU nào, Lô nào (FIFO), Vị trí (Khu vực / Zone), số lượng bao nhiêu.
-3. Thủ kho nhặt hàng trên điện thoại với giao diện mobile tối ưu (3-step wizard & compact layout).
+2. Pick List chỉ định: SKU nào, Niên vụ nào, Vị trí kệ thân thiện (ví dụ: `Tầng 1 - Kệ gỗ`, `Dưới gầm cầu thang`), số lượng bao nhiêu (ẩn hoàn toàn mã kỹ thuật `LOC-...` và số `Lot` nội bộ trên giao diện để tránh rối mắt).
+3. Thủ kho nhặt hàng trên điện thoại hoặc máy tính thông qua giao diện 1 màn hình duy nhất có thanh nút bấm cố định ở đáy (`Sticky Bottom Footer`) và nút cộng/trừ số lượng (`-` / `+`) cỡ lớn chuẩn cảm ứng.
 4. Sau khi nhặt xong → In **Phiếu Xuất Kho (PDF)** — mẫu in tiêu chuẩn A4 (đồng bộ layout với Đơn Bán Hàng), kèm hàng giao cho Shipper / Khách hàng.
 5. Khi giao thành công → Bấm **"Đã Giao Hàng"** (status: DELIVERED) → SO chuyển DELIVERED, Tồn kho tự động cập nhật & tự sinh bút toán Giá vốn hàng bán (COGS: Nợ 632 / Có 156).
 6. **Hoàn tác Xuất Kho (Reverse DO — Admin only):** Khi hoàn tác DO, hệ thống tự động hoàn trả số lượng vào `StockLot`, chuyển DO về `CANCELLED`, hoàn về trạng thái đơn hàng `CONFIRMED` và **tự động sinh bút toán đảo Giá vốn Nợ 156 / Có 632** để cân đối sổ cái tài chính.
@@ -109,6 +109,9 @@ Mỗi lô hàng nhập về được tạo 1 **Stock Lot** — đơn vị truy x
    - Nghiêm cấm trừ dở dang: Nếu số lượng hao hụt thực tế vượt quá lượng tồn khả dụng tại vị trí kệ, hệ thống rollback transaction và báo lỗi cảnh báo chi tiết thay vì trừ ngầm một phần.
 10. **Quy chuẩn hiển thị Niên vụ (Vintage & NV Badge):**
     - Rượu có niên vụ hiển thị `VTG YYYY` (hoặc số năm). Rượu không niên vụ (`vintage = null`) hiển thị huy hiệu `NV` chuẩn design system trên tất cả các bảng và thẻ di động.
+11. **Chuẩn hóa hiển thị Tên Vị Trí Kho Thân Thiện trên toàn bộ phân hệ WMS (`/dashboard/warehouse`):**
+    - Ẩn hoàn toàn mã địa chỉ kỹ thuật (`LOC-GVM-*`, `LOC-LYS-SR-*`, `LOC-TT-*`) trên giao diện người dùng tại tất cả các màn hình: Bảng Tồn Kho (`WarehouseClient.tsx`), Xuất Kho & Tạo DO (`DeliveryOrderTab.tsx`), Nhập Kho (`GoodsReceiptTab.tsx`), và Dịch Chuyển Tồn Kho (`StockMovementTab.tsx`).
+    - Tất cả dropdown chọn vị trí, thẻ gợi ý nhặt hàng và bảng chi tiết đều sử dụng hàm `formatFriendlyLocationName` để chỉ hiển thị tên vị trí tiếng Việt thực tế (ví dụ: `Khu vực sát cửa phụ`, `Khu vực cửa sổ`, `Kệ hàng lẻ`, `Zone A - Pallet 1`), đồng thời ưu tiên gợi ý lô khớp `vintage` trên đơn hàng và cho phép Thủ kho đổi vị trí lấy hoặc tách lấy từ nhiều vị trí kệ khác nhau.
 
 ---
 
@@ -335,7 +338,7 @@ searchProductLocations(warehouseId, term) → Find product → return locationId
 | **Kích hoạt Drill-down** | Click vào mã SKU hoặc nút *Sổ Chi Tiết* ở bất kỳ dòng nào trong Bảng Tổng Hợp |
 | **Giao diện chi tiết** | Banner thông tin sản phẩm (SKU, tên, loại rượu, xuất xứ, tồn kho hiện tại) + Nút `← Quay lại Bảng Tổng Hợp` |
 | **Mốc Tồn Đầu Kỳ** | Dòng hiển thị số dư Tồn Đầu Kỳ chuẩn xác tại mốc ngày `dateFrom` |
-| **Sổ chứng từ lũy kế** | Danh sách phiếu GR (nhập) / DO (xuất) trong khoảng thời gian, tự động tính **Tồn Lũy Kế (Running Balance)** từng dòng |
+| **Sổ chứng từ lũy kế** | Danh sách phiếu GR (nhập) / DO (xuất) và các đơn hàng `SalesOrder` (`DELIVERED` / `INVOICED` / `PAID`) xuất thẳng không tạo phiếu DO (lấy `so.createdAt` làm ngày xuất kho) trong khoảng thời gian, tự động tính **Tồn Lũy Kế (Running Balance)** từng dòng |
 | **Phân bổ vị trí kho** | Panel bên phải hiển thị chi tiết các Lô hàng (`StockLot`) & Vị trí (`LocationCode`) đang lưu trữ thực tế |
 
 ### 11.3 Backend (`actions-nxt.ts`)

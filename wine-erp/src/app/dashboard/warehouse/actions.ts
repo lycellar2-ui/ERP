@@ -182,7 +182,7 @@ export async function getStockInventory(filters: {
             },
         },
         orderBy: [{ status: 'asc' }, { receivedDate: 'desc' }],
-        take: 300,
+        take: 2000,
     })
 
     const productIds = Array.from(new Set(lots.map(l => l.productId)))
@@ -1103,19 +1103,19 @@ export async function getAvailableLotsForProduct(
         qtyAvailable: { gt: 0 },
         location: { warehouseId }
     }
-    if (vintage !== undefined && vintage !== null) {
-        where.vintage = vintage
-    }
-    
     const lots = await prisma.stockLot.findMany({
         where,
         include: {
             location: { select: { locationCode: true, zone: true, rack: true, bin: true, type: true } }
         },
-        orderBy: { receivedDate: 'asc' } // FIFO sorting
+        orderBy: [{ receivedDate: 'asc' }, { qtyAvailable: 'desc' }]
     })
+
+    const sortedLots = (vintage !== undefined && vintage !== null)
+        ? [...lots].sort((a, b) => (a.vintage === vintage ? 0 : 1) - (b.vintage === vintage ? 0 : 1))
+        : lots
     
-    return lots.map(l => ({
+    return sortedLots.map(l => ({
         id: l.id,
         lotNo: l.lotNo,
         locationId: l.locationId,

@@ -182,10 +182,10 @@ export function SampleInventoryTab() {
                         </div>
                         <div>
                             <h3 className="text-base font-extrabold text-slate-900">
-                                Quản Lý Tồn Kho Hàng Mẫu (Sample Wine)
+                                Kho Hàng Mẫu (Rượu Thử & Biếu Tặng)
                             </h3>
                             <p className="text-xs text-slate-500 font-medium">
-                                Kho riêng biệt không dùng bán hàng — Theo dõi nguồn ngạch & giao dịch xuất mẫu
+                                Kho rượu mẫu tách biệt với hàng bán thương mại — Theo dõi nhập & xuất sử dụng mẫu
                             </p>
                         </div>
                     </div>
@@ -318,17 +318,17 @@ export function SampleInventoryTab() {
                             <p className="text-sm font-semibold text-slate-500">Chưa có sản phẩm hàng mẫu nào phù hợp bộ lọc</p>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-hidden">
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-slate-100/80 border-b border-slate-200 text-slate-700">
-                                        <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold">Mã Mã Mẫu / SKU</th>
-                                        <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold">Tên Sản Phẩm Mẫu</th>
-                                        <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-center">Nguồn Ngạch</th>
-                                        <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-right">Tồn Kho Hiện Tại</th>
-                                        <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-right">Giá Ước Tính</th>
-                                        <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-right">Giá Trị Tồn Mẫu</th>
-                                        <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-center">Thao Tác</th>
+                                        <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold">Mã Mẫu / SKU</th>
+                                        <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold">Tên Sản Phẩm Mẫu</th>
+                                        <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold text-center">Nguồn Hàng</th>
+                                        <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold text-right">Tồn Kho Hiện Tại</th>
+                                        <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold text-right">Giá Ước Tính</th>
+                                        <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold text-right">Giá Trị Tồn Mẫu</th>
+                                        <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold text-center">Thao Tác</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
@@ -336,35 +336,35 @@ export function SampleInventoryTab() {
                                         const orig = ORIGIN_CFG[p.originType] || ORIGIN_CFG.FORMAL
                                         return (
                                             <tr key={p.id} className="transition-colors hover:bg-slate-50">
-                                                <td className="px-3.5 py-3">
+                                                <td className="px-2.5 py-2.5">
                                                     <span className="inline-block text-xs font-bold font-mono px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
                                                         {p.sampleCode || p.skuCode || 'N/A'}
                                                     </span>
                                                 </td>
-                                                <td className="px-3.5 py-3">
+                                                <td className="px-2.5 py-2.5">
                                                     <div>
                                                         <p className="text-xs font-bold text-slate-900">{p.productName}</p>
                                                         {p.notes && <p className="text-[10px] text-slate-400">{p.notes}</p>}
                                                     </div>
                                                 </td>
-                                                <td className="px-3.5 py-3 text-center">
+                                                <td className="px-2.5 py-2.5 text-center">
                                                     <span className="inline-block text-[10px] font-extrabold px-2.5 py-1 rounded-full border whitespace-nowrap shrink-0"
                                                         style={{ color: orig.color, background: orig.bg, borderColor: orig.border }}>
                                                         {orig.label}
                                                     </span>
                                                 </td>
-                                                <td className="px-3.5 py-3 text-right">
+                                                <td className="px-2.5 py-2.5 text-right">
                                                     <span className={`text-xs font-extrabold font-mono ${p.qtyOnHand > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
                                                         {p.qtyOnHand.toLocaleString()} chai
                                                     </span>
                                                 </td>
-                                                <td className="px-3.5 py-3 text-right text-xs font-mono text-slate-600 font-medium">
+                                                <td className="px-2.5 py-2.5 text-right text-xs font-mono text-slate-600 font-medium">
                                                     {p.estimatedValue ? formatVND(p.estimatedValue) : '—'}
                                                 </td>
-                                                <td className="px-3.5 py-3 text-right text-xs font-bold font-mono text-teal-700">
+                                                <td className="px-2.5 py-2.5 text-right text-xs font-bold font-mono text-teal-700">
                                                     {p.estimatedValue ? formatVND(p.qtyOnHand * p.estimatedValue) : '—'}
                                                 </td>
-                                                <td className="px-3.5 py-3 text-center">
+                                                <td className="px-2.5 py-2.5 text-center">
                                                     <button onClick={() => openOutboundQuick(p)}
                                                         disabled={p.qtyOnHand <= 0}
                                                         className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg font-bold transition-all bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-600 hover:text-white cursor-pointer disabled:opacity-40">
@@ -390,26 +390,26 @@ export function SampleInventoryTab() {
                             <p className="text-sm font-semibold text-slate-500">Chưa có nhật ký giao dịch nhập/xuất mẫu nào</p>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-hidden">
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-slate-100/80 border-b border-slate-200 text-slate-700">
-                                        <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold">Ngày GD</th>
-                                        <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold">Số CT</th>
-                                        <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold">Loại GD</th>
-                                        <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold">Sản Phẩm Mẫu</th>
-                                        <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-center">Lý Do Xuất</th>
-                                        <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold text-right">Số Lượng</th>
-                                        <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold">Người Nhận / Yêu Cầu</th>
-                                        <th className="px-3.5 py-3 text-[11px] uppercase tracking-wider font-extrabold">Ghi Chú</th>
+                                        <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold">Ngày GD</th>
+                                        <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold">Số CT</th>
+                                        <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold">Loại GD</th>
+                                        <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold">Sản Phẩm Mẫu</th>
+                                        <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold text-center">Lý Do Xuất</th>
+                                        <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold text-right">Số Lượng</th>
+                                        <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold">Người Nhận / Yêu Cầu</th>
+                                        <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-extrabold">Ghi Chú</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {transactions.map(tx => (
                                         <tr key={tx.id} className="transition-colors hover:bg-slate-50">
-                                            <td className="px-3.5 py-3 text-xs text-slate-600 font-medium">{formatDate(tx.performedAt)}</td>
-                                            <td className="px-3.5 py-3 text-xs font-mono font-bold text-emerald-700">{tx.docNo}</td>
-                                            <td className="px-3.5 py-3">
+                                            <td className="px-2.5 py-2.5 text-xs text-slate-600 font-medium">{formatDate(tx.performedAt)}</td>
+                                            <td className="px-2.5 py-2.5 text-xs font-mono font-bold text-emerald-700">{tx.docNo}</td>
+                                            <td className="px-2.5 py-2.5">
                                                 {tx.type === 'INBOUND' ? (
                                                     <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap inline-flex items-center shrink-0">
                                                         Nhập Mẫu
@@ -420,26 +420,26 @@ export function SampleInventoryTab() {
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-3.5 py-3">
+                                            <td className="px-2.5 py-2.5">
                                                 <div>
                                                     <p className="text-xs font-bold text-slate-900">{tx.sampleProductName}</p>
                                                     <span className="text-[10px] font-mono text-emerald-700 font-bold">{tx.sampleProductCode}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-3.5 py-3 text-center text-xs text-slate-600 font-medium">
+                                            <td className="px-2.5 py-2.5 text-center text-xs text-slate-600 font-medium">
                                                 {tx.reason ? REASON_CFG[tx.reason] || tx.reason : '—'}
                                             </td>
-                                            <td className="px-3.5 py-3 text-right">
+                                            <td className="px-2.5 py-2.5 text-right">
                                                 <span className={`text-xs font-extrabold font-mono ${tx.type === 'INBOUND' ? 'text-emerald-600' : 'text-rose-600'}`}>
                                                     {tx.type === 'INBOUND' ? `+${tx.qty}` : `-${tx.qty}`} chai
                                                 </span>
                                             </td>
-                                            <td className="px-3.5 py-3 text-xs text-slate-700 font-medium">
+                                            <td className="px-2.5 py-2.5 text-xs text-slate-700 font-medium">
                                                 {tx.recipient && <div>Nhận: {tx.recipient}</div>}
                                                 {tx.requestedBy && <div className="text-[10px] text-slate-400">Yêu cầu: {tx.requestedBy}</div>}
                                                 {!tx.recipient && !tx.requestedBy && <span className="text-slate-400">—</span>}
                                             </td>
-                                            <td className="px-3.5 py-3 text-xs text-slate-500">{tx.notes || '—'}</td>
+                                            <td className="px-2.5 py-2.5 text-xs text-slate-500">{tx.notes || '—'}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -485,7 +485,7 @@ export function SampleInventoryTab() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-bold block mb-1 text-slate-700">Nguồn Ngạch *</label>
+                                    <label className="text-xs font-bold block mb-1 text-slate-700">Nguồn Hàng *</label>
                                     <select value={formOrigin} onChange={e => setFormOrigin(e.target.value as any)} className={inputCls}>
                                         <option value="FORMAL">Chính Ngạch</option>
                                         <option value="INFORMAL">Tiểu Ngạch / Xách Tay</option>

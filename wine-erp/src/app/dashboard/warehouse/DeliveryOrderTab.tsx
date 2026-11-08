@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Truck, Plus, X, Eye, CheckCircle2, Loader2, Save, PackageCheck, AlertCircle, Search, ArrowRight, Box, Printer, RotateCcw, Phone, MapPin, Trash2, ShieldAlert, Check } from 'lucide-react'
+import { Truck, Plus, Minus, X, Eye, CheckCircle2, Loader2, Save, PackageCheck, AlertCircle, Search, ArrowRight, Box, Printer, RotateCcw, Phone, MapPin, Trash2, ShieldAlert, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     type DeliveryOrderRow,
@@ -11,6 +11,7 @@ import {
 } from './actions'
 import { formatDate } from '@/lib/utils'
 import { useConfirmDialog } from '@/components/ui'
+import { formatFriendlyLocationName } from '../stock-count/location-names'
 
 type SOOption = {
     id: string; soNo: string; customerName: string; createdAt?: Date | string; warehouseId?: string; legalEntityId?: string | null; legalEntityCode?: string | null
@@ -26,7 +27,7 @@ const DO_STATUS: Record<string, { label: string; color: string; bg: string }> = 
     DRAFT: { label: 'Nháp', color: '#475569', bg: '#F1F5F9' },
     CONFIRMED: { label: 'Đã XN', color: '#B47816', bg: 'rgba(180,83,9,0.15)' },
     SHIPPED: { label: 'Đã Giao', color: '#16A34A', bg: 'rgba(22,163,74,0.12)' },
-    REVERSED: { label: 'Đã Reverse', color: '#B91C1C', bg: 'rgba(185,28,28,0.12)' },
+    REVERSED: { label: 'Đã Hoàn Tác', color: '#B91C1C', bg: 'rgba(185,28,28,0.12)' },
     CANCELLED: { label: 'Đã Hủy', color: '#B91C1C', bg: 'rgba(185,28,28,0.12)' },
 }
 
@@ -392,7 +393,7 @@ export function DeliveryOrderTab({ warehouses }: {
             {activeSubTab === 'history' && (
                 <div className="rounded-lg overflow-hidden shadow-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     {/* Desktop Table (>= 768px) */}
-                    <div className="hidden md:block overflow-x-auto">
+                    <div className="hidden md:block overflow-x-hidden">
                         <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
@@ -422,7 +423,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                                     {d.customerName}
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-2.5 text-[11px]" style={{ color: '#475569' }}>{d.warehouseName}</td>
+                                            <td className="px-2.5 py-2.5 text-[11px] truncate max-w-[160px]" style={{ color: '#475569' }} title={d.warehouseName}>{d.warehouseName}</td>
                                             <td className="px-3 py-2.5 text-[11px]" style={{ color: '#475569' }}>{d.lineCount}</td>
                                             <td className="px-3 py-2.5 text-[11px] font-mono" style={{ color: '#475569' }}>
                                                 {d.totalQtyOrdered.toLocaleString()}
@@ -453,8 +454,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                                             title="Reverse (Hoàn Tác Xuất Kho — Chỉ Admin)"
                                                             className="px-2 py-1 text-[10px] font-bold rounded-md flex items-center gap-1 transition-all hover:brightness-105"
                                                             style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.2)' }}>
-                                                            <RotateCcw size={11} /> Reverse
-                                                        </button>
+                                                            <RotateCcw size={11} /> Hoàn Tác</button>
                                                     )}
                                                 </div>
                                             </td>
@@ -500,7 +500,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                             <button onClick={() => handleReverse(d.id, d.doNo)}
                                                 className="px-2.5 py-1 text-[10px] font-bold rounded-md flex items-center gap-1"
                                                 style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.2)' }}>
-                                                <RotateCcw size={11} /> Reverse (Admin)
+                                                <RotateCcw size={11} /> Hoàn Tác (Admin)
                                             </button>
                                         </div>
                                     )}
@@ -610,17 +610,17 @@ export function DeliveryOrderTab({ warehouses }: {
                                             className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg transition-all hover:brightness-105"
                                             style={{ background: 'rgba(185,28,28,0.15)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.3)' }}
                                         >
-                                            <RotateCcw size={14} /> Reverse Phiếu (Admin)
+                                            <RotateCcw size={14} /> Hoàn Tác Phiếu (Admin)
                                         </button>
                                     )}
                                 </div>
 
                                 {/* Detail Lines — Desktop Table */}
-                                <div className="rounded-lg overflow-x-auto overflow-hidden hidden sm:block shadow-sm" style={{ border: '1px solid #E2E8F0' }}>
+                                <div className="rounded-lg overflow-x-hidden hidden sm:block shadow-sm" style={{ border: '1px solid #E2E8F0' }}>
                                     <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                                         <thead>
                                             <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-                                                {['SKU', 'Sản Phẩm', 'Vintage', 'Vị Trí Kho', 'Picked', 'Shipped', ...((detailData.status === 'DRAFT' || detailData.status === 'PICKING') ? ['Thao Tác'] : [])].map(h => (
+                                                {['SKU', 'Sản Phẩm', 'Niên Vụ', 'Vị Trí Kho', 'SL Nhặt', 'SL Xuất', ...((detailData.status === 'DRAFT' || detailData.status === 'PICKING') ? ['Thao Tác'] : [])].map(h => (
                                                     <th key={h} className="px-3 py-2 text-[10px] uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
                                                 ))}
                                             </tr>
@@ -633,7 +633,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                                     </td>
                                                     <td className="px-3 py-2 text-xs" style={{ color: '#0F172A' }}>{l.productName}</td>
                                                     <td className="px-3 py-2 text-xs font-bold text-amber-700 font-mono">{(l as any).vintage ?? 'NV'}</td>
-                                                    <td className="px-3 py-2 text-xs font-mono font-medium" style={{ color: '#475569' }}>{l.locationCode}</td>
+                                                    <td className="px-3 py-2 text-xs font-medium" style={{ color: '#475569' }}>{formatFriendlyLocationName({ locationCode: l.locationCode, zone: (l as any).zone })}</td>
                                                     <td className="px-3 py-2 text-xs font-mono font-bold" style={{ color: '#0F172A' }}>{l.qtyPicked}</td>
                                                     <td className="px-3 py-2 text-xs font-mono font-bold" style={{ color: '#16A34A' }}>{l.qtyShipped}</td>
                                                     {(detailData.status === 'DRAFT' || detailData.status === 'PICKING') && (
@@ -652,10 +652,10 @@ export function DeliveryOrderTab({ warehouses }: {
                                                                     vintage: (l as any).vintage ?? null,
                                                                 })}
                                                                 className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-all cursor-pointer shadow-2xs"
-                                                                title="Báo chai vỡ / Đổi sang lô khác"
+                                                                title="Báo chai vỡ / Đổi vị trí lấy hàng"
                                                             >
                                                                 <ShieldAlert size={12} className="text-amber-700" />
-                                                                Đổi Lô Lỗi
+                                                                Báo Chai Vỡ / Đổi Vị Trí
                                                             </button>
                                                         </td>
                                                     )}
@@ -674,11 +674,11 @@ export function DeliveryOrderTab({ warehouses }: {
                                             </div>
                                             <p className="text-sm font-medium" style={{ color: '#0F172A' }}>{l.productName}</p>
                                             <div className="flex items-center gap-1 text-xs" style={{ color: '#64748B' }}>
-                                                Vị trí: <strong className="font-mono text-slate-800">{l.locationCode}</strong>
+                                                Vị trí: <strong className="font-semibold text-slate-800">{formatFriendlyLocationName({ locationCode: l.locationCode, zone: (l as any).zone })}</strong>
                                             </div>
                                             <div className="flex items-center justify-between pt-1.5 border-t text-xs" style={{ borderColor: '#E2E8F0' }}>
-                                                <span style={{ color: '#64748B' }}>Picked: <strong className="font-mono text-[#0F172A]">{l.qtyPicked}</strong></span>
-                                                <span style={{ color: '#64748B' }}>Shipped: <strong className="font-mono text-[#16A34A]">{l.qtyShipped}</strong></span>
+                                                <span style={{ color: '#64748B' }}>SL Nhặt: <strong className="font-mono text-[#0F172A]">{l.qtyPicked}</strong></span>
+                                                <span style={{ color: '#64748B' }}>SL Xuất: <strong className="font-mono text-[#16A34A]">{l.qtyShipped}</strong></span>
                                             </div>
                                             {(detailData.status === 'DRAFT' || detailData.status === 'PICKING') && (
                                                 <div className="pt-2 flex justify-end border-t border-slate-100">
@@ -698,7 +698,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                                         className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-all cursor-pointer"
                                                     >
                                                         <ShieldAlert size={12} className="text-amber-700" />
-                                                        Đổi Lô Lỗi (Cách Ly)
+                                                        Báo Chai Vỡ / Đổi Vị Trí
                                                     </button>
                                                 </div>
                                             )}
@@ -972,9 +972,12 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                 <p className="text-xs font-bold uppercase tracking-wider text-amber-700">
                     Sản Phẩm Cần Nhặt ({selectedSO!.lines.length} mặt hàng)
                 </p>
+                <span className="text-xs font-bold font-mono text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                    Tổng nhặt: {totalPicked.toLocaleString()} chai
+                </span>
             </div>
 
-            <div className="space-y-3.5">
+            <div className="space-y-3">
                 {selectedSO!.lines.map((sol) => {
                     const availLots = lotsMap[sol.productId] || []
                     const productPicks = lines
@@ -987,29 +990,29 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                     const isOverPicked = totalPickedForProduct > sol.qtyOrdered
 
                     return (
-                        <div key={sol.productId} className="p-4 rounded-lg space-y-3 border border-slate-200 bg-white shadow-xs">
+                        <div key={sol.productId} className="p-3.5 rounded-xl space-y-3 border border-slate-200 bg-white shadow-xs">
                             {/* Product Header: Name + Badges */}
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <div className="space-y-1">
-                                    <p className="text-sm font-bold text-slate-900 leading-tight">
+                                    <p className="text-sm font-bold text-slate-900 leading-snug">
                                         {sol.productName}
                                     </p>
-                                    <div className="flex items-center gap-2 flex-wrap text-xs">
+                                    <div className="flex items-center gap-1.5 flex-wrap text-xs">
                                         <span className="inline-block font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shrink-0">
-                                            SKU: {sol.skuCode}
+                                            {sol.skuCode}
                                         </span>
                                         <span className="inline-block font-semibold px-2 py-0.5 rounded text-[11px] bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
-                                            Niên vụ yêu cầu: {sol.vintage ? sol.vintage : 'NV'}
+                                            Niên vụ: {sol.vintage ? sol.vintage : 'NV'}
                                         </span>
                                     </div>
                                 </div>
 
                                 {/* Ordered Badge & Status */}
-                                <div className="flex items-center gap-2 flex-wrap self-start sm:self-center">
-                                    <span className="inline-block text-xs font-mono font-extrabold px-3 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap shrink-0">
-                                        ĐẶT: {sol.qtyOrdered} CHAI
+                                <div className="flex items-center gap-1.5 flex-wrap self-start sm:self-center">
+                                    <span className="inline-block text-xs font-mono font-extrabold px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap shrink-0">
+                                        CẦN: {sol.qtyOrdered} CHAI
                                     </span>
-                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg whitespace-nowrap shrink-0"
+                                    <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg whitespace-nowrap shrink-0"
                                         style={
                                             isSufficient
                                                 ? { background: 'rgba(22,163,74,0.1)', color: '#15803D', border: '1px solid rgba(22,163,74,0.3)' }
@@ -1020,14 +1023,14 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                         {isSufficient ? (
                                             <>
                                                 <CheckCircle2 size={13} />
-                                                <span>Đã nhặt: {totalPickedForProduct}/{sol.qtyOrdered} chai</span>
+                                                <span>Đủ {totalPickedForProduct}/{sol.qtyOrdered}</span>
                                             </>
                                         ) : isOverPicked ? (
-                                            <span>Vượt: {totalPickedForProduct}/{sol.qtyOrdered} chai</span>
+                                            <span>Dư {totalPickedForProduct}/{sol.qtyOrdered}</span>
                                         ) : (
                                             <>
                                                 <AlertCircle size={13} />
-                                                <span>Thiếu: {totalPickedForProduct}/{sol.qtyOrdered} chai (Tồn: {totalStockAvailable})</span>
+                                                <span>Thiếu ({totalPickedForProduct}/{sol.qtyOrdered} · Tồn: {totalStockAvailable})</span>
                                             </>
                                         )}
                                     </span>
@@ -1035,18 +1038,23 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                             </div>
 
                             {/* Render Split Location Pick Lines */}
-                            <div className="space-y-2.5 pt-1">
+                            <div className="space-y-2 pt-0.5">
                                 {productPicks.map((pick, pickIdx) => {
                                     const selectedLot = availLots.find(l => l.id === pick.lotId)
                                     const isLocInsufficient = selectedLot && selectedLot.qtyAvailable < pick.qtyPicked
 
                                     return (
-                                        <div key={pick.globalIdx} className="p-3 rounded-lg border bg-slate-50 grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-start"
+                                        <div key={pick.globalIdx} className="p-3 rounded-lg border bg-slate-50/80 grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end"
                                             style={{ borderColor: isLocInsufficient ? '#B91C1C' : '#E2E8F0' }}>
                                             {/* Col 1: Location selection */}
-                                            <div className="sm:col-span-8 space-y-1.5">
-                                                <label className="text-[10px] font-bold uppercase tracking-wider block text-slate-700">
-                                                    Vị Trí Kho & Lô Hàng {productPicks.length > 1 ? `(Vị trí ${pickIdx + 1})` : ''} *
+                                            <div className="sm:col-span-7 space-y-1">
+                                                <label className="text-[11px] font-bold text-slate-700 flex items-center justify-between">
+                                                    <span>Vị Trí Kệ Lấy Hàng {productPicks.length > 1 ? `(#${pickIdx + 1})` : ''}</span>
+                                                    {selectedLot && (
+                                                        <span className="text-emerald-700 font-mono text-[11px]">
+                                                            Tồn kệ: {selectedLot.qtyAvailable} chai
+                                                        </span>
+                                                    )}
                                                 </label>
                                                 <select
                                                     value={pick.lotId}
@@ -1061,53 +1069,72 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                                         }
                                                         setLines(v)
                                                     }}
-                                                    className="w-full px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none font-medium bg-white border border-slate-300 text-slate-900"
+                                                    className="w-full h-10 px-3 rounded-lg text-sm outline-none font-semibold bg-white border border-slate-300 text-slate-900"
                                                 >
-                                                    <option value="">— Chọn vị trí nhặt hàng —</option>
+                                                    <option value="">— Chọn vị trí kệ —</option>
                                                     {availLots.map((lot, idx) => {
                                                         const vtg = lot.vintage ? lot.vintage : (sol.vintage ? sol.vintage : 'NV')
                                                         return (
                                                             <option key={lot.id} value={lot.id}>
-                                                                {idx === 0 ? '[FIFO] ' : ''}{lot.locationCode} · {lot.zone}{lot.rack ? ` (Kệ ${lot.rack})` : ''}{lot.bin ? ` (Ô ${lot.bin})` : ''} | Vintage: {vtg} | Tồn: {lot.qtyAvailable} chai
+                                                                {idx === 0 ? '[Gợi ý] ' : ''}{formatFriendlyLocationName(lot)} · Niên vụ {vtg} (Tồn: {lot.qtyAvailable} chai)
                                                             </option>
                                                         )
                                                     })}
                                                 </select>
-
-                                                {selectedLot && (
-                                                    <div className="inline-flex items-center gap-2 text-[11px] px-2.5 py-1.5 rounded-md bg-white border border-slate-200 text-slate-600 flex-wrap whitespace-nowrap shrink-0">
-                                                        <span>Vị trí: <strong className="text-slate-900 font-bold">{selectedLot.locationCode}</strong> ({selectedLot.zone})</span>
-                                                        <span className="text-slate-300">·</span>
-                                                        <span>Lô: <strong className="font-mono text-slate-800">{selectedLot.lotNo}</strong></span>
-                                                        <span className="text-slate-300">·</span>
-                                                        <span>Vintage: <strong className="text-amber-800 font-semibold">{selectedLot.vintage ? selectedLot.vintage : (sol.vintage ? sol.vintage : 'NV')}</strong></span>
-                                                        <span className="text-slate-300">·</span>
-                                                        <span>Tồn: <strong className="font-mono font-bold text-emerald-700">{selectedLot.qtyAvailable} chai</strong></span>
-                                                    </div>
-                                                )}
                                             </div>
 
-                                            {/* Col 2: Quantity picked input */}
-                                            <div className="sm:col-span-4 flex items-center gap-2 pt-0.5">
-                                                <div className="flex-1">
-                                                    <label className="text-[10px] font-bold uppercase tracking-wider block mb-1 text-center text-slate-600">
-                                                        SL Nhặt (Chai) *
+                                            {/* Col 2: Quantity picked input with touch +/- buttons */}
+                                            <div className="sm:col-span-5 flex items-end gap-1.5">
+                                                <div className="flex-1 space-y-1">
+                                                    <label className="text-[11px] font-bold block text-center text-slate-700">
+                                                        Số Lượng Lấy (Chai)
                                                     </label>
-                                                    <input
-                                                        type="number"
-                                                        min={0}
-                                                        value={pick.qtyPicked}
-                                                        onChange={e => {
-                                                             const v = [...lines]
-                                                             v[pick.globalIdx] = { ...v[pick.globalIdx], qtyPicked: Number(e.target.value) }
-                                                             setLines(v)
-                                                        }}
-                                                        className="w-full px-3 py-2.5 rounded-lg text-base sm:text-sm font-mono font-bold text-center outline-none bg-white border"
-                                                        style={{
-                                                            borderColor: isLocInsufficient ? '#B91C1C' : '#CBD5E1',
-                                                            color: isLocInsufficient ? '#B91C1C' : '#16A34A'
-                                                        }}
-                                                    />
+                                                    <div className="flex items-center">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const v = [...lines]
+                                                                v[pick.globalIdx] = {
+                                                                    ...v[pick.globalIdx],
+                                                                    qtyPicked: Math.max(0, (pick.qtyPicked || 0) - 1)
+                                                                }
+                                                                setLines(v)
+                                                            }}
+                                                            className="h-10 w-10 flex items-center justify-center rounded-l-lg border border-r-0 border-slate-300 bg-white text-slate-700 hover:bg-slate-100 active:bg-slate-200 cursor-pointer shrink-0"
+                                                        >
+                                                            <Minus size={14} />
+                                                        </button>
+                                                        <input
+                                                            type="number"
+                                                            min={0}
+                                                            value={pick.qtyPicked}
+                                                            onChange={e => {
+                                                                const v = [...lines]
+                                                                v[pick.globalIdx] = { ...v[pick.globalIdx], qtyPicked: Math.max(0, Number(e.target.value)) }
+                                                                setLines(v)
+                                                            }}
+                                                            className="w-full h-10 px-2 text-sm font-mono font-bold text-center outline-none bg-white border-y"
+                                                            style={{
+                                                                borderColor: isLocInsufficient ? '#B91C1C' : '#CBD5E1',
+                                                                color: isLocInsufficient ? '#B91C1C' : '#16A34A'
+                                                            }}
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const v = [...lines]
+                                                                const maxAvail = selectedLot ? selectedLot.qtyAvailable : 9999
+                                                                v[pick.globalIdx] = {
+                                                                    ...v[pick.globalIdx],
+                                                                    qtyPicked: Math.min(maxAvail, (pick.qtyPicked || 0) + 1)
+                                                                }
+                                                                setLines(v)
+                                                            }}
+                                                            className="h-10 w-10 flex items-center justify-center rounded-r-lg border border-l-0 border-slate-300 bg-white text-slate-700 hover:bg-slate-100 active:bg-slate-200 cursor-pointer shrink-0"
+                                                        >
+                                                            <Plus size={14} />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                                 {productPicks.length > 1 && (
                                                     <button
@@ -1115,10 +1142,10 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                                         onClick={() => {
                                                             setLines(prev => prev.filter((_, idx) => idx !== pick.globalIdx))
                                                         }}
-                                                        className="p-2 rounded-lg shrink-0 mt-5 transition-colors cursor-pointer text-rose-600 hover:bg-rose-50 border border-slate-200 bg-white"
-                                                        title="Xóa vị trí nhặt hàng này"
+                                                        className="h-10 w-10 flex items-center justify-center rounded-lg shrink-0 transition-colors cursor-pointer text-rose-600 hover:bg-rose-50 border border-slate-200 bg-white"
+                                                        title="Xóa vị trí kệ này"
                                                     >
-                                                        <Trash2 size={14} />
+                                                        <Trash2 size={15} />
                                                     </button>
                                                 )}
                                             </div>
@@ -1134,9 +1161,9 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                                             { productId: sol.productId, lotId: '', locationId: '', qtyPicked: 1 }
                                         ])
                                     }}
-                                    className="text-xs font-semibold flex items-center gap-1.5 text-blue-600 hover:text-blue-800 transition-all cursor-pointer pt-1"
+                                    className="text-xs font-bold inline-flex items-center gap-1.5 text-amber-800 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-lg transition-all cursor-pointer"
                                 >
-                                    <Plus size={14} /> Tách vị trí nhặt hàng khác cho sản phẩm này
+                                    <Plus size={13} /> Lấy thêm từ vị trí kệ khác
                                 </button>
                             </div>
                         </div>
@@ -1146,38 +1173,14 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
         </>
     )
 
-    const renderSaveButtons = () => (
-        <div className="pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button
-                onClick={() => handleSave(false)}
-                disabled={saving}
-                className="flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-lg transition-all cursor-pointer disabled:opacity-50 bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200"
-                style={{ minHeight: '46px' }}
-            >
-                {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                <span>Lưu Nháp DO</span>
-            </button>
-
-            <button
-                onClick={() => handleSave(true)}
-                disabled={saving}
-                className="flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-lg shadow-md transition-all cursor-pointer disabled:opacity-50 hover:brightness-105 active:scale-[0.99]"
-                style={{ background: '#D97706', color: '#FFFFFF', minHeight: '46px' }}
-            >
-                {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={15} />}
-                <span>Tạo & Xác Nhận Xuất Kho</span>
-            </button>
-        </div>
-    )
-
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-[2px] animate-fade-in">
             <div className="w-full sm:w-[680px] max-w-full h-full flex flex-col shadow-2xl bg-white border-l border-slate-200 animate-drawer-in">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 sm:p-5 shrink-0 border-b border-slate-200 bg-white">
+                <div className="flex items-center justify-between px-4 py-3.5 sm:px-5 sm:py-4 shrink-0 border-b border-slate-200 bg-white">
                     <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                            <h3 className="text-base font-bold text-slate-900">Nhặt Hàng & Tạo DO</h3>
+                            <h3 className="text-base font-bold text-slate-900">Nhặt Hàng & Xuất Kho</h3>
                             {selectedSO && (
                                 <span className="inline-block text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
                                     {selectedSO.soNo}
@@ -1185,217 +1188,75 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                             )}
                         </div>
                         {selectedSO && (
-                            <p className="text-xs mt-1 truncate text-slate-600">
+                            <p className="text-xs mt-0.5 truncate text-slate-600">
                                 Khách hàng: <strong className="text-slate-900">{selectedSO.customerName}</strong>
                             </p>
                         )}
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
+                        className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
                     >
                         <X size={18} />
                     </button>
                 </div>
 
-                {/* Mobile Step Indicator */}
-                <div className="flex sm:hidden items-center gap-1 px-4 py-3 shrink-0 border-b border-slate-200 bg-slate-50">
-                    {[
-                        { step: 1 as const, label: 'Chọn Đơn' },
-                        { step: 2 as const, label: 'Nhặt Hàng' },
-                        { step: 3 as const, label: 'Xác Nhận' },
-                    ].map((s, idx) => (
-                        <div key={s.step} className="flex items-center gap-1 flex-1">
-                            <button
-                                onClick={() => {
-                                    if (s.step === 1) setMobileStep(1)
-                                    else if (s.step === 2 && canGoStep2) setMobileStep(2)
-                                    else if (s.step === 3 && canGoStep2 && validLinesCount > 0) setMobileStep(3)
-                                }}
-                                className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] font-bold w-full justify-center transition-all"
-                                style={{
-                                    background: mobileStep === s.step ? '#B45309' : mobileStep > s.step ? 'rgba(22,163,74,0.15)' : '#F1F5F9',
-                                    color: mobileStep === s.step ? '#F8FAFC' : mobileStep > s.step ? '#15803D' : '#64748B',
-                                }}
-                            >
-                                <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0"
-                                    style={{
-                                        background: mobileStep === s.step ? '#F8FAFC' : 'transparent',
-                                        color: mobileStep === s.step ? '#B45309' : 'inherit',
-                                        border: mobileStep === s.step ? 'none' : '1px solid currentColor',
-                                    }}>
-                                    {mobileStep > s.step ? <Check size={11} strokeWidth={3} /> : s.step}
+                {/* Unified Scrollable Content for both Mobile & Desktop */}
+                <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 bg-slate-50/50">
+                    {selectedSO && initialSOId ? (
+                        <div className="p-3.5 rounded-xl border border-slate-200 bg-white grid grid-cols-1 sm:grid-cols-3 gap-3 items-center shadow-2xs">
+                            <div>
+                                <span className="text-[10px] font-bold uppercase tracking-wider block text-slate-500">
+                                    Đơn Hàng
                                 </span>
-                                {s.label}
-                            </button>
-                            {idx < 2 && <div className="w-3 h-px shrink-0 bg-slate-300" />}
-                        </div>
-                    ))}
-                </div>
-
-                {/* Content — scrollable */}
-                <div className="flex-1 overflow-y-auto">
-                    {/* ═══ DESKTOP: Single page ═══ */}
-                    <div className="hidden sm:block p-5 space-y-4">
-                        {selectedSO ? (
-                            <div className="space-y-3">
-                                <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-between">
-                                    <div>
-                                        <span className="text-[10px] font-bold uppercase tracking-wider block text-slate-500">
-                                            Đơn Hàng Bán Ra
-                                        </span>
-                                        <div className="flex items-center gap-2 mt-0.5">
-                                            <span className="text-sm font-bold font-mono text-amber-800">{selectedSO.soNo}</span>
-                                            <span className="text-xs font-semibold text-slate-800">· {selectedSO.customerName}</span>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <span className="text-[10px] font-bold uppercase tracking-wider block text-slate-500">
-                                            Kho Xuất Bán
-                                        </span>
-                                        <span className="text-xs font-bold font-mono px-2 py-0.5 rounded inline-block mt-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap shrink-0">
-                                            {warehouses.find((w: any) => w.id === warehouseId)?.name || 'Kho Mặc Định'}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="max-w-xs">
-                                    {renderDateSelect()}
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                    <span className="text-sm font-bold font-mono text-amber-800">{selectedSO.soNo}</span>
+                                    <span className="text-xs font-semibold text-slate-700 truncate">· {selectedSO.customerName}</span>
                                 </div>
                             </div>
-                        ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                {renderSOSelect()}
-                                {renderWarehouseSelect()}
+                            <div>
+                                <span className="text-[10px] font-bold uppercase tracking-wider block text-slate-500">
+                                    Kho Xuất Bán
+                                </span>
+                                <span className="text-xs font-bold px-2.5 py-1 rounded-md inline-block mt-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                    {currentWhs.find((w: any) => w.id === warehouseId)?.name || 'Kho Mặc Định'}
+                                </span>
+                            </div>
+                            <div>
                                 {renderDateSelect()}
                             </div>
-                        )}
-                        {selectedSO && lines.length > 0 && renderProductLines()}
-                        {renderSaveButtons()}
-                    </div>
+                        </div>
+                    ) : (
+                        <div className="p-3.5 rounded-xl border border-slate-200 bg-white grid grid-cols-1 sm:grid-cols-3 gap-3 shadow-2xs">
+                            {renderSOSelect()}
+                            {renderWarehouseSelect()}
+                            {renderDateSelect()}
+                        </div>
+                    )}
 
-                    {/* ═══ MOBILE: Step Wizard ═══ */}
-                    <div className="block sm:hidden p-4 space-y-4">
-                        {/* Step 1 */}
-                        {mobileStep === 1 && (
-                            <div className="space-y-4">
-                                <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 space-y-3">
-                                    <p className="text-xs font-bold uppercase tracking-wider text-amber-800">
-                                        Bước 1: Chọn Đơn Hàng, Kho & Ngày Xuất
-                                    </p>
-                                    <div className="space-y-3">
-                                        {renderSOSelect()}
-                                        {renderWarehouseSelect()}
-                                        {renderDateSelect()}
-                                    </div>
-                                </div>
-                                {selectedSO && (
-                                    <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 space-y-2">
-                                        <p className="text-xs font-semibold text-slate-600">Sản phẩm trong đơn:</p>
-                                        {selectedSO.lines.map(l => (
-                                            <div key={l.productId} className="inline-flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white whitespace-nowrap shrink-0">
-                                                <span className="truncate pr-2 text-slate-800 font-medium">{l.productName}</span>
-                                                <span className="font-mono font-bold shrink-0 text-amber-800">×{l.qtyOrdered}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                                <button
-                                    onClick={() => setMobileStep(2)}
-                                    disabled={!canGoStep2}
-                                    className="w-full flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-lg transition-all disabled:opacity-50"
-                                    style={{
-                                        background: canGoStep2 ? '#B45309' : '#F1F5F9',
-                                        color: canGoStep2 ? '#F8FAFC' : '#94A3B8',
-                                        minHeight: '46px',
-                                    }}>
-                                    Tiếp Theo: Nhặt Hàng <ArrowRight size={16} />
-                                </button>
-                            </div>
-                        )}
+                    {selectedSO && lines.length > 0 && renderProductLines()}
+                </div>
 
-                        {/* Step 2 */}
-                        {mobileStep === 2 && selectedSO && lines.length > 0 && (
-                            <div className="space-y-4">
-                                {renderProductLines()}
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => setMobileStep(1)}
-                                        className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-lg border border-slate-300 bg-slate-100 text-slate-700"
-                                        style={{ minHeight: '46px' }}>
-                                        ← Quay Lại
-                                    </button>
-                                    <button
-                                        onClick={() => setMobileStep(3)}
-                                        disabled={validLinesCount === 0}
-                                        className="flex-[2] flex items-center justify-center gap-1.5 py-3 text-xs font-bold rounded-lg disabled:opacity-50"
-                                        style={{
-                                            background: validLinesCount > 0 ? '#B45309' : '#F1F5F9',
-                                            color: validLinesCount > 0 ? '#F8FAFC' : '#94A3B8',
-                                            minHeight: '46px',
-                                        }}>
-                                        Xác Nhận ({validLinesCount}/{lines.length}) →
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+                {/* Sticky Bottom Footer for 1-Tap Action on Mobile & Desktop */}
+                <div className="p-3.5 sm:px-5 sm:py-4 shrink-0 border-t border-slate-200 bg-white grid grid-cols-2 gap-2.5 shadow-lg">
+                    <button
+                        onClick={() => handleSave(false)}
+                        disabled={saving || !selectedSO}
+                        className="flex items-center justify-center gap-1.5 py-3 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50 bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200"
+                    >
+                        {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+                        <span>Lưu Nháp</span>
+                    </button>
 
-                        {/* Step 3 */}
-                        {mobileStep === 3 && selectedSO && (
-                            <div className="space-y-4">
-                                <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 space-y-3">
-                                    <p className="text-xs font-bold uppercase tracking-wider text-amber-800">
-                                        Bước 3: Xác Nhận Xuất Kho
-                                    </p>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div className="px-3 py-2 rounded-lg border border-slate-200 bg-white">
-                                            <p className="text-[10px] uppercase font-bold text-slate-500">Đơn hàng</p>
-                                            <p className="text-sm font-bold font-mono text-amber-800">{selectedSO.soNo}</p>
-                                        </div>
-                                        <div className="px-3 py-2 rounded-lg border border-slate-200 bg-white">
-                                            <p className="text-[10px] uppercase font-bold text-slate-500">Kho xuất</p>
-                                            <p className="text-sm font-bold text-slate-900">
-                                                {warehouses.find(w => w.id === warehouseId)?.code ?? '—'}
-                                            </p>
-                                        </div>
-                                        <div className="px-3 py-2 rounded-lg border border-slate-200 bg-white">
-                                            <p className="text-[10px] uppercase font-bold text-slate-500">Sản phẩm</p>
-                                            <p className="text-sm font-bold text-emerald-700">{validLinesCount} mặt hàng</p>
-                                        </div>
-                                        <div className="px-3 py-2 rounded-lg border border-slate-200 bg-white">
-                                            <p className="text-[10px] uppercase font-bold text-slate-500">Tổng nhặt</p>
-                                            <p className="text-sm font-bold font-mono text-emerald-700">{totalPicked.toLocaleString()} chai</p>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        {selectedSO.lines.map((sol, i) => {
-                                            const line = lines[i]
-                                            const lot = lotsMap[sol.productId]?.find(l => l.id === line?.lotId)
-                                            return (
-                                                <div key={sol.productId} className="inline-flex items-center justify-between text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white whitespace-nowrap shrink-0">
-                                                    <div className="min-w-0 pr-2">
-                                                        <p className="truncate font-bold text-slate-900">{sol.productName}</p>
-                                                        <p className="text-[10px] text-slate-500">
-                                                            {lot ? `Vị trí: ${lot.locationCode} (${lot.zone}) · Vintage: ${lot.vintage ?? 'NV'}` : 'Chưa chọn vị trí'}
-                                                        </p>
-                                                    </div>
-                                                    <span className="font-mono font-bold shrink-0 text-emerald-700">
-                                                        {line?.lotId ? `${line.qtyPicked} chai` : '—'}
-                                                    </span>
-                                                </div>
-                                            )
-                                        })}
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => setMobileStep(2)}
-                                    className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-300 bg-white text-slate-700"
-                                >
-                                    ← Sửa Lại Nhặt Hàng
-                                </button>
-                                {renderSaveButtons()}
-                            </div>
-                        )}
-                    </div>
+                    <button
+                        onClick={() => handleSave(true)}
+                        disabled={saving || !selectedSO || validLinesCount === 0}
+                        className="flex items-center justify-center gap-1.5 py-3 text-xs sm:text-sm font-bold rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50 hover:brightness-105 active:scale-[0.99]"
+                        style={{ background: '#D97706', color: '#FFFFFF' }}
+                    >
+                        {saving ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                        <span>Xác Nhận Xuất Kho</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -1440,14 +1301,14 @@ function SwapDefectLotModal({
                 setLots(others)
                 if (others.length > 0) setSelectedNewLotId(others[0].id)
             })
-            .catch((err: any) => toast.error('Không tải được danh sách lô thay thế: ' + err.message))
+            .catch((err: any) => toast.error('Không tải được danh sách vị trí thay thế: ' + err.message))
             .finally(() => setLoadingLots(false))
     }, [target])
 
     if (!target) return null
 
     const handleConfirmSwap = async () => {
-        if (!selectedNewLotId) return toast.error('Vui lòng chọn lô thay thế')
+        if (!selectedNewLotId) return toast.error('Vui lòng chọn vị trí kệ thay thế')
         if (qtyToSwap <= 0 || qtyToSwap > target.qtyPicked) {
             return toast.error(`Số lượng chai đổi phải từ 1 đến ${target.qtyPicked}`)
         }
@@ -1462,8 +1323,8 @@ function SwapDefectLotModal({
                 qtyToSwap,
                 reason,
             })
-            if (!res.success) throw new Error(res.error || 'Lỗi khi đổi lô')
-            toast.success(`Đã đổi ${qtyToSwap} chai sang lô mới và chuyển chai lỗi vào khu Cách ly (Quarantine)!`)
+            if (!res.success) throw new Error(res.error || 'Lỗi khi đổi vị trí')
+            toast.success(`Đã đổi ${qtyToSwap} chai sang vị trí mới và chuyển chai lỗi vào mục Hàng Lỗi / Hỏng!`)
             onSuccess()
             onClose()
         } catch (err: any) {
@@ -1475,15 +1336,15 @@ function SwapDefectLotModal({
 
     return (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs" onClick={onClose}>
-            <div className="bg-white rounded-md shadow-2xl max-w-lg w-full p-6 space-y-4 border border-slate-200" onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 border border-slate-200" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between border-b pb-3 border-slate-100">
                     <div className="flex items-center gap-2">
                         <span className="p-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
                             <ShieldAlert size={18} />
                         </span>
                         <div>
-                            <h3 className="text-base font-bold text-slate-900">Đổi Lô & Báo Chai Hỏng/Vỡ</h3>
-                            <p className="text-xs text-slate-500 font-mono">SKU: {target.skuCode} · Lô hiện tại: {target.currentLotNo}</p>
+                            <h3 className="text-base font-bold text-slate-900">Báo Chai Vỡ / Đổi Vị Trí Lấy</h3>
+                            <p className="text-xs text-slate-500 font-mono">Mã SKU: {target.skuCode}</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500"><X size={18} /></button>
@@ -1491,12 +1352,12 @@ function SwapDefectLotModal({
 
                 <div className="p-3 bg-slate-50 rounded-lg text-xs space-y-1 border border-slate-200">
                     <p className="font-bold text-slate-900">{target.productName}</p>
-                    <p className="text-slate-600">Niên vụ yêu cầu: <strong className="text-amber-800">{target.vintage ? target.vintage : 'NV'}</strong> · Đang nhặt: <strong className="text-slate-900">{target.qtyPicked} chai</strong></p>
+                    <p className="text-slate-600">Niên vụ: <strong className="text-amber-800">{target.vintage ? target.vintage : 'NV'}</strong> · Đang nhặt: <strong className="text-slate-900">{target.qtyPicked} chai</strong></p>
                 </div>
 
                 <div className="space-y-3">
                     <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">Số Lượng Chai Lỗi Cần Đổi *</label>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Số Lượng Chai Hỏng Cần Đổi *</label>
                         <input
                             type="number"
                             min={1}
@@ -1508,14 +1369,14 @@ function SwapDefectLotModal({
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">Chọn Lô Hàng Khả Dụng Thay Thế *</label>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Chọn Vị Trí Kệ Thay Thế *</label>
                         {loadingLots ? (
                             <div className="flex items-center gap-2 py-3 text-xs text-slate-500">
-                                <Loader2 size={16} className="animate-spin text-amber-600" /> Đang tìm các lô khả dụng...
+                                <Loader2 size={16} className="animate-spin text-amber-600" /> Đang tìm vị trí kệ khả dụng...
                             </div>
                         ) : lots.length === 0 ? (
                             <p className="text-xs text-rose-600 bg-rose-50 p-2.5 rounded-lg border border-rose-200">
-                                Không còn lô hàng khả dụng nào khác của sản phẩm này trong kho để thay thế!
+                                Không còn vị trí kệ nào khác có sẵn sản phẩm này trong kho để thay thế!
                             </p>
                         ) : (
                             <select
@@ -1525,7 +1386,7 @@ function SwapDefectLotModal({
                             >
                                 {lots.map(l => (
                                     <option key={l.id} value={l.id}>
-                                        {l.locationCode} ({l.zone}) · Lô: {l.lotNo} | Vintage: {l.vintage ? l.vintage : 'NV'} | Tồn: {l.qtyAvailable} chai
+                                        {formatFriendlyLocationName(l)} · Niên vụ {l.vintage ? l.vintage : 'NV'} (Tồn: {l.qtyAvailable} chai)
                                     </option>
                                 ))}
                             </select>
@@ -1533,7 +1394,7 @@ function SwapDefectLotModal({
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">Lý Do Đổi Lô (Chuyển Hàng Lỗi Sang Cách Ly) *</label>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Lý Do Báo Hỏng (Chuyển Vào Mục Hàng Lỗi / Hỏng) *</label>
                         <input
                             type="text"
                             value={reason}
@@ -1559,7 +1420,7 @@ function SwapDefectLotModal({
                         className="px-4 py-2 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-xs"
                     >
                         {submitting && <Loader2 size={13} className="animate-spin" />}
-                        Xác Nhận Đổi Lô & Cách Ly
+                        Xác Nhận Đổi Vị Trí
                     </button>
                 </div>
             </div>

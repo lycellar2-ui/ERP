@@ -268,7 +268,7 @@ export function TransfersTab() {
 
             {/* Desktop List Table */}
             <div className="hidden md:block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-xs">
-                <div className="overflow-x-auto">
+                <div className="overflow-x-hidden">
                     <table className="w-full text-left text-xs border-collapse">
                         <thead>
                             <tr className="bg-slate-100 border-b border-slate-200 text-slate-700">
@@ -302,10 +302,10 @@ export function TransfersTab() {
                                             <td className="p-3 font-mono font-extrabold text-amber-700 whitespace-nowrap">
                                                 {r.transferNo}
                                             </td>
-                                            <td className="p-3 font-bold text-slate-900 whitespace-nowrap">
+                                            <td className="px-2.5 py-2.5 font-bold text-slate-900">
                                                 [{r.fromWarehouseCode}] {r.fromWarehouse}
                                             </td>
-                                            <td className="p-3 font-bold text-slate-900 whitespace-nowrap">
+                                            <td className="px-2.5 py-2.5 font-bold text-slate-900">
                                                 [{r.toWarehouseCode}] {r.toWarehouse}
                                             </td>
                                             <td className="p-3 text-slate-800 font-medium whitespace-nowrap">

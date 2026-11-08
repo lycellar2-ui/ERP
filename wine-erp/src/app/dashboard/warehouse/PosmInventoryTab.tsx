@@ -327,7 +327,7 @@ export function PosmInventoryTab() {
                                 <Sparkles size={20} />
                             </span>
                             <h2 className="text-lg font-bold text-slate-900">
-                                Kho POSM & Master Data Vật Phẩm Tiếp Thị
+                                Kho Vật Phẩm Tiếp Thị & Quà Tặng (POSM)
                             </h2>
                             <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
                                 Độc Lập Với Tồn Rượu
@@ -380,7 +380,7 @@ export function PosmInventoryTab() {
                         <div className="text-xl font-bold text-slate-900">
                             {stats?.totalItems ?? 0} <span className="text-xs font-normal text-slate-500">mã</span>
                         </div>
-                        <div className="text-[11px] text-slate-500 mt-0.5">Master Data tiếp thị</div>
+                        <div className="text-[11px] text-slate-500 mt-0.5">Danh mục vật phẩm tiếp thị</div>
                     </div>
 
                     <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200/80">
@@ -431,7 +431,7 @@ export function PosmInventoryTab() {
                             }`}
                         >
                             <Boxes size={14} />
-                            <span>Master Data & Tồn Kho ({products.length})</span>
+                            <span>Danh Mục & Tồn Kho POSM ({products.length})</span>
                         </button>
                         <button
                             onClick={() => setSubTab('TX_LOG')}
@@ -497,18 +497,18 @@ export function PosmInventoryTab() {
             {/* ═══ TAB CONTENT: MASTER DATA & STOCK LIST ═══ */}
             {subTab === 'ITEMS' && (
                 <div className="bg-white border border-slate-200 rounded-md overflow-hidden shadow-2xs">
-                    <div className="overflow-x-auto">
+                    <div className="hidden md:block overflow-x-hidden">
                         <table className="w-full text-left border-collapse text-xs">
                             <thead>
                                 <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-                                    <th className="py-3 px-4">Mã & Vật Phẩm POSM</th>
-                                    <th className="py-3 px-4">Nhóm Phân Loại</th>
-                                    <th className="py-3 px-4">ĐVT / Hãng</th>
-                                    <th className="py-3 px-4 text-right">Đơn Giá Vốn</th>
-                                    <th className="py-3 px-4 text-center">Tồn Kho Hiện Tại</th>
-                                    <th className="py-3 px-4 text-center">Ngưỡng Tối Thiểu</th>
-                                    <th className="py-3 px-4">Vị Trí Lưu Kho</th>
-                                    <th className="py-3 px-4 text-right">Thao Tác</th>
+                                    <th className="py-2.5 px-2.5">Mã & Vật Phẩm POSM</th>
+                                    <th className="py-2.5 px-2.5">Nhóm Phân Loại</th>
+                                    <th className="py-2.5 px-2.5">ĐVT / Hãng</th>
+                                    <th className="py-2.5 px-2.5 text-right">Đơn Giá Vốn</th>
+                                    <th className="py-2.5 px-2.5 text-center">Tồn Kho Hiện Tại</th>
+                                    <th className="py-2.5 px-2.5 text-center">Ngưỡng Tối Thiểu</th>
+                                    <th className="py-2.5 px-2.5">Vị Trí Lưu Kho</th>
+                                    <th className="py-2.5 px-2.5 text-right">Thao Tác</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -529,7 +529,7 @@ export function PosmInventoryTab() {
                                         const CatIcon = cat.icon
                                         return (
                                             <tr key={item.id} className="hover:bg-slate-50/80 transition group">
-                                                <td className="py-3 px-4">
+                                                <td className="py-2.5 px-2.5">
                                                     <div className="font-bold text-slate-900 group-hover:text-amber-700 transition">
                                                         {item.name}
                                                     </div>
@@ -537,7 +537,7 @@ export function PosmInventoryTab() {
                                                         {item.posmCode}
                                                     </div>
                                                 </td>
-                                                <td className="py-3 px-4">
+                                                <td className="py-2.5 px-2.5">
                                                     <span
                                                         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border"
                                                         style={{
@@ -550,7 +550,7 @@ export function PosmInventoryTab() {
                                                         <span>{cat.label}</span>
                                                     </span>
                                                 </td>
-                                                <td className="py-3 px-4">
+                                                <td className="py-2.5 px-2.5">
                                                     <div className="text-slate-900 font-semibold">{item.unit}</div>
                                                     {item.brand && (
                                                         <div className="text-[11px] text-slate-500 mt-0.5">
@@ -558,10 +558,10 @@ export function PosmInventoryTab() {
                                                         </div>
                                                     )}
                                                 </td>
-                                                <td className="py-3 px-4 text-right font-medium text-slate-700">
+                                                <td className="py-2.5 px-2.5 text-right font-medium text-slate-700">
                                                     {formatVND(item.costPrice)}
                                                 </td>
-                                                <td className="py-3 px-4 text-center">
+                                                <td className="py-2.5 px-2.5 text-center">
                                                     <div className="inline-flex items-center gap-1.5">
                                                         <span className={`text-sm font-extrabold ${isLow ? 'text-rose-600' : 'text-slate-900'}`}>
                                                             {item.qtyOnHand}
@@ -574,15 +574,15 @@ export function PosmInventoryTab() {
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="py-3 px-4 text-center text-slate-500 font-mono text-xs">
+                                                <td className="py-2.5 px-2.5 text-center text-slate-500 font-mono text-xs">
                                                     {item.minStockAlert > 0 ? item.minStockAlert : '—'}
                                                 </td>
-                                                <td className="py-3 px-4">
+                                                <td className="py-2.5 px-2.5">
                                                     <span className="text-xs text-slate-600 font-medium">
                                                         {item.location || 'Kho Tổng'}
                                                     </span>
                                                 </td>
-                                                <td className="py-3 px-4 text-right">
+                                                <td className="py-2.5 px-2.5 text-right">
                                                     <div className="flex items-center justify-end gap-1.5">
                                                         <button
                                                             onClick={() => openInbound(item)}
@@ -614,24 +614,65 @@ export function PosmInventoryTab() {
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Mobile Cards (< 768px) */}
+                    <div className="block md:hidden divide-y divide-slate-100 p-2.5 space-y-2">
+                        {products.length === 0 ? (
+                            <div className="py-10 text-center text-slate-400 text-xs">Chưa có vật phẩm POSM nào</div>
+                        ) : (
+                            products.map(item => {
+                                const cat = POSM_CATEGORY_CONFIG[item.category] || POSM_CATEGORY_CONFIG.OTHER
+                                const isLow = item.isLowStock
+                                return (
+                                    <div key={item.id} className="p-3 rounded-lg border border-slate-200 bg-white space-y-2 shadow-2xs">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                                {item.posmCode}
+                                            </span>
+                                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded border"
+                                                style={{ background: cat.bg, color: cat.color, borderColor: cat.border }}>
+                                                {cat.label}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm font-bold text-slate-900 leading-snug">{item.name}</p>
+                                        <div className="flex items-center justify-between text-xs text-slate-600 pt-1 border-t border-slate-100">
+                                            <span>Vị trí: <strong className="text-slate-800">{item.location || 'Kho Tổng'}</strong></span>
+                                            <span>Tồn: <strong className={`font-mono text-sm ${isLow ? 'text-rose-600' : 'text-emerald-700'}`}>{item.qtyOnHand} {item.unit}</strong></span>
+                                        </div>
+                                        <div className="flex items-center justify-end gap-1.5 pt-1">
+                                            <button onClick={() => openInbound(item)} className="px-2.5 py-1 rounded text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                + Nhập
+                                            </button>
+                                            <button onClick={() => openOutbound(item)} className="px-2.5 py-1 rounded text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                                - Xuất
+                                            </button>
+                                            <button onClick={() => openEditMaster(item)} className="px-2.5 py-1 rounded text-xs font-semibold bg-slate-100 text-slate-700">
+                                                Sửa
+                                            </button>
+                                        </div>
+                                    </div>
+                                )
+                            })
+                        )}
+                    </div>
                 </div>
             )}
 
             {/* ═══ TAB CONTENT: TRANSACTION LOG ═══ */}
             {subTab === 'TX_LOG' && (
                 <div className="bg-white border border-slate-200 rounded-md overflow-hidden shadow-2xs">
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-hidden">
                         <table className="w-full text-left border-collapse text-xs">
                             <thead>
                                 <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-                                    <th className="py-3 px-4">Số Phiếu</th>
-                                    <th className="py-3 px-4">Thời Gian</th>
-                                    <th className="py-3 px-4">Loại Phiếu</th>
-                                    <th className="py-3 px-4">Vật Phẩm POSM</th>
-                                    <th className="py-3 px-4 text-center">Số Lượng</th>
-                                    <th className="py-3 px-4">Lý Do / Mục Đích</th>
-                                    <th className="py-3 px-4">Người Nhận / Bộ Phận</th>
-                                    <th className="py-3 px-4">Ghi Chú</th>
+                                    <th className="py-2.5 px-2.5">Số Phiếu</th>
+                                    <th className="py-2.5 px-2.5">Thời Gian</th>
+                                    <th className="py-2.5 px-2.5">Loại Phiếu</th>
+                                    <th className="py-2.5 px-2.5">Vật Phẩm POSM</th>
+                                    <th className="py-2.5 px-2.5 text-center">Số Lượng</th>
+                                    <th className="py-2.5 px-2.5">Lý Do / Mục Đích</th>
+                                    <th className="py-2.5 px-2.5">Người Nhận / Bộ Phận</th>
+                                    <th className="py-2.5 px-2.5">Ghi Chú</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -648,13 +689,13 @@ export function PosmInventoryTab() {
                                         const reasonInfo = POSM_REASON_LABELS[tx.reason] || { label: tx.reason, type: 'OUT' }
                                         return (
                                             <tr key={tx.id} className="hover:bg-slate-50/80 transition">
-                                                <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                                                <td className="py-2.5 px-2.5 font-mono font-bold text-slate-900">
                                                     {tx.docNo}
                                                 </td>
-                                                <td className="py-3 px-4 text-slate-500 font-medium">
+                                                <td className="py-2.5 px-2.5 text-slate-500 font-medium">
                                                     {formatDate(tx.performedAt)}
                                                 </td>
-                                                <td className="py-3 px-4">
+                                                <td className="py-2.5 px-2.5">
                                                     <span
                                                         className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                                                             isOut
@@ -666,29 +707,29 @@ export function PosmInventoryTab() {
                                                         <span>{isOut ? 'Xuất Kho' : 'Nhập Kho'}</span>
                                                     </span>
                                                 </td>
-                                                <td className="py-3 px-4">
+                                                <td className="py-2.5 px-2.5">
                                                     <div className="font-bold text-slate-900">{tx.posmProductName}</div>
                                                     <div className="text-[11px] text-slate-400 font-mono">{tx.posmProductCode}</div>
                                                 </td>
-                                                <td className="py-3 px-4 text-center">
+                                                <td className="py-2.5 px-2.5 text-center">
                                                     <span className={`font-bold ${isOut ? 'text-blue-700' : 'text-emerald-700'}`}>
                                                         {isOut ? `-${tx.qty}` : `+${tx.qty}`}
                                                     </span>{' '}
                                                     <span className="text-[11px] text-slate-500">{tx.unit}</span>
                                                 </td>
-                                                <td className="py-3 px-4">
+                                                <td className="py-2.5 px-2.5">
                                                     <span className="text-xs font-semibold text-slate-700">
                                                         {reasonInfo.label}
                                                     </span>
                                                 </td>
-                                                <td className="py-3 px-4 text-slate-600">
+                                                <td className="py-2.5 px-2.5 text-slate-600">
                                                     {tx.recipient ? (
                                                         <span className="font-medium text-slate-900">{tx.recipient}</span>
                                                     ) : (
                                                         <span className="text-slate-400">—</span>
                                                     )}
                                                 </td>
-                                                <td className="py-3 px-4 text-slate-500 text-[11px]">
+                                                <td className="py-2.5 px-2.5 text-slate-500 text-[11px]">
                                                     {tx.notes || '—'}
                                                 </td>
                                             </tr>
@@ -711,7 +752,7 @@ export function PosmInventoryTab() {
                                     <Sparkles size={18} />
                                 </span>
                                 <h3 className="font-bold text-slate-900 text-sm">
-                                    {editItem ? 'Chỉnh Sửa Master Data POSM' : 'Thêm Mới Vật Phẩm POSM Vào Master Data'}
+                                    {editItem ? 'Chỉnh Sửa Vật Phẩm POSM' : 'Thêm Mới Vật Phẩm POSM'}
                                 </h3>
                             </div>
                             <button

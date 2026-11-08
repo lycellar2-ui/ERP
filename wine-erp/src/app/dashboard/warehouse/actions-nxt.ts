@@ -217,14 +217,14 @@ export async function getWarehouseNXTReport(filters: {
     const openingDoMap = new Map<string, number>()
     openingDo.forEach(item => openingDoMap.set(item.productId, Number(item._sum.qtyShipped ?? 0)))
 
-    // B1.1 Opening POS Sales (Channel DIRECT_INDIVIDUAL, status PAID/DELIVERED/INVOICED before fromDate)
+    // B1.1 Opening Direct/No-DO Sales (SO status PAID/DELIVERED/INVOICED without shipped DO, before fromDate — uses SO createdAt)
     const openingPos = await prisma.salesOrderLine.groupBy({
         by: ['productId'],
         _sum: { qtyOrdered: true },
         where: {
             so: {
-                channel: 'DIRECT_INDIVIDUAL',
                 status: { in: ['PAID', 'DELIVERED', 'INVOICED'] },
+                deliveryOrders: { none: { status: { in: ['SHIPPED', 'DELIVERED'] } } },
                 createdAt: { lt: fromDate },
                 ...(warehouseId ? { warehouseId } : {}),
             },
@@ -335,14 +335,14 @@ export async function getWarehouseNXTReport(filters: {
     const periodDoMap = new Map<string, number>()
     periodDo.forEach(item => periodDoMap.set(item.productId, Number(item._sum.qtyShipped ?? 0)))
 
-    // D1.1 Period POS Sales (Channel DIRECT_INDIVIDUAL between fromDate and toDate)
+    // D1.1 Period Direct/No-DO Sales (SO status PAID/DELIVERED/INVOICED without shipped DO, between fromDate and toDate — uses SO createdAt)
     const periodPos = await prisma.salesOrderLine.groupBy({
         by: ['productId'],
         _sum: { qtyOrdered: true },
         where: {
             so: {
-                channel: 'DIRECT_INDIVIDUAL',
                 status: { in: ['PAID', 'DELIVERED', 'INVOICED'] },
+                deliveryOrders: { none: { status: { in: ['SHIPPED', 'DELIVERED'] } } },
                 createdAt: { gte: fromDate, lte: toDate },
                 ...(warehouseId ? { warehouseId } : {}),
             },
@@ -533,8 +533,8 @@ export async function getStockMovements(filters: {
             where: {
                 productId,
                 so: {
-                    channel: 'DIRECT_INDIVIDUAL',
                     status: { in: ['PAID', 'DELIVERED', 'INVOICED'] },
+                    deliveryOrders: { none: { status: { in: ['SHIPPED', 'DELIVERED'] } } },
                     createdAt: { lt: fromDate },
                     ...(warehouseId ? { warehouseId } : {}),
                 },
@@ -783,14 +783,14 @@ export async function getStockMovements(filters: {
         }
     }
 
-    // ── 5.1 POS Sales Lines (XUẤT BÁN LẺ POS) ─────
+    // ── 5.1 Direct / No-DO Sales Lines (XUẤT THEO NGÀY ĐƠN HÀNG SO) ─────
     if (movementType === 'ALL' || movementType === 'OUT') {
         const posLines = await prisma.salesOrderLine.findMany({
             where: {
                 productId,
                 so: {
-                    channel: 'DIRECT_INDIVIDUAL',
                     status: { in: ['PAID', 'DELIVERED', 'INVOICED'] },
+                    deliveryOrders: { none: { status: { in: ['SHIPPED', 'DELIVERED'] } } },
                     createdAt: { gte: fromDate, lte: toDate },
                     ...(warehouseId ? { warehouseId } : {}),
                 },
@@ -800,6 +800,7 @@ export async function getStockMovements(filters: {
                     select: {
                         id: true,
                         soNo: true,
+                        channel: true,
                         createdAt: true,
                         warehouseId: true,
                         warehouse: { select: { id: true, name: true } },
@@ -810,21 +811,22 @@ export async function getStockMovements(filters: {
         })
 
         for (const line of posLines) {
+            const isPos = line.so.channel === 'DIRECT_INDIVIDUAL'
             movements.push({
                 id: `pos-${line.id}`,
                 date: line.so.createdAt,
-                docType: 'POS_SALE',
+                docType: isPos ? 'POS_SALE' : 'DO',
                 docNo: line.so.soNo,
                 docId: line.so.id,
                 warehouseId: line.so.warehouse?.id ?? warehouseId ?? '',
                 warehouseName: line.so.warehouse?.name ?? 'Kho Bán Hàng',
-                locationCode: 'POS',
+                locationCode: isPos ? 'POS' : 'SO',
                 lotNo: '—',
                 qtyIn: 0,
                 qtyOut: Number(line.qtyOrdered),
                 balance: 0,
                 unitCost: 0,
-                reference: `Bán lẻ POS (${line.so.soNo})`,
+                reference: isPos ? `Bán lẻ POS (${line.so.soNo})` : `SO: ${line.so.soNo}`,
                 note: '',
             })
         }

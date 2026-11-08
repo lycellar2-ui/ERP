@@ -377,7 +377,7 @@ export function ReplenishmentTab() {
             ) : (
                 <div className="rounded-lg border overflow-hidden bg-white shadow-xs" style={{ borderColor: '#E2E8F0' }}>
                     {/* Desktop Table View (>= 768px) */}
-                    <div className="hidden md:block overflow-x-auto">
+                    <div className="hidden md:block overflow-x-hidden">
                         <table className="w-full text-left text-xs border-collapse">
                             <thead>
                                 <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px]">
@@ -394,7 +394,7 @@ export function ReplenishmentTab() {
                                 {suggestions.map((row) => (
                                     <tr key={row.id} className="hover:bg-slate-50/80 transition-colors">
                                         {/* SKU & Product Name */}
-                                        <td className="px-3.5 py-2.5 min-w-[220px]">
+                                        <td className="px-2.5 py-2.5">
                                             <div className="space-y-0.5">
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="inline-block font-mono font-bold text-amber-900 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200 text-[11px] whitespace-nowrap shrink-0">
@@ -418,7 +418,7 @@ export function ReplenishmentTab() {
                                         </td>
 
                                         {/* Target WH */}
-                                        <td className="px-3.5 py-2.5 min-w-[180px]">
+                                        <td className="px-2.5 py-2.5">
                                             <div className="space-y-1">
                                                 <div className="font-semibold text-slate-800 flex items-center gap-1">
                                                     <span className="truncate">{row.targetWarehouseName}</span>
@@ -432,7 +432,7 @@ export function ReplenishmentTab() {
                                         </td>
 
                                         {/* Source WH */}
-                                        <td className="px-3.5 py-2.5 min-w-[180px]">
+                                        <td className="px-2.5 py-2.5">
                                             <div className="space-y-1">
                                                 <div className="font-semibold text-slate-800 flex items-center gap-1">
                                                     <span className="truncate">{row.sourceWarehouseName}</span>
@@ -446,7 +446,7 @@ export function ReplenishmentTab() {
                                         </td>
 
                                         {/* Suggested Qty */}
-                                        <td className="px-3.5 py-2.5 text-center min-w-[130px]">
+                                        <td className="px-2.5 py-2.5 text-center">
                                             <div className="inline-flex flex-col items-center">
                                                 <span className="text-sm font-black font-mono text-lys-teal-strong">
                                                     {row.suggestedQty} <span className="text-[10px] font-sans font-normal text-slate-500">chai</span>
@@ -458,7 +458,7 @@ export function ReplenishmentTab() {
                                         </td>
 
                                         {/* Reason / Category */}
-                                        <td className="px-3.5 py-2.5 min-w-[200px]">
+                                        <td className="px-2.5 py-2.5">
                                             <div className="space-y-1">
                                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-block ${
                                                     row.category === 'INTRA_TA'
@@ -474,7 +474,7 @@ export function ReplenishmentTab() {
                                         </td>
 
                                         {/* 1-Click Action */}
-                                        <td className="px-3.5 py-2.5 text-right min-w-[150px]">
+                                        <td className="px-2.5 py-2.5 text-right">
                                             <button
                                                 onClick={() => handleCreateTransfer(row)}
                                                 className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg font-bold transition-all shadow-xs cursor-pointer bg-lys-teal-strong hover:bg-teal-700 text-white"

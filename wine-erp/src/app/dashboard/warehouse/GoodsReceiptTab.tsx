@@ -15,6 +15,7 @@ import {
 } from './actions'
 import { formatVND, formatDate, formatDateTime } from '@/lib/utils'
 import { useConfirmDialog } from '@/components/ui'
+import { formatFriendlyLocationName } from '../stock-count/location-names'
 
 // ── Types ──────────────────────────────────────────
 type POLineOption = {
@@ -659,20 +660,20 @@ export function GoodsReceiptTab({ warehouses }: {
             </div>
 
             {/* ── 4. Desktop Table View (Sales/Procurement Matching Style) ── */}
-            <div className="rounded-lg overflow-x-auto overflow-hidden hidden md:block border shadow-sm"
+            <div className="rounded-lg overflow-x-hidden hidden md:block border shadow-sm"
                 style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', color: '#475569' }}>
-                            <th className="px-4 py-3.5 text-[11px] uppercase tracking-wider font-bold">Số Phiếu GR</th>
-                            <th className="px-4 py-3.5 text-[11px] uppercase tracking-wider font-bold">Đơn Mua (PO)</th>
-                            <th className="px-4 py-3.5 text-[11px] uppercase tracking-wider font-bold">Kho Tiếp Nhận</th>
-                            <th className="px-4 py-3.5 text-[11px] uppercase tracking-wider font-bold">Số Mặt Hàng</th>
-                            <th className="px-4 py-3.5 text-[11px] uppercase tracking-wider font-bold">Tổng SL Nhận (Thùng / Chai)</th>
-                            <th className="px-4 py-3.5 text-[11px] uppercase tracking-wider font-bold">Trạng Thái</th>
-                            <th className="px-4 py-3.5 text-[11px] uppercase tracking-wider font-bold">Người Xác Nhận</th>
-                            <th className="px-4 py-3.5 text-[11px] uppercase tracking-wider font-bold">Ngày Tạo</th>
-                            <th className="px-4 py-3.5 text-[11px] uppercase tracking-wider font-bold text-right">Thao Tác</th>
+                            <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-bold">Số Phiếu GR</th>
+                            <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-bold">Đơn Mua (PO)</th>
+                            <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-bold">Kho Tiếp Nhận</th>
+                            <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-bold">Số Mặt Hàng</th>
+                            <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-bold">Tổng SL Nhận</th>
+                            <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-bold">Trạng Thái</th>
+                            <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-bold">Người Xác Nhận</th>
+                            <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-bold">Ngày Tạo</th>
+                            <th className="px-2.5 py-2.5 text-[11px] uppercase tracking-wider font-bold text-right">Thao Tác</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y" style={{ borderColor: '#E2E8F0' }}>
@@ -705,7 +706,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                         style={{ borderBottom: '1px solid #E2E8F0' }}
                                     >
                                         {/* GR No */}
-                                        <td className="px-4 py-3.5">
+                                        <td className="px-2.5 py-2.5">
                                             <span
                                                 className="text-xs font-bold font-mono px-2.5 py-1 rounded-md inline-block shadow-2xs"
                                                 style={{
@@ -719,7 +720,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                         </td>
 
                                         {/* PO No */}
-                                        <td className="px-4 py-3.5">
+                                        <td className="px-2.5 py-2.5">
                                             <span
                                                 className="text-xs font-mono font-bold px-2 py-0.5 rounded inline-block"
                                                 style={{
@@ -733,7 +734,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                         </td>
 
                                         {/* Warehouse */}
-                                        <td className="px-4 py-3.5 text-xs font-medium" style={{ color: '#0F172A' }}>
+                                        <td className="px-2.5 py-2.5 text-xs font-medium" style={{ color: '#0F172A' }}>
                                             <div className="flex items-center gap-1.5">
                                                 <MapPin size={13} style={{ color: '#1D4ED8' }} />
                                                 <span>{gr.warehouseName}</span>
@@ -741,12 +742,12 @@ export function GoodsReceiptTab({ warehouses }: {
                                         </td>
 
                                         {/* SKU count */}
-                                        <td className="px-4 py-3.5 text-xs font-medium" style={{ color: '#475569' }}>
+                                        <td className="px-2.5 py-2.5 text-xs font-medium" style={{ color: '#475569' }}>
                                             {gr.lineCount} sản phẩm
                                         </td>
 
                                         {/* Total Qty (Cases + Bottles) */}
-                                        <td className="px-4 py-3.5 text-xs font-medium">
+                                        <td className="px-2.5 py-2.5 text-xs font-medium">
                                             <div className="flex items-baseline gap-1.5">
                                                 <strong className="font-mono text-sm" style={{ color: '#0891B2' }}>
                                                     {cases} thùng
@@ -758,7 +759,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                         </td>
 
                                         {/* Status */}
-                                        <td className="px-4 py-3.5">
+                                        <td className="px-2.5 py-2.5">
                                             <span
                                                 className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border"
                                                 style={{ color: st.color, background: st.bg, borderColor: st.border }}
@@ -769,7 +770,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                         </td>
 
                                         {/* Confirmer & ConfirmedAt */}
-                                        <td className="px-4 py-3.5 text-xs" style={{ color: '#475569' }}>
+                                        <td className="px-2.5 py-2.5 text-xs" style={{ color: '#475569' }}>
                                             {gr.confirmedBy ? (
                                                 <div>
                                                     <p className="font-semibold" style={{ color: '#0F172A' }}>{gr.confirmedBy}</p>
@@ -783,12 +784,12 @@ export function GoodsReceiptTab({ warehouses }: {
                                         </td>
 
                                         {/* CreatedAt */}
-                                        <td className="px-4 py-3.5 text-xs" style={{ color: '#475569' }}>
+                                        <td className="px-2.5 py-2.5 text-xs" style={{ color: '#475569' }}>
                                             {formatDate(gr.createdAt)}
                                         </td>
 
                                         {/* Actions */}
-                                        <td className="px-4 py-3.5 text-right">
+                                        <td className="px-2.5 py-2.5 text-right">
                                             <div className="flex items-center justify-end gap-1.5" onClick={e => e.stopPropagation()}>
                                                 <button
                                                     onClick={() => openDetail(gr.id)}
@@ -1066,7 +1067,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                                     </span>
                                                     <div className="flex items-center gap-1.5">
                                                         <span className="inline-block text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
-                                                            {l.vintage ? `VTG ${l.vintage}` : 'NV'}
+                                                            {l.vintage ? l.vintage : 'NV'}
                                                         </span>
                                                         {l.variance !== 0 && (
                                                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
@@ -1083,8 +1084,8 @@ export function GoodsReceiptTab({ warehouses }: {
                                                 </p>
 
                                                 <div className="flex items-center justify-between text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-200">
-                                                    <span>Vị trí: <strong className="font-mono text-slate-800">{l.locationCode}</strong></span>
-                                                    <span>Lô: <strong className="font-mono text-slate-800">{l.lotNo}</strong></span>
+                                                    <span>Vị trí: <strong className="font-semibold text-slate-800">{formatFriendlyLocationName({ locationCode: l.locationCode })}</strong></span>
+                                                    <span>Quy cách: <strong className="font-mono text-slate-800">{l.unitsPerCase || 6} chai/thg</strong></span>
                                                 </div>
 
                                                 <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
@@ -1110,7 +1111,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                     {/* Desktop Table View (>= 768px) */}
                                     <div className="hidden md:block rounded-lg overflow-hidden border shadow-sm"
                                         style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}>
-                                        <div className="overflow-x-auto">
+                                        <div className="overflow-x-hidden">
                                             <table className="w-full text-left border-collapse text-xs">
                                                 <thead>
                                                     <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', color: '#475569' }}>
@@ -1118,8 +1119,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                                         <th className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold">Tên Sản Phẩm</th>
                                                         <th className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold">Quy Cách</th>
                                                         <th className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold">Niên Vụ</th>
-                                                        <th className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold">Mã Lô</th>
-                                                        <th className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold">Vị Trí</th>
+                                                                                                                <th className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold">Vị Trí</th>
                                                         <th className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold text-right">Dự Kiến (PO)</th>
                                                         <th className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold text-right">Thực Nhận</th>
                                                         <th className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold text-right">Chênh Lệch</th>
@@ -1138,13 +1138,11 @@ export function GoodsReceiptTab({ warehouses }: {
                                                                 {l.unitsPerCase || 6} chai/thùng
                                                             </td>
                                                             <td className="px-3 py-2.5 font-mono font-bold" style={{ color: '#B45309' }}>
-                                                                {l.vintage ? `VTG ${l.vintage}` : <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">NV</span>}
+                                                                {l.vintage ? l.vintage : <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">NV</span>}
                                                             </td>
-                                                            <td className="px-3 py-2.5 font-mono text-[11px]" style={{ color: '#475569' }}>
-                                                                {l.lotNo}
-                                                            </td>
+                                                            
                                                             <td className="px-3 py-2.5 font-mono font-medium" style={{ color: '#1D4ED8' }}>
-                                                                {l.locationCode}
+                                                                {formatFriendlyLocationName({ locationCode: l.locationCode })}
                                                             </td>
                                                             <td className="px-3 py-2.5 font-mono text-right" style={{ color: '#475569' }}>
                                                                 <div>
@@ -1554,7 +1552,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
                                                             <option value="">-- Chọn vị trí --</option>
                                                             {locations.map(loc => (
                                                                 <option key={loc.id} value={loc.id}>
-                                                                    {loc.locationCode} {loc.zone ? `(Khu ${loc.zone}${loc.rack ? ` - Kệ ${loc.rack}` : ''}${loc.bin ? ` - Ô ${loc.bin}` : ''})` : ''}
+                                                                    {formatFriendlyLocationName(loc)}
                                                                 </option>
                                                             ))}
                                                         </select>
