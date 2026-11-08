@@ -970,7 +970,7 @@ function CountView(props: {
 
     return (
         <div className="space-y-3">
-            <div className="sticky top-0 z-20 -mx-4 space-y-2 border-b border-lys-border bg-lys-bg/95 px-4 pb-2.5 pt-2 shadow-xs backdrop-blur-xs">
+            <div className="sticky top-0 z-20 -mx-4 space-y-1.5 border-b border-lys-border bg-lys-bg/95 px-4 pb-2.5 pt-2 shadow-xs backdrop-blur-xs">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <button onClick={props.onBack} className="flex items-center gap-1 py-0.5 text-sm font-semibold text-lys-teal-strong">
                         <ChevronLeft className="size-4" />Các vị trí
@@ -1010,8 +1010,6 @@ function CountView(props: {
                     </div>
                 )}
                 <SearchBox id="search" value={props.q} onChange={props.setQ} placeholder={posm ? 'Tìm vật phẩm…' : 'Tìm tên rượu, mã, vintage…'} />
-            </div>
-            <div className="space-y-2">
                 <div className="flex flex-wrap gap-1.5">
                     <button
                         type="button"
@@ -1066,7 +1064,7 @@ function CountView(props: {
                         const unverified = v === 'recheck' && (props.spotSummary?.cells ?? 0) > (props.spotSummary?.rechecked ?? 0)
                         return (
                             <button key={v} aria-pressed={props.filter === v} onClick={() => props.setFilter(v)}
-                                className={`rounded-md px-1 py-2 text-[13px] leading-tight ${
+                                className={`rounded-md px-1 py-1.5 text-[13px] leading-tight ${
                                     props.filter === v
                                         ? 'bg-lys-teal-strong font-semibold text-white'
                                         : unverified
