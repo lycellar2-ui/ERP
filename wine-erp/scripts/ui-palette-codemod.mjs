@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * UI palette codemod — normalizes legacy "Oceanic Cellar" dark-theme colors to the Light design system.
  * Value-level only (hex/rgba/class names); never touches logic.

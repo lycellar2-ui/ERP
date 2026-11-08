@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { cached, revalidateCache } from '@/lib/cache'
 import { getCurrentUser } from '@/lib/session'
 import { serialize } from '@/lib/serialize'
+import { formatFriendlyLocationName } from './location-names'
 import {
     getStockCountSessions, createStockCountSession,
     recordCountLine, completeStockCount, adjustStockFromCount
@@ -184,6 +185,12 @@ export async function getStockCountDetail(sessionId: string) {
             locationId: l.locationId,
             locationCode: l.locationCode || l.location?.locationCode || 'N/A',
             zone: l.location?.zone || l.locationCode || 'Khu vực chung',
+            locationName: formatFriendlyLocationName({
+                locationCode: l.locationCode || l.location?.locationCode,
+                zone: l.location?.zone,
+                rack: l.location?.rack,
+                bin: l.location?.bin
+            }),
             qtySystem: sysQty,
             qtyActual: actQty,
             variance: varQty,
@@ -466,7 +473,28 @@ export async function createStockCountSessionExtended(input: {
         const linesToCreate = Array.from(lineMap.values())
 
         if (linesToCreate.length === 0) {
-            return { success: false, error: 'Không tìm thấy tồn kho phù hợp với điều kiện kiểm kê đã chọn.' }
+            const targetLocations = locations.length > 0
+                ? locations
+                : await prisma.location.findMany({ where: { warehouseId: input.warehouseId } })
+            const activeProducts = await prisma.product.findMany({
+                where: productFilterWhere,
+                select: { id: true, skuCode: true },
+                take: 500
+            })
+            if (activeProducts.length > 0 && targetLocations.length > 0) {
+                const primaryLoc = targetLocations[0]
+                for (const p of activeProducts) {
+                    linesToCreate.push({
+                        productId: p.id,
+                        locationId: primaryLoc.id,
+                        locationCode: primaryLoc.locationCode,
+                        vintage: null,
+                        qtySystem: 0
+                    })
+                }
+            } else {
+                return { success: false, error: 'Không tìm thấy tồn kho hoặc danh mục sản phẩm phù hợp với điều kiện kiểm kê đã chọn.' }
+            }
         }
 
         const countTypeEnum: any = input.scopeType === 'FULL_WAREHOUSE' ? 'FULL_PHYSICAL' : input.scopeType === 'SPOT_COUNT' ? 'SPOT' : 'CYCLE'
@@ -820,10 +848,13 @@ export async function getWarehouseOptions() {
 export async function getWarehouseLocationOptions(warehouseId: string) {
     const locations = await prisma.location.findMany({
         where: { warehouseId },
-        select: { id: true, locationCode: true, zone: true },
+        select: { id: true, locationCode: true, zone: true, rack: true, bin: true },
         orderBy: { locationCode: 'asc' }
     })
-    return serialize(locations)
+    return serialize(locations.map(loc => ({
+        ...loc,
+        displayName: formatFriendlyLocationName(loc)
+    })))
 }
 
 function parseCode128Barcode(barcodeString: string): { sku: string; vintage: number | null } {

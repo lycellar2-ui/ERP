@@ -22,7 +22,7 @@ const mockTx = {
     goodsReceiptLine: { create: vi.fn() },
     stockLot: { create: vi.fn(), count: vi.fn(), update: vi.fn(), updateMany: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
     purchaseOrderLine: { findMany: vi.fn() },
-    deliveryOrder: { create: vi.fn(), update: vi.fn(), count: vi.fn() },
+    deliveryOrder: { create: vi.fn(), update: vi.fn(), count: vi.fn(), findFirst: vi.fn().mockResolvedValue(null), findUnique: vi.fn().mockResolvedValue(null) },
     deliveryOrderLine: { create: vi.fn(), findMany: vi.fn(), update: vi.fn() },
     salesOrder: { update: vi.fn(), findUnique: vi.fn() },
 }
@@ -62,6 +62,8 @@ beforeEach(() => {
     mockPrisma.warehouse.findUnique.mockResolvedValue({ id: 'wh-1', code: 'WH-TA', name: 'Kho TA' })
     mockPrisma.goodsReceipt.findFirst.mockResolvedValue(null)
     mockPrisma.deliveryOrder.findFirst.mockResolvedValue(null)
+    mockTx.deliveryOrder.findFirst.mockResolvedValue(null)
+    mockTx.deliveryOrder.findUnique.mockResolvedValue(null)
     mockTx.stockLot.updateMany.mockResolvedValue({ count: 1 })
 })
 
@@ -279,7 +281,9 @@ describe('transferStock', () => {
         mockTx.stockLot.findUnique.mockResolvedValue({
             id: 'lot-1', qtyAvailable: 50, productId: 'p-1', shipmentId: 'ship-1', unitLandedCost: 300000,
         })
-        mockTx.stockLot.updateMany.mockResolvedValue({ count: 1 })
+        mockTx.deliveryOrder.findFirst.mockResolvedValue(null)
+    mockTx.deliveryOrder.findUnique.mockResolvedValue(null)
+    mockTx.stockLot.updateMany.mockResolvedValue({ count: 1 })
         mockTx.stockLot.findFirst.mockResolvedValue(null) // No existing lot at destination
         mockTx.stockLot.count.mockResolvedValue(100)
         mockTx.stockLot.create = vi.fn()

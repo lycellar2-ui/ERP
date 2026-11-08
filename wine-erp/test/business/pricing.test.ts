@@ -8,14 +8,16 @@ vi.mock('@/lib/cache', () => ({
 vi.mock('@/lib/session', () => ({
     getCurrentUser: vi.fn(),
     requirePermission: vi.fn(),
+    requireAuth: vi.fn().mockResolvedValue({ id: 'u1', name: 'Admin', email: 'admin@test.com' }),
+    hasRole: vi.fn().mockReturnValue(true),
 }))
 
 const mockPrisma = {
-    customer: { findUnique: vi.fn() },
+    customer: { findUnique: vi.fn(), update: vi.fn() },
     customerPriceRule: { findMany: vi.fn(), create: vi.fn() },
     priceList: { findFirst: vi.fn() },
     priceListLine: { findMany: vi.fn() },
-    approvalConfig: { findUnique: vi.fn() },
+    approvalConfig: { findUnique: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
     product: { findMany: vi.fn() },
     productMarginPrice: { findMany: vi.fn(), findFirst: vi.fn() },
 }
@@ -34,6 +36,7 @@ beforeEach(() => {
     vi.clearAllMocks()
     // Default mock behavior for config to return null (using DEFAULT_CHANNEL_MAPPING)
     mockPrisma.approvalConfig.findUnique.mockResolvedValue(null)
+    mockPrisma.approvalConfig.findMany.mockResolvedValue([])
     mockPrisma.productMarginPrice.findMany.mockResolvedValue([])
     mockPrisma.productMarginPrice.findFirst.mockResolvedValue(null)
 })

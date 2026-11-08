@@ -1179,29 +1179,48 @@ export async function createDeliveryOrder(input: {
             }
         }
 
-        // Generate DO number (atomic — collision-safe)
-        const now = new Date()
-        const yy = String(now.getFullYear()).slice(-2)
-        const mm = String(now.getMonth() + 1).padStart(2, '0')
-        const doPrefix = `DO-${yy}${mm}-`
-        const lastDO = await prisma.deliveryOrder.findFirst({
-            where: { doNo: { startsWith: doPrefix } },
-            orderBy: { doNo: 'desc' },
-            select: { doNo: true },
-        })
-        const nextDOSeq = lastDO ? parseInt(lastDO.doNo.slice(-4)) + 1 : 1
-        const doNo = `${doPrefix}${String(nextDOSeq).padStart(4, '0')}`
+        // Generate DO number & create record (atomic & retry-protected against concurrency collisions)
+        let result: any = null
+        let assignedDoNo = ''
+        let attempts = 0
+        const maxAttempts = 5
 
-        const result = await prisma.$transaction(async (tx) => {
-            const deliveryOrder = await tx.deliveryOrder.create({
-                data: {
-                    doNo,
-                    soId,
-                    warehouseId,
-                    status: 'DRAFT',
-                    createdAt: doDate,
-                },
-            })
+        while (attempts < maxAttempts) {
+            attempts++
+            try {
+                result = await prisma.$transaction(async (tx) => {
+                    const now = new Date()
+                    const yy = String(now.getFullYear()).slice(-2)
+                    const mm = String(now.getMonth() + 1).padStart(2, '0')
+                    const doPrefix = `DO-${yy}${mm}-`
+                    const lastDO = await tx.deliveryOrder.findFirst({
+                        where: { doNo: { startsWith: doPrefix } },
+                        orderBy: { doNo: 'desc' },
+                        select: { doNo: true },
+                    })
+                    let nextDOSeq = 1
+                    if (lastDO && lastDO.doNo) {
+                        const parts = lastDO.doNo.split('-')
+                        const parsed = parseInt(parts[parts.length - 1], 10)
+                        if (!isNaN(parsed)) nextDOSeq = parsed + 1
+                    }
+                    let candidateDoNo = `${doPrefix}${String(nextDOSeq).padStart(4, '0')}`
+                    while (await tx.deliveryOrder.findUnique({ where: { doNo: candidateDoNo }, select: { id: true } })) {
+                        nextDOSeq++
+                        candidateDoNo = `${doPrefix}${String(nextDOSeq).padStart(4, '0')}`
+                    }
+
+                    assignedDoNo = candidateDoNo
+
+                    const deliveryOrder = await tx.deliveryOrder.create({
+                        data: {
+                            doNo: candidateDoNo,
+                            soId,
+                            warehouseId,
+                            status: 'DRAFT',
+                            createdAt: doDate,
+                        },
+                    })
 
             for (const line of lines) {
                 const pickedLot = await tx.stockLot.findUnique({
@@ -1257,12 +1276,20 @@ export async function createDeliveryOrder(input: {
             }
 
             return deliveryOrder
-        })
+                })
+                break // Success
+            } catch (txErr: any) {
+                if (txErr?.code === 'P2002' && attempts < maxAttempts) {
+                    continue
+                }
+                throw txErr
+            }
+        }
 
         revalidateCache('wms')
         revalidatePath('/dashboard/warehouse')
         revalidatePath('/dashboard/sales')
-        return { success: true, doId: result.id, doNo }
+        return { success: true, doId: result.id, doNo: assignedDoNo }
     } catch (err: any) {
         return { success: false, error: err.message }
     }

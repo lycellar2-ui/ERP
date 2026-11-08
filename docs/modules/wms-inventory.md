@@ -223,7 +223,28 @@ Hệ thống kiểm kê kho bãi đa chế độ, hỗ trợ đếm bằng đi�
 3. ⚡ **Kiểm kê mã có giao dịch (`TRANSACTED_ITEMS`):** Tự động lọc các mã SKU có phát sinh Giao dịch Nhập (GR), Xuất (DO), hoặc Điều chuyển trong N ngày gần nhất (mặc định 30 ngày).
 4. 🚨 **Kiểm kê Đột xuất (`SPOT_COUNT`):** Cho phép Ban Quản Lý / Kiểm toán chọn cụ thể **Danh sách Mã SKU bất kỳ** HOẶC **Khu vực/Kệ cụ thể** để phát lệnh kiểm kê tức thì không báo trước.
 
-### 6.2 Bộ Tính Năng Kiểm Kê Nâng Cao
+### 6.3 Hiện Đại Hóa Giao Diện Kiểm Kê Kho (Modern Stock Count Workflow - Tháng 11/2026)
+
+Thực hiện hợp nhất và thay thế trải nghiệm kiểm kê kho cũ tại `/dashboard/stock-count` bằng kiến trúc và thao tác mượt mà của công cụ kiểm kê hiện đại:
+- **Chuẩn hóa Hiển thị Tên Vị Trí Kho Thân Thiện (`location-names.ts`):**
+  - Tuyệt đối loại bỏ việc hiển thị các mã địa chỉ khô khan (`LOC-GVM-A1`, `LOC-TT-PALLET-4`, `t1-1`).
+  - Toàn bộ giao diện kiểm kê, thẻ vị trí, bộ lọc và phiếu in hiển thị Tên Tiếng Việt thực tế theo ngữ cảnh kho:
+    - *Kho Showroom (Lys):* Phòng ngoài T1 - kệ to, Phòng trong T1 - kệ to, Phòng trong T1 - Tủ lạnh, Kệ rượu ngang...
+    - *Kho Thắng Ân (GVM Tầng 2):* Kệ hàng lẻ, Kệ cạnh hàng lẻ, Khu vực cạnh bồn rửa, Khu vực sát cửa phụ, Khu vực cửa chính, Khu vực sát tường, Kệ hàng mẫu, Khu vực cửa sổ...
+    - *Kho Thường Tín:* Zone A - Pallet 1..12, Zone A - Pallet Cạnh Cửa, Zone B - Kệ Sắt Kho Cũ, Zone B - Pallet 1..14 Kho Cũ...
+- **Khởi tạo Đợt Kiểm Kê Linh Hoạt (`CreateSessionModal.tsx`):**
+  - **Kiểm kê Toàn phần (Full Warehouse):** Nạp toàn bộ danh mục sản phẩm và toàn bộ vị trí lưu kho.
+  - **Kiểm kê Một phần (Partial / Cycle Count):** Cho phép tick chọn danh sách các vị trí kho thân thiện với tiện ích Chọn tất cả / Bỏ chọn nhanh, kèm bộ lọc phân loại sản phẩm.
+  - Hỗ trợ chế độ Blind Count (Ẩn tồn sổ sách chống gian lận).
+- **Màn hình Kiểm Đếm Thực Tế Hiện Đại (`ModernStockCountView.tsx`):**
+  - **Chế độ Thẻ Vị Trí (Spots View):** Trực quan hóa tiến độ kiểm kê của từng kệ/khu vực (Đã kiểm X/Y mã, huy hiệu Chưa kiểm / Đang đếm / Hoàn thành kèm thanh tiến độ).
+  - **Đếm Hàng Nhanh (Count View):** Bộ đếm Thùng + Chai lẻ độc lập tự động tính tổng chai (`cases * unitsPerCase + loose`), nút `+` / `-`, nhập số trực tiếp, tự động lưu ngầm (debounced autosave 600ms) chống mất kết nối, hỗ trợ thêm mã phát sinh ngay tại kệ.
+  - **Màn hình Tổng Hợp & Phê Duyệt Tồn Kho ERP (Summary View):**
+    - Thống kê thời gian thực: Tổng mặt hàng, Tổng chai sổ sách, Tổng chai thực tế, Lệch (+/- chai), Giá trị lệch (VNĐ).
+    - Xem chi tiết theo Mặt hàng, theo Vị trí, hoặc danh sách Cảnh báo lệch kho.
+    - Nút **"Phê Duyệt & Cập Nhật Tồn ERP"**: Thực thi transaction cập nhật trực tiếp `StockLot` (tồn khả dụng), cập nhật vị trí `Location`, tự sinh phiếu điều chỉnh kho `ADJ-xxx` chuẩn kiểm toán ERP.
+    - Hỗ trợ In Biên bản kiểm kê chuẩn hóa.
+- **Kịch bản Đồng bộ Chốt Tồn 2 Kho (`scripts/sync-showroom-count-to-erp.ts`):** Tự động chuyển đổi toàn bộ 608 lượt đếm từ công cụ kiểm kê Showroom/GVM thành các bản ghi kiểm kê và cập nhật số tồn thực tế vào ERP sẵn sàng cho việc xuất kho hàng ngày.
 - **Trung Tâm Điều Hành Kiểm Kê Dành Cho Lead / Trưởng Kho (Live Lead Command Center Dashboard):** Tích hợp chế độ `🔴 LIVE SYNC (5s)` tự động tải dữ liệu thời gian thực. Bảng điền đóng vai trò Bảng chỉ huy giúp Trưởng kho / Lead theo dõi tiến độ đếm thực tế của từng nhân viên trên điện thoại (tỷ lệ %, số chai khớp, số chai lệch), lọc đa tiêu chí theo **Vị trí kệ / Nhân viên phụ trách / Trạng thái chênh lệch**, và ghi nhận vết thời gian thực đếm (`countedAt` timestamp audit trail).
 - **Linh hoạt Giao diện Đếm Điện Thoại & Bảng Điền Trực Tiếp (Mobile Counter ↔ Interactive Grid Table):** Cho phép người dùng chuyển đổi linh hoạt 2 chiều giữa chế độ đếm tập trung di động (`MobileLocationCounter`) và chế độ Bảng Điền trực tiếp kiểu Bảng tính Spreadsheet (`StockCountTableModal`).
 - **Bộ Lọc Vị Trí / Kệ Kho (Location/Zone Dropdown Filter):** Cho phép chọn lọc nhanh vị trí kệ kho (`Khu A - Kệ 01`, `Khu B - Kệ 02`...) ngay trên Bảng Điền để kho tập trung kiểm kê và chốt chênh lệch theo từng khu vực cụ thể.

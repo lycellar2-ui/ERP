@@ -7,16 +7,31 @@ import { useAppLocale } from '@/lib/i18n'
 import { getStockCountDict } from './i18n'
 
 type Props = {
+    isOpen?: boolean
     sessionId: string
-    sessionNo: string
+    sessionNo?: string
     warehouseId?: string
     defaultZone?: string
-    zones: string[]
+    zones?: string[]
+    targetLocationId?: string
+    targetLocationCode?: string
     onClose: () => void
     onSuccess: (newLineId?: string) => void
 }
 
-export function AddUnlistedModal({ sessionId, sessionNo, warehouseId, defaultZone, zones, onClose, onSuccess }: Props) {
+export function AddUnlistedModal({
+    isOpen = true,
+    sessionId,
+    sessionNo = '',
+    warehouseId,
+    defaultZone,
+    zones = [],
+    targetLocationId,
+    targetLocationCode,
+    onClose,
+    onSuccess,
+}: Props) {
+    if (!isOpen) return null
     const { locale } = useAppLocale()
     const t = getStockCountDict(locale)
     const [searchQuery, setSearchQuery] = useState('')
@@ -27,9 +42,9 @@ export function AddUnlistedModal({ sessionId, sessionNo, warehouseId, defaultZon
 
     // Form inputs
     const [vintage, setVintage] = useState<string>('')
-    const initialLoc = (defaultZone && defaultZone !== 'ALL') ? defaultZone : (zones[0] || t.common.generalZone)
+    const initialLoc = targetLocationCode || ((defaultZone && defaultZone !== 'ALL') ? defaultZone : (zones[0] || t.common.generalZone))
     const [locationCode, setLocationCode] = useState<string>(initialLoc)
-    const [selectedLocationId, setSelectedLocationId] = useState<string>('')
+    const [selectedLocationId, setSelectedLocationId] = useState<string>(targetLocationId || '')
     const [casesStr, setCasesStr] = useState<string>('0')
     const [looseStr, setLooseStr] = useState<string>('0')
     const [varianceReason, setVarianceReason] = useState<string>('UNRECORDED_GR')

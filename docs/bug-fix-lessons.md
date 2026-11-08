@@ -4316,3 +4316,55 @@ Qua đợt kiểm tra chuyên sâu toàn bộ 38 routes và tất cả component
 
 ### Bài học
 > ⚠️ **RULE 146: Tuyệt đối không để chuỗi ký tự mojibake (double UTF-8 / Windows-1252) lọt vào source code. Mọi bản mẫu in (print template / preview) và nhãn giao diện tiếng Việt phải luôn được lưu chuẩn UTF-8 nguyên vẹn.**
+
+---
+
+## BUG-147: Lỗi Type Props AddUnlistedModal Trong ModernStockCountView & Mismatch Mocks Vitest
+
+**Ngày:** 2026-11-08
+**Severity:** 🟡 Medium — Type check lỗi và test mock thiếu hàm khi nâng cấp engine phê duyệt giá & kiểm kê kho
+
+### Triệu chứng
+1. `npm run build` / `npx tsc --noEmit` báo lỗi:
+   `ModernStockCountView.tsx(1167,21): error TS2322: Type '{ isOpen: true; ... }' is not assignable to type 'IntrinsicAttributes & Props'. Property 'isOpen' does not exist on type 'IntrinsicAttributes & Props'.`
+2. Bộ test `test/business/pricing.test.ts` báo lỗi do mock `approvalConfig` thiếu `findMany` và `@/lib/session` thiếu `hasRole`.
+3. Bộ test `test/dashboard/pl-summary.test.ts` báo lỗi do cấu trúc `aRInvoice` thiếu `totalAmount`/`paidAmount` và sai chỉ mục bucket nợ quá hạn.
+
+### Nguyên nhân gốc rễ
+- Component `AddUnlistedModal` định nghĩa Props khắt khe thiếu các thuộc tính mở rộng (`isOpen`, `targetLocationId`, `targetLocationCode`) mà `ModernStockCountView` truyền vào.
+- Khi module `price-list` nâng cấp hỗ trợ cơ chế phê duyệt chính sách giá L2 đa cấp qua bảng `ApprovalConfig`, các test case cũ chưa cập nhật mock `findMany` và quyền hạn session.
+
+### Cách khắc phục
+- Bổ sung các trường tùy chọn (`isOpen?: boolean`, `targetLocationId?: string`, `targetLocationCode?: string`, `sessionNo?: string`, `zones?: string[]`) vào `Props` của `AddUnlistedModal.tsx`.
+- Cập nhật mock session (`requireAuth`, `hasRole`, `approvalConfig.findMany`) trong `pricing.test.ts` và chuẩn hóa cấu trúc đối tượng hóa đơn AR trong `pl-summary.test.ts`.
+- Bổ sung bộ test thực tế E2E `full-flow-audit.test.ts` gồm 17 ca kiểm thử liên hoàn kiểm tra tính toàn vẹn của chuỗi dữ liệu.
+
+### Bài học
+> ⚠️ **RULE 147: Khi một Modal Component được sử dụng ở nhiều màn hình (chế độ thường và chế độ hiện đại/tối ưu), Props của Modal phải linh hoạt hỗ trợ cả hai phong cách gọi (có hoặc không có cờ `isOpen`, vị trí ngắm sẵn `targetLocationCode`). Luôn chạy `npx tsc --noEmit` và `npm run test` để phát hiện ngay các sai lệch hợp đồng kiểu (type contract) trước khi nghiệm thu.**
+
+---
+
+## BUG-148: Lỗi Tranh Chấp Mã Phiếu Xuất Kho (doNo) Khi Chạy Song Song Nhiều Tiến Trình & Vitest Mock Mismatch
+
+**Ngày:** 2026-11-08
+**Severity:** 🔴 High — Unique constraint failure trên trường `doNo` khi phát sinh đồng thời nhiều phiếu xuất kho DO trong môi trường phân tán/concurrency cao
+
+### Triệu chứng
+1. Khi chạy Vitest test suite song song (`full-flow-audit.test.ts`, `stress-and-edge-cases.test.ts`, `e2e-real-db.test.ts`), hàm `createDeliveryOrder` trong `actions-do.ts` và `actions.ts` bị văng lỗi:
+   `Unique constraint failed on the fields: ("doNo")`
+2. Bộ unit test `test/business/warehouse.test.ts` báo lỗi do mock `mockTx.deliveryOrder` thiếu phương thức `findFirst` và `findUnique`.
+
+### Nguyên nhân gốc rễ
+1. Hàm `createDeliveryOrder` trước đây truy vấn `lastDO` ở ngoài giao dịch `prisma.$transaction`, sau đó tính số thứ tự `nextDOSeq = parseInt(lastDO.doNo.slice(-4)) + 1` và gán mã cứng. Khi có 2 tiến trình xuất kho chạy cùng miligiây, cả hai cùng đọc chung `lastDO` và sinh trùng mã `doNo`, dẫn đến đụng độ Unique Index P2002 trong database.
+2. `warehouse.test.ts` là unit test cô lập dùng mock, chưa định nghĩa `findFirst` và `findUnique` cho mock transaction `tx.deliveryOrder`.
+
+### Cách khắc phục
+1. Đưa logic sinh mã `doNo` vào bên trong transaction kèm vòng lặp kiểm tra candidate tồn tại: `while (await tx.deliveryOrder.findUnique({ where: { doNo: candidateDoNo } })) nextDOSeq++`.
+2. Bọc `prisma.$transaction` trong vòng lặp thử lại (retry loop lên đến 5 lần) bắt mã lỗi Prisma `P2002` để tự động tính toán lại mã phiếu mới nếu xảy ra race condition.
+3. Đồng bộ hóa cả hai file xử lý xuất kho `src/app/dashboard/warehouse/actions-do.ts` và `src/app/dashboard/warehouse/actions.ts`.
+4. Cập nhật `mockTx.deliveryOrder` trong `warehouse.test.ts` với `findFirst` và `findUnique` trả về `null`. Toàn bộ 35 file test (337/337 ca kiểm thử) chạy đồng thời đạt kết quả 100% PASS.
+
+### Bài học
+> ⚠️ **RULE 148: Mọi logic sinh mã tài liệu nghiệp vụ có tính duy nhất (như `SO-YYMM-XXXX`, `DO-YYMM-XXXX`, `GR-YYMM-XXXX`) PHẢI được bọc trong vòng lặp chống va chạm (candidate loop) và có cơ chế Retry tối đa 5 lần bắt lỗi Prisma P2002. Tuyệt đối không sinh mã duy nhất ngoài transaction mà không có retry protection.**
+
+
