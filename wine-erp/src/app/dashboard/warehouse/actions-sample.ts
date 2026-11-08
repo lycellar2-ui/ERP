@@ -1,7 +1,6 @@
 'use server'
 
 import { prisma } from '@/lib/db'
-import { cached } from '@/lib/cache'
 import { requireAuth } from '@/lib/session'
 import { SampleOriginType, SampleTxType, SampleReason } from '@prisma/client'
 
@@ -28,6 +27,9 @@ export interface SampleProductItem {
     createdAt: Date
     updatedAt: Date
     transactionCount?: number
+    inspectionStatus: 'PASSED' | 'FAILED' | 'PENDING'
+    inspectionDate: string | null
+    cleanNotes: string
 }
 
 export interface SampleInventoryStats {
@@ -55,10 +57,25 @@ export interface SampleTransactionItem {
     notes: string | null
 }
 
+// ── Helper: Parse Inspection Metadata from Notes ─────
+export function parseSampleInspection(notes: string | null) {
+    if (!notes) return { status: 'PENDING' as const, inspectionDate: null, cleanNotes: '' }
+    const match = notes.match(/^\[QC:(PASSED|FAILED)\|([^\]]+)\]\s*(.*)$/s)
+    if (match) {
+        return {
+            status: match[1] as 'PASSED' | 'FAILED',
+            inspectionDate: match[2],
+            cleanNotes: match[3] || '',
+        }
+    }
+    return { status: 'PENDING' as const, inspectionDate: null, cleanNotes: notes }
+}
+
 // ── 1. Fetch Sample Products ──────────────────────────
 export async function getSampleProducts(filters?: {
     search?: string
     originType?: string
+    inspectionStatus?: string
     hasSku?: boolean
     hideZeroStock?: boolean
 }): Promise<SampleProductItem[]> {
@@ -98,26 +115,38 @@ export async function getSampleProducts(filters?: {
         orderBy: { updatedAt: 'desc' },
     })
 
-    return items.map(p => ({
-        id: p.id,
-        sampleCode: p.sampleCode,
-        productId: p.productId,
-        skuCode: p.product?.skuCode,
-        productName: p.productName,
-        wineType: p.wineType,
-        vintage: p.vintage,
-        country: p.country,
-        producer: p.producer,
-        volumeMl: p.volumeMl,
-        originType: p.originType,
-        estimatedValue: Number(p.estimatedValue),
-        qtyOnHand: Number(p.qtyOnHand),
-        unit: p.unit,
-        notes: p.notes,
-        createdAt: p.createdAt,
-        updatedAt: p.updatedAt,
-        transactionCount: p._count.transactions,
-    }))
+    const parsed = items.map(p => {
+        const { status, inspectionDate, cleanNotes } = parseSampleInspection(p.notes)
+        return {
+            id: p.id,
+            sampleCode: p.sampleCode,
+            productId: p.productId,
+            skuCode: p.product?.skuCode,
+            productName: p.productName,
+            wineType: p.wineType,
+            vintage: p.vintage,
+            country: p.country,
+            producer: p.producer,
+            volumeMl: p.volumeMl,
+            originType: p.originType,
+            estimatedValue: Number(p.estimatedValue),
+            qtyOnHand: Number(p.qtyOnHand),
+            unit: p.unit,
+            notes: p.notes,
+            createdAt: p.createdAt,
+            updatedAt: p.updatedAt,
+            transactionCount: p._count.transactions,
+            inspectionStatus: status,
+            inspectionDate,
+            cleanNotes,
+        }
+    })
+
+    if (filters?.inspectionStatus && filters.inspectionStatus !== 'ALL') {
+        return parsed.filter(p => p.inspectionStatus === filters.inspectionStatus)
+    }
+
+    return parsed
 }
 
 // ── 2. Get Sample Inventory KPI Stats ────────────────
@@ -180,6 +209,7 @@ export async function createSampleProduct(data: {
     estimatedValue?: number
     initialQty?: number
     notes?: string
+    isInspected?: boolean
 }) {
     await requireAuth()
     const year = new Date().getFullYear()
@@ -194,6 +224,12 @@ export async function createSampleProduct(data: {
 
     const initialQty = Number(data.initialQty ?? 0)
 
+    let finalNotes = data.notes?.trim() || null
+    if (data.isInspected) {
+        const today = new Date().toLocaleDateString('vi-VN')
+        finalNotes = `[QC:PASSED|${today}] ${finalNotes || 'Nghiệm thu đạt chuẩn khi nhập mẫu ban đầu'}`.trim()
+    }
+
     const sampleProd = await prisma.sampleProduct.create({
         data: {
             sampleCode,
@@ -207,7 +243,7 @@ export async function createSampleProduct(data: {
             originType: data.originType as SampleOriginType,
             estimatedValue: data.estimatedValue || 0,
             qtyOnHand: initialQty,
-            notes: data.notes || null,
+            notes: finalNotes,
         },
     })
 
@@ -374,4 +410,53 @@ export async function getSampleTransactions(filters?: {
         performedAt: t.performedAt,
         notes: t.notes,
     }))
+}
+
+// ── 6. Record Sample Inspection (Kiểm Tra & Nghiệm Thu Mẫu) ─────
+export async function recordSampleInspection(data: {
+    sampleProductId: string
+    originType: 'FORMAL' | 'INFORMAL'
+    inspectionStatus: 'PASSED' | 'FAILED' | 'PENDING'
+    notes?: string
+}) {
+    await requireAuth()
+    const { sampleProductId, originType, inspectionStatus, notes = '' } = data
+
+    const current = await prisma.sampleProduct.findUnique({
+        where: { id: sampleProductId },
+        select: { notes: true }
+    })
+    if (!current) throw new Error('Không tìm thấy thông tin hàng mẫu')
+
+    const { cleanNotes } = parseSampleInspection(current.notes)
+    const baseNote = notes.trim() || cleanNotes || ''
+    const today = new Date().toLocaleDateString('vi-VN')
+
+    let newNotes: string | null = null
+    if (inspectionStatus === 'PASSED') {
+        newNotes = `[QC:PASSED|${today}] ${baseNote}`.trim()
+    } else if (inspectionStatus === 'FAILED') {
+        newNotes = `[QC:FAILED|${today}] ${baseNote}`.trim()
+    } else {
+        newNotes = baseNote || null
+    }
+
+    return prisma.sampleProduct.update({
+        where: { id: sampleProductId },
+        data: {
+            originType: originType as SampleOriginType,
+            notes: newNotes,
+        },
+    })
+}
+
+// ── 7. Quick Update Sample Origin (Đổi Nhanh Chính / Tiểu Ngạch) ──
+export async function updateSampleOrigin(sampleProductId: string, originType: 'FORMAL' | 'INFORMAL') {
+    await requireAuth()
+    return prisma.sampleProduct.update({
+        where: { id: sampleProductId },
+        data: {
+            originType: originType as SampleOriginType,
+        },
+    })
 }

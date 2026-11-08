@@ -804,7 +804,7 @@ function SODetailDrawer({
                         <div className="py-3 px-4 rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                             <div className="flex items-center justify-between text-xs mb-4">
                                 <span className="font-bold uppercase tracking-wider text-[10px]" style={{ color: '#64748B' }}>{isEn ? 'Order Progress' : 'Tiến Trình Đơn Hàng'}</span>
-                                <StatusBadge status={detail.status as SOStatus} approvalStep={(detail as any).approvalStep} />
+
                             </div>
                             
                             <div className="relative pt-2 pb-1">
@@ -1880,7 +1880,9 @@ function SalesOrderMobileCard({
                 {/* Status Badges */}
                 <div className="flex items-center gap-1 flex-wrap min-w-0 scale-90 origin-left">
                     <StatusBadge status={row.status} approvalStep={row.approvalStep} />
-                    <DeliveryStatusBadge status={row.deliveryStatus} shipped={row.totalQtyShipped} ordered={row.totalQtyOrdered} />
+                    {row.deliveryStatus && row.deliveryStatus !== 'UNDELIVERED' && row.deliveryStatus !== row.status && (
+                        <DeliveryStatusBadge status={row.deliveryStatus} shipped={row.totalQtyShipped} ordered={row.totalQtyOrdered} />
+                    )}
                 </div>
 
                 {/* Action Buttons */}
@@ -2996,7 +2998,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                 <Td className="px-2 whitespace-nowrap">
                                     <div className="flex flex-col gap-0.5 items-start">
                                         <StatusBadge status={row.status} approvalStep={row.approvalStep} />
-                                        {row.deliveryStatus && row.deliveryStatus !== 'UNDELIVERED' && (
+                                        {row.deliveryStatus && row.deliveryStatus !== 'UNDELIVERED' && row.deliveryStatus !== row.status && (
                                             <DeliveryStatusBadge status={row.deliveryStatus} shipped={row.totalQtyShipped} ordered={row.totalQtyOrdered} />
                                         )}
                                     </div>

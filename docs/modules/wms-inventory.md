@@ -352,23 +352,32 @@ getProductStockByLocation(productId)      → Current lots with location details
 
 ---
 
-## 12. Quản Lý Tồn Kho Hàng Mẫu — Sample Wine Inventory
+## 12. Quản Lý Tồn Kho & Kiểm Hàng Mẫu — Sample Wine Inventory
 
-> **Tab "🍷 Quản Lý Hàng Mẫu" trong module WMS** — Quản lý hàng mẫu riêng biệt không bán hàng thương mại, hỗ trợ hàng có SKU / chưa có SKU, hàng chính ngạch và tiểu ngạch.
+> **Tab "Quản Lý Hàng Mẫu" trong module WMS** — Quản lý hàng mẫu riêng biệt không bán hàng thương mại, hỗ trợ hàng có SKU / chưa có SKU, ô đánh dấu Chính ngạch vs Tiểu ngạch trực quan và quy trình kiểm hàng mẫu tinh gọn.
 
 ### 12.1 Đặc Điểm Tính Năng
 - **Tách biệt 100% kho bán hàng**: Dữ liệu lưu tại model `SampleProduct` và `SampleTransaction`, không bị xuất bán nhầm.
 - **Hỗ trợ 2 dạng mẫu**: Đã có mã SKU hệ thống OR Chưa có SKU (tự nhập tên rượu mẫu).
-- **Phân loại nguồn ngạch**: `Chính Ngạch` (FORMAL) vs `Tiểu Ngạch / Xách Tay` (INFORMAL).
-- **Nhật ký xuất mẫu theo mục đích**: *Thử rượu/Sommelier tasting*, *Tặng khách VIP*, *Marketing/Media*, *Kiểm định chất lượng*, *Hỏng/Hủy*.
+- **Ô đánh dấu Chính ngạch / Tiểu ngạch**:
+  - *Chính Ngạch (FORMAL)*: Hàng nhập khẩu chính ngạch (có tờ khai Hải quan).
+  - *Tiểu Ngạch / Xách Tay (INFORMAL)*: Hàng winery gửi thử nếm, quà tặng kèm, xách tay nội bộ.
+  - Hỗ trợ chuyển đổi nhanh (1-click toggle) trực tiếp trên danh mục tồn kho.
+- **Kiểm hàng mẫu (Sample QC & Inspection)**:
+  - Tích hợp ô đánh dấu kiểm hàng ngay khi khai báo nhập mẫu mới.
+  - Phiếu Kiểm tra & Nghiệm thu mẫu: Checklist nhanh 3 tiêu chí (Nút/seal nắp chai, nhãn mác chai nguyên vẹn, cảm quan màu sắc & thử nếm tasting).
+  - Trạng thái nghiệm thu: `Đã kiểm đạt (PASSED)` / `Không đạt (FAILED)` / `Chờ kiểm tra (PENDING)`.
+- **Nhật ký xuất mẫu theo mục đích**: *Thử rượu/Sommelier tasting*, *Tặng khách VIP*, *Sự kiện/Workshop*, *Marketing/Media*, *Hư hỏng/Bể vỡ*.
 
 ### 12.2 Backend (`actions-sample.ts`)
 ```typescript
-getSampleProducts(filters)       → SampleProductItem[]
-getSampleInventoryStats()        → SampleInventoryStats (5 KPI stats)
-createSampleProduct(data)        → Create sample item & initial inbound receipt
-createSampleTransaction(data)    → Create SMR/SMO/SMA doc & update qtyOnHand
-getSampleTransactions(filters)   → SampleTransactionItem[]
+getSampleProducts(filters)          → SampleProductItem[] (hỗ trợ filter originType & inspectionStatus)
+getSampleInventoryStats()           → SampleInventoryStats (5 KPI stats)
+createSampleProduct(data)           → Create sample item, initial inbound receipt & initial QC flag
+createSampleTransaction(data)       → Create SMR/SMO/SMA doc & update qtyOnHand
+getSampleTransactions(filters)      → SampleTransactionItem[]
+recordSampleInspection(data)        → Lưu kết quả kiểm hàng & nghiệm thu chất lượng mẫu
+updateSampleOrigin(id, originType)  → Cập nhật nhanh nguồn hàng Chính ngạch / Tiểu ngạch
 ```
 
 ## 8. Database Design
