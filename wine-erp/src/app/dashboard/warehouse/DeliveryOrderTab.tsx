@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Truck, Plus, Minus, X, Eye, CheckCircle2, Loader2, Save, PackageCheck, AlertCircle, Search, ArrowRight, Box, Printer, RotateCcw, Phone, MapPin, Trash2, ShieldAlert, Check } from 'lucide-react'
+import { Truck, Plus, Minus, X, Eye, CheckCircle2, Loader2, Save, PackageCheck, AlertCircle, Search, ArrowRight, Box, Printer, RotateCcw, Phone, MapPin, Trash2, ShieldAlert, Check, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     type DeliveryOrderRow,
@@ -90,6 +90,9 @@ export function DeliveryOrderTab({ warehouses }: {
     const [detailLoading, setDetailLoading] = useState(false)
     const [activeSubTab, setActiveSubTab] = useState<'pending' | 'history'>('pending')
     const [searchQuery, setSearchQuery] = useState('')
+    const [warehouseFilter, setWarehouseFilter] = useState('')
+    const [historyStatusFilter, setHistoryStatusFilter] = useState('ALL')
+    const [showStats, setShowStats] = useState(true)
     const [swapTarget, setSwapTarget] = useState<any | null>(null)
 
     const [activeWarehouses, setActiveWarehouses] = useState<WarehouseOption[]>(warehouses)
@@ -112,14 +115,57 @@ export function DeliveryOrderTab({ warehouses }: {
     useEffect(() => { reload() }, [])
 
     const filteredPendingSOs = useMemo(() => {
-        if (!searchQuery.trim()) return pendingSOs
-        const q = searchQuery.toLowerCase()
-        return pendingSOs.filter(s => 
-            s.soNo.toLowerCase().includes(q) || 
-            s.customerName?.toLowerCase().includes(q) ||
-            s.lines.some(l => l.productName.toLowerCase().includes(q) || l.skuCode.toLowerCase().includes(q))
-        )
-    }, [pendingSOs, searchQuery])
+        const q = searchQuery.trim().toLowerCase()
+        return pendingSOs.filter(s => {
+            const targetWhId = resolveWarehouseForSO(s, activeWarehouses)
+            const matchesWh = !warehouseFilter || targetWhId === warehouseFilter
+            const matchesSearch = !q ||
+                s.soNo.toLowerCase().includes(q) || 
+                s.customerName?.toLowerCase().includes(q) ||
+                s.lines.some(l =>
+                    l.productName?.toLowerCase().includes(q) ||
+                    l.skuCode?.toLowerCase().includes(q) ||
+                    String(l.vintage ?? 'NV').toLowerCase().includes(q)
+                )
+            return matchesWh && matchesSearch
+        })
+    }, [pendingSOs, searchQuery, warehouseFilter, activeWarehouses])
+
+    const filteredHistoryRows = useMemo(() => {
+        const q = searchQuery.trim().toLowerCase()
+        return rows.filter(d => {
+            const matchesStatus = historyStatusFilter === 'ALL' || d.status === historyStatusFilter
+            const matchesWh = !warehouseFilter || (d as any).warehouseId === warehouseFilter || d.warehouseName === activeWarehouses.find(w => w.id === warehouseFilter)?.name
+            const matchesSearch = !q ||
+                d.doNo.toLowerCase().includes(q) ||
+                d.soNo.toLowerCase().includes(q) ||
+                d.customerName?.toLowerCase().includes(q) ||
+                d.warehouseName?.toLowerCase().includes(q)
+            return matchesStatus && matchesWh && matchesSearch
+        })
+    }, [rows, searchQuery, warehouseFilter, historyStatusFilter, activeWarehouses])
+
+    const historyCounts = useMemo(() => ({
+        ALL: rows.length,
+        DRAFT: rows.filter(r => r.status === 'DRAFT').length,
+        CONFIRMED: rows.filter(r => r.status === 'CONFIRMED').length,
+        SHIPPED: rows.filter(r => r.status === 'SHIPPED').length,
+        REVERSED: rows.filter(r => r.status === 'REVERSED' || r.status === 'CANCELLED').length,
+    }), [rows])
+
+    const totalShippedBottles = useMemo(() => rows
+        .filter(r => r.status === 'CONFIRMED' || r.status === 'SHIPPED')
+        .reduce((sum, r) => sum + (r.totalQtyShipped ?? 0), 0), [rows])
+
+    const totalPendingBottles = useMemo(() => pendingSOs
+        .reduce((sum, s) => sum + s.lines.reduce((acc, l) => acc + l.qtyOrdered, 0), 0), [pendingSOs])
+
+    const activeFilterCount = [searchQuery, warehouseFilter, historyStatusFilter !== 'ALL' ? historyStatusFilter : ''].filter(Boolean).length
+    const resetFilters = () => {
+        setSearchQuery('')
+        setWarehouseFilter('')
+        setHistoryStatusFilter('ALL')
+    }
 
     const [editDoDate, setEditDoDate] = useState('')
     const [savingDate, setSavingDate] = useState(false)
@@ -222,85 +268,236 @@ export function DeliveryOrderTab({ warehouses }: {
     }
 
     return (
-        <div className="space-y-3 sm:space-y-5 pb-6 md:pb-4">
-            {/* Header & Sub-tab Navigation */}
-            <div className="space-y-2 sm:space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-sm sm:text-base font-bold flex items-center gap-1.5" style={{ color: '#0F172A' }}>
-                        <Truck size={16} style={{ color: '#B45309' }} /> Xuất Kho (DO)
-                    </h3>
-                    <button onClick={() => { setPreselectedSOId(null); setCreateOpen(true) }}
-                        className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold rounded-lg shadow-sm transition-all hover:brightness-105 shrink-0"
-                        style={{ background: '#D97706', color: '#FFFFFF' }}>
-                        <Plus size={12} /> Tạo DO
-                    </button>
+        <div className="space-y-4 pb-6 md:pb-4">
+            {/* ── TIER 1: Standardized Module Header Bar ── */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-4 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
+                            <Truck size={18} className="text-amber-700" />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-sm sm:text-base font-extrabold text-slate-900">
+                                    Xuất Kho & Lệnh Nhặt Hàng (DO)
+                                </h3>
+                                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                                    {pendingSOs.length} chờ xuất · {rows.length} phiếu DO
+                                </span>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                Tự động phân bổ lô FIFO theo SKU, Vintage và vị trí kệ kho
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Sub-tab Switcher */}
+                    <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100 border border-slate-200">
+                        <button
+                            type="button"
+                            onClick={() => setActiveSubTab('pending')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                                activeSubTab === 'pending'
+                                    ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/80'
+                                    : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                        >
+                            <span>Đơn SO Chờ Xuất</span>
+                            {pendingSOs.length > 0 && (
+                                <span className="inline-block px-1.5 py-0.2 text-[10px] font-mono font-extrabold rounded-full bg-amber-500 text-white">
+                                    {pendingSOs.length}
+                                </span>
+                            )}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveSubTab('history')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                                activeSubTab === 'history'
+                                    ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/80'
+                                    : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                        >
+                            <span>Lịch Sử Phiếu DO</span>
+                            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-700">
+                                {rows.length}
+                            </span>
+                        </button>
+                    </div>
                 </div>
 
-                {/* Navigation Tabs */}
-                <div className="flex p-1 rounded-lg overflow-x-auto no-scrollbar" style={{ background: '#F1F5F9', border: '1px solid #E2E8F0' }}>
+                <div className="flex flex-wrap items-center gap-2">
                     <button
-                        onClick={() => setActiveSubTab('pending')}
-                        className="flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold rounded-lg transition-all shrink-0 shadow-xs"
-                        style={{
-                            background: activeSubTab === 'pending' ? '#FFFFFF' : 'transparent',
-                            color: activeSubTab === 'pending' ? '#0F172A' : '#64748B',
-                            border: activeSubTab === 'pending' ? '1px solid #CBD5E1' : '1px solid transparent'
-                        }}
+                        type="button"
+                        onClick={() => setShowStats(!showStats)}
+                        className="flex items-center gap-1 px-2.5 py-2 rounded-lg text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer transition-all"
                     >
-                        Chờ Xuất
-                        {pendingSOs.length > 0 && (
-                            <span className="inline-block px-1.5 py-0.5 text-[9px] font-extrabold rounded-full whitespace-nowrap shrink-0"
-                                style={{
-                                    background: activeSubTab === 'pending' ? 'rgba(180,83,9,0.2)' : '#CBD5E1',
-                                    color: activeSubTab === 'pending' ? '#B47816' : '#475569'
-                                }}>
-                                {pendingSOs.length}
-                            </span>
-                        )}
+                        {showStats ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        <span className="hidden sm:inline">Chỉ số</span>
                     </button>
+
                     <button
-                        onClick={() => setActiveSubTab('history')}
-                        className="flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold rounded-lg transition-all shrink-0 shadow-xs"
-                        style={{
-                            background: activeSubTab === 'history' ? '#FFFFFF' : 'transparent',
-                            color: activeSubTab === 'history' ? '#0F172A' : '#64748B',
-                            border: activeSubTab === 'history' ? '1px solid #CBD5E1' : '1px solid transparent'
-                        }}
+                        type="button"
+                        onClick={reload}
+                        disabled={loading}
+                        className="flex items-center justify-center p-2 rounded-lg text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer transition-all"
+                        title="Làm mới danh sách"
                     >
-                        Lịch Sử
-                        <span className="text-[9px] opacity-60">({rows.length})</span>
+                        <RefreshCw size={14} className={loading ? 'animate-spin text-amber-700' : ''} />
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => { setPreselectedSOId(null); setCreateOpen(true) }}
+                        className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-lg shadow-xs transition-all hover:opacity-90 active:scale-95 cursor-pointer bg-lys-teal-strong text-white"
+                    >
+                        <Plus size={14} /> Tạo Phiếu DO
                     </button>
                 </div>
             </div>
 
-            {/* TAB 1: PENDING SALES ORDERS WAITING FOR FULFILLMENT */}
-            {activeSubTab === 'pending' && (
-                <div className="space-y-2.5 sm:space-y-4">
-                    {/* Search Bar - compact */}
-                    <div className="relative">
-                        <Search size={14} className="absolute left-3 top-2.5" style={{ color: '#64748B' }} />
+            {/* ── TIER 2: Collapsible KPI Stat Cards ── */}
+            {showStats && (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+                    <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs flex flex-col justify-between" style={{ borderLeft: '3px solid #B45309' }}>
+                        <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Đơn SO Chờ Nhặt Hàng</span>
+                        <div className="mt-1">
+                            <span className="text-lg sm:text-xl font-extrabold font-mono text-amber-700">{pendingSOs.length} đơn</span>
+                        </div>
+                        <span className="text-[11px] text-slate-500 mt-1">
+                            Tổng cần nhặt: <strong className="font-mono text-slate-700">{totalPendingBottles.toLocaleString()}</strong> chai
+                        </span>
+                    </div>
+
+                    <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs flex flex-col justify-between" style={{ borderLeft: '3px solid #0891B2' }}>
+                        <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Tổng Phiếu Xuất (DO)</span>
+                        <div className="mt-1">
+                            <span className="text-lg sm:text-xl font-extrabold font-mono text-slate-900">{rows.length} phiếu</span>
+                        </div>
+                        <span className="text-[11px] text-slate-500 mt-1">
+                            Nháp chờ duyệt: <strong className="font-mono text-slate-700">{historyCounts.DRAFT}</strong> phiếu
+                        </span>
+                    </div>
+
+                    <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs flex flex-col justify-between" style={{ borderLeft: '3px solid #15803D' }}>
+                        <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Đã Xuất Kho / Đã Giao</span>
+                        <div className="mt-1">
+                            <span className="text-lg sm:text-xl font-extrabold font-mono text-emerald-700">
+                                {(historyCounts.CONFIRMED + historyCounts.SHIPPED).toLocaleString()} phiếu
+                            </span>
+                        </div>
+                        <span className="text-[11px] text-slate-500 mt-1">
+                            Đã giao hoàn tất: <strong className="font-mono text-emerald-700">{historyCounts.SHIPPED}</strong> phiếu
+                        </span>
+                    </div>
+
+                    <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs flex flex-col justify-between" style={{ borderLeft: '3px solid #334155' }}>
+                        <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Tổng Chai Đã Xuất Kho</span>
+                        <div className="mt-1">
+                            <span className="text-lg sm:text-xl font-extrabold font-mono text-slate-900">
+                                {totalShippedBottles.toLocaleString()} <span className="text-xs font-semibold text-slate-500">chai</span>
+                            </span>
+                        </div>
+                        <span className="text-[11px] text-slate-500 mt-1">
+                            Hoàn tác / Hủy: <strong className="font-mono text-rose-600">{historyCounts.REVERSED}</strong> phiếu
+                        </span>
+                    </div>
+                </div>
+            )}
+
+            {/* ── TIER 3: Unified Filter & Search Toolbar ── */}
+            <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-2xs space-y-3">
+                {activeSubTab === 'history' && (
+                    <div className="flex items-center gap-1.5 border-b border-slate-200 pb-3 overflow-x-auto no-scrollbar">
+                        {[
+                            { key: 'ALL', label: 'Tất Cả Phiếu DO', count: historyCounts.ALL },
+                            { key: 'DRAFT', label: 'Nháp / Chờ Xác Nhận', count: historyCounts.DRAFT },
+                            { key: 'CONFIRMED', label: 'Đã Xuất Kho', count: historyCounts.CONFIRMED },
+                            { key: 'SHIPPED', label: 'Đã Giao Hàng', count: historyCounts.SHIPPED },
+                            { key: 'REVERSED', label: 'Hoàn Tác / Hủy', count: historyCounts.REVERSED },
+                        ].map(tab => {
+                            const active = historyStatusFilter === tab.key
+                            return (
+                                <button
+                                    key={tab.key}
+                                    type="button"
+                                    onClick={() => setHistoryStatusFilter(tab.key)}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap border ${
+                                        active
+                                            ? 'bg-lys-teal-strong text-white border-lys-teal-strong shadow-2xs'
+                                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                                    }`}
+                                >
+                                    <span>{tab.label}</span>
+                                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-extrabold ${
+                                        active ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-700'
+                                    }`}>
+                                        {tab.count}
+                                    </span>
+                                </button>
+                            )
+                        })}
+                    </div>
+                )}
+
+                <div className="flex flex-wrap items-center gap-2.5">
+                    <div className="relative flex-1 min-w-[220px]">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
-                            placeholder="Tìm Mã SO, Tên KH, SKU..."
-                            className="w-full pl-9 pr-3 py-2.5 text-base sm:text-xs rounded-lg outline-none font-medium"
-                            style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }}
+                            placeholder={activeSubTab === 'pending' ? 'Tìm mã SO, khách hàng, mã SKU, tên rượu, niên vụ...' : 'Tìm số DO, số SO, tên khách hàng, kho xuất...'}
+                            className="w-full h-9 pl-9 pr-8 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-900 placeholder:text-slate-400 outline-none focus:border-lys-teal-strong"
                         />
-                        <span className="absolute right-3 top-2.5 text-[10px] font-semibold" style={{ color: '#64748B' }}>
-                            {filteredPendingSOs.length} / {pendingSOs.length}
-                        </span>
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-slate-400 hover:text-slate-700 cursor-pointer"
+                            >
+                                <X size={13} />
+                            </button>
+                        )}
                     </div>
 
+                    <select
+                        value={warehouseFilter}
+                        onChange={e => setWarehouseFilter(e.target.value)}
+                        className="h-9 px-3 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 outline-none cursor-pointer"
+                    >
+                        <option value="">Tất cả kho xuất</option>
+                        {activeWarehouses.map(w => (
+                            <option key={w.id} value={w.id}>{w.name}</option>
+                        ))}
+                    </select>
+
+                    {activeFilterCount > 0 && (
+                        <button
+                            type="button"
+                            onClick={resetFilters}
+                            className="flex items-center gap-1 px-2.5 py-1.5 h-9 rounded-lg text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 cursor-pointer transition-all"
+                        >
+                            <RotateCcw size={12} />
+                            <span>Xóa lọc ({activeFilterCount})</span>
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            {/* ── TIER 4: Content Area ── */}
+            {/* TAB 1: PENDING SALES ORDERS WAITING FOR FULFILLMENT */}
+            {activeSubTab === 'pending' && (
+                <div className="space-y-3">
                     {loading ? (
-                        <div className="flex justify-center py-12">
-                            <Loader2 size={20} className="animate-spin" style={{ color: '#B45309' }} />
+                        <div className="flex justify-center py-12 bg-white rounded-lg border border-slate-200">
+                            <Loader2 size={22} className="animate-spin text-lys-teal-strong" />
                         </div>
                     ) : filteredPendingSOs.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-12 gap-2 rounded-lg" style={{ border: '1px dashed #CBD5E1', background: '#FFFFFF' }}>
-                            <CheckCircle2 size={28} style={{ color: '#16A34A' }} />
-                            <p className="text-xs font-semibold" style={{ color: '#0F172A' }}>
-                                {searchQuery ? 'Không tìm thấy đơn hàng' : 'Không có đơn chờ xuất'}
+                        <div className="flex flex-col items-center justify-center py-14 gap-2 rounded-lg border border-dashed border-slate-300 bg-white">
+                            <CheckCircle2 size={28} className="text-emerald-600" />
+                            <p className="text-xs font-semibold text-slate-900">
+                                {searchQuery || warehouseFilter ? 'Không tìm thấy đơn hàng khớp bộ lọc' : 'Không có đơn chờ xuất kho'}
                             </p>
                         </div>
                     ) : (
@@ -312,54 +509,57 @@ export function DeliveryOrderTab({ warehouses }: {
                                 return (
                                     <div
                                         key={so.id}
-                                        className="p-3.5 sm:p-4 rounded-lg flex flex-col justify-between transition-all shadow-sm hover:shadow-md"
-                                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
+                                        className="p-4 rounded-lg flex flex-col justify-between transition-all shadow-2xs hover:shadow-md bg-white border border-slate-200"
                                     >
                                         <div>
                                             {/* SO Header */}
                                             <div className="flex items-center justify-between mb-2">
                                                 <div className="flex items-center gap-1.5">
-                                                    <span className="inline-block px-2 py-0.5 text-[11px] font-extrabold font-mono rounded whitespace-nowrap shrink-0"
-                                                        style={{ background: 'rgba(180,83,9,0.15)', color: '#B47816' }}>
+                                                    <span className="inline-block px-2 py-0.5 text-[11px] font-extrabold font-mono rounded bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
                                                         {so.soNo}
                                                     </span>
-                                                    <span className="inline-block text-[9px] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap shrink-0"
-                                                        style={{ background: 'rgba(22,163,74,0.12)', color: '#16A34A' }}>
-                                                        Sẵn Sàng
+                                                    <span className="inline-block text-[10px] px-2 py-0.5 rounded font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
+                                                        Sẵn Sàng Nhặt
                                                     </span>
                                                 </div>
-                                                <span className="text-[10px] font-semibold" style={{ color: '#64748B' }}>
-                                                    {so.lines.length} SP ({totalItems} chai đặt)
+                                                <span className="text-[11px] font-mono font-bold text-slate-600">
+                                                    {so.lines.length} SKU · {totalItems} chai
                                                 </span>
                                             </div>
 
-                                            {/* Customer Name */}
-                                            <h4 className="text-[13px] font-bold truncate mb-1.5" style={{ color: '#0F172A' }}>
-                                                {so.customerName || (so as any).customer?.name || 'Khách hàng'}
-                                            </h4>
-
-                                            {/* Default Warehouse Badge */}
-                                            <div className="mb-2.5">
-                                                <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded flex items-center gap-1 inline-flex whitespace-nowrap shrink-0"
-                                                    style={{ background: '#F1F5F9', color: '#334155', border: '1px solid #E2E8F0' }}>
-                                                    Kho xuất: <strong style={{ color: '#0F172A' }}>{targetWh?.name || 'Kho Mặc Định'}</strong>
+                                            {/* Customer Name & Warehouse */}
+                                            <div className="flex items-center justify-between gap-2 mb-2.5">
+                                                <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                                                    {so.customerName || (so as any).customer?.name || 'Khách hàng'}
+                                                </h4>
+                                                <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
+                                                    Kho: <strong>{targetWh?.name || 'Kho Mặc Định'}</strong>
                                                 </span>
                                             </div>
 
-                                            {/* Product Lines */}
-                                            <div className="space-y-1.5 max-h-32 overflow-y-auto pr-0.5">
-                                                {so.lines.map(line => {
+                                            {/* Product Lines with SKU + Vintage clearly shown */}
+                                            <div className="space-y-1.5 max-h-36 overflow-y-auto pr-0.5">
+                                                {so.lines.map((line, idx) => {
                                                     const pName = line.productName || (line as any).product?.productName || ''
                                                     const pCode = line.skuCode || (line as any).product?.skuCode || ''
+                                                    const vStr = line.vintage ? String(line.vintage) : 'NV'
                                                     return (
-                                                        <div key={line.productId} className="inline-flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-lg whitespace-nowrap shrink-0"
-                                                            style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                                                        <div
+                                                            key={`${line.productId}-${idx}`}
+                                                            className="flex items-center justify-between text-xs px-2.5 py-1.5 rounded-md bg-slate-50 border border-slate-200/80"
+                                                        >
                                                             <div className="truncate pr-2 flex items-center gap-1.5 min-w-0">
-                                                                {pCode && <span className="font-mono font-extrabold text-slate-500 shrink-0">{pCode}</span>}
-                                                                {pCode && pName && <span className="text-[#CBD5E1] shrink-0">•</span>}
-                                                                <span className="font-semibold text-[#0F172A] truncate">{pName || pCode || 'Sản phẩm'}</span>
+                                                                {pCode && (
+                                                                    <span className="font-mono font-extrabold text-[11px] px-1.5 py-0.2 rounded bg-white text-slate-800 border border-slate-200 shrink-0">
+                                                                        {pCode}
+                                                                    </span>
+                                                                )}
+                                                                <span className="font-mono font-bold text-[10px] px-1.5 py-0.2 rounded bg-amber-50 text-amber-800 border border-amber-200 shrink-0">
+                                                                    {vStr}
+                                                                </span>
+                                                                <span className="font-semibold text-slate-900 truncate">{pName || pCode || 'Sản phẩm'}</span>
                                                             </div>
-                                                            <span className="font-mono font-bold shrink-0 text-[#D97706] ml-2">
+                                                            <span className="font-mono font-extrabold shrink-0 text-amber-700 ml-2">
                                                                 x{line.qtyOrdered}
                                                             </span>
                                                         </div>
@@ -369,16 +569,16 @@ export function DeliveryOrderTab({ warehouses }: {
                                         </div>
 
                                         {/* Action Footer */}
-                                        <div className="mt-3 pt-2.5 flex items-center justify-between" style={{ borderTop: '1px solid #E2E8F0' }}>
-                                            <span className="text-[10px] font-medium" style={{ color: '#64748B' }}>
-                                                FIFO tự động
+                                        <div className="mt-3 pt-2.5 flex items-center justify-between border-t border-slate-100">
+                                            <span className="text-[11px] font-medium text-slate-500">
+                                                Tự động gợi ý vị trí & lô FIFO
                                             </span>
                                             <button
+                                                type="button"
                                                 onClick={() => handleStartPicking(so.id)}
-                                                className="flex items-center gap-1.5 px-3.5 py-2 text-[11px] font-bold rounded-lg shadow-sm transition-all hover:brightness-105 active:scale-95"
-                                                style={{ background: '#D97706', color: '#FFFFFF', minHeight: '36px' }}
+                                                className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-lg shadow-2xs transition-all hover:opacity-90 active:scale-95 bg-lys-teal-strong text-white cursor-pointer"
                                             >
-                                                Nhặt Hàng & Xuất Kho <ArrowRight size={12} />
+                                                Nhặt Hàng & Xuất Kho <ArrowRight size={13} />
                                             </button>
                                         </div>
                                     </div>
@@ -391,59 +591,58 @@ export function DeliveryOrderTab({ warehouses }: {
 
             {/* TAB 2: PROCESSED DELIVERY ORDERS HISTORY */}
             {activeSubTab === 'history' && (
-                <div className="rounded-lg overflow-hidden shadow-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                <div className="rounded-lg overflow-hidden shadow-xs bg-white border border-slate-200">
                     {/* Desktop Table (>= 768px) */}
-                    <div className="hidden md:block overflow-x-hidden">
-                        <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                    <div className="hidden md:block overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-xs">
                             <thead>
-                                <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-                                    {['Số DO', 'Số SO', 'Khách Hàng', 'Kho', 'SP', 'SL Đặt', 'SL Giao', 'Trạng Thái', 'Ngày', 'Thao Tác'].map(h => (
-                                        <th key={h} className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-semibold whitespace-nowrap" style={{ color: '#64748B' }}>{h}</th>
+                                <tr className="bg-slate-50 border-b border-slate-200">
+                                    {['Số DO', 'Số SO', 'Khách Hàng', 'Kho Xuất', 'Số SKU', 'SL Đặt', 'SL Giao', 'Trạng Thái', 'Ngày Lập', 'Thao Tác'].map(h => (
+                                        <th key={h} className="px-3 py-2.5 text-[11px] uppercase tracking-wider font-extrabold text-slate-600 whitespace-nowrap">{h}</th>
                                     ))}
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-slate-100">
                                 {loading ? (
                                     <tr><td colSpan={10} className="text-center py-10">
-                                        <Loader2 size={18} className="animate-spin inline" style={{ color: '#B45309' }} />
+                                        <Loader2 size={20} className="animate-spin inline text-lys-teal-strong" />
                                     </td></tr>
-                                ) : rows.length === 0 ? (
-                                    <tr><td colSpan={10} className="text-center py-10 text-xs" style={{ color: '#64748B' }}>Chưa có DO nào</td></tr>
-                                ) : rows.map(d => {
+                                ) : filteredHistoryRows.length === 0 ? (
+                                    <tr><td colSpan={10} className="text-center py-12 text-xs text-slate-500">Không tìm thấy phiếu xuất kho (DO) nào khớp bộ lọc</td></tr>
+                                ) : filteredHistoryRows.map(d => {
                                     const st = DO_STATUS[d.status] ?? DO_STATUS.DRAFT
                                     const canReverse = d.status !== 'REVERSED' && d.status !== 'CANCELLED'
                                     return (
-                                        <tr key={d.id} className="transition-colors cursor-pointer hover:bg-slate-50"
-                                            style={{ borderBottom: '1px solid #F1F5F9' }}
+                                        <tr key={d.id} className="transition-colors cursor-pointer hover:bg-slate-50/80"
                                             onClick={() => openDetail(d.id)}>
-                                            <td className="px-3 py-2.5 text-[11px] font-bold font-mono whitespace-nowrap" style={{ color: '#B47816' }}>{d.doNo}</td>
-                                            <td className="px-3 py-2.5 text-[11px] font-mono whitespace-nowrap" style={{ color: '#475569' }}>{d.soNo}</td>
-                                            <td className="px-3 py-2.5 text-[11px]">
-                                                <span className="font-bold text-[#0F172A] block truncate max-w-[170px]" title={d.customerName}>
+                                            <td className="px-3 py-2.5 font-bold font-mono text-lys-teal-strong whitespace-nowrap">{d.doNo}</td>
+                                            <td className="px-3 py-2.5 font-mono font-semibold text-slate-700 whitespace-nowrap">{d.soNo}</td>
+                                            <td className="px-3 py-2.5">
+                                                <span className="font-bold text-slate-900 block truncate max-w-[180px]" title={d.customerName}>
                                                     {d.customerName}
                                                 </span>
                                             </td>
-                                            <td className="px-2.5 py-2.5 text-[11px] truncate max-w-[160px]" style={{ color: '#475569' }} title={d.warehouseName}>{d.warehouseName}</td>
-                                            <td className="px-3 py-2.5 text-[11px]" style={{ color: '#475569' }}>{d.lineCount}</td>
-                                            <td className="px-3 py-2.5 text-[11px] font-mono" style={{ color: '#475569' }}>
+                                            <td className="px-2.5 py-2.5 text-slate-600 truncate max-w-[160px]" title={d.warehouseName}>{d.warehouseName}</td>
+                                            <td className="px-3 py-2.5 font-mono text-slate-600">{d.lineCount}</td>
+                                            <td className="px-3 py-2.5 font-mono text-slate-600">
                                                 {d.totalQtyOrdered.toLocaleString()}
                                             </td>
-                                            <td className="px-3 py-2.5 text-[11px] font-bold font-mono" style={{ color: '#0F172A' }}>
+                                            <td className="px-3 py-2.5 font-bold font-mono text-slate-900">
                                                 {d.totalQtyShipped.toLocaleString()}
                                             </td>
                                             <td className="px-3 py-2.5 whitespace-nowrap">
-                                                <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded whitespace-nowrap shrink-0" style={{ color: st.color, background: st.bg }}>{st.label}</span>
+                                                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap shrink-0" style={{ color: st.color, background: st.bg }}>{st.label}</span>
                                             </td>
-                                            <td className="px-3 py-2.5 text-[10px] whitespace-nowrap" style={{ color: '#64748B' }}>{formatDate(d.createdAt)}</td>
+                                            <td className="px-3 py-2.5 text-[11px] text-slate-500 whitespace-nowrap">{formatDate(d.createdAt)}</td>
                                             <td className="px-3 py-2.5 whitespace-nowrap">
                                                 <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
-                                                    <button onClick={() => openDetail(d.id)} className="p-1.5 rounded-lg hover:bg-slate-100"
+                                                    <button onClick={() => openDetail(d.id)} className="p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"
                                                         title="Xem chi tiết"
-                                                        style={{ background: 'rgba(29,78,216,0.1)', color: '#1D4ED8' }}>
+                                                        style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
                                                         <Eye size={13} />
                                                     </button>
                                                     {d.status === 'DRAFT' && (
-                                                        <button onClick={() => handleConfirm(d.id)} className="p-1.5 rounded-lg hover:bg-slate-100"
+                                                        <button onClick={() => handleConfirm(d.id)} className="p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"
                                                             title="Xác nhận"
                                                             style={{ background: 'rgba(21,128,61,0.1)', color: '#15803D' }}>
                                                             <CheckCircle2 size={13} />
@@ -452,7 +651,7 @@ export function DeliveryOrderTab({ warehouses }: {
                                                     {canReverse && (
                                                         <button onClick={() => handleReverse(d.id, d.doNo)}
                                                             title="Reverse (Hoàn Tác Xuất Kho — Chỉ Admin)"
-                                                            className="px-2 py-1 text-[10px] font-bold rounded-md flex items-center gap-1 transition-all hover:brightness-105"
+                                                            className="px-2 py-1 text-[10px] font-bold rounded-md flex items-center gap-1 transition-all hover:brightness-105 cursor-pointer"
                                                             style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.2)' }}>
                                                             <RotateCcw size={11} /> Hoàn Tác</button>
                                                     )}
@@ -466,32 +665,31 @@ export function DeliveryOrderTab({ warehouses }: {
                     </div>
 
                     {/* Mobile Cards (< 768px) */}
-                    <div className="block md:hidden p-2.5 space-y-2">
+                    <div className="block md:hidden p-2.5 space-y-2 bg-slate-50/60">
                         {loading ? (
-                            <div className="text-center py-10"><Loader2 size={18} className="animate-spin inline" style={{ color: '#B45309' }} /></div>
-                        ) : rows.length === 0 ? (
-                            <div className="text-center py-10 text-xs" style={{ color: '#64748B' }}>Chưa có DO nào</div>
-                        ) : rows.map(d => {
+                            <div className="text-center py-10"><Loader2 size={18} className="animate-spin inline text-lys-teal-strong" /></div>
+                        ) : filteredHistoryRows.length === 0 ? (
+                            <div className="text-center py-10 text-xs text-slate-500">Không tìm thấy phiếu DO nào</div>
+                        ) : filteredHistoryRows.map(d => {
                             const st = DO_STATUS[d.status] ?? DO_STATUS.DRAFT
                             const canReverse = d.status !== 'REVERSED' && d.status !== 'CANCELLED'
                             return (
                                 <div key={d.id} onClick={() => openDetail(d.id)}
-                                    className="p-3 rounded-lg space-y-2 cursor-pointer transition-all active:scale-[0.99] shadow-sm"
-                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                    className="p-3 rounded-lg space-y-2 cursor-pointer transition-all active:scale-[0.99] shadow-2xs bg-white border border-slate-200">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[11px] font-bold font-mono" style={{ color: '#B47816' }}>
+                                        <span className="text-xs font-bold font-mono text-lys-teal-strong">
                                             {d.doNo}
                                         </span>
                                         <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded whitespace-nowrap shrink-0" style={{ color: st.color, background: st.bg }}>
                                             {st.label}
                                         </span>
                                     </div>
-                                    <div className="text-xs font-bold text-[#0F172A] truncate">
+                                    <div className="text-xs font-bold text-slate-900 truncate">
                                         {d.customerName}
                                     </div>
                                     <div className="flex items-center justify-between text-[11px]">
-                                        <span style={{ color: '#64748B' }}>SO: <strong className="font-mono text-[#334155]">{d.soNo}</strong></span>
-                                        <span className="font-mono font-bold" style={{ color: '#0F172A' }}>
+                                        <span className="text-slate-500">SO: <strong className="font-mono text-slate-700">{d.soNo}</strong></span>
+                                        <span className="font-mono font-bold text-slate-900">
                                             Giao {d.totalQtyShipped} / Đặt {d.totalQtyOrdered} chai
                                         </span>
                                     </div>

@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
-import { requireAuth } from '@/lib/session'
+import { requireAuth, hasRole } from '@/lib/session'
 
 // ═══════════════════════════════════════════════════
 // CSG — Consignment Management
@@ -342,8 +342,8 @@ export async function getConsignmentStats() {
 // ─── Customer options for dropdown ────────────────
 export async function getCustomerOptionsForCSG() {
     return prisma.customer.findMany({
-        where: { status: 'ACTIVE', customerType: { in: ['HORECA', 'WHOLESALE_DISTRIBUTOR'] } },
-        select: { id: true, name: true, code: true, customerType: true },
+        where: { status: 'ACTIVE', deletedAt: null },
+        select: { id: true, name: true, code: true, customerType: true, channel: true },
         orderBy: { name: 'asc' },
     })
 }
@@ -781,7 +781,10 @@ export async function createConsignmentWarehouse(input: {
     address?: string
 }): Promise<{ success: boolean; warehouseId?: string; error?: string }> {
     try {
-        await requireAuth()
+        const user = await requireAuth()
+        if (!hasRole(user, 'CEO', 'ADMIN', 'TRO_LY', 'CBO', 'SALES_MGR', 'SALES_ADMIN', 'THU_KHO') && !user.roles.includes('Operation Manager')) {
+            return { success: false, error: 'Chỉ Sales Admin, Thủ Kho hoặc Quản lý mới có quyền khởi tạo Kho Ký Gửi.' }
+        }
         const customer = await prisma.customer.findUnique({
             where: { id: input.customerId },
             include: { addresses: true },
@@ -900,6 +903,9 @@ export async function createConsignmentTransfer(input: {
 }): Promise<{ success: boolean; transferNo?: string; error?: string }> {
     try {
         const user = await requireAuth()
+        if (!hasRole(user, 'CEO', 'ADMIN', 'TRO_LY', 'CBO', 'SALES_MGR', 'SALES_ADMIN', 'THU_KHO') && !user.roles.includes('Operation Manager')) {
+            return { success: false, error: 'Chỉ Thủ Kho, Sales Admin hoặc Quản lý mới có quyền xuất chuyển kho ký gửi.' }
+        }
 
         if (!input.fromWarehouseId || !input.toWarehouseId) {
             return { success: false, error: 'Vui lòng chọn Kho xuất và Kho nhận ký gửi' }
@@ -1272,6 +1278,9 @@ export async function sellFromConsignmentWarehouse(input: {
 }): Promise<{ success: boolean; soNo?: string; invoiceNo?: string; error?: string }> {
     try {
         const user = await requireAuth()
+        if (hasRole(user, 'THU_KHO') && !hasRole(user, 'CEO', 'ADMIN', 'TRO_LY', 'CBO', 'SALES_MGR', 'SALES_ADMIN', 'KE_TOAN') && !user.roles.includes('Operation Manager')) {
+            return { success: false, error: 'Thủ kho không có quyền chốt bán tạo hóa đơn công nợ từ kho ký gửi. Vui lòng chuyển Sales Admin hoặc Kế toán thực hiện.' }
+        }
 
         const wh = await prisma.warehouse.findUnique({
             where: { id: input.warehouseId },
@@ -1406,4 +1415,88 @@ export async function sellFromConsignmentWarehouse(input: {
         return { success: false, error: err.message }
     }
 }
+
+// ─── Get Consignment Orders (Full SalesOrder format with CONSIGNMENT type or CSG settlement) ───
+export type ConsignmentOrderRow = {
+    id: string
+    soNo: string
+    orderType: string
+    status: string
+    customerId: string
+    customerName: string
+    customerCode: string
+    legalEntityCode: string | null
+    legalEntityName: string | null
+    salesRepName: string
+    paymentTerm: string
+    totalAmount: number
+    vatAmount: number
+    orderDiscount: number
+    totalQty: number
+    lineCount: number
+    shippingAddress: string | null
+    receiverPhone: string | null
+    notes: string | null
+    createdAt: Date
+}
+
+export async function getConsignmentOrders(): Promise<ConsignmentOrderRow[]> {
+    const orders = await prisma.salesOrder.findMany({
+        where: {
+            OR: [
+                { orderType: 'CONSIGNMENT' as any },
+                { soNo: { startsWith: 'SO-CSG-' } },
+                { warehouse: { type: 'CONSIGNMENT' } },
+            ],
+        },
+        include: {
+            customer: {
+                select: {
+                    id: true,
+                    name: true,
+                    code: true,
+                    receiverPhone: true,
+                    purchasingPhone: true,
+                    addresses: { orderBy: [{ isDefault: 'desc' }, { id: 'asc' }], take: 1 },
+                },
+            },
+            legalEntity: { select: { code: true, name: true } },
+            salesRep: { select: { name: true } },
+            shippingAddress: true,
+            lines: { select: { qtyOrdered: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+    })
+
+    return orders.map(o => {
+        const addr = o.shippingAddress || o.customer.addresses?.[0]
+        const fullAddr = addr
+            ? [addr.address, addr.ward, addr.district, addr.city].filter(Boolean).join(', ')
+            : null
+        return {
+            id: o.id,
+            soNo: o.soNo,
+            orderType: (o as any).orderType || 'STANDARD',
+            status: o.status,
+            customerId: o.customerId,
+            customerName: o.customer.name,
+            customerCode: o.customer.code,
+            legalEntityCode: o.legalEntity?.code || null,
+            legalEntityName: o.legalEntity?.name || null,
+            salesRepName: o.salesRep?.name || '—',
+            paymentTerm: o.paymentTerm,
+            totalAmount: Number(o.totalAmount),
+            vatAmount: Number(o.vatAmount || 0),
+            orderDiscount: Number(o.orderDiscount || 0),
+            totalQty: o.lines.reduce((s, l) => s + Number(l.qtyOrdered), 0),
+            lineCount: o.lines.length,
+            shippingAddress: fullAddr,
+            receiverPhone: o.customer.receiverPhone || o.customer.purchasingPhone || null,
+            notes: o.notes,
+            createdAt: o.createdAt,
+        }
+    })
+}
+
 

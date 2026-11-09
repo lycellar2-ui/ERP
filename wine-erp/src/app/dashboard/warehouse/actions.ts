@@ -1295,6 +1295,130 @@ export async function createDeliveryOrder(input: {
     }
 }
 
+// ── Helper: Move DO Lines into Customer's Consignment Warehouse for CONSIGNMENT Orders ──
+async function transferDOLinesToConsignmentWarehouse(
+    tx: any,
+    doId: string,
+    doNo: string,
+    so: any
+) {
+    // 1. Find or create Consignment Warehouse for customer
+    let csgWh = await tx.warehouse.findFirst({
+        where: { customerId: so.customerId, type: 'CONSIGNMENT' },
+        include: { locations: true },
+    })
+
+    if (!csgWh) {
+        let baseCode = `WH-CSG-${so.customer?.code || 'CUST'}`
+        const codeCheck = await tx.warehouse.findUnique({ where: { code: baseCode } })
+        if (codeCheck) {
+            baseCode = `${baseCode}-${Math.floor(10 + Math.random() * 90)}`
+        }
+        csgWh = await tx.warehouse.create({
+            data: {
+                code: baseCode,
+                name: `Kho Ký Gửi - ${so.customer?.name || 'Khách hàng'}`,
+                type: 'CONSIGNMENT',
+                customerId: so.customerId,
+                legalEntityId: so.legalEntityId || null,
+                allowSales: true,
+                locations: {
+                    create: {
+                        locationCode: 'CSG-DEFAULT',
+                        zone: 'CSG',
+                        type: 'STORAGE',
+                    }
+                }
+            },
+            include: { locations: true },
+        })
+    }
+
+    let csgLocation = csgWh.locations?.[0]
+    if (!csgLocation) {
+        csgLocation = await tx.location.create({
+            data: {
+                warehouseId: csgWh.id,
+                locationCode: 'CSG-DEFAULT',
+                zone: 'CSG',
+                type: 'STORAGE',
+            }
+        })
+    }
+
+    // 2. Find or create Active ConsignmentAgreement for customer
+    let agreement = await tx.consignmentAgreement.findFirst({
+        where: { customerId: so.customerId, status: 'ACTIVE' }
+    })
+    if (!agreement) {
+        const now = new Date()
+        const endDate = new Date(now)
+        endDate.setFullYear(endDate.getFullYear() + 1)
+        agreement = await tx.consignmentAgreement.create({
+            data: {
+                customerId: so.customerId,
+                startDate: now,
+                endDate,
+                reportFrequency: 'MONTHLY',
+                status: 'ACTIVE',
+            }
+        })
+    }
+
+    // 3. Create StockLots in Consignment Warehouse & update ConsignmentStock
+    const doLinesWithLots = await tx.deliveryOrderLine.findMany({
+        where: { doId },
+        include: { lot: true },
+    })
+
+    for (let i = 0; i < doLinesWithLots.length; i++) {
+        const line = doLinesWithLots[i]
+        const qty = Number(line.qtyShipped || line.qtyPicked || 0)
+        if (qty <= 0) continue
+
+        const srcLot = line.lot
+        const csgLotNo = `${srcLot?.lotNo || 'LOT'}-CSG-${doNo}-${i + 1}`
+
+        await tx.stockLot.create({
+            data: {
+                lotNo: csgLotNo,
+                productId: line.productId,
+                locationId: csgLocation.id,
+                ownerEntityId: srcLot?.ownerEntityId || so.legalEntityId || null,
+                shipmentId: srcLot?.shipmentId || null,
+                vintage: srcLot?.vintage || null,
+                qtyReceived: qty,
+                qtyAvailable: qty,
+                unitLandedCost: srcLot?.unitLandedCost || 0,
+                receivedDate: new Date(),
+                status: 'AVAILABLE',
+            }
+        })
+
+        if (agreement) {
+            await tx.consignmentStock.upsert({
+                where: {
+                    agreementId_productId: {
+                        agreementId: agreement.id,
+                        productId: line.productId,
+                    }
+                },
+                update: {
+                    qtyConsigned: { increment: qty },
+                    qtyRemaining: { increment: qty },
+                },
+                create: {
+                    agreementId: agreement.id,
+                    productId: line.productId,
+                    qtyConsigned: qty,
+                    qtySold: 0,
+                    qtyRemaining: qty,
+                }
+            })
+        }
+    }
+}
+
 // ── Confirm DO — Mark as shipped ──────────────────
 export async function confirmDeliveryOrder(
     doId: string,
@@ -1348,16 +1472,22 @@ export async function confirmDeliveryOrder(
             const totalShipped = allDOLines.reduce((s, l) => s + Number(l.qtyShipped || l.qtyPicked || 0), 0)
 
             const newSOStatus = totalShipped >= totalOrdered ? 'DELIVERED' : 'PARTIALLY_DELIVERED'
-            await tx.salesOrder.update({
+            const updatedSO = await tx.salesOrder.update({
                 where: { id: soId },
                 data: { status: newSOStatus },
+                include: { customer: true },
             })
 
-            // Auto COGS journal entry: DR 632 / CR 156
-            const { generateDeliveryOrderCOGSJournal } = await import('../finance/actions')
-            const journalResult = await generateDeliveryOrderCOGSJournal(doId, confirmerId ?? 'system', tx)
-            if (!journalResult.success) {
-                throw new Error(journalResult.error || 'Lỗi sinh bút toán giá vốn hàng bán')
+            if ((updatedSO as any).orderType === 'CONSIGNMENT') {
+                // CONSIGNMENT Order: Move shipped stock into Customer's Consignment Warehouse (no COGS 632/156 yet)
+                await transferDOLinesToConsignmentWarehouse(tx, doId, doNo, updatedSO)
+            } else {
+                // Auto COGS journal entry: DR 632 / CR 156
+                const { generateDeliveryOrderCOGSJournal } = await import('../finance/actions')
+                const journalResult = await generateDeliveryOrderCOGSJournal(doId, confirmerId ?? 'system', tx)
+                if (!journalResult.success) {
+                    throw new Error(journalResult.error || 'Lỗi sinh bút toán giá vốn hàng bán')
+                }
             }
         })
 
@@ -1373,8 +1503,10 @@ export async function confirmDeliveryOrder(
         }
 
         revalidateCache('wms')
+        revalidateCache('consignment')
         revalidatePath('/dashboard/warehouse')
         revalidatePath('/dashboard/sales')
+        revalidatePath('/dashboard/consignment')
         revalidatePath('/dashboard/finance')
         return { success: true }
     } catch (err: any) {
@@ -1411,12 +1543,21 @@ export async function markDODelivered(
                     })
                 }
 
-                // Auto COGS journal
-                const user = await getCurrentUser()
-                const { generateDeliveryOrderCOGSJournal } = await import('../finance/actions')
-                const journalResult = await generateDeliveryOrderCOGSJournal(doId, user?.id ?? 'system', tx)
-                if (!journalResult.success) {
-                    throw new Error(journalResult.error || 'Lỗi sinh bút toán giá vốn hàng bán')
+                const soRecord = await tx.salesOrder.findUnique({
+                    where: { id: deliveryOrder.soId },
+                    include: { customer: true },
+                })
+
+                if (soRecord && (soRecord as any).orderType === 'CONSIGNMENT') {
+                    await transferDOLinesToConsignmentWarehouse(tx, doId, deliveryOrder.doNo, soRecord)
+                } else {
+                    // Auto COGS journal
+                    const user = await getCurrentUser()
+                    const { generateDeliveryOrderCOGSJournal } = await import('../finance/actions')
+                    const journalResult = await generateDeliveryOrderCOGSJournal(doId, user?.id ?? 'system', tx)
+                    if (!journalResult.success) {
+                        throw new Error(journalResult.error || 'Lỗi sinh bút toán giá vốn hàng bán')
+                    }
                 }
             }
 
@@ -1490,7 +1631,7 @@ export async function reverseDeliveryOrder(
             where: { id: doId },
             include: {
                 lines: true,
-                so: { select: { id: true, soNo: true } },
+                so: { select: { id: true, soNo: true, orderType: true, customerId: true } },
             },
         })
 
@@ -1529,9 +1670,19 @@ export async function reverseDeliveryOrder(
                 data: { status: 'CONFIRMED' },
             })
 
-            // 4. Reverse COGS accounting journal: DR 156 / CR 632
-            const { reverseDeliveryOrderCOGSJournal } = await import('../finance/actions')
-            await reverseDeliveryOrderCOGSJournal(doId, user?.id ?? 'system', tx)
+            if ((deliveryOrder.so as any)?.orderType === 'CONSIGNMENT') {
+                // Reverse Consignment StockLots created for this DO
+                const csgLots = await tx.stockLot.findMany({
+                    where: { lotNo: { contains: `-CSG-${deliveryOrder.doNo}-` } }
+                })
+                for (const csgLot of csgLots) {
+                    await tx.stockLot.delete({ where: { id: csgLot.id } })
+                }
+            } else {
+                // 4. Reverse COGS accounting journal: DR 156 / CR 632
+                const { reverseDeliveryOrderCOGSJournal } = await import('../finance/actions')
+                await reverseDeliveryOrderCOGSJournal(doId, user?.id ?? 'system', tx)
+            }
         })
 
         if (user?.id) {

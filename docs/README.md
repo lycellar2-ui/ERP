@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 148 Rules rút ra từ 111 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 149 Rules rút ra từ 112 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -242,4 +242,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-11-08 22:42 | Wine ERP v12.43 - Friendly location names across WMS & DO pick flow + Synced 3-warehouse actual stock (25,146 bottles / 545 lots)*
+*Last updated: 2026-11-09 15:20 | Wine ERP v12.44 - Full Consignment Order (CONSIGNMENT SOType) workflow & Multi-page A4 print page-break fix*

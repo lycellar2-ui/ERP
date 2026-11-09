@@ -59,12 +59,34 @@ export default function PrintableConsignmentDispatch({ data, onClose }: Props) {
                 @media print {
                     @page {
                         size: A4 portrait;
-                        margin: 12mm 10mm 12mm 10mm;
+                        margin: 10mm 10mm 10mm 10mm;
+                    }
+                    header, nav, aside, .no-print {
+                        display: none !important;
                     }
                     body {
                         font-family: 'Times New Roman', Times, 'Liberation Serif', serif !important;
                         -webkit-print-color-adjust: exact;
                         print-color-adjust: exact;
+                        background: #ffffff !important;
+                    }
+                    table {
+                        page-break-inside: auto;
+                    }
+                    thead {
+                        display: table-header-group !important;
+                    }
+                    tfoot {
+                        display: table-footer-group !important;
+                    }
+                    tr {
+                        break-inside: avoid !important;
+                        page-break-inside: avoid !important;
+                        page-break-after: auto;
+                    }
+                    .print-keep-together {
+                        break-inside: avoid !important;
+                        page-break-inside: avoid !important;
                     }
                 }
                 .font-times {
@@ -207,39 +229,41 @@ export default function PrintableConsignmentDispatch({ data, onClose }: Props) {
                     </table>
                 </div>
 
-                <div className="text-xs italic mb-8">
-                    * Số lượng xuất kho (viết bằng chữ): ............................................................................................................ chai.
-                </div>
+                <div className="print-keep-together break-inside-avoid print:break-inside-avoid">
+                    <div className="text-xs italic mb-8">
+                        * Số lượng xuất kho (viết bằng chữ): ............................................................................................................ chai.
+                    </div>
 
-                {/* 4 Chữ ký */}
-                <div className="pt-2">
-                    <div className="grid grid-cols-4 text-center text-xs">
-                        <div className="space-y-1">
-                            <div className="font-extrabold uppercase text-[10px]">NGƯỜI LẬP PHIẾU</div>
-                            <div className="text-[10px] italic">(Ký, họ tên)</div>
-                            <div className="h-16"></div>
-                            <div className="font-bold">...........................</div>
-                        </div>
+                    {/* 4 Chữ ký */}
+                    <div className="pt-2">
+                        <div className="grid grid-cols-4 text-center text-xs">
+                            <div className="space-y-1">
+                                <div className="font-extrabold uppercase text-[10px]">NGƯỜI LẬP PHIẾU</div>
+                                <div className="text-[10px] italic">(Ký, họ tên)</div>
+                                <div className="h-16"></div>
+                                <div className="font-bold">...........................</div>
+                            </div>
 
-                        <div className="space-y-1">
-                            <div className="font-extrabold uppercase text-[10px]">THỦ KHO XUẤT</div>
-                            <div className="text-[10px] italic">(Ký, họ tên)</div>
-                            <div className="h-16"></div>
-                            <div className="font-bold">...........................</div>
-                        </div>
+                            <div className="space-y-1">
+                                <div className="font-extrabold uppercase text-[10px]">THỦ KHO XUẤT</div>
+                                <div className="text-[10px] italic">(Ký, họ tên)</div>
+                                <div className="h-16"></div>
+                                <div className="font-bold">...........................</div>
+                            </div>
 
-                        <div className="space-y-1">
-                            <div className="font-extrabold uppercase text-[10px]">NGƯỜI VẬN CHUYỂN</div>
-                            <div className="text-[10px] italic">(Ký, họ tên)</div>
-                            <div className="h-16"></div>
-                            <div className="font-bold">...........................</div>
-                        </div>
+                            <div className="space-y-1">
+                                <div className="font-extrabold uppercase text-[10px]">NGƯỜI VẬN CHUYỂN</div>
+                                <div className="text-[10px] italic">(Ký, họ tên)</div>
+                                <div className="h-16"></div>
+                                <div className="font-bold">...........................</div>
+                            </div>
 
-                        <div className="space-y-1">
-                            <div className="font-extrabold uppercase text-[10px]">BÊN NHẬN KÝ GỬI</div>
-                            <div className="text-[10px] italic">(Ký, đóng dấu, họ tên)</div>
-                            <div className="h-16"></div>
-                            <div className="font-bold">...........................</div>
+                            <div className="space-y-1">
+                                <div className="font-extrabold uppercase text-[10px]">BÊN NHẬN KÝ GỬI</div>
+                                <div className="text-[10px] italic">(Ký, đóng dấu, họ tên)</div>
+                                <div className="h-16"></div>
+                                <div className="font-bold">...........................</div>
+                            </div>
                         </div>
                     </div>
                 </div>

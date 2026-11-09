@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from 'react'
 import { getSalesOrderDetail } from '../actions'
 import { formatVND, formatDateTime } from '@/lib/utils'
-import { Loader2, Printer, ArrowLeft, Globe } from 'lucide-react'
+import { Loader2, Printer, ArrowLeft, Globe, Eye, EyeOff } from 'lucide-react'
 
 interface Props {
     searchParams: Promise<{ id?: string; lang?: string }>
@@ -41,6 +41,11 @@ const I18N = {
         enBtn: 'English',
         orderTitleStandard: 'ĐƠN BÁN HÀNG',
         orderTitleTasting: 'ĐƠN HÀNG TASTING (KHÔNG THU TIỀN)',
+        orderTitleConsignment: 'ĐƠN HÀNG KÝ GỬI',
+        consignmentSubtitle: 'Hàng ký gửi — Thanh toán theo thực tế tiêu thụ',
+        grandTotalConsignmentLabel: 'Tổng giá trị ký gửi (tạm tính):',
+        showPricesBtn: 'Hiện đơn giá',
+        hidePricesBtn: 'Ẩn đơn giá',
         draftPrefix: 'DỰ THẢO - ',
         basedOnProposal: 'Căn cứ Tờ trình',
         dateCreated: 'Ngày lập',
@@ -105,6 +110,11 @@ const I18N = {
         enBtn: 'English',
         orderTitleStandard: 'SALES ORDER',
         orderTitleTasting: 'TASTING ORDER (COMPLIMENTARY)',
+        orderTitleConsignment: 'CONSIGNMENT ORDER',
+        consignmentSubtitle: 'Consignment Stock — Settled upon actual consumption',
+        grandTotalConsignmentLabel: 'Total Consignment Value (est.):',
+        showPricesBtn: 'Show Prices',
+        hidePricesBtn: 'Hide Prices',
         draftPrefix: 'DRAFT - ',
         basedOnProposal: 'Based on Proposal',
         dateCreated: 'Date',
@@ -174,6 +184,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [lang, setLang] = useState<Lang>(initialLang)
+    const [showPrices, setShowPrices] = useState(true)
 
     useEffect(() => {
         if (!id) {
@@ -296,9 +307,12 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
     const hasMixedVat = vatBreakdown.length > 1
     const hasCustomerItemCodes = order.lines.some((l: any) => Boolean(l.customerItemCode))
 
+    const isConsignment = (order as any).orderType === 'CONSIGNMENT'
     const orderTitle = (order as any).orderType === 'TASTING' 
         ? t.orderTitleTasting 
-        : t.orderTitleStandard
+        : isConsignment
+            ? t.orderTitleConsignment
+            : t.orderTitleStandard
 
     const statusText = STATUS_MAP[order.status] 
         ? STATUS_MAP[order.status][lang] 
@@ -310,7 +324,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 p-0 sm:p-4 print:bg-white print:text-black print:p-0">
-            {/* Embedded Print CSS to force pure white background and hide browser header/footer */}
+            {/* Embedded Print CSS to force pure white background, prevent mid-row breaks, and keep footer signatures intact */}
             <style>{`
                 @media print {
                     @page {
@@ -324,6 +338,24 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                         background: #ffffff !important;
                         color: #000000 !important;
                         box-shadow: none !important;
+                    }
+                    table {
+                        page-break-inside: auto;
+                    }
+                    thead {
+                        display: table-header-group !important;
+                    }
+                    tfoot {
+                        display: table-footer-group !important;
+                    }
+                    tr {
+                        break-inside: avoid !important;
+                        page-break-inside: avoid !important;
+                        page-break-after: auto;
+                    }
+                    .print-keep-together {
+                        break-inside: avoid !important;
+                        page-break-inside: avoid !important;
                     }
                 }
             `}</style>
@@ -351,7 +383,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                                 : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                         }`}
                     >
-                        🇻🇳 {t.viBtn}
+                        {t.viBtn}
                     </button>
                     <button
                         type="button"
@@ -362,11 +394,23 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                                 : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                         }`}
                     >
-                        🇬🇧 {t.enBtn}
+                        {t.enBtn}
                     </button>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setShowPrices(prev => !prev)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded border transition-colors cursor-pointer ${
+                            showPrices
+                                ? 'bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100'
+                                : 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100'
+                        }`}
+                    >
+                        {showPrices ? <EyeOff size={14} /> : <Eye size={14} />}
+                        {showPrices ? t.hidePricesBtn : t.showPricesBtn}
+                    </button>
                     <button 
                         onClick={() => window.print()} 
                         className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded bg-[#0E7490] text-white hover:bg-[#155E75] transition-colors shadow-sm cursor-pointer"
@@ -377,7 +421,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
             </div>
 
             {/* A4 Sheet Wrapper */}
-            <div className="max-w-[850px] mx-auto bg-white text-black p-6 sm:p-8 shadow-xl border border-slate-200 print:shadow-none print:border-none print:p-0 min-h-[297mm]">
+            <div className="max-w-[850px] mx-auto bg-white text-black p-6 sm:p-8 shadow-xl border border-slate-200 print:shadow-none print:border-none print:p-0 min-h-[297mm] print:min-h-0">
                 {/* Print Header - No Logo, Clean Company Info */}
                 <div className="flex justify-between items-start border-b-2 border-black pb-2 mb-3">
                     <div>
@@ -395,6 +439,11 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                         <h1 className="text-xl font-bold uppercase tracking-wider mb-0.5 text-black">
                             {orderTitle}
                         </h1>
+                        {isConsignment && (
+                            <p className="text-[10px] font-semibold text-slate-700 italic mb-0.5">
+                                {t.consignmentSubtitle}
+                            </p>
+                        )}
                         <p className="text-xs font-bold font-mono text-slate-900">
                             {['DRAFT', 'PENDING_APPROVAL'].includes(order.status) ? t.draftPrefix : ''}{order.soNo}
                         </p>
@@ -515,18 +564,22 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                 {/* Product Lines Table */}
                 <table className="w-full text-[10px] mb-3 border-collapse border border-slate-300">
                     <thead>
-                        <tr className="bg-white text-black font-bold border-b-2 border-slate-800">
+                        <tr className="bg-white text-black font-bold border-b-2 border-slate-800 break-inside-avoid print:break-inside-avoid">
                             <td className="px-2 py-1.5 text-center w-8 border-r border-slate-300">{t.colIndex}</td>
                             {hasCustomerItemCodes && (
                                 <td className="px-2 py-1.5 w-20 text-center font-bold text-amber-900 border-r border-slate-300">{t.colCustomerItemCode}</td>
                             )}
                             <td className="px-2 py-1.5 w-24 border-r border-slate-300">{t.colSku}</td>
                             <td className="px-2 py-1.5 border-r border-slate-300">{t.colProductName}</td>
-                            <td className="px-2 py-1.5 text-right w-10 border-r border-slate-300">{t.colQty}</td>
-                            <td className="px-2 py-1.5 text-right w-24 border-r border-slate-300">{t.colUnitPrice}</td>
-                            <td className="px-2 py-1.5 text-center w-12 border-r border-slate-300">{t.colDiscountPct}</td>
-                            {hasMixedVat && <td className="px-2 py-1.5 text-center w-12 border-r border-slate-300">{t.colVatPct}</td>}
-                            <td className="px-2 py-1.5 text-right w-28">{t.colLineTotal}</td>
+                            <td className={`px-2 py-1.5 text-right w-12 ${showPrices ? 'border-r border-slate-300' : ''}`}>{t.colQty}</td>
+                            {showPrices && (
+                                <>
+                                    <td className="px-2 py-1.5 text-right w-24 border-r border-slate-300">{t.colUnitPrice}</td>
+                                    <td className="px-2 py-1.5 text-center w-12 border-r border-slate-300">{t.colDiscountPct}</td>
+                                    {hasMixedVat && <td className="px-2 py-1.5 text-center w-12 border-r border-slate-300">{t.colVatPct}</td>}
+                                    <td className="px-2 py-1.5 text-right w-28">{t.colLineTotal}</td>
+                                </>
+                            )}
                         </tr>
                     </thead>
                     <tbody>
@@ -536,7 +589,7 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                             const lineVat = (line as any).vatRate !== undefined && (line as any).vatRate !== null ? Number((line as any).vatRate) : 10
 
                             return (
-                                <tr key={line.id} className="border-b border-slate-200 align-middle">
+                                <tr key={line.id} className="border-b border-slate-200 align-middle break-inside-avoid print:break-inside-avoid">
                                     <td className="px-2 py-1.5 text-center text-slate-600 border-r border-slate-200">{idx + 1}</td>
                                     {hasCustomerItemCodes && (
                                         <td className="px-2 py-1.5 text-center font-mono font-bold text-[10px] text-amber-900 border-r border-slate-200">
@@ -550,123 +603,134 @@ export default function SalesOrderPrintPage({ searchParams }: Props) {
                                             {(line as any).vintage ? ` (${(line as any).vintage})` : ''}
                                         </div>
                                     </td>
-                                    <td className="px-2 py-1.5 text-right font-mono font-semibold tabular-nums text-slate-900 border-r border-slate-200">{Number(line.qtyOrdered)}</td>
-                                    <td className="px-2 py-1.5 text-right font-mono tabular-nums text-slate-900 border-r border-slate-200">{formatVND(Number(line.unitPrice))}</td>
-                                    <td className="px-2 py-1.5 text-center font-mono text-slate-600 tabular-nums border-r border-slate-200">{Number(line.lineDiscountPct) > 0 ? `${line.lineDiscountPct}%` : '—'}</td>
-                                    {hasMixedVat && (
-                                        <td className="px-2 py-1.5 text-center font-mono text-slate-600 tabular-nums border-r border-slate-200">
-                                            {lineVat}%
-                                        </td>
+                                    <td className={`px-2 py-1.5 text-right font-mono font-semibold tabular-nums text-slate-900 ${showPrices ? 'border-r border-slate-200' : ''}`}>{Number(line.qtyOrdered)}</td>
+                                    {showPrices && (
+                                        <>
+                                            <td className="px-2 py-1.5 text-right font-mono tabular-nums text-slate-900 border-r border-slate-200">{formatVND(Number(line.unitPrice))}</td>
+                                            <td className="px-2 py-1.5 text-center font-mono text-slate-600 tabular-nums border-r border-slate-200">{Number(line.lineDiscountPct) > 0 ? `${line.lineDiscountPct}%` : '—'}</td>
+                                            {hasMixedVat && (
+                                                <td className="px-2 py-1.5 text-center font-mono text-slate-600 tabular-nums border-r border-slate-200">
+                                                    {lineVat}%
+                                                </td>
+                                            )}
+                                            <td className="px-2 py-1.5 text-right font-mono font-bold tabular-nums text-slate-900">{formatVND(lineTotal)}</td>
+                                        </>
                                     )}
-                                    <td className="px-2 py-1.5 text-right font-mono font-bold tabular-nums text-slate-900">{formatVND(lineTotal)}</td>
                                 </tr>
                             )
                         })}
                     </tbody>
                 </table>
 
-                {/* Totals Section */}
-                <div className="flex justify-end mb-3 break-inside-avoid print:break-inside-avoid">
-                    <table className="w-84 text-[11px] border-collapse">
-                        <tbody>
-                            <tr className="border-b border-slate-200 font-semibold">
-                                <td className="py-1 text-slate-700">{t.totalQtyLabel}</td>
-                                <td className="py-1 text-right font-mono font-bold text-slate-900 tabular-nums">{totalQty} {t.bottlesUnit}</td>
-                            </tr>
-                            <tr className="border-b border-slate-200">
-                                <td className="py-1 text-slate-600">{isRetail ? t.subtotalRetail : t.subtotalB2B}</td>
-                                <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(subtotal)}</td>
-                            </tr>
-                            {discountAmount > 0 && (
-                                <tr className="border-b border-slate-200">
-                                    <td className="py-1 text-slate-600">{t.orderDiscountLabel} ({Number(order.orderDiscount ?? 0)}%):</td>
-                                    <td className="py-1 text-right font-mono text-red-600 tabular-nums">-{formatVND(discountAmount)}</td>
-                                </tr>
-                            )}
-                            {isRetail && (
-                                <tr className="border-b border-slate-200">
-                                    <td className="py-1 text-slate-600">{t.netAmountExtracted}</td>
-                                    <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(Math.round(calculatedNet))}</td>
-                                </tr>
-                            )}
-                            {vatBreakdown.length > 1 ? (
-                                <>
-                                    {vatBreakdown.map(item => (
-                                        <tr key={item.rate} className="border-b border-slate-200">
-                                            <td className="py-1 text-slate-600">{t.vatLabel} ({item.rate}%){isRetail ? t.vatExtractedSuffix : ''}:</td>
-                                            <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(item.amount)}</td>
-                                        </tr>
-                                    ))}
-                                    <tr className="border-b border-slate-200 font-semibold">
-                                        <td className="py-1 text-slate-700">{t.totalVatLabel}{isRetail ? t.vatExtractedSuffix : ''}:</td>
-                                        <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(vatAmount)}</td>
-                                    </tr>
-                                </>
-                            ) : (
-                                <tr className="border-b border-slate-200">
-                                    <td className="py-1 text-slate-600">{t.vatLabel} ({vatBreakdown[0]?.rate ?? (order as any).vatRate ?? 10}%){isRetail ? t.vatExtractedSuffix : ''}:</td>
-                                    <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(vatAmount)}</td>
-                                </tr>
-                            )}
-                            <tr className="font-bold border-t-2 border-black">
-                                <td className="py-1.5 text-slate-900 text-xs">{t.grandTotalLabel}</td>
-                                <td className="py-1.5 text-right font-mono text-xs tabular-nums text-black">{formatVND(grandTotal)}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Bank Account Details - ONLY FOR COD ORDERS */}
-                {(order.paymentTerm === 'COD' || order.paymentTerm?.toUpperCase().includes('COD')) && (
-                    <div className="border border-slate-300 rounded p-2.5 mb-3 bg-white text-[10px] leading-relaxed break-inside-avoid print:break-inside-avoid">
-                        <p className="font-bold text-slate-900 uppercase mb-1 text-[9px]">{t.bankInfoTitle}</p>
-                        <table className="w-full">
+                {/* Keep Totals + Bank Info + Signatures together so long orders never orphan signatures */}
+                <div className="print-keep-together break-inside-avoid print:break-inside-avoid">
+                    {/* Totals Section */}
+                    <div className="flex justify-end mb-3">
+                        <table className="w-84 text-[11px] border-collapse">
                             <tbody>
-                                <tr>
-                                    <td className="text-slate-600 w-24 py-0.5">{t.bankAccountName}:</td>
-                                    <td className="font-semibold text-slate-900 py-0.5">
-                                        {(order as any).legalEntity?.bankAccountName || "CÔNG TY CỔ PHẦN THƯƠNG MẠI THẮNG ÂN"}
-                                    </td>
+                                <tr className={`border-b ${showPrices ? 'border-slate-200' : 'border-black border-t-2'} font-semibold`}>
+                                    <td className="py-1 text-slate-700">{t.totalQtyLabel}</td>
+                                    <td className="py-1 text-right font-mono font-bold text-slate-900 tabular-nums">{totalQty} {t.bottlesUnit}</td>
                                 </tr>
-                                <tr>
-                                    <td className="text-slate-600 py-0.5">{t.bankAccountNumber}:</td>
-                                    <td className="font-semibold font-mono text-slate-900 py-0.5">
-                                        {(order as any).legalEntity?.bankAccountNumber || "1023456789"}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td className="text-slate-600 py-0.5">{t.bankName}:</td>
-                                    <td className="text-slate-900 font-semibold py-0.5">
-                                        {(order as any).legalEntity?.bankName || "Vietcombank (VCB) - Chi nhánh TP. Hà Nội"}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td className="text-slate-600 py-0.5">{t.bankTransferNote}:</td>
-                                    <td className="font-mono text-slate-900 font-semibold py-0.5">{t.bankTransferNoteContent} <span className="font-bold">{order.soNo}</span></td>
-                                </tr>
+                                {showPrices && (
+                                    <>
+                                        <tr className="border-b border-slate-200">
+                                            <td className="py-1 text-slate-600">{isRetail ? t.subtotalRetail : t.subtotalB2B}</td>
+                                            <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(subtotal)}</td>
+                                        </tr>
+                                        {discountAmount > 0 && (
+                                            <tr className="border-b border-slate-200">
+                                                <td className="py-1 text-slate-600">{t.orderDiscountLabel} ({Number(order.orderDiscount ?? 0)}%):</td>
+                                                <td className="py-1 text-right font-mono text-red-600 tabular-nums">-{formatVND(discountAmount)}</td>
+                                            </tr>
+                                        )}
+                                        {isRetail && (
+                                            <tr className="border-b border-slate-200">
+                                                <td className="py-1 text-slate-600">{t.netAmountExtracted}</td>
+                                                <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(Math.round(calculatedNet))}</td>
+                                            </tr>
+                                        )}
+                                        {vatBreakdown.length > 1 ? (
+                                            <>
+                                                {vatBreakdown.map(item => (
+                                                    <tr key={item.rate} className="border-b border-slate-200">
+                                                        <td className="py-1 text-slate-600">{t.vatLabel} ({item.rate}%){isRetail ? t.vatExtractedSuffix : ''}:</td>
+                                                        <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(item.amount)}</td>
+                                                    </tr>
+                                                ))}
+                                                <tr className="border-b border-slate-200 font-semibold">
+                                                    <td className="py-1 text-slate-700">{t.totalVatLabel}{isRetail ? t.vatExtractedSuffix : ''}:</td>
+                                                    <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(vatAmount)}</td>
+                                                </tr>
+                                            </>
+                                        ) : (
+                                            <tr className="border-b border-slate-200">
+                                                <td className="py-1 text-slate-600">{t.vatLabel} ({vatBreakdown[0]?.rate ?? (order as any).vatRate ?? 10}%){isRetail ? t.vatExtractedSuffix : ''}:</td>
+                                                <td className="py-1 text-right font-mono tabular-nums text-slate-900">{formatVND(vatAmount)}</td>
+                                            </tr>
+                                        )}
+                                        <tr className="font-bold border-t-2 border-black">
+                                            <td className="py-1.5 text-slate-900 text-xs">{isConsignment ? t.grandTotalConsignmentLabel : t.grandTotalLabel}</td>
+                                            <td className="py-1.5 text-right font-mono text-xs tabular-nums text-black">{formatVND(grandTotal)}</td>
+                                        </tr>
+                                    </>
+                                )}
                             </tbody>
                         </table>
                     </div>
-                )}
 
-                {/* Dynamic Footer Block */}
-                {/* Signatures for Sales Orders */}
-                <div className="grid grid-cols-4 gap-2 text-center text-xs mt-4 pt-2 border-t border-dashed border-slate-400 break-inside-avoid print:break-inside-avoid">
-                    <div className="flex flex-col pb-12">
-                        <p className="font-bold text-slate-900 uppercase tracking-wide text-[11px]">{t.signSaleAdmin}</p>
-                        <p className="text-slate-500 italic text-[9px] mt-0.5">{t.signHint}</p>
-                    </div>
-                    <div className="flex flex-col pb-12">
-                        <p className="font-bold text-slate-900 uppercase tracking-wide text-[11px]">{t.signAccounting}</p>
-                        <p className="text-slate-500 italic text-[9px] mt-0.5">{t.signHint}</p>
-                    </div>
-                    <div className="flex flex-col pb-12">
-                        <p className="font-bold text-slate-900 uppercase tracking-wide text-[11px]">{t.signWarehouse}</p>
-                        <p className="text-slate-500 italic text-[9px] mt-0.5">{t.signHint}</p>
-                    </div>
-                    <div className="flex flex-col pb-12">
-                        <p className="font-bold text-slate-900 uppercase tracking-wide text-[11px]">{t.signReceiver}</p>
-                        <p className="text-slate-500 italic text-[9px] mt-0.5">{t.signHint}</p>
+                    {/* Bank Account Details - ONLY FOR COD ORDERS */}
+                    {showPrices && (order.paymentTerm === 'COD' || order.paymentTerm?.toUpperCase().includes('COD')) && (
+                        <div className="border border-slate-300 rounded p-2.5 mb-3 bg-white text-[10px] leading-relaxed">
+                            <p className="font-bold text-slate-900 uppercase mb-1 text-[9px]">{t.bankInfoTitle}</p>
+                            <table className="w-full">
+                                <tbody>
+                                    <tr>
+                                        <td className="text-slate-600 w-24 py-0.5">{t.bankAccountName}:</td>
+                                        <td className="font-semibold text-slate-900 py-0.5">
+                                            {(order as any).legalEntity?.bankAccountName || "CÔNG TY CỔ PHẦN THƯƠNG MẠI THẮNG ÂN"}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="text-slate-600 py-0.5">{t.bankAccountNumber}:</td>
+                                        <td className="font-semibold font-mono text-slate-900 py-0.5">
+                                            {(order as any).legalEntity?.bankAccountNumber || "1023456789"}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="text-slate-600 py-0.5">{t.bankName}:</td>
+                                        <td className="text-slate-900 font-semibold py-0.5">
+                                            {(order as any).legalEntity?.bankName || "Vietcombank (VCB) - Chi nhánh TP. Hà Nội"}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="text-slate-600 py-0.5">{t.bankTransferNote}:</td>
+                                        <td className="font-mono text-slate-900 font-semibold py-0.5">{t.bankTransferNoteContent} <span className="font-bold">{order.soNo}</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    {/* Dynamic Footer Block */}
+                    {/* Signatures for Sales Orders */}
+                    <div className="grid grid-cols-4 gap-2 text-center text-xs mt-4 pt-2 border-t border-dashed border-slate-400">
+                        <div className="flex flex-col pb-12">
+                            <p className="font-bold text-slate-900 uppercase tracking-wide text-[11px]">{t.signSaleAdmin}</p>
+                            <p className="text-slate-500 italic text-[9px] mt-0.5">{t.signHint}</p>
+                        </div>
+                        <div className="flex flex-col pb-12">
+                            <p className="font-bold text-slate-900 uppercase tracking-wide text-[11px]">{t.signAccounting}</p>
+                            <p className="text-slate-500 italic text-[9px] mt-0.5">{t.signHint}</p>
+                        </div>
+                        <div className="flex flex-col pb-12">
+                            <p className="font-bold text-slate-900 uppercase tracking-wide text-[11px]">{t.signWarehouse}</p>
+                            <p className="text-slate-500 italic text-[9px] mt-0.5">{t.signHint}</p>
+                        </div>
+                        <div className="flex flex-col pb-12">
+                            <p className="font-bold text-slate-900 uppercase tracking-wide text-[11px]">{t.signReceiver}</p>
+                            <p className="text-slate-500 italic text-[9px] mt-0.5">{t.signHint}</p>
+                        </div>
                     </div>
                 </div>
             </div>

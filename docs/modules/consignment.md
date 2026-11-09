@@ -100,6 +100,9 @@ Trong mô hình kinh doanh Rượu Vang nhập khẩu, **hàng ký gửi (Consig
 | **Replenishment Alerts** | `getReplenishmentAlerts` | Cảnh báo khi tồn < min stock (10 chai) |
 | **Periodic Reconciliation** | `getPeriodicReconciliation` | Tổng hợp per-customer: consigned, sold, remaining, variance, pending AR, overdue detection |
 | Stats | `getConsignmentStats` | KPI: total agreements, active, stock sent, sold |
+| **Đơn Hàng Ký Gửi (`CONSIGNMENT` OrderType)** | `CreateSODrawer.tsx`, `EditSODrawer.tsx`, `sales/actions.ts`, `warehouse/actions.ts`, `ConsignmentClient.tsx` | Cho phép lên Đơn Ký Gửi đầy đủ trường thông tin y hệt Đơn Bán Hàng (khách hàng như Theodore, cơ chế giá riêng, chiết khấu dòng/đơn, VAT, địa chỉ/SĐT nhận hàng, duyệt đơn). Tự động khởi tạo Kho Ký Gửi `WH-CSG-[Mã KH]` & Hợp đồng Ký Gửi. Khi xuất kho giao hàng (`DO`), tự động chuyển lô hàng sang Kho Ký Gửi của khách hàng thay vì ghi nhận giá vốn COGS hay công nợ AR thương mại |
+| **In Đơn Ký Gửi & Chống Gãy Trang A4** | `sales/print/page.tsx`, `PrintableConsignmentDispatch.tsx`, `PrintableConsignmentCount.tsx` | Hỗ trợ in `ĐƠN HÀNG KÝ GỬI` khổ A4 đầy đủ đơn giá, chiết khấu, thuế VAT kèm nút bật/tắt `Hiện đơn giá / Ẩn đơn giá`. Áp dụng CSS `@media print` lặp lại tiêu đề bảng (`table-header-group`), chống cắt ngang dòng (`break-inside: avoid`) và khóa cụm Tổng tiền + Chữ ký (`print-keep-together`) không bị rớt lẻ sang trang sau |
+| **Phân Quyền RBAC Theo Nghiệp Vụ (SoD)** | `session.ts`, `Sidebar.tsx`, `seed-rbac.ts`, `ConsignmentClient.tsx`, `consignment/actions.ts` | Cấp quyền `CSG:READ/CREATE/UPDATE` cho `Sales Admin`, `Thủ Kho`, `Kế Toán`, `Sales Manager`, `Sales Rep`. Phân tách rõ: **Sales Admin** toàn quyền nghiệp vụ Ký Gửi; **Thủ Kho** chuyên trách phần Kho (Xem & In đơn ký gửi, Tạo kho ký gửi, Xuất chuyển kho ký gửi, Kiểm kê kho ký gửi — ẩn nút Tạo đơn giá bán & Chốt bán tạo hóa đơn AR); **Kế Toán** đối soát tồn & chốt bán xuất hóa đơn AR |
 
-*Last updated: 2026-09-07 | Wine ERP v5.1*
+*Last updated: 2026-11-09 | Wine ERP v12.44*
 

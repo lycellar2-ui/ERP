@@ -4367,4 +4367,32 @@ Qua đợt kiểm tra chuyên sâu toàn bộ 38 routes và tất cả component
 ### Bài học
 > ⚠️ **RULE 148: Mọi logic sinh mã tài liệu nghiệp vụ có tính duy nhất (như `SO-YYMM-XXXX`, `DO-YYMM-XXXX`, `GR-YYMM-XXXX`) PHẢI được bọc trong vòng lặp chống va chạm (candidate loop) và có cơ chế Retry tối đa 5 lần bắt lỗi Prisma P2002. Tuyệt đối không sinh mã duy nhất ngoài transaction mà không có retry protection.**
 
+---
+
+## BUG-149: Đơn Hàng Dài Khi In A4 Bị Gãy Trang, Cắt Đôi Dòng Sản Phẩm & Trôi Lẻ Khối Chữ Ký
+
+**Ngày:** 2026-11-09
+**Severity:** 🟠 Medium — Phiếu in đơn hàng nhiều mã sản phẩm bị cắt ngang dòng chữ và rớt lẻ phần tổng cộng / chữ ký sang trang mới thiếu chuyên nghiệp
+
+### Triệu chứng
+1. Khi in các đơn hàng bán hoặc đơn ký gửi có danh sách sản phẩm dài (vượt quá 1 trang A4) tại `/dashboard/sales/print`, `PrintableConsignmentDispatch.tsx` hoặc `PrintableConsignmentCount.tsx`:
+   - Bảng sản phẩm bị cắt ngang giữa dòng (`<tr>`), phần trên của chữ nằm ở cuối trang 1, phần dưới ở đầu trang 2.
+   - Trang 2 không tự động lặp lại dòng tiêu đề bảng (`<thead>`).
+   - Khối Tổng cộng tiền hàng, Thông tin chuyển khoản và 4 ô Chữ ký bị tách rời nhau hoặc trôi lẻ loi sang trang tiếp theo.
+   - Khung giấy A4 đặt cứng `min-h-[297mm]` ngay cả khi in khiến trình duyệt tính toán chiều cao trang in bị lệch.
+
+### Nguyên nhân gốc rễ
+- Thiếu các quy tắc phân trang CSS `@media print` chuyên biệt cho bảng dữ liệu dài (`display: table-header-group`, `break-inside: avoid` trên `tr`) và thiếu wrapper khóa khối (`print-keep-together` với `break-inside: avoid; page-break-inside: avoid`) bao quanh cụm Tổng tiền + Ngân hàng + Chữ ký cuối đơn.
+
+### Cách khắc phục
+1. Bổ sung CSS `@media print` chuẩn A4 vào `src/app/dashboard/sales/print/page.tsx`, `PrintableConsignmentDispatch.tsx`, và `PrintableConsignmentCount.tsx`:
+   - `thead { display: table-header-group !important; }` để tự động lặp lại header bảng ở đầu mỗi trang mới.
+   - `tr { break-inside: avoid !important; page-break-inside: avoid !important; }` để không bao giờ cắt đôi dòng sản phẩm.
+   - `.print-keep-together { break-inside: avoid !important; page-break-inside: avoid !important; }` bọc quanh toàn bộ khối Tổng tiền + Thông tin thanh toán + 4 cột Chữ ký để luôn đi liền nhau.
+2. Thêm `print:min-h-0` trên khung A4 wrapper để giải phóng chiều cao cố định khi xuất ra máy in/PDF nhiều trang.
+
+### Bài học
+> ⚠️ **RULE 149: Mọi mẫu in chứng từ A4 có bảng danh sách động (Đơn bán hàng, Đơn ký gửi, Phiếu xuất kho, Biên bản kiểm kê) BẮT BUỘC phải khai báo `@media print` gồm `thead { display: table-header-group }`, `tr { break-inside: avoid }` và bọc cụm Tổng cộng + Chữ ký trong khối `.print-keep-together { break-inside: avoid; page-break-inside: avoid }` kèm `print:min-h-0` trên container gốc để chống gãy trang khi đơn hàng kéo dài nhiều trang.**
+
+
 

@@ -430,7 +430,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                 <table className="w-full text-left text-xs" style={{ borderCollapse: 'collapse' }}>
                                     <thead>
                                         <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-                                            {[D.colWarehouse, D.colLocation, D.colLotNo, D.colLotStatus, D.colAvailable].map((h, idx) => (
+                                            {[D.colWarehouse, D.colLotNo, D.colLotStatus, D.colAvailable].map((h, idx) => (
                                                 <th key={idx} className="px-3 py-2 uppercase font-semibold text-[10px]" style={{ color: '#64748B' }}>{h}</th>
                                             ))}
                                         </tr>
@@ -439,7 +439,6 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                         {[1, 2].map(i => (
                                             <tr key={i} style={{ borderBottom: '1px solid #E2E8F0' }}>
                                                 <td className="px-3 py-3"><div className="h-3 bg-[#E2E8F0]/30 rounded w-24" /></td>
-                                                <td className="px-3 py-3"><div className="h-3 bg-[#E2E8F0]/30 rounded w-12" /></td>
                                                 <td className="px-3 py-3"><div className="h-3 bg-[#E2E8F0]/30 rounded w-16" /></td>
                                                 <td className="px-3 py-3"><div className="h-3 bg-[#E2E8F0]/30 rounded w-16" /></td>
                                                 <td className="px-3 py-3 text-right"><div className="h-3 bg-[#E2E8F0]/30 rounded w-8 ml-auto" /></td>
@@ -469,7 +468,7 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                                             <div>
                                                                 <p className="font-semibold text-slate-900">{lot.warehouseName}</p>
                                                                 <p className="text-[11px] font-mono text-slate-500">
-                                                                    {lot.locationCode} · {lot.lotNo} · VTG: {lot.vintage ?? 'NV'}
+                                                                    {lot.lotNo} · VTG: {lot.vintage ?? 'NV'}
                                                                 </p>
                                                             </div>
                                                             <StatusBadge status={lot.status} label={L.lotStatuses[lot.status] ?? lot.status} toneOverrides={LOT_TONE_OVERRIDES} />
@@ -509,8 +508,8 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                                 <table className="w-full text-left text-xs" style={{ borderCollapse: 'collapse' }}>
                                                     <thead>
                                                         <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0, zIndex: 10 }}>
-                                                            {[D.colWarehouse, D.colLocation, D.colLotNo, D.colVintage, D.colBook, D.colOnHand, D.colAvailable, D.colLotStatus].map((h, idx) => (
-                                                                <th key={idx} className={`px-2.5 py-2 uppercase font-semibold text-[10px] ${idx >= 4 && idx <= 6 ? 'text-center' : ''}`} style={{ color: '#64748B' }}>{h}</th>
+                                                            {[D.colWarehouse, D.colLotNo, D.colVintage, D.colBook, D.colOnHand, D.colAvailable, D.colLotStatus].map((h, idx) => (
+                                                                <th key={idx} className={`px-2.5 py-2 uppercase font-semibold text-[10px] ${idx >= 3 && idx <= 5 ? 'text-center' : ''}`} style={{ color: '#64748B' }}>{h}</th>
                                                             ))}
                                                         </tr>
                                                     </thead>
@@ -523,7 +522,6 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                                             return (
                                                                 <tr key={lot.id} style={{ borderBottom: '1px solid #E2E8F0' }} className="hover:bg-white/50">
                                                                     <td className="px-2.5 py-2 font-medium" style={{ color: '#0F172A' }}>{lot.warehouseName}</td>
-                                                                    <td className="px-2.5 py-2 font-sans font-semibold" style={{ color: '#475569' }}>{lot.locationCode}</td>
                                                                     <td className="px-2.5 py-2 font-sans font-mono text-[11px]" style={{ color: '#64748B' }}>{lot.lotNo}</td>
                                                                     <td className="px-2.5 py-2 font-sans font-semibold font-mono text-center" style={{ color: lot.vintage ? '#0E7490' : '#64748B' }}>{lot.vintage ?? 'NV'}</td>
                                                                     <td className="px-2.5 py-2 text-center font-mono font-bold" style={{ color: '#475569' }}>

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { ArrowRightLeft, ArrowRight, Plus, Eye, RefreshCw, Search, Clock, CheckCircle2, Truck, PackageCheck, FileText, Ban, ArrowUpDown, ArrowUp, ArrowDown, Zap } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { ArrowRightLeft, ArrowRight, Plus, Eye, RefreshCw, Search, Clock, CheckCircle2, Truck, PackageCheck, FileText, Ban, ArrowUpDown, ArrowUp, ArrowDown, Zap, ChevronDown, ChevronUp, RotateCcw, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { type TransferOrderRow, getTransferOrders, cancelTransferOrder } from '../transfers/actions'
 import { CreateTransferDrawer } from '../transfers/CreateTransferDrawer'
@@ -38,6 +38,9 @@ export function TransfersTab() {
 
     const [statusTab, setStatusTab] = useState<string>('ALL')
     const [search, setSearch] = useState('')
+    const [fromWhFilter, setFromWhFilter] = useState('')
+    const [toWhFilter, setToWhFilter] = useState('')
+    const [showStats, setShowStats] = useState(true)
 
     // Sắp xếp mặc định: ngày chuyển giảm dần (mới nhất lên đầu)
     const [sortField, setSortField] = useState<SortField>('transferDate')
@@ -89,15 +92,28 @@ export function TransfersTab() {
         })
     }
 
+    const fromWhOptions = useMemo(() => Array.from(new Set(rows.map(r => r.fromWarehouse))).sort((a, b) => a.localeCompare(b, 'vi')), [rows])
+    const toWhOptions = useMemo(() => Array.from(new Set(rows.map(r => r.toWarehouse))).sort((a, b) => a.localeCompare(b, 'vi')), [rows])
+
     const filteredRows = rows.filter(r => {
         const matchesStatus = statusTab === 'ALL' || r.status === statusTab
+        const matchesFrom = !fromWhFilter || r.fromWarehouse === fromWhFilter
+        const matchesTo = !toWhFilter || r.toWarehouse === toWhFilter
         const matchesSearch = !search ||
             r.transferNo.toLowerCase().includes(search.toLowerCase()) ||
             r.fromWarehouse.toLowerCase().includes(search.toLowerCase()) ||
             r.toWarehouse.toLowerCase().includes(search.toLowerCase()) ||
             r.requesterName.toLowerCase().includes(search.toLowerCase())
-        return matchesStatus && matchesSearch
+        return matchesStatus && matchesFrom && matchesTo && matchesSearch
     })
+
+    const activeFilterCount = [search, fromWhFilter, toWhFilter, statusTab !== 'ALL' ? statusTab : ''].filter(Boolean).length
+    const resetFilters = () => {
+        setSearch('')
+        setFromWhFilter('')
+        setToWhFilter('')
+        setStatusTab('ALL')
+    }
 
     const sortedRows = [...filteredRows].sort((a, b) => {
         const dir = sortOrder === 'asc' ? 1 : -1
@@ -136,21 +152,21 @@ export function TransfersTab() {
         return (
             <th
                 onClick={() => handleSort(field)}
-                className={`p-3 font-extrabold uppercase text-[11px] whitespace-nowrap cursor-pointer select-none transition-colors hover:bg-slate-200/80 group ${
+                className={`px-3 py-2.5 font-extrabold uppercase text-[11px] whitespace-nowrap cursor-pointer select-none transition-colors hover:bg-slate-100/80 group ${
                     align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left'
-                } ${isActive ? 'text-amber-800 bg-amber-100/50 font-black' : 'text-slate-700'}`}
+                } ${isActive ? 'text-lys-teal-strong bg-lys-teal-soft/40' : 'text-slate-600'}`}
                 title={`Sắp xếp theo ${typeof label === 'string' ? label : field}`}
             >
-                <div className={`inline-flex items-center gap-1.5 ${align === 'center' ? 'justify-center' : align === 'right' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`inline-flex items-center gap-1 ${align === 'center' ? 'justify-center' : align === 'right' ? 'justify-end' : 'justify-start'}`}>
                     <span>{label}</span>
                     {isActive ? (
                         sortOrder === 'asc' ? (
-                            <ArrowUp size={13} className="text-amber-600 font-bold shrink-0" />
+                            <ArrowUp size={12} className="text-lys-teal-strong font-bold shrink-0" />
                         ) : (
-                            <ArrowDown size={13} className="text-amber-600 font-bold shrink-0" />
+                            <ArrowDown size={12} className="text-lys-teal-strong font-bold shrink-0" />
                         )
                     ) : (
-                        <ArrowUpDown size={12} className="text-slate-400 opacity-40 group-hover:opacity-100 transition-opacity shrink-0" />
+                        <ArrowUpDown size={11} className="text-slate-400 opacity-45 group-hover:opacity-100 transition-opacity shrink-0" />
                     )}
                 </div>
             </th>
@@ -165,124 +181,250 @@ export function TransfersTab() {
         RECEIVED: rows.filter(r => r.status === 'RECEIVED').length,
     }
 
+    const totalBottlesTransferred = rows
+        .filter(r => r.status !== 'CANCELLED')
+        .reduce((sum, r) => sum + (r.totalQty ?? 0), 0)
+
     return (
         <div className="space-y-4 pb-8 md:pb-4">
-            {/* Top Sub-Module Switcher */}
-            <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-lg w-fit border border-slate-200">
-                <button
-                    onClick={() => setSubTab('transfers')}
-                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer select-none active:scale-95 flex items-center gap-1.5 ${
-                        subTab === 'transfers'
-                            ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
-                            : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                >
-                    <ArrowRightLeft size={13} className={subTab === 'transfers' ? 'text-amber-600' : 'text-slate-400'} />
-                    <span>Phiếu Điều Chuyển ({rows.length})</span>
-                </button>
-                <button
-                    onClick={() => setSubTab('replenishment')}
-                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer select-none active:scale-95 flex items-center gap-1.5 ${
-                        subTab === 'replenishment'
-                            ? 'bg-white text-lys-teal-strong shadow-2xs font-extrabold'
-                            : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                >
-                    <Zap size={13} className={subTab === 'replenishment' ? 'text-lys-teal-strong' : 'text-slate-400'} />
-                    <span>Gợi Ý Bổ Sung Tồn</span>
-                </button>
+            {/* ── TIER 1: Standardized Module Header Bar ── */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-4 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-lg bg-lys-teal-soft border border-lys-teal-subtle flex items-center justify-center shrink-0">
+                            <ArrowRightLeft size={18} className="text-lys-teal-strong" />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-sm sm:text-base font-extrabold text-slate-900">
+                                    Điều Chuyển Kho Nội Bộ & Bổ Sung Tồn
+                                </h3>
+                                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle">
+                                    {rows.length} phiếu
+                                </span>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                Lập phiếu chuyển kho theo SKU, Vintage & vị trí, duyệt Kế toán và theo dõi vận chuyển
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Sub-Module Switcher */}
+                    <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg border border-slate-200">
+                        <button
+                            type="button"
+                            onClick={() => setSubTab('transfers')}
+                            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                                subTab === 'transfers'
+                                    ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/80'
+                                    : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                        >
+                            <ArrowRightLeft size={13} className={subTab === 'transfers' ? 'text-lys-teal-strong' : 'text-slate-400'} />
+                            <span>Phiếu Điều Chuyển ({rows.length})</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setSubTab('replenishment')}
+                            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                                subTab === 'replenishment'
+                                    ? 'bg-white text-lys-teal-strong shadow-2xs border border-slate-200/80'
+                                    : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                        >
+                            <Zap size={13} className={subTab === 'replenishment' ? 'text-lys-teal-strong' : 'text-slate-400'} />
+                            <span>Gợi Ý Bổ Sung Tồn</span>
+                        </button>
+                    </div>
+                </div>
+
+                {subTab === 'transfers' && (
+                    <div className="flex flex-wrap items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setShowStats(!showStats)}
+                            className="flex items-center gap-1 px-2.5 py-2 rounded-lg text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer transition-all"
+                        >
+                            {showStats ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                            <span className="hidden sm:inline">Chỉ số</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={reload}
+                            disabled={loading}
+                            className="p-2 rounded-lg text-slate-700 hover:bg-slate-50 border border-slate-200 bg-white transition-colors cursor-pointer"
+                            title="Tải lại danh sách"
+                        >
+                            <RefreshCw size={14} className={loading ? 'animate-spin text-lys-teal-strong' : ''} />
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setCreateOpen(true)}
+                            className="px-3.5 py-2 rounded-lg bg-lys-teal-strong hover:opacity-90 text-white font-bold text-xs transition-all flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
+                        >
+                            <Plus size={14} /> Lập Phiếu Chuyển Kho
+                        </button>
+                    </div>
+                )}
             </div>
 
             {subTab === 'replenishment' ? (
                 <ReplenishmentTab />
             ) : (
                 <>
-                    {/* Top Toolbar */}
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-lg bg-white border border-slate-200 shadow-xs">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-600 border border-amber-200 flex items-center justify-center font-bold">
-                        <ArrowRightLeft size={20} />
+                    {/* ── TIER 2: Collapsible KPI Stat Cards ── */}
+                    {showStats && (
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+                            <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs flex flex-col justify-between" style={{ borderLeft: '3px solid #0891B2' }}>
+                                <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Tổng Phiếu Điều Chuyển</span>
+                                <div className="mt-1">
+                                    <span className="text-lg sm:text-xl font-extrabold font-mono text-slate-900">{rows.length} phiếu</span>
+                                </div>
+                                <span className="text-[11px] text-slate-500 mt-1">
+                                    Tổng luân chuyển: <strong className="font-mono text-slate-700">{totalBottlesTransferred.toLocaleString()}</strong> chai
+                                </span>
+                            </div>
+
+                            <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs flex flex-col justify-between" style={{ borderLeft: '3px solid #B45309' }}>
+                                <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Chờ Kế Toán Duyệt</span>
+                                <div className="mt-1">
+                                    <span className="text-lg sm:text-xl font-extrabold font-mono text-amber-700">{statusCounts.PENDING_ACCOUNTING} phiếu</span>
+                                </div>
+                                <span className="text-[11px] text-slate-500 mt-1">
+                                    Đã duyệt chờ xuất: <strong className="font-mono text-slate-700">{statusCounts.CONFIRMED}</strong> phiếu
+                                </span>
+                            </div>
+
+                            <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs flex flex-col justify-between" style={{ borderLeft: '3px solid #2563EB' }}>
+                                <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Đang Vận Chuyển</span>
+                                <div className="mt-1">
+                                    <span className="text-lg sm:text-xl font-extrabold font-mono text-blue-700">{statusCounts.IN_TRANSIT} phiếu</span>
+                                </div>
+                                <span className="text-[11px] text-slate-500 mt-1">
+                                    Hàng đang trên đường giữa các kho
+                                </span>
+                            </div>
+
+                            <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs flex flex-col justify-between" style={{ borderLeft: '3px solid #15803D' }}>
+                                <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Đã Nhận Hoàn Tất</span>
+                                <div className="mt-1">
+                                    <span className="text-lg sm:text-xl font-extrabold font-mono text-emerald-700">{statusCounts.RECEIVED} phiếu</span>
+                                </div>
+                                <span className="text-[11px] text-slate-500 mt-1">
+                                    Đã nhập vào vị trí kho nhận
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── TIER 3: Unified Filter & Search Toolbar ── */}
+                    <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-2xs space-y-3">
+                        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar border-b border-slate-200 pb-3">
+                            {[
+                                { key: 'ALL', label: 'Tất Cả', count: statusCounts.ALL },
+                                { key: 'PENDING_ACCOUNTING', label: 'Chờ Kế Toán Duyệt', count: statusCounts.PENDING_ACCOUNTING },
+                                { key: 'CONFIRMED', label: 'Đã Duyệt', count: statusCounts.CONFIRMED },
+                                { key: 'IN_TRANSIT', label: 'Đang Chuyển', count: statusCounts.IN_TRANSIT },
+                                { key: 'RECEIVED', label: 'Hoàn Tất', count: statusCounts.RECEIVED },
+                            ].map(t => {
+                                const active = statusTab === t.key
+                                return (
+                                    <button
+                                        key={t.key}
+                                        type="button"
+                                        onClick={() => setStatusTab(t.key)}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap border ${
+                                            active
+                                                ? 'bg-lys-teal-strong text-white border-lys-teal-strong shadow-2xs'
+                                                : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border-slate-200'
+                                        }`}
+                                    >
+                                        <span>{t.label}</span>
+                                        <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-extrabold ${
+                                            active ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-700'
+                                        }`}>
+                                            {t.count}
+                                        </span>
+                                    </button>
+                                )
+                            })}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2.5">
+                            <div className="relative flex-1 min-w-[220px]">
+                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                    placeholder="Tìm mã phiếu chuyển, kho xuất, kho nhận, người lập..."
+                                    className="w-full h-9 pl-9 pr-8 rounded-lg bg-white border border-slate-300 text-xs font-medium text-slate-900 outline-none focus:border-lys-teal-strong"
+                                />
+                                {search && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setSearch('')}
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-slate-400 hover:text-slate-700 cursor-pointer"
+                                    >
+                                        <X size={13} />
+                                    </button>
+                                )}
+                            </div>
+
+                            <select
+                                value={fromWhFilter}
+                                onChange={e => setFromWhFilter(e.target.value)}
+                                className="h-9 px-3 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 outline-none cursor-pointer"
+                            >
+                                <option value="">Tất cả Kho Xuất</option>
+                                {fromWhOptions.map(w => (
+                                    <option key={w} value={w}>Xuất từ: {w}</option>
+                                ))}
+                            </select>
+
+                            <select
+                                value={toWhFilter}
+                                onChange={e => setToWhFilter(e.target.value)}
+                                className="h-9 px-3 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 outline-none cursor-pointer"
+                            >
+                                <option value="">Tất cả Kho Nhận</option>
+                                {toWhOptions.map(w => (
+                                    <option key={w} value={w}>Nhận tại: {w}</option>
+                                ))}
+                            </select>
+
+                            {activeFilterCount > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={resetFilters}
+                                    className="flex items-center gap-1 px-2.5 py-1.5 h-9 rounded-lg text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 cursor-pointer transition-all"
+                                >
+                                    <RotateCcw size={12} />
+                                    <span>Xóa lọc ({activeFilterCount})</span>
+                                </button>
+                            )}
+                        </div>
                     </div>
-                    <div>
-                        <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                            Quản Lý Phiếu Chuyển Kho Nội Bộ
-                        </h3>
-                        <p className="text-xs text-slate-500">
-                            Lập phiếu chuyển kho, duyệt Kế toán & in phiếu chứng từ A4 ký 4 bên
-                        </p>
-                    </div>
-                </div>
 
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={reload}
-                        className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
-                        title="Tải lại danh sách"
-                    >
-                        <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-                    </button>
-
-                    <button
-                        onClick={() => setCreateOpen(true)}
-                        className="px-4 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs transition-colors flex items-center gap-1.5 shadow-md cursor-pointer"
-                    >
-                        <Plus size={16} /> Lập Phiếu Chuyển Kho
-                    </button>
-                </div>
-            </div>
-
-            {/* Filter Tabs & Search Bar */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
-                    {[
-                        { key: 'ALL', label: 'Tất Cả', count: statusCounts.ALL },
-                        { key: 'PENDING_ACCOUNTING', label: 'Chờ Kế Toán Duyệt', count: statusCounts.PENDING_ACCOUNTING, badgeColor: 'bg-amber-500 text-white' },
-                        { key: 'CONFIRMED', label: 'Đã Duyệt', count: statusCounts.CONFIRMED },
-                        { key: 'IN_TRANSIT', label: 'Đang Chuyển', count: statusCounts.IN_TRANSIT },
-                        { key: 'RECEIVED', label: 'Hoàn Tất', count: statusCounts.RECEIVED },
-                    ].map(t => (
-                        <button
-                            key={t.key}
-                            onClick={() => setStatusTab(t.key)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${statusTab === t.key ? 'bg-[#0E7490] text-white font-extrabold shadow-2xs border border-[#0891B2]' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
-                        >
-                            <span>{t.label}</span>
-                            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${t.badgeColor || (statusTab === t.key ? 'bg-slate-50/15 text-slate-900' : 'bg-slate-100 text-slate-700')}`}>
-                                {t.count}
-                            </span>
-                        </button>
-                    ))}
-                </div>
-
-                <div className="relative w-full sm:w-64">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                        type="text"
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        placeholder="Tìm mã phiếu, kho xuất, kho nhận..."
-                        className="w-full pl-9 pr-3 py-2 rounded-lg bg-white border border-slate-200 text-base sm:text-xs text-slate-900 outline-none focus:border-amber-500 shadow-2xs"
-                    />
-                </div>
-            </div>
-
-            {/* Desktop List Table */}
-            <div className="hidden md:block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-xs">
-                <div className="overflow-x-hidden">
-                    <table className="w-full text-left text-xs border-collapse">
-                        <thead>
-                            <tr className="bg-slate-100 border-b border-slate-200 text-slate-700">
-                                {renderSortHeader('transferNo', 'Mã Phiếu')}
-                                {renderSortHeader('fromWarehouse', 'Kho Xuất')}
-                                {renderSortHeader('toWarehouse', 'Kho Nhận')}
-                                {renderSortHeader('requesterName', 'Người Lập')}
-                                {renderSortHeader('transferDate', 'Ngày Chuyển')}
-                                {renderSortHeader('lineCount', 'Số Mặt Hàng', 'center')}
-                                {renderSortHeader('totalQty', 'Tổng Chai', 'center')}
-                                {renderSortHeader('status', 'Trạng Thái', 'center')}
-                                <th className="p-3 font-extrabold uppercase text-[11px] text-right whitespace-nowrap">Thao Tác</th>
-                            </tr>
-                        </thead>
+                    {/* ── TIER 4: Desktop List Table ── */}
+                    <div className="hidden md:block border border-slate-200 rounded-lg overflow-hidden bg-white shadow-xs">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-600">
+                                        {renderSortHeader('transferNo', 'Mã Phiếu')}
+                                        {renderSortHeader('fromWarehouse', 'Kho Xuất')}
+                                        {renderSortHeader('toWarehouse', 'Kho Nhận')}
+                                        {renderSortHeader('requesterName', 'Người Lập')}
+                                        {renderSortHeader('transferDate', 'Ngày Chuyển')}
+                                        {renderSortHeader('lineCount', 'Số Mặt Hàng', 'center')}
+                                        {renderSortHeader('totalQty', 'Tổng Chai', 'center')}
+                                        {renderSortHeader('status', 'Trạng Thái', 'center')}
+                                        <th className="px-3 py-2.5 font-extrabold uppercase text-[11px] text-right whitespace-nowrap">Thao Tác</th>
+                                    </tr>
+                                </thead>
                         <tbody className="divide-y divide-slate-100 bg-white">
                             {sortedRows.length === 0 ? (
                                 <tr>

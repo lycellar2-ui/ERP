@@ -143,7 +143,7 @@ export interface CloneSOData {
     }[]
 }
 
-export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [], cloneData }: { open: boolean; onClose: () => void; onSaved: (soId?: string) => void; userId: string; userRoles?: string[]; cloneData?: CloneSOData | null }) {
+export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [], cloneData, defaultOrderType = 'STANDARD' }: { open: boolean; onClose: () => void; onSaved: (soId?: string) => void; userId: string; userRoles?: string[]; cloneData?: CloneSOData | null; defaultOrderType?: SOType }) {
     const { locale, isEn, formatCurrency } = useAppLocale()
     const t = SALES_I18N[locale].createDrawer
 
@@ -204,11 +204,11 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
     const [orderDate, setOrderDate] = useState(() => getLocalDateString())
     const [customerId, setCustomerId] = useState('')
     const [channel, setChannel] = useState<SalesChannel>('HORECA')
-    const [paymentTerm, setPaymentTerm] = useState('NET30')
+    const [paymentTerm, setPaymentTerm] = useState(defaultOrderType === 'CONSIGNMENT' ? 'KÝ GỬI - Thanh toán theo thực tế tiêu thụ' : 'NET30')
     const [orderDiscount, setOrderDiscount] = useState(0)
     const [lines, setLines] = useState<SOLine[]>([])
     const [notes, setNotes] = useState('')
-    const [orderType, setOrderType] = useState<SOType>('STANDARD')
+    const [orderType, setOrderType] = useState<SOType>(defaultOrderType)
     const [proposalId, setProposalId] = useState('')
     const [proposals, setProposals] = useState<{ id: string; proposalNo: string; title: string; estimatedAmount: number; customer?: { id: string; name: string } | null }[]>([])
 
@@ -325,6 +325,15 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
             }
         }
     }, [open, cloneData])
+
+    useEffect(() => {
+        if (open && !cloneData) {
+            setOrderType(defaultOrderType)
+            if (defaultOrderType === 'CONSIGNMENT') {
+                setPaymentTerm('KÝ GỬI - Thanh toán theo thực tế tiêu thụ')
+            }
+        }
+    }, [open, cloneData, defaultOrderType])
 
     useEffect(() => {
         if (open && cloneData && sortedCustomersForSelect.length > 0) {
@@ -471,7 +480,13 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
         if (c) {
             const defaultAddress = c.addresses?.find(a => a.isDefault) || c.addresses?.[0]
             setShippingAddressId(defaultAddress?.id ?? '')
-            setPaymentTerm(c.paymentTerm)
+            setPaymentTerm(
+                orderType === 'CONSIGNMENT'
+                    ? 'KÝ GỬI - Thanh toán theo thực tế tiêu thụ'
+                    : orderType === 'TASTING'
+                        ? 'TASTING - Không thu tiền'
+                        : c.paymentTerm
+            )
             const nextChannel = (c.channel ?? 'HORECA') as SalesChannel
             setChannel(nextChannel)
             const fallbackLE = entities.find(e => e.code === 'TA')?.id || entities[0]?.id || ''
@@ -790,10 +805,10 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                 onClose={() => (previewOpen ? setPreviewOpen(false) : onClose())}
                 size="xl"
                 className="bg-lys-bg"
-                title={orderType === 'TASTING' ? t.tastingTitle : t.title}
+                title={orderType === 'TASTING' ? t.tastingTitle : orderType === 'CONSIGNMENT' ? t.consignmentTitle : t.title}
                 headerExtra={
-                    <Badge tone={orderType === 'TASTING' ? 'warning' : 'neutral'}>
-                        {orderType === 'TASTING' ? 'TASTING' : 'STANDARD'}
+                    <Badge tone={orderType === 'TASTING' ? 'warning' : orderType === 'CONSIGNMENT' ? 'info' : 'neutral'}>
+                        {orderType === 'TASTING' ? 'TASTING' : orderType === 'CONSIGNMENT' ? 'KÝ GỬI' : 'STANDARD'}
                     </Badge>
                 }
                 description={t.subtitle}
@@ -834,19 +849,24 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
 
                     {!loadingData && (
                         <>
-                            {/* Order Type Selector: Commercial vs Tasting */}
-                            <div className="p-2.5 sm:p-3 rounded-lg border border-slate-200 bg-slate-50 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                            {/* Order Type Selector: Commercial vs Consignment vs Tasting */}
+                            <div className="p-2.5 sm:p-3 rounded-lg border border-slate-200 bg-slate-50 shadow-xs flex flex-col gap-2">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 w-full">
                                     <span className="text-xs font-bold uppercase tracking-wider text-slate-600 whitespace-nowrap">
                                         {t.orderTypeLabel}
                                     </span>
-                                    <div className="grid grid-cols-2 gap-2 w-full sm:w-auto">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full sm:w-auto">
                                         <button
                                             type="button"
                                             onClick={() => {
                                                 setOrderType('STANDARD')
+                                                if (selectedCustomer?.paymentTerm) {
+                                                    setPaymentTerm(selectedCustomer.paymentTerm)
+                                                } else if (paymentTerm.includes('TASTING') || paymentTerm.includes('KÝ GỬI')) {
+                                                    setPaymentTerm('NET30')
+                                                }
                                             }}
-                                            className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
+                                            className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
                                                 orderType === 'STANDARD'
                                                     ? 'bg-emerald-700 text-white shadow-xs border border-emerald-800'
                                                     : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-300'
@@ -858,11 +878,29 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                         <button
                                             type="button"
                                             onClick={() => {
+                                                setOrderType('CONSIGNMENT')
+                                                setPaymentTerm('KÝ GỬI - Thanh toán theo thực tế tiêu thụ')
+                                                if (selectedCustomer) {
+                                                    loadPrices(selectedCustomer.id, channel)
+                                                }
+                                            }}
+                                            className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                                                orderType === 'CONSIGNMENT'
+                                                    ? 'bg-[#0891B2] text-white shadow-xs border border-[#0E7490] ring-2 ring-[#0891B2]/20'
+                                                    : 'bg-white text-[#0E7490] hover:bg-cyan-50 border border-cyan-300'
+                                            }`}
+                                        >
+                                            <Truck size={14} className="shrink-0" />
+                                            <span>{t.consignmentOrder}</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
                                                 setOrderType('TASTING')
                                                 setPaymentTerm('TASTING - Không thu tiền')
                                                 setLines(prev => prev.map(l => ({ ...l, unitPrice: 0 })))
                                             }}
-                                            className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
+                                            className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
                                                 orderType === 'TASTING'
                                                     ? 'bg-amber-600 text-white shadow-xs border border-amber-700 ring-2 ring-amber-500/20'
                                                     : 'bg-white text-amber-900 hover:bg-amber-50 border border-amber-400'
@@ -875,9 +913,15 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                 </div>
 
                                 {orderType === 'TASTING' && (
-                                    <span className="text-[11px] text-amber-950 bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-md inline-flex items-center gap-1.5 font-semibold shadow-xs whitespace-nowrap shrink-0">
+                                    <span className="text-[11px] text-amber-950 bg-amber-100 border border-amber-300 px-2.5 py-1.5 rounded-md inline-flex items-center gap-1.5 font-semibold shadow-xs">
                                         <Sparkles size={13} className="shrink-0 text-amber-700" />
                                         {t.tastingBanner}
+                                    </span>
+                                )}
+                                {orderType === 'CONSIGNMENT' && (
+                                    <span className="text-[11px] text-cyan-950 bg-cyan-50 border border-cyan-200 px-2.5 py-1.5 rounded-md inline-flex items-center gap-1.5 font-semibold shadow-xs">
+                                        <Truck size={13} className="shrink-0 text-[#0891B2]" />
+                                        {t.consignmentBanner}
                                     </span>
                                 )}
                             </div>
@@ -1847,8 +1891,13 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                     </div>
                                     <div className="text-right">
                                         <h1 className="text-xl font-bold uppercase tracking-wider mb-0.5 text-black">
-                                            {orderType === 'TASTING' ? 'ĐƠN HÀNG TASTING' : 'ĐƠN BÁN HÀNG'}
+                                            {orderType === 'TASTING' ? 'ĐƠN HÀNG TASTING' : orderType === 'CONSIGNMENT' ? 'ĐƠN HÀNG KÝ GỬI' : 'ĐƠN BÁN HÀNG'}
                                         </h1>
+                                        {orderType === 'CONSIGNMENT' && (
+                                            <p className="text-[10px] font-semibold text-slate-700 italic mb-0.5">
+                                                Hàng ký gửi — Thanh toán theo thực tế tiêu thụ
+                                            </p>
+                                        )}
                                         <p className="text-xs font-bold font-mono text-slate-900">DỰ THẢO</p>
                                         <p className="text-[9px] text-slate-600 mt-0.5">Ngày lập: {new Date().toLocaleDateString('vi-VN')}</p>
                                     </div>
@@ -2010,7 +2059,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                 </tr>
                                             )}
                                             <tr className="font-bold border-t-2 border-black">
-                                                <td className="py-1.5 text-slate-900 text-xs">Tổng cộng thanh toán:</td>
+                                                <td className="py-1.5 text-slate-900 text-xs">{orderType === 'CONSIGNMENT' ? 'Tổng giá trị ký gửi (tạm tính):' : 'Tổng cộng thanh toán:'}</td>
                                                 <td className="py-1.5 text-right font-mono text-xs tabular-nums text-black">{formatVND(finalTotal)}</td>
                                             </tr>
                                         </tbody>

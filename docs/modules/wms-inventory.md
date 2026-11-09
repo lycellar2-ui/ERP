@@ -58,6 +58,14 @@ Mỗi lô hàng nhập về được tạo 1 **Stock Lot** — đơn vị truy x
 > 2. **Tồn On-hand (`qtyOnHand`)**: Số lượng vật lý thực tế hiện diện trên sàn kho (`qtyAvailable + qtyReserved`). Tự động hiển thị huy hiệu cảnh báo chênh lệch (`⚠️ Lệch X chai`) khi On-hand khác Sổ sách.
 > 3. **Khả Dụng (`qtyAvailable`)**: Số lượng sẵn sàng xuất bán ngay = `Tồn On-hand - Đơn Đặt (Reserved)`.
 > 
+> **Chuẩn Hóa UI/UX 4 Tầng (4-Tier MISA ERP Standard) & Bộ Lọc Đa Chiều (SKU, Vintage, Vị Trí)**:
+> - **Bố cục 4 tầng đồng nhất** áp dụng xuyên suốt các màn hình Tồn Kho (`WarehouseClient.tsx`), Nhập Kho (`GoodsReceiptTab.tsx`), Xuất Kho (`DeliveryOrderTab.tsx`), và Điều Chuyển Kho (`TransfersTab.tsx`): (1) Thanh tiêu đề phân hệ chuẩn kèm bộ chuyển chế độ xem & nút thao tác; (2) Hệ thống 4 thẻ chỉ số KPI thu gọn/mở rộng (`Collapsible Stat Cards`); (3) Thanh công cụ lọc MISA đa chiều kèm nút `Xóa lọc` & chip trạng thái đang lọc; (4) Bảng dữ liệu chuẩn hóa sắp xếp đa cột và phân trang (`25/50/100/Tất cả`).
+> - **Tra cứu & Lọc chuyên sâu theo SKU, Vintage, Vị trí kệ**:
+>   - Hỗ trợ xem tồn kho **Toàn hệ thống (Tất cả các kho)** hoặc từng kho riêng lẻ.
+>   - Dropdown lọc động tự động thống kê số lượng chai khả dụng và số vị trí kệ theo từng **Mã SKU**, **Niên vụ (Vintage / NV)**, **Vị trí lưu kho (`formatFriendlyLocationName`)**, **Loại rượu**, và **Quốc gia xuất xứ**, kết hợp các tab lọc nhanh (`Tất cả`, `Còn khả dụng`, `Đang giữ chỗ`, `Lệch kiểm kê`, `Hết khả dụng`).
+>   - Hỗ trợ **Interactive Quick-Filter**: Bấm trực tiếp vào huy hiệu `SKU`, `Vintage`, hoặc `Vị trí` ngay trên dòng dữ liệu để lọc tức thì.
+>   - Hỗ trợ chuyển đổi linh hoạt giữa 2 chế độ hiển thị: **Theo Vị Trí (Chi tiết từng lô/kệ)** và **Gộp SKU + Vintage** (Tổng hợp số lượng theo từng cặp SKU + Niên vụ, hiển thị danh sách huy hiệu các vị trí phân bổ kèm số chai tại từng vị trí và cho phép mở rộng xem chi tiết).
+>
 > **Quy tắc phân bổ Đơn Đặt (Reserved) theo Pháp Nhân & Kho mặc định**:
 > - **Đơn hàng từ Thắng Ân (`TA` / `CÔNG TY CỔ PHẦN THƯƠNG MẠI THẮNG ÂN`)**: Mặc định giữ chỗ và trừ tồn khả dụng tại **Kho Thắng Ân (Giang Văn Minh tầng 2)** (`WH-TA-GVM`).
 > - **Đơn hàng từ Ly's Cellar (`LC` / `CÔNG TY TNHH HẦM RƯỢU LY'S`)**: Mặc định giữ chỗ và trừ tồn khả dụng tại **Kho Showroom (Lys)** (`WH-LYS-SR`).

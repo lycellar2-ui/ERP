@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useCallback, useRef, useState, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { signOut } from '@/app/login/actions'
-import { type SessionUser } from '@/lib/session'
+import { type SessionUser, hasPermission } from '@/lib/session'
 import {
     LayoutDashboard, Package, Users, ShoppingCart, Warehouse,
     Truck, DollarSign, FileText, BarChart3, Settings, ChevronLeft,
@@ -278,6 +278,10 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate, isMobile
                 }
 
                 if (!item.permission) return true
+                if (item.permission.includes(':')) {
+                    const [mod, act] = item.permission.split(':')
+                    if (hasPermission(currentUser, mod, act)) return true
+                }
                 return currentUser.permissions.includes(item.permission)
             })
 

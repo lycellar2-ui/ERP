@@ -1813,6 +1813,11 @@ function SalesOrderMobileCard({
                             Tasting
                         </span>
                     )}
+                    {row.orderType === 'CONSIGNMENT' && (
+                        <span className="inline-block px-1.5 py-0.2 text-[9px] font-bold rounded bg-cyan-100 text-cyan-800 border border-cyan-300 shrink-0">
+                            {isEn ? 'Consignment' : 'Ký Gửi'}
+                        </span>
+                    )}
                     {row.invoiceNo ? (
                         <span 
                             className="text-[9px] px-1.5 py-0.2 rounded font-mono font-bold shrink-0"
@@ -2501,6 +2506,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                         orderDiscount: Number(detail.orderDiscount),
                         legalEntityId: detail.legalEntityId,
                         shippingAddressId: detail.shippingAddressId || '',
+                        orderType: (detail as any).orderType || 'STANDARD',
                         notes: detail.notes ? `[Bản sao từ ${detail.soNo}] ${detail.notes}` : `Bản sao từ ${detail.soNo}`,
                         lines: detail.lines.map(l => ({
                             productId: l.productId,
@@ -2837,6 +2843,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                 onChange={e => { setOrderTypeFilter(e.target.value); setPage(1); reload({ orderType: e.target.value as any, page: 1 }, true) }}>
                                 <option value="ALL">{isEn ? 'All order types' : 'Tất cả loại đơn'}</option>
                                 <option value="STANDARD">{isEn ? 'Commercial' : 'Thương Mại'}</option>
+                                <option value="CONSIGNMENT">{isEn ? 'Consignment' : 'Đơn Ký Gửi'}</option>
                                 <option value="TASTING">{isEn ? 'Tasting' : 'Tasting (Nếm thử)'}</option>
                                 <option value="SAMPLE">{isEn ? 'Sample' : 'Hàng Mẫu'}</option>
                             </Select>
@@ -2969,6 +2976,16 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                         {row.legalEntityCode && (
                                             <Badge tone={row.legalEntityCode === 'TA' ? 'warning' : 'brand'} className="text-[10px] px-1 py-0 font-bold">
                                                 {row.legalEntityCode}
+                                            </Badge>
+                                        )}
+                                        {row.orderType === 'CONSIGNMENT' && (
+                                            <Badge tone="info" className="text-[10px] px-1.5 py-0 font-bold">
+                                                {isEn ? 'CSG' : 'Ký Gửi'}
+                                            </Badge>
+                                        )}
+                                        {row.orderType === 'TASTING' && (
+                                            <Badge tone="warning" className="text-[10px] px-1.5 py-0 font-bold">
+                                                Tasting
                                             </Badge>
                                         )}
                                     </div>

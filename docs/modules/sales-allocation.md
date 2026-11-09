@@ -696,6 +696,14 @@ Triển khai hoàn tất Phase 2 theo kế hoạch chuẩn hóa song ngữ toàn
 | **Thời Hạn Hiệu Lực (`startDate` - `endDate`) & Kế Thừa Công Ty Mẹ -> Chi Nhánh Con** | `customer-rules-actions.ts:resolveEffectiveLevel2Policy`, `proposals/actions.ts` | Lưu trữ cấu hình Level 2 kèm thời hạn hiệu lực tại `ApprovalConfig` (`pricing.policy_l2.<customerId>`). Khi hết hạn `endDate`, hệ thống tự động hạ về Level 1 (Giá theo kênh). Nếu chi nhánh con (`parentId`) chưa có cơ chế Level 2 riêng đang hiệu lực, hệ thống tự động kế thừa cơ chế Level 2 đang hiệu lực từ Công ty mẹ. |
 | **Zero-Downtime Active Policy (Bảo Toàn Giá Cũ Khi Chờ Duyệt)** | `customer-rules-actions.ts`, `CustomerRulesTab.tsx` | Khi khách hàng đang có cơ chế Level 2 đã duyệt (VD: giảm 5%) và Sales trình đề xuất mới (VD: giảm 10%), hệ thống giữ nguyên mức 5% đang hiệu lực cho mọi đơn hàng/báo giá cho đến khi tờ trình mới hoàn tất đủ 3 bước duyệt của CEO. |
 
-*Last updated: 2026-10-19 13:45 | Wine ERP v11.5*
+#### Session 20 — Nghiệp Vụ Đơn Hàng Ký Gửi (`CONSIGNMENT`) & Chống Gãy Trang In A4 Đơn Dài (09/11/2026)
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **Loại Đơn Hàng Ký Gửi (`CONSIGNMENT`)** | `prisma/schema.prisma`, `CreateSODrawer.tsx`, `EditSODrawer.tsx`, `SalesClient.tsx`, `sales/actions.ts` | Bổ sung `CONSIGNMENT` vào `SOType`. Cho phép tạo Đơn Ký Gửi từ cả `/dashboard/sales` và `/dashboard/consignment` với đầy đủ thông tin khách hàng (như Theodore), tự động áp giá bán/chiết khấu/VAT theo cơ chế khách hàng, tự động tạo Kho Ký Gửi (`WH-CSG-[Mã KH]`) và Hợp đồng ký gửi. Không tính vào doanh thu thương mại hay hạn mức công nợ AR khi chưa quyết toán bán. |
+| **Luân Chuyển Tồn Kho Ký Gửi Khi Giao DO** | `warehouse/actions.ts` (`transferDOLinesToConsignmentWarehouse`) | Khi xác nhận giao hàng (`confirmDeliveryOrder` / `markDODelivered`) cho đơn `CONSIGNMENT`, tự động chuyển các lô hàng (`StockLot`) sang Kho Ký Gửi của khách hàng và cộng `ConsignmentStock` thay vì hạch toán giá vốn `Nợ 632 / Có 156`. |
+| **In Đơn Ký Gửi & Chống Gãy Trang A4 Đơn Dài** | `sales/print/page.tsx`, `PrintableConsignmentDispatch.tsx`, `PrintableConsignmentCount.tsx` | Hiển thị tiêu đề `ĐƠN HÀNG KÝ GỬI`, mặc định in đầy đủ đơn giá/chiết khấu/VAT kèm nút `Hiện đơn giá / Ẩn đơn giá` trên thanh công cụ in. Khắc phục triệt để lỗi gãy trang khi in đơn nhiều dòng sản phẩm (`thead { display: table-header-group }`, `tr { break-inside: avoid }`, `.print-keep-together { break-inside: avoid }`). |
+
+*Last updated: 2026-11-09 15:20 | Wine ERP v12.44*
 
 

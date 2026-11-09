@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import {
     Warehouse, Package, BarChart3, Plus, Search, MapPin,
     Thermometer, Box, X, Save, Loader2, AlertCircle, CheckCircle2,
     ChevronRight, Layers, PackagePlus, Truck, ShieldAlert, Trash2,
-    DollarSign, AlertTriangle, Clock, Wine, ArrowUpDown, TrendingDown, Download, ChevronDown,
+    DollarSign, AlertTriangle, Clock, Wine, ArrowUpDown, ArrowUp, ArrowDown,
+    TrendingDown, Download, ChevronDown, ChevronUp, RotateCcw, Filter,
     ArrowRightLeft, ClipboardList, LayoutGrid, ArrowLeft, RefreshCw, BellRing, BellOff, Volume2,
     Sparkles, ClipboardCheck
 } from 'lucide-react'
@@ -141,170 +142,608 @@ function DaysInStockBadge({ receivedDate }: { receivedDate: Date }) {
 }
 
 // ── Stock table ───────────────────────────────────
-function StockTable({ lots, sortConfig, onSort, canSeeCost = true }: {
+function StockTable({
+    lots,
+    sortConfig,
+    onSort,
+    canSeeCost = true,
+    groupMode = 'lot',
+    showWarehouseColumn = false,
+    activeSkuFilter = '',
+    activeVintageFilter = '',
+    activeLocationFilter = '',
+    onFilterSku,
+    onFilterVintage,
+    onFilterLocation,
+    page = 1,
+    pageSize = 50,
+    onPageChange,
+    onPageSizeChange,
+}: {
     lots: StockLotRow[]
     sortConfig: { key: string; dir: 'asc' | 'desc' }
     onSort: (key: string) => void
     canSeeCost?: boolean
+    groupMode?: 'lot' | 'sku_vintage'
+    showWarehouseColumn?: boolean
+    activeSkuFilter?: string
+    activeVintageFilter?: string
+    activeLocationFilter?: string
+    onFilterSku?: (sku: string) => void
+    onFilterVintage?: (vintage: string) => void
+    onFilterLocation?: (locCode: string) => void
+    page?: number
+    pageSize?: number
+    onPageChange?: (p: number) => void
+    onPageSizeChange?: (s: number) => void
 }) {
     const { locale, formatCurrency } = useAppLocale()
     const t = WAREHOUSE_I18N[locale].table
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
+
+    const toggleGroup = (groupKey: string) => {
+        setExpandedGroups(prev => ({ ...prev, [groupKey]: !prev[groupKey] }))
+    }
+
+    // Build grouped rows when groupMode === 'sku_vintage'
+    const groupedRows = useMemo(() => {
+        if (groupMode !== 'sku_vintage') return []
+        const map = new Map<string, {
+            key: string
+            skuCode: string
+            productName: string
+            country: string
+            wineType: string
+            vintage: number | null
+            qtyBook: number
+            qtyOnHand: number
+            qtyAvailable: number
+            qtyReserved: number
+            variance: number
+            totalValue: number
+            locations: { locationCode: string; friendlyLoc: string; warehouseName: string; qtyAvailable: number; qtyOnHand: number }[]
+            lots: StockLotRow[]
+        }>()
+
+        for (const lot of lots) {
+            const vKey = lot.vintage ? String(lot.vintage) : 'NV'
+            const gKey = `${lot.skuCode}__${vKey}`
+            const book = lot.qtyBook ?? lot.qtyReceived
+            const onHand = lot.qtyOnHand ?? lot.qtyAvailable
+            const val = lot.qtyAvailable * lot.unitLandedCost
+            const friendlyLoc = formatFriendlyLocationName({ locationCode: lot.locationCode })
+
+            const existing = map.get(gKey)
+            if (!existing) {
+                map.set(gKey, {
+                    key: gKey,
+                    skuCode: lot.skuCode,
+                    productName: lot.productName,
+                    country: lot.country,
+                    wineType: lot.wineType,
+                    vintage: lot.vintage,
+                    qtyBook: book,
+                    qtyOnHand: onHand,
+                    qtyAvailable: lot.qtyAvailable,
+                    qtyReserved: lot.qtyReserved ?? 0,
+                    variance: onHand - book,
+                    totalValue: val,
+                    locations: [{
+                        locationCode: lot.locationCode,
+                        friendlyLoc,
+                        warehouseName: lot.warehouseName,
+                        qtyAvailable: lot.qtyAvailable,
+                        qtyOnHand: onHand,
+                    }],
+                    lots: [lot],
+                })
+            } else {
+                existing.qtyBook += book
+                existing.qtyOnHand += onHand
+                existing.qtyAvailable += lot.qtyAvailable
+                existing.qtyReserved += (lot.qtyReserved ?? 0)
+                existing.variance = existing.qtyOnHand - existing.qtyBook
+                existing.totalValue += val
+                existing.lots.push(lot)
+                const locEntry = existing.locations.find(
+                    loc => loc.locationCode === lot.locationCode && loc.warehouseName === lot.warehouseName
+                )
+                if (locEntry) {
+                    locEntry.qtyAvailable += lot.qtyAvailable
+                    locEntry.qtyOnHand += onHand
+                } else {
+                    existing.locations.push({
+                        locationCode: lot.locationCode,
+                        friendlyLoc,
+                        warehouseName: lot.warehouseName,
+                        qtyAvailable: lot.qtyAvailable,
+                        qtyOnHand: onHand,
+                    })
+                }
+            }
+        }
+
+        const arr = Array.from(map.values())
+        const dir = sortConfig.dir === 'asc' ? 1 : -1
+        const key = sortConfig.key
+        return arr.sort((a, b) => {
+            if (key === 'vintage') return ((a.vintage ?? 0) - (b.vintage ?? 0)) * dir
+            if (key === 'qtyBook') return (a.qtyBook - b.qtyBook) * dir
+            if (key === 'qtyOnHand') return (a.qtyOnHand - b.qtyOnHand) * dir
+            if (key === 'qtyAvailable') return (a.qtyAvailable - b.qtyAvailable) * dir
+            if (key === 'value') return (a.totalValue - b.totalValue) * dir
+            if (key === 'skuCode') return a.skuCode.localeCompare(b.skuCode) * dir
+            if (key === 'productName') return a.productName.localeCompare(b.productName) * dir
+            if (key === 'locationCode') return (a.locations[0]?.locationCode ?? '').localeCompare(b.locations[0]?.locationCode ?? '') * dir
+            return a.skuCode.localeCompare(b.skuCode) * dir
+        })
+    }, [lots, groupMode, sortConfig])
 
     if (lots.length === 0) {
         return (
-            <div className="flex flex-col items-center py-16 gap-3 rounded-lg" style={{ border: '1px dashed #CBD5E1', background: '#FFFFFF' }}>
-                <Box size={32} style={{ color: '#94A3B8' }} />
-                <p className="text-sm font-semibold" style={{ color: '#0F172A' }}>{t.emptyTitle}</p>
-                <p className="text-xs" style={{ color: '#64748B' }}>{t.emptySubtitle}</p>
+            <div className="flex flex-col items-center py-16 gap-3 rounded-lg border border-dashed border-slate-300 bg-white">
+                <Box size={32} className="text-slate-400" />
+                <p className="text-sm font-semibold text-slate-900">{t.emptyTitle}</p>
+                <p className="text-xs text-slate-500">{t.emptySubtitle}</p>
             </div>
         )
     }
 
+    const totalItems = groupMode === 'sku_vintage' ? groupedRows.length : lots.length
+    const effectivePageSize = pageSize <= 0 ? totalItems : pageSize
+    const totalPages = Math.max(1, Math.ceil(totalItems / effectivePageSize))
+    const safePage = Math.min(page, totalPages)
+    const startIdx = (safePage - 1) * effectivePageSize
+    const endIdx = Math.min(startIdx + effectivePageSize, totalItems)
+
+    const pagedLots = groupMode === 'lot' ? lots.slice(startIdx, endIdx) : []
+    const pagedGroups = groupMode === 'sku_vintage' ? groupedRows.slice(startIdx, endIdx) : []
+
     const headers = [
-        { key: 'skuCode', label: t.thSku, align: 'left' as const, width: 'w-[88px]' },
+        { key: 'skuCode', label: t.thSku, align: 'left' as const, width: 'w-[105px]' },
         { key: 'productName', label: t.thProduct, align: 'left' as const, width: '' },
-        { key: 'vintage', label: t.thVintage, align: 'center' as const, width: 'w-[84px]' },
-        { key: 'locationCode', label: t.thLocation, align: 'left' as const, width: 'w-[190px]' },
+        { key: 'vintage', label: t.thVintage, align: 'center' as const, width: 'w-[92px]' },
+        { key: 'locationCode', label: groupMode === 'sku_vintage' ? 'Vị Trí Phân Bổ' : t.thLocation, align: 'left' as const, width: showWarehouseColumn ? 'w-[240px]' : 'w-[205px]' },
         { key: 'qtyBook', label: t.thBookQty, align: 'center' as const, width: 'w-[92px]' },
-        { key: 'qtyOnHand', label: t.thOnHandQty, align: 'center' as const, width: 'w-[92px]' },
-        { key: 'qtyAvailable', label: t.thAvailable, align: 'center' as const, width: 'w-[105px]' },
+        { key: 'qtyOnHand', label: t.thOnHandQty, align: 'center' as const, width: 'w-[96px]' },
+        { key: 'qtyAvailable', label: t.thAvailable, align: 'center' as const, width: 'w-[108px]' },
         ...(canSeeCost ? [{ key: 'value', label: t.thLotValue, align: 'right' as const, width: 'w-[135px]' }] : []),
     ]
 
+    const renderSortIcon = (colKey: string) => {
+        if (sortConfig.key !== colKey) {
+            return <ArrowUpDown size={11} className="text-slate-400 opacity-45 group-hover:opacity-100 transition-opacity shrink-0" />
+        }
+        return sortConfig.dir === 'asc'
+            ? <ArrowUp size={12} className="text-lys-teal-strong shrink-0" />
+            : <ArrowDown size={12} className="text-lys-teal-strong shrink-0" />
+    }
+
     return (
         <div className="rounded-lg overflow-hidden shadow-xs border border-slate-200 bg-white">
-            {/* Desktop Table View (Zero Horizontal Scroll, Ultra-Clean) */}
-            <div className="hidden md:block overflow-x-hidden overflow-y-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
                 <table className="w-full table-fixed text-left border-collapse text-xs">
                     <thead>
-                        <tr className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
-                            {headers.map(h => (
-                                <th key={h.key} className={`px-3 py-2.5 text-[11px] uppercase tracking-wider font-extrabold cursor-pointer select-none whitespace-nowrap text-${h.align} ${h.width}`}
-                                    style={{ color: sortConfig.key === h.key ? '#B47816' : '#64748B' }}
-                                    onClick={() => onSort(h.key)}>
-                                    <span className="inline-flex items-center gap-1">
-                                        {h.label}
-                                        {sortConfig.key === h.key && (
-                                            <ArrowUpDown size={10} style={{ color: '#B47816' }} />
+                        <tr className="bg-slate-50 border-b border-slate-200">
+                            {headers.map(h => {
+                                const isSorted = sortConfig.key === h.key
+                                return (
+                                    <th
+                                        key={h.key}
+                                        onClick={() => onSort(h.key)}
+                                        className={cn(
+                                            'group px-3 py-2.5 text-[11px] uppercase tracking-wider font-extrabold cursor-pointer select-none whitespace-nowrap transition-colors hover:bg-slate-100/80',
+                                            h.align === 'center' ? 'text-center' : h.align === 'right' ? 'text-right' : 'text-left',
+                                            h.width,
+                                            isSorted ? 'text-lys-teal-strong bg-lys-teal-soft/40' : 'text-slate-600'
                                         )}
-                                    </span>
-                                </th>
-                            ))}
+                                    >
+                                        <span className={cn(
+                                            'inline-flex items-center gap-1',
+                                            h.align === 'center' && 'justify-center',
+                                            h.align === 'right' && 'justify-end'
+                                        )}>
+                                            {h.label}
+                                            {renderSortIcon(h.key)}
+                                        </span>
+                                    </th>
+                                )
+                            })}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 bg-white">
-                        {lots.map(lot => {
-                            const countryTag = lot.country ? `[${lot.country}]` : ''
-                            const wineColor = WINE_TYPE_COLOR[lot.wineType] ?? '#64748B'
-                            const lotValue = lot.qtyAvailable * lot.unitLandedCost
-                            const bookQty = lot.qtyBook ?? lot.qtyReceived
-                            const onHandQty = lot.qtyOnHand ?? lot.qtyAvailable
-                            const variance = lot.variance ?? (onHandQty - bookQty)
-                            const friendlyLoc = formatFriendlyLocationName({ locationCode: lot.locationCode })
+                        {groupMode === 'lot' ? (
+                            pagedLots.map(lot => {
+                                const countryTag = lot.country ? `[${lot.country}]` : ''
+                                const wineColor = WINE_TYPE_COLOR[lot.wineType] ?? '#64748B'
+                                const lotValue = lot.qtyAvailable * lot.unitLandedCost
+                                const bookQty = lot.qtyBook ?? lot.qtyReceived
+                                const onHandQty = lot.qtyOnHand ?? lot.qtyAvailable
+                                const variance = lot.variance ?? (onHandQty - bookQty)
+                                const friendlyLoc = formatFriendlyLocationName({ locationCode: lot.locationCode })
+                                const vStr = lot.vintage ? String(lot.vintage) : 'NV'
+                                const isSkuActive = activeSkuFilter === lot.skuCode
+                                const isVintageActive = activeVintageFilter === vStr
+                                const isLocActive = activeLocationFilter === lot.locationCode
 
-                            return (
-                                <tr key={lot.id} className="group transition-colors hover:bg-slate-50/80">
-                                    <td className="px-3 py-2 font-mono font-extrabold text-slate-800 whitespace-nowrap">
-                                        {lot.skuCode}
-                                    </td>
-                                    <td className="px-3 py-2 min-w-0">
-                                        <div className="flex items-center gap-1.5 min-w-0">
-                                            {countryTag && <span className="shrink-0 text-[10px] font-mono font-semibold text-slate-400">{countryTag}</span>}
-                                            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: wineColor }} />
-                                            <p className="font-bold text-slate-900 truncate text-xs" title={lot.productName}>{lot.productName}</p>
-                                        </div>
-                                    </td>
-                                    <td className="px-2 py-2 text-center whitespace-nowrap">
-                                        {lot.vintage ? (
-                                            <span className="text-xs font-bold px-2 py-0.5 rounded-md font-mono inline-block bg-amber-50 text-amber-800 border border-amber-200/80">
-                                                {lot.vintage}
-                                            </span>
-                                        ) : (
-                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-md font-mono inline-block bg-slate-100 text-slate-600 border border-slate-200">NV</span>
-                                        )}
-                                    </td>
-                                    <td className="px-3 py-2 whitespace-nowrap overflow-hidden">
-                                        <span className="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-md truncate max-w-full bg-slate-100 text-slate-700 border border-slate-200/80" title={friendlyLoc}>
-                                            {friendlyLoc}
-                                        </span>
-                                    </td>
-                                    {/* Cột 1: Sổ Sách */}
-                                    <td className="px-2 py-2 text-center whitespace-nowrap">
-                                        <span className="text-xs font-bold font-mono text-slate-700">
-                                            {bookQty.toLocaleString()}
-                                        </span>
-                                    </td>
-                                    {/* Cột 2: Thực Tế */}
-                                    <td className="px-2 py-2 text-center whitespace-nowrap">
-                                        <div className="flex flex-col items-center">
-                                            <span className="text-xs font-bold font-mono text-slate-900">
-                                                {onHandQty.toLocaleString()}
-                                            </span>
-                                            {variance !== 0 && (
-                                                <span className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded mt-0.5 border ${
-                                                    variance < 0 ? 'text-rose-700 bg-rose-50 border-rose-200' : 'text-amber-700 bg-amber-50 border-amber-200'
-                                                }`} title={t.varianceTitle(variance, onHandQty, bookQty)}>
-                                                    {t.varianceBadge(variance)}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-                                    {/* Cột 3: Khả Dụng */}
-                                    <td className="px-2 py-2 text-center whitespace-nowrap">
-                                        <div className="flex flex-col items-center">
-                                            <span className="text-xs font-extrabold font-mono px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                {lot.qtyAvailable.toLocaleString()}
-                                            </span>
-                                            {lot.qtyReserved > 0 && (
-                                                <span className="text-[9px] text-blue-600 font-bold mt-0.5">
-                                                    {t.reservedLabel(lot.qtyReserved)}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-                                    {canSeeCost && (
-                                        <td className="px-3 py-2 text-right whitespace-nowrap">
-                                            {lotValue > 0 ? (
-                                                <span className="text-xs font-mono font-semibold text-slate-800">
-                                                    {formatCurrency(lotValue)}
-                                                </span>
-                                            ) : (
-                                                <span className="text-xs text-slate-400">—</span>
-                                            )}
+                                return (
+                                    <tr key={lot.id} className="group transition-colors hover:bg-slate-50/80">
+                                        {/* Cột SKU — Click để lọc nhanh theo SKU */}
+                                        <td className="px-3 py-2.5 whitespace-nowrap">
+                                            <button
+                                                type="button"
+                                                onClick={() => onFilterSku?.(isSkuActive ? '' : lot.skuCode)}
+                                                title="Bấm để lọc theo mã SKU này"
+                                                className={cn(
+                                                    'font-mono font-extrabold text-xs px-2 py-0.5 rounded transition-all cursor-pointer',
+                                                    isSkuActive
+                                                        ? 'bg-lys-teal-strong text-white shadow-2xs'
+                                                        : 'text-slate-900 bg-slate-100/80 hover:bg-lys-teal-soft hover:text-lys-teal-strong border border-slate-200/80'
+                                                )}
+                                            >
+                                                {lot.skuCode}
+                                            </button>
                                         </td>
-                                    )}
-                                </tr>
-                            )
-                        })}
+
+                                        {/* Cột Sản Phẩm */}
+                                        <td className="px-3 py-2.5 min-w-0">
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                {countryTag && <span className="shrink-0 text-[10px] font-mono font-semibold text-slate-500">{countryTag}</span>}
+                                                <span className="w-2 h-2 rounded-full shrink-0" style={{ background: wineColor }} />
+                                                <p className="font-bold text-slate-900 truncate text-xs" title={lot.productName}>{lot.productName}</p>
+                                            </div>
+                                        </td>
+
+                                        {/* Cột Vintage — Click để lọc nhanh theo Niên vụ */}
+                                        <td className="px-2 py-2.5 text-center whitespace-nowrap">
+                                            <button
+                                                type="button"
+                                                onClick={() => onFilterVintage?.(isVintageActive ? '' : vStr)}
+                                                title="Bấm để lọc theo niên vụ (Vintage) này"
+                                                className={cn(
+                                                    'text-xs font-bold px-2 py-0.5 rounded-md font-mono inline-block transition-all cursor-pointer border',
+                                                    isVintageActive
+                                                        ? 'bg-amber-600 text-white border-amber-700 shadow-2xs'
+                                                        : lot.vintage
+                                                            ? 'bg-amber-50 text-amber-800 border-amber-200/80 hover:bg-amber-100'
+                                                            : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+                                                )}
+                                            >
+                                                {vStr}
+                                            </button>
+                                        </td>
+
+                                        {/* Cột Vị Trí — Click để lọc nhanh theo Vị trí */}
+                                        <td className="px-3 py-2.5 whitespace-nowrap overflow-hidden">
+                                            <div className="flex flex-col items-start gap-0.5 min-w-0">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onFilterLocation?.(isLocActive ? '' : lot.locationCode)}
+                                                    title={`Vị trí: ${friendlyLoc} (${lot.locationCode}) — Bấm để lọc vị trí này`}
+                                                    className={cn(
+                                                        'inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-md truncate max-w-full transition-all cursor-pointer border',
+                                                        isLocActive
+                                                            ? 'bg-lys-teal-strong text-white border-lys-teal-strong shadow-2xs'
+                                                            : 'bg-slate-100 text-slate-700 border-slate-200/80 hover:bg-lys-teal-soft hover:text-lys-teal-strong hover:border-lys-teal-subtle'
+                                                    )}
+                                                >
+                                                    <MapPin size={11} className="shrink-0 opacity-75" />
+                                                    <span className="truncate">{friendlyLoc}</span>
+                                                </button>
+                                                {showWarehouseColumn && lot.warehouseName && (
+                                                    <span className="text-[10px] text-slate-500 font-medium truncate max-w-full pl-0.5">
+                                                        {lot.warehouseName}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
+
+                                        {/* Cột 1: Sổ Sách */}
+                                        <td className="px-2 py-2.5 text-center whitespace-nowrap">
+                                            <span className="text-xs font-bold font-mono text-slate-700">
+                                                {bookQty.toLocaleString()}
+                                            </span>
+                                        </td>
+
+                                        {/* Cột 2: Thực Tế */}
+                                        <td className="px-2 py-2.5 text-center whitespace-nowrap">
+                                            <div className="flex flex-col items-center">
+                                                <span className="text-xs font-bold font-mono text-slate-900">
+                                                    {onHandQty.toLocaleString()}
+                                                </span>
+                                                {variance !== 0 && (
+                                                    <span className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded mt-0.5 border ${
+                                                        variance < 0 ? 'text-rose-700 bg-rose-50 border-rose-200' : 'text-amber-700 bg-amber-50 border-amber-200'
+                                                    }`} title={t.varianceTitle(variance, onHandQty, bookQty)}>
+                                                        {t.varianceBadge(variance)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
+
+                                        {/* Cột 3: Khả Dụng */}
+                                        <td className="px-2 py-2.5 text-center whitespace-nowrap">
+                                            <div className="flex flex-col items-center">
+                                                <span className={cn(
+                                                    'text-xs font-extrabold font-mono px-2.5 py-0.5 rounded-md border',
+                                                    lot.qtyAvailable > 0
+                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                        : 'bg-slate-100 text-slate-500 border-slate-200'
+                                                )}>
+                                                    {lot.qtyAvailable.toLocaleString()}
+                                                </span>
+                                                {lot.qtyReserved > 0 && (
+                                                    <span className="text-[9px] text-blue-600 font-bold mt-0.5">
+                                                        {t.reservedLabel(lot.qtyReserved)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
+
+                                        {canSeeCost && (
+                                            <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                                                {lotValue > 0 ? (
+                                                    <span className="text-xs font-mono font-semibold text-slate-800">
+                                                        {formatCurrency(lotValue)}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-slate-400">—</span>
+                                                )}
+                                            </td>
+                                        )}
+                                    </tr>
+                                )
+                            })
+                        ) : (
+                            pagedGroups.map(group => {
+                                const isExpanded = !!expandedGroups[group.key]
+                                const countryTag = group.country ? `[${group.country}]` : ''
+                                const wineColor = WINE_TYPE_COLOR[group.wineType] ?? '#64748B'
+                                const vStr = group.vintage ? String(group.vintage) : 'NV'
+                                const isSkuActive = activeSkuFilter === group.skuCode
+                                const isVintageActive = activeVintageFilter === vStr
+
+                                return (
+                                    <Fragment key={group.key}>
+                                        <tr
+                                            onClick={() => toggleGroup(group.key)}
+                                            className="group transition-colors hover:bg-slate-50/90 cursor-pointer"
+                                        >
+                                            <td className="px-3 py-2.5 whitespace-nowrap" onClick={e => e.stopPropagation()}>
+                                                <div className="flex items-center gap-1">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleGroup(group.key)}
+                                                        className="p-0.5 rounded hover:bg-slate-200 text-slate-500 cursor-pointer"
+                                                        title="Mở rộng chi tiết từng vị trí"
+                                                    >
+                                                        {isExpanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => onFilterSku?.(isSkuActive ? '' : group.skuCode)}
+                                                        className={cn(
+                                                            'font-mono font-extrabold text-xs px-1.5 py-0.5 rounded transition-all cursor-pointer',
+                                                            isSkuActive
+                                                                ? 'bg-lys-teal-strong text-white'
+                                                                : 'text-slate-900 bg-slate-100 hover:bg-lys-teal-soft hover:text-lys-teal-strong border border-slate-200/80'
+                                                        )}
+                                                    >
+                                                        {group.skuCode}
+                                                    </button>
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-2.5 min-w-0">
+                                                <div className="flex items-center gap-1.5 min-w-0">
+                                                    {countryTag && <span className="shrink-0 text-[10px] font-mono font-semibold text-slate-500">{countryTag}</span>}
+                                                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: wineColor }} />
+                                                    <p className="font-bold text-slate-900 truncate text-xs" title={group.productName}>{group.productName}</p>
+                                                    {group.lots.length > 1 && (
+                                                        <span className="shrink-0 text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                                                            {group.lots.length} vị trí
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-2 py-2.5 text-center whitespace-nowrap" onClick={e => e.stopPropagation()}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onFilterVintage?.(isVintageActive ? '' : vStr)}
+                                                    className={cn(
+                                                        'text-xs font-bold px-2 py-0.5 rounded-md font-mono inline-block transition-all cursor-pointer border',
+                                                        isVintageActive
+                                                            ? 'bg-amber-600 text-white border-amber-700'
+                                                            : group.vintage
+                                                                ? 'bg-amber-50 text-amber-800 border-amber-200/80 hover:bg-amber-100'
+                                                                : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+                                                    )}
+                                                >
+                                                    {vStr}
+                                                </button>
+                                            </td>
+                                            <td className="px-3 py-2.5" onClick={e => e.stopPropagation()}>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {group.locations.slice(0, 3).map((loc, idx) => {
+                                                        const isLocActive = activeLocationFilter === loc.locationCode
+                                                        return (
+                                                            <button
+                                                                key={`${loc.locationCode}-${idx}`}
+                                                                type="button"
+                                                                onClick={() => onFilterLocation?.(isLocActive ? '' : loc.locationCode)}
+                                                                title={`${loc.friendlyLoc}${showWarehouseColumn ? ` (${loc.warehouseName})` : ''}: ${loc.qtyAvailable} chai khả dụng`}
+                                                                className={cn(
+                                                                    'inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded border transition-all cursor-pointer max-w-full truncate',
+                                                                    isLocActive
+                                                                        ? 'bg-lys-teal-strong text-white border-lys-teal-strong'
+                                                                        : 'bg-slate-100 text-slate-700 border-slate-200/80 hover:bg-lys-teal-soft hover:text-lys-teal-strong'
+                                                                )}
+                                                            >
+                                                                <MapPin size={10} className="shrink-0 opacity-70" />
+                                                                <span className="truncate max-w-[115px]">{loc.friendlyLoc}</span>
+                                                                <span className="font-mono font-extrabold text-[10px] opacity-85">({loc.qtyAvailable})</span>
+                                                            </button>
+                                                        )
+                                                    })}
+                                                    {group.locations.length > 3 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => toggleGroup(group.key)}
+                                                            className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 hover:bg-slate-300 cursor-pointer"
+                                                        >
+                                                            +{group.locations.length - 3} vị trí
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-2 py-2.5 text-center whitespace-nowrap">
+                                                <span className="text-xs font-bold font-mono text-slate-700">
+                                                    {group.qtyBook.toLocaleString()}
+                                                </span>
+                                            </td>
+                                            <td className="px-2 py-2.5 text-center whitespace-nowrap">
+                                                <div className="flex flex-col items-center">
+                                                    <span className="text-xs font-bold font-mono text-slate-900">
+                                                        {group.qtyOnHand.toLocaleString()}
+                                                    </span>
+                                                    {group.variance !== 0 && (
+                                                        <span className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded mt-0.5 border ${
+                                                            group.variance < 0 ? 'text-rose-700 bg-rose-50 border-rose-200' : 'text-amber-700 bg-amber-50 border-amber-200'
+                                                        }`}>
+                                                            {t.varianceBadge(group.variance)}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-2 py-2.5 text-center whitespace-nowrap">
+                                                <div className="flex flex-col items-center">
+                                                    <span className={cn(
+                                                        'text-xs font-extrabold font-mono px-2.5 py-0.5 rounded-md border',
+                                                        group.qtyAvailable > 0
+                                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                            : 'bg-slate-100 text-slate-500 border-slate-200'
+                                                    )}>
+                                                        {group.qtyAvailable.toLocaleString()}
+                                                    </span>
+                                                    {group.qtyReserved > 0 && (
+                                                        <span className="text-[9px] text-blue-600 font-bold mt-0.5">
+                                                            {t.reservedLabel(group.qtyReserved)}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            {canSeeCost && (
+                                                <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                                                    {group.totalValue > 0 ? (
+                                                        <span className="text-xs font-mono font-semibold text-slate-800">
+                                                            {formatCurrency(group.totalValue)}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-xs text-slate-400">—</span>
+                                                    )}
+                                                </td>
+                                            )}
+                                        </tr>
+
+                                        {/* Sub-rows khi mở rộng nhóm SKU + Vintage */}
+                                        {isExpanded && group.lots.map(subLot => {
+                                            const subBook = subLot.qtyBook ?? subLot.qtyReceived
+                                            const subOnHand = subLot.qtyOnHand ?? subLot.qtyAvailable
+                                            const subVar = subLot.variance ?? (subOnHand - subBook)
+                                            const subVal = subLot.qtyAvailable * subLot.unitLandedCost
+                                            const subLoc = formatFriendlyLocationName({ locationCode: subLot.locationCode })
+                                            return (
+                                                <tr key={subLot.id} className="bg-slate-50/70 text-[11px] border-l-2 border-l-lys-teal-strong">
+                                                    <td className="pl-7 pr-2 py-1.5 font-mono text-slate-500 truncate" title={subLot.lotNo}>
+                                                        {subLot.lotNo}
+                                                    </td>
+                                                    <td className="px-3 py-1.5 text-slate-600 truncate">
+                                                        Lô nhập: {new Date(subLot.receivedDate).toLocaleDateString('vi-VN')}
+                                                    </td>
+                                                    <td className="px-2 py-1.5 text-center font-mono text-slate-500">
+                                                        {subLot.vintage ?? 'NV'}
+                                                    </td>
+                                                    <td className="px-3 py-1.5">
+                                                        <span className="inline-flex items-center gap-1 font-semibold text-slate-700">
+                                                            <MapPin size={10} className="text-lys-teal-strong shrink-0" />
+                                                            {subLoc}
+                                                            {showWarehouseColumn && subLot.warehouseName && (
+                                                                <span className="text-[10px] text-slate-500">({subLot.warehouseName})</span>
+                                                            )}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-2 py-1.5 text-center font-mono text-slate-600">{subBook.toLocaleString()}</td>
+                                                    <td className="px-2 py-1.5 text-center font-mono text-slate-800">
+                                                        {subOnHand.toLocaleString()}
+                                                        {subVar !== 0 && (
+                                                            <span className={`ml-1 text-[9px] font-bold ${subVar < 0 ? 'text-rose-600' : 'text-amber-700'}`}>
+                                                                ({subVar > 0 ? `+${subVar}` : subVar})
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-2 py-1.5 text-center font-mono font-bold text-emerald-700">{subLot.qtyAvailable.toLocaleString()}</td>
+                                                    {canSeeCost && (
+                                                        <td className="px-3 py-1.5 text-right font-mono text-slate-600">
+                                                            {subVal > 0 ? formatCurrency(subVal) : '—'}
+                                                        </td>
+                                                    )}
+                                                </tr>
+                                            )
+                                        })}
+                                    </Fragment>
+                                )
+                            })
+                        )}
                     </tbody>
                 </table>
             </div>
 
-            {/* Mobile Card List View (< 768px) — Clean, No Lot Number */}
+            {/* Mobile Card List View (< 768px) */}
             <div className="block md:hidden p-2.5 space-y-2.5 bg-slate-50/60">
-                {lots.map(lot => {
+                {(groupMode === 'lot' ? pagedLots : pagedGroups.flatMap(g => g.lots)).map(lot => {
                     const wineColor = WINE_TYPE_COLOR[lot.wineType] ?? '#64748B'
                     const bookQty = lot.qtyBook ?? lot.qtyReceived
                     const onHandQty = lot.qtyOnHand ?? lot.qtyAvailable
                     const variance = lot.variance ?? (onHandQty - bookQty)
                     const friendlyLoc = formatFriendlyLocationName({ locationCode: lot.locationCode })
+                    const vStr = lot.vintage ? String(lot.vintage) : 'NV'
 
                     return (
                         <div key={lot.id} className="p-3 rounded-lg space-y-2 shadow-2xs bg-white border border-slate-200 text-slate-900">
                             <div className="flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-1.5 min-w-0">
                                     <span className="w-2 h-2 rounded-full shrink-0" style={{ background: wineColor }} />
-                                    <span className="text-xs font-extrabold font-mono text-slate-900">{lot.skuCode}</span>
-                                    <span className="text-[11px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
-                                        {lot.vintage ?? 'NV'}
-                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => onFilterSku?.(activeSkuFilter === lot.skuCode ? '' : lot.skuCode)}
+                                        className="text-xs font-extrabold font-mono text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200"
+                                    >
+                                        {lot.skuCode}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => onFilterVintage?.(activeVintageFilter === vStr ? '' : vStr)}
+                                        className="text-[11px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200"
+                                    >
+                                        {vStr}
+                                    </button>
                                 </div>
-                                <span className="inline-block text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 truncate max-w-[180px]">
-                                    {friendlyLoc}
-                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => onFilterLocation?.(activeLocationFilter === lot.locationCode ? '' : lot.locationCode)}
+                                    className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 truncate max-w-[180px]"
+                                >
+                                    <MapPin size={10} className="shrink-0" />
+                                    <span className="truncate">{friendlyLoc}</span>
+                                </button>
                             </div>
 
-                            <h4 className="text-xs font-bold text-slate-900 leading-snug">{lot.productName}</h4>
+                            <div className="flex items-center justify-between gap-2">
+                                <h4 className="text-xs font-bold text-slate-900 leading-snug truncate">{lot.productName}</h4>
+                                {showWarehouseColumn && lot.warehouseName && (
+                                    <span className="text-[10px] font-semibold text-slate-500 shrink-0">{lot.warehouseName}</span>
+                                )}
+                            </div>
 
                             <div className="grid grid-cols-3 gap-1.5 pt-1.5 border-t border-slate-100 text-xs">
                                 <div className="text-center bg-slate-50 py-1 px-1.5 rounded border border-slate-200/80">
@@ -339,6 +778,49 @@ function StockTable({ lots, sortConfig, onSort, canSeeCost = true }: {
                         </div>
                     )
                 })}
+            </div>
+
+            {/* Standard Pagination Footer */}
+            <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-600">
+                <div className="flex items-center gap-2">
+                    <span>
+                        Hiển thị <strong className="font-mono text-slate-900">{startIdx + 1}–{endIdx}</strong> / <strong className="font-mono text-slate-900">{totalItems}</strong> {groupMode === 'sku_vintage' ? 'dòng SKU-Vintage' : 'vị trí lô hàng'}
+                    </span>
+                    <select
+                        value={pageSize}
+                        onChange={e => onPageSizeChange?.(Number(e.target.value))}
+                        className="px-2 py-1 rounded border border-slate-300 bg-white text-slate-800 font-semibold text-xs outline-none cursor-pointer"
+                    >
+                        <option value={25}>25 / trang</option>
+                        <option value={50}>50 / trang</option>
+                        <option value={100}>100 / trang</option>
+                        <option value={0}>Tất cả</option>
+                    </select>
+                </div>
+
+                {totalPages > 1 && (
+                    <div className="flex items-center gap-1">
+                        <button
+                            type="button"
+                            disabled={safePage <= 1}
+                            onClick={() => onPageChange?.(safePage - 1)}
+                            className="px-2.5 py-1 rounded border border-slate-300 bg-white text-slate-700 font-semibold disabled:opacity-40 hover:bg-slate-100 cursor-pointer"
+                        >
+                            Trước
+                        </button>
+                        <span className="px-2.5 py-1 font-mono font-bold text-slate-800">
+                            Trang {safePage} / {totalPages}
+                        </span>
+                        <button
+                            type="button"
+                            disabled={safePage >= totalPages}
+                            onClick={() => onPageChange?.(safePage + 1)}
+                            className="px-2.5 py-1 rounded border border-slate-300 bg-white text-slate-700 font-semibold disabled:opacity-40 hover:bg-slate-100 cursor-pointer"
+                        >
+                            Sau
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     )
@@ -502,8 +984,18 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
     const [qLoading, setQLoading] = useState(false)
     const [qLoaded, setQLoaded] = useState(false)
     const [search, setSearch] = useState('')
+    const [skuFilter, setSkuFilter] = useState('')
+    const [vintageFilter, setVintageFilter] = useState('')
+    const [locationFilter, setLocationFilter] = useState('')
     const [wineFilter, setWineFilter] = useState('')
+    const [countryFilter, setCountryFilter] = useState('')
     const [statusFilter, setStatusFilter] = useState('')
+    const [stockStatusTab, setStockStatusTab] = useState<'ALL' | 'AVAILABLE' | 'RESERVED' | 'VARIANCE' | 'EMPTY'>('ALL')
+    const [inventoryGroupMode, setInventoryGroupMode] = useState<'lot' | 'sku_vintage'>('lot')
+    const [showInventoryStats, setShowInventoryStats] = useState(true)
+    const [invPage, setInvPage] = useState(1)
+    const [invPageSize, setInvPageSize] = useState(50)
+    const hasInitWHRef = useRef(false)
     const [createWHOpen, setCreateWHOpen] = useState(false)
     const [editingWH, setEditingWH] = useState<WarehouseRow | null>(null)
     const [legalEntities, setLegalEntities] = useState<{ id: string; code: string; name: string }[]>([])
@@ -598,9 +1090,10 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
         }
     }, [selectedWH, lastDOId, audioNotifyEnabled])
 
-    // Auto pre-select Kho Thắng Ân Giang Văn Minh (WH-TA-GVM) by default
+    // Auto pre-select Kho Thắng Ân Giang Văn Minh (WH-TA-GVM) on initial load only
     useEffect(() => {
-        if (!selectedWH && warehouses.length > 0) {
+        if (!hasInitWHRef.current && warehouses.length > 0) {
+            hasInitWHRef.current = true
             const defaultWH = warehouses.find(w => w.code === 'WH-TA-GVM') || warehouses[0]
             if (defaultWH) selectWarehouse(defaultWH.id)
         }
@@ -755,14 +1248,15 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
         },
     ]
 
-    const selectWarehouse = async (id: string) => {
-        if (selectedWH === id) { setSelectedWH(null); setLots([]); setSelectedLocations([]); return }
+    const selectWarehouse = async (id: string | null) => {
         setSelectedWH(id)
+        setLocationFilter('')
+        setInvPage(1)
         setLotsLoading(true)
         try {
             const [data, locs] = await Promise.all([
-                getStockInventory({ warehouseId: id }),
-                getLocations(id),
+                getStockInventory(id ? { warehouseId: id } : {}),
+                id ? getLocations(id) : Promise.resolve([]),
             ])
             setLots(data)
             setSelectedLocations(locs)
@@ -770,6 +1264,119 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
             setLotsLoading(false)
         }
     }
+
+    const reloadInventory = () => selectWarehouse(selectedWH)
+
+    const resetInventoryFilters = () => {
+        setSearch('')
+        setSkuFilter('')
+        setVintageFilter('')
+        setLocationFilter('')
+        setWineFilter('')
+        setCountryFilter('')
+        setStatusFilter('')
+        setStockStatusTab('ALL')
+        setInvPage(1)
+    }
+
+    const activeInvFilterCount = [
+        search,
+        skuFilter,
+        vintageFilter,
+        locationFilter,
+        wineFilter,
+        countryFilter,
+        statusFilter,
+        stockStatusTab !== 'ALL' ? stockStatusTab : '',
+    ].filter(Boolean).length
+
+    // Dynamic options derived from loaded lots (for SKU, Vintage, Location, Country)
+    const skuOptions = useMemo(() => {
+        const map = new Map<string, { skuCode: string; productName: string; count: number; avail: number }>()
+        for (const l of lots) {
+            const cur = map.get(l.skuCode)
+            if (!cur) {
+                map.set(l.skuCode, { skuCode: l.skuCode, productName: l.productName, count: 1, avail: l.qtyAvailable })
+            } else {
+                cur.count += 1
+                cur.avail += l.qtyAvailable
+            }
+        }
+        return Array.from(map.values()).sort((a, b) => a.skuCode.localeCompare(b.skuCode))
+    }, [lots])
+
+    const vintageOptions = useMemo(() => {
+        const map = new Map<string, { value: string; label: string; count: number; avail: number }>()
+        for (const l of lots) {
+            const val = l.vintage ? String(l.vintage) : 'NV'
+            const cur = map.get(val)
+            if (!cur) {
+                map.set(val, { value: val, label: l.vintage ? `Vintage ${l.vintage}` : 'NV (Không niên vụ)', count: 1, avail: l.qtyAvailable })
+            } else {
+                cur.count += 1
+                cur.avail += l.qtyAvailable
+            }
+        }
+        return Array.from(map.values()).sort((a, b) => {
+            if (a.value === 'NV') return 1
+            if (b.value === 'NV') return -1
+            return Number(b.value) - Number(a.value)
+        })
+    }, [lots])
+
+    const locationOptions = useMemo(() => {
+        const map = new Map<string, { code: string; friendly: string; count: number; avail: number }>()
+        for (const l of lots) {
+            const cur = map.get(l.locationCode)
+            if (!cur) {
+                map.set(l.locationCode, {
+                    code: l.locationCode,
+                    friendly: formatFriendlyLocationName({ locationCode: l.locationCode }),
+                    count: 1,
+                    avail: l.qtyAvailable,
+                })
+            } else {
+                cur.count += 1
+                cur.avail += l.qtyAvailable
+            }
+        }
+        return Array.from(map.values()).sort((a, b) => a.friendly.localeCompare(b.friendly, 'vi'))
+    }, [lots])
+
+    const countryOptions = useMemo(() => {
+        const map = new Map<string, number>()
+        for (const l of lots) {
+            if (l.country) {
+                map.set(l.country, (map.get(l.country) ?? 0) + 1)
+            }
+        }
+        return Array.from(map.entries())
+            .map(([code, count]) => ({ code, count }))
+            .sort((a, b) => b.count - a.count)
+    }, [lots])
+
+    const invStatusCounts = useMemo(() => {
+        let available = 0
+        let reserved = 0
+        let variance = 0
+        let empty = 0
+        for (const l of lots) {
+            const book = l.qtyBook ?? l.qtyReceived
+            const onHand = l.qtyOnHand ?? l.qtyAvailable
+            const diff = l.variance ?? (onHand - book)
+            if (l.qtyAvailable > 0) available++
+            else empty++
+            if ((l.qtyReserved ?? 0) > 0) reserved++
+            if (diff !== 0) variance++
+        }
+        return {
+            ALL: lots.length,
+            AVAILABLE: available,
+            RESERVED: reserved,
+            VARIANCE: variance,
+            EMPTY: empty,
+        }
+    }, [lots])
 
     // Auto-load quarantine when tab opens and handle legacy redirects
     const handleTabChange = async (tab: WMSTab) => {
@@ -804,27 +1411,56 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
     }
 
     // Filter + sort lots
-    const filteredLots = lots
-        .filter(l =>
-            (!search || l.productName.toLowerCase().includes(search.toLowerCase()) || l.skuCode.toLowerCase().includes(search.toLowerCase()) || formatFriendlyLocationName({ locationCode: l.locationCode }).toLowerCase().includes(search.toLowerCase())) &&
-            (!wineFilter || l.wineType === wineFilter) &&
-            (!statusFilter || l.status === statusFilter)
-        )
-        .sort((a, b) => {
-            const dir = sortConfig.dir === 'asc' ? 1 : -1
-            const key = sortConfig.key
-            if (key === 'vintage') return ((a.vintage ?? 0) - (b.vintage ?? 0)) * dir
-            if (key === 'qtyBook') return ((a.qtyBook ?? a.qtyReceived) - (b.qtyBook ?? b.qtyReceived)) * dir
-            if (key === 'qtyOnHand') return ((a.qtyOnHand ?? a.qtyAvailable) - (b.qtyOnHand ?? b.qtyAvailable)) * dir
-            if (key === 'qtyAvailable') return (a.qtyAvailable - b.qtyAvailable) * dir
-            if (key === 'value') return ((a.qtyAvailable * a.unitLandedCost) - (b.qtyAvailable * b.unitLandedCost)) * dir
-            if (key === 'receivedDate') return (new Date(a.receivedDate).getTime() - new Date(b.receivedDate).getTime()) * dir
-            if (key === 'skuCode') return a.skuCode.localeCompare(b.skuCode) * dir
-            if (key === 'productName') return a.productName.localeCompare(b.productName) * dir
-            if (key === 'lotNo') return a.lotNo.localeCompare(b.lotNo) * dir
-            if (key === 'locationCode') return a.locationCode.localeCompare(b.locationCode) * dir
-            return 0
-        })
+    const filteredLots = useMemo(() => {
+        const q = search.trim().toLowerCase()
+        return lots
+            .filter(l => {
+                const friendlyLoc = formatFriendlyLocationName({ locationCode: l.locationCode })
+                const vStr = l.vintage ? String(l.vintage) : 'NV'
+                const book = l.qtyBook ?? l.qtyReceived
+                const onHand = l.qtyOnHand ?? l.qtyAvailable
+                const diff = l.variance ?? (onHand - book)
+
+                const matchesSearch = !q ||
+                    l.skuCode.toLowerCase().includes(q) ||
+                    l.productName.toLowerCase().includes(q) ||
+                    l.locationCode.toLowerCase().includes(q) ||
+                    friendlyLoc.toLowerCase().includes(q) ||
+                    vStr.toLowerCase().includes(q) ||
+                    l.lotNo.toLowerCase().includes(q)
+
+                const matchesSku = !skuFilter || l.skuCode === skuFilter
+                const matchesVintage = !vintageFilter || vStr === vintageFilter
+                const matchesLocation = !locationFilter || l.locationCode === locationFilter
+                const matchesWine = !wineFilter || l.wineType === wineFilter
+                const matchesCountry = !countryFilter || l.country === countryFilter
+                const matchesStatus = !statusFilter || l.status === statusFilter
+
+                const matchesTab =
+                    stockStatusTab === 'ALL' ? true :
+                    stockStatusTab === 'AVAILABLE' ? l.qtyAvailable > 0 :
+                    stockStatusTab === 'RESERVED' ? (l.qtyReserved ?? 0) > 0 :
+                    stockStatusTab === 'VARIANCE' ? diff !== 0 :
+                    stockStatusTab === 'EMPTY' ? l.qtyAvailable <= 0 : true
+
+                return matchesSearch && matchesSku && matchesVintage && matchesLocation && matchesWine && matchesCountry && matchesStatus && matchesTab
+            })
+            .sort((a, b) => {
+                const dir = sortConfig.dir === 'asc' ? 1 : -1
+                const key = sortConfig.key
+                if (key === 'vintage') return ((a.vintage ?? 0) - (b.vintage ?? 0)) * dir
+                if (key === 'qtyBook') return ((a.qtyBook ?? a.qtyReceived) - (b.qtyBook ?? b.qtyReceived)) * dir
+                if (key === 'qtyOnHand') return ((a.qtyOnHand ?? a.qtyAvailable) - (b.qtyOnHand ?? b.qtyAvailable)) * dir
+                if (key === 'qtyAvailable') return (a.qtyAvailable - b.qtyAvailable) * dir
+                if (key === 'value') return ((a.qtyAvailable * a.unitLandedCost) - (b.qtyAvailable * b.unitLandedCost)) * dir
+                if (key === 'receivedDate') return (new Date(a.receivedDate).getTime() - new Date(b.receivedDate).getTime()) * dir
+                if (key === 'skuCode') return a.skuCode.localeCompare(b.skuCode) * dir
+                if (key === 'productName') return a.productName.localeCompare(b.productName) * dir
+                if (key === 'lotNo') return a.lotNo.localeCompare(b.lotNo) * dir
+                if (key === 'locationCode') return a.locationCode.localeCompare(b.locationCode) * dir
+                return 0
+            })
+    }, [lots, search, skuFilter, vintageFilter, locationFilter, wineFilter, countryFilter, statusFilter, stockStatusTab, sortConfig])
 
     const formatStatCurrency = (val: number) => {
         if (val >= 1_000_000_000) {
@@ -904,13 +1540,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                                 value={selectedWH ?? ''}
                                 onChange={e => {
                                     const val = e.target.value
-                                    if (!val) {
-                                        setSelectedWH(null)
-                                        setLots([])
-                                        setSelectedLocations([])
-                                    } else {
-                                        selectWarehouse(val)
-                                    }
+                                    selectWarehouse(val || null)
                                 }}
                                 className="appearance-none pl-2 pr-6 py-1.5 rounded-lg text-base sm:text-[11px] font-extrabold outline-none cursor-pointer bg-slate-50 border border-slate-300 text-slate-900 focus:border-lys-teal-strong max-w-[140px] truncate"
                             >
@@ -1044,13 +1674,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                                 value={selectedWH ?? ''}
                                 onChange={e => {
                                     const val = e.target.value
-                                    if (!val) {
-                                        setSelectedWH(null)
-                                        setLots([])
-                                        setSelectedLocations([])
-                                    } else {
-                                        selectWarehouse(val)
-                                    }
+                                    selectWarehouse(val || null)
                                 }}
                                 className="appearance-none pl-3 pr-8 py-1.5 rounded-lg text-xs font-semibold outline-none cursor-pointer bg-slate-50 border border-slate-300 text-slate-900 focus:border-lys-teal-strong max-w-[210px] xl:max-w-[280px] truncate"
                             >
@@ -1297,185 +1921,519 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                         </div>
                     )}
 
-                    {/* Inventory Tab — Full Width */}
-                    {activeTab === 'inventory' && (
-                        <div className="w-full space-y-4">
-                            {/* Inventory Sub-tab switcher */}
-                            <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-lg w-fit border border-slate-200">
-                                <button
-                                    onClick={() => setInventorySubTab('available')}
-                                    className={cn(
-                                        "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer",
-                                        inventorySubTab === 'available'
-                                            ? "bg-white text-slate-900 shadow-2xs border border-slate-200/80"
-                                            : "text-slate-600 hover:text-slate-900"
-                                    )}
-                                >
-                                    <Package size={14} className={inventorySubTab === 'available' ? 'text-lys-teal-strong' : 'text-slate-400'} />
-                                    <span>Tồn Kho Tổng & Khả Dụng</span>
-                                </button>
-                                <button
-                                    onClick={async () => {
-                                        setInventorySubTab('quarantine')
-                                        if (!qLoaded) {
-                                            setQLoading(true)
-                                            setQuarantineLots(await getQuarantinedLots())
-                                            setQLoaded(true)
-                                            setQLoading(false)
-                                        }
-                                    }}
-                                    className={cn(
-                                        "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer",
-                                        inventorySubTab === 'quarantine'
-                                            ? "bg-white text-slate-900 shadow-2xs border border-slate-200/80"
-                                            : "text-slate-600 hover:text-slate-900"
-                                    )}
-                                >
-                                    <ShieldAlert size={14} className={inventorySubTab === 'quarantine' ? 'text-rose-600' : 'text-slate-400'} />
-                                    <span>Hàng Lỗi / Hỏng (Chờ Xử Lý)</span>
-                                    {stats.quarantinedCount > 0 && (
-                                        <span className="inline-block text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-rose-600 text-white font-mono">
-                                            {stats.quarantinedCount}
-                                        </span>
-                                    )}
-                                </button>
-                            </div>
+                    {/* Inventory Tab — Standardized 4-Tier ERP Layout */}
+                    {activeTab === 'inventory' && (() => {
+                        const totalBookQty = filteredLots.reduce((sum, l) => sum + (l.qtyBook ?? l.qtyReceived ?? 0), 0)
+                        const totalOnHandQty = filteredLots.reduce((sum, l) => sum + (l.qtyOnHand ?? l.qtyAvailable ?? 0), 0)
+                        const totalAvailableQty = filteredLots.reduce((sum, l) => sum + (l.qtyAvailable ?? 0), 0)
+                        const totalReservedQty = filteredLots.reduce((sum, l) => sum + (l.qtyReserved ?? 0), 0)
+                        const totalVarianceQty = totalOnHandQty - totalBookQty
+                        const totalFilteredValue = filteredLots.reduce((sum, l) => sum + (l.qtyAvailable * l.unitLandedCost), 0)
+                        const uniqueFilteredSkus = new Set(filteredLots.map(l => l.skuCode)).size
+                        const uniqueFilteredVintages = new Set(filteredLots.map(l => `${l.skuCode}_${l.vintage ?? 'NV'}`)).size
+                        const uniqueFilteredLocations = new Set(filteredLots.map(l => `${l.warehouseId}_${l.locationCode}`)).size
+                        const currentWhName = selectedWH ? warehouses.find(w => w.id === selectedWH)?.name : t.allWarehouses
 
-                            {inventorySubTab === 'quarantine' ? (
-                                <QuarantinePanel
-                                    lots={quarantineLots}
-                                    loading={qLoading}
-                                    onRefresh={async () => {
-                                        setQLoading(true)
-                                        setQuarantineLots(await getQuarantinedLots())
-                                        setQLoading(false)
-                                    }}
-                                />
-                            ) : (
-                                <>
-                                    <div className="flex items-center justify-between">
-                                        <p className="text-xs uppercase tracking-widest font-bold" style={{ color: '#64748B' }}>
-                                            {t.table.whInventoryTitle(selectedWH ? warehouses.find(w => w.id === selectedWH)?.name : undefined)}
-                                        </p>
-                                        {selectedWH && (() => {
-                                            const totalBookQty = filteredLots.reduce((sum, l) => sum + (l.qtyBook ?? l.qtyReceived ?? 0), 0)
-                                            const totalOnHandQty = filteredLots.reduce((sum, l) => sum + (l.qtyOnHand ?? l.qtyAvailable ?? 0), 0)
-                                            const totalAvailableQty = filteredLots.reduce((sum, l) => sum + (l.qtyAvailable ?? 0), 0)
-                                            const totalReservedQty = filteredLots.reduce((sum, l) => sum + (l.qtyReserved ?? 0), 0)
-                                            const totalVarianceQty = totalOnHandQty - totalBookQty
+                        const handleExportCsv = () => {
+                            if (filteredLots.length === 0) return
+                            const headers = canSeeCost
+                                ? (locale === 'en'
+                                    ? ['Warehouse', 'Location', 'SKU', 'Product Name', 'Vintage', 'Country', 'Stock Lot', 'Book Qty', 'On-hand Qty', 'Available Qty', 'Reserved Qty', 'Variance', 'Cost (VND)', 'Lot Value (VND)', 'Received Date', 'Status']
+                                    : ['Kho Hàng', 'Vị Trí', 'Mã SKU', 'Sản Phẩm', 'Vintage', 'Xuất Xứ', 'Số Lô', 'Tồn Sổ Sách', 'Tồn Thực Tế', 'Khả Dụng', 'Đã Giữ Chỗ', 'Chênh Lệch', 'Giá Vốn (VND)', 'Giá Trị Lô (VND)', 'Ngày Nhập', 'Trạng Thái'])
+                                : (locale === 'en'
+                                    ? ['Warehouse', 'Location', 'SKU', 'Product Name', 'Vintage', 'Country', 'Stock Lot', 'Book Qty', 'On-hand Qty', 'Available Qty', 'Reserved Qty', 'Variance', 'Received Date', 'Status']
+                                    : ['Kho Hàng', 'Vị Trí', 'Mã SKU', 'Sản Phẩm', 'Vintage', 'Xuất Xứ', 'Số Lô', 'Tồn Sổ Sách', 'Tồn Thực Tế', 'Khả Dụng', 'Đã Giữ Chỗ', 'Chênh Lệch', 'Ngày Nhập', 'Trạng Thái'])
+                            const rows = filteredLots.map(l => [
+                                l.warehouseName,
+                                formatFriendlyLocationName({ locationCode: l.locationCode }),
+                                l.skuCode,
+                                l.productName,
+                                l.vintage ?? 'NV',
+                                l.country || '',
+                                l.lotNo,
+                                l.qtyBook ?? l.qtyReceived,
+                                l.qtyOnHand ?? l.qtyAvailable,
+                                l.qtyAvailable,
+                                l.qtyReserved ?? 0,
+                                l.variance ?? 0,
+                                ...(canSeeCost ? [l.unitLandedCost, l.qtyAvailable * l.unitLandedCost] : []),
+                                formatDateLocale(l.receivedDate),
+                                getLotStatusLabel(l.status, locale),
+                            ])
+                            const csv = [headers, ...rows].map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')
+                            const BOM = '\uFEFF'
+                            const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' })
+                            const url = URL.createObjectURL(blob)
+                            const a = document.createElement('a')
+                            a.href = url
+                            a.download = `ton-kho-sku-vintage-vitri-${new Date().toISOString().slice(0, 10)}.csv`
+                            a.click()
+                            URL.revokeObjectURL(url)
+                        }
 
-                                            return (
-                                                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 max-w-full">
-                                                    <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold shrink-0 whitespace-nowrap" style={{ color: '#B47816', background: 'rgba(180,83,9,0.15)' }}>
-                                                        {t.lotsCount(filteredLots.length)}
+                        return (
+                            <div className="w-full space-y-4">
+                                {/* ── TIER 1: Standardized Module Header Bar ── */}
+                                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-4 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-9 h-9 rounded-lg bg-lys-teal-soft border border-lys-teal-subtle flex items-center justify-center shrink-0">
+                                                <Package size={18} className="text-lys-teal-strong" />
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900">
+                                                        Tồn Kho Theo SKU, Vintage & Vị Trí
+                                                    </h3>
+                                                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle">
+                                                        {uniqueFilteredSkus} SKU · {filteredLots.length} vị trí
                                                     </span>
-                                                    <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-slate-700 bg-slate-100 border border-slate-200 shrink-0 whitespace-nowrap">
-                                                        {t.table.tagBook} <strong>{totalBookQty.toLocaleString()}</strong>{t.bottlesUnit.charAt(0)}
-                                                    </span>
-                                                    <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 shrink-0 whitespace-nowrap">
-                                                        {t.table.tagOnHand} <strong>{totalOnHandQty.toLocaleString()}</strong>{t.bottlesUnit.charAt(0)}
-                                                    </span>
-                                                    <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-amber-900 bg-amber-50 border border-amber-200 shrink-0 whitespace-nowrap">
-                                                        {t.table.tagAvailable} <strong>{totalAvailableQty.toLocaleString()}</strong>{t.bottlesUnit.charAt(0)}
-                                                    </span>
-                                                    {totalReservedQty > 0 && (
-                                                        <span className="text-xs px-2.5 py-1 rounded-lg font-mono font-bold text-blue-800 bg-blue-50 border border-blue-200 shrink-0 whitespace-nowrap">
-                                                            {t.table.tagReserved} <strong>{totalReservedQty.toLocaleString()}</strong>{t.bottlesUnit.charAt(0)}
-                                                        </span>
-                                                    )}
-                                                    {totalVarianceQty !== 0 && (
-                                                        <span className={`text-xs px-2.5 py-1 rounded-lg font-mono font-black border shrink-0 whitespace-nowrap ${
-                                                            totalVarianceQty < 0 ? 'text-rose-700 bg-rose-50 border-rose-300' : 'text-amber-700 bg-amber-50 border-amber-300'
-                                                        }`}>
-                                                            {t.table.tagVariance} {totalVarianceQty > 0 ? `+${totalVarianceQty}` : totalVarianceQty}{t.bottlesUnit.charAt(0)}
-                                                        </span>
-                                                    )}
-                                                    <button onClick={() => {
-                                                        if (filteredLots.length === 0) return
-                                                        const headers = canSeeCost
-                                                            ? (locale === 'en'
-                                                                ? ['Stock Lot', 'Product Name', 'SKU', 'Vintage', 'Location', 'Book Qty', 'On-hand Qty', 'Available Qty', 'Reserved Qty', 'Variance', 'Cost (VND)', 'Lot Value (VND)', 'Received Date', 'Status']
-                                                                : ['Lô Hàng', 'Sản Phẩm', 'SKU', 'Vintage', 'Vị Trí', 'Tồn Sổ Sách', 'Tồn Thực Tế', 'Khả Dụng', 'Đã Giữ Chỗ', 'Chênh Lệch', 'Giá Vốn (VND)', 'Giá Trị Lô (VND)', 'Ngày Nhập', 'Trạng Thái'])
-                                                            : (locale === 'en'
-                                                                ? ['Stock Lot', 'Product Name', 'SKU', 'Vintage', 'Location', 'Book Qty', 'On-hand Qty', 'Available Qty', 'Reserved Qty', 'Variance', 'Received Date', 'Status']
-                                                                : ['Lô Hàng', 'Sản Phẩm', 'SKU', 'Vintage', 'Vị Trí', 'Tồn Sổ Sách', 'Tồn Thực Tế', 'Khả Dụng', 'Đã Giữ Chỗ', 'Chênh Lệch', 'Ngày Nhập', 'Trạng Thái'])
-                                                        const rows = filteredLots.map(l => [
-                                                            l.lotNo, l.productName, l.skuCode, l.vintage ?? 'NV', l.locationCode,
-                                                            l.qtyBook ?? l.qtyReceived, l.qtyOnHand ?? l.qtyAvailable, l.qtyAvailable, l.qtyReserved ?? 0, l.variance ?? 0,
-                                                            ...(canSeeCost ? [l.unitLandedCost, l.qtyAvailable * l.unitLandedCost] : []),
-                                                            formatDateLocale(l.receivedDate), getLotStatusLabel(l.status, locale),
-                                                        ])
-                                                        const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n')
-                                                        const BOM = '\uFEFF'
-                                                        const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' })
-                                                        const url = URL.createObjectURL(blob)
-                                                        const a = document.createElement('a')
-                                                        a.href = url
-                                                        a.download = locale === 'en'
-                                                            ? `stock-inventory-book-vs-onhand-${new Date().toISOString().slice(0, 10)}.csv`
-                                                            : `ton-kho-so-sach-vs-onhand-${new Date().toISOString().slice(0, 10)}.csv`
-                                                        a.click()
-                                                        URL.revokeObjectURL(url)
-                                                    }} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-all font-bold shadow-xs cursor-pointer shrink-0"
-                                                        style={{ color: '#0F172A', background: '#F1F5F9', border: '1px solid #CBD5E1' }}>
-                                                        <Download size={13} /> {t.table.exportCsv}
-                                                    </button>
                                                 </div>
-                                            )
-                                        })()}
+                                                <p className="text-xs text-slate-500 mt-0.5">
+                                                    Phạm vi: <strong className="text-slate-700">{currentWhName}</strong> — Tra cứu nhanh theo mã SKU, niên vụ (Vintage) và kệ lưu trữ
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Sub-tab switcher: Tồn kho khả dụng vs Hàng lỗi */}
+                                        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg border border-slate-200">
+                                            <button
+                                                type="button"
+                                                onClick={() => setInventorySubTab('available')}
+                                                className={cn(
+                                                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer",
+                                                    inventorySubTab === 'available'
+                                                        ? "bg-white text-slate-900 shadow-2xs border border-slate-200/80"
+                                                        : "text-slate-600 hover:text-slate-900"
+                                                )}
+                                            >
+                                                <Package size={13} className={inventorySubTab === 'available' ? 'text-lys-teal-strong' : 'text-slate-400'} />
+                                                <span>Tồn Kho Khả Dụng</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={async () => {
+                                                    setInventorySubTab('quarantine')
+                                                    if (!qLoaded) {
+                                                        setQLoading(true)
+                                                        setQuarantineLots(await getQuarantinedLots())
+                                                        setQLoaded(true)
+                                                        setQLoading(false)
+                                                    }
+                                                }}
+                                                className={cn(
+                                                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer",
+                                                    inventorySubTab === 'quarantine'
+                                                        ? "bg-white text-slate-900 shadow-2xs border border-slate-200/80"
+                                                        : "text-slate-600 hover:text-slate-900"
+                                                )}
+                                            >
+                                                <ShieldAlert size={13} className={inventorySubTab === 'quarantine' ? 'text-rose-600' : 'text-slate-400'} />
+                                                <span>Hàng Lỗi / Chờ Xử Lý</span>
+                                                {stats.quarantinedCount > 0 && (
+                                                    <span className="inline-block text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-rose-600 text-white font-mono">
+                                                        {stats.quarantinedCount}
+                                                    </span>
+                                                )}
+                                            </button>
+                                        </div>
                                     </div>
 
-                                    {selectedWH && (
-                                        <div className="flex flex-col sm:flex-row gap-2">
-                                            <div className="relative flex-1 w-full sm:w-auto sm:min-w-[200px]">
-                                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
-                                                <input placeholder={t.table.searchPlaceholder} value={search}
-                                                    onChange={e => setSearch(e.target.value)}
-                                                    className="w-full pl-9 pr-3 py-2.5 rounded-lg text-base sm:text-sm outline-none font-medium"
-                                                    style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F172A' }} />
+                                    {/* Right Action Toolbar */}
+                                    {inventorySubTab === 'available' && (
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            {/* Group mode toggle: Theo Vị Trí vs Gộp SKU + Vintage */}
+                                            <div className="flex items-center p-0.5 rounded-lg bg-slate-100 border border-slate-200">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => { setInventoryGroupMode('lot'); setInvPage(1) }}
+                                                    className={cn(
+                                                        'px-2.5 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1',
+                                                        inventoryGroupMode === 'lot'
+                                                            ? 'bg-white text-lys-teal-strong shadow-2xs border border-slate-200/80'
+                                                            : 'text-slate-600 hover:text-slate-900'
+                                                    )}
+                                                    title="Hiển thị chi tiết từng vị trí kệ & lô hàng"
+                                                >
+                                                    <MapPin size={13} />
+                                                    <span>Theo Vị Trí</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => { setInventoryGroupMode('sku_vintage'); setInvPage(1) }}
+                                                    className={cn(
+                                                        'px-2.5 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1',
+                                                        inventoryGroupMode === 'sku_vintage'
+                                                            ? 'bg-white text-lys-teal-strong shadow-2xs border border-slate-200/80'
+                                                            : 'text-slate-600 hover:text-slate-900'
+                                                    )}
+                                                    title="Gộp tổng tồn theo từng cặp Mã SKU + Niên vụ (Vintage)"
+                                                >
+                                                    <Layers size={13} />
+                                                    <span>Gộp SKU + Vintage</span>
+                                                </button>
                                             </div>
-                                            <div className="flex gap-2">
-                                                <select value={wineFilter} onChange={e => setWineFilter(e.target.value)}
-                                                    className="flex-1 sm:flex-none px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none font-medium"
-                                                    style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: wineFilter ? '#0F172A' : '#64748B' }}>
-                                                    <option value="">{t.table.allWineTypes}</option>
-                                                    <option value="RED">{t.wineTypes.RED}</option>
-                                                    <option value="WHITE">{t.wineTypes.WHITE}</option>
-                                                    <option value="ROSE">{t.wineTypes.ROSE}</option>
-                                                    <option value="SPARKLING">{t.wineTypes.SPARKLING}</option>
-                                                    <option value="FORTIFIED">{t.wineTypes.FORTIFIED}</option>
-                                                    <option value="DESSERT">{t.wineTypes.DESSERT}</option>
-                                                </select>
-                                                <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-                                                    className="flex-1 sm:flex-none px-3 py-2.5 rounded-lg text-base sm:text-sm outline-none font-medium"
-                                                    style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: statusFilter ? '#0F172A' : '#64748B' }}>
-                                                    <option value="">{t.table.allStatuses}</option>
-                                                    <option value="AVAILABLE">{t.lotStatuses.AVAILABLE}</option>
-                                                    <option value="RESERVED">{t.lotStatuses.RESERVED}</option>
-                                                    <option value="QUARANTINE">{t.lotStatuses.QUARANTINE}</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    )}
 
-                                    {lotsLoading ? (
-                                        <div className="flex items-center justify-center py-12">
-                                            <Loader2 size={24} className="animate-spin text-lys-teal-strong" />
-                                        </div>
-                                    ) : selectedWH ? (
-                                        <StockTable lots={filteredLots} sortConfig={sortConfig} onSort={handleSort} canSeeCost={canSeeCost} />
-                                    ) : (
-                                        <div className="flex flex-col items-center py-20 gap-3 rounded-lg shadow-xs bg-white border border-dashed border-slate-300">
-                                            <Warehouse size={36} className="text-slate-400" />
-                                            <p className="text-sm font-semibold text-slate-800">
-                                                {t.table.selectWhPrompt}
-                                            </p>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowInventoryStats(!showInventoryStats)}
+                                                className="flex items-center gap-1 px-2.5 py-2 rounded-lg text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer transition-all"
+                                            >
+                                                {showInventoryStats ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                                <span className="hidden sm:inline">Chỉ số</span>
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={reloadInventory}
+                                                disabled={lotsLoading}
+                                                className="flex items-center justify-center p-2 rounded-lg text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer transition-all"
+                                                title="Làm mới dữ liệu tồn kho"
+                                            >
+                                                <RefreshCw size={14} className={lotsLoading ? 'animate-spin text-lys-teal-strong' : ''} />
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={handleExportCsv}
+                                                disabled={filteredLots.length === 0}
+                                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border border-slate-200 bg-white text-lys-teal-strong hover:bg-lys-teal-soft/40 disabled:opacity-50 cursor-pointer transition-all"
+                                            >
+                                                <Download size={14} />
+                                                <span>{t.table.exportCsv}</span>
+                                            </button>
                                         </div>
                                     )}
-                                </>
-                            )}
-                        </div>
-                    )}
+                                </div>
+
+                                {inventorySubTab === 'quarantine' ? (
+                                    <QuarantinePanel
+                                        lots={quarantineLots}
+                                        loading={qLoading}
+                                        onRefresh={async () => {
+                                            setQLoading(true)
+                                            setQuarantineLots(await getQuarantinedLots())
+                                            setQLoading(false)
+                                        }}
+                                    />
+                                ) : (
+                                    <>
+                                        {/* ── TIER 2: Collapsible KPI Stat Cards ── */}
+                                        {showInventoryStats && (
+                                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+                                                <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs flex flex-col justify-between" style={{ borderLeft: '3px solid #0891B2' }}>
+                                                    <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Tổng Mã SKU & Vintage</span>
+                                                    <div className="mt-1 flex items-baseline gap-2">
+                                                        <span className="text-lg sm:text-xl font-extrabold font-mono text-slate-900">{uniqueFilteredSkus} SKU</span>
+                                                        <span className="text-xs font-mono font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                                                            {uniqueFilteredVintages} dòng niên vụ
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-[11px] text-slate-500 mt-1">
+                                                        Phân bổ tại <strong className="text-slate-700">{uniqueFilteredLocations}</strong> vị trí kệ
+                                                    </span>
+                                                </div>
+
+                                                <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs flex flex-col justify-between" style={{ borderLeft: '3px solid #334155' }}>
+                                                    <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Tồn Thực Tế / Sổ Sách</span>
+                                                    <div className="mt-1 flex items-baseline gap-2">
+                                                        <span className="text-lg sm:text-xl font-extrabold font-mono text-slate-900">
+                                                            {totalOnHandQty.toLocaleString()} <span className="text-xs font-semibold text-slate-500">{t.bottlesUnit}</span>
+                                                        </span>
+                                                        {totalVarianceQty !== 0 && (
+                                                            <span className={cn(
+                                                                'text-[11px] font-mono font-extrabold px-1.5 py-0.5 rounded border',
+                                                                totalVarianceQty < 0 ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+                                                            )}>
+                                                                Lệch {totalVarianceQty > 0 ? `+${totalVarianceQty}` : totalVarianceQty}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-[11px] text-slate-500 mt-1">
+                                                        Tồn sổ sách: <strong className="font-mono text-slate-700">{totalBookQty.toLocaleString()}</strong> {t.bottlesUnit}
+                                                    </span>
+                                                </div>
+
+                                                <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs flex flex-col justify-between" style={{ borderLeft: '3px solid #15803D' }}>
+                                                    <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Tồn Khả Dụng Bán</span>
+                                                    <div className="mt-1 flex items-baseline gap-2">
+                                                        <span className="text-lg sm:text-xl font-extrabold font-mono text-emerald-700">
+                                                            {totalAvailableQty.toLocaleString()} <span className="text-xs font-semibold text-emerald-600">{t.bottlesUnit}</span>
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-[11px] text-slate-500 mt-1">
+                                                        Đang giữ chỗ đơn SO: <strong className="font-mono text-blue-700">{totalReservedQty.toLocaleString()}</strong> {t.bottlesUnit}
+                                                    </span>
+                                                </div>
+
+                                                <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs flex flex-col justify-between" style={{ borderLeft: '3px solid #B45309' }}>
+                                                    <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">
+                                                        {canSeeCost ? 'Giá Trị Tồn Kho (Đang Lọc)' : 'Số Lô & Vị Trí Kệ'}
+                                                    </span>
+                                                    <div className="mt-1">
+                                                        <span className="text-lg sm:text-xl font-extrabold font-mono text-slate-900">
+                                                            {canSeeCost ? formatStatCurrency(totalFilteredValue) : `${filteredLots.length.toLocaleString()} lô`}
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-[11px] text-slate-500 mt-1 truncate">
+                                                        {canSeeCost ? formatCurrency(totalFilteredValue) : `Trên tổng số ${lots.length.toLocaleString()} lô toàn kho`}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* ── TIER 3: Unified MISA-Standard Filter Toolbar (Focused on SKU, Vintage, Location) ── */}
+                                        <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-2xs space-y-3">
+                                            {/* Row 1: Quick Status Filter Tabs */}
+                                            <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-3 overflow-x-auto no-scrollbar">
+                                                <div className="flex items-center gap-1.5">
+                                                    {[
+                                                        { key: 'ALL' as const, label: 'Tất Cả Vị Trí', count: invStatusCounts.ALL },
+                                                        { key: 'AVAILABLE' as const, label: 'Còn Khả Dụng', count: invStatusCounts.AVAILABLE },
+                                                        { key: 'RESERVED' as const, label: 'Đang Giữ Chỗ', count: invStatusCounts.RESERVED },
+                                                        { key: 'VARIANCE' as const, label: 'Lệch Kiểm Kê', count: invStatusCounts.VARIANCE },
+                                                        { key: 'EMPTY' as const, label: 'Hết Khả Dụng', count: invStatusCounts.EMPTY },
+                                                    ].map(tab => {
+                                                        const active = stockStatusTab === tab.key
+                                                        return (
+                                                            <button
+                                                                key={tab.key}
+                                                                type="button"
+                                                                onClick={() => { setStockStatusTab(tab.key); setInvPage(1) }}
+                                                                className={cn(
+                                                                    'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap border',
+                                                                    active
+                                                                        ? 'bg-lys-teal-strong text-white border-lys-teal-strong shadow-2xs'
+                                                                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
+                                                                )}
+                                                            >
+                                                                <span>{tab.label}</span>
+                                                                <span className={cn(
+                                                                    'px-1.5 py-0.2 rounded-full text-[10px] font-mono font-extrabold',
+                                                                    active ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-700'
+                                                                )}>
+                                                                    {tab.count}
+                                                                </span>
+                                                            </button>
+                                                        )
+                                                    })}
+                                                </div>
+
+                                                {activeInvFilterCount > 0 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={resetInventoryFilters}
+                                                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 cursor-pointer shrink-0 transition-all"
+                                                    >
+                                                        <RotateCcw size={12} />
+                                                        <span>Xóa bộ lọc ({activeInvFilterCount})</span>
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {/* Row 2: Multi-dimension Filter Controls (SKU, Vintage, Location, Warehouse, WineType, Country) */}
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5">
+                                                {/* 1. Search Input (SKU, Product, Location, Vintage) */}
+                                                <div className="relative sm:col-span-2 lg:col-span-2">
+                                                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Tìm nhanh mã SKU, tên rượu, niên vụ, vị trí kệ..."
+                                                        value={search}
+                                                        onChange={e => { setSearch(e.target.value); setInvPage(1) }}
+                                                        className="w-full h-9 pl-9 pr-8 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-900 placeholder:text-slate-400 outline-none focus:border-lys-teal-strong"
+                                                    />
+                                                    {search && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => { setSearch(''); setInvPage(1) }}
+                                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-slate-400 hover:text-slate-700 cursor-pointer"
+                                                        >
+                                                            <X size={13} />
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {/* 2. Bộ lọc Mã SKU */}
+                                                <select
+                                                    value={skuFilter}
+                                                    onChange={e => { setSkuFilter(e.target.value); setInvPage(1) }}
+                                                    className={cn(
+                                                        'h-9 px-2.5 rounded-lg border text-xs font-semibold outline-none cursor-pointer truncate',
+                                                        skuFilter
+                                                            ? 'border-lys-teal-strong bg-lys-teal-soft/30 text-lys-teal-strong font-bold'
+                                                            : 'border-slate-300 bg-white text-slate-700'
+                                                    )}
+                                                >
+                                                    <option value="">Tất cả Mã SKU ({skuOptions.length})</option>
+                                                    {skuOptions.map(s => (
+                                                        <option key={s.skuCode} value={s.skuCode}>
+                                                            [{s.skuCode}] {s.productName} ({s.avail} chai)
+                                                        </option>
+                                                    ))}
+                                                </select>
+
+                                                {/* 3. Bộ lọc Niên Vụ (Vintage) */}
+                                                <select
+                                                    value={vintageFilter}
+                                                    onChange={e => { setVintageFilter(e.target.value); setInvPage(1) }}
+                                                    className={cn(
+                                                        'h-9 px-2.5 rounded-lg border text-xs font-semibold outline-none cursor-pointer truncate',
+                                                        vintageFilter
+                                                            ? 'border-amber-500 bg-amber-50 text-amber-900 font-bold'
+                                                            : 'border-slate-300 bg-white text-slate-700'
+                                                    )}
+                                                >
+                                                    <option value="">Tất cả Vintage ({vintageOptions.length})</option>
+                                                    {vintageOptions.map(v => (
+                                                        <option key={v.value} value={v.value}>
+                                                            {v.label} — {v.avail.toLocaleString()} chai ({v.count} vị trí)
+                                                        </option>
+                                                    ))}
+                                                </select>
+
+                                                {/* 4. Bộ lọc Vị Trí Lưu Kho (Location) */}
+                                                <select
+                                                    value={locationFilter}
+                                                    onChange={e => { setLocationFilter(e.target.value); setInvPage(1) }}
+                                                    className={cn(
+                                                        'h-9 px-2.5 rounded-lg border text-xs font-semibold outline-none cursor-pointer truncate',
+                                                        locationFilter
+                                                            ? 'border-lys-teal-strong bg-lys-teal-soft/30 text-lys-teal-strong font-bold'
+                                                            : 'border-slate-300 bg-white text-slate-700'
+                                                    )}
+                                                >
+                                                    <option value="">Tất cả Vị Trí Kệ ({locationOptions.length})</option>
+                                                    {locationOptions.map(loc => (
+                                                        <option key={loc.code} value={loc.code}>
+                                                            {loc.friendly} — {loc.avail.toLocaleString()} chai ({loc.count} lô)
+                                                        </option>
+                                                    ))}
+                                                </select>
+
+                                                {/* 5. Bộ lọc Kho / Loại vang / Xuất xứ */}
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <select
+                                                        value={wineFilter}
+                                                        onChange={e => { setWineFilter(e.target.value); setInvPage(1) }}
+                                                        className={cn(
+                                                            'h-9 px-2 rounded-lg border text-xs font-semibold outline-none cursor-pointer truncate',
+                                                            wineFilter
+                                                                ? 'border-lys-teal-strong bg-lys-teal-soft/30 text-lys-teal-strong font-bold'
+                                                                : 'border-slate-300 bg-white text-slate-700'
+                                                        )}
+                                                    >
+                                                        <option value="">Loại rượu</option>
+                                                        <option value="RED">{t.wineTypes.RED}</option>
+                                                        <option value="WHITE">{t.wineTypes.WHITE}</option>
+                                                        <option value="ROSE">{t.wineTypes.ROSE}</option>
+                                                        <option value="SPARKLING">{t.wineTypes.SPARKLING}</option>
+                                                        <option value="FORTIFIED">{t.wineTypes.FORTIFIED}</option>
+                                                        <option value="DESSERT">{t.wineTypes.DESSERT}</option>
+                                                    </select>
+
+                                                    <select
+                                                        value={countryFilter}
+                                                        onChange={e => { setCountryFilter(e.target.value); setInvPage(1) }}
+                                                        className={cn(
+                                                            'h-9 px-2 rounded-lg border text-xs font-semibold outline-none cursor-pointer truncate',
+                                                            countryFilter
+                                                                ? 'border-lys-teal-strong bg-lys-teal-soft/30 text-lys-teal-strong font-bold'
+                                                                : 'border-slate-300 bg-white text-slate-700'
+                                                        )}
+                                                    >
+                                                        <option value="">Xuất xứ</option>
+                                                        {countryOptions.map(c => (
+                                                            <option key={c.code} value={c.code}>
+                                                                {c.code} ({c.count})
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            {/* Active Filter Chips Bar (when user filters by SKU, Vintage, Location, etc.) */}
+                                            {(skuFilter || vintageFilter || locationFilter || wineFilter || countryFilter || !selectedWH) && (
+                                                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                                                    <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1 mr-1">
+                                                        <Filter size={11} /> Đang xem:
+                                                    </span>
+
+                                                    {/* Warehouse scope chip */}
+                                                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                                                        <Warehouse size={11} />
+                                                        {currentWhName}
+                                                    </span>
+
+                                                    {skuFilter && (
+                                                        <span className="inline-flex items-center gap-1 text-[11px] font-bold font-mono px-2 py-0.5 rounded-md bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle">
+                                                            SKU: {skuFilter}
+                                                            <button type="button" onClick={() => setSkuFilter('')} className="hover:opacity-75 cursor-pointer"><X size={11} /></button>
+                                                        </span>
+                                                    )}
+
+                                                    {vintageFilter && (
+                                                        <span className="inline-flex items-center gap-1 text-[11px] font-bold font-mono px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200">
+                                                            Vintage: {vintageFilter}
+                                                            <button type="button" onClick={() => setVintageFilter('')} className="hover:opacity-75 cursor-pointer"><X size={11} /></button>
+                                                        </span>
+                                                    )}
+
+                                                    {locationFilter && (
+                                                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle">
+                                                            <MapPin size={10} />
+                                                            Vị trí: {formatFriendlyLocationName({ locationCode: locationFilter })}
+                                                            <button type="button" onClick={() => setLocationFilter('')} className="hover:opacity-75 cursor-pointer"><X size={11} /></button>
+                                                        </span>
+                                                    )}
+
+                                                    {wineFilter && (
+                                                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                                                            Loại: {getWineTypeLabel(wineFilter, locale)}
+                                                            <button type="button" onClick={() => setWineFilter('')} className="hover:opacity-75 cursor-pointer"><X size={11} /></button>
+                                                        </span>
+                                                    )}
+
+                                                    {countryFilter && (
+                                                        <span className="inline-flex items-center gap-1 text-[11px] font-bold font-mono px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                                                            Quốc gia: {countryFilter}
+                                                            <button type="button" onClick={() => setCountryFilter('')} className="hover:opacity-75 cursor-pointer"><X size={11} /></button>
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* ── TIER 4: Data Table + Pagination ── */}
+                                        {lotsLoading ? (
+                                            <div className="flex items-center justify-center py-16 bg-white rounded-lg border border-slate-200">
+                                                <Loader2 size={24} className="animate-spin text-lys-teal-strong" />
+                                            </div>
+                                        ) : (
+                                            <StockTable
+                                                lots={filteredLots}
+                                                sortConfig={sortConfig}
+                                                onSort={handleSort}
+                                                canSeeCost={canSeeCost}
+                                                groupMode={inventoryGroupMode}
+                                                showWarehouseColumn={!selectedWH}
+                                                activeSkuFilter={skuFilter}
+                                                activeVintageFilter={vintageFilter}
+                                                activeLocationFilter={locationFilter}
+                                                onFilterSku={sku => { setSkuFilter(sku); setInvPage(1) }}
+                                                onFilterVintage={v => { setVintageFilter(v); setInvPage(1) }}
+                                                onFilterLocation={loc => { setLocationFilter(loc); setInvPage(1) }}
+                                                page={invPage}
+                                                pageSize={invPageSize}
+                                                onPageChange={setInvPage}
+                                                onPageSizeChange={size => { setInvPageSize(size); setInvPage(1) }}
+                                            />
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        )
+                    })()}
                     </div>
                 </div>
             )}

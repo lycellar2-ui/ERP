@@ -16,9 +16,10 @@ import { useAppLocale } from '@/lib/i18n'
 import { getConsignmentI18n, ConsignmentI18n } from './i18n'
 import PrintableConsignmentCount, { ConsignmentCountHeader } from './PrintableConsignmentCount'
 import PrintableConsignmentDispatch, { ConsignmentDispatchData } from './PrintableConsignmentDispatch'
+import { CreateSODrawer } from '../sales/CreateSODrawer'
 import type {
     ConsignmentRow, ConsignmentStockRow, ConsignedStockMapRow,
-    ReplenishmentAlert, ConsignmentWarehouseRow
+    ReplenishmentAlert, ConsignmentWarehouseRow, ConsignmentOrderRow
 } from './actions'
 import {
     getConsignmentAgreements, getConsignmentStats, createConsignmentAgreement,
@@ -29,7 +30,7 @@ import {
     getInternalWarehouses, getWarehouseStockForTransfer,
     createConsignmentTransfer, getConsignmentInventoryForCount,
     getConsignmentTransferPrintData, getConsignmentTransfers,
-    sellFromConsignmentWarehouse
+    sellFromConsignmentWarehouse, getConsignmentOrders
 } from './actions'
 
 const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
@@ -42,13 +43,27 @@ const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
     DRAFT: { color: '#475569', bg: 'rgba(100,116,139,0.12)' },
 }
 
-export function ConsignmentClient({ initialRows, stats: initialStats }: { initialRows?: ConsignmentRow[]; stats?: any } = {}) {
-    const { locale, formatCurrency, formatDate, formatNumber } = useAppLocale()
+export function ConsignmentClient({ initialRows, stats: initialStats, userId = '', userRoles = [] }: { initialRows?: ConsignmentRow[]; stats?: any; userId?: string; userRoles?: string[] } = {}) {
+    const { locale, isEn, formatCurrency, formatDate, formatNumber } = useAppLocale()
     const i18n = getConsignmentI18n(locale)
 
-    const [mainTab, setMainTab] = useState<'warehouses' | 'transfers' | 'sales' | 'stockCount' | 'agreements' | 'stockMap'>('warehouses')
+    // Role-based capability flags (Segregation of Duties: Sales Admin vs Thủ Kho vs Kế Toán vs Sales Rep)
+    const isExecutiveOrSalesAdmin = userRoles.length === 0 || userRoles.some(r =>
+        ['CEO', 'ADMIN', 'Admin', 'SYS:ADMIN', 'CBO', 'TRO_LY', 'Trợ Lý', 'SALES_MGR', 'Sales Manager', 'SALES_ADMIN', 'Sales Admin', 'Operation Manager'].includes(r)
+    )
+    const isSalesRep = userRoles.some(r => ['SALES_REP', 'Sales Rep'].includes(r))
+    const isAccountant = userRoles.some(r => ['KE_TOAN', 'Kế Toán', 'ACCOUNTANT', 'CHIEF_ACCOUNTANT'].includes(r))
+    const isWarehouseKeeper = userRoles.some(r => ['THU_KHO', 'Thủ Kho', 'THU_KHO_TRUONG'].includes(r))
+
+    const canCreateConsignmentOrder = isExecutiveOrSalesAdmin || isSalesRep
+    const canManageWarehouseAndDispatch = isExecutiveOrSalesAdmin || isWarehouseKeeper
+    const canSellFromConsignment = isExecutiveOrSalesAdmin || isAccountant
+    const canManageAgreements = isExecutiveOrSalesAdmin
+
+    const [mainTab, setMainTab] = useState<'orders' | 'warehouses' | 'transfers' | 'sales' | 'stockCount' | 'agreements' | 'stockMap'>('orders')
 
     // Data States
+    const [consignmentOrders, setConsignmentOrders] = useState<ConsignmentOrderRow[]>([])
     const [warehouses, setWarehouses] = useState<ConsignmentWarehouseRow[]>([])
     const [transfers, setTransfers] = useState<any[]>([])
     const [agreements, setAgreements] = useState<ConsignmentRow[]>(initialRows || [])
@@ -59,6 +74,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
     const [searchTerm, setSearchTerm] = useState('')
 
     // Modals
+    const [createCSGOrderOpen, setCreateCSGOrderOpen] = useState(false)
     const [createWHOpen, setCreateWHOpen] = useState(false)
     const [createTransferOpen, setCreateTransferOpen] = useState(false)
     const [createSaleOpen, setCreateSaleOpen] = useState(false)
@@ -74,16 +90,18 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
     const loadAll = useCallback(async () => {
         setLoading(true)
         try {
-            const [whList, trfList, agList, st] = await Promise.all([
+            const [whList, trfList, agList, st, ordList] = await Promise.all([
                 getConsignmentWarehouses(),
                 getConsignmentTransfers(),
                 getConsignmentAgreements(),
                 getConsignmentStats(),
+                getConsignmentOrders(),
             ])
             setWarehouses(whList)
             setTransfers(trfList)
             setAgreements(agList)
             setStats(st)
+            setConsignmentOrders(ordList)
         } catch (err: any) {
             toast.error(i18n.toasts.loadErrorPrefix + err.message)
         } finally {
@@ -105,7 +123,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
         }
     }
 
-    const handleTabChange = (nextTab: 'warehouses' | 'transfers' | 'sales' | 'stockCount' | 'agreements' | 'stockMap') => {
+    const handleTabChange = (nextTab: 'orders' | 'warehouses' | 'transfers' | 'sales' | 'stockCount' | 'agreements' | 'stockMap') => {
         setMainTab(nextTab)
         if (nextTab === 'stockMap') {
             loadStockMapData()
@@ -150,15 +168,26 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                 description={i18n.header.description}
                 actions={
                     <div className="flex flex-wrap items-center gap-2">
-                        <Button variant="primary" size="sm" onClick={() => setCreateWHOpen(true)}>
-                            <Plus size={14} /> {i18n.header.createWarehouseBtn}
-                        </Button>
-                        <Button variant="secondary" size="sm" onClick={() => { setPreselectedWarehouseId(''); setCreateTransferOpen(true); }}>
-                            <ArrowRightLeft size={14} /> {i18n.header.createTransferBtn}
-                        </Button>
-                        <Button variant="secondary" size="sm" onClick={() => { setPreselectedWarehouseId(''); setCreateSaleOpen(true); }}>
-                            <ShoppingCart size={14} /> {i18n.header.createSaleBtn}
-                        </Button>
+                        {canCreateConsignmentOrder && (
+                            <Button variant="primary" size="sm" onClick={() => setCreateCSGOrderOpen(true)}>
+                                <Plus size={14} /> {isEn ? '+ Create Consignment Order' : '+ Tạo Đơn Ký Gửi'}
+                            </Button>
+                        )}
+                        {canManageWarehouseAndDispatch && (
+                            <Button variant="secondary" size="sm" onClick={() => setCreateWHOpen(true)}>
+                                <WarehouseIcon size={14} /> {i18n.header.createWarehouseBtn}
+                            </Button>
+                        )}
+                        {canManageWarehouseAndDispatch && (
+                            <Button variant="secondary" size="sm" onClick={() => { setPreselectedWarehouseId(''); setCreateTransferOpen(true); }}>
+                                <ArrowRightLeft size={14} /> {i18n.header.createTransferBtn}
+                            </Button>
+                        )}
+                        {canSellFromConsignment && (
+                            <Button variant="secondary" size="sm" onClick={() => { setPreselectedWarehouseId(''); setCreateSaleOpen(true); }}>
+                                <ShoppingCart size={14} /> {i18n.header.createSaleBtn}
+                            </Button>
+                        )}
                     </div>
                 }
             />
@@ -176,14 +205,160 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                 value={mainTab}
                 onChange={handleTabChange}
                 items={[
+                    { value: 'orders', label: isEn ? 'Consignment Orders' : 'Đơn Hàng Ký Gửi', count: consignmentOrders.length },
                     { value: 'warehouses', label: i18n.tabs.warehouses, count: warehouses.length },
                     { value: 'transfers', label: i18n.tabs.transfers, count: transfers.length },
-                    { value: 'sales', label: i18n.tabs.sales },
+                    ...(canSellFromConsignment ? [{ value: 'sales', label: i18n.tabs.sales }] : []),
                     { value: 'stockCount', label: i18n.tabs.stockCount },
                     { value: 'agreements', label: i18n.tabs.agreements, count: agreements.length },
                     { value: 'stockMap', label: i18n.tabs.stockMap },
                 ]}
             />
+
+            {/* TAB 0: CONSIGNMENT ORDERS (Full SalesOrder format) */}
+            {mainTab === 'orders' && (
+                <div className="space-y-4">
+                    <div className="p-4 rounded-lg border border-slate-200 bg-white flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h3 className="text-sm font-bold text-slate-900">
+                                {isEn ? 'Consignment Orders & Consumption Settlements' : 'Danh Sách Đơn Hàng Ký Gửi (Đầy Đủ Đơn Giá, Chiết Khấu, VAT & Giao Nhận)'}
+                            </h3>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                {isEn
+                                    ? 'Create full Consignment Orders with customer pricing, delivery info, and A4 print identical to standard Sales Orders.'
+                                    : 'Tạo Đơn Ký Gửi với đầy đủ thông tin khách hàng, địa chỉ giao nhận, đơn giá thỏa thuận, chiết khấu, VAT và in mẫu A4 chuẩn như Đơn Bán Hàng.'}
+                            </p>
+                        </div>
+                        {canCreateConsignmentOrder && (
+                            <Button variant="primary" size="sm" onClick={() => setCreateCSGOrderOpen(true)}>
+                                <Plus size={14} /> {isEn ? 'Create Consignment Order' : 'Tạo Đơn Ký Gửi Mới'}
+                            </Button>
+                        )}
+                    </div>
+
+                    <div className="hidden md:block rounded-lg overflow-hidden border border-slate-200 bg-white shadow-xs">
+                        <Table>
+                            <THead>
+                                <tr>
+                                    <Th>{isEn ? 'Order No' : 'Mã Đơn'}</Th>
+                                    <Th>{isEn ? 'Type' : 'Phân Loại'}</Th>
+                                    <Th>{isEn ? 'Customer & Delivery' : 'Khách Hàng & Giao Nhận'}</Th>
+                                    <Th>{isEn ? 'Qty / Items' : 'Số Lượng'}</Th>
+                                    <Th>{isEn ? 'Order Value (Excl. VAT)' : 'Giá Trị Đơn (Chưa VAT)'}</Th>
+                                    <Th>{isEn ? 'Sales Rep / Date' : 'Sales Rep / Ngày Lập'}</Th>
+                                    <Th>{isEn ? 'Status' : 'Trạng Thái'}</Th>
+                                    <Th>{isEn ? 'Actions' : 'Thao Tác'}</Th>
+                                </tr>
+                            </THead>
+                            <TBody>
+                                {loading ? (
+                                    <TableMessageRow colSpan={8}>{i18n.warehousesTab.loading}</TableMessageRow>
+                                ) : consignmentOrders.length === 0 ? (
+                                    <TableMessageRow colSpan={8}>
+                                        {isEn ? 'No consignment orders yet. Click "+ Create Consignment Order" to create one.' : 'Chưa có đơn hàng ký gửi nào. Bấm "+ Tạo Đơn Ký Gửi" để lên đơn mới.'}
+                                    </TableMessageRow>
+                                ) : (
+                                    consignmentOrders.map(ord => {
+                                        const isCSGOrder = ord.orderType === 'CONSIGNMENT'
+                                        return (
+                                            <Tr key={ord.id}>
+                                                <Td className="font-bold font-mono text-[#0891B2]">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span>{ord.soNo}</span>
+                                                        {ord.legalEntityCode && (
+                                                            <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                                                {ord.legalEntityCode}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </Td>
+                                                <Td>
+                                                    <span className={`inline-block text-[11px] px-2 py-0.5 rounded font-bold whitespace-nowrap ${
+                                                        isCSGOrder
+                                                            ? 'bg-cyan-50 text-[#0E7490] border border-cyan-200'
+                                                            : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                                    }`}>
+                                                        {isCSGOrder ? (isEn ? 'Consignment Order' : 'Đơn Xuất Ký Gửi') : (isEn ? 'CSG Settlement' : 'Chốt Bán Ký Gửi')}
+                                                    </span>
+                                                </Td>
+                                                <Td>
+                                                    <div className="font-semibold text-slate-900">{ord.customerName}</div>
+                                                    <div className="text-[11px] text-slate-500">
+                                                        {ord.customerCode}
+                                                        {ord.receiverPhone ? ` · SĐT: ${ord.receiverPhone}` : ''}
+                                                    </div>
+                                                    {ord.shippingAddress && (
+                                                        <div className="text-[11px] text-slate-400 truncate max-w-xs" title={ord.shippingAddress}>
+                                                            {ord.shippingAddress}
+                                                        </div>
+                                                    )}
+                                                </Td>
+                                                <Td className="font-bold font-mono text-slate-900">
+                                                    {formatNumber(ord.totalQty)} {i18n.stats.bottlesUnit} <span className="text-xs font-normal text-slate-500">({ord.lineCount} SKU)</span>
+                                                </Td>
+                                                <Td>
+                                                    <div className="font-bold font-mono text-slate-900">{formatCurrency(ord.totalAmount)}</div>
+                                                    {ord.vatAmount > 0 && (
+                                                        <div className="text-[11px] text-slate-500 font-mono">+ VAT: {formatCurrency(ord.vatAmount)}</div>
+                                                    )}
+                                                </Td>
+                                                <Td>
+                                                    <div className="text-xs font-medium text-slate-800">{ord.salesRepName}</div>
+                                                    <div className="text-[11px] text-slate-400">{formatDate(ord.createdAt)}</div>
+                                                </Td>
+                                                <Td>
+                                                    <span className="inline-block text-xs px-2 py-0.5 rounded font-bold bg-slate-100 text-slate-800 border border-slate-200">
+                                                        {ord.status}
+                                                    </span>
+                                                </Td>
+                                                <Td>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <button
+                                                            onClick={() => window.open(`/dashboard/sales/print?id=${ord.id}`, '_blank')}
+                                                            className="px-2.5 py-1 text-xs font-bold rounded flex items-center gap-1 cursor-pointer transition bg-white border border-slate-200 hover:bg-slate-50 text-[#0891B2]"
+                                                        >
+                                                            <Printer size={12} /> {isEn ? 'Print Order (A4)' : 'In Đơn (A4)'}
+                                                        </button>
+                                                    </div>
+                                                </Td>
+                                            </Tr>
+                                        )
+                                    })
+                                )}
+                            </TBody>
+                        </Table>
+                    </div>
+
+                    {/* Mobile Cards (<768px) */}
+                    <div className="block md:hidden space-y-3">
+                        {consignmentOrders.map(ord => (
+                            <div key={ord.id} className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs space-y-2">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div>
+                                        <span className="font-mono text-xs font-bold text-[#0891B2]">{ord.soNo}</span>
+                                        <p className="text-sm font-bold text-slate-900 mt-0.5">{ord.customerName}</p>
+                                        <p className="text-xs text-slate-500">{ord.customerCode} · {ord.salesRepName}</p>
+                                    </div>
+                                    <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-cyan-50 text-[#0E7490] border border-cyan-200 shrink-0">
+                                        {ord.status}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100">
+                                    <span className="font-mono font-bold text-slate-800">
+                                        {formatNumber(ord.totalQty)} {i18n.stats.bottlesUnit} · {formatCurrency(ord.totalAmount)}
+                                    </span>
+                                    <button
+                                        onClick={() => window.open(`/dashboard/sales/print?id=${ord.id}`, '_blank')}
+                                        className="px-2.5 py-1 text-xs font-bold rounded flex items-center gap-1 bg-slate-50 border border-slate-200 text-[#0891B2]"
+                                    >
+                                        <Printer size={12} /> {isEn ? 'Print A4' : 'In Đơn A4'}
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* TAB 1: CUSTOMER CONSIGNMENT WAREHOUSES */}
             {mainTab === 'warehouses' && (
@@ -242,20 +417,24 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                                             </Td>
                                             <Td>
                                                 <div className="flex items-center gap-1.5">
-                                                    <button
-                                                        onClick={() => { setPreselectedWarehouseId(wh.id); setCreateTransferOpen(true); }}
-                                                        title={i18n.warehousesTab.dispatchTitle}
-                                                        className="px-2.5 py-1 text-[11px] font-bold rounded flex items-center gap-1 cursor-pointer transition bg-white border border-slate-200 hover:bg-slate-50 text-[#B45309]"
-                                                    >
-                                                        <ArrowRightLeft size={12} /> {i18n.warehousesTab.dispatchBtn}
-                                                    </button>
-                                                    <button
-                                                        onClick={() => { setPreselectedWarehouseId(wh.id); setCreateSaleOpen(true); }}
-                                                        title={i18n.warehousesTab.sellTitle}
-                                                        className="px-2.5 py-1 text-[11px] font-bold rounded flex items-center gap-1 cursor-pointer transition bg-white border border-slate-200 hover:bg-slate-50 text-[#15803D]"
-                                                    >
-                                                        <ShoppingCart size={12} /> {i18n.warehousesTab.sellBtn}
-                                                    </button>
+                                                    {canManageWarehouseAndDispatch && (
+                                                        <button
+                                                            onClick={() => { setPreselectedWarehouseId(wh.id); setCreateTransferOpen(true); }}
+                                                            title={i18n.warehousesTab.dispatchTitle}
+                                                            className="px-2.5 py-1 text-[11px] font-bold rounded flex items-center gap-1 cursor-pointer transition bg-white border border-slate-200 hover:bg-slate-50 text-[#B45309]"
+                                                        >
+                                                            <ArrowRightLeft size={12} /> {i18n.warehousesTab.dispatchBtn}
+                                                        </button>
+                                                    )}
+                                                    {canSellFromConsignment && (
+                                                        <button
+                                                            onClick={() => { setPreselectedWarehouseId(wh.id); setCreateSaleOpen(true); }}
+                                                            title={i18n.warehousesTab.sellTitle}
+                                                            className="px-2.5 py-1 text-[11px] font-bold rounded flex items-center gap-1 cursor-pointer transition bg-white border border-slate-200 hover:bg-slate-50 text-[#15803D]"
+                                                        >
+                                                            <ShoppingCart size={12} /> {i18n.warehousesTab.sellBtn}
+                                                        </button>
+                                                    )}
                                                     <button
                                                         onClick={() => handleOpenPrintCount(wh.id)}
                                                         title={i18n.warehousesTab.printCountTitle}
@@ -298,22 +477,26 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                                     <span className="font-mono font-semibold text-[#B45309]">{wh.skuCount} SKU</span>
                                     <span className="font-mono font-bold text-[#0891B2]">{formatCurrency(wh.totalStockValue)}</span>
                                 </div>
-                                <div className="grid grid-cols-3 gap-1.5 pt-1">
-                                    <button
-                                        onClick={() => { setPreselectedWarehouseId(wh.id); setCreateTransferOpen(true); }}
-                                        className="py-1.5 px-2 text-[11px] font-bold rounded flex items-center justify-center gap-1 bg-slate-50 border border-slate-200 text-[#B45309]"
-                                    >
-                                        <ArrowRightLeft size={12} /> {i18n.warehousesTab.dispatchBtn}
-                                    </button>
-                                    <button
-                                        onClick={() => { setPreselectedWarehouseId(wh.id); setCreateSaleOpen(true); }}
-                                        className="py-1.5 px-2 text-[11px] font-bold rounded flex items-center justify-center gap-1 bg-slate-50 border border-slate-200 text-[#15803D]"
-                                    >
-                                        <ShoppingCart size={12} /> {i18n.warehousesTab.sellBtn}
-                                    </button>
+                                <div className="flex flex-wrap gap-1.5 pt-1">
+                                    {canManageWarehouseAndDispatch && (
+                                        <button
+                                            onClick={() => { setPreselectedWarehouseId(wh.id); setCreateTransferOpen(true); }}
+                                            className="flex-1 py-1.5 px-2 text-[11px] font-bold rounded flex items-center justify-center gap-1 bg-slate-50 border border-slate-200 text-[#B45309]"
+                                        >
+                                            <ArrowRightLeft size={12} /> {i18n.warehousesTab.dispatchBtn}
+                                        </button>
+                                    )}
+                                    {canSellFromConsignment && (
+                                        <button
+                                            onClick={() => { setPreselectedWarehouseId(wh.id); setCreateSaleOpen(true); }}
+                                            className="flex-1 py-1.5 px-2 text-[11px] font-bold rounded flex items-center justify-center gap-1 bg-slate-50 border border-slate-200 text-[#15803D]"
+                                        >
+                                            <ShoppingCart size={12} /> {i18n.warehousesTab.sellBtn}
+                                        </button>
+                                    )}
                                     <button
                                         onClick={() => handleOpenPrintCount(wh.id)}
-                                        className="py-1.5 px-2 text-[11px] font-bold rounded flex items-center justify-center gap-1 bg-slate-50 border border-slate-200 text-[#0891B2]"
+                                        className="flex-1 py-1.5 px-2 text-[11px] font-bold rounded flex items-center justify-center gap-1 bg-slate-50 border border-slate-200 text-[#0891B2]"
                                     >
                                         <Printer size={12} /> {i18n.warehousesTab.printCountBtn}
                                     </button>
@@ -331,12 +514,14 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                         <p className="text-xs text-slate-500">
                             {i18n.transfersTab.description}
                         </p>
-                        <button
-                            onClick={() => { setPreselectedWarehouseId(''); setCreateTransferOpen(true); }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg cursor-pointer transition bg-[#D97706] hover:bg-[#B45309] text-white"
-                        >
-                            <Plus size={14} /> {i18n.transfersTab.createBtn}
-                        </button>
+                        {canManageWarehouseAndDispatch && (
+                            <button
+                                onClick={() => { setPreselectedWarehouseId(''); setCreateTransferOpen(true); }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg cursor-pointer transition bg-[#D97706] hover:bg-[#B45309] text-white"
+                            >
+                                <Plus size={14} /> {i18n.transfersTab.createBtn}
+                            </button>
+                        )}
                     </div>
 
                     {/* Desktop Table */}
@@ -542,12 +727,14 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                 <div className="rounded-lg overflow-hidden shadow-xs border border-slate-200 bg-white">
                     <div className="p-3.5 bg-white border-b border-slate-200 flex justify-between items-center">
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-700">{i18n.agreementsTab.title}</span>
-                        <button
-                            onClick={() => setCreateAgreementOpen(true)}
-                            className="px-3 py-1.5 text-xs font-bold rounded cursor-pointer transition flex items-center gap-1 bg-[#0E7490] hover:bg-[#155E75] text-white"
-                        >
-                            <Plus size={14} /> {i18n.agreementsTab.addBtn}
-                        </button>
+                        {canManageAgreements && (
+                            <button
+                                onClick={() => setCreateAgreementOpen(true)}
+                                className="px-3 py-1.5 text-xs font-bold rounded cursor-pointer transition flex items-center gap-1 bg-[#0E7490] hover:bg-[#155E75] text-white"
+                            >
+                                <Plus size={14} /> {i18n.agreementsTab.addBtn}
+                            </button>
+                        )}
                     </div>
 
                     {/* Desktop Table */}
@@ -818,6 +1005,19 @@ export function ConsignmentClient({ initialRows, stats: initialStats }: { initia
                     onClose={() => setPrintDispatchData(null)}
                 />
             )}
+
+            {/* MODAL / DRAWER: CREATE FULL CONSIGNMENT ORDER */}
+            <CreateSODrawer
+                open={createCSGOrderOpen}
+                onClose={() => setCreateCSGOrderOpen(false)}
+                onSaved={() => {
+                    setCreateCSGOrderOpen(false)
+                    loadAll()
+                }}
+                userId={userId}
+                userRoles={userRoles}
+                defaultOrderType="CONSIGNMENT"
+            />
 
             {/* MODAL / DRAWER: CREATE & INSPECT AGREEMENT */}
             <CreateDrawer open={createAgreementOpen} i18n={i18n} onClose={() => setCreateAgreementOpen(false)} onCreated={loadAll} />

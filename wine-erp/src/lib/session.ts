@@ -157,7 +157,15 @@ export function hasPermission(user: SessionUser, module: string, action: string)
     if (!user) return false
     if (hasRole(user, 'CEO', 'ADMIN', 'TRO_LY')) return true
     if (action === 'READ' && hasRole(user, 'Kế Toán', 'KE_TOAN')) {
-        if (['MDM', 'FIN', 'TAX', 'SLS', 'PRC', 'CNT', 'CST', 'RPT', 'STM', 'DSH', 'WMS', 'TRS', 'MGN'].includes(module)) return true
+        if (['MDM', 'FIN', 'TAX', 'SLS', 'PRC', 'CNT', 'CST', 'RPT', 'STM', 'DSH', 'WMS', 'TRS', 'MGN', 'CSG'].includes(module)) return true
+    }
+    if (module === 'CSG') {
+        if (['READ', 'CREATE', 'UPDATE', 'WRITE'].includes(action) && hasRole(user, 'SALES_ADMIN', 'Sales Admin', 'THU_KHO', 'Thủ Kho', 'SALES_MGR', 'Sales Manager', 'Kế Toán', 'KE_TOAN', 'CBO')) {
+            return true
+        }
+        if (['READ', 'CREATE'].includes(action) && hasRole(user, 'SALES_REP', 'Sales Rep')) {
+            return true
+        }
     }
     return user.permissions.includes(`${module}:${action}`)
 }

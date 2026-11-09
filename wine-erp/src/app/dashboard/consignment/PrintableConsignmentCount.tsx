@@ -55,12 +55,34 @@ export default function PrintableConsignmentCount({ data, onClose }: Props) {
                 @media print {
                     @page {
                         size: A4 portrait;
-                        margin: 12mm 10mm 12mm 10mm;
+                        margin: 10mm 10mm 10mm 10mm;
+                    }
+                    header, nav, aside, .no-print {
+                        display: none !important;
                     }
                     body {
                         font-family: 'Times New Roman', Times, 'Liberation Serif', serif !important;
                         -webkit-print-color-adjust: exact;
                         print-color-adjust: exact;
+                        background: #ffffff !important;
+                    }
+                    table {
+                        page-break-inside: auto;
+                    }
+                    thead {
+                        display: table-header-group !important;
+                    }
+                    tfoot {
+                        display: table-footer-group !important;
+                    }
+                    tr {
+                        break-inside: avoid !important;
+                        page-break-inside: avoid !important;
+                        page-break-after: auto;
+                    }
+                    .print-keep-together {
+                        break-inside: avoid !important;
+                        page-break-inside: avoid !important;
                     }
                 }
                 .font-times {
@@ -225,32 +247,34 @@ export default function PrintableConsignmentCount({ data, onClose }: Props) {
                     </table>
                 </div>
 
-                {/* Kết luận và ý kiến các bên */}
-                <div className="text-xs space-y-2 mb-6 border border-black p-3">
-                    <div className="font-extrabold uppercase text-[11px]">III. Ý KIẾN VÀ KẾT LUẬN:</div>
-                    <div className="space-y-2 text-[11px]">
-                        <div>- Hai bên đã cùng tiến hành kiểm đếm thực tế số lượng hàng hóa ký gửi còn lưu giữ tại kho của Bên Nhận.</div>
-                        <div>- Tình trạng bao bì, nhãn mác, tem phụ/tem rượu nhập khẩu: ............................................................................</div>
-                        <div>- Các ý kiến khác (nếu có): ................................................................................................................................</div>
-                        <div>Biên bản được lập thành 02 bản có giá trị pháp lý như nhau, mỗi bên giữ 01 bản làm cơ sở đối soát định kỳ.</div>
-                    </div>
-                </div>
-
-                {/* Chữ ký 2 bên */}
-                <div className="pt-2">
-                    <div className="grid grid-cols-2 text-center text-xs">
-                        <div className="space-y-1">
-                            <div className="font-extrabold uppercase text-[11px]">ĐẠI DIỆN BÊN KÝ GỬI</div>
-                            <div className="text-[11px] italic">(Ký, ghi rõ họ tên)</div>
-                            <div className="h-20"></div>
-                            <div className="font-bold">......................................................</div>
+                <div className="print-keep-together break-inside-avoid print:break-inside-avoid">
+                    {/* Kết luận và ý kiến các bên */}
+                    <div className="text-xs space-y-2 mb-6 border border-black p-3">
+                        <div className="font-extrabold uppercase text-[11px]">III. Ý KIẾN VÀ KẾT LUẬN:</div>
+                        <div className="space-y-2 text-[11px]">
+                            <div>- Hai bên đã cùng tiến hành kiểm đếm thực tế số lượng hàng hóa ký gửi còn lưu giữ tại kho của Bên Nhận.</div>
+                            <div>- Tình trạng bao bì, nhãn mác, tem phụ/tem rượu nhập khẩu: ............................................................................</div>
+                            <div>- Các ý kiến khác (nếu có): ................................................................................................................................</div>
+                            <div>Biên bản được lập thành 02 bản có giá trị pháp lý như nhau, mỗi bên giữ 01 bản làm cơ sở đối soát định kỳ.</div>
                         </div>
+                    </div>
 
-                        <div className="space-y-1">
-                            <div className="font-extrabold uppercase text-[11px]">ĐẠI DIỆN BÊN NHẬN KÝ GỬI</div>
-                            <div className="text-[11px] italic">(Ký, đóng dấu & ghi rõ họ tên)</div>
-                            <div className="h-20"></div>
-                            <div className="font-bold">......................................................</div>
+                    {/* Chữ ký 2 bên */}
+                    <div className="pt-2">
+                        <div className="grid grid-cols-2 text-center text-xs">
+                            <div className="space-y-1">
+                                <div className="font-extrabold uppercase text-[11px]">ĐẠI DIỆN BÊN KÝ GỬI</div>
+                                <div className="text-[11px] italic">(Ký, ghi rõ họ tên)</div>
+                                <div className="h-20"></div>
+                                <div className="font-bold">......................................................</div>
+                            </div>
+
+                            <div className="space-y-1">
+                                <div className="font-extrabold uppercase text-[11px]">ĐẠI DIỆN BÊN NHẬN KÝ GỬI</div>
+                                <div className="text-[11px] italic">(Ký, đóng dấu & ghi rõ họ tên)</div>
+                                <div className="h-20"></div>
+                                <div className="font-bold">......................................................</div>
+                            </div>
                         </div>
                     </div>
                 </div>

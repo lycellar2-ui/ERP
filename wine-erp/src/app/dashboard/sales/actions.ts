@@ -15,7 +15,7 @@ import { getVnptInvoiceProductName } from '@/lib/vnpt/product-invoice-names'
 
 export type SOStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'PENDING_ACCOUNTING' | 'CONFIRMED' | 'PARTIALLY_DELIVERED' | 'DELIVERED' | 'INVOICED' | 'PAID' | 'CANCELLED'
 export type SalesChannel = 'HORECA' | 'WHOLESALE_DISTRIBUTOR' | 'VIP_RETAIL' | 'DIRECT_INDIVIDUAL' | 'CORPORATE' | 'RETAIL'
-export type SOType = 'STANDARD' | 'TASTING' | 'SAMPLE'
+export type SOType = 'STANDARD' | 'TASTING' | 'SAMPLE' | 'CONSIGNMENT'
 export type SODeliveryStatus = 'UNDELIVERED' | 'PREPARING' | 'PARTIALLY_DELIVERED' | 'DELIVERED'
 
 export interface SalesOrderRow {
@@ -822,6 +822,7 @@ export async function getCustomerARBalance(customerId: string): Promise<number> 
         where: {
             customerId: { in: targetCustomerIds },
             status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED'] },
+            orderType: 'STANDARD',
             arInvoices: { none: {} }
         },
         select: {
@@ -884,10 +885,86 @@ export async function generateUniqueSoNo(): Promise<string> {
     return candidate
 }
 
+// ── Auto-ensure Consignment Warehouse + Agreement for CONSIGNMENT Orders ──
+export async function ensureConsignmentSetupForCustomer(
+    customerId: string,
+    legalEntityId?: string | null,
+    shippingAddressId?: string | null
+) {
+    try {
+        const customer = await prisma.customer.findUnique({
+            where: { id: customerId },
+            include: { addresses: { orderBy: [{ isDefault: 'desc' }, { id: 'asc' }], take: 1 } }
+        })
+        if (!customer) return
+
+        // 1. Ensure Consignment Warehouse exists
+        const existingWh = await prisma.warehouse.findFirst({
+            where: { customerId, type: 'CONSIGNMENT' }
+        })
+        if (!existingWh) {
+            let baseCode = `WH-CSG-${customer.code}`
+            const codeCheck = await prisma.warehouse.findUnique({ where: { code: baseCode } })
+            if (codeCheck) {
+                baseCode = `${baseCode}-${Math.floor(10 + Math.random() * 90)}`
+            }
+            const addrObj = shippingAddressId
+                ? await prisma.customerAddress.findUnique({ where: { id: shippingAddressId } })
+                : customer.addresses[0]
+            const fullAddr = addrObj
+                ? [addrObj.address, addrObj.ward, addrObj.district, addrObj.city].filter(Boolean).join(', ')
+                : null
+
+            await prisma.warehouse.create({
+                data: {
+                    code: baseCode,
+                    name: `Kho Ký Gửi - ${customer.name}`,
+                    type: 'CONSIGNMENT',
+                    customerId,
+                    legalEntityId: legalEntityId || null,
+                    address: fullAddr,
+                    allowSales: true,
+                    locations: {
+                        create: {
+                            locationCode: 'CSG-DEFAULT',
+                            zone: 'CSG',
+                            type: 'STORAGE',
+                        }
+                    }
+                }
+            })
+        }
+
+        // 2. Ensure Active ConsignmentAgreement exists
+        const existingAgr = await prisma.consignmentAgreement.findFirst({
+            where: { customerId, status: 'ACTIVE' }
+        })
+        if (!existingAgr) {
+            const now = new Date()
+            const endDate = new Date(now)
+            endDate.setFullYear(endDate.getFullYear() + 1)
+            await prisma.consignmentAgreement.create({
+                data: {
+                    customerId,
+                    startDate: now,
+                    endDate,
+                    reportFrequency: 'MONTHLY',
+                    status: 'ACTIVE',
+                }
+            })
+        }
+    } catch (err) {
+        console.warn('[ensureConsignmentSetupForCustomer] Non-fatal error:', err)
+    }
+}
+
 // ── Create Sales Order ───────────────────────────
 export async function createSalesOrder(input: SOCreateInput): Promise<{ success: boolean; soId?: string; soNo?: string; error?: string; quotaWarnings?: string[] }> {
     try {
         const user = await requireAuth()
+        if (hasRole(user, 'THU_KHO') && !hasRole(user, 'CEO', 'ADMIN', 'TRO_LY', 'CBO', 'SALES_MGR', 'SALES_ADMIN', 'SALES_REP', 'KE_TOAN') && !user.roles.includes('Operation Manager')) {
+            return { success: false, error: 'Thủ kho không có quyền tạo đơn bán hàng / đơn ký gửi.' }
+        }
         // --- 0. Validate input ---
         parseOrThrow(SOCreateSchema, input)
 
@@ -1071,14 +1148,21 @@ export async function createSalesOrder(input: SOCreateInput): Promise<{ success:
             }
         }
 
+        // --- 4b. If CONSIGNMENT order, auto-ensure Consignment Warehouse + Agreement ---
+        if (input.orderType === 'CONSIGNMENT') {
+            await ensureConsignmentSetupForCustomer(input.customerId, input.legalEntityId, input.shippingAddressId)
+        }
+
         // --- 5. Audit log ---
         try {
-            await logAudit({ userId: salesRepId, action: 'CREATE', entityType: 'SalesOrder', entityId: so.id, newValue: { soNo, channel: input.channel, totalAmount: Math.round(netAmountTotal) } })
+            await logAudit({ userId: salesRepId, action: 'CREATE', entityType: 'SalesOrder', entityId: so.id, newValue: { soNo, channel: input.channel, orderType: input.orderType ?? 'STANDARD', totalAmount: Math.round(netAmountTotal) } })
         } catch { /* silent */ }
 
         revalidatePath('/dashboard/sales')
+        revalidatePath('/dashboard/consignment')
         revalidatePath('/dashboard/allocation')
         revalidateCache('sales')
+        revalidateCache('consignment')
         return { success: true, soId: so.id, soNo: so.soNo }
     } catch (err: any) {
         return { success: false, error: err.message }
@@ -1226,9 +1310,15 @@ export async function updateSalesOrder(input: SOUpdateInput): Promise<{ success:
             })),
         ])
 
-        await logAudit({ userId: so.salesRepId, action: 'UPDATE', entityType: 'SalesOrder', entityId: input.soId, newValue: { channel: input.channel, totalAmount: finalAmount, lineCount: input.lines.length } }).catch(() => { })
+        if (input.orderType === 'CONSIGNMENT') {
+            await ensureConsignmentSetupForCustomer(input.customerId, input.legalEntityId, input.shippingAddressId)
+        }
+
+        await logAudit({ userId: so.salesRepId, action: 'UPDATE', entityType: 'SalesOrder', entityId: input.soId, newValue: { channel: input.channel, orderType: input.orderType, totalAmount: finalAmount, lineCount: input.lines.length } }).catch(() => { })
         revalidatePath('/dashboard/sales')
+        revalidatePath('/dashboard/consignment')
         revalidateCache('sales')
+        revalidateCache('consignment')
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }
@@ -1976,6 +2066,7 @@ export async function getSalesStats(filters: {
 
         const revWhere = {
             ...where,
+            orderType: { not: 'CONSIGNMENT' as any },
             status: { in: ['CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID'] }
         }
 
