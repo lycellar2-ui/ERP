@@ -6,7 +6,27 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useCallback, useRef, useState, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { signOut } from '@/app/login/actions'
-import { type SessionUser, hasPermission } from '@/lib/session'
+import type { SessionUser } from '@/lib/session'
+
+function hasClientPermission(user: SessionUser, module: string, action: string): boolean {
+    if (!user) return false
+    const roles = user.roles || []
+    if (roles.some(r => ['CEO', 'ADMIN', 'SYS:ADMIN', 'DIRECTOR', 'BOD', 'Admin', 'TRO_LY', 'Trợ Lý', 'Trợ lý', 'ASSISTANT'].includes(r))) {
+        return true
+    }
+    if (action === 'READ' && roles.some(r => ['Kế Toán', 'Kế toán', 'KE_TOAN', 'ACCOUNTANT', 'ACCOUNTING', 'CHIEF_ACCOUNTANT', 'KE_TOAN_TRUONG', 'Kế toán trưởng'].includes(r))) {
+        if (['MDM', 'FIN', 'TAX', 'SLS', 'PRC', 'CNT', 'CST', 'RPT', 'STM', 'DSH', 'WMS', 'TRS', 'MGN', 'CSG'].includes(module)) return true
+    }
+    if (module === 'CSG') {
+        if (['READ', 'CREATE', 'UPDATE', 'WRITE'].includes(action) && roles.some(r => ['SALES_ADMIN', 'Sales Admin', 'THU_KHO', 'Thủ Kho', 'THU_KHO_TRUONG', 'SALES_MGR', 'Sales Manager', 'CBO', 'MANAGER', 'TP', 'TRUONG_PHONG', 'Kế Toán', 'Kế toán', 'KE_TOAN'].includes(r))) {
+            return true
+        }
+        if (['READ', 'CREATE'].includes(action) && roles.some(r => ['SALES_REP', 'Sales Rep'].includes(r))) {
+            return true
+        }
+    }
+    return user.permissions.includes(`${module}:${action}`)
+}
 import {
     LayoutDashboard, Package, Users, ShoppingCart, Warehouse,
     Truck, DollarSign, FileText, BarChart3, Settings, ChevronLeft,
@@ -280,7 +300,7 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate, isMobile
                 if (!item.permission) return true
                 if (item.permission.includes(':')) {
                     const [mod, act] = item.permission.split(':')
-                    if (hasPermission(currentUser, mod, act)) return true
+                    if (hasClientPermission(currentUser, mod, act)) return true
                 }
                 return currentUser.permissions.includes(item.permission)
             })

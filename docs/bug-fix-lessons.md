@@ -4396,3 +4396,27 @@ Qua đợt kiểm tra chuyên sâu toàn bộ 38 routes và tất cả component
 
 
 
+---
+
+## BUG-150: Lỗi Vercel Build (Turbopack) Do Client Component Import Runtime Function Từ `session.ts` & Sync Export Trong File `'use server'`
+
+**Ngày:** 2026-11-10
+**Severity:** 🔴 High — Chặn quá trình build production trên Vercel (`next build`)
+
+### Triệu chứng
+1. `./wine-erp/src/app/dashboard/warehouse/actions-sample.ts:61:17`: `Server Actions must be async functions` tại hàm helper đồng bộ `export function parseSampleInspection(...)`.
+2. `./wine-erp/src/lib/session.ts:2:1`: `You're importing a component that needs "next/headers"` và hàng loạt lỗi `Module not found: Can't resolve 'dns' | 'fs' | 'net' | 'tls'` từ `node_modules/pg` trong chuỗi import `Sidebar.tsx [Client Component Browser] -> src/lib/session.ts -> src/lib/db.ts`.
+3. `src/app/dashboard/consignment/ConsignmentClient.tsx(211,21)`: Lỗi TypeScript `Type 'string' is not assignable to type '"warehouses" | "sales" | ...'` khi truyền mảng điều kiện vào `StatusTabs`.
+
+### Nguyên nhân gốc rễ
+1. Trong file có directive `'use server'` (`actions-sample.ts`), mọi hàm được `export` đều bị Next.js coi là Server Action và bắt buộc phải là `async function`. Hàm nội bộ `parseSampleInspection` là hàm đồng bộ nhưng lại gắn từ khóa `export`.
+2. `Sidebar.tsx` là Client Component (`'use client'`) nhưng lại import hàm runtime `hasPermission` từ `@/lib/session` (`import { type SessionUser, hasPermission } from '@/lib/session'`). Khi import giá trị runtime (không phải `import type`), Turbopack kéo toàn bộ `session.ts` (vốn import `next/headers` và `prisma`/`pg`) vào bundle trình duyệt.
+3. Trong `ConsignmentClient.tsx`, phần tử `{ value: 'sales', label: ... }` trong toán tử spread thiếu `as const` khiến TypeScript suy diễn kiểu `value` thành `string` chung thay vì literal `'sales'`.
+
+### Cách khắc phục
+1. Bỏ từ khóa `export` khỏi hàm helper nội bộ `function parseSampleInspection` trong `src/app/dashboard/warehouse/actions-sample.ts`.
+2. Trong `src/components/layout/Sidebar.tsx`, chuyển về `import type { SessionUser } from '@/lib/session'` và tách hàm thuần kiểm tra quyền phía client `hasClientPermission` ngay tại `Sidebar.tsx` để không kéo module server `session.ts` vào bundle trình duyệt.
+3. Thêm `'sales' as const` tại `src/app/dashboard/consignment/ConsignmentClient.tsx`.
+
+### Bài học
+> ⚠️ **RULE 150: Tuyệt đối KHÔNG import hàm hoặc biến runtime từ `@/lib/session` hay `@/lib/db` vào bất kỳ file `'use client'` nào (chỉ được phép dùng `import type { SessionUser } from '@/lib/session'`); đồng thời không bao giờ `export` hàm đồng bộ (sync function) trong file có directive `'use server'`.**

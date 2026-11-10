@@ -208,7 +208,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats, userId = '
                     { value: 'orders', label: isEn ? 'Consignment Orders' : 'Đơn Hàng Ký Gửi', count: consignmentOrders.length },
                     { value: 'warehouses', label: i18n.tabs.warehouses, count: warehouses.length },
                     { value: 'transfers', label: i18n.tabs.transfers, count: transfers.length },
-                    ...(canSellFromConsignment ? [{ value: 'sales', label: i18n.tabs.sales }] : []),
+                    ...(canSellFromConsignment ? [{ value: 'sales' as const, label: i18n.tabs.sales }] : []),
                     { value: 'stockCount', label: i18n.tabs.stockCount },
                     { value: 'agreements', label: i18n.tabs.agreements, count: agreements.length },
                     { value: 'stockMap', label: i18n.tabs.stockMap },

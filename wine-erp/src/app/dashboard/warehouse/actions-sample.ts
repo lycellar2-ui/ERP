@@ -58,9 +58,9 @@ export interface SampleTransactionItem {
 }
 
 // ── Helper: Parse Inspection Metadata from Notes ─────
-export function parseSampleInspection(notes: string | null) {
+function parseSampleInspection(notes: string | null) {
     if (!notes) return { status: 'PENDING' as const, inspectionDate: null, cleanNotes: '' }
-    const match = notes.match(/^\[QC:(PASSED|FAILED)\|([^\]]+)\]\s*(.*)$/s)
+    const match = notes.match(/^\[QC:(PASSED|FAILED)\|([^\]]+)\]\s*([\s\S]*)$/)
     if (match) {
         return {
             status: match[1] as 'PASSED' | 'FAILED',
