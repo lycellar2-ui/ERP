@@ -2688,6 +2688,248 @@ export async function searchProductsForDashboard(query: string = ''): Promise<Da
         .slice(0, 30)
 }
 
+export interface SkuReplenishmentAlertItem {
+    id: string
+    skuCode: string
+    productName: string
+    wineType: string
+    country: string
+    producerName: string
+    unitsPerCase: number
+    totalStock: number
+    incomingQty: number
+    activeBuyerCount: number
+    sold6m: number
+    sold12m: number
+    avgMonthlySales: number
+    mosCurrent: number
+    mosWithIncoming: number
+    estimatedRunoutDate: string | null
+    suggestedReorderBottles: number
+    suggestedReorderCases: number
+    estimatedReorderCostVnd: number
+    urgencyTier: 'OUT_OF_STOCK' | 'CRITICAL' | 'LOW' | 'PLAN_REORDER'
+    urgencyLabelVi: string
+    urgencyLabelEn: string
+}
+
+export async function getSkuReplenishmentAlerts(): Promise<SkuReplenishmentAlertItem[]> {
+    return cached('dashboard:sku-replenishment-alerts-v1', async () => {
+        const rows = await prisma.$queryRawUnsafe<Array<{
+            id: string
+            skuCode: string
+            productName: string
+            wineType: string
+            country: string
+            producerName: string | null
+            unitsPerCase: any
+            costPrice: any
+            totalStock: any
+            incomingQty: any
+            so6m: any
+            so12m: any
+            soAll: any
+            hist6m: any
+            hist12m: any
+            histAll: any
+            activeBuyerCount: any
+        }>>(`
+            WITH stock_agg AS (
+                SELECT "productId",
+                       COALESCE(SUM("qtyAvailable"), 0) AS total_stock,
+                       AVG(NULLIF("unitLandedCost", 0)) AS avg_lot_cost
+                FROM stock_lots
+                WHERE status = 'AVAILABLE' AND "qtyAvailable" > 0
+                GROUP BY "productId"
+            ),
+            po_agg AS (
+                SELECT pol."productId",
+                       COALESCE(SUM(pol."qtyOrdered"), 0) AS incoming_qty
+                FROM purchase_order_lines pol
+                JOIN purchase_orders po ON pol."poId" = po.id
+                WHERE po.status IN ('APPROVED', 'IN_TRANSIT', 'PARTIALLY_RECEIVED')
+                GROUP BY pol."productId"
+            ),
+            so_agg AS (
+                SELECT sol."productId",
+                       COALESCE(SUM(sol."qtyOrdered") FILTER (WHERE so."createdAt" >= NOW() - INTERVAL '6 months' AND COALESCE(so."orderType", 'STANDARD') NOT IN ('TASTING', 'SAMPLE')), 0) AS so_6m,
+                       COALESCE(SUM(sol."qtyOrdered") FILTER (WHERE so."createdAt" >= NOW() - INTERVAL '12 months' AND COALESCE(so."orderType", 'STANDARD') NOT IN ('TASTING', 'SAMPLE')), 0) AS so_12m,
+                       COALESCE(SUM(sol."qtyOrdered") FILTER (WHERE COALESCE(so."orderType", 'STANDARD') NOT IN ('TASTING', 'SAMPLE')), 0) AS so_all,
+                       ARRAY_AGG(DISTINCT so."customerId") FILTER (WHERE so."customerId" IS NOT NULL) AS so_buyers
+                FROM sales_order_lines sol
+                JOIN sales_orders so ON sol."soId" = so.id
+                WHERE so.status != 'CANCELLED'
+                GROUP BY sol."productId"
+            ),
+            hist_agg AS (
+                SELECT COALESCE(h."productId", p.id) AS prod_id,
+                       COALESCE(SUM(h.qty) FILTER (WHERE h."invoiceDate" >= NOW() - INTERVAL '6 months'), 0) AS hist_6m,
+                       COALESCE(SUM(h.qty) FILTER (WHERE h."invoiceDate" >= NOW() - INTERVAL '12 months'), 0) AS hist_12m,
+                       COALESCE(SUM(h.qty), 0) AS hist_all,
+                       ARRAY_AGG(DISTINCT COALESCE(h."customerId", h."customerCode", h."customerName")) AS hist_buyers
+                FROM historical_customer_sku_sales h
+                LEFT JOIN products p ON p."skuCode" = h."skuCode" AND p."deletedAt" IS NULL
+                GROUP BY COALESCE(h."productId", p.id)
+            ),
+            imp_cost_agg AS (
+                SELECT COALESCE(hi."productId", p.id) AS prod_id,
+                       AVG(NULLIF(hi."landedCostVnd", 0)) FILTER (WHERE hi."importType" = 'DIRECT_IMPORT') AS avg_imp_cost
+                FROM historical_sku_imports hi
+                LEFT JOIN products p ON p."skuCode" = hi."skuCode" AND p."deletedAt" IS NULL
+                GROUP BY COALESCE(hi."productId", p.id)
+            )
+            SELECT p.id,
+                   p."skuCode",
+                   p."productName",
+                   p."wineType"::text AS "wineType",
+                   p.country,
+                   pr.name AS "producerName",
+                   COALESCE(p."unitsPerCase", 6) AS "unitsPerCase",
+                   COALESCE(ic.avg_imp_cost, st.avg_lot_cost, mp."costPrice", 0) AS "costPrice",
+                   COALESCE(st.total_stock, 0) AS "totalStock",
+                   COALESCE(pa.incoming_qty, 0) AS "incomingQty",
+                   COALESCE(sa.so_6m, 0) AS "so6m",
+                   COALESCE(sa.so_12m, 0) AS "so12m",
+                   COALESCE(sa.so_all, 0) AS "soAll",
+                   COALESCE(ha.hist_6m, 0) AS "hist6m",
+                   COALESCE(ha.hist_12m, 0) AS "hist12m",
+                   COALESCE(ha.hist_all, 0) AS "histAll",
+                   (
+                       SELECT COUNT(DISTINCT b)
+                       FROM UNNEST(
+                           COALESCE(sa.so_buyers, ARRAY[]::text[]) ||
+                           COALESCE(ha.hist_buyers, ARRAY[]::text[])
+                       ) AS b
+                       WHERE b IS NOT NULL
+                   ) AS "activeBuyerCount"
+            FROM products p
+            LEFT JOIN producers pr ON pr.id = p."producerId"
+            LEFT JOIN product_margin_prices mp ON mp."productId" = p.id
+            LEFT JOIN stock_agg st ON st."productId" = p.id
+            LEFT JOIN po_agg pa ON pa."productId" = p.id
+            LEFT JOIN so_agg sa ON sa."productId" = p.id
+            LEFT JOIN hist_agg ha ON ha.prod_id = p.id
+            LEFT JOIN imp_cost_agg ic ON ic.prod_id = p.id
+            WHERE p."deletedAt" IS NULL AND p.status = 'ACTIVE'
+        `)
+
+        const now = new Date()
+        const targetMosMonths = 6
+        const leadTimeMonths = 1.5 // 45 days import lead time
+
+        const items: SkuReplenishmentAlertItem[] = []
+
+        for (const r of rows) {
+            const totalStock = Number(r.totalStock || 0)
+            const incomingQty = Number(r.incomingQty || 0)
+            const sold6m = Number(r.so6m || 0) + Number(r.hist6m || 0)
+            const sold12m = Number(r.so12m || 0) + Number(r.hist12m || 0)
+            const soldAll = Number(r.soAll || 0) + Number(r.histAll || 0)
+            const unitsPerCase = Math.max(1, Number(r.unitsPerCase || 6))
+            const unitCost = Number(r.costPrice || 0)
+
+            // Determine monthly velocity (prioritize 6M, fallback to 12M, fallback to 36M historical average)
+            let avgMonthlySales = 0
+            if (sold6m > 0) {
+                avgMonthlySales = Math.round((sold6m / 6) * 10) / 10
+            } else if (sold12m > 0) {
+                avgMonthlySales = Math.round((sold12m / 12) * 10) / 10
+            } else if (soldAll >= 12) {
+                avgMonthlySales = Math.round((soldAll / 36) * 10) / 10
+            }
+
+            if (avgMonthlySales <= 0) continue
+
+            const mosCurrent = Math.round((totalStock / avgMonthlySales) * 10) / 10
+            const mosWithIncoming = Math.round(((totalStock + incomingQty) / avgMonthlySales) * 10) / 10
+
+            // Only include SKUs whose current MOS (or MOS with incoming) is below the 6-month target
+            if (mosCurrent >= targetMosMonths) continue
+
+            const requiredStock = avgMonthlySales * (targetMosMonths + leadTimeMonths)
+            const rawShortfall = Math.max(0, Math.ceil(requiredStock - (totalStock + incomingQty)))
+            const suggestedReorderCases = rawShortfall > 0 ? Math.ceil(rawShortfall / unitsPerCase) : 0
+            const suggestedReorderBottles = suggestedReorderCases * unitsPerCase
+
+            if (suggestedReorderBottles <= 0 && totalStock > 0) continue
+
+            let estimatedRunoutDate: string | null = null
+            if (totalStock <= 0) {
+                estimatedRunoutDate = now.toISOString()
+            } else {
+                const daysLeft = Math.round((totalStock / avgMonthlySales) * 30.44)
+                const runout = new Date(now.getTime() + daysLeft * 86400000)
+                estimatedRunoutDate = runout.toISOString()
+            }
+
+            let urgencyTier: SkuReplenishmentAlertItem['urgencyTier'] = 'PLAN_REORDER'
+            let urgencyLabelVi = 'Cần bổ sung (<6T)'
+            let urgencyLabelEn = 'Replenish (<6M)'
+
+            if (totalStock <= 0) {
+                urgencyTier = 'OUT_OF_STOCK'
+                urgencyLabelVi = 'Đứt hàng (Tồn = 0)'
+                urgencyLabelEn = 'Out of Stock (0)'
+            } else if (mosCurrent < 2.0) {
+                urgencyTier = 'CRITICAL'
+                urgencyLabelVi = 'Đặt gấp (MOS < 2T)'
+                urgencyLabelEn = 'Urgent (MOS < 2M)'
+            } else if (mosCurrent < 3.5) {
+                urgencyTier = 'LOW'
+                urgencyLabelVi = 'Sắp chạm đáy (<3.5T)'
+                urgencyLabelEn = 'Low Stock (<3.5M)'
+            }
+
+            items.push({
+                id: r.id,
+                skuCode: r.skuCode,
+                productName: r.productName,
+                wineType: r.wineType,
+                country: r.country,
+                producerName: r.producerName ?? '—',
+                unitsPerCase,
+                totalStock,
+                incomingQty,
+                activeBuyerCount: Number(r.activeBuyerCount || 0),
+                sold6m,
+                sold12m,
+                avgMonthlySales,
+                mosCurrent,
+                mosWithIncoming,
+                estimatedRunoutDate,
+                suggestedReorderBottles,
+                suggestedReorderCases,
+                estimatedReorderCostVnd: Math.round(suggestedReorderBottles * unitCost),
+                urgencyTier,
+                urgencyLabelVi,
+                urgencyLabelEn,
+            })
+        }
+
+        const tierWeight: Record<SkuReplenishmentAlertItem['urgencyTier'], number> = {
+            OUT_OF_STOCK: 1,
+            CRITICAL: 2,
+            LOW: 3,
+            PLAN_REORDER: 4,
+        }
+
+        items.sort((a, b) => {
+            if (tierWeight[a.urgencyTier] !== tierWeight[b.urgencyTier]) {
+                return tierWeight[a.urgencyTier] - tierWeight[b.urgencyTier]
+            }
+            if (a.urgencyTier === 'OUT_OF_STOCK') {
+                return b.avgMonthlySales - a.avgMonthlySales
+            }
+            if (a.mosCurrent !== b.mosCurrent) {
+                return a.mosCurrent - b.mosCurrent
+            }
+            return b.avgMonthlySales - a.avgMonthlySales
+        })
+
+        return items
+    }, 120_000)
+}
+
 export interface SkuCustomerBuyerItem {
     key: string
     customerId: string | null

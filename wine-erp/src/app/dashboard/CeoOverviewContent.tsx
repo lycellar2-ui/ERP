@@ -23,6 +23,7 @@ import {
     rejectEngineRequestFromDashboard,
     type WaterfallBar,
     type DailyRevenueSummary,
+    type SkuReplenishmentAlertItem,
 } from './actions'
 import { REG_DOC_TYPE_LABELS } from './contracts/reg-doc-constants'
 import { CATEGORY_LABELS, PRIORITY_LABELS } from './proposals/constants'
@@ -125,6 +126,7 @@ interface CeoOverviewContentProps {
     warehouseData: any
     dashConfig: any
     dailyRevenueData: DailyRevenueSummary
+    replenishmentAlerts?: SkuReplenishmentAlertItem[]
 }
 
 export function CeoOverviewContent({
@@ -156,6 +158,7 @@ export function CeoOverviewContent({
     warehouseData,
     dashConfig,
     dailyRevenueData,
+    replenishmentAlerts = [],
 }: CeoOverviewContentProps) {
     const router = useRouter()
     const [isPendingAction, startTransition] = useTransition()
@@ -233,7 +236,8 @@ export function CeoOverviewContent({
     const hasWf = Boolean(wf && Array.isArray(wf.bars) && wf.bars.length > 0 && (!dashConfig?.sections || dashConfig.sections.includes('cost_waterfall')))
     const hasCompliance = Boolean(complianceWarnings && complianceWarnings.length > 0 && (!dashConfig?.sections || dashConfig.sections.includes('legal_compliance')))
     const hasSlowStock = Boolean(Array.isArray(slowMovingStock) && slowMovingStock.length > 0 && (!dashConfig?.sections || dashConfig.sections.includes('stock_alerts')))
-    const hasLayer5 = hasKpis || hasChannels || hasYoy || hasWf || hasCompliance || hasSlowStock
+    const hasReplenishmentAlerts = Boolean(Array.isArray(replenishmentAlerts) && replenishmentAlerts.length > 0)
+    const hasLayer5 = hasKpis || hasChannels || hasYoy || hasWf || hasCompliance || hasSlowStock || hasReplenishmentAlerts
 
     return (
         <div className="space-y-5">
@@ -1098,6 +1102,117 @@ export function CeoOverviewContent({
                                     </div>
                                 </div>
                             )}
+                        </div>
+                    )}
+
+                    {/* SKU Replenishment & Stock Alert Priority Queue (Sorted Top-to-Bottom) */}
+                    {hasReplenishmentAlerts && (
+                        <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                            <SectionHead
+                                icon={<Package size={15} style={{ color: '#B91C1C' }} />}
+                                title={
+                                    isEn
+                                        ? 'SKU Stock Alert & Replenishment Priority Queue (Sorted by Urgency)'
+                                        : 'Cảnh Báo Tồn Kho & Đề Xuất Mua Hàng Theo SKU (Sắp Xếp Từ Trên Xuống Dưới)'
+                                }
+                                badge={
+                                    <span
+                                        className="inline-block px-2.5 py-0.5 text-[10px] font-bold rounded-full whitespace-nowrap shrink-0"
+                                        style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C' }}
+                                    >
+                                        {replenishmentAlerts.length} {isEn ? 'SKUs to Reorder' : 'SKU cần mua thêm'}
+                                    </span>
+                                }
+                            >
+                                <Link
+                                    href="/dashboard?tab=skus"
+                                    className="text-[11px] font-semibold px-2.5 py-1 rounded whitespace-nowrap"
+                                    style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}
+                                >
+                                    {isEn ? 'Open SKU 360°' : 'Mở Báo Cáo SKU 360°'}
+                                </Link>
+                            </SectionHead>
+
+                            <div className="overflow-x-auto border border-slate-200 rounded-md max-h-[340px] overflow-y-auto">
+                                <table className="w-full text-xs text-left border-collapse">
+                                    <thead className="sticky top-0 z-10">
+                                        <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase text-slate-500 whitespace-nowrap">
+                                            <th className="py-2 px-3 w-10">#</th>
+                                            <th className="py-2 px-3">{isEn ? 'Priority' : 'Mức Độ Ưu Tiên'}</th>
+                                            <th className="py-2 px-3">{isEn ? 'SKU & Wine Name' : 'Mã SKU & Tên Rượu'}</th>
+                                            <th className="py-2 px-3 text-right">{isEn ? 'Stock' : 'Tồn Kho'}</th>
+                                            <th className="py-2 px-3 text-right">{isEn ? 'Avg Velocity' : 'Tốc Độ Bán TB'}</th>
+                                            <th className="py-2 px-3 text-right">{isEn ? 'MOS' : 'MOS Hiện Tại'}</th>
+                                            <th className="py-2 px-3 text-right">{isEn ? 'Suggested Reorder (6M)' : 'SL Cần Mua Thêm (Chuẩn 6T)'}</th>
+                                            <th className="py-2 px-3 text-right">{isEn ? 'Est. Capital' : 'Dự Toán Vốn'}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {replenishmentAlerts.slice(0, 20).map((item, idx) => {
+                                            const badgeStyle =
+                                                item.urgencyTier === 'OUT_OF_STOCK'
+                                                    ? 'bg-red-50 text-red-700 border-red-200/90'
+                                                    : item.urgencyTier === 'CRITICAL'
+                                                    ? 'bg-amber-50 text-amber-800 border-amber-200/90'
+                                                    : item.urgencyTier === 'LOW'
+                                                    ? 'bg-cyan-50 text-cyan-800 border-cyan-200/90'
+                                                    : 'bg-slate-100 text-slate-700 border-slate-200/90'
+                                            const dotColor =
+                                                item.urgencyTier === 'OUT_OF_STOCK'
+                                                    ? 'bg-red-600'
+                                                    : item.urgencyTier === 'CRITICAL'
+                                                    ? 'bg-amber-500'
+                                                    : item.urgencyTier === 'LOW'
+                                                    ? 'bg-cyan-600'
+                                                    : 'bg-slate-400'
+                                            return (
+                                                <tr key={item.id} className="hover:bg-slate-50/80 transition-colors whitespace-nowrap">
+                                                    <td className="py-2 px-3 font-mono text-slate-400 tabular-nums">{idx + 1}</td>
+                                                    <td className="py-2 px-3">
+                                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap ${badgeStyle}`}>
+                                                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
+                                                            <span>{isEn ? item.urgencyLabelEn : item.urgencyLabelVi}</span>
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-2 px-3">
+                                                        <Link
+                                                            href={`/dashboard?tab=skus&productId=${item.id}`}
+                                                            className="flex items-center gap-2 group"
+                                                        >
+                                                            <span className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 border border-slate-200/80">
+                                                                {item.skuCode}
+                                                            </span>
+                                                            <span className="font-semibold text-slate-900 group-hover:text-cyan-700 truncate max-w-[260px]">
+                                                                {item.productName}
+                                                            </span>
+                                                            <ExternalLink size={12} className="text-slate-400 group-hover:text-cyan-600 shrink-0" />
+                                                        </Link>
+                                                    </td>
+                                                    <td className="py-2 px-3 text-right font-mono tabular-nums">
+                                                        <span className={`font-bold ${item.totalStock <= 0 ? 'text-red-600' : 'text-slate-900'}`}>
+                                                            {item.totalStock.toLocaleString()} {isEn ? 'btls' : 'chai'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-2 px-3 text-right font-mono font-semibold text-slate-800 tabular-nums">
+                                                        {item.avgMonthlySales.toLocaleString()} {isEn ? 'btls/mo' : 'chai/tháng'}
+                                                    </td>
+                                                    <td className="py-2 px-3 text-right font-mono font-bold tabular-nums">
+                                                        <span className={item.mosCurrent < 2 ? 'text-red-600' : item.mosCurrent < 3.5 ? 'text-amber-700' : 'text-slate-800'}>
+                                                            {item.mosCurrent} {isEn ? 'mos' : 'tháng'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-2 px-3 text-right font-mono font-bold text-cyan-700 tabular-nums">
+                                                        {item.suggestedReorderBottles.toLocaleString()} {isEn ? 'btls' : 'chai'} ({item.suggestedReorderCases} {isEn ? 'cs' : 'thùng'})
+                                                    </td>
+                                                    <td className="py-2 px-3 text-right font-mono font-semibold text-slate-900 tabular-nums">
+                                                        {item.estimatedReorderCostVnd > 0 ? formatCurrency(item.estimatedReorderCostVnd) : '—'}
+                                                    </td>
+                                                </tr>
+                                            )
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     )}
 

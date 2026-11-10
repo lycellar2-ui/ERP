@@ -5,7 +5,7 @@ import {
     getDashboardConfig, type DashboardSection, getMySales, getWarehouseDashboard,
     getTopCustomers, getTopProducts, getRevenueByChannel,
     getDailyRevenueChart, getLegalEntitiesForDashboard, type DashboardFilterOptions,
-    searchProductsForDashboard, getProductAnalyticsForDashboard,
+    searchProductsForDashboard, getProductAnalyticsForDashboard, getSkuReplenishmentAlerts,
 } from './actions'
 import { DashboardFilterBar, type PresetKey } from './DashboardFilterBar'
 import { CustomerAnalyticsDashboard } from './CustomerAnalyticsDashboard'
@@ -94,9 +94,12 @@ export default async function DashboardPage(props: PageProps) {
     const user = await getCurrentUser()
     const roles = user?.roles ?? ['CEO']
 
-    // Fast path for SKU 360° tab: pre-fetch SKU list + first SKU analytics directly on server, skipping 17 Overview queries
+    // Fast path for SKU 360° tab: pre-fetch SKU list + replenishment alerts + first SKU analytics directly on server
     if (currentTab === 'skus') {
-        const initialSearchResults = await searchProductsForDashboard('')
+        const [initialSearchResults, replenishmentAlerts] = await Promise.all([
+            searchProductsForDashboard(''),
+            getSkuReplenishmentAlerts(),
+        ])
         const targetProductId = resolvedParams.productId || initialSearchResults[0]?.id || ''
         const initialSkuData = targetProductId
             ? await getProductAnalyticsForDashboard(targetProductId, 'ALL')
@@ -120,6 +123,7 @@ export default async function DashboardPage(props: PageProps) {
                     initialProductId={targetProductId}
                     initialSearchResults={initialSearchResults}
                     initialData={initialSkuData}
+                    replenishmentAlerts={replenishmentAlerts}
                 />
             </div>
         )
@@ -172,6 +176,7 @@ export default async function DashboardPage(props: PageProps) {
         warehouseData,
         complianceWarnings,
         pendingProposals,
+        replenishmentAlerts,
     ] = await Promise.all([
         getLegalEntitiesForDashboard(),
         getDailyRevenueChart(filterOptions),
@@ -190,6 +195,7 @@ export default async function DashboardPage(props: PageProps) {
         has('warehouse_summary') ? getWarehouseDashboard() : null,
         has('legal_compliance') ? getComplianceWarnings() : [],
         has('pending_approvals') ? getPendingProposalsForCEO() : [],
+        getSkuReplenishmentAlerts(),
     ])
 
     // Defaults
@@ -268,6 +274,7 @@ export default async function DashboardPage(props: PageProps) {
                 warehouseData={warehouseData}
                 dashConfig={dashConfig}
                 dailyRevenueData={dailyRevenueData}
+                replenishmentAlerts={replenishmentAlerts}
             />
         </div>
     )

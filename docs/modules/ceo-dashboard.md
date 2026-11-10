@@ -545,6 +545,10 @@ Nâng cấp `/dashboard` thành trung tâm điều hành 3 Tab độc lập (`?t
   - **Loại bỏ truy vấn trùng lặp & Cache 2 tầng trong `getProductAnalyticsForDashboard`**: Loại bỏ 2 truy vấn vận tốc tiêu thụ bị lặp (`velocitySoLines`, `velocityHistSales`), lưu cache dữ liệu gốc theo SKU (`dashboard:sku-360-raw:${productId}`) để khi người dùng chuyển bộ lọc thời gian (`ALL` / `THIS_YEAR` / `LAST_6_MONTHS` / `THIS_MONTH`), hệ thống lọc trực tiếp trên RAM với **0 truy vấn DB**.
 - **Trải nghiệm chuyển đổi mượt mà & Hover Prefetch (`SkuAnalyticsDashboard.tsx`)**:
   - Bổ sung bộ nhớ đệm phía Client (`clientCacheRef`) kết hợp `onMouseEnter` prefetch khi di chuột qua các thẻ SKU gợi ý, giữ nguyên layout với hiệu ứng chuyển mượt (`transition-opacity duration-150`) thay vì xóa trắng màn hình khi chuyển SKU.
-- **Chuẩn hóa hệ thống Badge một dòng (`whitespace-nowrap`)**:
-  - Thiết kế lại toàn bộ badge Kênh phân phối (bổ sung `DIRECT_INDIVIDUAL` → `Khách Cá Nhân`), Trạng thái lấy hàng (`Đang lấy hàng`, `Chậm lấy >75 ngày`, `Trước T8/2026`, `Có giá riêng` kèm chấm trạng thái 6px) và badge `Giá riêng: XXX ₫ (-Y%)` trên 1 dòng gọn gàng, không bị gãy dòng trên mọi độ phân giải.
+- **Chuẩn hóa hệ thống Badge một dòng & Loại bỏ chữ xám phụ (`whitespace-nowrap`)**:
+  - Thiết kế lại toàn bộ badge Kênh phân phối (bổ sung `DIRECT_INDIVIDUAL` → `Khách Cá Nhân`), Trạng thái lấy hàng (`Đang lấy hàng`, `Chậm lấy >75 ngày`, `Trước T8/2026`, `Có giá riêng` kèm chấm trạng thái 6px) và badge `Giá riêng: XXX ₫ (-Y%)` trên 1 dòng gọn gàng, loại bỏ toàn bộ dòng chữ xám phụ bên dưới mỗi ô để bảng khách hàng gọn trên đúng 1 dòng ngang.
+- **Task Cảnh Báo Tồn Kho & Danh Sách SKU Cần Mua Hàng (`getSkuReplenishmentAlerts`)**:
+  - Bổ sung hàm SQL CTE tổng hợp tồn kho, hàng đang về (`PO`) và tốc độ bán bình quân (`6T`/`12T`/`36T`) cho toàn bộ danh mục SKU, sắp xếp từ trên xuống dưới theo 4 cấp độ khẩn cấp: `Đứt hàng (Tồn = 0)` → `Đặt gấp (MOS < 2T)` → `Sắp chạm đáy (<3.5T)` → `Cần bổ sung (<6T)` kèm số lượng chai/thùng đề xuất đặt mua và dự toán vốn nhập.
+  - Hiển thị trực tiếp tại cả **Tab Tổng Quan Điều Hành (`/dashboard`)** và **Tab Báo Cáo Theo SKU (`/dashboard?tab=skus`)**.
+
 

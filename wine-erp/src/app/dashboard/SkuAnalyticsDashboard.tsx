@@ -14,6 +14,7 @@ import {
     getProductAnalyticsForDashboard,
     type DashboardProductSearchItem,
     type SkuAnalyticsResult,
+    type SkuReplenishmentAlertItem,
 } from './actions'
 
 interface SkuAnalyticsDashboardProps {
@@ -28,12 +29,14 @@ interface SkuAnalyticsDashboardProps {
     initialProductId?: string
     initialSearchResults?: DashboardProductSearchItem[]
     initialData?: SkuAnalyticsResult | null
+    replenishmentAlerts?: SkuReplenishmentAlertItem[]
 }
 
 type TimeRangeKey = 'ALL' | 'THIS_YEAR' | 'LAST_6_MONTHS' | 'THIS_MONTH'
 type BuyerStatusFilter = 'ALL' | 'ACTIVE' | 'AT_RISK' | 'PRICE_RULE' | 'HISTORICAL_ONLY'
 type OrderSourceFilter = 'ALL' | 'ERP_SO' | 'HISTORICAL_INVOICE' | 'TASTING'
 type ImportSourceFilter = 'EXTERNAL' | 'INTERNAL' | 'ALL'
+type ReplenishmentTierFilter = 'ALL' | 'OUT_OF_STOCK' | 'CRITICAL' | 'LOW' | 'PLAN_REORDER'
 
 const WINE_TYPE_BADGE: Record<string, { vi: string; en: string; bg: string; color: string; border: string }> = {
     RED: { vi: 'Vang Đỏ', en: 'Red Wine', bg: 'rgba(153, 27, 27, 0.08)', color: '#991B1B', border: 'rgba(153, 27, 27, 0.25)' },
@@ -58,6 +61,7 @@ export function SkuAnalyticsDashboard({
     initialProductId,
     initialSearchResults,
     initialData,
+    replenishmentAlerts = [],
 }: SkuAnalyticsDashboardProps) {
     const { isEn } = useAppLocale()
 
@@ -70,6 +74,8 @@ export function SkuAnalyticsDashboard({
     const [data, setData] = useState<SkuAnalyticsResult | null>(initialData ?? null)
     const [isPending, startTransition] = useTransition()
     const [isSearching, setIsSearching] = useState(false)
+    const [showReplenishmentList, setShowReplenishmentList] = useState<boolean>(false)
+    const [replenishmentFilter, setReplenishmentFilter] = useState<ReplenishmentTierFilter>('ALL')
 
     // Client-side instant cache for SKU 360 results (key: `${productId}:${timeRange}`)
     const clientCacheRef = useRef<Map<string, SkuAnalyticsResult>>(
@@ -209,25 +215,43 @@ export function SkuAnalyticsDashboard({
         return Math.max(...data.monthlyTrend.map(m => m.commercialBottles + m.tastingBottles), 1)
     }, [data])
 
+    const filteredReplenishmentAlerts = useMemo(() => {
+        if (replenishmentFilter === 'ALL') return replenishmentAlerts
+        return replenishmentAlerts.filter(a => a.urgencyTier === replenishmentFilter)
+    }, [replenishmentAlerts, replenishmentFilter])
+
     return (
         <div className="space-y-4">
             {/* ═══ 1. SEARCH & SKU SELECTOR BAR ═══ */}
             <div className="bg-white rounded-md border border-slate-200 p-4 shadow-2xs">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-3">
-                    <div>
+                    <div className="flex flex-wrap items-center gap-3">
                         <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                             <Wine size={16} className="text-cyan-600" />
                             <span>
                                 {isEn
                                     ? 'SKU 360° Distribution & Restaurant Buyer Intelligence'
-                                    : 'Báo Cáo Phân Tích Theo SKU (SKU 360°) — Tra Cứu Nhà Hàng & Khách Đang Lấy'}
+                                    : 'Báo Cáo Phân Tích Theo SKU (SKU 360°)'}
                             </span>
                         </h3>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                            {isEn
-                                ? 'Select any wine SKU to view all restaurants/customers buying it, special prices, warehouse stock & full historical ledger (2021–2026) from Supabase'
-                                : 'Chọn mã rượu (SKU) để xem chi tiết danh sách nhà hàng/khách hàng đang lấy, đơn giá riêng, tồn kho theo kho và lịch sử xuất bán đầy đủ (2021–2026) trên Supabase'}
-                        </p>
+                        {replenishmentAlerts.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => setShowReplenishmentList(prev => !prev)}
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors cursor-pointer whitespace-nowrap ${
+                                    showReplenishmentList
+                                        ? 'bg-red-600 border-red-600 text-white'
+                                        : 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100'
+                                }`}
+                            >
+                                <span className={`w-1.5 h-1.5 rounded-full ${showReplenishmentList ? 'bg-white' : 'bg-red-600'}`} />
+                                <span>
+                                    {isEn
+                                        ? `Stock Alert: ${replenishmentAlerts.length} SKUs to Reorder`
+                                        : `Cảnh báo tồn kho: ${replenishmentAlerts.length} SKU cần mua thêm`}
+                                </span>
+                            </button>
+                        )}
                     </div>
 
                     {/* Time Range Filter */}
@@ -277,16 +301,6 @@ export function SkuAnalyticsDashboard({
 
                 {/* Quick Pick SKU Pills */}
                 <div className="mt-3">
-                    <div className="text-[11px] font-semibold text-slate-500 mb-1.5 flex items-center justify-between">
-                        <span>
-                            {searchQuery.trim()
-                                ? (isEn ? `Search results (${searchResults.length} SKUs):` : `Kết quả tìm kiếm (${searchResults.length} mã SKU):`)
-                                : (isEn ? 'Top Selling & Active SKUs (Click to inspect):' : 'Danh sách SKU tiêu thụ cao / nhiều nhà hàng đang lấy (Bấm để xem chi tiết):')}
-                        </span>
-                        <span className="text-[11px] text-slate-400 font-mono">
-                            {isEn ? 'Sorted by total volume sold' : 'Sắp xếp theo tổng sản lượng tiêu thụ'}
-                        </span>
-                    </div>
                     <div className="flex items-center gap-2 overflow-x-auto pb-1.5 no-scrollbar">
                         {searchResults.map(item => {
                             const isSelected = item.id === selectedProductId
@@ -296,37 +310,152 @@ export function SkuAnalyticsDashboard({
                                     type="button"
                                     onMouseEnter={() => prefetchSku(item.id)}
                                     onClick={() => setSelectedProductId(item.id)}
-                                    className={`shrink-0 text-left px-3 py-2 rounded-md border transition-all cursor-pointer ${
+                                    className={`shrink-0 text-left px-3 py-1.5 rounded-md border transition-all cursor-pointer flex items-center gap-2 ${
                                         isSelected
                                             ? 'bg-slate-900 border-slate-900 text-white shadow-xs'
                                             : 'bg-slate-50/80 border-slate-200 text-slate-800 hover:bg-slate-100 hover:border-slate-300'
                                     }`}
                                 >
-                                    <div className="flex items-center gap-2">
-                                        <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 rounded ${
-                                            isSelected ? 'bg-cyan-500/20 text-cyan-300' : 'bg-cyan-50 text-cyan-700'
-                                        }`}>
-                                            {item.skuCode}
-                                        </span>
-                                        <span className="text-xs font-semibold truncate max-w-[190px]">
-                                            {item.productName}
-                                        </span>
-                                    </div>
-                                    <div className={`flex items-center gap-3 mt-1 text-[10px] font-mono tabular-nums ${
-                                        isSelected ? 'text-slate-300' : 'text-slate-500'
+                                    <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                                        isSelected ? 'bg-cyan-500/20 text-cyan-300' : 'bg-cyan-50 text-cyan-700'
                                     }`}>
-                                        <span>{item.activeBuyerCount} {isEn ? 'buyers' : 'nhà lấy'}</span>
-                                        <span>&bull;</span>
-                                        <span>{item.totalSoldBottles.toLocaleString()} {isEn ? 'btls sold' : 'chai đã bán'}</span>
-                                        <span>&bull;</span>
-                                        <span>{isEn ? 'Stock:' : 'Tồn:'} {item.totalStock}</span>
-                                    </div>
+                                        {item.skuCode}
+                                    </span>
+                                    <span className="text-xs font-semibold truncate max-w-[190px]">
+                                        {item.productName}
+                                    </span>
                                 </button>
                             )
                         })}
                     </div>
                 </div>
             </div>
+
+            {/* ═══ 1B. BẢNG CẢNH BÁO TỒN KHO & DANH SÁCH SKU CẦN MUA (SẮP XẾP TỪ TRÊN XUỐNG DƯỚI) ═══ */}
+            {showReplenishmentList && replenishmentAlerts.length > 0 && (
+                <div className="bg-white rounded-md border border-slate-200 p-4 shadow-2xs space-y-3">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                                {isEn
+                                    ? 'SKU Replenishment Priority Queue (Sorted by Urgency)'
+                                    : 'Danh Sách Cảnh Báo Tồn Kho & Đề Xuất Mua Hàng (Sắp Xếp Từ Trên Xuống Dưới Theo Độ Khẩn Cấp)'}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-50 text-red-700 border border-red-200">
+                                {filteredReplenishmentAlerts.length} SKU
+                            </span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            {([
+                                { key: 'ALL' as const, vi: `Tất cả cần mua (${replenishmentAlerts.length})`, en: `All (${replenishmentAlerts.length})` },
+                                { key: 'OUT_OF_STOCK' as const, vi: `Đứt hàng (${replenishmentAlerts.filter(a => a.urgencyTier === 'OUT_OF_STOCK').length})`, en: `Out of Stock (${replenishmentAlerts.filter(a => a.urgencyTier === 'OUT_OF_STOCK').length})` },
+                                { key: 'CRITICAL' as const, vi: `Đặt gấp MOS < 2T (${replenishmentAlerts.filter(a => a.urgencyTier === 'CRITICAL').length})`, en: `Urgent <2M (${replenishmentAlerts.filter(a => a.urgencyTier === 'CRITICAL').length})` },
+                                { key: 'LOW' as const, vi: `Tồn thấp < 3.5T (${replenishmentAlerts.filter(a => a.urgencyTier === 'LOW').length})`, en: `Low <3.5M (${replenishmentAlerts.filter(a => a.urgencyTier === 'LOW').length})` },
+                                { key: 'PLAN_REORDER' as const, vi: `Bổ sung < 6T (${replenishmentAlerts.filter(a => a.urgencyTier === 'PLAN_REORDER').length})`, en: `Plan <6M (${replenishmentAlerts.filter(a => a.urgencyTier === 'PLAN_REORDER').length})` },
+                            ]).map(f => (
+                                <button
+                                    key={f.key}
+                                    type="button"
+                                    onClick={() => setReplenishmentFilter(f.key)}
+                                    className={`px-2.5 py-1 text-[11px] font-semibold rounded border transition-colors cursor-pointer whitespace-nowrap ${
+                                        replenishmentFilter === f.key
+                                            ? 'bg-slate-900 border-slate-900 text-white'
+                                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                                    }`}
+                                >
+                                    {isEn ? f.en : f.vi}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="overflow-x-auto border border-slate-200 rounded-md max-h-[380px] overflow-y-auto">
+                        <table className="w-full text-xs text-left border-collapse">
+                            <thead className="sticky top-0 z-10">
+                                <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase text-slate-500 whitespace-nowrap">
+                                    <th className="py-2.5 px-3 w-10">#</th>
+                                    <th className="py-2.5 px-3">{isEn ? 'Urgency' : 'Mức Độ Ưu Tiên'}</th>
+                                    <th className="py-2.5 px-3">{isEn ? 'SKU & Wine Name' : 'Mã SKU & Tên Rượu'}</th>
+                                    <th className="py-2.5 px-3 text-right">{isEn ? 'Available Stock' : 'Tồn Kho Hiện Tại'}</th>
+                                    <th className="py-2.5 px-3 text-right">{isEn ? 'Monthly Velocity' : 'Tốc Độ Bán TB'}</th>
+                                    <th className="py-2.5 px-3 text-right">{isEn ? 'Current MOS' : 'MOS Hiện Tại'}</th>
+                                    <th className="py-2.5 px-3 text-right">{isEn ? 'Suggested Order (6M Target)' : 'SL Đề Xuất Đặt Mua (Chuẩn 6T)'}</th>
+                                    <th className="py-2.5 px-3 text-right">{isEn ? 'Est. Capital' : 'Dự Toán Vốn Nhập'}</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {filteredReplenishmentAlerts.map((item, idx) => {
+                                    const isCurrent = item.id === selectedProductId
+                                    const badgeStyle =
+                                        item.urgencyTier === 'OUT_OF_STOCK'
+                                            ? 'bg-red-50 text-red-700 border-red-200/90'
+                                            : item.urgencyTier === 'CRITICAL'
+                                            ? 'bg-amber-50 text-amber-800 border-amber-200/90'
+                                            : item.urgencyTier === 'LOW'
+                                            ? 'bg-cyan-50 text-cyan-800 border-cyan-200/90'
+                                            : 'bg-slate-100 text-slate-700 border-slate-200/90'
+                                    const dotColor =
+                                        item.urgencyTier === 'OUT_OF_STOCK'
+                                            ? 'bg-red-600'
+                                            : item.urgencyTier === 'CRITICAL'
+                                            ? 'bg-amber-500'
+                                            : item.urgencyTier === 'LOW'
+                                            ? 'bg-cyan-600'
+                                            : 'bg-slate-400'
+
+                                    return (
+                                        <tr
+                                            key={item.id}
+                                            onMouseEnter={() => prefetchSku(item.id)}
+                                            onClick={() => setSelectedProductId(item.id)}
+                                            className={`cursor-pointer transition-colors whitespace-nowrap ${
+                                                isCurrent ? 'bg-cyan-50/70' : 'hover:bg-slate-50/90'
+                                            }`}
+                                        >
+                                            <td className="py-2 px-3 font-mono text-slate-400 tabular-nums">{idx + 1}</td>
+                                            <td className="py-2 px-3">
+                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap ${badgeStyle}`}>
+                                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
+                                                    <span>{isEn ? item.urgencyLabelEn : item.urgencyLabelVi}</span>
+                                                </span>
+                                            </td>
+                                            <td className="py-2 px-3">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 border border-slate-200/80">
+                                                        {item.skuCode}
+                                                    </span>
+                                                    <span className="font-semibold text-slate-900 truncate max-w-[260px]">
+                                                        {item.productName}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="py-2 px-3 text-right font-mono tabular-nums">
+                                                <span className={`font-bold ${item.totalStock <= 0 ? 'text-red-600' : 'text-slate-900'}`}>
+                                                    {item.totalStock.toLocaleString()} {isEn ? 'btls' : 'chai'}
+                                                </span>
+                                            </td>
+                                            <td className="py-2 px-3 text-right font-mono font-semibold text-slate-800 tabular-nums">
+                                                {item.avgMonthlySales.toLocaleString()} {isEn ? 'btls/mo' : 'chai/tháng'}
+                                            </td>
+                                            <td className="py-2 px-3 text-right font-mono font-bold tabular-nums">
+                                                <span className={item.mosCurrent < 2 ? 'text-red-600' : item.mosCurrent < 3.5 ? 'text-amber-700' : 'text-slate-800'}>
+                                                    {item.mosCurrent} {isEn ? 'mos' : 'tháng'}
+                                                </span>
+                                            </td>
+                                            <td className="py-2 px-3 text-right font-mono font-bold text-cyan-700 tabular-nums">
+                                                {item.suggestedReorderBottles.toLocaleString()} {isEn ? 'btls' : 'chai'} ({item.suggestedReorderCases} {isEn ? 'cs' : 'thùng'})
+                                            </td>
+                                            <td className="py-2 px-3 text-right font-mono font-semibold text-slate-900 tabular-nums">
+                                                {item.estimatedReorderCostVnd > 0 ? formatVND(item.estimatedReorderCostVnd) : '—'}
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
 
             {/* Loading State (only shown if no initial data yet) */}
             {isPending && !data && (
@@ -866,18 +995,19 @@ export function SkuAnalyticsDashboard({
                                             <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase text-slate-500 whitespace-nowrap">
                                                 <th className="py-2.5 px-3 w-10">#</th>
                                                 <th className="py-2.5 px-3 min-w-[240px]">{isEn ? 'Restaurant / Customer' : 'Nhà Hàng / Khách Hàng'}</th>
-                                                <th className="py-2.5 px-3 min-w-[140px]">{isEn ? 'Channel & Sales Rep' : 'Kênh & Sales Phụ Trách'}</th>
-                                                <th className="py-2.5 px-3 min-w-[165px]">{isEn ? 'Buying Status & Cycle' : 'Trạng Thái Lấy & Chu Kỳ'}</th>
-                                                <th className="py-2.5 px-3 text-right min-w-[140px]">{isEn ? 'Volume Bought (Btls)' : 'Sản Lượng Lấy (Chai)'}</th>
+                                                <th className="py-2.5 px-3 min-w-[115px]">{isEn ? 'Channel' : 'Kênh'}</th>
+                                                <th className="py-2.5 px-3 min-w-[125px]">{isEn ? 'Sales Rep' : 'Sales Phụ Trách'}</th>
+                                                <th className="py-2.5 px-3 min-w-[140px]">{isEn ? 'Buying Status' : 'Trạng Thái Lấy'}</th>
+                                                <th className="py-2.5 px-3 text-right min-w-[120px]">{isEn ? 'Volume (Btls)' : 'Sản Lượng (Chai)'}</th>
                                                 <th className="py-2.5 px-3 text-right min-w-[130px]">{isEn ? 'Total Revenue' : 'Tổng Doanh Thu'}</th>
                                                 <th className="py-2.5 px-3 text-right min-w-[175px]">{isEn ? 'Applied / Special Price' : 'Đơn Giá Mua / Giá Riêng'}</th>
-                                                <th className="py-2.5 px-3 text-right min-w-[155px]">{isEn ? 'Last Order' : 'Lần Lấy Gần Nhất'}</th>
+                                                <th className="py-2.5 px-3 text-right min-w-[125px]">{isEn ? 'Last Order' : 'Lần Lấy Gần Nhất'}</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
                                             {filteredBuyers.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={8} className="py-8 text-center text-slate-400">
+                                                    <td colSpan={9} className="py-8 text-center text-slate-400">
                                                         {isEn
                                                             ? 'No matching restaurants/customers found for this filter.'
                                                             : 'Không tìm thấy nhà hàng / khách hàng phù hợp với bộ lọc hiện tại.'}
@@ -917,11 +1047,6 @@ export function SkuAnalyticsDashboard({
                                                                         </span>
                                                                     )}
                                                                 </div>
-                                                                {buyer.parentName && (
-                                                                    <div className="text-[11px] text-slate-500 mt-0.5 truncate max-w-[280px]">
-                                                                        {isEn ? 'Legal Entity:' : 'Pháp nhân:'} {buyer.parentName}
-                                                                    </div>
-                                                                )}
                                                             </td>
                                                             <td className="py-2.5 px-3 whitespace-nowrap">
                                                                 <span
@@ -934,9 +1059,11 @@ export function SkuAnalyticsDashboard({
                                                                 >
                                                                     {isEn ? chBadge.labelEn : chBadge.label}
                                                                 </span>
-                                                                <div className="text-[11px] text-slate-500 mt-1 truncate max-w-[160px]">
-                                                                    Sales: <span className="font-medium text-slate-700">{buyer.salesRepName || '—'}</span>
-                                                                </div>
+                                                            </td>
+                                                            <td className="py-2.5 px-3 whitespace-nowrap">
+                                                                <span className="font-medium text-slate-800">
+                                                                    {buyer.salesRepName || '—'}
+                                                                </span>
                                                             </td>
                                                             <td className="py-2.5 px-3 whitespace-nowrap">
                                                                 {buyer.buyerStatus === 'ACTIVE' && (
@@ -963,44 +1090,25 @@ export function SkuAnalyticsDashboard({
                                                                         <span>{isEn ? 'Special Price' : 'Có giá riêng'}</span>
                                                                     </span>
                                                                 )}
-                                                                {buyer.averageCycleDays && (
-                                                                    <div className="text-[11px] text-slate-500 mt-1 font-mono tabular-nums whitespace-nowrap">
-                                                                        {isEn ? `Cycle: ~${buyer.averageCycleDays}d/order` : `Chu kỳ: ~${buyer.averageCycleDays} ngày/đơn`}
-                                                                    </div>
-                                                                )}
                                                             </td>
                                                             <td className="py-2.5 px-3 text-right font-mono tabular-nums whitespace-nowrap">
-                                                                <div className="text-sm font-bold text-slate-900">
-                                                                    {buyer.totalBottles.toLocaleString()} <span className="text-[10px] font-sans font-normal text-slate-500">{isEn ? 'btls' : 'chai'}</span>
-                                                                </div>
-                                                                <div className="text-[10px] text-slate-500 mt-0.5 whitespace-nowrap">
-                                                                    {[
-                                                                        buyer.liveCommercialBottles > 0 ? `ERP: ${buyer.liveCommercialBottles}` : null,
-                                                                        buyer.liveTastingBottles > 0 ? `Tasting: ${buyer.liveTastingBottles}` : null,
-                                                                        buyer.historicalBottles > 0 ? `${isEn ? 'Hist:' : 'Trước T8:'} ${buyer.historicalBottles}` : null,
-                                                                    ]
-                                                                        .filter(Boolean)
-                                                                        .join(' · ')}
-                                                                </div>
+                                                                <span className="text-sm font-bold text-slate-900">
+                                                                    {buyer.totalBottles.toLocaleString()}
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900 tabular-nums whitespace-nowrap">
+                                                                {buyer.totalRevenue > 0 ? formatVND(buyer.totalRevenue) : '—'}
                                                             </td>
                                                             <td className="py-2.5 px-3 text-right font-mono tabular-nums whitespace-nowrap">
-                                                                <div className="font-bold text-slate-900">
-                                                                    {buyer.totalRevenue > 0 ? formatVND(buyer.totalRevenue) : '—'}
-                                                                </div>
-                                                                <div className="text-[10px] text-slate-500 mt-0.5">
-                                                                    {buyer.orderCount} {isEn ? 'orders/inv' : 'đơn / HĐ'}
-                                                                </div>
-                                                            </td>
-                                                            <td className="py-2.5 px-3 text-right font-mono tabular-nums whitespace-nowrap">
-                                                                {buyer.lastUnitPrice !== null && buyer.lastUnitPrice > 0 ? (
-                                                                    <div className="font-bold text-slate-900">
-                                                                        {formatVND(buyer.lastUnitPrice)}
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className="text-slate-400">—</div>
-                                                                )}
-                                                                {buyer.specialPrice !== null && (
-                                                                    <div className="mt-1">
+                                                                <div className="inline-flex items-center justify-end gap-1.5">
+                                                                    {buyer.lastUnitPrice !== null && buyer.lastUnitPrice > 0 ? (
+                                                                        <span className="font-bold text-slate-900">
+                                                                            {formatVND(buyer.lastUnitPrice)}
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="text-slate-400">—</span>
+                                                                    )}
+                                                                    {buyer.specialPrice !== null && (
                                                                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200/80 text-[10px] font-semibold whitespace-nowrap">
                                                                             <span>
                                                                                 {isEn ? 'Special:' : 'Giá riêng:'} {formatVND(buyer.specialPrice)}
@@ -1011,27 +1119,11 @@ export function SkuAnalyticsDashboard({
                                                                                 </span>
                                                                             ) : null}
                                                                         </span>
-                                                                    </div>
-                                                                )}
+                                                                    )}
+                                                                </div>
                                                             </td>
-                                                            <td className="py-2.5 px-3 text-right font-mono tabular-nums whitespace-nowrap">
-                                                                {buyer.lastOrderDate ? (
-                                                                    <>
-                                                                        <div className="font-semibold text-slate-800">
-                                                                            {formatDate(buyer.lastOrderDate)}
-                                                                        </div>
-                                                                        <div className="text-[10px] text-slate-500 mt-0.5 whitespace-nowrap">
-                                                                            {buyer.lastOrderNo} &middot;{' '}
-                                                                            {buyer.daysSinceLastOrder === 0
-                                                                                ? (isEn ? 'Today' : 'Hôm nay')
-                                                                                : `${buyer.daysSinceLastOrder} ${isEn ? 'd ago' : 'ngày trước'}`}
-                                                                        </div>
-                                                                    </>
-                                                                ) : (
-                                                                    <span className="text-slate-400 text-[11px] font-sans">
-                                                                        {isEn ? 'No orders yet' : 'Chưa phát sinh đơn'}
-                                                                    </span>
-                                                                )}
+                                                            <td className="py-2.5 px-3 text-right font-mono font-semibold text-slate-800 tabular-nums whitespace-nowrap">
+                                                                {buyer.lastOrderDate ? formatDate(buyer.lastOrderDate) : '—'}
                                                             </td>
                                                         </tr>
                                                     )
