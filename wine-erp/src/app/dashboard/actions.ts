@@ -396,13 +396,13 @@ export async function approveSO(id: string): Promise<{ success: boolean; error?:
             if (!so || so.status !== 'PENDING_APPROVAL') {
                 return { success: false, error: res.error || 'Đơn hàng không ở trạng thái chờ duyệt' }
             }
-            await prisma.salesOrder.update({ where: { id }, data: { status: 'PENDING_ACCOUNTING' } })
+            await prisma.salesOrder.update({ where: { id }, data: { status: 'CONFIRMED' } })
             await logAudit({
                 userId: user.id,
                 action: 'APPROVE',
                 entityType: 'SalesOrder',
                 entityId: id,
-                newValue: { status: 'PENDING_ACCOUNTING', source: 'CEO_DASHBOARD' },
+                newValue: { status: 'CONFIRMED', source: 'CEO_DASHBOARD' },
             }).catch(() => {})
         }
         revalidateCache('dashboard')
@@ -1328,7 +1328,7 @@ const ROLE_DASHBOARD: Record<string, DashboardConfig> = {
         greeting: 'Điều Hành Kinh Doanh (Sales Admin)',
         sections: [
             'kpi_cards', 'recent_orders', 'pending_approvals', 'revenue_chart',
-            'kpi_targets', 'top_products',
+            'ar_aging', 'shipment_tracker', 'kpi_targets', 'top_products', 'stock_alerts',
         ],
         quickLinks: [
             { label: 'Đơn hàng', href: '/dashboard/sales', icon: 'Package' },
@@ -1342,7 +1342,7 @@ const DASHBOARD_ROLE_MATCHERS: Record<string, string[]> = {
     CEO: ['CEO', 'ADMIN', 'SYS:ADMIN', 'DIRECTOR', 'BOD', 'Admin', 'Giám Đốc', 'Trợ Lý', 'Trợ lý', 'TRO_LY', 'ASSISTANT'],
     KE_TOAN: ['KE_TOAN', 'Kế Toán', 'Kế toán', 'ACCOUNTANT', 'ACCOUNTING', 'CHIEF_ACCOUNTANT', 'KE_TOAN_TRUONG', 'Kế toán trưởng'],
     SALES_MGR: ['SALES_MGR', 'Sales Manager', 'CBO', 'MANAGER', 'TP', 'TRUONG_PHONG', 'Trưởng Phòng'],
-    SALES_ADMIN: ['SALES_ADMIN', 'Sales Admin'],
+    SALES_ADMIN: ['SALES_ADMIN', 'SALE_ADMIN', 'Sales Admin', 'Sale Admin', 'sale admin'],
     THU_KHO: ['THU_KHO', 'Thủ Kho', 'THU_KHO_TRUONG', 'WAREHOUSE_MANAGER'],
     THU_MUA: ['THU_MUA', 'Thu Mua', 'PURCHASING'],
     SALES_REP: ['SALES_REP', 'Sales Rep', 'SALES', 'Nhân Viên Kinh Doanh'],

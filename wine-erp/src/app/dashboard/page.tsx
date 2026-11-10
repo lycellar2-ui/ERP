@@ -189,7 +189,7 @@ export default async function DashboardPage(props: PageProps) {
         has('cost_waterfall') ? getCostWaterfall(filterOptions) : [],
         has('revenue_yoy') ? getRevenueYoY() : null,
         getTopCustomers(8, filterOptions),
-        has('pl_summary') ? getTopProducts(5, filterOptions) : [],
+        (has('top_products') || has('pl_summary')) ? getTopProducts(5, filterOptions) : [],
         has('revenue_chart') ? getRevenueByChannel(filterOptions) : null,
         has('my_sales') && user ? getMySales(user.id) : null,
         has('warehouse_summary') ? getWarehouseDashboard() : null,

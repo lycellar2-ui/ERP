@@ -1345,7 +1345,7 @@ export async function confirmSalesOrder(id: string): Promise<{ success: boolean;
         if (!so) return { success: false, error: 'SO not found' }
         if (so.status !== 'DRAFT') return { success: false, error: `Không thể xác nhận SO ở trạng thái ${so.status}` }
 
-        if (hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
+        if (hasRole(user, 'Sales Rep', 'SALES_REP') && !hasRole(user, 'Sales Manager', 'SALES_MGR', 'Sales Admin', 'SALES_ADMIN', 'Sale Admin', 'SALE_ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN')) {
             if (so.salesRepId !== user.id) {
                 return { success: false, error: 'Bạn không có quyền xác nhận đơn hàng của Sales khác.' }
             }
@@ -1362,7 +1362,7 @@ export async function confirmSalesOrder(id: string): Promise<{ success: boolean;
         })
 
         const targetStatus = (approvalRes.success && !approvalRes.requestId) 
-            ? 'PENDING_ACCOUNTING' 
+            ? 'CONFIRMED' 
             : 'PENDING_APPROVAL'
 
         await prisma.salesOrder.update({ where: { id }, data: { status: targetStatus } })
@@ -1383,7 +1383,7 @@ export async function confirmSalesOrder(id: string): Promise<{ success: boolean;
                     where: {
                         roles: {
                             some: {
-                                role: { name: { in: ['Sales Admin', 'SALES_ADMIN', 'Sales Manager', 'SALES_MGR'] } }
+                                role: { name: { in: ['Sales Admin', 'SALES_ADMIN', 'Sale Admin', 'SALE_ADMIN', 'Sales Manager', 'SALES_MGR'] } }
                             }
                         },
                         status: 'ACTIVE'
@@ -1414,7 +1414,7 @@ export async function confirmSalesOrder(id: string): Promise<{ success: boolean;
     }
 }
 
-// ── CEO/Admin Approve PENDING_APPROVAL ─────
+// ── Sale Admin / CEO Approve → Directly to CONFIRMED (Chờ Kho Xuất) ─────
 export async function approveSalesOrder(
     id: string, 
     vintages?: { lineId: string; vintage: number }[],
@@ -1428,34 +1428,34 @@ export async function approveSalesOrder(
                 status: true, 
                 soNo: true, 
                 salesRepId: true, 
+                legalEntityId: true,
+                warehouseId: true,
                 totalAmount: true,
                 orderDiscount: true,
                 customer: { select: { name: true } },
-                salesRep: { select: { name: true } },
+                salesRep: { select: { name: true, email: true } },
                 lines: { select: { id: true, qtyOrdered: true, unitPrice: true, lineDiscountPct: true } }
             },
         })
         if (!so) return { success: false, error: 'SO not found' }
-        if (so.status !== 'PENDING_APPROVAL') return { success: false, error: `SO không ở trạng thái Chờ Duyệt (hiện: ${so.status})` }
-
-        const amount = Number(so.totalAmount)
-
-        // Find the active approval request for this SO
-        const approvalReq = await prisma.approvalRequest.findFirst({
-            where: { docType: 'SALES_ORDER', docId: id, status: 'PENDING' },
-            include: { template: { include: { steps: { orderBy: { stepOrder: 'asc' } } } } }
-        })
-
-        if (!approvalReq) {
-            return { success: false, error: 'Không tìm thấy yêu cầu duyệt của đơn hàng này' }
+        if (!['DRAFT', 'PENDING_APPROVAL', 'PENDING_ACCOUNTING'].includes(so.status)) {
+            return { success: false, error: `SO không ở trạng thái Chờ Duyệt (hiện: ${so.status})` }
         }
 
-        const isCEO = hasRole(user, 'CEO')
-        const isSaleAdminOrMgr = hasRole(user, 'Sales Admin', 'SALES_ADMIN', 'Sales Manager', 'SALES_MGR')
+        const isCEO = hasRole(user, 'CEO', 'ADMIN', 'Admin')
+        const isSaleAdminOrMgr = hasRole(user, 'Sales Admin', 'SALES_ADMIN', 'Sale Admin', 'SALE_ADMIN', 'Sales Manager', 'SALES_MGR')
 
         if (!isCEO && !isSaleAdminOrMgr) {
             return { success: false, error: 'Bạn không có quyền duyệt đơn hàng này' }
         }
+
+        const amount = Number(so.totalAmount)
+
+        // Find the active approval request for this SO (optional if approved directly from DRAFT)
+        const approvalReq = await prisma.approvalRequest.findFirst({
+            where: { docType: 'SALES_ORDER', docId: id, status: 'PENDING' },
+            include: { template: { include: { steps: { orderBy: { stepOrder: 'asc' } } } } }
+        })
 
         // Save selected vintages to SalesOrderLine
         if (vintages && vintages.length > 0) {
@@ -1467,53 +1467,67 @@ export async function approveSalesOrder(
             }
         }
 
-        // Log approval step
-        await prisma.approvalLog.create({
-            data: {
-                requestId: approvalReq.id,
-                step: approvalReq.currentStep,
-                action: 'APPROVE',
-                approvedBy: user.id,
-                comment: isCEO ? 'CEO phê duyệt' : 'Sale Admin phê duyệt'
-            }
-        })
+        if (approvalReq) {
+            // Log approval step
+            await prisma.approvalLog.create({
+                data: {
+                    requestId: approvalReq.id,
+                    step: approvalReq.currentStep,
+                    action: 'APPROVE',
+                    approvedBy: user.id,
+                    comment: isCEO ? 'CEO phê duyệt — Chuyển Kho Xuất' : 'Sale Admin phê duyệt — Chuyển Kho Xuất'
+                }
+            })
 
-        // Final approval — mark request as APPROVED completely regardless of order amount or discount
-        await prisma.approvalRequest.update({
-            where: { id: approvalReq.id },
-            data: { status: 'APPROVED' },
-        })
+            // Final approval — mark request as APPROVED completely
+            await prisma.approvalRequest.update({
+                where: { id: approvalReq.id },
+                data: { status: 'APPROVED' },
+            })
+        }
 
-        // Transition SO directly to PENDING_ACCOUNTING
-        const updateData: any = { status: 'PENDING_ACCOUNTING' }
-        if (warehouseId) {
-            updateData.warehouseId = warehouseId
+        // Resolve warehouseId (use passed warehouseId, existing so.warehouseId, or default sales warehouse for legalEntity)
+        let targetWarehouseId = warehouseId || so.warehouseId || undefined
+        if (!targetWarehouseId && so.legalEntityId) {
+            const defaultWh = await prisma.warehouse.findFirst({
+                where: { legalEntityId: so.legalEntityId, allowSales: true },
+                orderBy: [{ isDefault: 'desc' }, { name: 'asc' }],
+                select: { id: true },
+            })
+            if (defaultWh) targetWarehouseId = defaultWh.id
+        }
+
+        // Transition SO directly to CONFIRMED (skipping PENDING_ACCOUNTING so Warehouse can export immediately)
+        const updateData: any = { status: 'CONFIRMED' }
+        if (targetWarehouseId) {
+            updateData.warehouseId = targetWarehouseId
         }
         await prisma.salesOrder.update({
             where: { id },
             data: updateData
         })
 
-        // Notify Accountant
+        // Notify Warehouse (Thủ Kho) and Sales Rep immediately
         ;(async () => {
             try {
-                const accountants = await prisma.user.findMany({
+                const warehouseKeepers = await prisma.user.findMany({
                     where: {
                         roles: {
-                            some: { role: { name: { in: ['Kế Toán', 'KE_TOAN'] } } }
+                            some: { role: { name: { in: ['Thủ Kho', 'THU_KHO'] } } }
                         },
                         status: 'ACTIVE'
                     },
                     select: { email: true }
                 })
-                const acctEmails = accountants.map(u => u.email)
-                if (acctEmails.length > 0) {
-                    await notifySOPendingAccounting({
+                const keeperEmails = warehouseKeepers.map(u => u.email)
+                const recipientEmails = [...new Set([...keeperEmails, so.salesRep.email].filter(Boolean))]
+                if (recipientEmails.length > 0) {
+                    await notifySOConfirmed({
                         soNo: so.soNo,
                         customerName: so.customer.name,
                         totalAmount: amount,
                         salesRepName: so.salesRep.name,
-                        recipientEmails: acctEmails
+                        recipientEmails
                     })
                 }
             } catch (notifyErr) {
@@ -1527,13 +1541,18 @@ export async function approveSalesOrder(
             entityType: 'SalesOrder',
             entityId: id,
             newValue: { 
-                step: approvalReq.currentStep, 
-                status: 'PENDING_ACCOUNTING' 
+                step: approvalReq?.currentStep ?? 1, 
+                status: 'CONFIRMED',
+                warehouseId: targetWarehouseId ?? null,
             }
         }).catch(() => { })
 
         revalidatePath('/dashboard/sales')
+        revalidatePath('/dashboard/warehouse')
+        revalidatePath('/dashboard')
         revalidateCache('sales')
+        revalidateCache('wms')
+        revalidateCache('dashboard')
         return { success: true }
     } catch (err: any) {
         return { success: false, error: err.message }
@@ -1549,10 +1568,10 @@ export async function rejectSalesOrder(id: string): Promise<{ success: boolean; 
             select: { status: true, soNo: true, totalAmount: true },
         })
         if (!so) return { success: false, error: 'SO not found' }
-        if (so.status !== 'PENDING_APPROVAL') return { success: false, error: `SO không ở trạng thái Chờ Duyệt (hiện: ${so.status})` }
+        if (!['PENDING_APPROVAL', 'PENDING_ACCOUNTING'].includes(so.status)) return { success: false, error: `SO không ở trạng thái Chờ Duyệt (hiện: ${so.status})` }
 
-        const isCEO = hasRole(user, 'CEO')
-        const isSaleAdminOrMgr = hasRole(user, 'Sales Admin', 'SALES_ADMIN', 'Sales Manager', 'SALES_MGR')
+        const isCEO = hasRole(user, 'CEO', 'ADMIN', 'Admin')
+        const isSaleAdminOrMgr = hasRole(user, 'Sales Admin', 'SALES_ADMIN', 'Sale Admin', 'SALE_ADMIN', 'Sales Manager', 'SALES_MGR')
 
         if (!isCEO && !isSaleAdminOrMgr) {
             return { success: false, error: 'Bạn không có quyền từ chối đơn hàng này' }

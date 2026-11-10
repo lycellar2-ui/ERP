@@ -17,8 +17,12 @@ function hasClientPermission(user: SessionUser, module: string, action: string):
     if (action === 'READ' && roles.some(r => ['Kế Toán', 'Kế toán', 'KE_TOAN', 'ACCOUNTANT', 'ACCOUNTING', 'CHIEF_ACCOUNTANT', 'KE_TOAN_TRUONG', 'Kế toán trưởng'].includes(r))) {
         if (['MDM', 'FIN', 'TAX', 'SLS', 'PRC', 'CNT', 'CST', 'RPT', 'STM', 'DSH', 'WMS', 'TRS', 'MGN', 'CSG'].includes(module)) return true
     }
+    if (roles.some(r => ['SALES_ADMIN', 'SALE_ADMIN', 'Sales Admin', 'Sale Admin', 'sale admin'].includes(r))) {
+        if (action === 'READ' && ['DSH', 'SLS', 'MDM', 'CRM', 'RPT', 'WMS', 'CSG', 'PRO', 'CNT', 'RTN'].includes(module)) return true
+        if (['CREATE', 'UPDATE', 'WRITE', 'APPROVE'].includes(action) && ['SLS', 'CSG', 'CRM', 'MDM', 'PRO'].includes(module)) return true
+    }
     if (module === 'CSG') {
-        if (['READ', 'CREATE', 'UPDATE', 'WRITE'].includes(action) && roles.some(r => ['SALES_ADMIN', 'Sales Admin', 'THU_KHO', 'Thủ Kho', 'THU_KHO_TRUONG', 'SALES_MGR', 'Sales Manager', 'CBO', 'MANAGER', 'TP', 'TRUONG_PHONG', 'Kế Toán', 'Kế toán', 'KE_TOAN'].includes(r))) {
+        if (['READ', 'CREATE', 'UPDATE', 'WRITE'].includes(action) && roles.some(r => ['SALES_ADMIN', 'SALE_ADMIN', 'Sales Admin', 'Sale Admin', 'sale admin', 'THU_KHO', 'Thủ Kho', 'THU_KHO_TRUONG', 'SALES_MGR', 'Sales Manager', 'CBO', 'MANAGER', 'TP', 'TRUONG_PHONG', 'Kế Toán', 'Kế toán', 'KE_TOAN'].includes(r))) {
             return true
         }
         if (['READ', 'CREATE'].includes(action) && roles.some(r => ['SALES_REP', 'Sales Rep'].includes(r))) {

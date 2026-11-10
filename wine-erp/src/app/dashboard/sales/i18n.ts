@@ -27,9 +27,9 @@ export const SALES_I18N = {
         tabs: {
             all: 'Tất cả',
             draft: 'Nháp',
-            pendingApproval: 'Chờ QL Duyệt',
+            pendingApproval: 'Chờ Duyệt',
             pendingAccounting: 'Chờ KT Duyệt',
-            confirmed: 'Đã Xác Nhận',
+            confirmed: 'Đã Duyệt (Chờ Xuất)',
             delivering: 'Đang Giao',
             delivered: 'Đã Giao',
             invoiced: 'Đã Xuất HĐ',
@@ -83,8 +83,8 @@ export const SALES_I18N = {
 
         timelineSteps: {
             DRAFT: 'Tạo đơn',
-            PENDING_ACCOUNTING: 'QL Duyệt',
-            CONFIRMED: 'KT Duyệt',
+            PENDING_APPROVAL: 'Chờ Duyệt',
+            CONFIRMED: 'Đã Duyệt (Chờ Xuất)',
             DELIVERED: 'Giao hàng',
             INVOICED: 'Xuất HĐ',
             PAID: 'Thu tiền',
@@ -359,8 +359,8 @@ export const SALES_I18N = {
 
         timelineSteps: {
             DRAFT: 'Created',
-            PENDING_ACCOUNTING: 'Mgr Approved',
-            CONFIRMED: 'Acct Approved',
+            PENDING_APPROVAL: 'Pending Approval',
+            CONFIRMED: 'Approved (Ready)',
             DELIVERED: 'Delivered',
             INVOICED: 'Invoiced',
             PAID: 'Paid',

@@ -303,10 +303,10 @@ function DeliveryStatusBadge({
 
 
 // ── Quick Filter Tabs ────────────────────────────
-const TAB_ORDER: (SOStatus | 'ALL')[] = ['ALL', 'DRAFT', 'PENDING_APPROVAL', 'PENDING_ACCOUNTING', 'CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID', 'CANCELLED']
+const TAB_ORDER: (SOStatus | 'ALL')[] = ['ALL', 'DRAFT', 'PENDING_APPROVAL', 'CONFIRMED', 'PARTIALLY_DELIVERED', 'DELIVERED', 'INVOICED', 'PAID', 'CANCELLED']
 const TAB_LABELS: Record<string, string> = {
-    ALL: 'Tất cả', DRAFT: 'Nháp', PENDING_APPROVAL: 'Chờ CEO', PENDING_ACCOUNTING: 'Chờ KT',
-    CONFIRMED: 'Đã XN',
+    ALL: 'Tất cả', DRAFT: 'Nháp', PENDING_APPROVAL: 'Chờ Duyệt', PENDING_ACCOUNTING: 'Chờ KT',
+    CONFIRMED: 'Đã Duyệt (Chờ Xuất)',
     PARTIALLY_DELIVERED: 'Giao 1 phần', DELIVERED: 'Đã Giao', INVOICED: 'Xuất HĐ', PAID: 'Đã TT', CANCELLED: 'Huỷ',
 }
 
@@ -699,16 +699,12 @@ function SODetailDrawer({
     const getStepTimestamp = (step: SOStatus, orderCreatedAt: Date | string, orderUpdatedAt: Date | string, orderStatus: string): Date | null => {
         if (step === 'DRAFT') return new Date(orderCreatedAt)
         
-        if (step === 'PENDING_ACCOUNTING') {
-            const ev = timeline.find(e => e.action === 'APPROVE')
-            if (ev) return new Date(ev.createdAt)
-            
-            // Fallback for auto-approved orders that bypass manager approval
+        if (step === 'PENDING_APPROVAL') {
             const confirmEv = timeline.find(e => e.action === 'CONFIRM')
-            return confirmEv ? new Date(confirmEv.createdAt) : null
+            return confirmEv ? new Date(confirmEv.createdAt) : (orderStatus !== 'DRAFT' ? new Date(orderCreatedAt) : null)
         }
         if (step === 'CONFIRMED') {
-            const ev = timeline.find(e => e.action === 'ACCOUNTING_APPROVE')
+            const ev = timeline.find(e => e.action === 'APPROVE' || e.action === 'ACCOUNTING_APPROVE')
             return ev ? new Date(ev.createdAt) : null
         }
         if (step === 'DELIVERED') {
@@ -762,14 +758,16 @@ function SODetailDrawer({
                                 </Button>
                             </>
                         )}
-                        {detail.status === 'PENDING_APPROVAL' && canApprove && (
+                        {(detail.status === 'PENDING_APPROVAL' || detail.status === 'DRAFT') && canApprove && (
                             <>
                                 <Button size="sm" onClick={() => onApprove?.(soId)}>
                                     <CheckCircle2 size={13} /> {isEn ? 'Approve Order' : 'Duyệt Đơn'}
                                 </Button>
-                                <Button size="sm" variant="danger-outline" onClick={() => onReject?.(soId)}>
-                                    <XCircle size={13} /> {isEn ? 'Reject' : 'Từ Chối'}
-                                </Button>
+                                {detail.status === 'PENDING_APPROVAL' && (
+                                    <Button size="sm" variant="danger-outline" onClick={() => onReject?.(soId)}>
+                                        <XCircle size={13} /> {isEn ? 'Reject' : 'Từ Chối'}
+                                    </Button>
+                                )}
                             </>
                         )}
                         <Button size="sm" variant="secondary" onClick={() => window.open(`/dashboard/sales/print?id=${soId}`, '_blank')}
@@ -815,11 +813,11 @@ function SODetailDrawer({
                                             case 'DRAFT': activeIdx = 0; break;
                                             case 'PENDING_APPROVAL': activeIdx = 1; break;
                                             case 'PENDING_ACCOUNTING': activeIdx = 2; break;
-                                            case 'CONFIRMED': activeIdx = 3; break;
-                                            case 'PARTIALLY_DELIVERED': activeIdx = 3; break;
-                                            case 'DELIVERED': activeIdx = 4; break;
-                                            case 'INVOICED': activeIdx = 5; break;
-                                            case 'PAID': activeIdx = 6; break;
+                                            case 'CONFIRMED': activeIdx = 2; break;
+                                            case 'PARTIALLY_DELIVERED': activeIdx = 2; break;
+                                            case 'DELIVERED': activeIdx = 3; break;
+                                            case 'INVOICED': activeIdx = 4; break;
+                                            case 'PAID': activeIdx = 5; break;
                                             case 'CANCELLED': activeIdx = -1; break;
                                         }
                                         return (
@@ -837,7 +835,7 @@ function SODetailDrawer({
                                     {(() => {
                                         const steps = [
                                             { s: 'DRAFT', label: sI18n.timelineSteps.DRAFT },
-                                            { s: 'PENDING_ACCOUNTING', label: sI18n.timelineSteps.PENDING_ACCOUNTING },
+                                            { s: 'PENDING_APPROVAL', label: sI18n.timelineSteps.PENDING_APPROVAL || (isEn ? 'Pending Approval' : 'Chờ Duyệt') },
                                             { s: 'CONFIRMED', label: sI18n.timelineSteps.CONFIRMED },
                                             { s: 'DELIVERED', label: sI18n.timelineSteps.DELIVERED },
                                             { s: 'INVOICED', label: detail.isInvoiceExempt ? (isEn ? 'Invoice Exempt' : 'Miễn HĐ') : sI18n.timelineSteps.INVOICED },
@@ -849,11 +847,11 @@ function SODetailDrawer({
                                             case 'DRAFT': activeIdx = 0; break;
                                             case 'PENDING_APPROVAL': activeIdx = 1; break;
                                             case 'PENDING_ACCOUNTING': activeIdx = 2; break;
-                                            case 'CONFIRMED': activeIdx = 3; break;
-                                            case 'PARTIALLY_DELIVERED': activeIdx = 3; break;
-                                            case 'DELIVERED': activeIdx = 4; break;
-                                            case 'INVOICED': activeIdx = 5; break;
-                                            case 'PAID': activeIdx = 6; break;
+                                            case 'CONFIRMED': activeIdx = 2; break;
+                                            case 'PARTIALLY_DELIVERED': activeIdx = 2; break;
+                                            case 'DELIVERED': activeIdx = 3; break;
+                                            case 'INVOICED': activeIdx = 4; break;
+                                            case 'PAID': activeIdx = 5; break;
                                             case 'CANCELLED': activeIdx = -1; break;
                                         }
 
@@ -1927,11 +1925,19 @@ function SalesOrderMobileCard({
                     {/* Draft Actions */}
                     {row.status === 'DRAFT' && (
                         <>
-                            <button onClick={onConfirm} disabled={isActLoading}
-                                className="px-1.5 py-0.5 text-[10px] font-semibold border transition-all rounded"
-                                style={{ background: 'rgba(21,128,61,0.12)', color: '#15803D', borderColor: 'rgba(21,128,61,0.25)' }}>
-                                {isActLoading ? <Loader2 size={10} className="animate-spin" /> : (isEn ? 'Confirm' : 'Xác nhận')}
-                            </button>
+                            {canApprove ? (
+                                <button onClick={onApprove} disabled={isActLoading}
+                                    className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-bold border transition-all rounded"
+                                    style={{ background: 'rgba(21,128,61,0.12)', color: '#15803D', borderColor: 'rgba(21,128,61,0.25)' }}>
+                                    {isActLoading ? <Loader2 size={10} className="animate-spin" /> : <><CheckCircle2 size={10} /> {isEn ? 'Approve' : 'Duyệt'}</>}
+                                </button>
+                            ) : (
+                                <button onClick={onConfirm} disabled={isActLoading}
+                                    className="px-1.5 py-0.5 text-[10px] font-semibold border transition-all rounded"
+                                    style={{ background: 'rgba(21,128,61,0.12)', color: '#15803D', borderColor: 'rgba(21,128,61,0.25)' }}>
+                                    {isActLoading ? <Loader2 size={10} className="animate-spin" /> : (isEn ? 'Confirm' : 'Xác nhận')}
+                                </button>
+                            )}
                             <button onClick={onEdit}
                                 className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-semibold border transition-all rounded"
                                 style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309', borderColor: 'rgba(180,83,9,0.2)' }}>
@@ -1979,7 +1985,7 @@ function SalesOrderMobileCard({
 }
 // ── Main Component ───────────────────────────────
 // Roles allowed to see cost/margin data
-const MARGIN_ROLES = ['CEO', 'KE_TOAN', 'Kế Toán', 'SALES_MGR', 'Sales Manager', 'Trợ Lý', 'TRO_LY']
+const MARGIN_ROLES = ['CEO', 'KE_TOAN', 'Kế Toán', 'SALES_MGR', 'Sales Manager', 'SALES_ADMIN', 'SALE_ADMIN', 'Sales Admin', 'Sale Admin', 'sale admin', 'Trợ Lý', 'TRO_LY']
 
 type SalesPageResult = { 
     rows: SalesOrderRow[]
@@ -2012,7 +2018,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
     const queryClient = useQueryClient()
     const canSeeMargin = MARGIN_ROLES.some(r => userRoles.includes(r))
     const isCEO = userRoles.includes('CEO')
-    const isSaleAdminOrMgr = userRoles.includes('Sales Admin') || userRoles.includes('Sales Manager') || userRoles.includes('SALES_ADMIN') || userRoles.includes('SALES_MGR')
+    const isSaleAdminOrMgr = userRoles.some(r => ['Sales Admin', 'Sale Admin', 'sale admin', 'Sales Manager', 'SALES_ADMIN', 'SALE_ADMIN', 'SALES_MGR'].includes(r))
     const canAcctApprove = userRoles.includes('Kế Toán') || userRoles.includes('KE_TOAN') || userRoles.includes('ACCOUNTANT')
 
     const isAccountant = canAcctApprove || 
@@ -2338,7 +2344,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
 
     const confirmMutation = useMutation({
         mutationFn: confirmSalesOrder,
-        onMutate: (id) => updateCachedOrderStatus(id, 'PENDING_ACCOUNTING'),
+        onMutate: (id) => updateCachedOrderStatus(id, 'PENDING_APPROVAL'),
         onError: (err, id, context) => rollbackQueries(context),
         onSettled: () => queryClient.invalidateQueries({ queryKey: ['sales'] }),
     })
@@ -2402,7 +2408,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             if (!r.success) throw new Error(r.error || 'Duyệt không thành công')
             return r
         },
-        onMutate: ({ id }) => updateCachedOrderStatus(id, 'PENDING_ACCOUNTING'),
+        onMutate: ({ id }) => updateCachedOrderStatus(id, 'CONFIRMED'),
         onError: (err, variables, context) => rollbackQueries(context),
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ['sales'] })
@@ -2414,7 +2420,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
         setActionLoading(id)
         toast.promise(confirmMutation.mutateAsync(id), {
             loading: 'Đang xác nhận...',
-            success: 'Đã chuyển sang Chờ KT Duyệt (Cập nhật tức thì)!',
+            success: 'Đã gửi chờ Sale Admin duyệt (Cập nhật tức thì)!',
             error: 'Không thể xác nhận đơn hàng',
             finally: () => setActionLoading(null),
         })
@@ -3047,9 +3053,15 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                         )}
                                         {row.status === 'DRAFT' && canCreateSO && (
                                             <>
-                                                <Button size="sm" className="h-7 px-2" onClick={() => handleConfirm(row.id)} loading={actionLoading === row.id}>
-                                                    {isEn ? 'Confirm' : 'Xác Nhận'}
-                                                </Button>
+                                                {(isCEO || isSaleAdminOrMgr) ? (
+                                                    <Button size="sm" className="h-7 px-2" onClick={() => handleApprove(row.id)} loading={actionLoading === row.id}>
+                                                        {actionLoading !== row.id && <CheckCircle2 size={12} />} {isEn ? 'Approve' : 'Duyệt'}
+                                                    </Button>
+                                                ) : (
+                                                    <Button size="sm" className="h-7 px-2" onClick={() => handleConfirm(row.id)} loading={actionLoading === row.id}>
+                                                        {isEn ? 'Confirm' : 'Xác Nhận'}
+                                                    </Button>
+                                                )}
                                                 <Button size="icon-sm" variant="secondary" className="h-7 w-7" title={isEn ? 'Edit' : 'Sửa'} aria-label={isEn ? 'Edit' : 'Sửa'} onClick={() => setEditId(row.id)}>
                                                     <Pencil size={12} />
                                                 </Button>
@@ -3514,7 +3526,7 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
         try {
             const res = await approveSalesOrder(soId, vintagesList, selectedWarehouseId || undefined)
             if (res.success) {
-                toast.success(isEn ? 'Order approved successfully!' : 'Đã duyệt đơn hàng thành công!')
+                toast.success(isEn ? 'Order approved — Ready for Warehouse export!' : 'Đã duyệt đơn hàng — Chuyển sang Đã Xác Nhận (Chờ Kho Xuất)!')
                 onApproved()
             } else {
                 toast.error(res.error || (isEn ? 'Error approving order' : 'Lỗi khi duyệt đơn'))

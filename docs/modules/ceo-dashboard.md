@@ -550,5 +550,8 @@ Nâng cấp `/dashboard` thành trung tâm điều hành 3 Tab độc lập (`?t
 - **Task Cảnh Báo Tồn Kho & Danh Sách SKU Cần Mua Hàng (`getSkuReplenishmentAlerts`)**:
   - Bổ sung hàm SQL CTE tổng hợp tồn kho, hàng đang về (`PO`) và tốc độ bán bình quân (`6T`/`12T`/`36T`) cho toàn bộ danh mục SKU, sắp xếp từ trên xuống dưới theo 4 cấp độ khẩn cấp: `Đứt hàng (Tồn = 0)` → `Đặt gấp (MOS < 2T)` → `Sắp chạm đáy (<3.5T)` → `Cần bổ sung (<6T)` kèm số lượng chai/thùng đề xuất đặt mua và dự toán vốn nhập.
   - Hiển thị trực tiếp tại cả **Tab Tổng Quan Điều Hành (`/dashboard`)** và **Tab Báo Cáo Theo SKU (`/dashboard?tab=skus`)**.
+- **Phân Quyền Toàn Diện Dashboard & Báo Cáo Cho `Sale Admin` (`SALES_ADMIN` / `SALE_ADMIN` / `Sale Admin`)**:
+  - Đồng bộ hóa alias role (`SALES_ADMIN`, `SALE_ADMIN`, `Sales Admin`, `Sale Admin`, `sale admin`) trong `src/lib/session.ts`, `Sidebar.tsx` và `src/app/dashboard/actions.ts` (`ROLE_DASHBOARD.SALES_ADMIN` & `DASHBOARD_ROLE_MATCHERS`).
+  - Cấp đầy đủ quyền truy cập cho `Sale Admin` vào cả 3 tab của Dashboard (`/dashboard` Tổng quan, `/dashboard?tab=customers` Customer 360°, `/dashboard?tab=skus` SKU 360°) kèm các phân khu: `kpi_cards`, `recent_orders`, `pending_approvals` (duyệt nhanh đơn hàng ngay từ Dashboard), `revenue_chart`, `ar_aging`, `shipment_tracker`, `kpi_targets`, `top_products` và `stock_alerts` (bảng cảnh báo tồn kho & SKU cần mua hàng).
 
 

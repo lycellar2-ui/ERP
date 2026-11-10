@@ -130,6 +130,9 @@ export const ROLE_NAME_MAP: Record<string, string> = {
     'Thủ Kho': 'THU_KHO',
     'Thu Mua': 'THU_MUA',
     'Sales Admin': 'SALES_ADMIN',
+    'Sale Admin': 'SALES_ADMIN',
+    'sale admin': 'SALES_ADMIN',
+    'SALE_ADMIN': 'SALES_ADMIN',
     'Trợ Lý': 'TRO_LY',
     'Hành Chính Nhân Sự': 'HCNS',
     'Nhân Sự': 'HCNS',
@@ -146,8 +149,10 @@ const ROLE_ALIASES: Record<string, string[]> = {
     'Kế Toán': ['KE_TOAN', 'Kế Toán', 'Kế toán', 'ACCOUNTANT', 'ACCOUNTING', 'CHIEF_ACCOUNTANT', 'KE_TOAN_TRUONG', 'Kế toán trưởng'],
     'SALES_MGR': ['SALES_MGR', 'Sales Manager', 'CBO', 'MANAGER', 'TP', 'TRUONG_PHONG'],
     'Sales Manager': ['SALES_MGR', 'Sales Manager', 'CBO', 'MANAGER', 'TP', 'TRUONG_PHONG'],
-    'SALES_ADMIN': ['SALES_ADMIN', 'Sales Admin'],
-    'Sales Admin': ['SALES_ADMIN', 'Sales Admin'],
+    'SALES_ADMIN': ['SALES_ADMIN', 'SALE_ADMIN', 'Sales Admin', 'Sale Admin', 'sale admin'],
+    'SALE_ADMIN': ['SALES_ADMIN', 'SALE_ADMIN', 'Sales Admin', 'Sale Admin', 'sale admin'],
+    'Sales Admin': ['SALES_ADMIN', 'SALE_ADMIN', 'Sales Admin', 'Sale Admin', 'sale admin'],
+    'Sale Admin': ['SALES_ADMIN', 'SALE_ADMIN', 'Sales Admin', 'Sale Admin', 'sale admin'],
     'THU_KHO': ['THU_KHO', 'Thủ Kho', 'THU_KHO_TRUONG'],
     'Thủ Kho': ['THU_KHO', 'Thủ Kho', 'THU_KHO_TRUONG'],
 }
@@ -158,6 +163,10 @@ export function hasPermission(user: SessionUser, module: string, action: string)
     if (hasRole(user, 'CEO', 'ADMIN', 'TRO_LY')) return true
     if (action === 'READ' && hasRole(user, 'Kế Toán', 'KE_TOAN')) {
         if (['MDM', 'FIN', 'TAX', 'SLS', 'PRC', 'CNT', 'CST', 'RPT', 'STM', 'DSH', 'WMS', 'TRS', 'MGN', 'CSG'].includes(module)) return true
+    }
+    if (hasRole(user, 'SALES_ADMIN', 'Sales Admin', 'SALE_ADMIN', 'Sale Admin')) {
+        if (action === 'READ' && ['DSH', 'SLS', 'MDM', 'CRM', 'RPT', 'WMS', 'CSG', 'PRO', 'CNT', 'RTN'].includes(module)) return true
+        if (['CREATE', 'UPDATE', 'WRITE', 'APPROVE'].includes(action) && ['SLS', 'CSG', 'CRM', 'MDM', 'PRO'].includes(module)) return true
     }
     if (module === 'CSG') {
         if (['READ', 'CREATE', 'UPDATE', 'WRITE'].includes(action) && hasRole(user, 'SALES_ADMIN', 'Sales Admin', 'THU_KHO', 'Thủ Kho', 'SALES_MGR', 'Sales Manager', 'Kế Toán', 'KE_TOAN', 'CBO')) {

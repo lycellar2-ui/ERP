@@ -704,6 +704,13 @@ Triển khai hoàn tất Phase 2 theo kế hoạch chuẩn hóa song ngữ toàn
 | **Luân Chuyển Tồn Kho Ký Gửi Khi Giao DO** | `warehouse/actions.ts` (`transferDOLinesToConsignmentWarehouse`) | Khi xác nhận giao hàng (`confirmDeliveryOrder` / `markDODelivered`) cho đơn `CONSIGNMENT`, tự động chuyển các lô hàng (`StockLot`) sang Kho Ký Gửi của khách hàng và cộng `ConsignmentStock` thay vì hạch toán giá vốn `Nợ 632 / Có 156`. |
 | **In Đơn Ký Gửi & Chống Gãy Trang A4 Đơn Dài** | `sales/print/page.tsx`, `PrintableConsignmentDispatch.tsx`, `PrintableConsignmentCount.tsx` | Hiển thị tiêu đề `ĐƠN HÀNG KÝ GỬI`, mặc định in đầy đủ đơn giá/chiết khấu/VAT kèm nút `Hiện đơn giá / Ẩn đơn giá` trên thanh công cụ in. Khắc phục triệt để lỗi gãy trang khi in đơn nhiều dòng sản phẩm (`thead { display: table-header-group }`, `tr { break-inside: avoid }`, `.print-keep-together { break-inside: avoid }`). |
 
-*Last updated: 2026-11-09 15:20 | Wine ERP v12.44*
+#### Session 21 — Rút Gọn Luồng Duyệt Đơn Bán Hàng (`Sale Admin Duyệt → Chờ Kho Xuất`) & Bỏ Bước Kế Toán Duyệt (10/11/2026)
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **Loại bỏ bước Kế Toán Duyệt (`PENDING_ACCOUNTING`)** | `src/app/dashboard/sales/actions.ts`, `SalesClient.tsx`, `i18n.ts` | Khi `Sale Admin` (hoặc `Sales Manager` / `CEO`) duyệt đơn hàng (`approveSalesOrder` — bao gồm chọn kho xuất `warehouseId` và niên vụ `vintage`), đơn hàng chuyển thẳng sang trạng thái **`CONFIRMED` (`Đã Duyệt / Chờ Kho Xuất`)** và gửi thông báo ngay cho `Thủ Kho` (`notifySOConfirmed`) để xuất kho mà không cần chờ Kế Toán duyệt. |
+| **Duyệt trực tiếp 1-bước cho `Sale Admin` từ trạng thái Nháp (`DRAFT`)** | `SalesClient.tsx`, `sales/actions.ts` | Khi `Sale Admin` tạo đơn mới (`DRAFT`) hoặc xem đơn nháp, hiển thị nút **`Duyệt`** ngay trên dòng/thẻ đơn nháp để `Sale Admin` chọn kho xuất & vintage và duyệt thẳng sang `CONFIRMED`. Đã migrate toàn bộ 10 đơn hàng đang kẹt ở `PENDING_ACCOUNTING` trên Supabase sang `CONFIRMED`. |
+
+*Last updated: 2026-11-10 19:05 | Wine ERP v12.45*
 
 
