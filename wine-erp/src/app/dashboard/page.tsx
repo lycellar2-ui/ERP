@@ -5,6 +5,7 @@ import {
     getDashboardConfig, type DashboardSection, getMySales, getWarehouseDashboard,
     getTopCustomers, getTopProducts, getRevenueByChannel,
     getDailyRevenueChart, getLegalEntitiesForDashboard, type DashboardFilterOptions,
+    searchProductsForDashboard, getProductAnalyticsForDashboard,
 } from './actions'
 import { DashboardFilterBar, type PresetKey } from './DashboardFilterBar'
 import { CustomerAnalyticsDashboard } from './CustomerAnalyticsDashboard'
@@ -92,6 +93,63 @@ export default async function DashboardPage(props: PageProps) {
 
     const user = await getCurrentUser()
     const roles = user?.roles ?? ['CEO']
+
+    // Fast path for SKU 360° tab: pre-fetch SKU list + first SKU analytics directly on server, skipping 17 Overview queries
+    if (currentTab === 'skus') {
+        const initialSearchResults = await searchProductsForDashboard('')
+        const targetProductId = resolvedParams.productId || initialSearchResults[0]?.id || ''
+        const initialSkuData = targetProductId
+            ? await getProductAnalyticsForDashboard(targetProductId, 'ALL')
+            : null
+
+        return (
+            <div className="space-y-5 max-w-7xl mx-auto">
+                <DashboardHeaderNav
+                    userName={user?.name}
+                    roles={roles}
+                    currentTab={currentTab}
+                    currentPreset={resolvedParams.preset}
+                    currentEntity={resolvedParams.entity}
+                    exportAction={async () => {
+                        'use server'
+                        return await exportDashboardExcel()
+                    }}
+                />
+                <SkuAnalyticsDashboard
+                    topProducts={[]}
+                    initialProductId={targetProductId}
+                    initialSearchResults={initialSearchResults}
+                    initialData={initialSkuData}
+                />
+            </div>
+        )
+    }
+
+    // Fast path for Customer 360° tab: skip 16 unused Overview queries
+    if (currentTab === 'customers') {
+        const topCust = await getTopCustomers(8, filterOptions)
+        const topCustomers = Array.isArray(topCust) ? topCust : []
+        return (
+            <div className="space-y-5 max-w-7xl mx-auto">
+                <DashboardHeaderNav
+                    userName={user?.name}
+                    roles={roles}
+                    currentTab={currentTab}
+                    currentPreset={resolvedParams.preset}
+                    currentEntity={resolvedParams.entity}
+                    exportAction={async () => {
+                        'use server'
+                        return await exportDashboardExcel()
+                    }}
+                />
+                <CustomerAnalyticsDashboard
+                    topCustomers={topCustomers}
+                    initialCustomerId={resolvedParams.customerId}
+                />
+            </div>
+        )
+    }
+
     const dashConfig = await getDashboardConfig(roles)
     const has = (s: DashboardSection) => dashConfig.sections.includes(s)
 
@@ -173,58 +231,44 @@ export default async function DashboardPage(props: PageProps) {
                 }}
             />
 
-            {currentTab === 'customers' ? (
-                <CustomerAnalyticsDashboard
-                    topCustomers={topCustomers}
-                    initialCustomerId={resolvedParams.customerId}
-                />
-            ) : currentTab === 'skus' ? (
-                <SkuAnalyticsDashboard
-                    topProducts={topProducts}
-                    initialProductId={resolvedParams.productId}
-                />
-            ) : (
-                <>
-                    {/* ═══ FILTER BAR (Bilingual) ═══ */}
-                    <DashboardFilterBar
-                        currentPreset={preset}
-                        currentEntity={entity}
-                        currentFrom={resolvedParams.from}
-                        currentTo={resolvedParams.to}
-                        legalEntities={legalEntities}
-                        displayRangeText={displayRangeText}
-                    />
+            {/* ═══ FILTER BAR (Bilingual) ═══ */}
+            <DashboardFilterBar
+                currentPreset={preset}
+                currentEntity={entity}
+                currentFrom={resolvedParams.from}
+                currentTo={resolvedParams.to}
+                legalEntities={legalEntities}
+                displayRangeText={displayRangeText}
+            />
 
-                    {/* ═══ CEO OVERVIEW (Bilingual & Interactive) ═══ */}
-                    <CeoOverviewContent
-                        primaryRevenue={primaryRevenue}
-                        revenueSource={revenueSource}
-                        stats={stats}
-                        pl={pl}
-                        cash={cash}
-                        ar={ar}
-                        arMax={arMax}
-                        arOverdue={arOverdue}
-                        totalPending={totalPending}
-                        pendingSub={pendingSub}
-                        pendingProposals={pendingProposals}
-                        pendingApprovalReqs={pendingApprovalReqs}
-                        topCustomers={topCustomers}
-                        topProducts={topProducts}
-                        channels={channels}
-                        yoyData={yoyData}
-                        wf={wf}
-                        kpis={kpis}
-                        preset={preset}
-                        displayRangeText={displayRangeText}
-                        complianceWarnings={complianceWarnings}
-                        mySales={mySales}
-                        warehouseData={warehouseData}
-                        dashConfig={dashConfig}
-                        dailyRevenueData={dailyRevenueData}
-                    />
-                </>
-            )}
+            {/* ═══ CEO OVERVIEW (Bilingual & Interactive) ═══ */}
+            <CeoOverviewContent
+                primaryRevenue={primaryRevenue}
+                revenueSource={revenueSource}
+                stats={stats}
+                pl={pl}
+                cash={cash}
+                ar={ar}
+                arMax={arMax}
+                arOverdue={arOverdue}
+                totalPending={totalPending}
+                pendingSub={pendingSub}
+                pendingProposals={pendingProposals}
+                pendingApprovalReqs={pendingApprovalReqs}
+                topCustomers={topCustomers}
+                topProducts={topProducts}
+                channels={channels}
+                yoyData={yoyData}
+                wf={wf}
+                kpis={kpis}
+                preset={preset}
+                displayRangeText={displayRangeText}
+                complianceWarnings={complianceWarnings}
+                mySales={mySales}
+                warehouseData={warehouseData}
+                dashConfig={dashConfig}
+                dailyRevenueData={dailyRevenueData}
+            />
         </div>
     )
 }

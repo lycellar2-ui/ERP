@@ -537,3 +537,14 @@ Nâng cấp `/dashboard` thành trung tâm điều hành 3 Tab độc lập (`?t
     2. **Tốc độ tiêu thụ bình quân (`avgMonthlySales` chai/tháng)** và tổng sản lượng xuất kho (kể cả Tasting).
     3. **Ngày dự kiến chạm đáy tồn kho (`estimatedRunoutDate`)** đối chiếu trực tiếp với **Lead Time nhập khẩu (`~45 ngày`)**.
     4. **Đề xuất đặt hàng bổ sung (`suggestedReorderBottles` chai ~ `suggestedReorderCases` thùng)** để đạt định mức tồn kho an toàn 6 tháng (`targetMosMonths = 6`), kèm phân loại cảnh báo (`OUT_OF_STOCK`, `CRITICAL < 2M`, `LOW 2–3.5M`, `OPTIMAL 3.5–6M`, `ABUNDANT 6–12M`, `OVERSTOCK > 12M`).
+
+### 6. Tối Ưu Tốc Độ Query, Caching 2 Tầng & Chuẩn Hóa Badge Giao Diện SKU 360°
+- **Tối ưu truy vấn & Caching phía Server (`src/app/dashboard/actions.ts` & `page.tsx`)**:
+  - **Fast-path SSR theo Tab**: Khi truy cập `/dashboard?tab=skus`, Server Component `page.tsx` bỏ qua 17 truy vấn của tab Tổng quan và nạp sẵn (`pre-fetch`) danh sách SKU cùng dữ liệu chi tiết của SKU đầu tiên ngay trên Server (loại bỏ hoàn toàn hiện tượng waterfall chờ hydration trên Client).
+  - **Gộp SQL Aggregation cho `searchProductsForDashboard`**: Thay thế truy vấn Prisma N+1 relations bằng 1 câu SQL CTE + `GROUP BY` duy nhất kết hợp bộ nhớ đệm `cached('dashboard:sku-search-all-v2', ..., 120_000)` (thời gian tìm kiếm lọc SKU trên RAM < 1ms).
+  - **Loại bỏ truy vấn trùng lặp & Cache 2 tầng trong `getProductAnalyticsForDashboard`**: Loại bỏ 2 truy vấn vận tốc tiêu thụ bị lặp (`velocitySoLines`, `velocityHistSales`), lưu cache dữ liệu gốc theo SKU (`dashboard:sku-360-raw:${productId}`) để khi người dùng chuyển bộ lọc thời gian (`ALL` / `THIS_YEAR` / `LAST_6_MONTHS` / `THIS_MONTH`), hệ thống lọc trực tiếp trên RAM với **0 truy vấn DB**.
+- **Trải nghiệm chuyển đổi mượt mà & Hover Prefetch (`SkuAnalyticsDashboard.tsx`)**:
+  - Bổ sung bộ nhớ đệm phía Client (`clientCacheRef`) kết hợp `onMouseEnter` prefetch khi di chuột qua các thẻ SKU gợi ý, giữ nguyên layout với hiệu ứng chuyển mượt (`transition-opacity duration-150`) thay vì xóa trắng màn hình khi chuyển SKU.
+- **Chuẩn hóa hệ thống Badge một dòng (`whitespace-nowrap`)**:
+  - Thiết kế lại toàn bộ badge Kênh phân phối (bổ sung `DIRECT_INDIVIDUAL` → `Khách Cá Nhân`), Trạng thái lấy hàng (`Đang lấy hàng`, `Chậm lấy >75 ngày`, `Trước T8/2026`, `Có giá riêng` kèm chấm trạng thái 6px) và badge `Giá riêng: XXX ₫ (-Y%)` trên 1 dòng gọn gàng, không bị gãy dòng trên mọi độ phân giải.
+

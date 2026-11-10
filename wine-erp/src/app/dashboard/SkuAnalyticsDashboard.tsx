@@ -1,10 +1,10 @@
 'use client'
 
-import React, { useState, useEffect, useTransition, useMemo } from 'react'
+import React, { useState, useEffect, useTransition, useMemo, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import {
-    Search, Wine, Users, Package, DollarSign, Calendar, ArrowUpRight,
-    Building2, CheckCircle2, AlertTriangle, Clock, Tag, Layers,
+    Search, Wine, Users, Package, DollarSign, ArrowUpRight,
+    Building2, Clock, Layers,
     TrendingUp, FileText, Filter, Warehouse, ExternalLink
 } from 'lucide-react'
 import { formatVND, formatDate } from '@/lib/utils'
@@ -26,6 +26,8 @@ interface SkuAnalyticsDashboardProps {
         marginPct: number | null
     }>
     initialProductId?: string
+    initialSearchResults?: DashboardProductSearchItem[]
+    initialData?: SkuAnalyticsResult | null
 }
 
 type TimeRangeKey = 'ALL' | 'THIS_YEAR' | 'LAST_6_MONTHS' | 'THIS_MONTH'
@@ -42,26 +44,43 @@ const WINE_TYPE_BADGE: Record<string, { vi: string; en: string; bg: string; colo
     DESSERT: { vi: 'Vang Ngọt', en: 'Dessert', bg: 'rgba(217, 119, 6, 0.08)', color: '#D97706', border: 'rgba(217, 119, 6, 0.25)' },
 }
 
-const CHANNEL_BADGE: Record<string, { label: string; bg: string; color: string }> = {
-    HORECA: { label: 'HORECA', bg: 'rgba(8, 145, 178, 0.1)', color: '#0891B2' },
-    CORPORATE: { label: 'Corporate B2B', bg: 'rgba(21, 128, 61, 0.1)', color: '#15803D' },
-    WHOLESALE_DISTRIBUTOR: { label: 'Đại Lý / Sỉ', bg: 'rgba(180, 83, 9, 0.1)', color: '#B45309' },
-    VIP_RETAIL: { label: 'VIP Retail', bg: 'rgba(15, 23, 42, 0.08)', color: '#334155' },
-    RETAIL: { label: 'Khách Lẻ', bg: 'rgba(100, 116, 139, 0.12)', color: '#475569' },
+const CHANNEL_BADGE: Record<string, { label: string; labelEn: string; bg: string; color: string; border: string }> = {
+    HORECA: { label: 'HORECA', labelEn: 'HORECA', bg: '#ECFEFF', color: '#0E7490', border: '#A5F3FC' },
+    CORPORATE: { label: 'Doanh Nghiệp', labelEn: 'Corporate B2B', bg: '#F0FDF4', color: '#15803D', border: '#BBF7D0' },
+    WHOLESALE_DISTRIBUTOR: { label: 'Đại Lý / Sỉ', labelEn: 'Wholesale', bg: '#FFFBEB', color: '#B45309', border: '#FDE68A' },
+    VIP_RETAIL: { label: 'VIP Retail', labelEn: 'VIP Retail', bg: '#F8FAFC', color: '#0F172A', border: '#CBD5E1' },
+    RETAIL: { label: 'Khách Lẻ', labelEn: 'Retail', bg: '#F1F5F9', color: '#475569', border: '#E2E8F0' },
+    DIRECT_INDIVIDUAL: { label: 'Khách Cá Nhân', labelEn: 'Individual', bg: '#F1F5F9', color: '#475569', border: '#E2E8F0' },
 }
 
-export function SkuAnalyticsDashboard({ topProducts, initialProductId }: SkuAnalyticsDashboardProps) {
+export function SkuAnalyticsDashboard({
+    topProducts,
+    initialProductId,
+    initialSearchResults,
+    initialData,
+}: SkuAnalyticsDashboardProps) {
     const { isEn } = useAppLocale()
 
     const [searchQuery, setSearchQuery] = useState('')
-    const [searchResults, setSearchResults] = useState<DashboardProductSearchItem[]>([])
+    const [searchResults, setSearchResults] = useState<DashboardProductSearchItem[]>(initialSearchResults ?? [])
     const [selectedProductId, setSelectedProductId] = useState<string>(
-        initialProductId || topProducts.find(p => p.id)?.id || ''
+        initialProductId || initialData?.product.id || topProducts.find(p => p.id)?.id || initialSearchResults?.[0]?.id || ''
     )
     const [timeRange, setTimeRange] = useState<TimeRangeKey>('ALL')
-    const [data, setData] = useState<SkuAnalyticsResult | null>(null)
+    const [data, setData] = useState<SkuAnalyticsResult | null>(initialData ?? null)
     const [isPending, startTransition] = useTransition()
     const [isSearching, setIsSearching] = useState(false)
+
+    // Client-side instant cache for SKU 360 results (key: `${productId}:${timeRange}`)
+    const clientCacheRef = useRef<Map<string, SkuAnalyticsResult>>(
+        new Map(
+            initialData
+                ? [[`${initialData.product.id}:ALL`, initialData]]
+                : []
+        )
+    )
+    const isFirstSearchMount = useRef(Boolean(initialSearchResults && initialSearchResults.length > 0))
+    const isFirstDataMount = useRef(Boolean(initialData))
 
     // Sub-tabs & local table filters
     const [activeSubTab, setActiveSubTab] = useState<'buyers' | 'orders' | 'imports' | 'monthly'>('buyers')
@@ -79,8 +98,12 @@ export function SkuAnalyticsDashboard({ topProducts, initialProductId }: SkuAnal
         }
     }, [initialProductId])
 
-    // Search products with debounce
+    // Search products with debounce (skip initial fetch if SSR already provided initialSearchResults)
     useEffect(() => {
+        if (isFirstSearchMount.current && searchQuery === '') {
+            isFirstSearchMount.current = false
+            return
+        }
         let active = true
         setIsSearching(true)
         const timer = setTimeout(async () => {
@@ -95,21 +118,52 @@ export function SkuAnalyticsDashboard({ topProducts, initialProductId }: SkuAnal
             } finally {
                 if (active) setIsSearching(false)
             }
-        }, 220)
+        }, 160)
         return () => {
             active = false
             clearTimeout(timer)
         }
     }, [searchQuery])
 
-    // Load SKU 360 analytics from Supabase when selectedProductId or timeRange changes
+    // Load SKU 360 analytics with instant client-cache hit + non-blocking transition
     useEffect(() => {
         if (!selectedProductId) return
+        const cacheKey = `${selectedProductId}:${timeRange}`
+        if (isFirstDataMount.current && initialData && initialData.product.id === selectedProductId && timeRange === 'ALL') {
+            isFirstDataMount.current = false
+            return
+        }
+        isFirstDataMount.current = false
+
+        const cachedItem = clientCacheRef.current.get(cacheKey)
+        if (cachedItem) {
+            setData(cachedItem)
+            return
+        }
+
+        let cancelled = false
         startTransition(async () => {
             const res = await getProductAnalyticsForDashboard(selectedProductId, timeRange)
-            setData(res)
+            if (!cancelled && res) {
+                clientCacheRef.current.set(cacheKey, res)
+                setData(res)
+            }
         })
+        return () => {
+            cancelled = true
+        }
     }, [selectedProductId, timeRange])
+
+    // Hover prefetch so clicking any SKU pill feels instantaneous
+    const prefetchSku = useCallback((productId: string) => {
+        const cacheKey = `${productId}:${timeRange}`
+        if (clientCacheRef.current.has(cacheKey)) return
+        getProductAnalyticsForDashboard(productId, timeRange)
+            .then(res => {
+                if (res) clientCacheRef.current.set(cacheKey, res)
+            })
+            .catch(() => {})
+    }, [timeRange])
 
     const filteredBuyers = useMemo(() => {
         if (!data) return []
@@ -240,6 +294,7 @@ export function SkuAnalyticsDashboard({ topProducts, initialProductId }: SkuAnal
                                 <button
                                     key={item.id}
                                     type="button"
+                                    onMouseEnter={() => prefetchSku(item.id)}
                                     onClick={() => setSelectedProductId(item.id)}
                                     className={`shrink-0 text-left px-3 py-2 rounded-md border transition-all cursor-pointer ${
                                         isSelected
@@ -273,16 +328,16 @@ export function SkuAnalyticsDashboard({ topProducts, initialProductId }: SkuAnal
                 </div>
             </div>
 
-            {/* Loading State */}
-            {isPending && (
+            {/* Loading State (only shown if no initial data yet) */}
+            {isPending && !data && (
                 <div className="bg-white rounded-md border border-slate-200 p-8 text-center text-xs text-slate-500">
                     {isEn ? 'Loading SKU 360° data from Supabase...' : 'Đang tải dữ liệu báo cáo SKU 360° từ Supabase...'}
                 </div>
             )}
 
             {/* ═══ 2. MAIN SKU 360 CONTENT ═══ */}
-            {!isPending && data && (
-                <>
+            {data && (
+                <div className={`space-y-4 transition-opacity duration-150 ${isPending ? 'opacity-65' : 'opacity-100'}`}>
                     {/* SKU Identity & Warehouse Stock Banner */}
                     <div className="bg-white rounded-md border border-slate-200 p-4 shadow-2xs">
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -808,15 +863,15 @@ export function SkuAnalyticsDashboard({ topProducts, initialProductId }: SkuAnal
                                 <div className="overflow-x-auto border border-slate-200 rounded-md">
                                     <table className="w-full text-xs text-left border-collapse">
                                         <thead>
-                                            <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase text-slate-500">
-                                                <th className="py-2.5 px-3">#</th>
-                                                <th className="py-2.5 px-3">{isEn ? 'Restaurant / Customer' : 'Nhà Hàng / Khách Hàng'}</th>
-                                                <th className="py-2.5 px-3">{isEn ? 'Channel & Sales Rep' : 'Kênh & Sales Phụ Trách'}</th>
-                                                <th className="py-2.5 px-3">{isEn ? 'Buying Status & Cycle' : 'Trạng Thái Lấy & Chu Kỳ'}</th>
-                                                <th className="py-2.5 px-3 text-right">{isEn ? 'Volume Bought (Btls)' : 'Sản Lượng Lấy (Chai)'}</th>
-                                                <th className="py-2.5 px-3 text-right">{isEn ? 'Total Revenue' : 'Tổng Doanh Thu'}</th>
-                                                <th className="py-2.5 px-3 text-right">{isEn ? 'Applied / Special Price' : 'Đơn Giá Mua / Giá Riêng'}</th>
-                                                <th className="py-2.5 px-3 text-right">{isEn ? 'Last Order' : 'Lần Lấy Gần Nhất'}</th>
+                                            <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase text-slate-500 whitespace-nowrap">
+                                                <th className="py-2.5 px-3 w-10">#</th>
+                                                <th className="py-2.5 px-3 min-w-[240px]">{isEn ? 'Restaurant / Customer' : 'Nhà Hàng / Khách Hàng'}</th>
+                                                <th className="py-2.5 px-3 min-w-[140px]">{isEn ? 'Channel & Sales Rep' : 'Kênh & Sales Phụ Trách'}</th>
+                                                <th className="py-2.5 px-3 min-w-[165px]">{isEn ? 'Buying Status & Cycle' : 'Trạng Thái Lấy & Chu Kỳ'}</th>
+                                                <th className="py-2.5 px-3 text-right min-w-[140px]">{isEn ? 'Volume Bought (Btls)' : 'Sản Lượng Lấy (Chai)'}</th>
+                                                <th className="py-2.5 px-3 text-right min-w-[130px]">{isEn ? 'Total Revenue' : 'Tổng Doanh Thu'}</th>
+                                                <th className="py-2.5 px-3 text-right min-w-[175px]">{isEn ? 'Applied / Special Price' : 'Đơn Giá Mua / Giá Riêng'}</th>
+                                                <th className="py-2.5 px-3 text-right min-w-[155px]">{isEn ? 'Last Order' : 'Lần Lấy Gần Nhất'}</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
@@ -832,17 +887,19 @@ export function SkuAnalyticsDashboard({ topProducts, initialProductId }: SkuAnal
                                                 filteredBuyers.map((buyer, idx) => {
                                                     const chBadge = CHANNEL_BADGE[buyer.channel] || {
                                                         label: buyer.channel,
+                                                        labelEn: buyer.channel,
                                                         bg: '#F1F5F9',
                                                         color: '#475569',
+                                                        border: '#E2E8F0',
                                                     }
                                                     return (
                                                         <tr key={buyer.key} className="hover:bg-slate-50/80 transition-colors">
-                                                            <td className="py-2.5 px-3 font-mono text-slate-400 tabular-nums">
+                                                            <td className="py-2.5 px-3 font-mono text-slate-400 tabular-nums whitespace-nowrap">
                                                                 {idx + 1}
                                                             </td>
                                                             <td className="py-2.5 px-3">
                                                                 <div className="flex items-center gap-1.5">
-                                                                    <span className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                                                                    <span className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200/80 whitespace-nowrap">
                                                                         {buyer.customerCode}
                                                                     </span>
                                                                     {buyer.isLinkedCustomer && buyer.customerId ? (
@@ -851,11 +908,11 @@ export function SkuAnalyticsDashboard({ topProducts, initialProductId }: SkuAnal
                                                                             className="font-bold text-slate-900 hover:text-cyan-700 flex items-center gap-1 group"
                                                                             title={isEn ? 'Open Customer 360° Profile' : 'Mở hồ sơ Khách hàng 360°'}
                                                                         >
-                                                                            <span>{buyer.customerName}</span>
+                                                                            <span className="line-clamp-1">{buyer.customerName}</span>
                                                                             <ExternalLink size={12} className="text-slate-400 group-hover:text-cyan-600 shrink-0" />
                                                                         </Link>
                                                                     ) : (
-                                                                        <span className="font-semibold text-slate-800">
+                                                                        <span className="font-semibold text-slate-800 line-clamp-1">
                                                                             {buyer.customerName}
                                                                         </span>
                                                                     )}
@@ -866,100 +923,105 @@ export function SkuAnalyticsDashboard({ topProducts, initialProductId }: SkuAnal
                                                                     </div>
                                                                 )}
                                                             </td>
-                                                            <td className="py-2.5 px-3">
-                                                                <div className="flex items-center gap-1.5">
-                                                                    <span
-                                                                        className="px-1.5 py-0.5 text-[10px] font-semibold rounded"
-                                                                        style={{ background: chBadge.bg, color: chBadge.color }}
-                                                                    >
-                                                                        {chBadge.label}
-                                                                    </span>
-                                                                </div>
-                                                                <div className="text-[11px] text-slate-500 mt-0.5">
+                                                            <td className="py-2.5 px-3 whitespace-nowrap">
+                                                                <span
+                                                                    className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold tracking-wide rounded-full whitespace-nowrap"
+                                                                    style={{
+                                                                        background: chBadge.bg,
+                                                                        color: chBadge.color,
+                                                                        border: `1px solid ${chBadge.border}`,
+                                                                    }}
+                                                                >
+                                                                    {isEn ? chBadge.labelEn : chBadge.label}
+                                                                </span>
+                                                                <div className="text-[11px] text-slate-500 mt-1 truncate max-w-[160px]">
                                                                     Sales: <span className="font-medium text-slate-700">{buyer.salesRepName || '—'}</span>
                                                                 </div>
                                                             </td>
-                                                            <td className="py-2.5 px-3">
+                                                            <td className="py-2.5 px-3 whitespace-nowrap">
                                                                 {buyer.buyerStatus === 'ACTIVE' && (
-                                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                                        <CheckCircle2 size={12} />
+                                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/90 whitespace-nowrap">
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                                                                         <span>{isEn ? 'Active Buyer' : 'Đang lấy hàng'}</span>
                                                                     </span>
                                                                 )}
                                                                 {buyer.buyerStatus === 'AT_RISK' && (
-                                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                                                                        <AlertTriangle size={12} />
-                                                                        <span>{isEn ? 'Slow (>75d)' : 'Quá 75 ngày chưa lấy'}</span>
+                                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200/90 whitespace-nowrap">
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                                                                        <span>{isEn ? 'Slow (>75d)' : 'Chậm lấy >75 ngày'}</span>
                                                                     </span>
                                                                 )}
                                                                 {buyer.buyerStatus === 'HISTORICAL_ONLY' && (
-                                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                                                                        <Clock size={12} />
-                                                                        <span>{isEn ? 'Pre-Aug 2026' : 'Lấy trước T8/2026'}</span>
+                                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200/90 whitespace-nowrap">
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
+                                                                        <span>{isEn ? 'Pre-Aug 2026' : 'Trước T8/2026'}</span>
                                                                     </span>
                                                                 )}
                                                                 {buyer.buyerStatus === 'PRICE_RULE_ONLY' && (
-                                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-cyan-50 text-cyan-700 border border-cyan-200">
-                                                                        <Tag size={12} />
-                                                                        <span>{isEn ? 'Special Price Set' : 'Đã cài giá riêng (Chưa lấy)'}</span>
+                                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-cyan-50 text-cyan-700 border border-cyan-200/90 whitespace-nowrap">
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 shrink-0" />
+                                                                        <span>{isEn ? 'Special Price' : 'Có giá riêng'}</span>
                                                                     </span>
                                                                 )}
                                                                 {buyer.averageCycleDays && (
-                                                                    <div className="text-[11px] text-slate-500 mt-0.5 font-mono tabular-nums">
+                                                                    <div className="text-[11px] text-slate-500 mt-1 font-mono tabular-nums whitespace-nowrap">
                                                                         {isEn ? `Cycle: ~${buyer.averageCycleDays}d/order` : `Chu kỳ: ~${buyer.averageCycleDays} ngày/đơn`}
                                                                     </div>
                                                                 )}
                                                             </td>
-                                                            <td className="py-2.5 px-3 text-right font-mono tabular-nums">
+                                                            <td className="py-2.5 px-3 text-right font-mono tabular-nums whitespace-nowrap">
                                                                 <div className="text-sm font-bold text-slate-900">
                                                                     {buyer.totalBottles.toLocaleString()} <span className="text-[10px] font-sans font-normal text-slate-500">{isEn ? 'btls' : 'chai'}</span>
                                                                 </div>
-                                                                <div className="text-[10px] text-slate-500">
-                                                                    {buyer.liveCommercialBottles > 0 && (
-                                                                        <span>ERP: {buyer.liveCommercialBottles} </span>
-                                                                    )}
-                                                                    {buyer.liveTastingBottles > 0 && (
-                                                                        <span className="text-amber-700">&bull; Tasting: {buyer.liveTastingBottles} </span>
-                                                                    )}
-                                                                    {buyer.historicalBottles > 0 && (
-                                                                        <span>&bull; {isEn ? 'Hist:' : 'Trước T8:'} {buyer.historicalBottles}</span>
-                                                                    )}
+                                                                <div className="text-[10px] text-slate-500 mt-0.5 whitespace-nowrap">
+                                                                    {[
+                                                                        buyer.liveCommercialBottles > 0 ? `ERP: ${buyer.liveCommercialBottles}` : null,
+                                                                        buyer.liveTastingBottles > 0 ? `Tasting: ${buyer.liveTastingBottles}` : null,
+                                                                        buyer.historicalBottles > 0 ? `${isEn ? 'Hist:' : 'Trước T8:'} ${buyer.historicalBottles}` : null,
+                                                                    ]
+                                                                        .filter(Boolean)
+                                                                        .join(' · ')}
                                                                 </div>
                                                             </td>
-                                                            <td className="py-2.5 px-3 text-right font-mono tabular-nums">
+                                                            <td className="py-2.5 px-3 text-right font-mono tabular-nums whitespace-nowrap">
                                                                 <div className="font-bold text-slate-900">
                                                                     {buyer.totalRevenue > 0 ? formatVND(buyer.totalRevenue) : '—'}
                                                                 </div>
-                                                                <div className="text-[10px] text-slate-500">
+                                                                <div className="text-[10px] text-slate-500 mt-0.5">
                                                                     {buyer.orderCount} {isEn ? 'orders/inv' : 'đơn / HĐ'}
                                                                 </div>
                                                             </td>
-                                                            <td className="py-2.5 px-3 text-right font-mono tabular-nums">
+                                                            <td className="py-2.5 px-3 text-right font-mono tabular-nums whitespace-nowrap">
                                                                 {buyer.lastUnitPrice !== null && buyer.lastUnitPrice > 0 ? (
-                                                                    <div className="font-semibold text-slate-900">
+                                                                    <div className="font-bold text-slate-900">
                                                                         {formatVND(buyer.lastUnitPrice)}
                                                                     </div>
                                                                 ) : (
                                                                     <div className="text-slate-400">—</div>
                                                                 )}
                                                                 {buyer.specialPrice !== null && (
-                                                                    <div className="inline-flex items-center gap-1 px-1.5 py-0.5 mt-0.5 rounded bg-cyan-50 text-cyan-700 text-[10px] font-semibold">
-                                                                        <Tag size={10} />
-                                                                        <span>
-                                                                            {isEn ? 'Rule:' : 'Giá riêng:'} {formatVND(buyer.specialPrice)}
-                                                                            {buyer.specialDiscountPct ? ` (-${buyer.specialDiscountPct}%)` : ''}
+                                                                    <div className="mt-1">
+                                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200/80 text-[10px] font-semibold whitespace-nowrap">
+                                                                            <span>
+                                                                                {isEn ? 'Special:' : 'Giá riêng:'} {formatVND(buyer.specialPrice)}
+                                                                            </span>
+                                                                            {buyer.specialDiscountPct ? (
+                                                                                <span className="text-cyan-600 font-bold">
+                                                                                    (-{buyer.specialDiscountPct}%)
+                                                                                </span>
+                                                                            ) : null}
                                                                         </span>
                                                                     </div>
                                                                 )}
                                                             </td>
-                                                            <td className="py-2.5 px-3 text-right font-mono tabular-nums">
+                                                            <td className="py-2.5 px-3 text-right font-mono tabular-nums whitespace-nowrap">
                                                                 {buyer.lastOrderDate ? (
                                                                     <>
                                                                         <div className="font-semibold text-slate-800">
                                                                             {formatDate(buyer.lastOrderDate)}
                                                                         </div>
-                                                                        <div className="text-[10px] text-slate-500">
-                                                                            {buyer.lastOrderNo} &bull;{' '}
+                                                                        <div className="text-[10px] text-slate-500 mt-0.5 whitespace-nowrap">
+                                                                            {buyer.lastOrderNo} &middot;{' '}
                                                                             {buyer.daysSinceLastOrder === 0
                                                                                 ? (isEn ? 'Today' : 'Hôm nay')
                                                                                 : `${buyer.daysSinceLastOrder} ${isEn ? 'd ago' : 'ngày trước'}`}
@@ -1547,7 +1609,7 @@ export function SkuAnalyticsDashboard({ topProducts, initialProductId }: SkuAnal
                             </div>
                         )}
                     </div>
-                </>
+                </div>
             )}
         </div>
     )

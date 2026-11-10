@@ -2573,91 +2573,119 @@ export interface DashboardProductSearchItem {
 }
 
 export async function searchProductsForDashboard(query: string = ''): Promise<DashboardProductSearchItem[]> {
-    const q = query.trim()
-    const where: any = { deletedAt: null, status: 'ACTIVE' }
-    if (q) {
-        where.OR = [
-            { skuCode: { contains: q, mode: 'insensitive' } },
-            { productName: { contains: q, mode: 'insensitive' } },
-            { country: { contains: q, mode: 'insensitive' } },
-            { producer: { name: { contains: q, mode: 'insensitive' } } },
-        ]
-    }
+    const allSkus = await cached('dashboard:sku-search-all-v2', async () => {
+        const rows = await prisma.$queryRawUnsafe<Array<{
+            id: string
+            skuCode: string
+            productName: string
+            wineType: string
+            country: string
+            producerName: string | null
+            wholesalePrice: any
+            retailPrice: any
+            totalStock: any
+            liveBottles: any
+            histBottles: any
+            activeBuyerCount: any
+        }>>(`
+            WITH stock_agg AS (
+                SELECT "productId", COALESCE(SUM("qtyAvailable"), 0) AS total_stock
+                FROM stock_lots
+                WHERE status = 'AVAILABLE' AND "qtyAvailable" > 0
+                GROUP BY "productId"
+            ),
+            so_agg AS (
+                SELECT sol."productId",
+                       COALESCE(SUM(sol."qtyOrdered"), 0) AS live_bottles,
+                       ARRAY_AGG(DISTINCT so."customerId") FILTER (WHERE so."customerId" IS NOT NULL) AS so_buyers
+                FROM sales_order_lines sol
+                JOIN sales_orders so ON sol."soId" = so.id
+                WHERE so.status != 'CANCELLED'
+                GROUP BY sol."productId"
+            ),
+            hist_agg AS (
+                SELECT COALESCE(h."productId", p.id) AS prod_id,
+                       COALESCE(SUM(h.qty), 0) AS hist_bottles,
+                       ARRAY_AGG(DISTINCT COALESCE(h."customerId", h."customerCode", h."customerName")) AS hist_buyers
+                FROM historical_customer_sku_sales h
+                LEFT JOIN products p ON p."skuCode" = h."skuCode" AND p."deletedAt" IS NULL
+                GROUP BY COALESCE(h."productId", p.id)
+            ),
+            rule_agg AS (
+                SELECT "productId",
+                       ARRAY_AGG(DISTINCT "customerId") AS rule_buyers
+                FROM customer_price_rules
+                WHERE status = 'APPROVED'
+                GROUP BY "productId"
+            )
+            SELECT p.id,
+                   p."skuCode",
+                   p."productName",
+                   p."wineType"::text AS "wineType",
+                   p.country,
+                   pr.name AS "producerName",
+                   COALESCE(mp."wholesalePrice", 0) AS "wholesalePrice",
+                   COALESCE(mp."retailPrice", 0) AS "retailPrice",
+                   COALESCE(st.total_stock, 0) AS "totalStock",
+                   COALESCE(sa.live_bottles, 0) AS "liveBottles",
+                   COALESCE(ha.hist_bottles, 0) AS "histBottles",
+                   (
+                       SELECT COUNT(DISTINCT b)
+                       FROM UNNEST(
+                           COALESCE(sa.so_buyers, ARRAY[]::text[]) ||
+                           COALESCE(ha.hist_buyers, ARRAY[]::text[]) ||
+                           COALESCE(ra.rule_buyers, ARRAY[]::text[])
+                       ) AS b
+                       WHERE b IS NOT NULL
+                   ) AS "activeBuyerCount"
+            FROM products p
+            LEFT JOIN producers pr ON pr.id = p."producerId"
+            LEFT JOIN product_margin_prices mp ON mp."productId" = p.id
+            LEFT JOIN stock_agg st ON st."productId" = p.id
+            LEFT JOIN so_agg sa ON sa."productId" = p.id
+            LEFT JOIN hist_agg ha ON ha.prod_id = p.id
+            LEFT JOIN rule_agg ra ON ra."productId" = p.id
+            WHERE p."deletedAt" IS NULL AND p.status = 'ACTIVE'
+        `)
 
-    const products = await prisma.product.findMany({
-        where,
-        take: q ? 30 : 40,
-        select: {
-            id: true,
-            skuCode: true,
-            productName: true,
-            wineType: true,
-            country: true,
-            producer: { select: { name: true } },
-            marginPrice: { select: { wholesalePrice: true, retailPrice: true } },
-            stockLots: {
-                where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
-                select: { qtyAvailable: true },
-            },
-            soLines: {
-                where: { so: { status: { not: 'CANCELLED' } } },
-                select: {
-                    qtyOrdered: true,
-                    so: { select: { customerId: true } },
-                },
-            },
-            historicalCustomerSales: {
-                select: {
-                    qty: true,
-                    customerId: true,
-                    customerCode: true,
-                    customerName: true,
-                },
-            },
-            priceRules: {
-                where: { status: 'APPROVED' },
-                select: { customerId: true },
-            },
-        },
-    })
+        const mapped: DashboardProductSearchItem[] = rows.map(r => {
+            const liveB = Number(r.liveBottles || 0)
+            const histB = Number(r.histBottles || 0)
+            return {
+                id: r.id,
+                skuCode: r.skuCode,
+                productName: r.productName,
+                wineType: r.wineType,
+                country: r.country,
+                producerName: r.producerName ?? '—',
+                totalStock: Number(r.totalStock || 0),
+                wholesalePrice: Number(r.wholesalePrice || 0),
+                retailPrice: Number(r.retailPrice || 0),
+                activeBuyerCount: Number(r.activeBuyerCount || 0),
+                totalSoldBottles: liveB + histB,
+            }
+        })
 
-    const mapped: DashboardProductSearchItem[] = products.map(p => {
-        const totalStock = p.stockLots.reduce((s, l) => s + Number(l.qtyAvailable), 0)
-        const liveBottles = p.soLines.reduce((s, l) => s + Number(l.qtyOrdered), 0)
-        const histBottles = p.historicalCustomerSales.reduce((s, h) => s + Number(h.qty), 0)
-        const buyerKeys = new Set<string>()
-        for (const l of p.soLines) {
-            if (l.so?.customerId) buyerKeys.add(l.so.customerId)
-        }
-        for (const h of p.historicalCustomerSales) {
-            buyerKeys.add(h.customerId || h.customerCode || h.customerName)
-        }
-        for (const pr of p.priceRules) {
-            if (pr.customerId) buyerKeys.add(pr.customerId)
-        }
+        mapped.sort((a, b) => {
+            if (b.totalSoldBottles !== a.totalSoldBottles) return b.totalSoldBottles - a.totalSoldBottles
+            if (b.activeBuyerCount !== a.activeBuyerCount) return b.activeBuyerCount - a.activeBuyerCount
+            return b.totalStock - a.totalStock
+        })
 
-        return {
-            id: p.id,
-            skuCode: p.skuCode,
-            productName: p.productName,
-            wineType: p.wineType,
-            country: p.country,
-            producerName: p.producer?.name ?? '—',
-            totalStock,
-            wholesalePrice: Number(p.marginPrice?.wholesalePrice ?? 0),
-            retailPrice: Number(p.marginPrice?.retailPrice ?? 0),
-            activeBuyerCount: buyerKeys.size,
-            totalSoldBottles: liveBottles + histBottles,
-        }
-    })
+        return mapped
+    }, 120_000)
 
-    mapped.sort((a, b) => {
-        if (b.totalSoldBottles !== a.totalSoldBottles) return b.totalSoldBottles - a.totalSoldBottles
-        if (b.activeBuyerCount !== a.activeBuyerCount) return b.activeBuyerCount - a.activeBuyerCount
-        return b.totalStock - a.totalStock
-    })
+    const q = query.trim().toLowerCase()
+    if (!q) return allSkus.slice(0, 30)
 
-    return mapped.slice(0, 30)
+    return allSkus
+        .filter(item =>
+            item.skuCode.toLowerCase().includes(q) ||
+            item.productName.toLowerCase().includes(q) ||
+            item.country.toLowerCase().includes(q) ||
+            item.producerName.toLowerCase().includes(q)
+        )
+        .slice(0, 30)
 }
 
 export interface SkuCustomerBuyerItem {
@@ -2854,45 +2882,79 @@ export async function getProductAnalyticsForDashboard(
 ): Promise<SkuAnalyticsResult | null> {
     if (!productId) return null
 
-    const product = await prisma.product.findUnique({
-        where: { id: productId },
-        include: {
-            producer: { select: { name: true } },
-            marginPrice: { select: { costPrice: true, wholesalePrice: true, retailPrice: true } },
-            stockLots: {
-                where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
+    return cached(`dashboard:sku-360:${productId}:${timeRange}`, async () => {
+        // Cache raw SKU dataset for 2 minutes so switching timeRange (ALL / THIS_YEAR / LAST_6_MONTHS / THIS_MONTH) takes 0 DB queries!
+        const rawData = await cached(`dashboard:sku-360-raw:${productId}`, async () => {
+            const product = await prisma.product.findUnique({
+                where: { id: productId },
                 include: {
-                    ownerEntity: { select: { name: true, code: true } },
-                    location: { include: { warehouse: { select: { code: true, name: true } } } },
+                    producer: { select: { name: true } },
+                    marginPrice: { select: { costPrice: true, wholesalePrice: true, retailPrice: true } },
+                    stockLots: {
+                        where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
+                        include: {
+                            ownerEntity: { select: { name: true, code: true } },
+                            location: { include: { warehouse: { select: { code: true, name: true } } } },
+                        },
+                        orderBy: { qtyAvailable: 'desc' },
+                    },
                 },
-                orderBy: { qtyAvailable: 'desc' },
-            },
-        },
-    })
+            })
 
-    if (!product) return null
+            if (!product) return null
 
-    const now = new Date()
-    let dateFilter: { gte?: Date; lte?: Date } | undefined = undefined
-    if (timeRange === 'THIS_MONTH') {
-        dateFilter = { gte: startOfMonth(now), lte: endOfMonth(now) }
-    } else if (timeRange === 'LAST_6_MONTHS') {
-        dateFilter = { gte: subMonths(now, 6), lte: endOfMonth(now) }
-    } else if (timeRange === 'THIS_YEAR') {
-        dateFilter = { gte: startOfYear(now), lte: endOfYear(now) }
-    }
-
-    const [soLines, histSales, priceRules, histMonthly, histImports, grLines, incomingPoLines, velocitySoLines, velocityHistSales] = await Promise.all([
-        prisma.salesOrderLine.findMany({
-            where: {
-                productId: product.id,
-                so: {
-                    status: { not: 'CANCELLED' },
-                    ...(dateFilter ? { createdAt: dateFilter } : {}),
-                },
-            },
-            include: {
-                so: {
+            const [allSoLines, allHistSales, priceRules, histMonthly, allHistImports, allGrLines, incomingPoLines] = await Promise.all([
+                prisma.salesOrderLine.findMany({
+                    where: {
+                        productId: product.id,
+                        so: { status: { not: 'CANCELLED' } },
+                    },
+                    include: {
+                        so: {
+                            include: {
+                                customer: {
+                                    include: {
+                                        parent: { select: { id: true, code: true, name: true } },
+                                        salesRep: { select: { name: true } },
+                                    },
+                                },
+                                salesRep: { select: { name: true } },
+                                legalEntity: { select: { name: true, code: true } },
+                                deliveryOrders: { select: { status: true } },
+                            },
+                        },
+                    },
+                    orderBy: { so: { createdAt: 'desc' } },
+                }),
+                prisma.historicalCustomerSkuSale.findMany({
+                    where: {
+                        OR: [{ productId: product.id }, { skuCode: product.skuCode }],
+                    },
+                    include: {
+                        customer: {
+                            include: {
+                                parent: { select: { id: true, code: true, name: true } },
+                                salesRep: { select: { name: true } },
+                                children: {
+                                    select: {
+                                        id: true,
+                                        code: true,
+                                        name: true,
+                                        channel: true,
+                                        entityType: true,
+                                        salesRep: { select: { name: true } },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    orderBy: { invoiceDate: 'desc' },
+                }),
+                prisma.customerPriceRule.findMany({
+                    where: {
+                        productId: product.id,
+                        status: 'APPROVED',
+                    },
                     include: {
                         customer: {
                             include: {
@@ -2900,129 +2962,87 @@ export async function getProductAnalyticsForDashboard(
                                 salesRep: { select: { name: true } },
                             },
                         },
-                        salesRep: { select: { name: true } },
-                        legalEntity: { select: { name: true, code: true } },
-                        deliveryOrders: { select: { status: true } },
                     },
-                },
-            },
-            orderBy: { so: { createdAt: 'desc' } },
-        }),
-        prisma.historicalCustomerSkuSale.findMany({
-            where: {
-                OR: [{ productId: product.id }, { skuCode: product.skuCode }],
-                ...(dateFilter ? { invoiceDate: dateFilter } : {}),
-            },
-            include: {
-                customer: {
-                    include: {
-                        parent: { select: { id: true, code: true, name: true } },
-                        salesRep: { select: { name: true } },
-                        children: {
-                            select: {
-                                id: true,
-                                code: true,
-                                name: true,
-                                channel: true,
-                                entityType: true,
-                                salesRep: { select: { name: true } },
-                            },
-                        },
+                    orderBy: { createdAt: 'desc' },
+                }),
+                prisma.historicalMonthlySales.findMany({
+                    where: { skuCode: product.skuCode },
+                    orderBy: { month: 'asc' },
+                }),
+                prisma.historicalSkuImport.findMany({
+                    where: {
+                        OR: [{ productId: product.id }, { skuCode: product.skuCode }],
                     },
-                },
-            },
-            orderBy: { invoiceDate: 'desc' },
-        }),
-        prisma.customerPriceRule.findMany({
-            where: {
-                productId: product.id,
-                status: 'APPROVED',
-            },
-            include: {
-                customer: {
+                    orderBy: { receiptDate: 'desc' },
+                }),
+                prisma.goodsReceiptLine.findMany({
+                    where: { productId: product.id },
                     include: {
-                        parent: { select: { id: true, code: true, name: true } },
-                        salesRep: { select: { name: true } },
-                    },
-                },
-            },
-            orderBy: { createdAt: 'desc' },
-        }),
-        prisma.historicalMonthlySales.findMany({
-            where: { skuCode: product.skuCode },
-            orderBy: { month: 'asc' },
-        }),
-        prisma.historicalSkuImport.findMany({
-            where: {
-                OR: [{ productId: product.id }, { skuCode: product.skuCode }],
-                ...(dateFilter ? { receiptDate: dateFilter } : {}),
-            },
-            orderBy: { receiptDate: 'desc' },
-        }),
-        prisma.goodsReceiptLine.findMany({
-            where: {
-                productId: product.id,
-                gr: {
-                    ...(dateFilter ? { createdAt: dateFilter } : {}),
-                },
-            },
-            include: {
-                lot: { select: { lotNo: true, unitLandedCost: true } },
-                gr: {
-                    include: {
-                        warehouse: { select: { name: true, code: true } },
-                        shipment: { include: { customsDecl: { select: { declarationNo: true } } } },
-                        po: {
+                        lot: { select: { lotNo: true, unitLandedCost: true } },
+                        gr: {
                             include: {
-                                supplier: { select: { name: true, country: true } },
-                                lines: { where: { productId: product.id } },
+                                warehouse: { select: { name: true, code: true } },
+                                shipment: { include: { customsDecl: { select: { declarationNo: true } } } },
+                                po: {
+                                    include: {
+                                        supplier: { select: { name: true, country: true } },
+                                        lines: { where: { productId: product.id } },
+                                    },
+                                },
                             },
                         },
                     },
-                },
-            },
-            orderBy: { gr: { createdAt: 'desc' } },
-        }),
-        prisma.purchaseOrderLine.findMany({
-            where: {
-                productId: product.id,
-                po: {
-                    status: { in: ['APPROVED', 'IN_TRANSIT', 'PARTIALLY_RECEIVED'] },
-                },
-            },
-            include: {
-                po: {
-                    select: {
-                        poNo: true,
-                        estimatedDelivery: true,
-                        supplier: { select: { leadTimeDays: true } },
-                        shipments: { select: { etd: true, eta: true }, orderBy: { createdAt: 'desc' }, take: 1 },
+                    orderBy: { gr: { createdAt: 'desc' } },
+                }),
+                prisma.purchaseOrderLine.findMany({
+                    where: {
+                        productId: product.id,
+                        po: {
+                            status: { in: ['APPROVED', 'IN_TRANSIT', 'PARTIALLY_RECEIVED'] },
+                        },
                     },
-                },
-            },
-        }),
-        prisma.salesOrderLine.findMany({
-            where: {
-                productId: product.id,
-                so: {
-                    status: { not: 'CANCELLED' },
-                },
-            },
-            select: {
-                qtyOrdered: true,
-                so: { select: { createdAt: true, orderType: true } },
-            },
-        }),
-        prisma.historicalCustomerSkuSale.findMany({
-            where: {
-                OR: [{ productId: product.id }, { skuCode: product.skuCode }],
-            },
-            select: {
-                month: true,
-                qty: true,
-            },
-        }),
-    ])
+                    include: {
+                        po: {
+                            select: {
+                                poNo: true,
+                                estimatedDelivery: true,
+                                supplier: { select: { leadTimeDays: true } },
+                                shipments: { select: { etd: true, eta: true }, orderBy: { createdAt: 'desc' }, take: 1 },
+                            },
+                        },
+                    },
+                }),
+            ])
+
+            return { product, allSoLines, allHistSales, priceRules, histMonthly, allHistImports, allGrLines, incomingPoLines }
+        }, 120_000)
+
+        if (!rawData) return null
+        const { product, allSoLines, allHistSales, priceRules, histMonthly, allHistImports, allGrLines, incomingPoLines } = rawData
+
+        const now = new Date()
+        let dateFilter: { gte?: Date; lte?: Date } | undefined = undefined
+        if (timeRange === 'THIS_MONTH') {
+            dateFilter = { gte: startOfMonth(now), lte: endOfMonth(now) }
+        } else if (timeRange === 'LAST_6_MONTHS') {
+            dateFilter = { gte: subMonths(now, 6), lte: endOfMonth(now) }
+        } else if (timeRange === 'THIS_YEAR') {
+            dateFilter = { gte: startOfYear(now), lte: endOfYear(now) }
+        }
+
+        const inDateRange = (d: Date) => {
+            if (!dateFilter) return true
+            if (dateFilter.gte && d < dateFilter.gte) return false
+            if (dateFilter.lte && d > dateFilter.lte) return false
+            return true
+        }
+
+        const soLines = dateFilter ? allSoLines.filter(l => inDateRange(new Date(l.so.createdAt))) : allSoLines
+        const histSales = dateFilter ? allHistSales.filter(h => inDateRange(new Date(h.invoiceDate))) : allHistSales
+        const histImports = dateFilter ? allHistImports.filter(hi => inDateRange(new Date(hi.receiptDate))) : allHistImports
+        const grLines = dateFilter ? allGrLines.filter(grl => inDateRange(new Date(grl.gr.createdAt))) : allGrLines
+        const velocitySoLines = allSoLines
+        const velocityHistSales = allHistSales
 
     // 1. Warehouse Stock Breakdown
     let totalStock = 0
@@ -3909,4 +3929,5 @@ export async function getProductAnalyticsForDashboard(
         channelBreakdown,
         monthlyTrend,
     })
+    }, 120_000)
 }
