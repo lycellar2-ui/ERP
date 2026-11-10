@@ -2,14 +2,14 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { BarChart3, Users, Download, Sparkles, RefreshCw, X, Loader2 } from 'lucide-react'
+import { BarChart3, Users, Wine, Download, Sparkles, RefreshCw, X, Loader2 } from 'lucide-react'
 import { useAppLocale } from '@/lib/i18n'
 import { getDashboardDictionary } from './i18n'
 
 interface DashboardHeaderNavProps {
     userName?: string | null
     roles: string[]
-    currentTab: 'overview' | 'customers'
+    currentTab: 'overview' | 'customers' | 'skus'
     currentPreset?: string
     currentEntity?: string
     exportAction: () => Promise<string>
@@ -209,6 +209,20 @@ export function DashboardHeaderNav({
                     <span>{t.customerAnalytics}</span>
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-mono font-normal">
                         {t.customerAnalyticsBadge}
+                    </span>
+                </Link>
+                <Link
+                    href={`/dashboard?tab=skus${queryString}`}
+                    className={`flex items-center gap-2 pb-2.5 text-xs font-semibold transition-all border-b-2 whitespace-nowrap ${
+                        currentTab === 'skus'
+                            ? 'border-slate-900 text-slate-900 font-bold'
+                            : 'border-transparent text-slate-500 hover:text-slate-800'
+                    }`}
+                >
+                    <Wine size={15} className={currentTab === 'skus' ? 'text-slate-900' : 'text-slate-400'} />
+                    <span>{t.skuAnalytics}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-50 text-cyan-700 font-mono font-normal">
+                        {t.skuAnalyticsBadge}
                     </span>
                 </Link>
             </div>

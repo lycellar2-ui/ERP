@@ -1,7 +1,7 @@
 # Database ERD — Wine ERP System
 **Phase 3 — Architecture Design** | 2026-03-04 | Updated 2026-09-24
 
-> ERD này thể hiện toàn bộ mô hình dữ liệu của 31 module (147 models, 95 enums). Được phân thành 3 phần:
+> ERD này thể hiện toàn bộ mô hình dữ liệu của 32 module (149 models, 95 enums). Được phân thành 3 phần:
 > 1. Sơ đồ phụ thuộc giữa các Domain (Module Map)
 > 2. ERD tổng hợp các Entity cốt lõi (Core ERD)
 > 3. Schema chi tiết từng Domain
@@ -1038,3 +1038,13 @@ showroom_count_checks  (spotId, itemId, checkedBy ≠ người đếm, qtyAtChec
 showroom_count_notes   (spotId, itemId '' = cả vị trí, note ≤500, writtenBy, updatedAt) UNIQUE(spotId, itemId, writtenBy) — ghi chú người kiểm
 ```
 Độc lập với Product/StockLot/StockCountSession — chỉ ghi nhận số đếm, không ảnh hưởng tồn kho. Tạo bằng `prisma/sql/create_showroom_count_tables.sql`.
+
+
+### 3.16 Historical Customer SKU Sales (`historical_customer_sku_sales`)
+Bảng lưu trữ dữ liệu hóa đơn bán hàng lịch sử theo từng Khách hàng & SKU trước tháng 08/2026 (2021 – 07/2026) trên Supabase PostgreSQL, phục vụ truy vấn **SKU 360°** (`/dashboard?tab=skus`) và **Customer 360°** (`/dashboard?tab=customers`):
+- `HistoricalCustomerSkuSale`: `id`, `productId` (FK → `Product`), `skuCode`, `productName`, `customerId` (FK → `Customer`), `customerCode`, `customerName`, `channel`, `legalEntity`, `invoiceDate`, `month` (`YYYY-MM`), `voucherNo`, `invoiceNo`, `qty`, `unitPrice`, `totalAmount`, `source`.
+
+
+### 3.17 Historical SKU Imports (`historical_sku_imports`)
+Bảng lưu trữ toàn bộ lịch sử các đợt nhập khẩu trực tiếp (tờ khai hải quan, lô hàng `L01`–`L15`), phiếu nhập kho và giao dịch mua bán nội bộ (`Thắng Ân → Ly's Cellars`) theo từng SKU giai đoạn `11/2021 – 10/2026` trên Supabase PostgreSQL, phục vụ tab **Lịch Sử Nhập Hàng & Lô Tồn Kho** trong **SKU 360°** (`/dashboard?tab=skus`):
+- `HistoricalSkuImport`: `id`, `productId` (FK → `Product`), `skuCode`, `productName`, `supplierName`, `country`, `legalEntity`, `importType` (`DIRECT_IMPORT` | `INTERNAL_TRANSFER` | `RETURN_INBOUND`), `batchCode`, `receiptDate`, `month` (`YYYY-MM`), `voucherNo`, `declarationNo`, `qtyCommercial`, `qtyFoc`, `qtyTotal`, `currency`, `foreignUnitPrice`, `purchasePriceVnd`, `landedCostVnd`, `totalValueVnd`, `source`.

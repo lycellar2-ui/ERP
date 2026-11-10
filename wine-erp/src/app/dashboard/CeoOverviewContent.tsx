@@ -614,7 +614,7 @@ export function CeoOverviewContent({
                                         <div key={p.sku || i} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: i === 0 ? 'rgba(180,83,9,0.06)' : 'transparent' }}>
                                             <div className="flex items-center gap-2 min-w-0">
                                                 <span className="text-[10px] font-bold w-4" style={{ color: i === 0 ? '#B45309' : '#64748B' }}>{i + 1}.</span>
-                                                <span className="text-xs truncate" style={{ color: '#0F172A' }}>{p.name}</span>
+                                                <Link href={`/dashboard?tab=skus${p.id ? `&productId=${p.id}` : ''}`} className="text-xs truncate hover:text-cyan-700 font-medium flex items-center gap-1 group" style={{ color: '#0F172A' }} title="Xem Báo Cáo Theo SKU (Nhà nào đang lấy)"><span>{p.name}</span><ExternalLink size={11} className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0" style={{ color: '#0891B2' }} /></Link>
                                             </div>
                                             <div className="flex items-center gap-1.5 flex-shrink-0">
                                                 {typeof p.marginPct === 'number' && (

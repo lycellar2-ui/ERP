@@ -486,3 +486,54 @@ Nhằm phục vụ cả Ban Giám Đốc người Việt và chuyên gia/cổ đ
 - **Container đang về & AR Aging**: Quản lý trạng thái vận đơn tàu biển (Booked, On Vessel, Arrived Port, Customs Cleared, In Warehouse) và phân tầng tuổi nợ.
 - **Trung tâm phê duyệt CEO & Cảnh báo tuân thủ**: Tờ trình (Proposals), Đơn bán hàng SO, Tờ khai pháp lý & giấy phép sắp hết hạn.
 - **Thống kê chuyên biệt theo Role**: Doanh số cá nhân của Sales Rep (`My Sales Performance`) và Tồn kho tổng hợp (`Warehouse Overview`).
+
+
+---
+
+## 12. Tính Năng v6 — "Báo Cáo Theo SKU (SKU 360°) & Đồng Bộ Dữ Liệu Lịch Sử Khách Hàng - SKU (2021–2026) Lên Supabase" (10/11/2026)
+
+Nâng cấp `/dashboard` thành trung tâm điều hành 3 Tab độc lập (`?tab=overview` | `?tab=customers` | `?tab=skus`), giải quyết trực tiếp bài toán nghiệp vụ: **"Khi chọn 1 mã rượu (SKU), muốn xem ngay những nhà hàng/khách hàng nào đang lấy mã đó, sản lượng bao nhiêu, giá riêng thế nào và lịch sử lấy từ trước tới nay"**.
+
+### 1. Migrate Dữ Liệu Lịch Sử Bán Hàng Theo Khách Hàng & SKU Lên Supabase (`historical_customer_sku_sales`)
+- Thêm model `HistoricalCustomerSkuSale` (`@@map("historical_customer_sku_sales")`) vào `prisma/schema.prisma`, liên kết khóa ngoại trực tiếp với `Product` (`productId`) và `Customer` (`customerId`).
+- Script đồng bộ `prisma/migrate-historical-customer-sku-sales.cjs` chuẩn hóa, khử trùng lặp và đẩy toàn bộ **7,088 dòng giao dịch hóa đơn lịch sử (từ 12/2021 đến 07/2026)** từ sổ chi tiết kế toán (Thắng Ân & Ly's Cellars) và báo cáo chi tiết chi nhánh HORECA lên trực tiếp **Supabase PostgreSQL**:
+  - Tổng sản lượng lịch sử: **34,451 chai** (~15.76 tỷ VND doanh thu thuần) trên **142 SKU** và **233 khách hàng/nhà hàng**.
+  - Tự động ánh xạ `skuCode` sang `Product.id` (đạt 99.5%) và ánh xạ mã khách hàng / MST / tên pháp nhân về đúng điểm bán `RESTAURANT` hoặc `COMPANY` trong CRM.
+- Kết hợp liền mạch với dữ liệu `SalesOrder` & `SalesOrderLine` trên ERP (từ 08/2026 đến nay) và bảng giá riêng `CustomerPriceRule` mà không làm ảnh hưởng đến số dư công nợ AR hay P&L kỳ hiện tại.
+
+### 2. Tab "Báo Cáo Theo SKU (SKU 360°)" (`/dashboard?tab=skus`)
+- **Thanh tìm kiếm & Quick-pick SKU (`searchProductsForDashboard`)**:
+  - Tìm kiếm tức thì theo mã SKU (`L20034`, `L10023`...), tên rượu, quốc gia, nhà sản xuất.
+  - Gợi ý nhanh các SKU có sản lượng tiêu thụ cao nhất kèm số lượng nhà hàng đang lấy và tồn kho khả dụng.
+- **Banner Định Danh SKU & Tồn Kho Theo Kho**:
+  - Hiển thị loại vang, quốc gia, nhà sản xuất, nồng độ ABV, quy cách thùng, giá bán buôn chuẩn, giá bán lẻ và đơn giá bán bình quân thực tế.
+  - Bóc tách tồn kho khả dụng theo từng kho: **Kho Thường Tín**, **Kho Giảng Võ (GVM)**, và **Kho Khác / Showroom**.
+- **3 Phân Khu Phân Tích Chuyên Sâu (`getProductAnalyticsForDashboard`)**:
+  1. **Danh Sách Nhà Hàng & Khách Hàng Đang Lấy**:
+     - Liệt kê toàn bộ nhà hàng/khách hàng đã mua (trên ERP hoặc sổ lịch sử 2021–2026) hoặc đã được cài đặt giá riêng (`CustomerPriceRule`) cho SKU đó.
+     - Phân loại trạng thái lấy hàng: `Đang lấy hàng (Active)`, `Quá 75 ngày chưa lấy (At Risk)`, `Lấy trước T8/2026 (Historical)`, `Đã cài giá riêng (Chưa lấy)` kèm chu kỳ đặt hàng trung bình (`~X ngày/đơn`).
+     - Bóc tách sản lượng theo từng khách: `ERP (Thương mại)` + `Tasting / Mẫu` + `Lịch sử trước T8/2026`, tổng doanh thu, đơn giá mua gần nhất, giá riêng được duyệt (`-X%`) và ngày lấy gần nhất.
+     - Liên kết 2 chiều (`Cross-link`): Bấm vào tên nhà hàng chuyển thẳng sang **Customer 360°** (`/dashboard?tab=customers&customerId=...`); ngược lại từ bảng Top Products hoặc danh mục rượu trong Customer 360° bấm vào tên rượu chuyển thẳng sang **SKU 360°** (`/dashboard?tab=skus&productId=...`).
+  2. **Sổ Chi Tiết Đơn Hàng & Hóa Đơn Xuất Bán**:
+     - Hợp nhất toàn bộ đơn hàng `ERP Live` (T8/2026–nay), đơn `Tasting / Sample` và hóa đơn `Lịch sử Kế toán` (2021–T7/2026) từ Supabase.
+  3. **Nhịp Độ Bán Hàng Theo Tháng**:
+     - Biểu đồ cột và bảng chi tiết sản lượng thương mại, sản lượng tasting, doanh thu và số lượng nhà hàng lấy theo từng tháng.
+
+
+### 4. Lịch Sử Nhập Hàng & Lô Tồn Kho Trong SKU 360° (`historical_sku_imports` + `stock_lots`)
+- Thêm model `HistoricalSkuImport` (`@@map("historical_sku_imports")`) vào `prisma/schema.prisma` và thực thi script `prisma/migrate-historical-sku-imports.cjs` đẩy **1,254 bản ghi lịch sử nhập hàng (11/2021 – 10/2026)** lên Supabase PostgreSQL:
+  - **331 đợt nhập khẩu trực tiếp (`DIRECT_IMPORT`)**: `68,779 chai` (giá trị vốn nhập kho `7.99 tỷ VND`), bao gồm đầy đủ Số tờ khai Hải quan, Mã lô (`L01`–`L15`), Nhà cung cấp/Hãng rượu ngoại, SL Thương mại, SL FOC, Đơn giá ngoại tệ (`USD`/`EUR`/`AUD`) và Giá vốn 1 chai (`Landed Cost`).
+  - **922 dòng mua bán điều chuyển nội bộ (`INTERNAL_TRANSFER` — `Thắng Ân → Ly's Cellars`)**: `26,407 chai` (`5.91 tỷ VND`), được phân tách rõ để không cộng trùng vào sản lượng nhập khẩu ngoại.
+- Tích hợp sub-tab **`Lịch Sử Nhập Hàng & Lô Tồn Kho`** ngay trong `SkuAnalyticsDashboard.tsx`:
+  - **4 Thẻ KPI Nhập Kho**: Tổng sản lượng nhập khẩu trực tiếp (+ FOC), Tổng giá trị vốn nhập kho & điều chuyển nội bộ, Đơn giá vốn nhập kho bình quân & biên độ (Min – Max), Đợt nhập khẩu gần nhất & Nhà cung cấp.
+  - **Bảng Sổ Chi Tiết Đợt Nhập Hàng / Tờ Khai Hải Quan**: Cho phép lọc riêng giữa `Nhập khẩu trực tiếp & Phiếu GRN`, `Nhập mua nội bộ Thắng Ân -> Ly's Cellars`, và `Tất cả phiếu nhập`.
+  - **Bảng Chi Tiết Các Lô Tồn Kho Hiện Tại Tại Kho (`StockLot`)**: Hiển thị từng mã lô (`LOT-TT-...`, `LOT-GVM-...`), kho & vị trí kệ, pháp nhân sở hữu, niên vụ (`Vintage`), số lượng nhập ban đầu, số lượng đang tồn khả dụng và giá vốn lô.
+
+### 5. Dự Báo MOS (Months of Supply) & Kế Hoạch Đặt Hàng Bổ Sung Trong SKU 360°
+- Tích hợp bộ tính toán **MOS (Months of Supply — Số tháng đủ bán)** trực tiếp trong `getProductAnalyticsForDashboard` (`src/app/dashboard/actions.ts`) và hiển thị trên `SkuAnalyticsDashboard.tsx`:
+  - **Đa chu kỳ tốc độ tiêu thụ (`3 Tháng` | `6 Tháng (Chuẩn)` | `12 Tháng`)**: Tự động tổng hợp sản lượng bán thực tế (kết hợp dữ liệu lịch sử Supabase + đơn ERP hiện hành) không phụ thuộc bộ lọc bảng để luôn phản ánh đúng vận tốc tiêu thụ thực.
+  - **4 Chỉ số Dự báo MOS**:
+    1. **Chỉ số MOS hiện tại (`mosCurrentStock`) & MOS sau khi cộng hàng đang về (`mosWithIncoming`)** từ các đơn PO đang trên biển (`APPROVED`, `IN_TRANSIT`, `PARTIALLY_RECEIVED`).
+    2. **Tốc độ tiêu thụ bình quân (`avgMonthlySales` chai/tháng)** và tổng sản lượng xuất kho (kể cả Tasting).
+    3. **Ngày dự kiến chạm đáy tồn kho (`estimatedRunoutDate`)** đối chiếu trực tiếp với **Lead Time nhập khẩu (`~45 ngày`)**.
+    4. **Đề xuất đặt hàng bổ sung (`suggestedReorderBottles` chai ~ `suggestedReorderCases` thùng)** để đạt định mức tồn kho an toàn 6 tháng (`targetMosMonths = 6`), kèm phân loại cảnh báo (`OUT_OF_STOCK`, `CRITICAL < 2M`, `LOW 2–3.5M`, `OPTIMAL 3.5–6M`, `ABUNDANT 6–12M`, `OVERSTOCK > 12M`).

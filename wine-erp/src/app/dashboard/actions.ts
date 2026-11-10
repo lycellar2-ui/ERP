@@ -1573,7 +1573,7 @@ export async function getTopProducts(limit = 5, options?: DashboardFilterOptions
             },
         })
 
-        const map = new Map<string, { sku: string; name: string; qty: number; revenue: number; cogs: number }>()
+        const map = new Map<string, { id: string; sku: string; name: string; qty: number; revenue: number; cogs: number }>()
         for (const l of lines) {
             const pid = l.product?.id ?? 'unknown'
             const existing = map.get(pid)
@@ -1590,8 +1590,7 @@ export async function getTopProducts(limit = 5, options?: DashboardFilterOptions
                 existing.revenue += lineRevenue
                 existing.cogs += lineCogs
             } else {
-                map.set(pid, {
-                    sku: l.product?.skuCode ?? '?',
+                map.set(pid, { id: pid, sku: l.product?.skuCode ?? '?',
                     name: l.product?.productName ?? 'Unknown',
                     qty,
                     revenue: lineRevenue,
@@ -1601,8 +1600,7 @@ export async function getTopProducts(limit = 5, options?: DashboardFilterOptions
         }
 
         return Array.from(map.values())
-            .map(item => ({
-                sku: item.sku,
+            .map(item => ({ id: item.id, sku: item.sku,
                 name: item.name,
                 qty: item.qty,
                 revenue: item.revenue,
@@ -2090,7 +2088,29 @@ export async function getCustomerPurchaseHistory(
         }
     }
 
-    // 5. Calculate Metrics, Health, Preferences, and Monthly Trends
+    // 5. Calculate Metrics, Health, Preferences, and Monthly Trends (including migrated pre-Aug 2026 Supabase records)
+    const histTargetIds = customer.parent ? [...targetCustomerIds, customer.parent.id] : targetCustomerIds
+    const histCustomerSales = await prisma.historicalCustomerSkuSale.findMany({
+        where: {
+            OR: [
+                { customerId: { in: histTargetIds } },
+                { customerCode: { in: [customer.code, ...customer.children.map(c => c.code)] } },
+            ],
+            ...(dateFilter ? { invoiceDate: dateFilter } : {}),
+        },
+        include: {
+            product: {
+                select: {
+                    id: true,
+                    skuCode: true,
+                    productName: true,
+                    wineType: true,
+                    country: true,
+                },
+            },
+        },
+        orderBy: { invoiceDate: 'desc' },
+    })
     let totalRevenue = 0
     let totalBottles = 0
     let totalPaidAmount = 0
@@ -2203,6 +2223,131 @@ export async function getCustomerPurchaseHistory(
         monthlyMap.set(mKey, mCurr)
     }
 
+    // Process migrated pre-Aug 2026 historical sales from Supabase
+    const histInvoiceGroups = new Map<string, {
+        id: string
+        soNo: string
+        createdAt: Date
+        legalEntity: string | null
+        customerName: string
+        customerCode: string | null
+        totalAmount: number
+        totalBottles: number
+        lines: Array<{
+            id: string
+            skuCode: string
+            productName: string
+            wineType: string | null
+            qtyOrdered: number
+            unitPrice: number
+            lineDiscountPct: number
+            lineTotal: number
+        }>
+    }>()
+
+    for (const h of histCustomerSales) {
+        const qty = Number(h.qty)
+        const price = Number(h.unitPrice)
+        const lineSpend = Number(h.totalAmount) || Math.round(qty * price)
+        const invDate = new Date(h.invoiceDate)
+
+        totalRevenue += lineSpend
+        totalPaidAmount += lineSpend
+        totalBottles += qty
+        commercialRevenue += lineSpend
+        commercialBottles += qty
+
+        const invNoDisplay = h.invoiceNo ? `HĐ-${h.invoiceNo}` : (h.voucherNo || `HIST-${h.month}`)
+        const grpKey = `${h.month}|${invNoDisplay}`
+        const existingGrp = histInvoiceGroups.get(grpKey)
+        if (existingGrp) {
+            existingGrp.totalAmount += lineSpend
+            existingGrp.totalBottles += qty
+            existingGrp.lines.push({
+                id: h.id,
+                skuCode: h.product?.skuCode ?? h.skuCode,
+                productName: h.product?.productName ?? h.productName ?? h.skuCode,
+                wineType: h.product?.wineType ?? null,
+                qtyOrdered: qty,
+                unitPrice: price,
+                lineDiscountPct: 0,
+                lineTotal: lineSpend,
+            })
+        } else {
+            histInvoiceGroups.set(grpKey, {
+                id: h.id,
+                soNo: invNoDisplay,
+                createdAt: invDate,
+                legalEntity: h.legalEntity ?? null,
+                customerName: h.customerName,
+                customerCode: h.customerCode ?? null,
+                totalAmount: lineSpend,
+                totalBottles: qty,
+                lines: [{
+                    id: h.id,
+                    skuCode: h.product?.skuCode ?? h.skuCode,
+                    productName: h.product?.productName ?? h.productName ?? h.skuCode,
+                    wineType: h.product?.wineType ?? null,
+                    qtyOrdered: qty,
+                    unitPrice: price,
+                    lineDiscountPct: 0,
+                    lineTotal: lineSpend,
+                }],
+            })
+        }
+
+        const wt = h.product?.wineType || 'OTHER'
+        const curWt = wineTypeMap.get(wt) ?? { bottles: 0, revenue: 0 }
+        curWt.bottles += qty
+        curWt.revenue += lineSpend
+        wineTypeMap.set(wt, curWt)
+
+        if (price < 500_000) {
+            priceBrackets.under500k.bottles += qty
+            priceBrackets.under500k.revenue += lineSpend
+        } else if (price <= 1_500_000) {
+            priceBrackets.mid500k_1500k.bottles += qty
+            priceBrackets.mid500k_1500k.revenue += lineSpend
+        } else {
+            priceBrackets.grandCru.bottles += qty
+            priceBrackets.grandCru.revenue += lineSpend
+        }
+
+        const pid = h.product?.id ?? `sku:${h.skuCode}`
+        const pCurr = productMap.get(pid)
+        if (pCurr) {
+            pCurr.totalQty += qty
+            pCurr.totalSpend += lineSpend
+            if (invDate > new Date(pCurr.lastPurchasedAt)) {
+                pCurr.lastUnitPrice = price
+                pCurr.lastPurchasedAt = invDate
+            }
+        } else {
+            productMap.set(pid, {
+                productId: h.product?.id ?? '',
+                skuCode: h.product?.skuCode ?? h.skuCode,
+                name: h.product?.productName ?? h.productName ?? h.skuCode,
+                wineType: h.product?.wineType ?? null,
+                originCountry: h.product?.country ?? null,
+                totalQty: qty,
+                totalSpend: lineSpend,
+                lastUnitPrice: price,
+                lastPurchasedAt: invDate,
+            })
+        }
+    }
+
+    commercialCount += histInvoiceGroups.size
+    for (const grp of histInvoiceGroups.values()) {
+        const mKey = `${grp.createdAt.getFullYear()}-${String(grp.createdAt.getMonth() + 1).padStart(2, '0')}`
+        const mLabel = `T${grp.createdAt.getMonth() + 1}/${String(grp.createdAt.getFullYear()).slice(-2)}`
+        const mCurr = monthlyMap.get(mKey) ?? { month: mKey, label: mLabel, revenue: 0, bottles: 0, orders: 0 }
+        mCurr.revenue += grp.totalAmount
+        mCurr.bottles += grp.totalBottles
+        mCurr.orders += 1
+        monthlyMap.set(mKey, mCurr)
+    }
+
     // Health / Buying cycle calculation
     let daysSinceLastOrder: number | null = null
     let averageOrderCycleDays: number | null = null
@@ -2268,6 +2413,29 @@ export async function getCustomerPurchaseHistory(
 
     const monthlyTrend = Array.from(monthlyMap.values())
         .sort((a, b) => a.month.localeCompare(b.month))
+
+    const histFormattedOrders: CustomerHistorySOItem[] = Array.from(histInvoiceGroups.values()).map(grp => ({
+        id: grp.id,
+        soNo: grp.soNo,
+        createdAt: grp.createdAt.toISOString(),
+        orderType: 'STANDARD',
+        totalAmount: Math.round(grp.totalAmount),
+        paidAmount: Math.round(grp.totalAmount),
+        unpaidAmount: 0,
+        status: 'PAID',
+        deliveryStatus: 'DELIVERED',
+        salesRepName: customer.salesRep?.name ?? (grp.legalEntity || '—'),
+        branchName: grp.customerCode && grp.customerCode !== customer.code ? `${grp.customerCode} - ${grp.customerName}` : null,
+        totalBottles: grp.totalBottles,
+        lineCount: grp.lines.length,
+        shippingAddress: null,
+        receiverName: customer.receiverName || null,
+        receiverPhone: customer.receiverPhone || null,
+        deliveryNotes: grp.legalEntity ? `Hóa đơn lịch sử trước T8/2026 (${grp.legalEntity})` : 'Hóa đơn lịch sử trước T8/2026',
+        deliveryOrders: [],
+        arInvoices: [],
+        lines: grp.lines,
+    }))
 
     const formattedOrders: CustomerHistorySOItem[] = orders.map(o => {
         let deliveryStatus = 'UNDELIVERED'
@@ -2344,10 +2512,10 @@ export async function getCustomerPurchaseHistory(
         },
         kpis: {
             totalRevenue,
-            totalOrders: orders.length,
+            totalOrders: formattedOrders.length + histFormattedOrders.length,
             totalBottles,
-            lastOrderDate: orders[0]?.createdAt.toISOString() ?? null,
-            lastOrderNo: orders[0]?.soNo ?? null,
+            lastOrderDate: formattedOrders[0]?.createdAt ?? histFormattedOrders[0]?.createdAt ?? null,
+            lastOrderNo: formattedOrders[0]?.soNo ?? histFormattedOrders[0]?.soNo ?? null,
             totalPaidAmount,
             totalArDebt,
             overdueArDebt,
@@ -2376,11 +2544,1369 @@ export async function getCustomerPurchaseHistory(
             wineTypes: wineTypePreferences,
             priceBrackets: priceTierPreferences,
         },
-        orders: formattedOrders,
+        orders: [...formattedOrders, ...histFormattedOrders],
         topProducts: topProducts.map(p => ({
             ...p,
             lastPurchasedAt: p.lastPurchasedAt.toISOString(),
         })),
+        monthlyTrend,
+    })
+}
+
+
+// ═══════════════════════════════════════════════════
+// SKU 360° ANALYTICS & CUSTOMER BUYER DISTRIBUTION
+// ═══════════════════════════════════════════════════
+
+export interface DashboardProductSearchItem {
+    id: string
+    skuCode: string
+    productName: string
+    wineType: string
+    country: string
+    producerName: string
+    totalStock: number
+    wholesalePrice: number
+    retailPrice: number
+    activeBuyerCount: number
+    totalSoldBottles: number
+}
+
+export async function searchProductsForDashboard(query: string = ''): Promise<DashboardProductSearchItem[]> {
+    const q = query.trim()
+    const where: any = { deletedAt: null, status: 'ACTIVE' }
+    if (q) {
+        where.OR = [
+            { skuCode: { contains: q, mode: 'insensitive' } },
+            { productName: { contains: q, mode: 'insensitive' } },
+            { country: { contains: q, mode: 'insensitive' } },
+            { producer: { name: { contains: q, mode: 'insensitive' } } },
+        ]
+    }
+
+    const products = await prisma.product.findMany({
+        where,
+        take: q ? 30 : 40,
+        select: {
+            id: true,
+            skuCode: true,
+            productName: true,
+            wineType: true,
+            country: true,
+            producer: { select: { name: true } },
+            marginPrice: { select: { wholesalePrice: true, retailPrice: true } },
+            stockLots: {
+                where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
+                select: { qtyAvailable: true },
+            },
+            soLines: {
+                where: { so: { status: { not: 'CANCELLED' } } },
+                select: {
+                    qtyOrdered: true,
+                    so: { select: { customerId: true } },
+                },
+            },
+            historicalCustomerSales: {
+                select: {
+                    qty: true,
+                    customerId: true,
+                    customerCode: true,
+                    customerName: true,
+                },
+            },
+            priceRules: {
+                where: { status: 'APPROVED' },
+                select: { customerId: true },
+            },
+        },
+    })
+
+    const mapped: DashboardProductSearchItem[] = products.map(p => {
+        const totalStock = p.stockLots.reduce((s, l) => s + Number(l.qtyAvailable), 0)
+        const liveBottles = p.soLines.reduce((s, l) => s + Number(l.qtyOrdered), 0)
+        const histBottles = p.historicalCustomerSales.reduce((s, h) => s + Number(h.qty), 0)
+        const buyerKeys = new Set<string>()
+        for (const l of p.soLines) {
+            if (l.so?.customerId) buyerKeys.add(l.so.customerId)
+        }
+        for (const h of p.historicalCustomerSales) {
+            buyerKeys.add(h.customerId || h.customerCode || h.customerName)
+        }
+        for (const pr of p.priceRules) {
+            if (pr.customerId) buyerKeys.add(pr.customerId)
+        }
+
+        return {
+            id: p.id,
+            skuCode: p.skuCode,
+            productName: p.productName,
+            wineType: p.wineType,
+            country: p.country,
+            producerName: p.producer?.name ?? '—',
+            totalStock,
+            wholesalePrice: Number(p.marginPrice?.wholesalePrice ?? 0),
+            retailPrice: Number(p.marginPrice?.retailPrice ?? 0),
+            activeBuyerCount: buyerKeys.size,
+            totalSoldBottles: liveBottles + histBottles,
+        }
+    })
+
+    mapped.sort((a, b) => {
+        if (b.totalSoldBottles !== a.totalSoldBottles) return b.totalSoldBottles - a.totalSoldBottles
+        if (b.activeBuyerCount !== a.activeBuyerCount) return b.activeBuyerCount - a.activeBuyerCount
+        return b.totalStock - a.totalStock
+    })
+
+    return mapped.slice(0, 30)
+}
+
+export interface SkuCustomerBuyerItem {
+    key: string
+    customerId: string | null
+    isLinkedCustomer: boolean
+    customerCode: string
+    customerName: string
+    channel: string
+    entityType: string
+    parentName: string | null
+    salesRepName: string | null
+    buyerStatus: 'ACTIVE' | 'AT_RISK' | 'HISTORICAL_ONLY' | 'PRICE_RULE_ONLY'
+    liveCommercialBottles: number
+    liveTastingBottles: number
+    historicalBottles: number
+    totalBottles: number
+    totalRevenue: number
+    orderCount: number
+    firstOrderDate: string | null
+    lastOrderDate: string | null
+    lastOrderNo: string | null
+    lastUnitPrice: number | null
+    avgUnitPrice: number | null
+    specialPrice: number | null
+    specialDiscountPct: number | null
+    specialRuleEndDate: string | null
+    daysSinceLastOrder: number | null
+    averageCycleDays: number | null
+}
+
+export interface SkuOrderRecordItem {
+    id: string
+    docNo: string
+    date: string
+    recordSource: 'ERP_SO' | 'HISTORICAL_INVOICE'
+    orderType: 'STANDARD' | 'TASTING' | 'SAMPLE' | 'HISTORICAL'
+    legalEntity: string | null
+    customerId: string | null
+    customerCode: string
+    customerName: string
+    channel: string
+    salesRepName: string
+    qty: number
+    unitPrice: number
+    discountPct: number
+    lineTotal: number
+    status: string
+    deliveryStatus: string
+}
+
+export interface SkuChannelBreakdownItem {
+    channel: string
+    label: string
+    bottles: number
+    revenue: number
+    customerCount: number
+    pct: number
+}
+
+export interface SkuMonthlyTrendItem {
+    month: string
+    label: string
+    commercialBottles: number
+    tastingBottles: number
+    revenue: number
+    buyerCount: number
+}
+
+export interface SkuImportRecordItem {
+    id: string
+    receiptDate: string
+    month: string
+    voucherNo: string
+    declarationNo: string | null
+    batchCode: string | null
+    supplierName: string
+    country: string | null
+    legalEntity: string | null
+    importType: 'DIRECT_IMPORT' | 'INTERNAL_TRANSFER' | 'RETURN_INBOUND' | 'ERP_GR'
+    qtyCommercial: number
+    qtyFoc: number
+    qtyTotal: number
+    currency: string
+    foreignUnitPrice: number | null
+    purchasePriceVnd: number
+    landedCostVnd: number
+    totalValueVnd: number
+    source: string
+}
+
+export interface SkuStockLotItem {
+    id: string
+    lotNo: string
+    warehouseName: string
+    locationCode: string
+    legalEntityName: string
+    vintage: number | null
+    receivedDate: string
+    qtyReceived: number
+    qtyAvailable: number
+    unitLandedCost: number
+    status: string
+}
+
+export interface SkuImportKpis {
+    totalImportedBottles: number
+    totalFocBottles: number
+    totalInternalTransferBottles: number
+    totalImportBatches: number
+    totalImportValueVnd: number
+    latestImportDate: string | null
+    latestSupplierName: string | null
+    latestLandedCostVnd: number | null
+    minLandedCostVnd: number | null
+    maxLandedCostVnd: number | null
+    avgLandedCostVnd: number | null
+}
+
+export interface SkuMosCycleItem {
+    cycleMonths: 3 | 6 | 12
+    totalBottlesInCycle: number
+    avgMonthlySales: number
+    avgMonthlyTotalOutflow: number
+    mosCurrentStock: number | null
+    mosWithIncoming: number | null
+    estimatedRunoutDate: string | null
+    suggestedReorderBottles: number
+    suggestedReorderCases: number
+}
+
+export interface SkuMosForecastInfo {
+    riskStatus: 'OUT_OF_STOCK' | 'CRITICAL' | 'LOW' | 'OPTIMAL' | 'ABUNDANT' | 'OVERSTOCK' | 'NO_SALES'
+    riskLabelVi: string
+    riskLabelEn: string
+    recommendationVi: string
+    recommendationEn: string
+    leadTimeDays: number
+    targetMosMonths: number
+    incomingQty: number
+    incomingPoNo: string | null
+    incomingEta: string | null
+    cycles: {
+        m3: SkuMosCycleItem
+        m6: SkuMosCycleItem
+        m12: SkuMosCycleItem
+    }
+}
+
+export interface SkuAnalyticsResult {
+    product: {
+        id: string
+        skuCode: string
+        productName: string
+        wineType: string
+        country: string
+        producerName: string
+        abvPercent: number
+        volumeMl: number
+        unitsPerCase: number
+        costPrice: number
+        wholesalePrice: number
+        retailPrice: number
+        totalStock: number
+        stockTT: number
+        stockGVM: number
+        stockOther: number
+    }
+    kpis: {
+        totalBottles: number
+        liveCommercialBottles: number
+        liveTastingBottles: number
+        historicalBottles: number
+        totalRevenue: number
+        avgSellingPrice: number
+        totalBuyersCount: number
+        activeBuyersCount: number
+        specialRuleCustomerCount: number
+        totalOrdersCount: number
+    }
+    importKpis: SkuImportKpis
+    mosForecast: SkuMosForecastInfo
+    customers: SkuCustomerBuyerItem[]
+    orders: SkuOrderRecordItem[]
+    imports: SkuImportRecordItem[]
+    stockLots: SkuStockLotItem[]
+    channelBreakdown: SkuChannelBreakdownItem[]
+    monthlyTrend: SkuMonthlyTrendItem[]
+}
+
+export async function getProductAnalyticsForDashboard(
+    productId: string,
+    timeRange: 'ALL' | 'THIS_YEAR' | 'LAST_6_MONTHS' | 'THIS_MONTH' = 'ALL'
+): Promise<SkuAnalyticsResult | null> {
+    if (!productId) return null
+
+    const product = await prisma.product.findUnique({
+        where: { id: productId },
+        include: {
+            producer: { select: { name: true } },
+            marginPrice: { select: { costPrice: true, wholesalePrice: true, retailPrice: true } },
+            stockLots: {
+                where: { status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
+                include: {
+                    ownerEntity: { select: { name: true, code: true } },
+                    location: { include: { warehouse: { select: { code: true, name: true } } } },
+                },
+                orderBy: { qtyAvailable: 'desc' },
+            },
+        },
+    })
+
+    if (!product) return null
+
+    const now = new Date()
+    let dateFilter: { gte?: Date; lte?: Date } | undefined = undefined
+    if (timeRange === 'THIS_MONTH') {
+        dateFilter = { gte: startOfMonth(now), lte: endOfMonth(now) }
+    } else if (timeRange === 'LAST_6_MONTHS') {
+        dateFilter = { gte: subMonths(now, 6), lte: endOfMonth(now) }
+    } else if (timeRange === 'THIS_YEAR') {
+        dateFilter = { gte: startOfYear(now), lte: endOfYear(now) }
+    }
+
+    const [soLines, histSales, priceRules, histMonthly, histImports, grLines, incomingPoLines, velocitySoLines, velocityHistSales] = await Promise.all([
+        prisma.salesOrderLine.findMany({
+            where: {
+                productId: product.id,
+                so: {
+                    status: { not: 'CANCELLED' },
+                    ...(dateFilter ? { createdAt: dateFilter } : {}),
+                },
+            },
+            include: {
+                so: {
+                    include: {
+                        customer: {
+                            include: {
+                                parent: { select: { id: true, code: true, name: true } },
+                                salesRep: { select: { name: true } },
+                            },
+                        },
+                        salesRep: { select: { name: true } },
+                        legalEntity: { select: { name: true, code: true } },
+                        deliveryOrders: { select: { status: true } },
+                    },
+                },
+            },
+            orderBy: { so: { createdAt: 'desc' } },
+        }),
+        prisma.historicalCustomerSkuSale.findMany({
+            where: {
+                OR: [{ productId: product.id }, { skuCode: product.skuCode }],
+                ...(dateFilter ? { invoiceDate: dateFilter } : {}),
+            },
+            include: {
+                customer: {
+                    include: {
+                        parent: { select: { id: true, code: true, name: true } },
+                        salesRep: { select: { name: true } },
+                        children: {
+                            select: {
+                                id: true,
+                                code: true,
+                                name: true,
+                                channel: true,
+                                entityType: true,
+                                salesRep: { select: { name: true } },
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: { invoiceDate: 'desc' },
+        }),
+        prisma.customerPriceRule.findMany({
+            where: {
+                productId: product.id,
+                status: 'APPROVED',
+            },
+            include: {
+                customer: {
+                    include: {
+                        parent: { select: { id: true, code: true, name: true } },
+                        salesRep: { select: { name: true } },
+                    },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+        }),
+        prisma.historicalMonthlySales.findMany({
+            where: { skuCode: product.skuCode },
+            orderBy: { month: 'asc' },
+        }),
+        prisma.historicalSkuImport.findMany({
+            where: {
+                OR: [{ productId: product.id }, { skuCode: product.skuCode }],
+                ...(dateFilter ? { receiptDate: dateFilter } : {}),
+            },
+            orderBy: { receiptDate: 'desc' },
+        }),
+        prisma.goodsReceiptLine.findMany({
+            where: {
+                productId: product.id,
+                gr: {
+                    ...(dateFilter ? { createdAt: dateFilter } : {}),
+                },
+            },
+            include: {
+                lot: { select: { lotNo: true, unitLandedCost: true } },
+                gr: {
+                    include: {
+                        warehouse: { select: { name: true, code: true } },
+                        shipment: { include: { customsDecl: { select: { declarationNo: true } } } },
+                        po: {
+                            include: {
+                                supplier: { select: { name: true, country: true } },
+                                lines: { where: { productId: product.id } },
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: { gr: { createdAt: 'desc' } },
+        }),
+        prisma.purchaseOrderLine.findMany({
+            where: {
+                productId: product.id,
+                po: {
+                    status: { in: ['APPROVED', 'IN_TRANSIT', 'PARTIALLY_RECEIVED'] },
+                },
+            },
+            include: {
+                po: {
+                    select: {
+                        poNo: true,
+                        estimatedDelivery: true,
+                        supplier: { select: { leadTimeDays: true } },
+                        shipments: { select: { etd: true, eta: true }, orderBy: { createdAt: 'desc' }, take: 1 },
+                    },
+                },
+            },
+        }),
+        prisma.salesOrderLine.findMany({
+            where: {
+                productId: product.id,
+                so: {
+                    status: { not: 'CANCELLED' },
+                },
+            },
+            select: {
+                qtyOrdered: true,
+                so: { select: { createdAt: true, orderType: true } },
+            },
+        }),
+        prisma.historicalCustomerSkuSale.findMany({
+            where: {
+                OR: [{ productId: product.id }, { skuCode: product.skuCode }],
+            },
+            select: {
+                month: true,
+                qty: true,
+            },
+        }),
+    ])
+
+    // 1. Warehouse Stock Breakdown
+    let totalStock = 0
+    let stockTT = 0
+    let stockGVM = 0
+    let stockOther = 0
+
+    for (const lot of product.stockLots) {
+        const qty = Number(lot.qtyAvailable)
+        totalStock += qty
+        const whName = `${lot.location?.warehouse?.code ?? ''} ${lot.location?.warehouse?.name ?? ''}`.toUpperCase()
+        if (whName.includes('THƯỜNG TÍN') || whName.includes('THUONG TIN') || whName.includes('TT') || whName.includes('THANH TRÌ')) {
+            stockTT += qty
+        } else if (whName.includes('GVM') || whName.includes('GIẢNG VÕ') || whName.includes('GIANG VO')) {
+            stockGVM += qty
+        } else {
+            stockOther += qty
+        }
+    }
+
+    const wholesalePrice = Number(product.marginPrice?.wholesalePrice ?? 0)
+    const retailPrice = Number(product.marginPrice?.retailPrice ?? 0)
+    const costPrice = Number(product.marginPrice?.costPrice ?? 0)
+    const stdRefPrice = wholesalePrice > 0 ? wholesalePrice : retailPrice
+
+    // 2. Map Customer Special Price Rules first
+    const ruleByCustomerId = new Map<string, { specialPrice: number; discountPct: number; endDate: string | null }>()
+    for (const r of priceRules) {
+        const val = Number(r.value)
+        let sp = val
+        let discPct = 0
+        if (r.ruleType === 'FIXED_DISCOUNT') {
+            discPct = val
+            sp = stdRefPrice > 0 ? Math.max(0, stdRefPrice * (1 - val / 100)) : 0
+        } else {
+            sp = val
+            if (stdRefPrice > sp && stdRefPrice > 0) {
+                discPct = Math.round(((stdRefPrice - sp) / stdRefPrice) * 100)
+            }
+        }
+        ruleByCustomerId.set(r.customerId, {
+            specialPrice: sp,
+            discountPct: discPct,
+            endDate: r.endDate ? r.endDate.toISOString() : null,
+        })
+    }
+
+    // 3. Aggregate Buyers & Orders
+    interface BuyerAcc {
+        key: string
+        customerId: string | null
+        isLinkedCustomer: boolean
+        customerCode: string
+        customerName: string
+        channel: string
+        entityType: string
+        parentName: string | null
+        salesRepName: string | null
+        liveCommercialBottles: number
+        liveTastingBottles: number
+        historicalBottles: number
+        totalRevenue: number
+        commercialBottlesForAvg: number
+        orderDates: Date[]
+        orderNos: Set<string>
+        firstOrderDate: Date | null
+        lastOrderDate: Date | null
+        lastOrderNo: string | null
+        lastUnitPrice: number | null
+        specialPrice: number | null
+        specialDiscountPct: number | null
+        specialRuleEndDate: string | null
+    }
+
+    const buyerMap = new Map<string, BuyerAcc>()
+    const orderRecords: SkuOrderRecordItem[] = []
+    const monthlyMap = new Map<string, {
+        month: string
+        label: string
+        commercialBottles: number
+        tastingBottles: number
+        revenue: number
+        buyers: Set<string>
+    }>()
+
+    let liveCommercialBottles = 0
+    let liveTastingBottles = 0
+    let historicalBottles = 0
+    let totalRevenue = 0
+    let totalCommercialPriceWeighted = 0
+    let totalCommercialBottlesWeighted = 0
+
+    const ensureBuyer = (params: {
+        key: string
+        customerId: string | null
+        isLinkedCustomer: boolean
+        customerCode: string
+        customerName: string
+        channel: string
+        entityType: string
+        parentName: string | null
+        salesRepName: string | null
+        parentId?: string | null
+    }): BuyerAcc => {
+        const existing = buyerMap.get(params.key)
+        if (existing) {
+            if (!existing.salesRepName && params.salesRepName) existing.salesRepName = params.salesRepName
+            if (!existing.parentName && params.parentName) existing.parentName = params.parentName
+            return existing
+        }
+        const rule = (params.customerId && ruleByCustomerId.get(params.customerId))
+            || (params.parentId && ruleByCustomerId.get(params.parentId))
+            || null
+
+        const created: BuyerAcc = {
+            key: params.key,
+            customerId: params.customerId,
+            isLinkedCustomer: params.isLinkedCustomer,
+            customerCode: params.customerCode,
+            customerName: params.customerName,
+            channel: params.channel || 'HORECA',
+            entityType: params.entityType || 'RESTAURANT',
+            parentName: params.parentName,
+            salesRepName: params.salesRepName,
+            liveCommercialBottles: 0,
+            liveTastingBottles: 0,
+            historicalBottles: 0,
+            totalRevenue: 0,
+            commercialBottlesForAvg: 0,
+            orderDates: [],
+            orderNos: new Set<string>(),
+            firstOrderDate: null,
+            lastOrderDate: null,
+            lastOrderNo: null,
+            lastUnitPrice: null,
+            specialPrice: rule ? rule.specialPrice : null,
+            specialDiscountPct: rule ? rule.discountPct : null,
+            specialRuleEndDate: rule ? rule.endDate : null,
+        }
+        buyerMap.set(params.key, created)
+        return created
+    }
+
+    // 3a. Process Live ERP SalesOrderLines (Aug 2026+)
+    for (const line of soLines) {
+        const so = line.so
+        const cust = so.customer
+        const key = cust.id
+        const qty = Number(line.qtyOrdered)
+        const price = Number(line.unitPrice)
+        const lineDisc = Number(line.lineDiscountPct ?? 0)
+        const orderDisc = Number((so as any).orderDiscount ?? 0)
+        const netUnitPrice = price * (1 - lineDisc / 100) * Math.max(0, 1 - orderDisc / 100)
+        const lineTotal = Math.round(qty * netUnitPrice)
+
+        const orderTypeRaw = ((so as any).orderType || 'STANDARD') as 'STANDARD' | 'TASTING' | 'SAMPLE'
+        const isTastingOrSample = orderTypeRaw === 'TASTING' || orderTypeRaw === 'SAMPLE'
+        const orderDate = new Date(so.createdAt)
+
+        const buyer = ensureBuyer({
+            key,
+            customerId: cust.id,
+            isLinkedCustomer: true,
+            customerCode: cust.code,
+            customerName: cust.name,
+            channel: cust.channel || so.channel || 'HORECA',
+            entityType: cust.entityType || 'RESTAURANT',
+            parentName: cust.parent ? `${cust.parent.code} - ${cust.parent.name}` : null,
+            salesRepName: so.salesRep?.name ?? cust.salesRep?.name ?? null,
+            parentId: cust.parentId,
+        })
+
+        if (isTastingOrSample) {
+            liveTastingBottles += qty
+            buyer.liveTastingBottles += qty
+        } else {
+            liveCommercialBottles += qty
+            buyer.liveCommercialBottles += qty
+            buyer.totalRevenue += lineTotal
+            buyer.commercialBottlesForAvg += qty
+            totalRevenue += lineTotal
+            totalCommercialPriceWeighted += lineTotal
+            totalCommercialBottlesWeighted += qty
+        }
+
+        buyer.orderNos.add(so.soNo)
+        buyer.orderDates.push(orderDate)
+        if (!buyer.firstOrderDate || orderDate < buyer.firstOrderDate) {
+            buyer.firstOrderDate = orderDate
+        }
+        if (!buyer.lastOrderDate || orderDate >= buyer.lastOrderDate) {
+            buyer.lastOrderDate = orderDate
+            buyer.lastOrderNo = so.soNo
+            if (!isTastingOrSample || buyer.lastUnitPrice === null) {
+                buyer.lastUnitPrice = Math.round(netUnitPrice)
+            }
+        }
+
+        // Monthly trend
+        const mKey = `${orderDate.getFullYear()}-${String(orderDate.getMonth() + 1).padStart(2, '0')}`
+        const mLabel = `T${orderDate.getMonth() + 1}/${String(orderDate.getFullYear()).slice(-2)}`
+        const mItem = monthlyMap.get(mKey) ?? {
+            month: mKey,
+            label: mLabel,
+            commercialBottles: 0,
+            tastingBottles: 0,
+            revenue: 0,
+            buyers: new Set<string>(),
+        }
+        if (isTastingOrSample) {
+            mItem.tastingBottles += qty
+        } else {
+            mItem.commercialBottles += qty
+            mItem.revenue += lineTotal
+        }
+        mItem.buyers.add(key)
+        monthlyMap.set(mKey, mItem)
+
+        let deliveryStatus = 'UNDELIVERED'
+        if (so.status === 'DELIVERED' || so.deliveryOrders.some(d => d.status === 'DELIVERED')) {
+            deliveryStatus = 'DELIVERED'
+        } else if (so.deliveryOrders.length > 0) {
+            deliveryStatus = 'PREPARING'
+        }
+
+        orderRecords.push({
+            id: line.id,
+            docNo: so.soNo,
+            date: orderDate.toISOString(),
+            recordSource: 'ERP_SO',
+            orderType: orderTypeRaw,
+            legalEntity: so.legalEntity?.name ?? null,
+            customerId: cust.id,
+            customerCode: cust.code,
+            customerName: cust.name,
+            channel: cust.channel || so.channel || 'HORECA',
+            salesRepName: so.salesRep?.name ?? cust.salesRep?.name ?? '—',
+            qty,
+            unitPrice: Math.round(netUnitPrice),
+            discountPct: Math.max(lineDisc, orderDisc),
+            lineTotal,
+            status: so.status,
+            deliveryStatus,
+        })
+    }
+
+    // 3b. Process Migrated Historical Sales from Supabase (2021 - Jul 2026)
+    for (const h of histSales) {
+        const qty = Number(h.qty)
+        const price = Number(h.unitPrice)
+        const lineTotal = Number(h.totalAmount) || Math.round(qty * price)
+        const invDate = new Date(h.invoiceDate)
+
+        // If linked customer is a parent COMPANY that has exactly 1 child RESTAURANT, resolve to that child so it merges seamlessly with live ERP orders
+        let resolvedCust = h.customer
+        let parentLabel: string | null = h.customer?.parent ? `${h.customer.parent.code} - ${h.customer.parent.name}` : null
+        let parentId: string | null = h.customer?.parentId ?? null
+
+        if (resolvedCust && resolvedCust.entityType === 'COMPANY' && resolvedCust.children && resolvedCust.children.length === 1) {
+            const singleChild = resolvedCust.children[0]
+            parentLabel = `${resolvedCust.code} - ${resolvedCust.name}`
+            parentId = resolvedCust.id
+            resolvedCust = {
+                ...resolvedCust,
+                id: singleChild.id,
+                code: singleChild.code,
+                name: singleChild.name,
+                channel: singleChild.channel,
+                entityType: singleChild.entityType,
+                salesRep: singleChild.salesRep ?? resolvedCust.salesRep,
+            } as any
+        }
+
+        const key = resolvedCust ? resolvedCust.id : `hist:${h.customerCode || h.customerName}`
+        const buyer = ensureBuyer({
+            key,
+            customerId: resolvedCust ? resolvedCust.id : null,
+            isLinkedCustomer: Boolean(resolvedCust),
+            customerCode: resolvedCust ? resolvedCust.code : (h.customerCode || 'HIST'),
+            customerName: resolvedCust ? resolvedCust.name : h.customerName,
+            channel: resolvedCust?.channel || h.channel || 'HORECA',
+            entityType: resolvedCust?.entityType || 'RESTAURANT',
+            parentName: parentLabel,
+            salesRepName: resolvedCust?.salesRep?.name ?? null,
+            parentId,
+        })
+
+        historicalBottles += qty
+        buyer.historicalBottles += qty
+        buyer.totalRevenue += lineTotal
+        buyer.commercialBottlesForAvg += qty
+        totalRevenue += lineTotal
+        totalCommercialPriceWeighted += lineTotal
+        totalCommercialBottlesWeighted += qty
+
+        const docNo = h.invoiceNo ? `HĐ ${h.invoiceNo}` : (h.voucherNo || `HIST-${h.month}`)
+        buyer.orderNos.add(`${h.month}-${docNo}`)
+        buyer.orderDates.push(invDate)
+        if (!buyer.firstOrderDate || invDate < buyer.firstOrderDate) {
+            buyer.firstOrderDate = invDate
+        }
+        if (!buyer.lastOrderDate || invDate > buyer.lastOrderDate) {
+            buyer.lastOrderDate = invDate
+            buyer.lastOrderNo = docNo
+            buyer.lastUnitPrice = Math.round(price)
+        }
+
+        const mKey = h.month
+        const [yStr, mStr] = mKey.split('-')
+        const mLabel = `T${parseInt(mStr, 10)}/${yStr.slice(-2)}`
+        const mItem = monthlyMap.get(mKey) ?? {
+            month: mKey,
+            label: mLabel,
+            commercialBottles: 0,
+            tastingBottles: 0,
+            revenue: 0,
+            buyers: new Set<string>(),
+        }
+        mItem.commercialBottles += qty
+        mItem.revenue += lineTotal
+        mItem.buyers.add(key)
+        monthlyMap.set(mKey, mItem)
+
+        orderRecords.push({
+            id: h.id,
+            docNo,
+            date: invDate.toISOString(),
+            recordSource: 'HISTORICAL_INVOICE',
+            orderType: 'HISTORICAL',
+            legalEntity: h.legalEntity ?? null,
+            customerId: resolvedCust ? resolvedCust.id : null,
+            customerCode: resolvedCust ? resolvedCust.code : (h.customerCode || '—'),
+            customerName: resolvedCust ? resolvedCust.name : h.customerName,
+            channel: resolvedCust?.channel || h.channel || 'HORECA',
+            salesRepName: resolvedCust?.salesRep?.name ?? '—',
+            qty,
+            unitPrice: Math.round(price),
+            discountPct: 0,
+            lineTotal: Math.round(lineTotal),
+            status: 'PAID',
+            deliveryStatus: 'DELIVERED',
+        })
+    }
+
+    // 3c. Also include customers who have an approved CustomerPriceRule for this SKU even if they haven't ordered in the filtered period
+    for (const r of priceRules) {
+        const cust = r.customer
+        if (!buyerMap.has(cust.id)) {
+            ensureBuyer({
+                key: cust.id,
+                customerId: cust.id,
+                isLinkedCustomer: true,
+                customerCode: cust.code,
+                customerName: cust.name,
+                channel: cust.channel || 'HORECA',
+                entityType: cust.entityType || 'RESTAURANT',
+                parentName: cust.parent ? `${cust.parent.code} - ${cust.parent.name}` : null,
+                salesRepName: cust.salesRep?.name ?? null,
+                parentId: cust.parentId,
+            })
+        }
+    }
+
+    // 3d. Enrich monthlyTrend with any earlier months from HistoricalMonthlySales if timeRange === 'ALL'
+    if (timeRange === 'ALL') {
+        for (const hm of histMonthly) {
+            if (!monthlyMap.has(hm.month)) {
+                const salesQty = Number(hm.salesQty)
+                const tastingQty = Number(hm.tastingQty)
+                if (salesQty > 0 || tastingQty > 0) {
+                    const [yStr, mStr] = hm.month.split('-')
+                    monthlyMap.set(hm.month, {
+                        month: hm.month,
+                        label: `T${parseInt(mStr, 10)}/${yStr.slice(-2)}`,
+                        commercialBottles: salesQty,
+                        tastingBottles: tastingQty,
+                        revenue: salesQty * stdRefPrice,
+                        buyers: new Set<string>(),
+                    })
+                }
+            }
+        }
+    }
+
+    // 4. Finalize Buyer List & Status Classification
+    let activeBuyersCount = 0
+    const customers: SkuCustomerBuyerItem[] = Array.from(buyerMap.values()).map(b => {
+        const totalBottles = b.liveCommercialBottles + b.liveTastingBottles + b.historicalBottles
+        const daysSinceLastOrder = b.lastOrderDate
+            ? Math.max(0, Math.floor((now.getTime() - b.lastOrderDate.getTime()) / 86400000))
+            : null
+
+        let averageCycleDays: number | null = null
+        if (b.orderDates.length >= 2) {
+            const sortedTs = b.orderDates
+                .map(d => d.getTime())
+                .sort((x, y) => x - y)
+            // Deduplicate same-day invoices when computing cycle
+            const uniqueDayTs: number[] = []
+            for (const ts of sortedTs) {
+                if (uniqueDayTs.length === 0 || (ts - uniqueDayTs[uniqueDayTs.length - 1]) >= 86400000) {
+                    uniqueDayTs.push(ts)
+                }
+            }
+            if (uniqueDayTs.length >= 2) {
+                let sumDiff = 0
+                for (let i = 1; i < uniqueDayTs.length; i++) {
+                    sumDiff += (uniqueDayTs[i] - uniqueDayTs[i - 1]) / 86400000
+                }
+                averageCycleDays = Math.max(1, Math.round(sumDiff / (uniqueDayTs.length - 1)))
+            }
+        }
+
+        let buyerStatus: 'ACTIVE' | 'AT_RISK' | 'HISTORICAL_ONLY' | 'PRICE_RULE_ONLY' = 'PRICE_RULE_ONLY'
+        if (totalBottles === 0) {
+            buyerStatus = 'PRICE_RULE_ONLY'
+        } else if (b.liveCommercialBottles + b.liveTastingBottles > 0) {
+            if (daysSinceLastOrder !== null && daysSinceLastOrder > 75) {
+                buyerStatus = 'AT_RISK'
+            } else {
+                buyerStatus = 'ACTIVE'
+                activeBuyersCount++
+            }
+        } else {
+            // Only bought in historical pre-Aug 2026 ledger
+            buyerStatus = 'HISTORICAL_ONLY'
+        }
+
+        const avgUnitPrice = b.commercialBottlesForAvg > 0
+            ? Math.round(b.totalRevenue / b.commercialBottlesForAvg)
+            : b.lastUnitPrice
+
+        return {
+            key: b.key,
+            customerId: b.customerId,
+            isLinkedCustomer: b.isLinkedCustomer,
+            customerCode: b.customerCode,
+            customerName: b.customerName,
+            channel: b.channel,
+            entityType: b.entityType,
+            parentName: b.parentName,
+            salesRepName: b.salesRepName,
+            buyerStatus,
+            liveCommercialBottles: b.liveCommercialBottles,
+            liveTastingBottles: b.liveTastingBottles,
+            historicalBottles: b.historicalBottles,
+            totalBottles,
+            totalRevenue: Math.round(b.totalRevenue),
+            orderCount: b.orderNos.size,
+            firstOrderDate: b.firstOrderDate ? b.firstOrderDate.toISOString() : null,
+            lastOrderDate: b.lastOrderDate ? b.lastOrderDate.toISOString() : null,
+            lastOrderNo: b.lastOrderNo,
+            lastUnitPrice: b.lastUnitPrice,
+            avgUnitPrice,
+            specialPrice: b.specialPrice !== null ? Math.round(b.specialPrice) : null,
+            specialDiscountPct: b.specialDiscountPct,
+            specialRuleEndDate: b.specialRuleEndDate,
+            daysSinceLastOrder,
+            averageCycleDays,
+        }
+    })
+
+    // Sort buyers: ACTIVE / highest totalBottles first, then PRICE_RULE_ONLY
+    customers.sort((a, b) => {
+        if (b.totalBottles !== a.totalBottles) return b.totalBottles - a.totalBottles
+        if (b.totalRevenue !== a.totalRevenue) return b.totalRevenue - a.totalRevenue
+        return (b.specialPrice ?? 0) - (a.specialPrice ?? 0)
+    })
+
+    // Sort orders newest first
+    orderRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+    // 5. Channel Breakdown
+    const CHANNEL_LABELS: Record<string, string> = {
+        HORECA: 'Kênh Nhà Hàng / Khách Sạn (HORECA)',
+        CORPORATE: 'Khách Doanh Nghiệp (B2B / Corporate)',
+        WHOLESALE_DISTRIBUTOR: 'Đại Lý / Bán Buôn (Wholesale)',
+        VIP_RETAIL: 'Khách Lẻ VIP',
+        RETAIL: 'Khách Lẻ (Retail)',
+        DIRECT_INDIVIDUAL: 'Khách Cá Nhân',
+    }
+    const chMap = new Map<string, { bottles: number; revenue: number; customers: Set<string> }>()
+    for (const c of customers) {
+        if (c.totalBottles <= 0) continue
+        const ch = c.channel || 'HORECA'
+        const cur = chMap.get(ch) ?? { bottles: 0, revenue: 0, customers: new Set<string>() }
+        cur.bottles += c.totalBottles
+        cur.revenue += c.totalRevenue
+        cur.customers.add(c.key)
+        chMap.set(ch, cur)
+    }
+
+    const totalAllBottles = liveCommercialBottles + liveTastingBottles + historicalBottles
+    const channelBreakdown: SkuChannelBreakdownItem[] = Array.from(chMap.entries())
+        .map(([ch, val]) => ({
+            channel: ch,
+            label: CHANNEL_LABELS[ch] ?? ch,
+            bottles: val.bottles,
+            revenue: Math.round(val.revenue),
+            customerCount: val.customers.size,
+            pct: totalAllBottles > 0 ? Math.round((val.bottles / totalAllBottles) * 100) : 0,
+        }))
+        .sort((a, b) => b.bottles - a.bottles)
+
+    const monthlyTrend: SkuMonthlyTrendItem[] = Array.from(monthlyMap.values())
+        .sort((a, b) => a.month.localeCompare(b.month))
+        .map(m => ({
+            month: m.month,
+            label: m.label,
+            commercialBottles: m.commercialBottles,
+            tastingBottles: m.tastingBottles,
+            revenue: Math.round(m.revenue),
+            buyerCount: m.buyers.size,
+        }))
+
+    const avgSellingPrice = totalCommercialBottlesWeighted > 0
+        ? Math.round(totalCommercialPriceWeighted / totalCommercialBottlesWeighted)
+        : stdRefPrice
+
+    // 6. Build Inbound / Import History & Stock Lots
+    const imports: SkuImportRecordItem[] = []
+
+    // 6a. Live ERP GoodsReceiptLines
+    for (const grl of grLines) {
+        const qtyTotal = Number(grl.qtyReceived)
+        if (qtyTotal <= 0) continue
+        const gr = grl.gr
+        const po = gr.po
+        const poLine = po?.lines?.[0]
+        const isFoc = Boolean(poLine?.isFoc)
+        const qtyCommercial = isFoc ? 0 : qtyTotal
+        const qtyFoc = isFoc ? qtyTotal : 0
+        const rDate = gr.confirmedAt ? new Date(gr.confirmedAt) : new Date(gr.createdAt)
+        const mKey = `${rDate.getFullYear()}-${String(rDate.getMonth() + 1).padStart(2, '0')}`
+        const landedCost = Number(grl.lot?.unitLandedCost ?? costPrice ?? 0)
+        const foreignPrice = poLine ? Number(poLine.unitPrice) : null
+        const currency = (po as any)?.currency || 'USD'
+
+        imports.push({
+            id: `grl_${grl.id}`,
+            receiptDate: rDate.toISOString(),
+            month: mKey,
+            voucherNo: gr.grNo,
+            declarationNo: gr.shipment?.customsDecl?.declarationNo ?? po?.poNo ?? null,
+            batchCode: grl.lot?.lotNo ?? null,
+            supplierName: po?.supplier?.name ?? product.producer?.name ?? 'Nhà cung cấp ERP',
+            country: po?.supplier?.country ?? product.country ?? null,
+            legalEntity: gr.warehouse?.name ?? 'Thắng Ân',
+            importType: 'ERP_GR',
+            qtyCommercial,
+            qtyFoc,
+            qtyTotal,
+            currency,
+            foreignUnitPrice: foreignPrice,
+            purchasePriceVnd: Math.round(landedCost),
+            landedCostVnd: Math.round(landedCost),
+            totalValueVnd: Math.round(qtyTotal * landedCost),
+            source: 'ERP_GOODS_RECEIPT',
+        })
+    }
+
+    // 6b. Migrated Historical SKU Imports from Supabase (2021 - 10/2026)
+    for (const hi of histImports) {
+        const qtyCommercial = Number(hi.qtyCommercial)
+        const qtyFoc = Number(hi.qtyFoc)
+        const qtyTotal = Number(hi.qtyTotal) || (qtyCommercial + qtyFoc)
+        if (qtyTotal <= 0) continue
+        const rDate = new Date(hi.receiptDate)
+        const impType = (hi.importType || 'DIRECT_IMPORT') as 'DIRECT_IMPORT' | 'INTERNAL_TRANSFER' | 'RETURN_INBOUND'
+
+        imports.push({
+            id: hi.id,
+            receiptDate: rDate.toISOString(),
+            month: hi.month,
+            voucherNo: hi.voucherNo || `IMP-${hi.month}`,
+            declarationNo: hi.declarationNo ?? null,
+            batchCode: hi.batchCode ?? null,
+            supplierName: hi.supplierName,
+            country: hi.country ?? product.country ?? null,
+            legalEntity: hi.legalEntity ?? 'Thắng Ân',
+            importType: impType,
+            qtyCommercial,
+            qtyFoc,
+            qtyTotal,
+            currency: hi.currency || 'VND',
+            foreignUnitPrice: hi.foreignUnitPrice !== null ? Number(hi.foreignUnitPrice) : null,
+            purchasePriceVnd: Math.round(Number(hi.purchasePriceVnd)),
+            landedCostVnd: Math.round(Number(hi.landedCostVnd)),
+            totalValueVnd: Math.round(Number(hi.totalValueVnd)),
+            source: hi.source || 'HISTORICAL_IMPORT_LEDGER',
+        })
+    }
+
+    imports.sort((a, b) => new Date(b.receiptDate).getTime() - new Date(a.receiptDate).getTime())
+
+    let totalImportedBottles = 0
+    let totalFocBottles = 0
+    let totalInternalTransferBottles = 0
+    let totalImportBatches = 0
+    let totalImportValueVnd = 0
+    let latestImportDate: string | null = null
+    let latestSupplierName: string | null = null
+    let latestLandedCostVnd: number | null = null
+    let minLandedCostVnd: number | null = null
+    let maxLandedCostVnd: number | null = null
+    let weightedCostSum = 0
+    let weightedCostQty = 0
+
+    for (const imp of imports) {
+        if (imp.importType === 'INTERNAL_TRANSFER') {
+            totalInternalTransferBottles += imp.qtyTotal
+            continue
+        }
+        totalImportedBottles += imp.qtyTotal
+        totalFocBottles += imp.qtyFoc
+        totalImportBatches += 1
+        totalImportValueVnd += imp.totalValueVnd
+
+        if (!latestImportDate) {
+            latestImportDate = imp.receiptDate
+            latestSupplierName = imp.supplierName
+            latestLandedCostVnd = imp.landedCostVnd > 0 ? imp.landedCostVnd : null
+        }
+
+        if (imp.landedCostVnd > 0 && imp.qtyTotal > 0) {
+            if (minLandedCostVnd === null || imp.landedCostVnd < minLandedCostVnd) {
+                minLandedCostVnd = imp.landedCostVnd
+            }
+            if (maxLandedCostVnd === null || imp.landedCostVnd > maxLandedCostVnd) {
+                maxLandedCostVnd = imp.landedCostVnd
+            }
+            weightedCostSum += imp.landedCostVnd * imp.qtyTotal
+            weightedCostQty += imp.qtyTotal
+        }
+    }
+
+    const avgLandedCostVnd = weightedCostQty > 0
+        ? Math.round(weightedCostSum / weightedCostQty)
+        : (costPrice > 0 ? Math.round(costPrice) : null)
+
+    const stockLots: SkuStockLotItem[] = product.stockLots.map(lot => ({
+        id: lot.id,
+        lotNo: lot.lotNo,
+        warehouseName: lot.location?.warehouse?.name ?? 'Kho chính',
+        locationCode: lot.location?.locationCode ?? '—',
+        legalEntityName: (lot as any).ownerEntity?.name ?? 'Thắng Ân',
+        vintage: lot.vintage ?? null,
+        receivedDate: lot.receivedDate.toISOString(),
+        qtyReceived: Number(lot.qtyReceived),
+        qtyAvailable: Number(lot.qtyAvailable),
+        unitLandedCost: Math.round(Number(lot.unitLandedCost)),
+        status: lot.status,
+    }))
+
+    // 7. Compute MOS (Months of Supply) & Reorder Forecast (3M / 6M / 12M)
+    const fullMonthlySalesMap = new Map<string, { commercial: number; tasting: number }>()
+    for (const hm of histMonthly) {
+        fullMonthlySalesMap.set(hm.month, {
+            commercial: Number(hm.salesQty) || 0,
+            tasting: Number(hm.tastingQty) || 0,
+        })
+    }
+    const histCustMonthlyMap = new Map<string, number>()
+    for (const hs of velocityHistSales) {
+        histCustMonthlyMap.set(hs.month, (histCustMonthlyMap.get(hs.month) ?? 0) + Number(hs.qty))
+    }
+    for (const [mKey, cQty] of histCustMonthlyMap.entries()) {
+        const cur = fullMonthlySalesMap.get(mKey)
+        if (!cur || cQty > cur.commercial) {
+            fullMonthlySalesMap.set(mKey, {
+                commercial: cQty,
+                tasting: cur?.tasting ?? 0,
+            })
+        }
+    }
+    for (const vl of velocitySoLines) {
+        const d = new Date(vl.so.createdAt)
+        const mKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        const cur = fullMonthlySalesMap.get(mKey) ?? { commercial: 0, tasting: 0 }
+        const q = Number(vl.qtyOrdered)
+        const oType = (vl.so as any).orderType || 'STANDARD'
+        if (oType === 'TASTING' || oType === 'SAMPLE') {
+            cur.tasting += q
+        } else {
+            cur.commercial += q
+        }
+        fullMonthlySalesMap.set(mKey, cur)
+    }
+
+    // Build chronological last 12 months window ending at latest complete/active month (2026-10 / current month)
+    const allRecordedMonths = Array.from(fullMonthlySalesMap.keys()).sort()
+    const anchorMonth = allRecordedMonths.length > 0
+        ? allRecordedMonths[allRecordedMonths.length - 1]
+        : `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const [anchorY, anchorM] = anchorMonth.split('-').map(Number)
+    const last12MonthKeys: string[] = []
+    for (let i = 11; i >= 0; i--) {
+        const d = new Date(Date.UTC(anchorY, anchorM - 1 - i, 1))
+        const mk = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+        last12MonthKeys.push(mk)
+    }
+
+    let incomingQty = 0
+    let incomingPoNo: string | null = null
+    let incomingEta: string | null = null
+    let leadTimeDays = 45
+    for (const pol of incomingPoLines) {
+        const q = Number(pol.qtyOrdered)
+        if (q > 0) {
+            incomingQty += q
+            if (!incomingPoNo && pol.po?.poNo) incomingPoNo = pol.po.poNo
+            const shipEta = pol.po?.shipments?.[0]?.eta || pol.po?.estimatedDelivery
+            if (!incomingEta && shipEta) incomingEta = new Date(shipEta).toISOString()
+            if (pol.po?.supplier?.leadTimeDays) leadTimeDays = pol.po.supplier.leadTimeDays
+        }
+    }
+
+    const targetMosMonths = 6
+    const unitsPerCase = Math.max(1, product.unitsPerCase || 6)
+
+    const buildMosCycle = (cycleMonths: 3 | 6 | 12): SkuMosCycleItem => {
+        const sliceKeys = last12MonthKeys.slice(-cycleMonths)
+        let commSum = 0
+        let tasteSum = 0
+        for (const mk of sliceKeys) {
+            const entry = fullMonthlySalesMap.get(mk)
+            if (entry) {
+                commSum += entry.commercial
+                tasteSum += entry.tasting
+            }
+        }
+        const avgMonthlySales = Number((commSum / cycleMonths).toFixed(1))
+        const avgMonthlyTotalOutflow = Number(((commSum + tasteSum) / cycleMonths).toFixed(1))
+        const mosCurrentStock = avgMonthlySales > 0 ? Number((totalStock / avgMonthlySales).toFixed(1)) : null
+        const mosWithIncoming = avgMonthlySales > 0 ? Number(((totalStock + incomingQty) / avgMonthlySales).toFixed(1)) : null
+
+        let estimatedRunoutDate: string | null = null
+        if (totalStock <= 0) {
+            estimatedRunoutDate = now.toISOString()
+        } else if (avgMonthlySales > 0) {
+            const daysRemaining = Math.round((totalStock / avgMonthlySales) * 30.4375)
+            estimatedRunoutDate = new Date(now.getTime() + daysRemaining * 86400000).toISOString()
+        }
+
+        const targetBottles = Math.ceil(avgMonthlySales * targetMosMonths)
+        const suggestedReorderBottles = Math.max(0, targetBottles - (totalStock + incomingQty))
+        const suggestedReorderCases = Math.ceil(suggestedReorderBottles / unitsPerCase)
+
+        return {
+            cycleMonths,
+            totalBottlesInCycle: commSum,
+            avgMonthlySales,
+            avgMonthlyTotalOutflow,
+            mosCurrentStock,
+            mosWithIncoming,
+            estimatedRunoutDate,
+            suggestedReorderBottles,
+            suggestedReorderCases,
+        }
+    }
+
+    const m3 = buildMosCycle(3)
+    const m6 = buildMosCycle(6)
+    const m12 = buildMosCycle(12)
+
+    let riskStatus: SkuMosForecastInfo['riskStatus'] = 'OPTIMAL'
+    let riskLabelVi = 'Tồn kho tối ưu (2 – 6 tháng)'
+    let riskLabelEn = 'Optimal Stock (2 – 6M)'
+    let recommendationVi = 'Tồn kho đủ đáp ứng nhu cầu tiêu thụ theo nhịp hiện tại.'
+    let recommendationEn = 'Current inventory comfortably covers regular monthly demand.'
+
+    if (totalStock <= 0) {
+        riskStatus = 'OUT_OF_STOCK'
+        riskLabelVi = 'Hết hàng tồn kho (Out of Stock)'
+        riskLabelEn = 'Out of Stock (0 btls)'
+        recommendationVi = m6.avgMonthlySales > 0
+            ? `Đang đứt hàng! Tốc độ tiêu thụ 6T là ${m6.avgMonthlySales} chai/tháng — cần nhập bổ sung ngay ~${m6.suggestedReorderBottles.toLocaleString()} chai (${m6.suggestedReorderCases} thùng).`
+            : 'Hiện không còn tồn kho tại các kho.'
+        recommendationEn = m6.avgMonthlySales > 0
+            ? `Out of stock! 6M velocity is ${m6.avgMonthlySales} btls/mo — reorder ~${m6.suggestedReorderBottles.toLocaleString()} btls (${m6.suggestedReorderCases} cases).`
+            : 'Currently zero stock across all warehouses.'
+    } else if (m6.avgMonthlySales <= 0 && m12.avgMonthlySales <= 0) {
+        riskStatus = 'NO_SALES'
+        riskLabelVi = 'Tồn chậm luân chuyển (Chưa phát sinh bán 12T)'
+        riskLabelEn = 'Slow Moving (No Sales in 12M)'
+        recommendationVi = `Đang tồn ${totalStock.toLocaleString()} chai nhưng chưa phát sinh sản lượng bán trong 12 tháng qua — ưu tiên chương trình đẩy hàng / by-the-glass.`
+        recommendationEn = `${totalStock.toLocaleString()} btls in stock with zero sales in the last 12M — consider promotional push.`
+    } else {
+        const refMos = m6.mosCurrentStock ?? m12.mosCurrentStock ?? 0
+        if (refMos < 2) {
+            riskStatus = 'CRITICAL'
+            riskLabelVi = 'Báo động thiếu hàng (MOS < 2 tháng)'
+            riskLabelEn = 'Critical Low Stock (MOS < 2M)'
+            recommendationVi = `Tồn kho chỉ đủ bán ~${refMos} tháng (Lead time nhập khẩu ~${leadTimeDays} ngày) — cần lên PO nhập gấp tối thiểu ${m6.suggestedReorderBottles.toLocaleString()} chai (${m6.suggestedReorderCases} thùng).`
+            recommendationEn = `Only ~${refMos} months of supply left (Lead time ~${leadTimeDays}d) — urgent PO recommended for ${m6.suggestedReorderBottles.toLocaleString()} btls (${m6.suggestedReorderCases} cases).`
+        } else if (refMos < 3.5) {
+            riskStatus = 'LOW'
+            riskLabelVi = 'Sắp chạm điểm đặt hàng (MOS 2 – 3.5 tháng)'
+            riskLabelEn = 'Reorder Point Approaching (MOS 2 – 3.5M)'
+            recommendationVi = `Tồn kho còn ~${refMos} tháng — nên chuẩn bị kế hoạch đặt hàng thêm ~${m6.suggestedReorderBottles.toLocaleString()} chai (${m6.suggestedReorderCases} thùng) để duy trì chuẩn 6 tháng.`
+            recommendationEn = `~${refMos} months of supply remaining — plan next PO of ~${m6.suggestedReorderBottles.toLocaleString()} btls (${m6.suggestedReorderCases} cases).`
+        } else if (refMos <= 6) {
+            riskStatus = 'OPTIMAL'
+            riskLabelVi = 'Tồn kho chuẩn an toàn (MOS 3.5 – 6 tháng)'
+            riskLabelEn = 'Optimal Coverage (MOS 3.5 – 6M)'
+            recommendationVi = `Tồn kho lý tưởng (~${refMos} tháng), cân bằng tốt giữa vốn lưu động và tốc độ lấy hàng của các nhà hàng.`
+            recommendationEn = `Healthy stock coverage (~${refMos}M), well-balanced for current HORECA demand.`
+        } else if (refMos <= 12) {
+            riskStatus = 'ABUNDANT'
+            riskLabelVi = 'Tồn kho dồi dào (MOS 6 – 12 tháng)'
+            riskLabelEn = 'Abundant Stock (MOS 6 – 12M)'
+            recommendationVi = `Đủ bán trong ~${refMos} tháng tới — chưa cần đặt nhập thêm, có thể mở rộng chào thêm nhà hàng mới.`
+            recommendationEn = `~${refMos} months of supply on hand — no reorder needed; good candidate for new outlet placement.`
+        } else {
+            riskStatus = 'OVERSTOCK'
+            riskLabelVi = 'Tồn kho cao / Dư thừa (MOS > 12 tháng)'
+            riskLabelEn = 'Overstock (MOS > 12M)'
+            recommendationVi = `Số tháng tồn kho cao (~${refMos} tháng) — tạm dừng nhập mới mã này và ưu tiên chính sách giá đặc biệt / combo đẩy tồn.`
+            recommendationEn = `High inventory coverage (~${refMos}M) — pause reorders and prioritize sales push / special pricing.`
+        }
+    }
+
+    return serialize({
+        product: {
+            id: product.id,
+            skuCode: product.skuCode,
+            productName: product.productName,
+            wineType: product.wineType,
+            country: product.country,
+            producerName: product.producer?.name ?? '—',
+            abvPercent: Number(product.abvPercent ?? 0),
+            volumeMl: product.volumeMl,
+            unitsPerCase: product.unitsPerCase,
+            costPrice,
+            wholesalePrice,
+            retailPrice,
+            totalStock,
+            stockTT,
+            stockGVM,
+            stockOther,
+        },
+        kpis: {
+            totalBottles: totalAllBottles,
+            liveCommercialBottles,
+            liveTastingBottles,
+            historicalBottles,
+            totalRevenue: Math.round(totalRevenue),
+            avgSellingPrice,
+            totalBuyersCount: customers.length,
+            activeBuyersCount,
+            specialRuleCustomerCount: priceRules.length,
+            totalOrdersCount: orderRecords.length,
+        },
+        importKpis: {
+            totalImportedBottles,
+            totalFocBottles,
+            totalInternalTransferBottles,
+            totalImportBatches,
+            totalImportValueVnd: Math.round(totalImportValueVnd),
+            latestImportDate,
+            latestSupplierName,
+            latestLandedCostVnd,
+            minLandedCostVnd,
+            maxLandedCostVnd,
+            avgLandedCostVnd,
+        },
+        mosForecast: {
+            riskStatus,
+            riskLabelVi,
+            riskLabelEn,
+            recommendationVi,
+            recommendationEn,
+            leadTimeDays,
+            targetMosMonths,
+            incomingQty,
+            incomingPoNo,
+            incomingEta,
+            cycles: { m3, m6, m12 },
+        },
+        customers,
+        orders: orderRecords,
+        imports,
+        stockLots,
+        channelBreakdown,
         monthlyTrend,
     })
 }

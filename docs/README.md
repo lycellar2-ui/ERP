@@ -52,7 +52,7 @@
 
 | Metric | Giá trị |
 |---|---|
-| **Prisma models** | 147 |
+| **Prisma models** | 148 |
 | **Prisma enums** | 95 |
 | **Dashboard routes** | 38 folders |
 | **Server Action files** | 48 files |
@@ -242,4 +242,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-11-09 15:20 | Wine ERP v12.44 - Full Consignment Order (CONSIGNMENT SOType) workflow & Multi-page A4 print page-break fix*
+*Last updated: 2026-11-10 18:05 | Wine ERP v12.47 - SKU 360° MOS Forecast (3M/6M/12M Months of Supply & Reorder Planning) + Import & Stock Lot History on Supabase*

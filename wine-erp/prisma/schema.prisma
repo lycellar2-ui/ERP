@@ -312,6 +312,8 @@ model Product {
   marginPrice          ProductMarginPrice?
   profile              ProductProfile?
   stockCountLines      StockCountLine[]
+  historicalCustomerSales HistoricalCustomerSkuSale[]
+  historicalImports    HistoricalSkuImport[]
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
   deletedAt            DateTime?
@@ -588,6 +590,7 @@ model Customer {
   callPlans      SalesCallPlan[]
   bankTransactions BankTransaction[]
   bankReconciliationRules BankReconciliationRule[]
+  historicalSkuSales HistoricalCustomerSkuSale[]
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
   deletedAt     DateTime?
@@ -4068,4 +4071,75 @@ model HistoricalMonthlySales {
   @@index([skuCode])
   @@index([month])
   @@map("historical_monthly_sales")
+}
+
+
+// -------------------------------------------------------------
+// HISTORICAL CUSTOMER SKU SALES (Dữ liệu bán hàng lịch sử theo Khách hàng & SKU trước T8/2026)
+// -------------------------------------------------------------
+model HistoricalCustomerSkuSale {
+  id            String    @id @default(cuid())
+  productId     String?
+  product       Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  skuCode       String
+  productName   String?
+  customerId    String?
+  customer      Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerCode  String?
+  customerName  String
+  channel       String?   // HORECA, CORPORATE, RETAIL, WHOLESALE_DISTRIBUTOR...
+  legalEntity   String?   // "Thắng Ân" | "Ly's Cellars"
+  invoiceDate   DateTime
+  month         String    // "YYYY-MM"
+  voucherNo     String?
+  invoiceNo     String?
+  qty           Decimal   @default(0) @db.Decimal(12, 2)
+  unitPrice     Decimal   @default(0) @db.Decimal(18, 2)
+  totalAmount   Decimal   @default(0) @db.Decimal(18, 2)
+  source        String?   @default("HISTORICAL_LEDGER")
+  createdAt     DateTime  @default(now())
+
+  @@index([productId])
+  @@index([skuCode])
+  @@index([customerId])
+  @@index([month])
+  @@index([invoiceDate])
+  @@map("historical_customer_sku_sales")
+}
+
+
+// -------------------------------------------------------------
+// HISTORICAL SKU IMPORTS (Dữ liệu lịch sử nhập khẩu & mua hàng theo SKU 2021 - 2026)
+// -------------------------------------------------------------
+model HistoricalSkuImport {
+  id               String    @id @default(cuid())
+  productId        String?
+  product          Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  skuCode          String
+  productName      String?
+  supplierName     String
+  country          String?
+  legalEntity      String?   // "Thắng Ân" | "Ly's Cellars"
+  importType       String    @default("DIRECT_IMPORT") // "DIRECT_IMPORT" | "INTERNAL_TRANSFER" | "RETURN_INBOUND"
+  batchCode        String?   // e.g. "L01".."L15"
+  receiptDate      DateTime
+  month            String    // "YYYY-MM"
+  voucherNo        String?   // e.g. "PNK001/21", "NK001/22"
+  declarationNo    String?   // Số tờ khai HQ / Số hóa đơn
+  qtyCommercial    Decimal   @default(0) @db.Decimal(12, 2)
+  qtyFoc           Decimal   @default(0) @db.Decimal(12, 2)
+  qtyTotal         Decimal   @default(0) @db.Decimal(12, 2)
+  currency         String?   @default("VND")
+  foreignUnitPrice Decimal?  @db.Decimal(18, 4)
+  purchasePriceVnd Decimal   @default(0) @db.Decimal(18, 2)
+  landedCostVnd    Decimal   @default(0) @db.Decimal(18, 2)
+  totalValueVnd    Decimal   @default(0) @db.Decimal(18, 2)
+  source           String?   @default("HISTORICAL_IMPORT_LEDGER")
+  createdAt        DateTime  @default(now())
+
+  @@index([productId])
+  @@index([skuCode])
+  @@index([month])
+  @@index([receiptDate])
+  @@map("historical_sku_imports")
 }

@@ -8,6 +8,7 @@ import {
 } from './actions'
 import { DashboardFilterBar, type PresetKey } from './DashboardFilterBar'
 import { CustomerAnalyticsDashboard } from './CustomerAnalyticsDashboard'
+import { SkuAnalyticsDashboard } from './SkuAnalyticsDashboard'
 import { DashboardHeaderNav } from './DashboardHeaderNav'
 import { CeoOverviewContent } from './CeoOverviewContent'
 import { startOfMonth, endOfMonth, subMonths } from 'date-fns'
@@ -25,6 +26,7 @@ interface PageProps {
         to?: string
         tab?: string
         customerId?: string
+        productId?: string
     }>
 }
 
@@ -32,7 +34,8 @@ export default async function DashboardPage(props: PageProps) {
     const resolvedParams = props.searchParams ? await props.searchParams : {}
     const preset = (resolvedParams.preset as PresetKey) ?? 'THIS_MONTH'
     const entity = resolvedParams.entity ?? 'ALL'
-    const currentTab = resolvedParams.tab === 'customers' ? 'customers' : 'overview'
+    const currentTab: 'overview' | 'customers' | 'skus' =
+        resolvedParams.tab === 'customers' ? 'customers' : resolvedParams.tab === 'skus' ? 'skus' : 'overview'
 
     const now = new Date()
     let from: Date
@@ -174,6 +177,11 @@ export default async function DashboardPage(props: PageProps) {
                 <CustomerAnalyticsDashboard
                     topCustomers={topCustomers}
                     initialCustomerId={resolvedParams.customerId}
+                />
+            ) : currentTab === 'skus' ? (
+                <SkuAnalyticsDashboard
+                    topProducts={topProducts}
+                    initialProductId={resolvedParams.productId}
                 />
             ) : (
                 <>

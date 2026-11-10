@@ -585,7 +585,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                 <span className="inline-block font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 whitespace-nowrap shrink-0">
                                                                     {rule.skuCode}
                                                                 </span>
-                                                                <span className="font-bold text-slate-900">{rule.productName}</span>
+                                                                <Link href={`/dashboard?tab=skus&productId=${rule.productId}`} className="font-bold text-slate-900 hover:text-cyan-700 flex items-center gap-1 group" title="Xem Báo Cáo SKU 360°"><span>{rule.productName}</span><ExternalLink size={11} className="text-slate-400 group-hover:text-cyan-600" /></Link>
                                                                 {rule.wineType && (
                                                                     <span className="inline-block text-[10px] px-1 py-0.2 rounded font-medium bg-slate-100 text-slate-700 whitespace-nowrap shrink-0">
                                                                         {rule.wineType}
@@ -995,7 +995,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                                                                         <span className="inline-block font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 whitespace-nowrap shrink-0">
                                                                             {wine.skuCode}
                                                                         </span>
-                                                                        <span className="font-bold text-slate-900">{wine.name}</span>
+                                                                        {wine.productId ? <Link href={`/dashboard?tab=skus&productId=${wine.productId}`} className="font-bold text-slate-900 hover:text-cyan-700 flex items-center gap-1 group" title="Xem Báo Cáo SKU 360°"><span>{wine.name}</span><ExternalLink size={11} className="text-slate-400 group-hover:text-cyan-600" /></Link> : <span className="font-bold text-slate-900">{wine.name}</span>}
                                                                         {wine.wineType && (
                                                                             <span className="inline-block text-[10px] px-1.5 py-0.2 rounded font-medium bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shrink-0">
                                                                                 {wine.wineType}
