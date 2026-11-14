@@ -102,6 +102,8 @@ export async function createGoodsReceipt(input: {
     lines: GRLineInput[]
 }): Promise<{ success: boolean; grId?: string; grNo?: string; error?: string }> {
     try {
+        const { requireAuth } = await import('@/lib/session')
+        await requireAuth()
         const validated = parseOrThrow(GoodsReceiptCreateSchema, input)
         const { poId, warehouseId, shipmentId, lines } = validated
 

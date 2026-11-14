@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Camera, ChevronLeft, KeyRound, Mic, Minus, Plus, Search, Sparkles, X } from 'lucide-react'
+import { Camera, ChevronLeft, KeyRound, Mic, Minus, Plus, Search, Sparkles, Square, X } from 'lucide-react'
 import {
     addShowroomPosmItem, addShowroomVintage, addShowroomWineItem, auditShowroomWithAi, getShowroomAiKeyStatus, getShowroomCount,
     identifyShowroomWineImageWithAi, parseShowroomVoiceWithAi, renameShowroomSpots,
@@ -384,7 +384,7 @@ export function ShowroomCountClient({ initial, initialError }: { initial: Showro
         <div className="mb-3 flex items-end justify-between gap-3">
             <div>
                 <div className="text-[11px] font-semibold uppercase tracking-widest text-lys-muted">{eyebrow}</div>
-                <h1 className="mt-1 text-2xl font-extrabold text-lys-primary">{title}</h1>
+                <h2 className="mt-1 text-2xl font-extrabold text-lys-primary">{title}</h2>
             </div>
             <div className="text-right text-[13px] text-lys-muted">
                 Người kiểm: <b className="text-lys-primary">{who}</b><br />
@@ -649,7 +649,7 @@ function SpotsView(props: {
             {props.errorNote}
             {!editing && (
                 <>
-                    <button onClick={props.onSummary} className="flex w-full items-center justify-between gap-3 rounded-xl bg-lys-teal-strong px-4 py-3 text-left text-white">
+                    <button onClick={props.onSummary} className="flex w-full items-center justify-between gap-3 rounded-lg bg-lys-teal-strong px-4 py-3 text-left text-white">
                         <div>
                             <div className="text-xs opacity-85">Tổng đã đếm</div>
                             <div className="text-[15px]">
@@ -780,7 +780,7 @@ function SpotsView(props: {
                 </>
             )}
             {props.homeQ.trim() && !editing ? (
-                <div className="overflow-hidden rounded-xl border border-lys-border bg-lys-surface">
+                <div className="overflow-hidden rounded-lg border border-lys-border bg-lys-surface">
                     {!hits.length && <p className="p-6 text-center text-lys-muted"><b className="block text-lys-primary">Không tìm thấy</b>Thử gõ một phần tên hoặc mã, ví dụ “1er Cru” hoặc “L200”.</p>}
                     {hits.map(item => {
                         const where = props.entries.filter(e => e.itemId === item.id)
@@ -840,7 +840,7 @@ function SpotsView(props: {
                                         const [u1, u2] = unitOf(s)
                                         const t2 = isCaseSpot(s)
                                         if (editing) return (
-                                            <div key={s.id} className="flex flex-col gap-1.5 rounded-xl border border-lys-border bg-lys-surface p-3">
+                                            <div key={s.id} className="flex flex-col gap-1.5 rounded-lg border border-lys-border bg-lys-surface p-3">
                                                 <span className="text-xs text-lys-muted">{g.name}</span>
                                                 <input aria-label="Tên vị trí" value={editing.get(s.id) ?? s.name}
                                                     onChange={e => setEditing(m => new Map(m!).set(s.id, e.target.value))}
@@ -849,7 +849,7 @@ function SpotsView(props: {
                                         )
                                         return (
                                             <button key={s.id} onClick={() => props.onOpen(s.id)}
-                                                className={`flex min-h-[84px] flex-col gap-1.5 rounded-xl border bg-lys-surface p-3 text-left ${ss?.touched ? 'border-tone-success-fg' : 'border-lys-border'}`}>
+                                                className={`flex min-h-[84px] flex-col gap-1.5 rounded-lg border bg-lys-surface p-3 text-left ${ss?.touched ? 'border-tone-success-fg' : 'border-lys-border'}`}>
                                                 <span className="font-semibold leading-tight">{s.name}</span>
                                                 <span className={`mt-auto text-[13px] font-semibold ${ss?.touched ? 'text-tone-success-fg' : 'text-lys-muted'}`}>
                                                     {ss?.touched
@@ -992,7 +992,7 @@ function CountView(props: {
                         ) : ''}
                     </div>
                 </div>
-                <h1 className="text-xl font-extrabold leading-tight text-lys-primary">{spot.name}</h1>
+                <h2 className="text-xl font-extrabold leading-tight text-lys-primary">{spot.name}</h2>
                 {t2 && (
                     <div className="grid grid-cols-3 gap-2 rounded-lg border border-lys-border bg-lys-surface px-3 py-1.5 text-center">
                         <div>
@@ -1148,7 +1148,7 @@ function CountView(props: {
                 />
             )}
             {props.errorNote}
-            <div className="overflow-hidden rounded-xl border border-lys-border bg-lys-surface">
+            <div className="overflow-hidden rounded-lg border border-lys-border bg-lys-surface">
                 {!shown.length && <p className="p-6 text-center text-lys-muted"><b className="block text-lys-primary">{posm ? 'Không thấy vật phẩm nào' : 'Không thấy rượu nào'}</b>{posm ? 'Thử từ khóa khác, hoặc thêm mã POSM chưa có ở bên dưới.' : 'Thử từ khóa khác, hoặc thêm vintage chưa có ở bên dưới.'}</p>}
                 {shown.map(item => {
                     const key = `${spot.id}|${item.id}`
@@ -1241,7 +1241,7 @@ function CountView(props: {
                     )
                 })}
             </div>
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 rounded-xl border border-lys-border bg-lys-surface p-3">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 rounded-lg border border-lys-border bg-lys-surface p-3">
                 <b className="text-sm">Ghi chú chung cho vị trí này</b>
                 <div className="text-xs">{noteButton('')}</div>
                 <Notes notes={props.notesOf('')} who={props.who} editing={noteOpen.has('')} />
@@ -1358,8 +1358,9 @@ function Recheck({ check, total, canCheck, busy, error, onChange }: {
                     )}
                     {canCheck ? (
                         <button disabled={busy} onClick={() => onChange(true)}
-                            className="rounded-md border border-tone-success-fg px-2.5 py-1.5 font-semibold text-tone-success-fg disabled:opacity-50">
-                            ☐ Kiểm lại: đúng {total}
+                            className="inline-flex items-center gap-1.5 rounded-md border border-tone-success-fg px-2.5 py-1.5 font-semibold text-tone-success-fg disabled:opacity-50">
+                            <Square size={12} aria-hidden />
+                            <span>Kiểm lại: đúng {total}</span>
                         </button>
                     ) : (
                         <span className="font-semibold text-tone-danger-fg">Cần người khác kiểm lại dòng này</span>
@@ -1486,7 +1487,7 @@ function AddPosmItem({ spot, who, onAdded }: {
     }
 
     return (
-        <div className="space-y-2.5 rounded-xl border border-lys-teal-strong bg-lys-surface p-3">
+        <div className="space-y-2.5 rounded-lg border border-lys-teal-strong bg-lys-surface p-3">
             <b className="block text-sm text-lys-primary">Thêm mã / vật phẩm POSM mới</b>
             <div className="grid grid-cols-[120px_minmax(0,1fr)] gap-2">
                 <input
@@ -1600,7 +1601,7 @@ function AddWineItem({ spot, who, onAdded }: {
     }
 
     return (
-        <div className="space-y-2.5 rounded-xl border border-lys-teal-strong bg-lys-surface p-3">
+        <div className="space-y-2.5 rounded-lg border border-lys-teal-strong bg-lys-surface p-3">
             <b className="block text-sm text-lys-primary">
                 {isSampleGroup ? 'Thêm mã hàng mẫu mới' : 'Thêm mã rượu mới'}
             </b>
@@ -1689,7 +1690,7 @@ function AddVintage({ spot, wines, code, setCode, who, onAdded, inline = false }
         await onAdded(code)
     }
     return (
-        <div className={`space-y-2 rounded-xl border p-3 ${inline ? 'border-lys-teal-strong bg-tone-brand-bg' : 'border-lys-border bg-lys-surface'}`}>
+        <div className={`space-y-2 rounded-lg border p-3 ${inline ? 'border-lys-teal-strong bg-tone-brand-bg' : 'border-lys-border bg-lys-surface'}`}>
             <b className="text-sm">{inline ? <>Thêm vintage khác cho <Code c={code} /></> : 'Thêm vintage khác'}</b>
             <div className="flex gap-2">
                 {inline ? (
@@ -1765,7 +1766,7 @@ function SummaryView(props: {
             <div className="grid grid-cols-2 gap-2">
                 {[[fmt(s.bottles), 'chai đã đếm'], [String(s.wineFound.length), `/${s.wineCount} dòng có hàng`],
                   [`${s.spots.filter(x => x.touched).length}/${s.spots.length}`, 'vị trí đã kiểm'], [`${s.rechecked}/${s.cells}`, 'dòng đã kiểm lại (lần 2)']].map(([n, l]) => (
-                    <div key={l} className="rounded-xl border border-lys-border bg-lys-surface px-3 py-2.5">
+                    <div key={l} className="rounded-lg border border-lys-border bg-lys-surface px-3 py-2.5">
                         <div className="text-2xl font-bold">{n}</div><div className="text-xs text-lys-muted">{l}</div>
                     </div>
                 ))}
@@ -1806,7 +1807,7 @@ function SummaryView(props: {
                             onClose={() => setShowKeySetup(false)}
                         />
                     )}
-                    <div className="rounded-xl border border-lys-border bg-lys-surface p-3 space-y-2.5">
+                    <div className="rounded-lg border border-lys-border bg-lys-surface p-3 space-y-2.5">
                         <div className="flex items-center justify-between gap-2">
                             <div>
                                 <div className="text-sm font-bold">Phân tích & Rà soát số liệu bằng AI</div>
@@ -1842,7 +1843,7 @@ function SummaryView(props: {
                 </div>
             )}
 
-            <div className="overflow-hidden rounded-xl border border-lys-border bg-lys-surface">
+            <div className="overflow-hidden rounded-lg border border-lys-border bg-lys-surface">
                 {props.mode === 'audit' && (() => {
                     if (!props.anomalies.length) {
                         return (
@@ -2046,7 +2047,7 @@ function SummaryView(props: {
                     )
                 })}
             </div>
-            <div className="space-y-2 rounded-xl border border-lys-border bg-lys-surface p-3">
+            <div className="space-y-2 rounded-lg border border-lys-border bg-lys-surface p-3">
                 <b className="text-sm">Tải biên bản kiểm kê (có chỗ ký) — In / Lưu PDF</b>
                 <div className="grid grid-cols-2 gap-2">
                     {props.groups.map(g => (
@@ -2134,15 +2135,15 @@ function PackView(props: {
             <AiKeySetupCard status={props.aiStatus} onSave={props.onSaveAiKey} />
 
             <div className="grid grid-cols-3 gap-2">
-                <div className="rounded-xl border border-lys-border bg-lys-surface px-3 py-2.5">
+                <div className="rounded-lg border border-lys-border bg-lys-surface px-3 py-2.5">
                     <div className="text-2xl font-bold">{codes.length}</div>
                     <div className="text-xs text-lys-muted">mã rượu</div>
                 </div>
-                <div className="rounded-xl border border-lys-teal-strong bg-tone-brand-bg px-3 py-2.5">
+                <div className="rounded-lg border border-lys-teal-strong bg-tone-brand-bg px-3 py-2.5">
                     <div className="text-2xl font-bold text-lys-teal-strong">{count12}</div>
                     <div className="text-xs font-medium text-tone-brand-fg">thùng 12 chai</div>
                 </div>
-                <div className="rounded-xl border border-lys-border bg-lys-surface px-3 py-2.5">
+                <div className="rounded-lg border border-lys-border bg-lys-surface px-3 py-2.5">
                     <div className="text-2xl font-bold">{count6}</div>
                     <div className="text-xs text-lys-muted">thùng 6 chai</div>
                 </div>
@@ -2163,7 +2164,7 @@ function PackView(props: {
                 ))}
             </div>
 
-            <div className="overflow-hidden rounded-xl border border-lys-border bg-lys-surface">
+            <div className="overflow-hidden rounded-lg border border-lys-border bg-lys-surface">
                 {!shown.length && (
                     <p className="p-6 text-center text-lys-muted">
                         <b className="block text-lys-primary">Không tìm thấy mã rượu nào</b>
@@ -2259,7 +2260,7 @@ function AiKeySetupCard({
     }
 
     return (
-        <div className="space-y-2.5 rounded-xl border border-lys-teal-strong bg-lys-surface p-3.5">
+        <div className="space-y-2.5 rounded-lg border border-lys-teal-strong bg-lys-surface p-3.5">
             <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2">
                     <KeyRound className="size-4 shrink-0 text-lys-teal-strong" />
@@ -2659,7 +2660,7 @@ function AiVoicePanel({
     }
 
     return (
-        <div className="space-y-2.5 rounded-xl border border-lys-teal-strong bg-lys-surface p-3.5">
+        <div className="space-y-2.5 rounded-lg border border-lys-teal-strong bg-lys-surface p-3.5">
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5 text-sm font-bold text-lys-primary">
                     <Mic className="size-4 text-lys-teal-strong" />
@@ -3089,7 +3090,7 @@ function AiVisionPanel({
     const totalBottlesInList = draftItems.reduce((t, x) => t + x.qty, 0)
 
     return (
-        <div className="space-y-2.5 rounded-xl border border-lys-teal-strong bg-lys-surface p-3.5">
+        <div className="space-y-2.5 rounded-lg border border-lys-teal-strong bg-lys-surface p-3.5">
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5 text-sm font-bold text-lys-primary">
                     <Camera className="size-4 text-lys-teal-strong" />

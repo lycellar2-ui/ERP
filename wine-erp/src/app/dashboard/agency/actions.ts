@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { serialize } from '@/lib/serialize'
 import { cached, revalidateCache } from '@/lib/cache'
+import { requireAuth } from '@/lib/session'
 import crypto from 'crypto'
 
 // ═══════════════════════════════════════════════════
@@ -99,6 +100,7 @@ export async function createAgencyPartner(input: {
     passwordHash: string
 }): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
+        await requireAuth()
         const salt = crypto.randomBytes(16).toString('hex')
         const hash = crypto.scryptSync(input.passwordHash, salt, 64).toString('hex')
         const securePasswordHash = `${salt}:${hash}`
@@ -169,6 +171,7 @@ export async function createAgencySubmission(input: {
     notes?: string
 }): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
+        await requireAuth()
         const sub = await prisma.agencySubmission.create({
             data: {
                 partnerId: input.partnerId,

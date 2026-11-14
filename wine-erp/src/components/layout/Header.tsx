@@ -28,7 +28,8 @@ interface NotificationItem {
     createdAt: string
 }
 
-function formatNotiTime(dateString: string): string {
+function formatNotiTime(dateString: string, locale: 'vi' | 'en' = 'vi'): string {
+    const isEn = locale === 'en'
     try {
         const date = new Date(dateString)
         const now = new Date()
@@ -37,15 +38,15 @@ function formatNotiTime(dateString: string): string {
         const diffHours = Math.floor(diffMins / 60)
         const diffDays = Math.floor(diffHours / 24)
 
-        if (diffMins < 1) return 'Vừa xong'
-        if (diffMins < 60) return `${diffMins} phút trước`
-        if (diffHours < 24) return `${diffHours} giờ trước`
-        if (diffDays === 1) return 'Hôm qua'
-        if (diffDays < 7) return `${diffDays} ngày trước`
-        
-        return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+        if (diffMins < 1) return isEn ? 'Just now' : 'Vừa xong'
+        if (diffMins < 60) return isEn ? `${diffMins}m ago` : `${diffMins} phút trước`
+        if (diffHours < 24) return isEn ? `${diffHours}h ago` : `${diffHours} giờ trước`
+        if (diffDays === 1) return isEn ? 'Yesterday' : 'Hôm qua'
+        if (diffDays < 7) return isEn ? `${diffDays}d ago` : `${diffDays} ngày trước`
+
+        return date.toLocaleDateString(isEn ? 'en-GB' : 'vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
     } catch {
-        return 'Vừa xong'
+        return isEn ? 'Just now' : 'Vừa xong'
     }
 }
 
@@ -114,7 +115,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
             await markAllAsRead()
             setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
             setUnreadCount(0)
-            toast.success('Đã đánh dấu đọc tất cả thông báo')
+            toast.success(locale === 'en' ? 'Marked all notifications as read' : 'Đã đánh dấu đọc tất cả thông báo')
         } catch (err) {
             console.error('Error marking all as read:', err)
         }
@@ -273,7 +274,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                     <button
                         type="button"
                         onClick={handleToggleNoti}
-                        aria-label="Thông báo"
+                        aria-label={locale === 'en' ? 'Notifications' : 'Thông báo'}
                         className="relative flex items-center justify-center w-8 h-8 rounded-md bg-white border border-lys-border text-lys-secondary transition-all duration-150 hover:border-lys-teal hover:text-lys-teal-strong active:scale-90 cursor-pointer"
                     >
                         <Bell size={15} />
@@ -289,20 +290,22 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                     {showNoti && (
                         <div className="absolute right-0 mt-2 w-[calc(100vw-24px)] max-w-xs sm:w-80 rounded-lg shadow-xl z-50 overflow-hidden bg-lys-card border border-lys-border animate-dropdown origin-top-right">
                             <div className="flex items-center justify-between px-4 py-3 border-b border-lys-border">
-                                <span className="text-xs font-semibold uppercase tracking-wider text-lys-secondary">Thông Báo</span>
+                                <span className="text-xs font-semibold uppercase tracking-wider text-lys-secondary">
+                                    {locale === 'en' ? 'Notifications' : 'Thông Báo'}
+                                </span>
                                 {unreadCount > 0 && (
                                     <button
                                         onClick={handleMarkAllAsRead}
                                         className="text-[11px] font-semibold hover:underline text-lys-teal-strong cursor-pointer"
                                     >
-                                        Đọc tất cả
+                                        {locale === 'en' ? 'Mark all read' : 'Đọc tất cả'}
                                     </button>
                                 )}
                             </div>
                             <div className="max-h-64 overflow-y-auto">
                                 {notifications.length === 0 ? (
                                     <div className="py-8 text-center text-xs text-lys-muted">
-                                        Không có thông báo mới
+                                        {locale === 'en' ? 'No new notifications' : 'Không có thông báo mới'}
                                     </div>
                                 ) : (
                                     <>
@@ -333,7 +336,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                                             </p>
                                                         )}
                                                         <span className="text-[11px] block mt-1 text-lys-dim">
-                                                            {formatNotiTime(n.createdAt)}
+                                                            {formatNotiTime(n.createdAt, locale)}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -345,7 +348,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                                 disabled={loadingNoti}
                                                 className="w-full py-2 text-center text-[11px] font-semibold border-t border-lys-border hover:underline text-lys-teal-strong cursor-pointer"
                                             >
-                                                {loadingNoti ? 'Đang tải...' : 'Xem thêm thông báo'}
+                                                {loadingNoti ? (locale === 'en' ? 'Loading...' : 'Đang tải...') : (locale === 'en' ? 'Load more' : 'Xem thêm thông báo')}
                                             </button>
                                         )}
                                     </>
@@ -358,7 +361,9 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                 {/* Avatar & Profile Popover */}
                 <div className="relative" ref={profileRef}>
                     <button
+                        type="button"
                         onClick={() => setShowProfile(!showProfile)}
+                        aria-label={locale === 'en' ? 'Account menu' : 'Menu tài khoản'}
                         className="flex items-center gap-1.5 pl-0.5 pr-2.5 py-0.5 rounded-md bg-white border border-lys-border transition-all duration-150 hover:border-lys-teal active:scale-95 cursor-pointer"
                     >
                         <div className="w-6 h-6 flex items-center justify-center text-[11px] font-bold rounded bg-lys-teal-soft text-lys-teal-strong border border-tone-brand-border">
@@ -373,7 +378,9 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                     {showProfile && (
                         <div className="absolute right-0 mt-2 w-64 rounded-lg shadow-xl z-50 overflow-hidden bg-lys-card border border-lys-border animate-dropdown origin-top-right">
                             <div className="p-4 border-b border-lys-border">
-                                <p className="text-xs font-semibold uppercase tracking-wider mb-2 text-lys-secondary">Thông Tin Cá Nhân</p>
+                                <p className="text-xs font-semibold uppercase tracking-wider mb-2 text-lys-secondary">
+                                    {locale === 'en' ? 'Personal Info' : 'Thông Tin Cá Nhân'}
+                                </p>
                                 <p className="text-sm font-semibold truncate text-lys-primary">
                                     {currentUser?.name || 'Admin'}
                                 </p>
@@ -401,24 +408,28 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                             </div>
                             <div className="p-2 border-b border-lys-border">
                                 <button
+                                    type="button"
                                     onClick={() => {
                                         setShowProfile(false)
                                         setShowMyAccount(true)
                                     }}
-                                    className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold rounded transition-colors duration-150 text-left text-slate-700 hover:text-slate-900 hover:bg-slate-100"
+                                    className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold rounded transition-colors duration-150 text-left text-slate-700 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
                                 >
                                     <User size={14} className="text-lys-teal-strong" />
-                                    Tài khoản của tôi
+                                    {locale === 'en' ? 'My Account' : 'Tài khoản của tôi'}
                                 </button>
                             </div>
                             <div className="p-2">
                                 <button
+                                    type="button"
                                     onClick={handleLogout}
                                     disabled={isLoggingOut}
                                     className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold rounded transition-colors duration-150 disabled:opacity-50 text-left text-tone-danger-fg hover:bg-tone-danger-bg cursor-pointer"
                                 >
                                     <LogOut size={14} className={isLoggingOut ? 'animate-spin' : ''} />
-                                    {isLoggingOut ? 'Đang Đăng Xuất...' : 'Đăng Xuất'}
+                                    {isLoggingOut
+                                        ? (locale === 'en' ? 'Signing out...' : 'Đang Đăng Xuất...')
+                                        : (locale === 'en' ? 'Sign Out' : 'Đăng Xuất')}
                                 </button>
                             </div>
                         </div>
@@ -430,6 +441,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                 open={showMyAccount}
                 onClose={() => setShowMyAccount(false)}
                 currentUser={currentUser ?? null}
+                locale={locale}
             />
         </header>
     )
@@ -440,9 +452,11 @@ interface MyAccountDrawerProps {
     open: boolean
     onClose: () => void
     currentUser: SessionUser | null
+    locale?: 'vi' | 'en'
 }
 
-function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
+function MyAccountDrawer({ open, onClose, currentUser, locale = 'vi' }: MyAccountDrawerProps) {
+    const isEn = locale === 'en'
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
     const [name, setName] = useState('')
@@ -463,34 +477,34 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
         }
     }, [currentUser, open])
 
+    useEffect(() => {
+        if (!open) return
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && !saving) onClose()
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [open, saving, onClose])
+
     if (!open || !currentUser || !mounted) return null
 
-    const inputStyle: React.CSSProperties = {
-        width: '100%',
-        padding: '10px 12px',
-        borderRadius: '6px',
-        border: '1px solid #E2E8F0',
-        background: '#FFFFFF',
-        color: '#0F172A',
-        fontSize: '14px',
-        outline: 'none',
-        transition: 'border-color 0.15s ease-in-out',
-    }
+    const inputClassName =
+        'w-full px-3 py-2.5 rounded-md border border-slate-200 bg-white text-slate-900 text-base sm:text-sm outline-none focus:border-[#0891B2] transition-colors'
 
     async function handleSave() {
         setError('')
         if (name.trim().length < 2) {
-            setError('Họ tên tối thiểu 2 ký tự')
+            setError(isEn ? 'Full name must be at least 2 characters' : 'Họ tên tối thiểu 2 ký tự')
             return
         }
 
         if (password.length > 0) {
             if (password.length < 6) {
-                setError('Mật khẩu mới tối thiểu 6 ký tự')
+                setError(isEn ? 'New password must be at least 6 characters' : 'Mật khẩu mới tối thiểu 6 ký tự')
                 return
             }
             if (password !== confirmPassword) {
-                setError('Mật khẩu xác nhận không trùng khớp')
+                setError(isEn ? 'Password confirmation does not match' : 'Mật khẩu xác nhận không trùng khớp')
                 return
             }
         }
@@ -499,30 +513,46 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
         try {
             const res = await updatePersonalProfile(name, password || undefined)
             if (res.success) {
-                toast.success('Cập nhật tài khoản thành công!')
+                toast.success(isEn ? 'Account updated successfully!' : 'Cập nhật tài khoản thành công!')
                 onClose()
                 window.location.reload()
             } else {
-                setError(res.error || 'Lỗi cập nhật tài khoản')
+                setError(res.error || (isEn ? 'Failed to update account' : 'Lỗi cập nhật tài khoản'))
             }
         } catch (err: any) {
-            setError(err.message || 'Lỗi kết nối hệ thống')
+            setError(err.message || (isEn ? 'System connection error' : 'Lỗi kết nối hệ thống'))
         } finally {
             setSaving(false)
         }
     }
 
     return createPortal(
-        <div className="fixed inset-0 z-[9999] flex justify-end" style={{ background: 'rgba(15, 23, 42, 0.45)' }}>
-            <div className="w-full max-w-md h-full overflow-y-auto p-4 sm:p-6 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-250" 
-                style={{ background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}>
+        <div
+            className="fixed inset-0 z-[9999] flex justify-end"
+            style={{ background: 'rgba(15, 23, 42, 0.45)' }}
+            onClick={() => { if (!saving) onClose() }}
+        >
+            <div
+                role="dialog"
+                aria-modal="true"
+                className="w-full max-w-md h-full overflow-y-auto p-4 sm:p-6 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-250"
+                style={{ background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}
+                onClick={e => e.stopPropagation()}
+            >
                 <div>
                     <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
                         <div className="flex items-center gap-2">
                             <User size={18} style={{ color: '#0891B2' }} />
-                            <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>Tài Khoản Của Tôi</h3>
+                            <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
+                                {isEn ? 'My Account' : 'Tài Khoản Của Tôi'}
+                            </h3>
                         </div>
-                        <button onClick={onClose} className="hover:opacity-80 transition-opacity">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            aria-label={isEn ? 'Close' : 'Đóng'}
+                            className="p-1.5 rounded-md hover:bg-slate-200/70 transition-colors cursor-pointer"
+                        >
                             <X size={18} style={{ color: '#64748B' }} />
                         </button>
                     </div>
@@ -543,7 +573,9 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
                         </div>
 
                         <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Vai Trò</label>
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>
+                                {isEn ? 'Role' : 'Vai Trò'}
+                            </label>
                             <div className="flex flex-wrap gap-1 p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                 {(currentUser.roles || []).map(r => (
                                     <span key={r} className="inline-block text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap shrink-0"
@@ -555,39 +587,47 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
                         </div>
 
                         <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Họ Tên *</label>
-                            <input 
-                                style={inputStyle} 
-                                placeholder="Họ và tên của bạn"
-                                value={name} 
-                                onChange={e => setName(e.target.value)} 
+                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>
+                                {isEn ? 'Full Name *' : 'Họ Tên *'}
+                            </label>
+                            <input
+                                className={inputClassName}
+                                placeholder={isEn ? 'Your full name' : 'Họ và tên của bạn'}
+                                value={name}
+                                onChange={e => setName(e.target.value)}
                             />
                         </div>
 
                         <div className="pt-4 border-t" style={{ borderColor: '#E2E8F0' }}>
                             <div className="flex items-center gap-1.5 mb-3">
                                 <Key size={14} style={{ color: '#0891B2' }} />
-                                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#475569' }}>Đổi Mật Khẩu</span>
+                                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#475569' }}>
+                                    {isEn ? 'Change Password' : 'Đổi Mật Khẩu'}
+                                </span>
                             </div>
-                            
+
                             <div className="space-y-3">
                                 <div>
-                                    <label className="text-[11px] font-semibold mb-1 block" style={{ color: '#64748B' }}>Mật Khẩu Mới</label>
-                                    <input 
-                                        style={inputStyle} 
-                                        type="password" 
-                                        placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
-                                        value={password} 
+                                    <label className="text-[11px] font-semibold mb-1 block" style={{ color: '#64748B' }}>
+                                        {isEn ? 'New Password' : 'Mật Khẩu Mới'}
+                                    </label>
+                                    <input
+                                        className={inputClassName}
+                                        type="password"
+                                        placeholder={isEn ? 'Enter new password (min 6 chars)' : 'Nhập mật khẩu mới (tối thiểu 6 ký tự)'}
+                                        value={password}
                                         onChange={e => setPassword(e.target.value)}
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[11px] font-semibold mb-1 block" style={{ color: '#64748B' }}>Xác Nhận Mật Khẩu Mới</label>
-                                    <input 
-                                        style={inputStyle} 
-                                        type="password" 
-                                        placeholder="Xác nhận mật khẩu mới"
-                                        value={confirmPassword} 
+                                    <label className="text-[11px] font-semibold mb-1 block" style={{ color: '#64748B' }}>
+                                        {isEn ? 'Confirm New Password' : 'Xác Nhận Mật Khẩu Mới'}
+                                    </label>
+                                    <input
+                                        className={inputClassName}
+                                        type="password"
+                                        placeholder={isEn ? 'Confirm new password' : 'Xác nhận mật khẩu mới'}
+                                        value={confirmPassword}
                                         onChange={e => setConfirmPassword(e.target.value)}
                                     />
                                 </div>
@@ -596,14 +636,17 @@ function MyAccountDrawer({ open, onClose, currentUser }: MyAccountDrawerProps) {
                     </div>
                 </div>
 
-                <button 
-                    onClick={handleSave} 
+                <button
+                    type="button"
+                    onClick={handleSave}
                     disabled={saving}
-                    className="w-full mt-8 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all hover:opacity-90 disabled:opacity-50"
+                    className="w-full mt-8 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all hover:opacity-90 disabled:opacity-50 cursor-pointer"
                     style={{ background: '#0E7490', color: '#FFFFFF' }}
                 >
                     {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                    {saving ? 'Đang lưu thay đổi...' : 'Lưu Thay Đổi'}
+                    {saving
+                        ? (isEn ? 'Saving changes...' : 'Đang lưu thay đổi...')
+                        : (isEn ? 'Save Changes' : 'Lưu Thay Đổi')}
                 </button>
             </div>
         </div>,

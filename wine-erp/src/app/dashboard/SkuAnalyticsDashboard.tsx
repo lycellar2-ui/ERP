@@ -238,7 +238,7 @@ export function SkuAnalyticsDashboard({
                             <button
                                 type="button"
                                 onClick={() => setShowReplenishmentList(prev => !prev)}
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors cursor-pointer whitespace-nowrap ${
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border transition-colors cursor-pointer whitespace-nowrap ${
                                     showReplenishmentList
                                         ? 'bg-red-600 border-red-600 text-white'
                                         : 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100'
@@ -268,7 +268,7 @@ export function SkuAnalyticsDashboard({
                                 onClick={() => setTimeRange(t.key)}
                                 className={`px-2.5 py-1 text-xs font-semibold rounded transition-colors cursor-pointer ${
                                     timeRange === t.key
-                                        ? 'bg-slate-900 text-white shadow-2xs'
+                                        ? 'bg-[#0E7490] text-white shadow-2xs'
                                         : 'text-slate-600 hover:text-slate-900'
                                 }`}
                             >
@@ -312,12 +312,12 @@ export function SkuAnalyticsDashboard({
                                     onClick={() => setSelectedProductId(item.id)}
                                     className={`shrink-0 text-left px-3 py-1.5 rounded-md border transition-all cursor-pointer flex items-center gap-2 ${
                                         isSelected
-                                            ? 'bg-slate-900 border-slate-900 text-white shadow-xs'
+                                            ? 'bg-[#0E7490] border-[#0E7490] text-white shadow-xs'
                                             : 'bg-slate-50/80 border-slate-200 text-slate-800 hover:bg-slate-100 hover:border-slate-300'
                                     }`}
                                 >
                                     <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 rounded ${
-                                        isSelected ? 'bg-cyan-500/20 text-cyan-300' : 'bg-cyan-50 text-cyan-700'
+                                        isSelected ? 'bg-white/20 text-white' : 'bg-cyan-50 text-cyan-700'
                                     }`}>
                                         {item.skuCode}
                                     </span>
@@ -359,7 +359,7 @@ export function SkuAnalyticsDashboard({
                                     onClick={() => setReplenishmentFilter(f.key)}
                                     className={`px-2.5 py-1 text-[11px] font-semibold rounded border transition-colors cursor-pointer whitespace-nowrap ${
                                         replenishmentFilter === f.key
-                                            ? 'bg-slate-900 border-slate-900 text-white'
+                                            ? 'bg-[#0E7490] border-[#0E7490] text-white'
                                             : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                                     }`}
                                 >
@@ -473,7 +473,7 @@ export function SkuAnalyticsDashboard({
                             {/* Left: SKU Metadata */}
                             <div className="space-y-1.5">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <span className="px-2 py-0.5 text-xs font-mono font-bold rounded bg-slate-900 text-white">
+                                    <span className="px-2 py-0.5 text-xs font-mono font-bold rounded bg-[#0E7490] text-white">
                                         {data.product.skuCode}
                                     </span>
                                     {(() => {
@@ -728,7 +728,7 @@ export function SkuAnalyticsDashboard({
                                                 onClick={() => setMosCycle(c.cycle)}
                                                 className={`px-2.5 py-1 text-[11px] font-semibold rounded transition-colors cursor-pointer ${
                                                     mosCycle === c.cycle
-                                                        ? 'bg-slate-900 text-white shadow-2xs'
+                                                        ? 'bg-[#0E7490] text-white shadow-2xs'
                                                         : 'text-slate-600 hover:text-slate-900'
                                                 }`}
                                             >
@@ -953,7 +953,7 @@ export function SkuAnalyticsDashboard({
                                                 onClick={() => setBuyerStatusFilter(f.key)}
                                                 className={`px-2.5 py-1 text-xs font-medium rounded border transition-colors cursor-pointer ${
                                                     buyerStatusFilter === f.key
-                                                        ? 'bg-slate-900 border-slate-900 text-white'
+                                                        ? 'bg-[#0E7490] border-[#0E7490] text-white'
                                                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                                                 }`}
                                             >
@@ -1167,7 +1167,7 @@ export function SkuAnalyticsDashboard({
                                                 onClick={() => setOrderSourceFilter(f.key)}
                                                 className={`px-2.5 py-1 text-xs font-medium rounded border transition-colors cursor-pointer ${
                                                     orderSourceFilter === f.key
-                                                        ? 'bg-slate-900 border-slate-900 text-white'
+                                                        ? 'bg-[#0E7490] border-[#0E7490] text-white'
                                                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                                                 }`}
                                             >
@@ -1368,7 +1368,7 @@ export function SkuAnalyticsDashboard({
                                                 onClick={() => setImportSourceFilter(f.key)}
                                                 className={`px-2.5 py-1 text-xs font-medium rounded border transition-colors cursor-pointer ${
                                                     importSourceFilter === f.key
-                                                        ? 'bg-slate-900 border-slate-900 text-white'
+                                                        ? 'bg-[#0E7490] border-[#0E7490] text-white'
                                                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                                                 }`}
                                             >

@@ -8,18 +8,41 @@ interface MarkdownViewerProps {
     className?: string
 }
 
+function escapeHtml(raw: string): string {
+    return raw
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+}
+
+/**
+ * Strip dangerous tags, inline event handlers, and javascript:/vbscript: URIs
+ * from rendered markdown HTML so untrusted AI/DB markdown cannot execute scripts.
+ */
+export function sanitizeMarkdownHtml(html: string): string {
+    return html
+        .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, '')
+        .replace(/<(iframe|object|embed|form|meta|link|base)\b[^>]*>([\s\S]*?<\/\1>)?/gi, '')
+        .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+        .replace(/\s(href|src|action|formaction)\s*=\s*(['"])\s*(?:javascript|vbscript|data:text\/html):[\s\S]*?\2/gi, ' $1="#"')
+        .replace(/\s(href|src|action|formaction)\s*=\s*(?:javascript|vbscript|data:text\/html):[^\s>]+/gi, ' $1="#"')
+}
+
 export function MarkdownViewer({ content, className = '' }: MarkdownViewerProps) {
     const htmlContent = useMemo(() => {
         if (!content) return ''
         try {
-            // Configure marked options
-            return marked.parse(content, {
+            const parsed = marked.parse(content, {
                 gfm: true,
                 breaks: true
             }) as string
+            return sanitizeMarkdownHtml(parsed)
         } catch (err) {
             console.error('Error parsing markdown:', err)
-            return `<pre>${content}</pre>`
+            return `<pre>${escapeHtml(content)}</pre>`
         }
     }, [content])
 

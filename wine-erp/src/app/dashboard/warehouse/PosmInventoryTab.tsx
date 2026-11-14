@@ -1204,7 +1204,7 @@ export function PosmInventoryTab() {
                             <button
                                 onClick={() => handleSaveOutbound(false)}
                                 disabled={outboundSubmitting}
-                                className="px-3.5 py-2 text-xs font-bold bg-slate-700 hover:bg-slate-800 text-white rounded-lg transition cursor-pointer flex items-center gap-1.5"
+                                className="px-3.5 py-2 text-xs font-bold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-md transition cursor-pointer flex items-center gap-1.5"
                             >
                                 <CheckCircle2 size={14} />
                                 <span>Chỉ Lưu Kho</span>
@@ -1212,7 +1212,7 @@ export function PosmInventoryTab() {
                             <button
                                 onClick={() => handleSaveOutbound(true)}
                                 disabled={outboundSubmitting}
-                                className="px-4 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow-2xs cursor-pointer flex items-center gap-1.5"
+                                className="px-4 py-2 text-xs font-bold bg-[#0E7490] hover:bg-[#155E75] text-white rounded-md transition shadow-2xs cursor-pointer flex items-center gap-1.5"
                             >
                                 <Printer size={14} />
                                 <span>Xác Nhận & In Phiếu Xuất</span>
@@ -1224,8 +1224,8 @@ export function PosmInventoryTab() {
 
             {/* ═══ MODAL 4: PHIẾU XUẤT KHO POSM (PRINTABLE VOUCHER) ═══ */}
             {showPrintVoucherModal && selectedVoucherForPrint && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-                    <div className="bg-white rounded-lg shadow-2xl border border-slate-200 w-full max-w-3xl my-6 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                <div className="print-modal fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto print:static print:bg-white print:p-0 print:overflow-visible">
+                    <div className="bg-white rounded-lg shadow-2xl border border-slate-200 w-full max-w-3xl my-6 overflow-hidden animate-in fade-in zoom-in-95 duration-150 print:my-0 print:shadow-none print:border-0">
                         {/* Top Toolbar (No-Print) */}
                         <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50 no-print">
                             <div className="flex items-center gap-2">

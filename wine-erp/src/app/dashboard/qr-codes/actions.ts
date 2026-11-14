@@ -7,6 +7,8 @@ import { cached, revalidateCache } from '@/lib/cache'
 // ── Generate QR codes for a GR (after confirm) ────
 export async function generateQRCodesForGR(grId: string): Promise<{ success: boolean; count: number; error?: string }> {
     try {
+        const { requireAuth } = await import('@/lib/session')
+        await requireAuth()
         const gr = await prisma.goodsReceipt.findUnique({
             where: { id: grId },
             include: {
@@ -181,6 +183,8 @@ export async function getQRCodesForPrint(ids: string[]) {
 
 // ── Generate printable HTML for QR labels ─────────
 export async function generatePrintLabelsHtml(ids: string[], baseUrl: string): Promise<string> {
+    const { requireAuth } = await import('@/lib/session')
+    await requireAuth()
     const labels = await getQRCodesForPrint(ids)
 
     const labelHtml = labels.map(l => `

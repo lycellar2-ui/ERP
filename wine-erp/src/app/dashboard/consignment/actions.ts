@@ -256,8 +256,8 @@ export async function confirmConsignmentReport(
             legalEntityId = existingSO?.legalEntityId
 
             if (soId && legalEntityId) {
-                const invCount = await prisma.aRInvoice.count()
-                invoiceNo = `CSG-INV-${String(invCount + 1).padStart(6, '0')}`
+                const { generateNextDocCode } = await import('@/lib/doc-code')
+                invoiceNo = await generateNextDocCode(prisma.aRInvoice, 'invoiceNo', 'CSG-INV-', 6)
                 const vatAmount = totalSales * 0.1
                 const totalAmount = totalSales + vatAmount
 
@@ -1382,8 +1382,8 @@ export async function sellFromConsignmentWarehouse(input: {
                 },
             })
 
-            const invCount = await tx.aRInvoice.count()
-            const invoiceNo = `CSG-INV-${String(invCount + 1).padStart(6, '0')}`
+            const { generateNextDocCode } = await import('@/lib/doc-code')
+            const invoiceNo = await generateNextDocCode(tx.aRInvoice, 'invoiceNo', 'CSG-INV-', 6)
             const vatAmount = totalAmount * 0.1
             const grandTotal = totalAmount + vatAmount
 

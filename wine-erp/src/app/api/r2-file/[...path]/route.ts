@@ -47,6 +47,9 @@ export async function GET(
         if (!path || path.length === 0) {
             return NextResponse.json({ error: 'File path not provided' }, { status: 400 })
         }
+        if (path.some(seg => !seg || seg === '.' || seg === '..' || seg.includes('\\') || seg.includes('\0'))) {
+            return NextResponse.json({ error: 'Invalid file path' }, { status: 400 })
+        }
 
         const storagePath = path.join('/')
         const r2 = getR2Client()
@@ -84,6 +87,7 @@ export async function GET(
                             ? 'public, max-age=31536000, s-maxage=31536000, stale-while-revalidate=86400, immutable'
                             : 'public, max-age=86400, s-maxage=86400',
                         'X-Frame-Options': 'SAMEORIGIN',
+                        'X-Content-Type-Options': 'nosniff',
                     },
                 })
             }

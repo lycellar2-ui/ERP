@@ -1195,8 +1195,8 @@ export async function quickCreateSupplier(input: {
 
         let code = input.code?.trim().toUpperCase()
         if (!code) {
-            const count = await prisma.supplier.count()
-            code = `NCC-${String(count + 1).padStart(4, '0')}`
+            const { generateNextDocCode } = await import('@/lib/doc-code')
+            code = await generateNextDocCode(prisma.supplier, 'code', 'NCC-', 4)
         }
 
         // Format bankAccountInfo string: "Ngân hàng: ..., STK: ..., Chủ TK: ..."

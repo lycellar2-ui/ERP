@@ -2,9 +2,12 @@ import { prisma, withRetry } from '@/lib/db'
 import { callGemini, resolvePromptTemplate } from '@/lib/ai-service'
 import { NextResponse } from 'next/server'
 import { isModuleAiEnabled } from '@/app/dashboard/ai/ai-actions'
+import { getCurrentUser } from '@/lib/session'
 
 export async function POST() {
     try {
+        const user = await getCurrentUser()
+        if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
         const aiOk = await isModuleAiEnabled('pipeline')
         if (!aiOk) return NextResponse.json({ success: false, error: 'AI đã bị tắt bởi Admin' }, { status: 403 })
         const now = new Date()

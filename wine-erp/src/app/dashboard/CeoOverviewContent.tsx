@@ -588,11 +588,12 @@ export function CeoOverviewContent({
                                     {topCustomers.map((c: any, i: number) => {
                                         const custHref = `/dashboard?tab=customers&customerId=${c.id}${preset ? `&preset=${preset}` : ''}${currentEntity && currentEntity !== 'ALL' ? `&entity=${currentEntity}` : ''}`
                                         return (
-                                            <Link
+                                            <button
+                                                type="button"
                                                 key={c.id || i}
-                                                href={custHref}
+                                                onClick={() => router.push(custHref)}
                                                 title={t.rankings.clickCustomerHint}
-                                                className="group flex items-center justify-between py-1.5 px-2 rounded transition-colors hover:bg-sky-50/70"
+                                                className="group w-full text-left flex items-center justify-between py-1.5 px-2 rounded transition-colors hover:bg-sky-50/70 cursor-pointer"
                                                 style={{ background: i === 0 ? 'rgba(8,145,178,0.06)' : 'transparent' }}
                                             >
                                                 <div className="flex items-center gap-2 min-w-0">
@@ -601,7 +602,7 @@ export function CeoOverviewContent({
                                                     <ExternalLink size={11} className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0" style={{ color: '#0891B2' }} />
                                                 </div>
                                                 <span className="text-[11px] font-bold font-mono flex-shrink-0" style={{ color: '#0891B2' }}>{formatFriendlyVND(c.revenue, isEn)}</span>
-                                            </Link>
+                                            </button>
                                         )
                                     })}
                                 </div>
@@ -618,7 +619,7 @@ export function CeoOverviewContent({
                                         <div key={p.sku || i} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: i === 0 ? 'rgba(180,83,9,0.06)' : 'transparent' }}>
                                             <div className="flex items-center gap-2 min-w-0">
                                                 <span className="text-[10px] font-bold w-4" style={{ color: i === 0 ? '#B45309' : '#64748B' }}>{i + 1}.</span>
-                                                <Link href={`/dashboard?tab=skus${p.id ? `&productId=${p.id}` : ''}`} className="text-xs truncate hover:text-cyan-700 font-medium flex items-center gap-1 group" style={{ color: '#0F172A' }} title="Xem Báo Cáo Theo SKU (Nhà nào đang lấy)"><span>{p.name}</span><ExternalLink size={11} className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0" style={{ color: '#0891B2' }} /></Link>
+                                                <button type="button" onClick={() => router.push(`/dashboard?tab=skus${p.id ? `&productId=${p.id}` : ''}`)} className="text-xs truncate hover:text-cyan-700 font-medium flex items-center gap-1 group cursor-pointer text-left" style={{ color: '#0F172A' }} title="Xem Báo Cáo Theo SKU (Nhà nào đang lấy)"><span className="truncate">{p.name}</span><ExternalLink size={11} className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0" style={{ color: '#0891B2' }} /></button>
                                             </div>
                                             <div className="flex items-center gap-1.5 flex-shrink-0">
                                                 {typeof p.marginPct === 'number' && (
@@ -717,7 +718,7 @@ export function CeoOverviewContent({
                                             <div className="flex items-center gap-1.5 flex-wrap mb-1">
                                                 <AlertCircle size={13} style={{ color: '#0891B2' }} />
                                                 <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(8, 145, 178, 0.1)', color: '#0891B2' }}>SO</span>
-                                                <Link href="/dashboard/sales" className="text-xs font-bold hover:underline" style={{ color: '#0F172A' }}>{so.soNo}</Link>
+                                                <button type="button" onClick={() => router.push('/dashboard/sales')} className="text-xs font-bold hover:underline cursor-pointer" style={{ color: '#0F172A' }}>{so.soNo}</button>
                                                 <span className="text-xs font-medium truncate" style={{ color: '#334155' }}>&middot; {so.customerName}</span>
                                                 {typeof so.estimatedMarginPct === 'number' && (
                                                     <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-mono font-bold whitespace-nowrap" style={{ background: `${marginColor}18`, color: marginColor }}>
@@ -774,7 +775,7 @@ export function CeoOverviewContent({
                                                 <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
                                                     <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: prioCfg.bg, color: prioCfg.color }}>{prioCfg.label}</span>
                                                     <span className="inline-block text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: 'rgba(29,78,216,0.1)', color: '#1D4ED8' }}>{CATEGORY_LABELS[p.category] ?? p.category}</span>
-                                                    <Link href="/dashboard/proposals" className="text-xs font-bold hover:underline" style={{ color: '#0891B2' }}>{p.proposalNo}</Link>
+                                                    <button type="button" onClick={() => router.push('/dashboard/proposals')} className="text-xs font-bold hover:underline cursor-pointer" style={{ color: '#0891B2' }}>{p.proposalNo}</button>
                                                 </div>
                                                 <p className="text-sm truncate font-medium" style={{ color: '#0F172A' }}>{p.title}</p>
                                                 <span className="text-[10px]" style={{ color: '#64748B' }}>{p.creatorName}</span>
@@ -820,9 +821,9 @@ export function CeoOverviewContent({
                                                 <span className="inline-block text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: '#F1F5F9', color: '#475569' }}>
                                                     {pr.purposeLabel}
                                                 </span>
-                                                <Link href="/dashboard/payment-requests" className="text-xs font-bold hover:underline" style={{ color: '#0F172A' }}>
+                                                <button type="button" onClick={() => router.push('/dashboard/payment-requests')} className="text-xs font-bold hover:underline cursor-pointer" style={{ color: '#0F172A' }}>
                                                     {pr.requestNo}
-                                                </Link>
+                                                </button>
                                             </div>
                                             <p className="text-xs truncate font-medium" style={{ color: '#0F172A' }}>{pr.beneficiary}</p>
                                             <span className="text-[10px]" style={{ color: '#64748B' }}>

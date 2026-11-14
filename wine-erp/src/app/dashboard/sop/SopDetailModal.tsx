@@ -123,15 +123,15 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
     const attachedMdFiles = attachedForms.filter(f => f.fileName.toLowerCase().endsWith('.md'))
 
     return (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex justify-center p-3 sm:p-6 animate-in fade-in duration-150">
+        <div className="print-modal fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex justify-center p-3 sm:p-6 animate-in fade-in duration-150 print:static print:bg-white print:p-0 print:overflow-visible">
             {/* Modal Container */}
             <div
-                className="bg-white w-full max-w-5xl rounded-lg shadow-2xl border border-slate-200 flex flex-col my-auto max-h-[92vh] overflow-hidden"
+                className="print-keep bg-white w-full max-w-5xl rounded-lg shadow-2xl border border-slate-200 flex flex-col my-auto max-h-[92vh] overflow-hidden print:max-h-none print:shadow-none print:border-0"
                 role="dialog"
                 aria-modal="true"
             >
                 {/* Header */}
-                <div className="p-5 sm:p-6 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="p-5 sm:p-6 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:bg-white">
                     <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-800 border border-slate-200">
@@ -154,7 +154,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-1.5 self-end sm:self-center">
+                    <div className="flex items-center gap-1.5 self-end sm:self-center no-print">
                         <button
                             onClick={() => setIsEditing(true)}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-xs transition"

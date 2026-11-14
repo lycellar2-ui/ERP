@@ -348,14 +348,10 @@ describe('E2E Real Database Flow: New Product, Customer, Sales Order, and Delive
             maxSteps--
         }
 
-        expect(currentSo?.status).toBe('PENDING_ACCOUNTING')
-
-        // 7. Accounting approval (transitions from PENDING_ACCOUNTING to CONFIRMED)
-        const acctResult = await accountingApproveSO(soId)
-        expect(acctResult.success).toBe(true)
-
-        currentSo = await prisma.salesOrder.findUnique({ where: { id: soId } })
         expect(currentSo?.status).toBe('CONFIRMED')
+
+        // 7. Confirm direct transition to CONFIRMED (accounting step skipped per v3.x workflow)
+        expect(['CONFIRMED']).toContain(currentSo?.status)
 
         // 8. Create Delivery Order (DO)
         const doResult = await createDeliveryOrder({

@@ -1188,7 +1188,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                     const isOverPicked = totalPickedForProduct > sol.qtyOrdered
 
                     return (
-                        <div key={sol.productId} className="p-3.5 rounded-xl space-y-3 border border-slate-200 bg-white shadow-xs">
+                        <div key={sol.productId} className="p-3.5 rounded-lg space-y-3 border border-slate-200 bg-white shadow-xs">
                             {/* Product Header: Name + Badges */}
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <div className="space-y-1">
@@ -1402,7 +1402,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                 {/* Unified Scrollable Content for both Mobile & Desktop */}
                 <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 bg-slate-50/50">
                     {selectedSO && initialSOId ? (
-                        <div className="p-3.5 rounded-xl border border-slate-200 bg-white grid grid-cols-1 sm:grid-cols-3 gap-3 items-center shadow-2xs">
+                        <div className="p-3.5 rounded-lg border border-slate-200 bg-white grid grid-cols-1 sm:grid-cols-3 gap-3 items-center shadow-2xs">
                             <div>
                                 <span className="text-[10px] font-bold uppercase tracking-wider block text-slate-500">
                                     Đơn Hàng
@@ -1425,7 +1425,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                             </div>
                         </div>
                     ) : (
-                        <div className="p-3.5 rounded-xl border border-slate-200 bg-white grid grid-cols-1 sm:grid-cols-3 gap-3 shadow-2xs">
+                        <div className="p-3.5 rounded-lg border border-slate-200 bg-white grid grid-cols-1 sm:grid-cols-3 gap-3 shadow-2xs">
                             {renderSOSelect()}
                             {renderWarehouseSelect()}
                             {renderDateSelect()}
@@ -1440,7 +1440,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                     <button
                         onClick={() => handleSave(false)}
                         disabled={saving || !selectedSO}
-                        className="flex items-center justify-center gap-1.5 py-3 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50 bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200"
+                        className="flex items-center justify-center gap-1.5 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all cursor-pointer disabled:opacity-50 bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200"
                     >
                         {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                         <span>Lưu Nháp</span>
@@ -1449,7 +1449,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                     <button
                         onClick={() => handleSave(true)}
                         disabled={saving || !selectedSO || validLinesCount === 0}
-                        className="flex items-center justify-center gap-1.5 py-3 text-xs sm:text-sm font-bold rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50 hover:brightness-105 active:scale-[0.99]"
+                        className="flex items-center justify-center gap-1.5 py-3 text-xs sm:text-sm font-bold rounded-lg shadow-md transition-all cursor-pointer disabled:opacity-50 hover:brightness-105 active:scale-[0.99]"
                         style={{ background: '#D97706', color: '#FFFFFF' }}
                     >
                         {saving ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={16} />}
@@ -1534,7 +1534,7 @@ function SwapDefectLotModal({
 
     return (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs" onClick={onClose}>
-            <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 border border-slate-200" onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 border border-slate-200" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between border-b pb-3 border-slate-100">
                     <div className="flex items-center gap-2">
                         <span className="p-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">

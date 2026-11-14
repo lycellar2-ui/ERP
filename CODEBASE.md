@@ -25,7 +25,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 - **Sales & Allocation**: `wine-erp/src/app/dashboard/sales` (**Order Discount**, **Credit Hold Auto**, **Quick Filter Tabs**, **Sortable Columns**, **Date Range**, **Timeline**, **Clone SO**, **CSV Export**, **Role-based Margin Visibility**), `wine-erp/src/app/dashboard/quotations` (**Professional PDF Export**, **Send Drawer Email/Zalo**, **View Tracking**), `wine-erp/src/app/dashboard/price-list`, `wine-erp/src/app/dashboard/allocation`, `wine-erp/src/app/dashboard/returns` (Credit Note + WMS Quarantine)
 - **CRM**: `wine-erp/src/app/dashboard/crm` (**TastingEventsPanel**, **ComplaintTicketsPanel**, **WinePreferencePanel**), `wine-erp/src/app/dashboard/pipeline`
 - **Finance & Tem**: `wine-erp/src/app/dashboard/finance` (P&L, **Balance Sheet/CĐKT**, Expenses, Period Close, COD→AR), `wine-erp/src/app/dashboard/payment-requests` (**Đề Nghị Thanh Toán & Ngân Sách**, Cloudflare R2 Scan Viewer, Duyệt đa cấp), `wine-erp/src/app/dashboard/declarations` (e-Sign, Doc Upload, **TTĐB Bảng Kê**), `wine-erp/src/app/dashboard/stamps`
-- **Procurement & Operations**: `wine-erp/src/app/dashboard/procurement` (**Tax Engine**, **Variance Report**, **Excel Import**, **Multi-currency VND**), `wine-erp/src/app/dashboard/contracts` (**Amendment audit trail**, **E-Sign**, Doc Upload), `wine-erp/src/app/dashboard/agency`
+- **Procurement & Operations**: `wine-erp/src/app/dashboard/procurement` (**Tax Engine**, **Variance Report**, **Excel Import**, **Multi-currency VND**), `wine-erp/src/app/dashboard/contracts` (**Amendment audit trail**, **E-Sign**, Doc Upload, `contract-templates.ts`), `wine-erp/src/app/dashboard/agency`
 - **Tax & Market Data**: `wine-erp/src/app/dashboard/tax`, `wine-erp/src/app/dashboard/costing`, `wine-erp/src/app/dashboard/market-price`
 - **Logistics**: `wine-erp/src/app/dashboard/delivery` (**COD→AR Sync**, Reverse Logistics), `wine-erp/src/app/dashboard/consignment`, `wine-erp/src/app/dashboard/transfers`, `wine-erp/src/app/dashboard/returns`, `wine-erp/src/app/dashboard/stock-count`
 - **CEO Board**: `wine-erp/src/app/dashboard` (**AI CEO Briefing**), `wine-erp/src/app/dashboard/kpi`, `wine-erp/src/app/dashboard/reports`
@@ -58,6 +58,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 | **Server Cache** | `wine-erp/src/lib/cache.ts` | In-memory Map cache with TTL + prefix invalidation for DB query results |
 | **Realtime Hook** | `wine-erp/src/lib/useRealtimeDashboard.ts` | Supabase Realtime subscriptions — role-based channel management |
 | **Audit Diff** | `wine-erp/src/lib/audit.ts` | `logAuditWithDiff()` — per-field change tracking + auto-description |
+| **Doc Code Generator** | `wine-erp/src/lib/doc-code.ts` | `generateNextDocCode()` — collision-safe sequential code generator matching `^<prefix>(\d+)$` |
 
 ## 5. LƯU Ý QUAN TRỌNG
 - **Soft Delete Pattern**: Product, Customer, Supplier sử dụng `deletedAt` + `status: INACTIVE`. Kiểm tra active PO/SO trước khi xoá.

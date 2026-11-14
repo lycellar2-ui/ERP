@@ -409,7 +409,7 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                                 className={cn(
                                                     'px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer',
                                                     skuFilterMode === 'PRICED'
-                                                        ? 'bg-[#0891B2] text-white'
+                                                        ? 'bg-[#0E7490] hover:bg-[#155E75] text-white'
                                                         : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
                                                 )}
                                             >
@@ -433,7 +433,7 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
                                                 className={cn(
                                                     'px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer',
                                                     skuFilterMode === 'ALL'
-                                                        ? 'bg-slate-800 text-white'
+                                                        ? 'bg-[#0E7490] hover:bg-[#155E75] text-white'
                                                         : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
                                                 )}
                                             >

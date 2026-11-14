@@ -5,7 +5,7 @@ import Link from 'next/link'
 import {
     Plus, Search, Trash2, Loader2, X, Check, Ban,
     FileText, Copy, Building2, SlidersHorizontal,
-    Zap, ChevronRight, Clock, RefreshCw, Layers, ShieldCheck, Calendar, GitBranch
+    Zap, ChevronRight, Clock, RefreshCw, Layers, ShieldCheck, Calendar, GitBranch, Circle
 } from 'lucide-react'
 import {
     getCustomerPriceRules,
@@ -555,44 +555,44 @@ export function CustomerRulesTab({ currentUser }: Props) {
     return (
         <div className="w-full space-y-3">
             {/* 4-Level Pricing Hierarchy Reference Bar */}
-            <div className="p-3 rounded-lg bg-slate-900 text-white border border-slate-800 shadow-xs">
+            <div className="p-3 rounded-lg bg-cyan-50/60 text-slate-900 border border-cyan-200 shadow-2xs">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
                     <div className="flex items-center gap-2">
-                        <Layers size={15} className="text-[#0891B2] shrink-0" />
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                        <Layers size={15} className="text-[#0E7490] shrink-0" />
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
                             {isEn
                                 ? '4-Level Pricing Priority (Level 4 -> 3 -> 2 -> 1):'
                                 : 'Thứ Tự Ưu Tiên Áp Giá 4 Tầng (Level 4 -> 3 -> 2 -> 1):'}
                         </span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2 flex-1 lg:max-w-4xl">
-                        <div className="px-2.5 py-1.5 rounded bg-slate-800/90 border border-slate-700 flex items-center justify-between gap-2">
+                        <div className="px-2.5 py-1.5 rounded bg-white border border-amber-200 flex items-center justify-between gap-2">
                             <div>
-                                <div className="text-[10px] font-bold text-amber-400 uppercase">Level 4 · {isEn ? 'Priority 1' : 'Ưu tiên 1'}</div>
-                                <div className="text-xs font-semibold text-white">{isEn ? 'Promotion Campaign' : 'Chương Trình KM (CTKM)'}</div>
+                                <div className="text-[10px] font-bold text-amber-700 uppercase">Level 4 · {isEn ? 'Priority 1' : 'Ưu tiên 1'}</div>
+                                <div className="text-xs font-semibold text-slate-900">{isEn ? 'Promotion Campaign' : 'Chương Trình KM (CTKM)'}</div>
                             </div>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">{isEn ? 'Highest' : 'Cao nhất'}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-800 font-mono">{isEn ? 'Highest' : 'Cao nhất'}</span>
                         </div>
-                        <div className="px-2.5 py-1.5 rounded bg-slate-800/90 border border-sky-700/60 flex items-center justify-between gap-2">
+                        <div className="px-2.5 py-1.5 rounded bg-white border border-sky-200 flex items-center justify-between gap-2">
                             <div>
-                                <div className="text-[10px] font-bold text-sky-400 uppercase">Level 3 · {isEn ? 'Priority 2' : 'Ưu tiên 2'}</div>
-                                <div className="text-xs font-semibold text-white">{isEn ? 'Special Price per SKU' : 'Giá Đặc Biệt Từng Mã SKU'}</div>
+                                <div className="text-[10px] font-bold text-sky-700 uppercase">Level 3 · {isEn ? 'Priority 2' : 'Ưu tiên 2'}</div>
+                                <div className="text-xs font-semibold text-slate-900">{isEn ? 'Special Price per SKU' : 'Giá Đặc Biệt Từng Mã SKU'}</div>
                             </div>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 font-mono">{isEn ? 'Overrides L2' : 'Đè Level 2'}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-50 border border-sky-200 text-sky-800 font-mono">{isEn ? 'Overrides L2' : 'Đè Level 2'}</span>
                         </div>
-                        <div className="px-2.5 py-1.5 rounded bg-slate-800/90 border border-emerald-600/60 flex items-center justify-between gap-2">
+                        <div className="px-2.5 py-1.5 rounded bg-white border border-emerald-200 flex items-center justify-between gap-2">
                             <div>
-                                <div className="text-[10px] font-bold text-emerald-400 uppercase">Level 2 · {isEn ? 'Priority 3' : 'Ưu tiên 3'}</div>
-                                <div className="text-xs font-semibold text-white">{isEn ? 'Customer % Policy (All SKUs)' : 'Cơ Chế Giảm % Toàn Kho'}</div>
+                                <div className="text-[10px] font-bold text-emerald-700 uppercase">Level 2 · {isEn ? 'Priority 3' : 'Ưu tiên 3'}</div>
+                                <div className="text-xs font-semibold text-slate-900">{isEn ? 'Customer % Policy (All SKUs)' : 'Cơ Chế Giảm % Toàn Kho'}</div>
                             </div>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">{isEn ? '3-Step Approval' : 'Duyệt 3 cấp'}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-800 font-mono">{isEn ? '3-Step Approval' : 'Duyệt 3 cấp'}</span>
                         </div>
-                        <div className="px-2.5 py-1.5 rounded bg-slate-800/90 border border-slate-700 flex items-center justify-between gap-2">
+                        <div className="px-2.5 py-1.5 rounded bg-white border border-slate-200 flex items-center justify-between gap-2">
                             <div>
-                                <div className="text-[10px] font-bold text-slate-400 uppercase">Level 1 · {isEn ? 'Base' : 'Nền tảng'}</div>
-                                <div className="text-xs font-semibold text-slate-200">{isEn ? 'Channel Base Price' : 'Giá Chuẩn Theo Kênh'}</div>
+                                <div className="text-[10px] font-bold text-slate-500 uppercase">Level 1 · {isEn ? 'Base' : 'Nền tảng'}</div>
+                                <div className="text-xs font-semibold text-slate-800">{isEn ? 'Channel Base Price' : 'Giá Chuẩn Theo Kênh'}</div>
                             </div>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-300 font-mono">{isEn ? 'Default' : 'Mặc định'}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700 font-mono">{isEn ? 'Default' : 'Mặc định'}</span>
                         </div>
                     </div>
                 </div>
@@ -790,7 +790,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                         return (
                                                             <span
                                                                 key={lvl}
-                                                                className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                                                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border ${
                                                                     isDone
                                                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                                                         : isCurrent
@@ -798,7 +798,8 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                                         : 'bg-slate-50 text-slate-400 border-slate-200'
                                                                 }`}
                                                             >
-                                                                {isDone ? '✓ ' : isCurrent ? '● ' : ''}{getStepTitle(lvl)}
+                                                                {isDone ? <Check size={10} /> : isCurrent ? <Circle size={7} className="fill-current" /> : null}
+                                                                <span>{getStepTitle(lvl)}</span>
                                                             </span>
                                                         )
                                                     })}
@@ -1252,7 +1253,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                 return (
                                                     <span
                                                         key={lvl}
-                                                        className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                                                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border ${
                                                             isDone
                                                                 ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
                                                                 : isCurrent
@@ -1260,7 +1261,8 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                                                 : 'bg-white text-slate-400 border-slate-200'
                                                         }`}
                                                     >
-                                                        {isDone ? '✓ ' : isCurrent ? '● ' : ''}{getStepTitle(lvl)}
+                                                        {isDone ? <Check size={10} /> : isCurrent ? <Circle size={7} className="fill-current" /> : null}
+                                                        <span>{getStepTitle(lvl)}</span>
                                                     </span>
                                                 )
                                             })}

@@ -388,7 +388,39 @@ function SODetailDrawer({
     const [deletingVnpt, setDeletingVnpt] = useState(false)
     const [syncingVnpt, setSyncingVnpt] = useState(false)
     const [dateWarningModal, setDateWarningModal] = useState<InvoiceDateWarning | null>(null)
+    const [promptModal, setPromptModal] = useState<{
+        title: string
+        description: string
+        placeholder: string
+        required: boolean
+        confirmLabel: string
+        onSubmit: (value: string) => Promise<void>
+    } | null>(null)
+    const [promptInput, setPromptInput] = useState('')
+    const [promptError, setPromptError] = useState('')
+    const [promptSubmitting, setPromptSubmitting] = useState(false)
     const { confirm: confirmDrawer, dialog: confirmDrawerDialog } = useConfirmDialog()
+
+    const openInputPrompt = (opts: {
+        title: string
+        description: string
+        placeholder: string
+        defaultValue?: string
+        required?: boolean
+        confirmLabel: string
+        onSubmit: (value: string) => Promise<void>
+    }) => {
+        setPromptInput(opts.defaultValue ?? '')
+        setPromptError('')
+        setPromptModal({
+            title: opts.title,
+            description: opts.description,
+            placeholder: opts.placeholder,
+            required: Boolean(opts.required),
+            confirmLabel: opts.confirmLabel,
+            onSubmit: opts.onSubmit,
+        })
+    }
 
     const handleToggleExempt = async () => {
         if (!soId || !detail || togglingExempt) return
@@ -419,28 +451,35 @@ function SODetailDrawer({
             })
             return
         } else {
-            const reason = window.prompt(
-                'Nhập lý do không xuất hóa đơn VAT (ví dụ: Khách lẻ không lấy HĐ, tiêu dùng nội bộ, quà biếu tặng...):',
-                'Khách lẻ không lấy hóa đơn'
-            )
-            if (reason === null) return
-            setTogglingExempt(true)
-            try {
-                const res = await toggleInvoiceExempt(soId, true, reason)
-                if (res.success) {
-                    toast.success('Đã đánh dấu không xuất hóa đơn VAT thành công!')
-                    const updated = await getSalesOrderDetail(soId)
-                    setDetail(updated)
-                    getSOTimeline(soId).then(setTimeline).catch(() => {})
-                    onReloadList?.()
-                } else {
-                    toast.error(res.error || 'Lỗi thao tác')
-                }
-            } catch (err: any) {
-                toast.error(err.message || 'Lỗi hệ thống')
-            } finally {
-                setTogglingExempt(false)
-            }
+            openInputPrompt({
+                title: isEn ? 'Mark VAT Invoice Exempt' : 'Đánh Dấu Không Xuất Hóa Đơn VAT',
+                description: isEn
+                    ? 'Enter reason for skipping VAT invoice (e.g., retail walk-in, internal consumption, gift):'
+                    : 'Nhập lý do không xuất hóa đơn VAT (ví dụ: Khách lẻ không lấy HĐ, tiêu dùng nội bộ, quà biếu tặng...):',
+                placeholder: isEn ? 'Reason for exemption...' : 'Khách lẻ không lấy hóa đơn',
+                defaultValue: isEn ? 'Retail customer without VAT invoice' : 'Khách lẻ không lấy hóa đơn',
+                required: false,
+                confirmLabel: isEn ? 'Confirm Exempt' : 'Xác Nhận Miễn HĐ',
+                onSubmit: async (reason) => {
+                    setTogglingExempt(true)
+                    try {
+                        const res = await toggleInvoiceExempt(soId, true, reason.trim())
+                        if (res.success) {
+                            toast.success(isEn ? 'Marked as VAT invoice exempt!' : 'Đã đánh dấu không xuất hóa đơn VAT thành công!')
+                            const updated = await getSalesOrderDetail(soId)
+                            setDetail(updated)
+                            getSOTimeline(soId).then(setTimeline).catch(() => {})
+                            onReloadList?.()
+                        } else {
+                            toast.error(res.error || 'Lỗi thao tác')
+                        }
+                    } catch (err: any) {
+                        toast.error(err.message || 'Lỗi hệ thống')
+                    } finally {
+                        setTogglingExempt(false)
+                    }
+                },
+            })
         }
     }
 
@@ -477,56 +516,65 @@ function SODetailDrawer({
 
     const handleCreateInvoice = async () => {
         if (!soId || creatingInvoice) return
-        const customNo = window.prompt(
-            'Nhập mã hóa đơn điện tử VAT (ví dụ: VAT-001234, hoặc để trống để tự động sinh mã hệ thống):',
-            ''
-        )
-        if (customNo === null) return
-
-        setCreatingInvoice(true)
-        try {
-            const res = await createARInvoiceForSO(soId, customNo || undefined)
-            if (res.success) {
-                toast.success(`Đã xuất hóa đơn ${res.invoiceNo} cho đơn hàng thành công!`)
-                const updated = await getSalesOrderDetail(soId)
-                setDetail(updated)
-                getSOTimeline(soId).then(setTimeline).catch(() => {})
-            } else {
-                toast.error(res.error || 'Lỗi xuất hóa đơn')
-            }
-        } catch (err: any) {
-            toast.error(err.message || 'Lỗi kết nối hệ thống')
-        } finally {
-            setCreatingInvoice(false)
-        }
+        openInputPrompt({
+            title: isEn ? 'Create VAT Invoice' : 'Xuất Hóa Đơn VAT',
+            description: isEn
+                ? 'Enter e-invoice number (e.g., VAT-001234, or leave blank to auto-generate):'
+                : 'Nhập mã hóa đơn điện tử VAT (ví dụ: VAT-001234, hoặc để trống để tự động sinh mã hệ thống):',
+            placeholder: 'VAT-001234',
+            defaultValue: '',
+            required: false,
+            confirmLabel: isEn ? 'Create Invoice' : 'Xuất Hóa Đơn',
+            onSubmit: async (customNo) => {
+                setCreatingInvoice(true)
+                try {
+                    const res = await createARInvoiceForSO(soId, customNo.trim() || undefined)
+                    if (res.success) {
+                        toast.success(isEn ? `Invoice ${res.invoiceNo} created!` : `Đã xuất hóa đơn ${res.invoiceNo} cho đơn hàng thành công!`)
+                        const updated = await getSalesOrderDetail(soId)
+                        setDetail(updated)
+                        getSOTimeline(soId).then(setTimeline).catch(() => {})
+                    } else {
+                        toast.error(res.error || 'Lỗi xuất hóa đơn')
+                    }
+                } catch (err: any) {
+                    toast.error(err.message || 'Lỗi kết nối hệ thống')
+                } finally {
+                    setCreatingInvoice(false)
+                }
+            },
+        })
     }
 
     const handleEditInvoice = async (invId: string, currentInvoiceNo: string) => {
-        const newNo = window.prompt('Nhập mã số hóa đơn mới:', currentInvoiceNo)
-        if (newNo === null) return
-        const trimmed = newNo.trim()
-        if (!trimmed) {
-            toast.error('Mã số hóa đơn không được để trống')
-            return
-        }
-        if (trimmed === currentInvoiceNo) return
-
-        setEditingInvoiceId(invId)
-        try {
-            const res = await updateARInvoiceNo(invId, trimmed)
-            if (res.success) {
-                toast.success(`Đã cập nhật mã hóa đơn thành ${res.invoiceNo}!`)
-                const updated = await getSalesOrderDetail(soId)
-                setDetail(updated)
-                getSOTimeline(soId).then(setTimeline).catch(() => {})
-            } else {
-                toast.error(res.error || 'Lỗi cập nhật hóa đơn')
-            }
-        } catch (err: any) {
-            toast.error(err.message || 'Lỗi kết nối hệ thống')
-        } finally {
-            setEditingInvoiceId(null)
-        }
+        openInputPrompt({
+            title: isEn ? 'Update Invoice Number' : 'Cập Nhật Mã Số Hóa Đơn',
+            description: isEn ? 'Enter the new VAT invoice number:' : 'Nhập mã số hóa đơn mới:',
+            placeholder: 'VAT-001234',
+            defaultValue: currentInvoiceNo,
+            required: true,
+            confirmLabel: isEn ? 'Save Number' : 'Lưu Mã Hóa Đơn',
+            onSubmit: async (newNo) => {
+                const trimmed = newNo.trim()
+                if (trimmed === currentInvoiceNo) return
+                setEditingInvoiceId(invId)
+                try {
+                    const res = await updateARInvoiceNo(invId, trimmed)
+                    if (res.success) {
+                        toast.success(isEn ? `Updated invoice number to ${res.invoiceNo}!` : `Đã cập nhật mã hóa đơn thành ${res.invoiceNo}!`)
+                        const updated = await getSalesOrderDetail(soId)
+                        setDetail(updated)
+                        getSOTimeline(soId).then(setTimeline).catch(() => {})
+                    } else {
+                        toast.error(res.error || 'Lỗi cập nhật hóa đơn')
+                    }
+                } catch (err: any) {
+                    toast.error(err.message || 'Lỗi kết nối hệ thống')
+                } finally {
+                    setEditingInvoiceId(null)
+                }
+            },
+        })
     }
 
     const handleDeleteInvoice = (invId: string, invNo: string) => {
@@ -1733,6 +1781,94 @@ function SODetailDrawer({
                                 {isEn ? 'I Have Reviewed & Proceed' : 'Tôi Đã Rà Soát & Tiếp Tục Đẩy Nháp'}
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {promptModal && (
+                <div
+                    className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/45 backdrop-blur-xs animate-fade-in"
+                    onClick={() => { if (!promptSubmitting) setPromptModal(null) }}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Escape' && !promptSubmitting) setPromptModal(null)
+                    }}
+                >
+                    <div
+                        className="w-full max-w-md rounded-lg bg-white border border-slate-200 shadow-xl p-5 space-y-4"
+                        role="dialog"
+                        aria-modal="true"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="flex items-start justify-between gap-3">
+                            <div>
+                                <h3 className="text-sm font-bold text-slate-900">{promptModal.title}</h3>
+                                <p className="text-xs text-slate-600 mt-1">{promptModal.description}</p>
+                            </div>
+                            <button
+                                type="button"
+                                aria-label={isEn ? 'Close' : 'Đóng'}
+                                onClick={() => { if (!promptSubmitting) setPromptModal(null) }}
+                                className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        <form
+                            onSubmit={async (e) => {
+                                e.preventDefault()
+                                if (promptModal.required && !promptInput.trim()) {
+                                    setPromptError(isEn ? 'This field is required' : 'Trường này không được để trống')
+                                    return
+                                }
+                                setPromptError('')
+                                setPromptSubmitting(true)
+                                const active = promptModal
+                                const val = promptInput
+                                try {
+                                    await active.onSubmit(val)
+                                    setPromptModal(null)
+                                } finally {
+                                    setPromptSubmitting(false)
+                                }
+                            }}
+                            className="space-y-3"
+                        >
+                            <div>
+                                <input
+                                    autoFocus
+                                    type="text"
+                                    value={promptInput}
+                                    onChange={(e) => {
+                                        setPromptInput(e.target.value)
+                                        if (promptError) setPromptError('')
+                                    }}
+                                    placeholder={promptModal.placeholder}
+                                    className="w-full px-3 py-2 rounded-md border border-slate-200 bg-white text-slate-900 text-base sm:text-sm outline-none focus:border-[#0891B2]"
+                                />
+                                {promptError && (
+                                    <p className="text-xs font-medium text-rose-700 mt-1">{promptError}</p>
+                                )}
+                            </div>
+                            <div className="flex items-center justify-end gap-2 pt-1">
+                                <button
+                                    type="button"
+                                    disabled={promptSubmitting}
+                                    onClick={() => setPromptModal(null)}
+                                    className="px-3.5 py-2 rounded-md text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 cursor-pointer disabled:opacity-50"
+                                >
+                                    {isEn ? 'Cancel' : 'Hủy Bỏ'}
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={promptSubmitting}
+                                    className="px-4 py-2 rounded-md text-xs font-semibold text-white bg-[#0E7490] hover:bg-[#155E75] cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                                >
+                                    {promptSubmitting && <Loader2 size={13} className="animate-spin" />}
+                                    {promptModal.confirmLabel}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

@@ -1593,7 +1593,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                 <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-4">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="flex items-center gap-2.5">
-                                            <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-700">
+                                            <div className="w-10 h-10 rounded-lg bg-cyan-50/60 border border-cyan-200 flex items-center justify-center text-[#0E7490]">
                                                 <Database size={20} />
                                             </div>
                                             <div>
@@ -1649,7 +1649,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                         </div>
                                         <div className="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden border border-slate-200">
                                             <div
-                                                className="h-full bg-indigo-600 transition-all"
+                                                className="h-full bg-[#0E7490] transition-all"
                                                 style={{
                                                     width: `${Math.min(
                                                         100,

@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { cached, revalidateCache } from '@/lib/cache'
+import { requireAuth } from '@/lib/session'
 
 export type AllocationCampaignRow = {
     id: string; name: string; productId: string; skuCode: string; productName: string
@@ -95,6 +96,7 @@ export async function createAllocCampaign(input: {
     startDate: string; endDate: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         await prisma.allocationCampaign.create({
             data: {
                 name: input.name,
@@ -118,6 +120,7 @@ export async function addAllocQuota(input: {
     campaignId: string; targetType: string; targetId: string; qtyAllocated: number
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         await prisma.allocationQuota.create({
             data: {
                 campaignId: input.campaignId,

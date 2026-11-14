@@ -503,8 +503,8 @@ export async function generatePOSVATInvoice(input: {
         const now = new Date()
         const yy = String(now.getFullYear()).slice(-2)
         const mm = String(now.getMonth() + 1).padStart(2, '0')
-        const count = await prisma.aRInvoice.count()
-        const invoiceNo = `VAT-${yy}${mm}-${String(count + 1).padStart(5, '0')}`
+        const { generateNextDocCode } = await import('@/lib/doc-code')
+        const invoiceNo = await generateNextDocCode(prisma.aRInvoice, 'invoiceNo', `VAT-${yy}${mm}-`, 5)
 
         const totalAmount = Number(so.totalAmount)
         const vatAmount = Math.round(totalAmount / 11) // VAT 10% from total (total = base + VAT)

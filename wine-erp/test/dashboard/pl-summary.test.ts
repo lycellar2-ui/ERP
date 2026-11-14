@@ -109,12 +109,12 @@ describe('getARAgingChart', () => {
 })
 
 describe('approveSO', () => {
-    it('should update SO status to PENDING_ACCOUNTING via fallback', async () => {
+    it('should update SO status to CONFIRMED via fallback', async () => {
         mockPrisma.salesOrder.findUnique.mockResolvedValue({ id: 'so-001', status: 'PENDING_APPROVAL', soNo: 'SO-001' })
         mockPrisma.salesOrder.update.mockResolvedValue({})
         await approveSO('so-001')
         expect(mockPrisma.salesOrder.update).toHaveBeenCalledWith({
-            where: { id: 'so-001' }, data: { status: 'PENDING_ACCOUNTING' },
+            where: { id: 'so-001' }, data: { status: 'CONFIRMED' },
         })
     })
 })

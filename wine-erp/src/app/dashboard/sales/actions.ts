@@ -1488,9 +1488,36 @@ export async function approveSalesOrder(
 
         // Resolve warehouseId (use passed warehouseId, existing so.warehouseId, or default sales warehouse for legalEntity)
         let targetWarehouseId = warehouseId || so.warehouseId || undefined
-        if (!targetWarehouseId && so.legalEntityId) {
+        if (targetWarehouseId && typeof (prisma as any).warehouse?.findUnique === 'function') {
+            const wh = await prisma.warehouse.findUnique({
+                where: { id: targetWarehouseId },
+                select: { id: true, code: true, allowSales: true, legalEntityId: true },
+            })
+            if (!wh) {
+                return { success: false, error: 'Kho xuất bán không tồn tại trong hệ thống' }
+            }
+            if (wh.code === 'WH-TA-TT') {
+                return {
+                    success: false,
+                    error: 'Kho Thường Tín (WH-TA-TT) là kho lưu trữ, không được phép xuất bán trực tiếp. Vui lòng chọn kho xuất bán hoặc tạo Lệnh Điều Chuyển.',
+                }
+            }
+            if (wh.allowSales === false) {
+                return {
+                    success: false,
+                    error: 'Kho được chọn không cấu hình cho phép xuất bán (allowSales = false)',
+                }
+            }
+            if (so.legalEntityId && wh.legalEntityId && wh.legalEntityId !== so.legalEntityId) {
+                return {
+                    success: false,
+                    error: 'Pháp nhân của kho xuất bán không khớp với pháp nhân của Đơn bán hàng (SO)',
+                }
+            }
+        }
+        if (!targetWarehouseId && so.legalEntityId && typeof (prisma as any).warehouse?.findFirst === 'function') {
             const defaultWh = await prisma.warehouse.findFirst({
-                where: { legalEntityId: so.legalEntityId, allowSales: true },
+                where: { legalEntityId: so.legalEntityId, allowSales: true, code: { not: 'WH-TA-TT' } },
                 orderBy: [{ isDefault: 'desc' }, { name: 'asc' }],
                 select: { id: true },
             })
@@ -3639,8 +3666,8 @@ export async function createARInvoiceForSO(
             return { success: false, error: `Đơn hàng ${so.soNo} đã được xuất hóa đơn (${so.arInvoices[0].invoiceNo})` }
         }
 
-        const count = await prisma.aRInvoice.count()
-        const defaultInvoiceNo = `VAT-SO-${String(count + 1).padStart(6, '0')}`
+        const { generateNextDocCode } = await import('@/lib/doc-code')
+        const defaultInvoiceNo = await generateNextDocCode(prisma.aRInvoice, 'invoiceNo', 'VAT-SO-', 6)
         const invoiceNo = customInvoiceNo?.trim() || defaultInvoiceNo
 
         // Check invoiceNo unique

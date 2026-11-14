@@ -11,6 +11,12 @@ const mockPrisma = {
 }
 
 vi.mock('@/lib/db', () => ({ prisma: mockPrisma }))
+vi.mock('@/lib/session', () => ({
+    requireAuth: vi.fn().mockResolvedValue({ id: 'test-user', name: 'Test Admin', roles: ['CEO', 'ADMIN'], permissions: ['*'] }),
+    requirePermission: vi.fn().mockResolvedValue({ id: 'test-user', name: 'Test Admin', roles: ['CEO', 'ADMIN'], permissions: ['*'] }),
+    getCurrentUser: vi.fn().mockResolvedValue({ id: 'test-user', name: 'Test Admin', roles: ['CEO', 'ADMIN'], permissions: ['*'] }),
+    hasRole: vi.fn().mockReturnValue(true),
+}))
 
 const {
     createAllocCampaign,

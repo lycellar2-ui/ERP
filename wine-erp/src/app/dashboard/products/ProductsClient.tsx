@@ -492,7 +492,7 @@ export function ProductsClient({
                     onClick={() => !qpSaving && setQuickPriceTarget(null)}
                 >
                     <div
-                        className="w-full max-w-md rounded-xl p-5 shadow-xl space-y-4"
+                        className="w-full max-w-md rounded-lg p-5 shadow-xl space-y-4"
                         style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
                         onClick={e => e.stopPropagation()}
                     >

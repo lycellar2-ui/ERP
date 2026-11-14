@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { logAudit } from '@/lib/audit'
 import { revalidateCache } from '@/lib/cache'
-import { getCurrentUser } from '@/lib/session'
+import { getCurrentUser, requireAuth } from '@/lib/session'
 
 // ═══════════════════════════════════════════════════
 // DELIVERY ORDER — Xuất kho từ SO
@@ -113,6 +113,7 @@ export async function createDeliveryOrder(input: {
     lines: DOLineInput[]
 }): Promise<{ success: boolean; doId?: string; doNo?: string; error?: string }> {
     try {
+        await requireAuth()
         const { soId, warehouseId, lines } = input
         if (lines.length === 0) return { success: false, error: 'Cần ít nhất 1 dòng xuất kho' }
 

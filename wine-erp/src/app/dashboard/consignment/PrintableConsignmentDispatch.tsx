@@ -54,7 +54,7 @@ export default function PrintableConsignmentDispatch({ data, onClose }: Props) {
     const legalName = data.legalEntityName || 'CÔNG TY TNHH LY CELLARS'
 
     return (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 overflow-y-auto p-4 sm:p-6 print:p-0 print:bg-white print:overflow-visible print:inset-auto print:static">
+        <div className="print-modal fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 overflow-y-auto p-4 sm:p-6 print:p-0 print:bg-white print:overflow-visible print:inset-auto print:static">
             <style>{`
                 @media print {
                     @page {

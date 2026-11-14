@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 149 Rules rút ra từ 112 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 157 Rules rút ra từ 120 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -242,4 +242,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-11-10 18:05 | Wine ERP v12.47 - SKU 360° MOS Forecast (3M/6M/12M Months of Supply & Reorder Planning) + Import & Stock Lot History on Supabase*
+*Last updated: 2026-11-14 | Wine ERP v12.48 - Full-Stack UI/UX, Logic, RBAC & Production E2E Audit Fixes*

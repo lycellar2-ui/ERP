@@ -117,14 +117,14 @@ export function MarkdownDocModal({
     }
 
     return (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex justify-center p-3 sm:p-6 animate-in fade-in duration-150">
+        <div className="print-modal fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex justify-center p-3 sm:p-6 animate-in fade-in duration-150 print:static print:bg-white print:p-0 print:overflow-visible">
             <div
-                className="bg-white w-full max-w-4xl rounded-lg shadow-2xl border border-slate-200 flex flex-col my-auto max-h-[92vh] overflow-hidden"
+                className="print-keep bg-white w-full max-w-4xl rounded-lg shadow-2xl border border-slate-200 flex flex-col my-auto max-h-[92vh] overflow-hidden print:max-h-none print:shadow-none print:border-0"
                 role="dialog"
                 aria-modal="true"
             >
                 {/* Header */}
-                <div className="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between gap-4">
+                <div className="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between gap-4 print:bg-white">
                     <div className="flex items-start gap-3 overflow-hidden">
                         <div className="p-2 rounded-lg bg-slate-200 text-slate-700 flex-shrink-0 mt-0.5">
                             <FileText className="w-4 h-4" />
@@ -160,7 +160,7 @@ export function MarkdownDocModal({
                     </div>
 
                     {/* Toolbar Actions */}
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <div className="flex items-center gap-1.5 flex-shrink-0 no-print">
                         <button
                             onClick={handleCopy}
                             disabled={loading || !content}

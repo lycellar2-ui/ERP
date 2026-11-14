@@ -263,3 +263,12 @@ Import: `import { Button, StatusBadge, Drawer } from '@/components/ui'`
 | ✅ Đã chuẩn hóa | **Agency** — AgencyClient (PageHeader, StatGrid, StatCard, Button, Drawer, Tabs) |
 | ✅ Đã chuẩn hóa | **AI** — ai/page.tsx + AIManagementUI + AIWidgets + OCRWidget + VaultUI + ActivePromptEditor (PageHeader, Widgets light) |
 | ✅ Đã chuẩn hóa | **Dashboard (CEO)** — page.tsx + CeoOverviewContent + AICeoSummary + DailyRevenueChart + DashboardFilterBar + CustomerAnalyticsDashboard (PageHeader, StatGrid, Charts, KPI) |
+
+---
+
+## Pure Light Design System v4.1 — Print, Accessibility & Interaction Standards (2026-11-14)
+
+- **Printable Modals (`.print-modal` / `.print-keep` / `.no-print`):** Quy tắc `@media print` trong `globals.css` chỉ ẩn `[role="dialog"]:not(.print-modal):not(.print-keep)` và `.fixed:not(.print-modal):not([class*="print:static"])`. Toàn bộ modal in (`PosmInventoryTab`, `PrintableConsignmentCount`, `PrintableConsignmentDispatch`, `PrintablePaymentRequest`, `PrintableAuditReport`, `StampsClient`, `MarkdownDocModal`, `SopDetailModal`) gắn `.print-modal`. Bảng sử dụng `table { page-break-inside: auto }`, `thead { display: table-header-group }`, `tr { page-break-inside: avoid }`.
+- **Controlled Input Modals (Zero Native Prompt):** Cấm tuyệt đối `window.prompt`, `window.alert`, `window.confirm`. Luồng nhập lý do/VAT/số hóa đơn trong `SalesClient.tsx` sử dụng controlled modal Light Design System hỗ trợ validate, Escape để đóng và backdrop click.
+- **WCAG AA Contrast & Zero Purple/Indigo:** Nút/tab active chữ trắng sử dụng tối thiểu `#0E7490` (thay cho `#0891B2` hoặc `bg-slate-900`/`800`). Loại bỏ hoàn toàn class `indigo-*` / `purple-*` / mã hex tím (`#7C3AED`, `#C084FC`) trên toàn bộ UI và thông báo.
+- **Heading Hierarchy, Hick's Law & Mobile Inputs:** Mỗi trang công khai/app đảm bảo tối đa 1 thẻ `<h1>` chính (`ShowroomCountClient.tsx`), điều hướng phụ dùng `<button type="button">` thay vì quá nhiều `<Link>` (`CeoOverviewContent.tsx`), và input mobile dùng `text-base sm:text-sm` (`Header.tsx`, `ShowroomCountClient.tsx`) để tránh iOS Safari auto-zoom.

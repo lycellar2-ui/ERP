@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/session'
+import { serialize } from '@/lib/serialize'
 import { PosmCategory, PosmTxType, PosmReason } from '@prisma/client'
 
 // ═══════════════════════════════════════════════════════════════
@@ -240,7 +241,7 @@ export async function createPosmProduct(data: {
         })
     }
 
-    return item
+    return serialize(item)
 }
 
 // ── 4. Update POSM Master Data Item ───────────────────────────
@@ -258,7 +259,7 @@ export async function updatePosmProduct(id: string, data: {
 }) {
     await requireAuth()
 
-    return prisma.posmProduct.update({
+    const updated = await prisma.posmProduct.update({
         where: { id },
         data: {
             name: data.name?.trim(),
@@ -273,6 +274,8 @@ export async function updatePosmProduct(id: string, data: {
             notes: data.notes?.trim() ?? null,
         },
     })
+
+    return serialize(updated)
 }
 
 // ── 5. Delete POSM Item (Only allowed if no transactions) ──────
@@ -284,7 +287,8 @@ export async function deletePosmProduct(id: string) {
         throw new Error(`Không thể xóa vật phẩm POSM này vì đã có ${txCount} giao dịch nhập/xuất kho. Vui lòng chuyển trạng thái sang DISCONTINUED.`)
     }
 
-    return prisma.posmProduct.delete({ where: { id } })
+    const deleted = await prisma.posmProduct.delete({ where: { id } })
+    return serialize(deleted)
 }
 
 // ── 6. Create POSM Transaction (Inbound / Outbound / Adjust) ──

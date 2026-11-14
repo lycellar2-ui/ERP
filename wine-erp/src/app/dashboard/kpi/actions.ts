@@ -183,6 +183,8 @@ export async function upsertKpiTarget(input: {
     salesRepId?: string | null
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        const { requireAuth } = await import('@/lib/session')
+        await requireAuth()
         const existing = await prisma.kpiTarget.findFirst({
             where: {
                 metric: input.metric,
@@ -218,6 +220,8 @@ export async function upsertKpiTarget(input: {
 
 export async function deleteKpiTarget(id: string): Promise<{ success: boolean; error?: string }> {
     try {
+        const { requireAuth } = await import('@/lib/session')
+        await requireAuth()
         await prisma.kpiTarget.delete({ where: { id } })
         revalidateCache('kpi')
         revalidatePath('/dashboard/kpi')

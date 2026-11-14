@@ -189,8 +189,9 @@ export async function createQuotation(input: {
     lines: { productId: string; qtyOrdered: number; unitPrice: number; lineDiscountPct?: number; vatRate?: number }[]
 }): Promise<{ success: boolean; id?: string; quotationNo?: string; publicToken?: string | null; error?: string }> {
     try {
-        const count = await prisma.salesQuotation.count()
-        const quotationNo = `QT-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(count + 1).padStart(3, '0')}`
+        const { generateNextDocCode } = await import('@/lib/doc-code')
+        const qtPrefix = `QT-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-`
+        const quotationNo = await generateNextDocCode(prisma.salesQuotation, 'quotationNo', qtPrefix, 3)
         const distinctVatRates = Array.from(new Set(input.lines.map(l => Number(l.vatRate ?? 10))))
         if (distinctVatRates.length > 1) {
             return {
@@ -560,8 +561,9 @@ export async function duplicateQuotation(quotationId: string): Promise<{ success
         })
         if (!qt) return { success: false, error: 'Quotation không tồn tại' }
 
-        const count = await prisma.salesQuotation.count()
-        const quotationNo = `QT-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(count + 1).padStart(3, '0')}`
+        const { generateNextDocCode } = await import('@/lib/doc-code')
+        const qtPrefix = `QT-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-`
+        const quotationNo = await generateNextDocCode(prisma.salesQuotation, 'quotationNo', qtPrefix, 3)
 
         const validUntil = new Date()
         validUntil.setDate(validUntil.getDate() + 30)

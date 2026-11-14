@@ -93,7 +93,7 @@ function getPreviewUrl(url: string): { type: 'image' | 'office' | 'pdf'; src: st
 const GROUP_BADGE_CLASS: Record<ProductLegalDocGroup, string> = {
     TCB: 'bg-emerald-50 text-emerald-800 border-emerald-200',
     AMENDMENT: 'bg-amber-50 text-amber-800 border-amber-200',
-    TESTING: 'bg-indigo-50 text-indigo-800 border-indigo-200',
+    TESTING: 'bg-sky-50 text-sky-800 border-sky-200',
 }
 
 export function TastingNotesCatalog({
@@ -490,8 +490,8 @@ export function TastingNotesCatalog({
                             onClick={() => setDocFilter('HAS_TESTING')}
                             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
                                 docFilter === 'HAS_TESTING'
-                                    ? 'bg-indigo-700 text-white'
-                                    : 'bg-indigo-50 text-indigo-800 hover:bg-indigo-100 border border-indigo-200'
+                                    ? 'bg-[#0E7490] text-white'
+                                    : 'bg-sky-50 text-sky-800 hover:bg-sky-100 border border-sky-200'
                             }`}
                         >
                             <FlaskConical size={13} />
@@ -608,7 +608,7 @@ export function TastingNotesCatalog({
                                         <button
                                             type="button"
                                             onClick={() => openDossierDrawer(item.id, 'ALL')}
-                                            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold bg-slate-800 text-white"
+                                            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold bg-[#0E7490] hover:bg-[#155E75] text-white"
                                         >
                                             <FolderOpen size={11} />
                                             <span>{TC.table.dossierBtn} ({totalDocsCount})</span>
@@ -674,7 +674,7 @@ export function TastingNotesCatalog({
                                         <button
                                             type="button"
                                             onClick={() => openDossierDrawer(item.id, 'TESTING')}
-                                            className="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200"
+                                            className="px-2 py-0.5 rounded text-[10px] font-semibold bg-sky-50 text-sky-800 border border-sky-200"
                                         >
                                             {item.testingDocs.length} {TC.table.testingCountUnit}
                                         </button>
@@ -1049,7 +1049,7 @@ export function TastingNotesCatalog({
                                                                     title: `${latestTesting.name} — ${item.skuCode}`,
                                                                 })
                                                             }
-                                                            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer"
+                                                            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold bg-sky-50 text-sky-800 border border-sky-200 hover:bg-sky-100 transition-colors cursor-pointer"
                                                         >
                                                             <Eye size={12} /> {TC.table.viewTesting}
                                                         </button>
@@ -1059,7 +1059,7 @@ export function TastingNotesCatalog({
                                                                 onClick={() =>
                                                                     openDossierDrawer(item.id, 'TESTING')
                                                                 }
-                                                                className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-900 hover:bg-indigo-200 cursor-pointer"
+                                                                className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-900 hover:bg-sky-200 cursor-pointer"
                                                             >
                                                                 {item.testingDocs.length} {TC.table.testingCountUnit}
                                                             </button>
@@ -1135,7 +1135,7 @@ export function TastingNotesCatalog({
                                                 <button
                                                     type="button"
                                                     onClick={() => openDossierDrawer(item.id, 'ALL')}
-                                                    className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold bg-slate-800 text-white hover:bg-slate-900 transition-colors cursor-pointer"
+                                                    className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold bg-[#0E7490] text-white hover:bg-[#155E75] transition-colors cursor-pointer"
                                                     title={TC.table.openDossierTooltip}
                                                 >
                                                     <FolderOpen size={12} />
@@ -1201,7 +1201,7 @@ export function TastingNotesCatalog({
                                     </div>
                                     <div className="min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-slate-900 text-white">
+                                            <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-800 border border-slate-300">
                                                 {activeDossierItem.skuCode}
                                             </span>
                                             <WineTypeBadge type={activeDossierItem.wineType} />
@@ -1254,7 +1254,7 @@ export function TastingNotesCatalog({
                                         onClick={() => setActiveDossierSection('ALL')}
                                         className={`px-2.5 py-1 rounded text-xs font-semibold cursor-pointer transition-colors ${
                                             activeDossierSection === 'ALL'
-                                                ? 'bg-slate-900 text-white'
+                                                ? 'bg-[#0E7490] text-white'
                                                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                         }`}
                                     >
@@ -1298,8 +1298,8 @@ export function TastingNotesCatalog({
                                         onClick={() => setActiveDossierSection('TESTING')}
                                         className={`px-2.5 py-1 rounded text-xs font-semibold cursor-pointer transition-colors ${
                                             activeDossierSection === 'TESTING'
-                                                ? 'bg-indigo-700 text-white'
-                                                : 'bg-indigo-50 text-indigo-800 hover:bg-indigo-100'
+                                                ? 'bg-[#0E7490] text-white'
+                                                : 'bg-sky-50 text-sky-800 hover:bg-sky-100'
                                         }`}
                                     >
                                         {TC.dossierDrawer.tabTesting} ({activeDossierItem.testingDocs.length})
@@ -1600,7 +1600,7 @@ export function TastingNotesCatalog({
                                                                     ? 'text-emerald-700'
                                                                     : group === 'AMENDMENT'
                                                                     ? 'text-amber-700'
-                                                                    : 'text-indigo-700'
+                                                                    : 'text-sky-700'
                                                             }
                                                         />
                                                         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">

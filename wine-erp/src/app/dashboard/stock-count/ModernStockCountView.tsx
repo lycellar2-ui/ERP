@@ -398,7 +398,7 @@ export function ModernStockCountView({ detail, onBack, onRefreshed }: Props) {
                         </div>
 
                         {filteredSpots.length === 0 ? (
-                            <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-500 text-xs">
+                            <div className="bg-white rounded-lg border border-slate-200 p-8 text-center text-slate-500 text-xs">
                                 Không tìm thấy vị trí nào phù hợp với từ khóa.
                             </div>
                         ) : (
@@ -418,7 +418,7 @@ export function ModernStockCountView({ detail, onBack, onRefreshed }: Props) {
                                                 setSelectedSpotKey(sp.key)
                                                 setView('count')
                                             }}
-                                            className={`p-4 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer group hover:shadow-xs active:scale-[0.99] ${
+                                            className={`p-4 rounded-lg border text-left transition-all flex flex-col justify-between cursor-pointer group hover:shadow-xs active:scale-[0.99] ${
                                                 isDone
                                                     ? 'bg-emerald-50/40 border-emerald-300/80 hover:border-emerald-400'
                                                     : isPartial
@@ -476,7 +476,7 @@ export function ModernStockCountView({ detail, onBack, onRefreshed }: Props) {
                 {view === 'count' && currentSpot && (
                     <div className="space-y-4">
                         {/* Spot Counting Header */}
-                        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs">
+                        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-2xs">
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                                 <div className="flex items-center gap-2">
                                     <button
@@ -532,7 +532,7 @@ export function ModernStockCountView({ detail, onBack, onRefreshed }: Props) {
                                                 onClick={() => setCountFilter(f)}
                                                 className={`px-3 py-1 rounded-md text-xs font-semibold whitespace-nowrap transition-colors ${
                                                     countFilter === f
-                                                        ? 'bg-slate-900 text-white'
+                                                        ? 'bg-[#0E7490] text-white'
                                                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                                 }`}
                                             >
@@ -546,7 +546,7 @@ export function ModernStockCountView({ detail, onBack, onRefreshed }: Props) {
 
                         {/* Items List */}
                         {currentSpotItems.length === 0 ? (
-                            <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-500 text-xs">
+                            <div className="bg-white rounded-lg border border-slate-200 p-8 text-center text-slate-500 text-xs">
                                 Không có mặt hàng nào phù hợp với bộ lọc tại vị trí này.
                             </div>
                         ) : (
@@ -563,7 +563,7 @@ export function ModernStockCountView({ detail, onBack, onRefreshed }: Props) {
                                     return (
                                         <div
                                             key={item.id}
-                                            className={`bg-white rounded-xl border p-4 shadow-2xs transition-all ${
+                                            className={`bg-white rounded-lg border p-4 shadow-2xs transition-all ${
                                                 isCounted
                                                     ? 'border-slate-200'
                                                     : 'border-amber-200 bg-amber-50/10'
@@ -739,7 +739,7 @@ export function ModernStockCountView({ detail, onBack, onRefreshed }: Props) {
                     <div className="space-y-5">
                         {/* Summary KPI Cards */}
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs">
+                            <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-2xs">
                                 <span className="text-[11px] font-bold text-slate-400 uppercase">
                                     Tổng mặt hàng
                                 </span>
@@ -751,7 +751,7 @@ export function ModernStockCountView({ detail, onBack, onRefreshed }: Props) {
                                 </div>
                             </div>
 
-                            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs">
+                            <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-2xs">
                                 <span className="text-[11px] font-bold text-slate-400 uppercase">
                                     Tổng chai thực tế
                                 </span>
@@ -763,7 +763,7 @@ export function ModernStockCountView({ detail, onBack, onRefreshed }: Props) {
                                 </div>
                             </div>
 
-                            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs">
+                            <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-2xs">
                                 <span className="text-[11px] font-bold text-slate-400 uppercase">
                                     Chênh lệch số lượng
                                 </span>
@@ -781,7 +781,7 @@ export function ModernStockCountView({ detail, onBack, onRefreshed }: Props) {
                                 </div>
                             </div>
 
-                            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs">
+                            <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-2xs">
                                 <span className="text-[11px] font-bold text-slate-400 uppercase">
                                     Giá trị chênh lệch
                                 </span>
@@ -797,13 +797,13 @@ export function ModernStockCountView({ detail, onBack, onRefreshed }: Props) {
                         </div>
 
                         {/* Summary Action Bar */}
-                        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div className="flex items-center gap-1 border-b sm:border-b-0 border-slate-100 pb-2 sm:pb-0">
                                 <button
                                     type="button"
                                     onClick={() => setSummaryTab('items')}
                                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                                        summaryTab === 'items' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                                        summaryTab === 'items' ? 'bg-[#0E7490] text-white' : 'text-slate-600 hover:bg-slate-100'
                                     }`}
                                 >
                                     Theo Mặt Hàng
@@ -812,7 +812,7 @@ export function ModernStockCountView({ detail, onBack, onRefreshed }: Props) {
                                     type="button"
                                     onClick={() => setSummaryTab('spots')}
                                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                                        summaryTab === 'spots' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                                        summaryTab === 'spots' ? 'bg-[#0E7490] text-white' : 'text-slate-600 hover:bg-slate-100'
                                     }`}
                                 >
                                     Theo Vị Trí
@@ -821,7 +821,7 @@ export function ModernStockCountView({ detail, onBack, onRefreshed }: Props) {
                                     type="button"
                                     onClick={() => setSummaryTab('variance')}
                                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                                        summaryTab === 'variance' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                                        summaryTab === 'variance' ? 'bg-[#0E7490] text-white' : 'text-slate-600 hover:bg-slate-100'
                                     }`}
                                 >
                                     Cảnh Báo Lệch Kho
@@ -857,7 +857,7 @@ export function ModernStockCountView({ detail, onBack, onRefreshed }: Props) {
                         </div>
 
                         {/* Summary Tables */}
-                        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-2xs">
+                        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-2xs">
                             {summaryTab === 'items' && (
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-xs text-left">
@@ -1047,7 +1047,7 @@ export function ModernStockCountView({ detail, onBack, onRefreshed }: Props) {
             {/* Note Edit Modal */}
             {activeNoteLine && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-                    <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-md p-5 space-y-4">
+                    <div className="bg-white rounded-lg shadow-2xl border border-slate-200 w-full max-w-md p-5 space-y-4">
                         <div className="flex items-center justify-between">
                             <h3 className="font-bold text-sm text-slate-900">
                                 Ghi chú kiểm đếm
@@ -1095,7 +1095,7 @@ export function ModernStockCountView({ detail, onBack, onRefreshed }: Props) {
             {/* Approve Confirmation Modal */}
             {showApproveModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in-50">
-                    <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg p-5 space-y-4">
+                    <div className="bg-white rounded-lg shadow-2xl border border-slate-200 w-full max-w-lg p-5 space-y-4">
                         <div className="flex items-center gap-3">
                             <div className="p-2.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
                                 <ShieldCheck size={22} />

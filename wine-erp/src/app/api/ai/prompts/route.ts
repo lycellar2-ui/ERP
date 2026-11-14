@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { getCurrentUser, hasRole } from '@/lib/session'
 
 export async function PUT(req: NextRequest) {
     try {
+        const user = await getCurrentUser()
+        if (!user || !hasRole(user, 'CEO', 'ADMIN', 'Admin', 'SYS:ADMIN')) {
+            return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 })
+        }
         const body = await req.json()
         const { slug, systemPrompt, userTemplate, temperature, maxTokens } = body
 

@@ -34,6 +34,8 @@ export type MarginProductRow = {
 }
 
 export async function getMarginSuppliers(): Promise<MarginSupplierOption[]> {
+    const { requireAuth } = await import('@/lib/session')
+    await requireAuth()
     const suppliers = await prisma.supplier.findMany({
         where: { deletedAt: null, status: 'ACTIVE' },
         select: { id: true, name: true },
@@ -44,6 +46,8 @@ export async function getMarginSuppliers(): Promise<MarginSupplierOption[]> {
 
 // ─── Fetch products with pricing ──────────────────
 export async function getMarginProducts(): Promise<MarginProductRow[]> {
+    const { requireAuth } = await import('@/lib/session')
+    await requireAuth()
     const products = await prisma.product.findMany({
         where: { deletedAt: null, status: 'ACTIVE' },
         include: {
@@ -168,19 +172,32 @@ export async function bulkImportMarginPrices(rows: Record<string, any>[]): Promi
                 continue
             }
 
-            // Helper to clean price numbers: handles strings with commas, dots, spaces, or currency symbols (e.g. 854,528 -> 854528)
-            const parseVal = (v: any) => {
+            // Helper to parse price numbers safely:
+            // Handles "850000.00" (decimal), "854,528.50" (US formatted), "854.528" / "1.200.000" (VN thousands)
+            const parsePriceNumber = (v: unknown): number => {
                 if (v === undefined || v === null || v === '') return 0
-                if (typeof v === 'number') return v
-                // Strip formatting: commas, dots, spaces, currency symbols
-                const cleanStr = String(v).replace(/[,.\sđđ]/g, '').trim()
+                if (typeof v === 'number') return Number.isFinite(v) ? v : 0
+                let raw = String(v).replace(/[\sđ₫VND]/gi, '').trim()
+                if (!raw) return 0
+                // Case 1: ends with decimal .dd (1-2 digits) e.g. "850000.00" or "850,000.50"
+                if (/^\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?$/.test(raw) || /^\d+\.\d{1,2}$/.test(raw)) {
+                    const num = Number(raw.replace(/,/g, ''))
+                    return Number.isFinite(num) ? Math.round(num) : 0
+                }
+                // Case 2: VN decimal comma with thousands dots e.g. "850.000,50"
+                if (/^\d{1,3}(?:\.\d{3})*,\d{1,2}$/.test(raw)) {
+                    const num = Number(raw.replace(/\./g, '').replace(',', '.'))
+                    return Number.isFinite(num) ? Math.round(num) : 0
+                }
+                // Case 3: Pure thousands separators ("850.000", "1,250,000")
+                const cleanStr = raw.replace(/[,.]/g, '')
                 const num = Number(cleanStr)
-                return isNaN(num) ? 0 : num
+                return Number.isFinite(num) ? num : 0
             }
 
-            const costPrice = parseVal(rawCostVal)
-            const retailPrice = parseVal(rawRetailVal)
-            const wholesalePrice = parseVal(rawWholesaleVal)
+            const costPrice = parsePriceNumber(rawCostVal)
+            const retailPrice = parsePriceNumber(rawRetailVal)
+            const wholesalePrice = parsePriceNumber(rawWholesaleVal)
 
             // Convert and validate numbers
             const parsed = importRowSchema.parse({

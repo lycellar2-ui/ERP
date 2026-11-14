@@ -59,14 +59,13 @@ function CustomerCard({ row, onSelect, isSelected }: { row: CustomerCRMRow; onSe
     const tierCfg = TIER_CFG[tier]
 
     return (
-        <button onClick={onSelect} className="w-full text-left p-4 rounded-md transition-all duration-150"
-            style={{
-                background: isSelected ? 'rgba(8,145,178,0.08)' : '#FFFFFF',
-                border: `1px solid ${isSelected ? '#0E7490' : '#E2E8F0'}`,
-                borderLeft: `3px solid ${isSelected ? '#0E7490' : 'transparent'}`,
-            }}
-            onMouseEnter={e => { if (!isSelected) { (e.currentTarget as HTMLElement).style.borderColor = '#0891B2' } }}
-            onMouseLeave={e => { if (!isSelected) { (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0' } }}
+        <button
+            onClick={onSelect}
+            className={`w-full text-left p-4 rounded-md transition-all duration-150 cursor-pointer border ${
+                isSelected
+                    ? 'bg-cyan-50/70 border-[#0E7490] border-l-[3px]'
+                    : 'bg-white border-slate-200 hover:border-[#0891B2] border-l-[3px] border-l-transparent'
+            }`}
         >
             <div className="flex items-start justify-between mb-3">
                 <div className="flex-1 min-w-0">

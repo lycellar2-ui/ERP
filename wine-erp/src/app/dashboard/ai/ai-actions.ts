@@ -2,6 +2,15 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { requireAuth, hasRole } from '@/lib/session'
+
+async function requireAiAdmin() {
+    const user = await requireAuth()
+    if (!hasRole(user, 'CEO', 'ADMIN', 'Admin', 'SYS:ADMIN')) {
+        throw new Error('Forbidden: Admin access required for AI settings')
+    }
+    return user
+}
 
 // ═══════════════════════════════════════════════════
 // AI SYSTEM CONFIG — Toggle + Settings
@@ -40,6 +49,7 @@ export async function isModuleAiEnabled(module: string): Promise<boolean> {
 }
 
 export async function toggleAiEnabled(enabled: boolean) {
+    await requireAiAdmin()
     await prisma.aiSystemConfig.upsert({
         where: { id: 'singleton' },
         update: { aiEnabled: enabled },
@@ -54,6 +64,7 @@ export async function updateAiConfig(data: {
     defaultTemperature?: number
     defaultMaxTokens?: number
 }) {
+    await requireAiAdmin()
     await prisma.aiSystemConfig.upsert({
         where: { id: 'singleton' },
         update: data,
@@ -73,6 +84,7 @@ export async function saveAiReport(input: {
     stats?: any
     prompt?: string
 }) {
+    await requireAuth()
     const report = await prisma.aiReport.create({
         data: {
             module: input.module,
@@ -86,6 +98,7 @@ export async function saveAiReport(input: {
 }
 
 export async function getAiReports(module?: string, limit = 20) {
+    await requireAuth()
     const reports = await prisma.aiReport.findMany({
         where: {
             ...(module ? { module } : {}),
@@ -98,11 +111,13 @@ export async function getAiReports(module?: string, limit = 20) {
 }
 
 export async function getAiReportById(id: string) {
+    await requireAuth()
     const report = await prisma.aiReport.findUnique({ where: { id } })
     return report ? JSON.parse(JSON.stringify(report)) : null
 }
 
 export async function togglePinReport(id: string) {
+    await requireAuth()
     const report = await prisma.aiReport.findUnique({ where: { id }, select: { isPinned: true } })
     if (!report) return
     await prisma.aiReport.update({
@@ -112,6 +127,7 @@ export async function togglePinReport(id: string) {
 }
 
 export async function archiveReport(id: string) {
+    await requireAuth()
     await prisma.aiReport.update({
         where: { id },
         data: { isArchived: true },
@@ -119,6 +135,7 @@ export async function archiveReport(id: string) {
 }
 
 export async function deleteAiReport(id: string) {
+    await requireAuth()
     await prisma.aiReport.delete({ where: { id } })
 }
 
@@ -127,6 +144,7 @@ export async function deleteAiReport(id: string) {
 // ═══════════════════════════════════════════════════
 
 export async function getPromptTemplates() {
+    await requireAuth()
     const templates = await prisma.aiPromptTemplate.findMany({
         orderBy: { updatedAt: 'desc' },
         include: { _count: { select: { runs: true } } },
@@ -135,6 +153,7 @@ export async function getPromptTemplates() {
 }
 
 export async function getPromptTemplate(slug: string) {
+    await requireAuth()
     const template = await prisma.aiPromptTemplate.findUnique({ where: { slug } })
     return template ? JSON.parse(JSON.stringify(template)) : null
 }
@@ -149,6 +168,7 @@ export async function upsertPromptTemplate(input: {
     temperature?: number
     maxTokens?: number
 }) {
+    await requireAiAdmin()
     const data = {
         name: input.name,
         description: input.description ?? null,
@@ -167,6 +187,7 @@ export async function upsertPromptTemplate(input: {
 }
 
 export async function deletePromptTemplate(slug: string) {
+    await requireAiAdmin()
     await prisma.aiPromptTemplate.delete({ where: { slug } })
 }
 

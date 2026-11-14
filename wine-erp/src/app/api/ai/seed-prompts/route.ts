@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { getCurrentUser, hasRole } from '@/lib/session'
 
 const DEFAULT_PROMPTS = [
     {
@@ -75,6 +76,10 @@ Yêu cầu: Viết bằng tiếng Việt. Cụ thể tên sản phẩm, NCC. K�
 
 export async function POST() {
     try {
+        const user = await getCurrentUser()
+        if (!user || !hasRole(user, 'CEO', 'ADMIN', 'Admin', 'SYS:ADMIN')) {
+            return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 })
+        }
         const results = []
         for (const p of DEFAULT_PROMPTS) {
             const created = await prisma.aiPromptTemplate.upsert({

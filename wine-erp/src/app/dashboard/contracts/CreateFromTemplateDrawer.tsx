@@ -28,6 +28,8 @@ import {
 import {
     CONTRACT_TEMPLATES,
     ContractTemplateDefinition,
+} from './contract-templates'
+import {
     getCounterpartyDetailAction,
     getAvailableProductsForContractAction,
     generateContractFromTemplateAction,

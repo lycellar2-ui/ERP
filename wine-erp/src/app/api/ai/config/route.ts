@@ -9,10 +9,15 @@ export async function PUT(req: NextRequest) {
             return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 })
         }
         const body = await req.json()
+        const updateData: Record<string, unknown> = {}
+        if (typeof body.aiEnabled === 'boolean') updateData.aiEnabled = body.aiEnabled
+        if (Array.isArray(body.allowedModules)) updateData.allowedModules = body.allowedModules
+        if (typeof body.defaultTemperature === 'number') updateData.defaultTemperature = body.defaultTemperature
+        if (typeof body.defaultMaxTokens === 'number') updateData.defaultMaxTokens = body.defaultMaxTokens
         await prisma.aiSystemConfig.upsert({
             where: { id: 'singleton' },
-            update: body,
-            create: { id: 'singleton', ...body },
+            update: updateData,
+            create: { id: 'singleton', ...updateData },
         })
         return NextResponse.json({ success: true })
     } catch (err) {

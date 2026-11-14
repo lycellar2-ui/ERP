@@ -207,8 +207,8 @@ export async function createEmployee(data: CreateEmployeeInput) {
     // Auto generate code if missing
     let code = data.code?.trim()
     if (!code) {
-        const count = await prisma.employee.count()
-        code = `NV-${String(count + 1).padStart(3, '0')}`
+        const { generateNextDocCode } = await import('@/lib/doc-code')
+        code = await generateNextDocCode(prisma.employee, 'code', 'NV-', 3)
     } else {
         const existing = await prisma.employee.findUnique({ where: { code } })
         if (existing) {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { getCurrentUser } from '@/lib/session'
 
 export async function GET(req: NextRequest) {
     const id = req.nextUrl.searchParams.get('id')
@@ -7,6 +8,10 @@ export async function GET(req: NextRequest) {
     const style = req.nextUrl.searchParams.get('style') || 'professional'
 
     if (!id && !token) return NextResponse.json({ error: 'Missing id or token' }, { status: 400 })
+    if (!token) {
+        const user = await getCurrentUser()
+        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const qt = await prisma.salesQuotation.findUnique({
         where: token ? { publicToken: token } : { id: id! },
@@ -43,6 +48,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
+        const user = await getCurrentUser()
+        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         let data: any
         const contentType = req.headers.get('content-type') || ''
         if (contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data')) {

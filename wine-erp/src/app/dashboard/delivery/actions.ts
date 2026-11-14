@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { uploadFile } from '@/lib/storage'
 import { cached, revalidateCache } from '@/lib/cache'
 import { parseOrThrow, DeliveryRouteCreateSchema, EPODSchema, DeliveryFailureSchema, CODSyncSchema } from '@/lib/validations'
+import { requireAuth } from '@/lib/session'
 
 export interface DeliveryRouteRow {
     id: string
@@ -90,6 +91,7 @@ export async function updateRouteStatus(
     status: 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         await prisma.deliveryRoute.update({ where: { id: routeId }, data: { status } })
         revalidateCache('delivery')
         revalidatePath('/dashboard/delivery')
@@ -118,6 +120,7 @@ export async function createDeliveryRoute(data: {
     vehicleId: string
 }): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
+        await requireAuth()
         const validated = parseOrThrow(DeliveryRouteCreateSchema, data)
         const route = await prisma.deliveryRoute.create({
             data: {
@@ -144,6 +147,7 @@ export async function recordEPOD(data: {
     photoUrl?: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         const validated = parseOrThrow(EPODSchema, data)
         await prisma.$transaction([
             prisma.proofOfDelivery.upsert({
@@ -419,6 +423,7 @@ export async function syncCODToAR(input: {
     notes?: string
 }): Promise<{ success: boolean; paymentId?: string; error?: string }> {
     try {
+        await requireAuth()
         const validated = parseOrThrow(CODSyncSchema, input)
 
         const stop = await prisma.deliveryStop.findUnique({
@@ -443,8 +448,8 @@ export async function syncCODToAR(input: {
         const invoice = stop.do.so.arInvoices[0]
         if (!invoice) return { success: false, error: 'No outstanding AR invoice for this SO' }
 
-        const paymentCount = await prisma.aRPayment.count()
-        const paymentNo = `COD-${String(paymentCount + 1).padStart(6, '0')}`
+        const { generateNextDocCode } = await import('@/lib/doc-code')
+        const paymentNo = await generateNextDocCode(prisma.aRPayment, 'paymentNo', 'COD-', 6)
 
         const payment = await prisma.aRPayment.create({
             data: {

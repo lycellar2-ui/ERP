@@ -16,7 +16,7 @@ import {
 import {
     CONTRACT_TEMPLATES,
     ContractTemplateDefinition,
-} from './template-actions'
+} from './contract-templates'
 import { Button, Badge } from '@/components/ui'
 import { useAppLocale } from '@/lib/i18n'
 import { getContractsDict } from './i18n'

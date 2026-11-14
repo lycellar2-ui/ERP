@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { requireAuth } from '@/lib/session'
+import { serialize } from '@/lib/serialize'
 import { SampleOriginType, SampleTxType, SampleReason } from '@prisma/client'
 
 // ═══════════════════════════════════════════════════
@@ -271,7 +272,7 @@ export async function createSampleProduct(data: {
         })
     }
 
-    return sampleProd
+    return serialize(sampleProd)
 }
 
 // ── 4. Create Sample Transaction (Inbound / Outbound) 
@@ -344,7 +345,7 @@ export async function createSampleTransaction(data: {
             data: { qtyOnHand: newQty },
         })
 
-        return transaction
+        return serialize(transaction)
     })
 }
 
@@ -441,22 +442,24 @@ export async function recordSampleInspection(data: {
         newNotes = baseNote || null
     }
 
-    return prisma.sampleProduct.update({
+    const updated = await prisma.sampleProduct.update({
         where: { id: sampleProductId },
         data: {
             originType: originType as SampleOriginType,
             notes: newNotes,
         },
     })
+    return serialize(updated)
 }
 
 // ── 7. Quick Update Sample Origin (Đổi Nhanh Chính / Tiểu Ngạch) ──
 export async function updateSampleOrigin(sampleProductId: string, originType: 'FORMAL' | 'INFORMAL') {
     await requireAuth()
-    return prisma.sampleProduct.update({
+    const updated = await prisma.sampleProduct.update({
         where: { id: sampleProductId },
         data: {
             originType: originType as SampleOriginType,
         },
     })
+    return serialize(updated)
 }

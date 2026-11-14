@@ -92,6 +92,13 @@
 83. [BUG-136: Build Fail Trên Vercel — Non-Async Function & Object/Type Exports Trong File 'use server' (Turbopack Server Actions)](#bug-136-build-fail-trên-vercel--non-async-function--objecttype-exports-trong-file-use-server-turbopack-server-actions)
 84. [BUG-137: Audit Toàn Diện UI/UX Toàn Hệ Thống — Skeleton Trắng-Trên-Trắng, Thiếu Header Title, Native Alert/Confirm, Class Dark Mode & Độ Tương Phản WCAG AA](#bug-137-audit-toàn-diện-uiux-toàn-hệ-thống--skeleton-trắng-trên-trắng-thiếu-header-title-native-alertconfirm-class-dark-mode--độ-tương-phản-wcag-aa)
 85. [BUG-146: Vỡ Font / Lỗi Hiển Thị Tiếng Việt (Mojibake) Trong Modal Xem Trước Bản In (Print Preview) Đơn Bán Hàng CreateSODrawer](#bug-146-vỡ-font--lỗi-hiển-thị-tiếng-việt-mojibake-trong-modal-xem-trước-bản-in-print-preview-đơn-bán-hàng-createsodrawer)
+86. [BUG-151: Vi Phạm Luật React Hooks (Early Return Trước Hook) & Export Non-Async Function Trong File 'use server'](#bug-151-vi-phạm-luật-react-hooks-early-return-trước-hook--export-non-async-function-trong-file-use-server)
+87. [BUG-152: Thiếu Auth/RBAC Guards Trên AI Vault, API Routes, Server Actions Kho/Vận Hành & Lỗi Decimal Serialization](#bug-152-thiếu-authrbac-guards-trên-ai-vault-api-routes-server-actions-khovận-hành--lỗi-decimal-serialization)
+88. [BUG-153: Duyệt SO Thiếu Chặn Kho Cấm Bán / Lệch Pháp Nhân & Lỗi parseVal Nhân 100 Giá Trị Thập Phân Ở Module Margin](#bug-153-duyệt-so-thiếu-chặn-kho-cấm-bán--lệch-pháp-nhân--lỗi-parseval-nhân-100-giá-trị-thập-phân-ở-module-margin)
+89. [BUG-154: Sinh Mã Chứng Từ Bằng count() + 1 Gây Trùng Mã & Lỗi Chuỗi Lịch Sử JE-COGS-20266-* Che Khuất Mã Tuần Tự](#bug-154-sinh-mã-chứng-từ-bằng-count--1-gây-trùng-mã--lỗi-chuỗi-lịch-sử-je-cogs-20266--che-khuất-mã-tuần-tự)
+90. [BUG-155: Rủi Ro XSS Khi Render HTML Chưa Lọc Trong MarkdownViewer](#bug-155-rủi-ro-xss-khi-render-html-chưa-lọc-trong-markdownviewer)
+91. [BUG-156: Bản In Modal Bị Trắng Trang & Bị Cắt Bảng Do Quy Tắc @media print Trong globals.css](#bug-156-bản-in-modal-bị-trắng-trang--bị-cắt-bảng-do-quy-tắc-media-print-trong-globalscss)
+92. [BUG-157: Lỗi UI/UX Toàn Hệ Thống — window.prompt, Vi Phạm Purple Ban, Tương Phản Nút #0891B2, Đa Thẻ H1, Hick's Law & Thiếu i18n Header](#bug-157-lỗi-uiux-toàn-hệ-thống--windowprompt-vi-phạm-purple-ban-tương-phản-nút-0891b2-đa-thẻ-h1-hicks-law--thiếu-i18n-header)
 
 ---
 
@@ -4420,3 +4427,131 @@ Qua đợt kiểm tra chuyên sâu toàn bộ 38 routes và tất cả component
 
 ### Bài học
 > ⚠️ **RULE 150: Tuyệt đối KHÔNG import hàm hoặc biến runtime từ `@/lib/session` hay `@/lib/db` vào bất kỳ file `'use client'` nào (chỉ được phép dùng `import type { SessionUser } from '@/lib/session'`); đồng thời không bao giờ `export` hàm đồng bộ (sync function) trong file có directive `'use server'`.**
+
+---
+
+## BUG-151: Vi Phạm Luật React Hooks (Early Return Trước Hook) & Export Non-Async Function Trong File 'use server'
+
+**Ngày:** 2026-11-14
+**Severity:** High — Crash client modal / lỗi ESLint `react-hooks/rules-of-hooks` và fail build Next.js `'use server'`
+
+### Triệu chứng
+- `ProcurementCashFlowModal.tsx` và `AddUnlistedModal.tsx` đặt `if (!open) return null` / `if (!isOpen) return null` phía trước `useState`, `useMemo`, `useEffect`.
+- `contracts/template-actions.ts` (`'use server'`) export trực tiếp constant object `CONTRACT_TEMPLATES` và type `ContractTemplateDefinition`.
+
+### Cách fix
+1. Di chuyển guard `if (!open) return null` / `if (!isOpen) return null` xuống sau tất cả các Hooks (và bảo vệ thân `useEffect` bằng `if (!isOpen) return`).
+2. Tách `CONTRACT_TEMPLATES` & `ContractTemplateDefinition` sang file thuần `src/app/dashboard/contracts/contract-templates.ts`, cập nhật imports tại `template-actions.ts`, `ContractTemplatesTab.tsx`, `CreateFromTemplateDrawer.tsx`.
+
+### Bài học
+> ⚠️ **RULE 151: Mọi Hook (`useState`, `useMemo`, `useEffect`) trong React component PHẢI luôn được gọi vô điều kiện ở đầu hàm trước bất kỳ lệnh `return` sớm nào; mọi constant/type phục vụ UI không được export từ file `'use server'`.**
+
+---
+
+## BUG-152: Thiếu Auth/RBAC Guards Trên AI Vault, API Routes, Server Actions Kho/Vận Hành & Lỗi Decimal Serialization
+
+**Ngày:** 2026-11-14
+**Severity:** Critical — Cho phép truy cập API/Server Action không xác thực hoặc làm crash RSC khi trả về `Prisma.Decimal`
+
+### Triệu chứng
+- Một số API endpoints (`api/ai/*`, `api/*-analysis`, `api/purchase-suggestion`, `api/qr-print`, `api/export/quotation-pdf`) và Server Actions (`ai/vault-actions.ts`, `ai/ai-actions.ts`, `warehouse/actions-do.ts`, `actions-gr.ts`, `agency`, `allocation`, `costing`, `delivery`, `kpi`, `qr-codes`, `stamps`) thiếu kiểm tra `requireAuth()` / permission guard.
+- `api/r2-file/[...path]` thiếu kiểm tra path traversal (`..`, URL-encoded traversal) và thiếu header `X-Content-Type-Options: nosniff`.
+- `warehouse/actions-posm.ts` và `warehouse/actions-sample.ts` trả về raw `Prisma.Decimal` chưa qua `serialize(...)`.
+
+### Cách fix
+1. Bổ sung `requireAuth()` (kèm `hasPermission` ở các luồng nhạy cảm) cho toàn bộ API routes & Server Actions nêu trên (bao gồm `allocateStampsToPO`, `template-actions.ts`).
+2. Chặn path traversal và bổ sung `X-Content-Type-Options: nosniff` trong `api/r2-file/[...path]/route.ts`.
+3. Bọc kết quả trả về trong `warehouse/actions-posm.ts` và `actions-sample.ts` bằng `serialize(...)`.
+
+### Bài học
+> ⚠️ **RULE 152: Mọi API route (trừ webhook có chữ ký riêng / public link token) và mọi Server Action đọc/ghi dữ liệu PHẢI gọi `requireAuth()` ở dòng đầu tiên; mọi route proxy file tĩnh PHẢI chống path traversal + gắn `nosniff`, và mọi dữ liệu chứa `Prisma.Decimal` PHẢI đi qua `serialize()`.**
+
+---
+
+## BUG-153: Duyệt SO Thiếu Chặn Kho Cấm Bán / Lệch Pháp Nhân & Lỗi parseVal Nhân 100 Giá Trị Thập Phân Ở Module Margin
+
+**Ngày:** 2026-11-14
+**Severity:** High — Xuất nhầm kho kiểm dịch `WH-TA-TT` / kho khác pháp nhân khi duyệt SO, và sai lệch giá 100 lần khi mô phỏng Margin
+
+### Triệu chứng
+- `approveSalesOrder` (`sales/actions.ts`) không chặn kho `WH-TA-TT` hoặc kho có `allowSales === false` hoặc `warehouse.legalEntityId !== so.legalEntityId`.
+- `parseVal` trong `margin/actions.ts` xóa toàn bộ dấu chấm trước khi parse, khiến chuỗi thập phân kiểu `"850000.00"` bị biến thành `85000000`.
+
+### Cách fix
+1. Siết validation trong `approveSalesOrder` để loại `WH-TA-TT`, chặn kho `allowSales === false`, kiểm tra khớp `legalEntityId`, và loại `WH-TA-TT` khỏi query chọn kho mặc định.
+2. Đổi `parseVal` thành `parsePriceNumber` hỗ trợ đúng định dạng thập phân `.00` vs dấu phân cách hàng nghìn.
+
+### Bài học
+> ⚠️ **RULE 153: Luồng duyệt SO phải đối soát đồng thời trạng thái cho phép xuất bán của kho (`allowSales`, khác `WH-TA-TT`) và khớp pháp nhân với đơn hàng (`legalEntityId`); parser số tiền tuyệt đối không xóa mù dấu chấm thập phân.**
+
+---
+
+## BUG-154: Sinh Mã Chứng Từ Bằng count() + 1 Gây Trùng Mã & Lỗi Chuỗi Lịch Sử JE-COGS-20266-* Che Khuất Mã Tuần Tự
+
+**Ngày:** 2026-11-14
+**Severity:** High — Unique constraint violation khi xóa bản ghi hoặc sinh bút toán COGS (`JE-COGS-*`)
+
+### Triệu chứng
+- Nhiều phân hệ (`hr`, `consignment`, `delivery`, `finance`, `payment-requests`, `pos`, `quotations`, `sales`) sinh mã chứng từ bằng `count() + 1`, dẫn tới trùng mã khi bảng từng có bản ghi bị xóa.
+- Dùng `findFirst({ orderBy: { entryNo: 'desc' } })` bị thất bại khi bảng `JournalEntry` tồn tại mã lịch sử dạng `JE-COGS-20266-69rdla` đứng trên `JE-COGS-00198` theo thứ tự chữ cái (ASCII `'2' > '0'`), khiến generator không thấy `00198` và quay về sinh `JE-COGS-000001` gây trùng khóa chính.
+
+### Cách fix
+- Tạo helper dùng chung `generateNextDocCode` (`src/lib/doc-code.ts`) ưu tiên quét `findMany({ where: { [field]: { startsWith: prefix } }, select: { [field]: true } })`, lọc đúng biểu thức chính quy `^<prefix>(\d+)$` để tìm giá trị số lớn nhất thực sự (giữ fallback `findFirst` và `count()` cho mock unit test không có `findMany`).
+
+### Bài học
+> ⚠️ **RULE 154: Tuyệt đối không sinh mã chứng từ tuần tự bằng `count() + 1` hay `findFirst` `orderBy: desc` đơn thuần khi có hậu tố khác quy chuẩn; luôn quét & lọc bằng regex `^<prefix>(\d+)$` qua `generateNextDocCode` để tìm đúng số thứ tự lớn nhất.**
+
+---
+
+## BUG-155: Rủi Ro XSS Khi Render HTML Chưa Lọc Trong MarkdownViewer
+
+**Ngày:** 2026-11-14
+**Severity:** High — Stored/Reflected XSS tiềm ẩn khi hiển thị nội dung markdown/SOP bằng `dangerouslySetInnerHTML`
+
+### Triệu chứng
+- `MarkdownViewer.tsx` render HTML qua `dangerouslySetInnerHTML` không có lớp lọc thẻ/thuộc tính nguy hiểm (`<script>`, `<iframe>`, `on*`, `javascript:`), và fallback `<pre>` không escape HTML.
+
+### Cách fix
+- Bổ sung hàm `sanitizeMarkdownHtml` trong `src/components/ui/MarkdownViewer.tsx` loại bỏ `<script>`, `<style>`, `<iframe>`, `<object>`, `<embed>`, event handlers `on*=`, và URL `javascript:`/`data:text/html`, kèm escape HTML cho fallback `<pre>`.
+
+### Bài học
+> ⚠️ **RULE 155: Mọi chỗ sử dụng `dangerouslySetInnerHTML` trong UI bắt buộc phải đi qua hàm sanitize (`sanitizeMarkdownHtml` hoặc equivalent) và được bảo vệ bằng regression test chống payload `<script>` / `onerror=` / `javascript:`.**
+
+---
+
+## BUG-156: Bản In Modal Bị Trắng Trang & Bị Cắt Bảng Do Quy Tắc @media print Trong globals.css
+
+**Ngày:** 2026-11-14
+**Severity:** Medium — Người dùng bấm in trong các modal chứng từ ra trang trắng hoặc bảng bị cắt giữa trang
+
+### Triệu chứng
+- `globals.css` đặt `[role="dialog"] { display: none !important }` và `.fixed { display: none !important }` trong `@media print`, vô tình ẩn luôn cả các modal xem trước bản in.
+- Quy tắc `table { page-break-inside: avoid }` làm trình duyệt đẩy cả bảng lớn sang trang mới hoặc cắt cụt nội dung.
+
+### Cách fix
+1. Cập nhật `@media print` trong `src/app/globals.css`: loại trừ `[role="dialog"]:not(.print-modal):not(.print-keep)` và `.fixed:not(.print-modal):not([class*="print:static"])`; chuyển table print sang `table { page-break-inside: auto }`, `thead { display: table-header-group }`, `tr { page-break-inside: avoid }`.
+2. Gắn class `print-modal` (và `print-keep` / `no-print`) cho toàn bộ 8 modal in (`PosmInventoryTab`, `PrintableConsignmentCount`, `PrintableConsignmentDispatch`, `PrintablePaymentRequest`, `PrintableAuditReport`, `StampsClient`, `MarkdownDocModal`, `SopDetailModal`).
+
+### Bài học
+> ⚠️ **RULE 156: Quy tắc `@media print` ẩn modal overlay PHẢI giữ ngoại lệ `.print-modal` / `.print-keep`, và phân trang bảng khi in chỉ đặt `page-break-inside: avoid` ở mức `<tr>` thay vì toàn bộ `<table>`.**
+
+---
+
+## BUG-157: Lỗi UI/UX Toàn Hệ Thống — window.prompt, Vi Phạm Purple Ban, Tương Phản Nút #0891B2, Đa Thẻ H1, Hick's Law & Thiếu i18n Header
+
+**Ngày:** 2026-11-14
+**Severity:** Medium — Trải nghiệm thiếu đồng bộ Light Design System, vi phạm WCAG AA/SEO và lỗi iOS auto-zoom
+
+### Triệu chứng
+- `SalesClient.tsx` còn 3 lời gọi `window.prompt(...)` cho lý do miễn VAT và tạo/sửa số hóa đơn.
+- Tồn tại màu tím/indigo (`indigo-*`, `#7C3AED`, `#C084FC`) tại `TastingNotesCatalog.tsx`, `SettingsClient.tsx`, `lib/notifications.ts`.
+- Nhiều nút active/primary dùng `#0891B2` nền với chữ trắng (tương phản < 4.5:1) hoặc `bg-slate-900`/`800`.
+- `ShowroomCountClient.tsx` dùng tới 3 thẻ `<h1>` (SEO issue) và ký tự Unicode `☐`; `CeoOverviewContent.tsx` dùng > 5 `<Link>` (Hick's Law); `CRMClient.tsx` mutate style trực tiếp bằng `onMouseEnter`/`onMouseLeave`; `Header.tsx` thiếu i18n đầy đủ và thiếu đóng bằng `Escape` / `text-base sm:text-sm` trên mobile drawer.
+
+### Cách fix
+1. Thay 3 `window.prompt` trong `SalesClient.tsx` bằng controlled Light Design System modal (`promptModal` state).
+2. Xóa sạch `indigo-*`/`#7C3AED`/`#C084FC` sang palette Cyan/Sky/Teal; nâng nền nút chữ trắng sang `#0E7490` (WCAG AA); chuyển `<Link>` phụ ở `CeoOverviewContent` sang `<button>`; giữ duy nhất 1 `<h1>` tại `ShowroomCountClient.tsx` và dùng icon Lucide `<Square />`.
+3. Chuẩn hóa bo góc (`rounded-lg`/`rounded-md`), hover Tailwind (`hover:border-[#0891B2]`), i18n/Escape/`text-base sm:text-sm` cho `Header.tsx`.
+
+### Bài học
+> ⚠️ **RULE 157: Tuyệt đối cấm `window.prompt`/class màu tím (`indigo`/`purple`), nút chữ trắng giữ tối thiểu `#0E7490`, mỗi route chỉ có duy nhất 1 `<h1>`, và mọi drawer input trên mobile phải đặt `text-base sm:text-sm`.**

@@ -541,19 +541,19 @@ export async function notifySOPendingAccounting(input: {
             subject: `💸 [Chờ KT Duyệt] Đơn hàng ${input.soNo} — ${input.customerName}`,
             html: `
             <div style="font-family: system-ui; max-width: 600px; margin: 0 auto;">
-                <div style="background: #7C3AED; padding: 24px; border-radius: 8px 8px 0 0;">
-                    <h2 style="color: #FFFFFF; margin: 0; font-size: 20px;">💸 Đơn hàng chờ duyệt tài chính</h2>
+                <div style="background: #0E7490; padding: 24px; border-radius: 8px 8px 0 0;">
+                    <h2 style="color: #FFFFFF; margin: 0; font-size: 20px;">Đơn hàng chờ duyệt tài chính</h2>
                 </div>
                 <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-top: none; padding: 24px; border-radius: 0 0 8px 8px; color: #0F172A;">
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr><td style="padding: 8px; color: #64748B;">Số SO:</td><td style="padding: 8px; font-weight: bold;">${input.soNo}</td></tr>
                         <tr><td style="padding: 8px; color: #64748B;">Khách hàng:</td><td style="padding: 8px;">${input.customerName}</td></tr>
-                        <tr><td style="padding: 8px; color: #64748B;">Tổng tiền:</td><td style="padding: 8px; font-weight: bold; color: #C084FC;">${input.totalAmount.toLocaleString('vi-VN')} VND</td></tr>
+                        <tr><td style="padding: 8px; color: #64748B;">Tổng tiền:</td><td style="padding: 8px; font-weight: bold; color: #0E7490;">${input.totalAmount.toLocaleString('vi-VN')} VND</td></tr>
                         <tr><td style="padding: 8px; color: #64748B;">NV Bán hàng:</td><td style="padding: 8px;">${input.salesRepName}</td></tr>
                     </table>
                     <div style="margin-top: 20px; text-align: center;">
                         <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/dashboard/sales" 
-                           style="display: inline-block; background: #7C3AED; color: #FFFFFF; padding: 12px 32px; 
+                           style="display: inline-block; background: #0E7490; color: #FFFFFF; padding: 12px 32px; 
                                   border-radius: 6px; text-decoration: none; font-weight: 600;">
                             Kiểm Tra & Xuất Hóa Đơn
                         </a>

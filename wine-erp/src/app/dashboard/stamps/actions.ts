@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { cached, revalidateCache } from '@/lib/cache'
 import { serialize } from '@/lib/serialize'
+import { requireAuth } from '@/lib/session'
 
 export async function getStampPurchases() {
     return cached('stamps:purchases', async () => {
@@ -40,6 +41,7 @@ export async function createStampPurchase(data: {
     serialEnd: string
     totalQty: number
 }) {
+    await requireAuth()
     if (data.totalQty <= 0) {
         throw new Error('Tổng số lượng tem mua phải lớn hơn 0')
     }
@@ -70,6 +72,7 @@ export async function recordStampUsage(data: {
     reportedBy?: string
     notes?: string
 }) {
+    await requireAuth()
     if (data.qtyUsed < 0 || data.qtyDamaged < 0) {
         throw new Error('Số lượng dán hoặc số lượng hỏng không được là số âm')
     }
@@ -376,6 +379,7 @@ export async function createStampDestruction(data: {
     notes?: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         const purchase = await prisma.wineStampPurchase.findUnique({
             where: { id: data.purchaseId },
         })
@@ -966,6 +970,7 @@ export async function allocateStampsToPO(data: {
     reportedBy?: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         if (!data.items || data.items.length === 0) {
             return { success: false, error: 'Không có sản phẩm nào được chọn để phân tem' }
         }

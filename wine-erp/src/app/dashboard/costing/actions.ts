@@ -260,6 +260,8 @@ export async function createLandedCostCampaign(input: {
     totalOtherCost: number
 }): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
+        const { requireAuth } = await import('@/lib/session')
+        await requireAuth()
         const existing = await prisma.landedCostCampaign.findUnique({
             where: { shipmentId: input.shipmentId },
         })
@@ -291,6 +293,8 @@ export async function updateLandedCostCampaign(input: {
     totalOtherCost: number
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        const { requireAuth } = await import('@/lib/session')
+        await requireAuth()
         const campaign = await prisma.landedCostCampaign.findUnique({ where: { id: input.id } })
         if (!campaign) return { success: false, error: 'Campaign không tồn tại' }
         if (campaign.status === 'ALLOCATED') {

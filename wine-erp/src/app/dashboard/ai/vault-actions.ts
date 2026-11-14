@@ -4,6 +4,15 @@ import { prisma } from '@/lib/db'
 import { withRetry } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { encryptApiKey, maskApiKey } from '@/lib/encryption'
+import { requireAuth, hasRole } from '@/lib/session'
+
+async function requireAiAdmin() {
+    const user = await requireAuth()
+    if (!hasRole(user, 'CEO', 'ADMIN', 'Admin', 'SYS:ADMIN')) {
+        throw new Error('Forbidden: Admin access required for AI Vault')
+    }
+    return user
+}
 
 // ═══════════════════════════════════════════════════
 // API KEY VAULT
@@ -21,6 +30,7 @@ export type ApiKeyRow = {
 }
 
 export async function getApiKeys(): Promise<ApiKeyRow[]> {
+    await requireAiAdmin()
     const keys = await withRetry(() => prisma.aiApiKey.findMany({ orderBy: { provider: 'asc' } }))
     const rows: ApiKeyRow[] = []
     for (const k of keys) {
@@ -45,6 +55,7 @@ export async function saveApiKey(input: {
     monthlyBudget?: number
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAiAdmin()
         const { encrypted, iv } = await encryptApiKey(input.apiKey)
         await withRetry(() => prisma.aiApiKey.upsert({
             where: { provider: input.provider },
@@ -72,6 +83,7 @@ export async function saveApiKey(input: {
 }
 
 export async function toggleApiKey(id: string): Promise<{ success: boolean }> {
+    await requireAiAdmin()
     const key = await withRetry(() => prisma.aiApiKey.findUnique({ where: { id } }))
     if (!key) return { success: false }
     await withRetry(() => prisma.aiApiKey.update({ where: { id }, data: { isActive: !key.isActive } }))
@@ -80,6 +92,7 @@ export async function toggleApiKey(id: string): Promise<{ success: boolean }> {
 }
 
 export async function deleteApiKey(id: string): Promise<{ success: boolean }> {
+    await requireAiAdmin()
     await withRetry(() => prisma.aiApiKey.delete({ where: { id } }))
     revalidatePath('/dashboard/ai')
     return { success: true }
@@ -87,6 +100,7 @@ export async function deleteApiKey(id: string): Promise<{ success: boolean }> {
 
 export async function testApiKey(id: string): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAiAdmin()
         const key = await withRetry(() => prisma.aiApiKey.findUnique({ where: { id } }))
         if (!key) return { success: false, error: 'Key not found' }
 
@@ -139,6 +153,7 @@ export type PromptTemplateRow = {
 }
 
 export async function getPromptTemplates(): Promise<PromptTemplateRow[]> {
+    await requireAuth()
     const templates = await prisma.aiPromptTemplate.findMany({
         include: { _count: { select: { runs: true } } },
         orderBy: { createdAt: 'desc' },
@@ -169,6 +184,7 @@ export async function createPromptTemplate(input: {
     maxTokens?: number
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAiAdmin()
         await prisma.aiPromptTemplate.create({
             data: {
                 slug: input.slug,
@@ -189,6 +205,7 @@ export async function createPromptTemplate(input: {
 }
 
 export async function deletePromptTemplate(id: string): Promise<{ success: boolean }> {
+    await requireAiAdmin()
     await prisma.aiPromptTemplate.delete({ where: { id } })
     revalidatePath('/dashboard/ai')
     return { success: true }
@@ -199,6 +216,7 @@ export async function deletePromptTemplate(id: string): Promise<{ success: boole
 // ═══════════════════════════════════════════════════
 
 export async function getAiUsageStats() {
+    await requireAuth()
     const now = new Date()
     const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
@@ -235,6 +253,7 @@ export async function logAiRun(input: {
     error?: string
     userId?: string
 }) {
+    await requireAuth()
     await prisma.aiPromptRun.create({ data: input })
     // Update monthly usage
     if (input.costUsd > 0) {

@@ -1423,7 +1423,7 @@ export default function StampsClient({
                                                             e.stopPropagation()
                                                             setStickingGuideAlloc(alloc)
                                                         }}
-                                                        className="bg-lys-teal hover:bg-lys-teal-strong text-white font-medium shadow-xs"
+                                                        className="bg-lys-teal-strong hover:bg-lys-teal-hover text-white font-medium shadow-xs"
                                                     >
                                                         <FileText size={14} className="mr-1.5" />
                                                         {t.poAlloc.btnViewGuide}
@@ -2419,7 +2419,7 @@ export default function StampsClient({
             {/* MODAL / VIEW: PHIẾU CHỈ DẪN DÁN TEM CHO NHÂN VIÊN */}
             {stickingGuideAlloc && (
                 <div
-                    className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto no-scrollbar print:p-0 print:bg-white print:static"
+                    className="print-modal fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto no-scrollbar print:p-0 print:bg-white print:static"
                     onClick={() => setStickingGuideAlloc(null)}
                 >
                     <div
@@ -2427,7 +2427,7 @@ export default function StampsClient({
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Header */}
-                        <div className="p-4 sm:p-6 border-b border-slate-200 bg-slate-50/70 sticky top-0 z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:static print:bg-transparent print:border-b-2 print:border-slate-800">
+                        <div className="print-keep p-4 sm:p-6 border-b border-slate-200 bg-slate-50/70 sticky top-0 z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:static print:bg-transparent print:border-b-2 print:border-slate-800">
                             <div>
                                 <div className="flex items-center gap-2">
                                     <span className="font-bold text-xs font-mono uppercase bg-cyan-100 text-cyan-900 border border-cyan-300 px-2.5 py-0.5 rounded">

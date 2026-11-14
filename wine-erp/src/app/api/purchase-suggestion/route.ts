@@ -1,9 +1,12 @@
 import { prisma, withRetry } from '@/lib/db'
 import { callGemini } from '@/lib/ai-service'
 import { NextResponse } from 'next/server'
+import { getCurrentUser } from '@/lib/session'
 
 export async function POST() {
     try {
+        const user = await getCurrentUser()
+        if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
         const now = new Date()
         const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1)
 

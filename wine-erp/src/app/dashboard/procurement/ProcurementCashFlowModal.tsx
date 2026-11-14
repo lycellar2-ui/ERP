@@ -35,8 +35,6 @@ export function ProcurementCashFlowModal({
     const dict = getProcurementDict(locale)
     const t = dict.cashFlowModal
 
-    if (!open) return null
-
     // ─── 1. BỘ LỌC THỜI ĐIỂM (TIME HORIZON) ─────────────────────
     const [periodFilter, setPeriodFilter] = useState<'ALL_OPEN' | 'THIS_MONTH' | 'NEXT_MONTH' | 'THIS_QUARTER'>('ALL_OPEN')
 
@@ -242,6 +240,8 @@ export function ProcurementCashFlowModal({
 
     // Tab chuyển đổi góc nhìn trong Modal
     const [viewMode, setViewMode] = useState<'MATRIX' | 'TIMELINE' | 'TAX_BREAKDOWN'>('MATRIX')
+
+    if (!open) return null
 
     // Xuất dữ liệu dòng tiền ra CSV
     const exportCSV = () => {

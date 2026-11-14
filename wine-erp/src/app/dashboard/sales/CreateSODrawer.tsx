@@ -886,7 +886,7 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                             }}
                                             className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
                                                 orderType === 'CONSIGNMENT'
-                                                    ? 'bg-[#0891B2] text-white shadow-xs border border-[#0E7490] ring-2 ring-[#0891B2]/20'
+                                                    ? 'bg-[#0E7490] hover:bg-[#155E75] text-white shadow-xs border border-[#0E7490] ring-2 ring-[#0E7490]/20'
                                                     : 'bg-white text-[#0E7490] hover:bg-cyan-50 border border-cyan-300'
                                             }`}
                                         >

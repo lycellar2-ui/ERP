@@ -673,8 +673,8 @@ export async function getOrCreatePeriod(year: number, month: number, txClient?: 
 // ── Generate Journal Entry Number ─────────────────
 export async function nextEntryNo(prefix: string, txClient?: any): Promise<string> {
     const client = txClient || prisma
-    const count = await client.journalEntry.count()
-    return `${prefix}-${String(count + 1).padStart(6, '0')}`
+    const { generateNextDocCode } = await import('@/lib/doc-code')
+    return generateNextDocCode(client.journalEntry, 'entryNo', `${prefix}-`, 6)
 }
 
 // ── Auto-generate: Goods Receipt → DR 156 / CR 331
@@ -1830,8 +1830,8 @@ export async function createExpense(data: {
         const userId = user.id
         const now = new Date()
         const period = await getOrCreatePeriod(now.getFullYear(), now.getMonth() + 1)
-        const count = await prisma.expense.count()
-        const expenseNo = `EXP-${String(count + 1).padStart(6, '0')}`
+        const { generateNextDocCode } = await import('@/lib/doc-code')
+        const expenseNo = await generateNextDocCode(prisma.expense, 'expenseNo', 'EXP-', 6)
         const account = CATEGORY_ACCOUNT[data.category] ?? '811 - Chi phí khác'
 
         // > 5M → need approval, else auto-approve

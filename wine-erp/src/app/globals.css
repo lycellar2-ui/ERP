@@ -427,9 +427,9 @@ a,
   input,
   select,
   textarea,
-  [role="dialog"],
+  [role="dialog"]:not(.print-modal):not(.print-keep),
   [role="tablist"],
-  .fixed:not(.print-modal) {
+  .fixed:not(.print-modal):not([class*="print:static"]) {
     display: none !important;
   }
 
@@ -451,11 +451,20 @@ a,
     break-after: avoid;
   }
 
-  table,
   figure,
-  img {
+  img,
+  tr {
     page-break-inside: avoid;
     break-inside: avoid;
+  }
+
+  table {
+    page-break-inside: auto;
+    break-inside: auto;
+  }
+
+  thead {
+    display: table-header-group;
   }
 
   /* ── Layout: Full Width ── */
