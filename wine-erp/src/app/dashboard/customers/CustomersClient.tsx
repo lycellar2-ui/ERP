@@ -1710,7 +1710,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                 ...data.map(row =>
                     headers.map(h => {
                         const val = String((row as any)[h] ?? '')
-                        return val.includes(',') || val.includes('"') ? `"${val.replace(/"/g, '""')}"` : val
+                        return /[",\r\n]/.test(val) ? `"${val.replace(/"/g, '""')}"` : val
                     }).join(',')
                 ),
             ]

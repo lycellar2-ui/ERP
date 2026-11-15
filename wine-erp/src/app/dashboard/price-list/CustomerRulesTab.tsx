@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import {
     Plus, Search, Trash2, Loader2, X, Check, Ban,
-    FileText, Copy, Building2, SlidersHorizontal,
+    FileText, Copy, Building2, SlidersHorizontal, Download,
     Zap, ChevronRight, Clock, RefreshCw, Layers, ShieldCheck, Calendar, GitBranch, Circle
 } from 'lucide-react'
 import {
@@ -21,6 +21,8 @@ import {
     rejectCustomerPricingPolicyL2,
     getPendingPricingPoliciesL2,
     getCustomerSpecialPriceDetail,
+    exportCustomerPricingReport,
+    exportSingleCustomerPriceList,
     PriceRuleRow,
     CustomerPricingMasterResult,
     PendingPricingPolicyL2Row,
@@ -85,6 +87,8 @@ export function CustomerRulesTab({ currentUser }: Props) {
     const [products, setProducts] = useState<{ id: string; skuCode: string; productName: string }[]>([])
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
+    const [exportingExcel, setExportingExcel] = useState(false)
+    const [exportingCustomerPriceList, setExportingCustomerPriceList] = useState(false)
     const { confirm, dialog: confirmDialog } = useConfirmDialog()
 
     // Master Filters
@@ -466,6 +470,100 @@ export function CustomerRulesTab({ currentUser }: Props) {
         setCloning(false)
     }
 
+    const handleExportExcel = async () => {
+        const exportCustomers = masterOverview?.customers ?? []
+        const hasFilter = Boolean(searchQuery.trim() || filterChannel !== 'ALL' || filterMasterType !== 'ALL')
+        const customerIds = hasFilter ? exportCustomers.map(c => c.id) : undefined
+
+        if (hasFilter && exportCustomers.length === 0) {
+            toast.error(isEn ? 'No data to export' : 'Không có dữ liệu để xuất')
+            return
+        }
+
+        setExportingExcel(true)
+        try {
+            const [{ policyRows, ruleRows, priceListRows }, XLSX] = await Promise.all([
+                exportCustomerPricingReport(customerIds),
+                import('xlsx'),
+            ])
+
+            const wb = XLSX.utils.book_new()
+
+            const wsPolicy = XLSX.utils.json_to_sheet(policyRows.length > 0 ? policyRows : [{
+                'Mã KH': '', 'Tên Khách Hàng': '', 'Kênh': '', 'Khách Hàng Cha': '', 'Sales Rep': '',
+                'Bảng Giá Áp Dụng': '', 'Cơ Chế Bảng Giá (L2)': '', 'Chiết Khấu Toàn Kho % (L2)': '',
+                'Nguồn Cơ Chế L2': '', 'Số Tờ Trình L2': '', 'Ngày Validate (Duyệt L2)': '',
+                'Người Validate (Duyệt L2)': '', 'Hiệu Lực L2 Từ': '', 'Hiệu Lực L2 Đến': '', 'Trạng Thái L2': '',
+            }])
+            wsPolicy['!cols'] = [
+                { wch: 14 }, { wch: 32 }, { wch: 22 }, { wch: 26 }, { wch: 20 },
+                { wch: 28 }, { wch: 18 }, { wch: 22 }, { wch: 28 }, { wch: 18 },
+                { wch: 20 }, { wch: 22 }, { wch: 14 }, { wch: 14 }, { wch: 16 },
+            ]
+            XLSX.utils.book_append_sheet(wb, wsPolicy, 'Co_Che_Gia_KH')
+
+            const wsRules = XLSX.utils.json_to_sheet(ruleRows.length > 0 ? ruleRows : [{
+                'Mã KH': '', 'Tên Khách Hàng': '', 'Kênh': '', 'SKU': '', 'Tên Sản Phẩm': '',
+                'Loại Quy Tắc': '', 'Giá Trị': '', 'Hiệu Lực Từ': '', 'Hiệu Lực Đến': '',
+                'Trạng Thái': '', 'Người Đề Xuất': '', 'Người Validate (Duyệt)': '',
+                'Ngày Validate (Duyệt)': '', 'Ghi Chú': '',
+            }])
+            wsRules['!cols'] = [
+                { wch: 14 }, { wch: 32 }, { wch: 20 }, { wch: 16 }, { wch: 36 },
+                { wch: 20 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 18 },
+                { wch: 22 }, { wch: 22 }, { wch: 20 }, { wch: 28 },
+            ]
+            XLSX.utils.book_append_sheet(wb, wsRules, 'Gia_Dac_Biet_SKU')
+
+            const wsPriceList = XLSX.utils.json_to_sheet(priceListRows.length > 0 ? priceListRows : [{
+                'Tên Bảng Giá': '', 'Kênh': '', 'Hiệu Lực Từ': '', 'Hiệu Lực Đến': '',
+                'SKU': '', 'Tên Sản Phẩm': '', 'Đơn Giá (VND)': '',
+            }])
+            wsPriceList['!cols'] = [
+                { wch: 28 }, { wch: 22 }, { wch: 14 }, { wch: 14 },
+                { wch: 16 }, { wch: 38 }, { wch: 18 },
+            ]
+            XLSX.utils.book_append_sheet(wb, wsPriceList, 'Bang_Gia_Chuan')
+
+            XLSX.writeFile(wb, `co_che_va_bang_gia_kh_${new Date().toISOString().slice(0, 10)}.xlsx`)
+            toast.success(i18n.general.toastExported)
+        } catch (err: any) {
+            toast.error(i18n.general.errorPrefix + (err?.message ?? 'Export failed'))
+        } finally {
+            setExportingExcel(false)
+        }
+    }
+
+    const handleExportSingleCustomerPriceList = async () => {
+        if (!drawerCustomer) return
+        setExportingCustomerPriceList(true)
+        try {
+            const [res, XLSX] = await Promise.all([
+                exportSingleCustomerPriceList(drawerCustomer.id),
+                import('xlsx'),
+            ])
+            if (!res || res.rows.length === 0) {
+                toast.error(isEn ? 'No data to export' : 'Không có dữ liệu để xuất')
+                return
+            }
+            const ws = XLSX.utils.json_to_sheet(res.rows)
+            ws['!cols'] = [
+                { wch: 14 }, { wch: 32 }, { wch: 16 }, { wch: 38 },
+                { wch: 24 }, { wch: 16 }, { wch: 14 }, { wch: 20 },
+                { wch: 14 }, { wch: 14 }, { wch: 20 },
+            ]
+            const wb = XLSX.utils.book_new()
+            XLSX.utils.book_append_sheet(wb, ws, 'Bang_Gia_KH')
+            const safeCode = res.customerCode.replace(/[^a-zA-Z0-9_-]/g, '_')
+            XLSX.writeFile(wb, `bang_gia_${safeCode}_${new Date().toISOString().slice(0, 10)}.xlsx`)
+            toast.success(i18n.general.toastExported)
+        } catch (err: any) {
+            toast.error(i18n.general.errorPrefix + (err?.message ?? 'Export failed'))
+        } finally {
+            setExportingCustomerPriceList(false)
+        }
+    }
+
     // Pending rules for quick approval banner (Level 3)
     const pendingRules = useMemo(() => {
         return rules.filter(r => r.status === 'PENDING_APPROVAL')
@@ -652,29 +750,40 @@ export function CustomerRulesTab({ currentUser }: Props) {
                         </button>
                     </div>
 
-                    {canCreate && (
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <button
-                                type="button"
-                                onClick={() => openCloneModal()}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 transition shadow-xs"
-                            >
-                                <Copy size={13} className="text-slate-500" /> {cr.filters.cloneToBranch}
-                            </button>
-                            <Link
-                                href="/dashboard/proposals?category=PRICE_ADJUSTMENT&action=create"
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-[#0E7490] hover:bg-[#155E75] text-white transition shadow-xs"
-                            >
-                                <FileText size={13} /> {isEn ? '+ Level 2 Mechanism Proposal' : '+ Tờ trình Cơ chế giá (Level 2)'}
-                            </Link>
-                            <Link
-                                href="/dashboard/proposals?category=SPECIAL_PRICE&action=create"
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-[#1D4ED8] hover:bg-[#1E40AF] text-white transition shadow-xs"
-                            >
-                                <FileText size={13} /> {isEn ? '+ Level 3 Special Price Proposal' : '+ Tờ trình Giá đặc biệt (Level 3)'}
-                            </Link>
-                        </div>
-                    )}
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                            type="button"
+                            onClick={handleExportExcel}
+                            disabled={exportingExcel || loading}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 transition shadow-xs disabled:opacity-50"
+                        >
+                            {exportingExcel ? <Loader2 size={13} className="animate-spin text-slate-500" /> : <Download size={13} className="text-slate-500" />}
+                            {isEn ? 'Export Excel' : 'Xuất Excel'}
+                        </button>
+                        {canCreate && (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={() => openCloneModal()}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 transition shadow-xs"
+                                >
+                                    <Copy size={13} className="text-slate-500" /> {cr.filters.cloneToBranch}
+                                </button>
+                                <Link
+                                    href="/dashboard/proposals?category=PRICE_ADJUSTMENT&action=create"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-[#0E7490] hover:bg-[#155E75] text-white transition shadow-xs"
+                                >
+                                    <FileText size={13} /> {isEn ? '+ Level 2 Mechanism Proposal' : '+ Tờ trình Cơ chế giá (Level 2)'}
+                                </Link>
+                                <Link
+                                    href="/dashboard/proposals?category=SPECIAL_PRICE&action=create"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-[#1D4ED8] hover:bg-[#1E40AF] text-white transition shadow-xs"
+                                >
+                                    <FileText size={13} /> {isEn ? '+ Level 3 Special Price Proposal' : '+ Tờ trình Giá đặc biệt (Level 3)'}
+                                </Link>
+                            </>
+                        )}
+                    </div>
                 </div>
 
                 {/* Bottom Row: Search & Channel Filter */}
@@ -1171,6 +1280,15 @@ export function CustomerRulesTab({ currentUser }: Props) {
                             </div>
 
                             <div className="flex items-center gap-1.5 shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={handleExportSingleCustomerPriceList}
+                                    disabled={exportingCustomerPriceList}
+                                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-md bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 transition shadow-xs disabled:opacity-50"
+                                >
+                                    {exportingCustomerPriceList ? <Loader2 size={13} className="animate-spin text-slate-500" /> : <Download size={13} className="text-slate-500" />}
+                                    {isEn ? 'Export Price List' : 'Xuất Bảng Giá KH'}
+                                </button>
                                 <button
                                     type="button"
                                     onClick={refreshDrawer}

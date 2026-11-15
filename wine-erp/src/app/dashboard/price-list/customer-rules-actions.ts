@@ -1959,4 +1959,215 @@ export async function getCustomerSpecialPriceDetail(customerId: string) {
     }
 }
 
+// ─── Export Full Customer Pricing Report (Cơ chế giá + Giá đặc biệt + Bảng giá + Ngày Validate) ───
+export async function exportCustomerPricingReport(customerIds?: string[]) {
+    await requireAuth()
+    const now = new Date()
+    const fmtDate = (d: Date | string | null | undefined) => {
+        if (!d) return ''
+        const parsed = new Date(d)
+        return Number.isNaN(parsed.getTime()) ? '' : parsed.toISOString().slice(0, 10)
+    }
+
+    const [policyMap, channelMapping, customers, rules, activePriceLists] = await Promise.all([
+        getLevel2PolicyMap(),
+        getChannelPriceMapping(),
+        prisma.customer.findMany({
+            where: {
+                deletedAt: null,
+                ...(customerIds && customerIds.length > 0 ? { id: { in: customerIds } } : {}),
+            },
+            include: {
+                parent: { select: { id: true, code: true, name: true, basePriceType: true, defaultDiscountPct: true } },
+                salesRep: { select: { name: true } },
+            },
+            orderBy: { name: 'asc' },
+        }),
+        prisma.customerPriceRule.findMany({
+            where: customerIds && customerIds.length > 0 ? { customerId: { in: customerIds } } : undefined,
+            include: {
+                customer: { select: { code: true, name: true, channel: true } },
+                product: { select: { skuCode: true, productName: true } },
+                requester: { select: { name: true, email: true } },
+                approver: { select: { name: true, email: true } },
+            },
+            orderBy: [{ customer: { name: 'asc' } }, { createdAt: 'desc' }],
+        }),
+        prisma.priceList.findMany({
+            where: {
+                effectiveDate: { lte: now },
+                OR: [{ expiryDate: null }, { expiryDate: { gte: now } }],
+            },
+            include: {
+                lines: {
+                    include: { product: { select: { skuCode: true, productName: true } } },
+                    orderBy: { product: { skuCode: 'asc' } },
+                },
+            },
+            orderBy: { effectiveDate: 'desc' },
+        }),
+    ])
+
+    const activePriceListByChannel = new Map<string, (typeof activePriceLists)[number]>()
+    for (const pl of activePriceLists) {
+        if (!activePriceListByChannel.has(pl.channel)) {
+            activePriceListByChannel.set(pl.channel, pl)
+        }
+    }
+
+    const resolveTargetChannel = (basePriceType: string, customerChannel: string) => {
+        if (basePriceType === 'WHOLESALE') return 'WHOLESALE_DISTRIBUTOR'
+        if (basePriceType === 'RETAIL') return 'DIRECT_INDIVIDUAL'
+        if (basePriceType === 'HORECA') return 'HORECA'
+        return channelMapping[customerChannel] ?? 'DIRECT_INDIVIDUAL'
+    }
+
+    const policyRows = customers.map(c => {
+        const effL2 = resolveEffectiveLevel2Policy(c, policyMap, now)
+        const cfg = effL2.isInherited && c.parentId
+            ? policyMap[c.parentId]
+            : policyMap[c.id]
+        const targetChannel = resolveTargetChannel(effL2.basePriceType, c.channel)
+        const matchedPriceList = activePriceListByChannel.get(targetChannel)
+
+        return {
+            'Mã KH': c.code,
+            'Tên Khách Hàng': c.name,
+            'Kênh': c.channel,
+            'Khách Hàng Cha': c.parent ? `[${c.parent.code}] ${c.parent.name}` : '',
+            'Sales Rep': c.salesRep?.name ?? '',
+            'Bảng Giá Áp Dụng': matchedPriceList ? matchedPriceList.name : targetChannel,
+            'Cơ Chế Bảng Giá (L2)': effL2.basePriceType,
+            'Chiết Khấu Toàn Kho % (L2)': effL2.discountPct,
+            'Nguồn Cơ Chế L2': effL2.isInherited
+                ? `Kế thừa (${effL2.inheritedFromCode ?? ''} - ${effL2.inheritedFromName ?? ''})`
+                : (effL2.isActive ? 'Riêng' : 'Mặc định theo kênh'),
+            'Số Tờ Trình L2': effL2.proposalNo ?? '',
+            'Ngày Validate (Duyệt L2)': fmtDate(cfg?.approvedAt),
+            'Người Validate (Duyệt L2)': cfg?.approvedBy ?? '',
+            'Hiệu Lực L2 Từ': fmtDate(effL2.startDate),
+            'Hiệu Lực L2 Đến': fmtDate(effL2.endDate),
+            'Trạng Thái L2': effL2.isExpired
+                ? 'Hết hạn'
+                : (effL2.isActive ? 'Đang áp dụng' : 'Mặc định'),
+        }
+    })
+
+    const ruleRows = rules.map(r => ({
+        'Mã KH': r.customer.code,
+        'Tên Khách Hàng': r.customer.name,
+        'Kênh': r.customer.channel ?? '',
+        'SKU': r.product.skuCode,
+        'Tên Sản Phẩm': r.product.productName,
+        'Loại Quy Tắc': r.ruleType === 'FIXED_DISCOUNT' ? 'Chiết khấu (%)' : 'Giá đặc biệt (VND)',
+        'Giá Trị': Number(r.value),
+        'Hiệu Lực Từ': fmtDate(r.startDate),
+        'Hiệu Lực Đến': fmtDate(r.endDate),
+        'Trạng Thái': r.status,
+        'Người Đề Xuất': r.requester.name ?? r.requester.email,
+        'Người Validate (Duyệt)': r.approver ? (r.approver.name ?? r.approver.email) : '',
+        'Ngày Validate (Duyệt)': fmtDate(r.approvedAt),
+        'Ghi Chú': r.notes ?? '',
+    }))
+
+    const priceListRows = activePriceLists.flatMap(pl =>
+        pl.lines.map(l => ({
+            'Tên Bảng Giá': pl.name,
+            'Kênh': pl.channel,
+            'Hiệu Lực Từ': fmtDate(pl.effectiveDate),
+            'Hiệu Lực Đến': fmtDate(pl.expiryDate),
+            'SKU': l.product.skuCode,
+            'Tên Sản Phẩm': l.product.productName,
+            'Đơn Giá (VND)': Number(l.unitPrice),
+        }))
+    )
+
+    return { policyRows, ruleRows, priceListRows }
+}
+
+// ─── Export Resolved Price List for a Single Customer ───
+export async function exportSingleCustomerPriceList(customerId: string) {
+    await requireAuth()
+    const now = new Date()
+    const fmtDate = (d: Date | string | null | undefined) => {
+        if (!d) return ''
+        const parsed = new Date(d)
+        return Number.isNaN(parsed.getTime()) ? '' : parsed.toISOString().slice(0, 10)
+    }
+
+    const [customer, products, policyMap, approvedRules] = await Promise.all([
+        prisma.customer.findUnique({
+            where: { id: customerId },
+            include: {
+                parent: { select: { id: true, code: true, name: true, basePriceType: true, defaultDiscountPct: true } },
+            },
+        }),
+        prisma.product.findMany({
+            where: { status: 'ACTIVE', deletedAt: null },
+            select: { id: true, skuCode: true, productName: true },
+            orderBy: { skuCode: 'asc' },
+        }),
+        getLevel2PolicyMap(),
+        prisma.customerPriceRule.findMany({
+            where: {
+                customerId,
+                status: 'APPROVED',
+                startDate: { lte: now },
+                OR: [{ endDate: null }, { endDate: { gte: now } }],
+            },
+            orderBy: { approvedAt: 'desc' },
+        }),
+    ])
+    if (!customer) return null
+
+    const resolvedMap = await getCustomerResolvedPrices(customerId)
+    const effL2 = resolveEffectiveLevel2Policy(customer, policyMap, now)
+    const l2Cfg = effL2.isInherited && customer.parentId
+        ? policyMap[customer.parentId]
+        : policyMap[customer.id]
+    const ruleByProduct = new Map(approvedRules.map(r => [r.productId, r]))
+
+    const levelLabel = (lvl: number) => {
+        if (lvl === 4) return 'Level 4 - CTKM'
+        if (lvl === 3) return 'Level 3 - Giá đặc biệt SKU'
+        if (lvl === 2) return 'Level 2 - Cơ chế % KH'
+        return 'Level 1 - Bảng giá chuẩn'
+    }
+
+    const rows = products.map(p => {
+        const res = resolvedMap[p.id]
+        const l3Rule = ruleByProduct.get(p.id)
+        const level = res?.level ?? 1
+        const validFrom = level === 3 && l3Rule
+            ? fmtDate(l3Rule.startDate)
+            : (level === 2 ? fmtDate(effL2.startDate) : '')
+        const validTo = level === 3 && l3Rule
+            ? fmtDate(l3Rule.endDate)
+            : (level === 2 ? fmtDate(effL2.endDate) : '')
+        const validatedAt = level === 3 && l3Rule
+            ? fmtDate(l3Rule.approvedAt)
+            : (level === 2 ? fmtDate(l2Cfg?.approvedAt) : '')
+
+        return {
+            'Mã KH': customer.code,
+            'Tên Khách Hàng': customer.name,
+            'SKU': p.skuCode,
+            'Tên Sản Phẩm': p.productName,
+            'Cấp Áp Dụng': levelLabel(level),
+            'Giá Gốc (VND)': res?.basePrice ?? res?.price ?? 0,
+            'Chiết Khấu (%)': res?.discountPct ?? (level === 2 ? effL2.discountPct : 0),
+            'Giá Bán Áp Dụng (VND)': res?.price ?? 0,
+            'Hiệu Lực Từ': validFrom,
+            'Hiệu Lực Đến': validTo,
+            'Ngày Validate (Duyệt)': validatedAt,
+        }
+    })
+
+    return {
+        customerCode: customer.code,
+        customerName: customer.name,
+        rows,
+    }
+}
+
 

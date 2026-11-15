@@ -458,33 +458,79 @@ export async function exportCustomersData() {
         where: { deletedAt: null },
         include: {
             salesRep: { select: { name: true } },
-            contacts: { where: { isPrimary: true }, take: 1 },
-            addresses: { where: { isDefault: true }, take: 1 },
+            contacts: { orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }] },
+            addresses: { orderBy: [{ isDefault: 'desc' }, { id: 'asc' }] },
             salesOrders: { select: { id: true } },
-            parent: { select: { code: true, name: true, taxId: true } },
+            parent: {
+                select: {
+                    code: true,
+                    name: true,
+                    taxId: true,
+                    vatCompanyName: true,
+                    vatAddress: true,
+                    vatEmail: true,
+                },
+            },
         },
         orderBy: { name: 'asc' },
     })
 
-    return items.map(c => ({
-        'Mã KH': c.code,
-        'Tên KH': c.name,
-        'Tên viết tắt': c.shortName ?? '',
-        'Loại': c.customerType,
-        'Kênh': c.channel ?? '',
-        'MST': c.taxId || c.parent?.taxId || '',
-        'Khách Hàng Cha (Cty Mẹ)': c.parent ? `[${c.parent.code}] ${c.parent.name}` : '',
-        'Thanh Toán': c.paymentTerm,
-        'Hạn Mức': Number(c.creditLimit),
-        'Sales Rep': c.salesRep?.name ?? '',
-        'Trạng Thái': c.status,
-        'Số ĐH': c.salesOrders.length,
-        'Người liên hệ': c.contacts[0]?.name ?? '',
-        'SĐT': c.contacts[0]?.phone ?? '',
-        'Email': c.contacts[0]?.email ?? '',
-        'Địa chỉ': c.addresses[0]?.address ?? '',
-        'Thành phố': c.addresses[0]?.city ?? '',
-    }))
+    const formatFullAddress = (a: (typeof items)[number]['addresses'][number]) => {
+        const parts = [a.address, a.ward, a.district, a.city].filter(Boolean).join(', ')
+        return a.label ? `[${a.label}] ${parts}` : parts
+    }
+
+    const formatContact = (ct: (typeof items)[number]['contacts'][number]) => {
+        const info = [ct.title, ct.phone, ct.email].filter(Boolean).join(' - ')
+        return info ? `${ct.name} (${info})` : ct.name
+    }
+
+    return items.map(c => {
+        const primaryContact = c.contacts[0]
+        const primaryAddress = c.addresses[0]
+
+        return {
+            'Mã KH': c.code,
+            'Tên KH': c.name,
+            'Tên viết tắt': c.shortName ?? '',
+            'Loại hình': c.entityType,
+            'Phân loại': c.customerType ?? '',
+            'Kênh': c.channel ?? '',
+            'Nhóm thương hiệu': c.brandGroup ?? '',
+            'Khách Hàng Cha (Cty Mẹ)': c.parent ? `[${c.parent.code}] ${c.parent.name}` : '',
+            'Cho phép SO trực tiếp': c.allowDirectSO ? 'Có' : 'Không',
+            'MST': c.taxId || c.parent?.taxId || '',
+            'Tên Cty Xuất HĐ VAT': c.vatCompanyName || c.parent?.vatCompanyName || '',
+            'Địa Chỉ Xuất HĐ VAT': c.vatAddress || c.parent?.vatAddress || '',
+            'Email Nhận HĐ VAT': c.vatEmail || c.parent?.vatEmail || '',
+            'Bảng giá mặc định': c.basePriceType ?? '',
+            'Chiết khấu mặc định (%)': Number(c.defaultDiscountPct),
+            'Thanh Toán': c.paymentTerm,
+            'Hạn Mức': Number(c.creditLimit),
+            'Khóa công nợ': c.creditHold ? 'Có' : 'Không',
+            'Kênh đặt hàng': c.orderChannel ?? '',
+            'Sales Rep': c.salesRep?.name ?? '',
+            'Trạng Thái': c.status,
+            'Số ĐH': c.salesOrders.length,
+            'Người liên hệ': primaryContact?.name ?? '',
+            'Chức vụ': primaryContact?.title ?? '',
+            'SĐT': primaryContact?.phone ?? '',
+            'Email': primaryContact?.email ?? '',
+            'Tất cả liên hệ': c.contacts.map(formatContact).join(' | '),
+            'Người mua hàng': c.purchasingName ?? '',
+            'SĐT mua hàng': c.purchasingPhone ?? '',
+            'Người nhận hàng': c.receiverName ?? '',
+            'SĐT nhận hàng': c.receiverPhone ?? '',
+            'Ghi chú giao hàng': c.deliveryNotes ?? '',
+            'Địa chỉ': primaryAddress?.address ?? '',
+            'Phường/Xã': primaryAddress?.ward ?? '',
+            'Quận/Huyện': primaryAddress?.district ?? '',
+            'Thành phố': primaryAddress?.city ?? '',
+            'Tất cả địa chỉ giao hàng': c.addresses.map(formatFullAddress).join(' | '),
+            'Ngày tạo': c.createdAt.toISOString().slice(0, 10),
+            'Cập nhật lần cuối': c.updatedAt.toISOString().slice(0, 10),
+        }
+    })
 }
 
 // ═══════════════════════════════════════════════════

@@ -67,30 +67,32 @@ function ProductTableRow({ row, onEdit, onDelete, onView, onQuickPrice, onPrefet
                     >
                         {row.primaryImageUrl ? (
                             <>
-                                <img
-                                    ref={imgRef}
-                                    src={row.primaryImageUrl}
-                                    alt={row.productName}
-                                    loading="lazy"
-                                    decoding="async"
-                                    onLoad={e => {
-                                        const img = e.currentTarget
-                                        setIsVertical(img.naturalHeight > img.naturalWidth * 1.2)
-                                    }}
-                                    className="object-contain transition-transform duration-200 group-hover/img:scale-105"
-                                    style={isVertical ? {
-                                        position: 'absolute',
-                                        width: '44px',
-                                        height: '80px',
-                                        top: '50%',
-                                        left: '50%',
-                                        transform: 'translate(-50%, -50%) rotate(90deg)',
-                                    } : {
-                                        width: '100%',
-                                        height: '100%',
-                                        padding: '2px',
-                                    }}
-                                />
+                                <div className="relative w-full h-full overflow-hidden rounded-md flex items-center justify-center">
+                                    <img
+                                        ref={imgRef}
+                                        src={row.primaryImageUrl}
+                                        alt={row.productName}
+                                        loading="lazy"
+                                        decoding="async"
+                                        onLoad={e => {
+                                            const img = e.currentTarget
+                                            setIsVertical(img.naturalHeight > img.naturalWidth * 1.2)
+                                        }}
+                                        className="object-contain transition-transform duration-200 group-hover/img:scale-105"
+                                        style={isVertical ? {
+                                            position: 'absolute',
+                                            width: '44px',
+                                            height: '80px',
+                                            top: '50%',
+                                            left: '50%',
+                                            transform: 'translate(-50%, -50%) rotate(90deg)',
+                                        } : {
+                                            width: '100%',
+                                            height: '100%',
+                                            padding: '2px',
+                                        }}
+                                    />
+                                </div>
                                 {/* Hover preview */}
                                 <div className="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-52 bg-lys-card rounded-lg p-3 border border-lys-border shadow-lg opacity-0 scale-95 pointer-events-none group-hover/img:opacity-100 group-hover/img:scale-100 transition-all duration-200 z-50 flex flex-col items-center gap-2">
                                     <div className="w-full h-64 bg-white rounded-md p-3 flex items-center justify-center border border-lys-border overflow-hidden">
