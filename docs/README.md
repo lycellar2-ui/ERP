@@ -52,10 +52,10 @@
 
 | Metric | Giá trị |
 |---|---|
-| **Prisma models** | 154 |
-| **Prisma enums** | 95 |
+| **Prisma models** | 155 |
+| **Prisma enums** | 96 |
 | **Dashboard routes** | 38 folders (46 page routes; 53 total app routes) |
-| **Server Action files** | 62 files |
+| **Server Action files** | 63 files |
 | **Module spec files** | 32 files |
 | **Sidebar nav items** | 41 items (7 groups) |
 

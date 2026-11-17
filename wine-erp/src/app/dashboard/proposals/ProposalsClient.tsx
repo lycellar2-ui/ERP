@@ -20,6 +20,16 @@ import { useSearchParams } from 'next/navigation'
 import { getCustomersForSO, getProductsWithStock } from '../sales/actions'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase'
+import {
+    PageContainer,
+    PageHeader,
+    StatCard,
+    StatusTabs,
+    Badge,
+    StatusBadge,
+    Button,
+    EmptyState,
+} from '@/components/ui'
 
 function formatCompactVND(amount: number, locale: AppLocale = 'vi'): string {
     if (amount >= 1_000_000_000) {
@@ -115,31 +125,31 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
         const isEn = locale === 'en'
         switch (cat) {
             case 'TASTING':
-                return { label: isEn ? 'Tasting (Sample)' : 'Tasting (Thử Rượu)', bg: 'rgba(180,83,9,0.15)', color: '#B45309', border: 'rgba(180,83,9,0.3)' }
+                return { label: isEn ? 'Tasting (Sample)' : 'Tasting (Thử Rượu)', bg: '#FEF3C7', color: '#92400E', border: '#FDE68A' }
             case 'INTERNAL_TRAINING':
-                return { label: isEn ? 'Internal Training' : 'Đào Tạo Nội Bộ', bg: 'rgba(21,128,61,0.15)', color: '#15803D', border: 'rgba(21,128,61,0.3)' }
+                return { label: isEn ? 'Internal Training' : 'Đào Tạo Nội Bộ', bg: '#ECFDF5', color: '#065F46', border: '#A7F3D0' }
             case 'SPECIAL_EVENT':
-                return { label: isEn ? 'Special Event' : 'Sự Kiện / Event', bg: 'rgba(180,140,210,0.15)', color: '#B48CD2', border: 'rgba(180,140,210,0.3)' }
+                return { label: isEn ? 'Special Event' : 'Sự Kiện / Event', bg: '#F1F5F9', color: '#334155', border: '#CBD5E1' }
             case 'PRICE_ADJUSTMENT':
-                return { label: isEn ? 'Pricing Mechanism (L2)' : 'Cơ Chế Giá (Level 2)', bg: 'rgba(8, 145, 178, 0.12)', color: '#0E7490', border: 'rgba(8, 145, 178, 0.3)' }
+                return { label: isEn ? 'Pricing Mechanism (L2)' : 'Cơ Chế Giá (L2)', bg: '#ECFEFF', color: '#0E7490', border: '#A5F3FC' }
             case 'SPECIAL_PRICE':
-                return { label: isEn ? 'Special SKU Price (L3)' : 'Giá Đặc Biệt SKU (Level 3)', bg: 'rgba(29,78,216,0.12)', color: '#1D4ED8', border: 'rgba(29,78,216,0.3)' }
+                return { label: isEn ? 'Special SKU Price (L3)' : 'Giá Đặc Biệt SKU (L3)', bg: '#EFF6FF', color: '#1D4ED8', border: '#BFDBFE' }
             case 'BUDGET_REQUEST':
-                return { label: isEn ? 'Budget Request' : 'Xin Ngân Sách', bg: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: 'rgba(8, 145, 178, 0.25)' }
+                return { label: isEn ? 'Budget Request' : 'Xin Ngân Sách', bg: '#F0F9FF', color: '#0369A1', border: '#BAE6FD' }
             case 'CAPITAL_EXPENDITURE':
-                return { label: isEn ? 'CAPEX' : 'Mua Sắm TSCĐ', bg: 'rgba(180,140,210,0.15)', color: '#B48CD2', border: 'rgba(180,140,210,0.3)' }
+                return { label: isEn ? 'CAPEX' : 'Mua Sắm TSCĐ', bg: '#F8FAFC', color: '#334155', border: '#CBD5E1' }
             case 'NEW_SUPPLIER':
-                return { label: isEn ? 'New Supplier' : 'NCC Mới', bg: 'rgba(21,128,61,0.15)', color: '#15803D', border: 'rgba(21,128,61,0.3)' }
+                return { label: isEn ? 'New Supplier' : 'NCC Mới', bg: '#ECFDF5', color: '#065F46', border: '#A7F3D0' }
             case 'NEW_PRODUCT':
-                return { label: isEn ? 'New Product' : 'Sản Phẩm Mới', bg: 'rgba(21,128,61,0.15)', color: '#15803D', border: 'rgba(21,128,61,0.3)' }
+                return { label: isEn ? 'New Product' : 'Sản Phẩm Mới', bg: '#ECFDF5', color: '#065F46', border: '#A7F3D0' }
             case 'POLICY_CHANGE':
-                return { label: isEn ? 'Policy Change' : 'Đổi Quy Trình', bg: 'rgba(224,140,80,0.15)', color: '#E08C50', border: 'rgba(224,140,80,0.3)' }
+                return { label: isEn ? 'Policy Change' : 'Đổi Quy Trình', bg: '#FFF7ED', color: '#9A3412', border: '#FED7AA' }
             case 'PAYMENT_SCHEDULE':
-                return { label: isEn ? 'Payment Schedule' : 'Lịch Thanh Toán', bg: 'rgba(29,78,216,0.15)', color: '#1D4ED8', border: 'rgba(29,78,216,0.3)' }
+                return { label: isEn ? 'Payment Schedule' : 'Lịch Thanh Toán', bg: '#EFF6FF', color: '#1D4ED8', border: '#BFDBFE' }
             case 'PROMOTION_CAMPAIGN':
-                return { label: isEn ? 'Promotion (L4)' : 'Khuyến Mãi (Level 4)', bg: 'rgba(180,83,9,0.15)', color: '#B45309', border: 'rgba(180,83,9,0.3)' }
+                return { label: isEn ? 'Promotion (L4)' : 'Khuyến Mãi (L4)', bg: '#FEF3C7', color: '#92400E', border: '#FDE68A' }
             default:
-                return { label: getCategoryLabel(cat, locale), bg: 'rgba(100,116,139,0.15)', color: '#475569', border: 'rgba(100,116,139,0.3)' }
+                return { label: getCategoryLabel(cat, locale), bg: '#F1F5F9', color: '#475569', border: '#E2E8F0' }
         }
     }, [locale])
 
@@ -1005,295 +1015,157 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
     }, [proposals])
 
     return (
-        <div className="space-y-6 w-full max-w-none px-2 sm:px-4">
+        <PageContainer className="w-full max-w-screen-2xl mx-auto">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                    <h2 className="text-xl sm:text-2xl font-bold" style={{ color: '#0F172A' }}>
-                        {t.header.title}
-                    </h2>
-                    <p className="text-xs sm:text-sm mt-0.5" style={{ color: '#64748B' }}>
-                        {t.header.subtitle}
-                    </p>
-                </div>
-                <button
-                    onClick={() => setShowCreate(true)}
-                    className="flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-md transition-all w-full sm:w-auto cursor-pointer shadow-xs bg-[#0E7490] hover:bg-[#0E7490] text-white"
-                >
-                    <Plus size={16} /> {t.header.createBtn}
-                </button>
-            </div>
-
-            {/* Stat Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
-                {[
-                    { label: t.stats.total, value: currentStats.total, accent: '#475569' },
-                    { label: t.stats.pending, value: currentStats.pending, accent: '#B45309' },
-                    { label: t.stats.draft, value: currentStats.draft, accent: '#64748B' },
-                    { label: t.stats.approved, value: currentStats.approved, accent: '#15803D' },
-                    { label: t.stats.rejected, value: currentStats.rejected, accent: '#B91C1C' },
-                ].map((s, idx) => (
-                    <div 
-                        key={s.label} 
-                        className={`rounded-md p-3 sm:p-4 shadow-2xs ${idx === 4 ? 'col-span-2 sm:col-span-1' : ''}`}
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: `3px solid ${s.accent}` }}
+            <PageHeader
+                title={t.header.title}
+                description={t.header.subtitle}
+                actions={
+                    <Button
+                        variant="primary"
+                        onClick={() => setShowCreate(true)}
+                        className="w-full sm:w-auto"
                     >
-                        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider" style={{ color: '#64748B' }}>{s.label}</p>
-                        <p className="text-xl sm:text-2xl font-bold mt-1" style={{ color: '#0F172A' }}>{s.value}</p>
-                    </div>
-                ))}
+                        <Plus size={15} /> {t.header.createBtn}
+                    </Button>
+                }
+            />
+
+            {/* Interactive Stat Cards (Design System) */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                <StatCard
+                    label={t.stats.total}
+                    value={currentStats.total}
+                    icon={FileText}
+                    tone="brand"
+                    active={filter === 'ALL'}
+                    onClick={() => setFilter('ALL')}
+                />
+                <StatCard
+                    label={t.stats.pending}
+                    value={currentStats.pending}
+                    icon={Clock}
+                    tone="warning"
+                    active={filter === 'PENDING'}
+                    onClick={() => setFilter('PENDING')}
+                />
+                <StatCard
+                    label={t.stats.draft}
+                    value={currentStats.draft}
+                    icon={ClipboardCheck}
+                    tone="neutral"
+                    active={filter === 'DRAFT'}
+                    onClick={() => setFilter('DRAFT')}
+                />
+                <StatCard
+                    label={t.stats.approved}
+                    value={currentStats.approved}
+                    icon={CheckCircle2}
+                    tone="success"
+                    active={filter === 'APPROVED'}
+                    onClick={() => setFilter('APPROVED')}
+                />
+                <StatCard
+                    label={t.stats.rejected}
+                    value={currentStats.rejected}
+                    icon={XCircle}
+                    tone="danger"
+                    active={filter === 'REJECTED'}
+                    onClick={() => setFilter('REJECTED')}
+                    className="col-span-2 sm:col-span-1"
+                />
             </div>
 
-            {/* Filter + Search Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 flex-wrap w-full">
-                <div className="w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar flex rounded-md flex-shrink-0" style={{ border: '1px solid #E2E8F0' }}>
-                    {(['ALL', 'PENDING', 'DRAFT', 'APPROVED', 'REJECTED'] as const).map((f, idx, arr) => (
-                        <button
-                            key={f}
-                            onClick={() => setFilter(f)}
-                            className="flex-1 sm:flex-initial px-3 sm:px-4 py-2 text-xs font-semibold transition-all whitespace-nowrap text-center"
-                            style={{
-                                background: filter === f ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
-                                color: filter === f ? '#0E7490' : '#64748B',
-                                borderRight: idx < arr.length - 1 ? '1px solid #E2E8F0' : 'none',
-                            }}
-                        >
-                            {f === 'ALL' ? t.tabs.all : f === 'PENDING' ? t.tabs.pending : f === 'DRAFT' ? t.tabs.draft : f === 'APPROVED' ? t.tabs.approved : t.tabs.rejected}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="grid grid-cols-2 sm:flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-                    {/* Category Dropdown Filter */}
-                    <div className="min-w-0 flex-1 sm:flex-shrink-0">
-                        <select
-                            value={categoryFilter}
-                            onChange={e => setCategoryFilter(e.target.value)}
-                            className="w-full px-2.5 sm:px-3 py-2 text-base sm:text-xs font-semibold rounded-md outline-none cursor-pointer truncate"
-                            style={{
-                                background: categoryFilter === 'ALL' ? '#FFFFFF' : 'rgba(8, 145, 178, 0.08)',
-                                border: '1px solid #E2E8F0',
-                                color: categoryFilter === 'ALL' ? '#475569' : '#0E7490',
-                            }}
-                        >
-                            <option value="ALL">{t.filters.allCategories}</option>
-                            <option value="INTERNAL_TRAINING">{locale === 'en' ? 'Internal Training' : 'Tờ Trình Đào Tạo Nội Bộ'}</option>
-                            <option value="TASTING">{locale === 'en' ? 'Wine Tasting & Sample' : 'Tờ Trình Tasting (Thử Rượu)'}</option>
-                            <option value="SPECIAL_EVENT">{locale === 'en' ? 'Special Event' : 'Sự Kiện / Event'}</option>
-                            <option value="PRICE_ADJUSTMENT">{locale === 'en' ? 'Special Pricing Mechanism' : 'Tờ Trình Cơ Chế Giá & Giá Đặc Biệt'}</option>
-                            <option value="BUDGET_REQUEST">{locale === 'en' ? 'Budget Request' : 'Xin Ngân Sách'}</option>
-                            <option value="CAPITAL_EXPENDITURE">{locale === 'en' ? 'CAPEX' : 'Mua Sắm TSCĐ'}</option>
-                            <option value="NEW_SUPPLIER">{locale === 'en' ? 'New Supplier' : 'Nhà Cung Cấp Mới'}</option>
-                            <option value="NEW_PRODUCT">{locale === 'en' ? 'New Product' : 'Sản Phẩm Mới'}</option>
-                            <option value="POLICY_CHANGE">{locale === 'en' ? 'Policy Change' : 'Thay Đổi Quy Trình'}</option>
-                            <option value="PAYMENT_SCHEDULE">{locale === 'en' ? 'Payment Schedule' : 'Lịch Thanh Toán'}</option>
-                            <option value="PROMOTION_CAMPAIGN">{locale === 'en' ? 'Promotion' : 'Chương Trình KM'}</option>
-                            <option value="OTHER">{locale === 'en' ? 'Other' : 'Khác'}</option>
-                        </select>
-                    </div>
-
-                    {/* Priority Dropdown Filter */}
-                    <div className="min-w-0 flex-1 sm:flex-shrink-0">
-                        <select
-                            value={priorityFilter}
-                            onChange={e => setPriorityFilter(e.target.value)}
-                            className="w-full px-2.5 sm:px-3 py-2 text-base sm:text-xs font-semibold rounded-md outline-none cursor-pointer truncate"
-                            style={{
-                                background: priorityFilter === 'ALL' ? '#FFFFFF' : 'rgba(180,83,9,0.15)',
-                                border: '1px solid #E2E8F0',
-                                color: priorityFilter === 'ALL' ? '#475569' : '#B45309',
-                            }}
-                        >
-                            <option value="ALL">{t.filters.allPriorities}</option>
-                            <option value="URGENT">{locale === 'en' ? 'Urgent' : 'Khẩn cấp (Urgent)'}</option>
-                            <option value="HIGH">{locale === 'en' ? 'High' : 'Cao (High)'}</option>
-                            <option value="NORMAL">{locale === 'en' ? 'Normal' : 'Bình thường (Normal)'}</option>
-                            <option value="LOW">{locale === 'en' ? 'Low' : 'Thấp (Low)'}</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div className="w-full sm:flex-1 relative min-w-0 sm:min-w-[220px]">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
-                    <input
-                        type="text"
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        placeholder={t.filters.searchPlaceholder}
-                        className="w-full pl-9 pr-3 py-2 text-base sm:text-xs rounded-md"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', outline: 'none' }}
+            {/* Status Tabs + Filter Toolbar (Design System) */}
+            <div className="bg-lys-card border border-lys-border rounded-lg shadow-xs overflow-hidden">
+                <div className="px-4 pt-1 border-b border-lys-border flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
+                    <StatusTabs
+                        value={filter}
+                        onChange={setFilter}
+                        className="border-b-0"
+                        items={[
+                            { value: 'ALL', label: t.tabs.all, count: currentStats.total },
+                            { value: 'PENDING', label: t.tabs.pending, count: currentStats.pending },
+                            { value: 'DRAFT', label: t.tabs.draft, count: currentStats.draft },
+                            { value: 'APPROVED', label: t.tabs.approved, count: currentStats.approved },
+                            { value: 'REJECTED', label: t.tabs.rejected, count: currentStats.rejected },
+                        ]}
                     />
-                </div>
-            </div>
 
-            {/* Mobile View - Cards for small screens */}
-            <div className="block md:hidden space-y-3">
-                {filtered.length === 0 ? (
-                    <div className="flex flex-col items-center py-12 gap-2" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px' }}>
-                        <FileText size={32} style={{ color: '#E2E8F0' }} />
-                        <p className="text-sm" style={{ color: '#64748B' }}>{t.table.empty}</p>
-                    </div>
-                ) : (
-                    filtered.map(p => {
-                        const statusCfg = getStatusLabel(p.status, locale)
-                        const prioCfg = getPriorityLabel(p.priority, locale)
-                        const isPending = ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'].includes(p.status)
-                        const canApproveThis = isPending && canApproveAtLevel(p.currentLevel, userRoles)
-                        const { main, sub } = formatBilingualTitle(p.title, locale)
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pb-2 lg:pb-1">
+                        <div className="relative min-w-[200px] sm:w-56">
+                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-lys-muted" />
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                placeholder={t.filters.searchPlaceholder}
+                                className="w-full h-8 pl-8 pr-3 text-xs rounded-md border border-lys-border bg-lys-bg focus:bg-lys-surface focus:border-lys-teal text-lys-primary outline-none transition-colors"
+                            />
+                        </div>
 
-                        return (
-                            <div
-                                key={p.id}
-                                className="p-4 rounded-lg space-y-3 transition-all cursor-pointer"
-                                style={{
-                                    background: '#FFFFFF',
-                                    border: canApproveThis ? '1px solid #B45309' : '1px solid #E2E8F0',
-                                }}
-                                onClick={() => openDetail(p.id)}
+                        <div className="grid grid-cols-2 sm:flex items-center gap-2 shrink-0">
+                            <select
+                                value={categoryFilter}
+                                onChange={e => setCategoryFilter(e.target.value)}
+                                className={`h-8 px-2.5 text-xs font-medium rounded-md border outline-none cursor-pointer truncate max-w-[180px] ${
+                                    categoryFilter === 'ALL'
+                                        ? 'bg-lys-surface border-lys-border text-lys-secondary'
+                                        : 'bg-lys-teal-soft border-tone-brand-border text-lys-teal-strong font-semibold'
+                                }`}
                             >
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold font-mono" style={{ color: '#0891B2' }}>
-                                        {p.proposalNo}
-                                    </span>
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-medium inline-block whitespace-nowrap shrink-0"
-                                        style={{ background: statusCfg.bg, color: statusCfg.color }}>
-                                        {statusCfg.label}
-                                    </span>
-                                </div>
+                                <option value="ALL">{t.filters.allCategories}</option>
+                                <option value="INTERNAL_TRAINING">{locale === 'en' ? 'Internal Training' : 'Đào Tạo Nội Bộ'}</option>
+                                <option value="TASTING">{locale === 'en' ? 'Wine Tasting & Sample' : 'Tasting (Thử Rượu)'}</option>
+                                <option value="SPECIAL_EVENT">{locale === 'en' ? 'Special Event' : 'Sự Kiện / Event'}</option>
+                                <option value="PRICE_ADJUSTMENT">{locale === 'en' ? 'Pricing Mechanism' : 'Cơ Chế Giá & Giá Đặc Biệt'}</option>
+                                <option value="BUDGET_REQUEST">{locale === 'en' ? 'Budget Request' : 'Xin Ngân Sách'}</option>
+                                <option value="CAPITAL_EXPENDITURE">{locale === 'en' ? 'CAPEX' : 'Mua Sắm TSCĐ'}</option>
+                                <option value="NEW_SUPPLIER">{locale === 'en' ? 'New Supplier' : 'Nhà Cung Cấp Mới'}</option>
+                                <option value="NEW_PRODUCT">{locale === 'en' ? 'New Product' : 'Sản Phẩm Mới'}</option>
+                                <option value="POLICY_CHANGE">{locale === 'en' ? 'Policy Change' : 'Thay Đổi Quy Trình'}</option>
+                                <option value="PAYMENT_SCHEDULE">{locale === 'en' ? 'Payment Schedule' : 'Lịch Thanh Toán'}</option>
+                                <option value="PROMOTION_CAMPAIGN">{locale === 'en' ? 'Promotion' : 'Chương Trình KM'}</option>
+                                <option value="OTHER">{locale === 'en' ? 'Other' : 'Khác'}</option>
+                            </select>
 
-                                <div>
-                                    <p className="text-sm font-bold leading-snug" style={{ color: '#0F172A' }}>
-                                        {main}
-                                    </p>
-                                    {sub && (
-                                        <p className="text-xs font-medium italic mt-0.5 text-slate-500">
-                                            {sub}
-                                        </p>
-                                    )}
-                                </div>
+                            <select
+                                value={priorityFilter}
+                                onChange={e => setPriorityFilter(e.target.value)}
+                                className={`h-8 px-2.5 text-xs font-medium rounded-md border outline-none cursor-pointer ${
+                                    priorityFilter === 'ALL'
+                                        ? 'bg-lys-surface border-lys-border text-lys-secondary'
+                                        : 'bg-tone-warning-bg border-tone-warning-border text-tone-warning-fg font-semibold'
+                                }`}
+                            >
+                                <option value="ALL">{t.filters.allPriorities}</option>
+                                <option value="URGENT">{locale === 'en' ? 'Urgent' : 'Khẩn cấp'}</option>
+                                <option value="HIGH">{locale === 'en' ? 'High' : 'Cao'}</option>
+                                <option value="NORMAL">{locale === 'en' ? 'Normal' : 'Bình thường'}</option>
+                                <option value="LOW">{locale === 'en' ? 'Low' : 'Thấp'}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
 
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full inline-block whitespace-nowrap shrink-0"
-                                        style={{ background: 'rgba(29,78,216,0.1)', color: '#1D4ED8' }}>
-                                        {getCategoryBadge(p.category).label}
-                                    </span>
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold inline-block whitespace-nowrap shrink-0"
-                                        style={{ background: prioCfg.bg, color: prioCfg.color }}>
-                                        {prioCfg.label}
-                                    </span>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-2 text-xs pt-2" style={{ borderTop: '1px solid #E2E8F0', color: '#475569' }}>
-                                    <div>
-                                        <p style={{ color: '#64748B' }} className="text-[10px] uppercase font-semibold">{locale === 'en' ? 'Submitter' : 'Người trình'}</p>
-                                        <p className="font-medium mt-0.5">{p.creatorName}</p>
-                                    </div>
-                                    <div>
-                                        <p style={{ color: '#64748B' }} className="text-[10px] uppercase font-semibold">{locale === 'en' ? 'Submitted' : 'Ngày trình'}</p>
-                                        <p className="font-medium mt-0.5">
-                                            {p.submittedAt ? new Date(p.submittedAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN') : '—'}
-                                        </p>
-                                    </div>
-                                    {p.estimatedAmount !== null && (
-                                        <div className="col-span-2">
-                                            <p style={{ color: '#64748B' }} className="text-[10px] uppercase font-semibold">{locale === 'en' ? 'Estimated Amount' : 'Giá trị dự kiến'}</p>
-                                            <p className="font-bold text-sm mt-0.5" style={{ color: '#0F172A' }}>
-                                                {formatCompactVND(p.estimatedAmount, locale)}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="flex justify-end gap-2 pt-2" onClick={e => e.stopPropagation()}>
-                                    <button onClick={() => openDetail(p.id)}
-                                        className="px-3 py-1.5 text-xs font-medium rounded transition-all"
-                                        style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
-                                        <Eye size={12} className="inline mr-1" />{t.actions.detail}
-                                    </button>
-                                    {canApproveThis && (
-                                        <>
-                                            <button
-                                                onClick={() => handleApproval(p.id, 'APPROVE')}
-                                                disabled={actionLoading === p.id}
-                                                className="px-3 py-1.5 text-xs font-semibold rounded transition-all"
-                                                style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)' }}>
-                                                {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} className="inline mr-1" />}
-                                                {t.actions.approve}
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    const reason = prompt(locale === 'en' ? 'Reason for rejection:' : 'Lý do từ chối:')
-                                                    if (reason) handleApproval(p.id, 'REJECT', reason)
-                                                }}
-                                                className="px-3 py-1.5 text-xs font-semibold rounded transition-all"
-                                                style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.2)' }}>
-                                                <XCircle size={12} className="inline mr-1" />{t.actions.reject}
-                                            </button>
-                                        </>
-                                    )}
-                                    {(p.status === 'DRAFT' || p.status === 'RETURNED') && (
-                                        <button
-                                            onClick={() => handleSubmitProposal(p.id)}
-                                            disabled={actionLoading === p.id}
-                                            className="px-3 py-1.5 text-xs font-semibold rounded transition-all"
-                                            style={{ background: 'rgba(29,78,216,0.15)', color: '#1D4ED8', border: '1px solid rgba(29,78,216,0.3)' }}>
-                                            {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} className="inline mr-1" />}
-                                            {t.actions.submit}
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        )
-                    })
-                )}
-            </div>
-
-            {/* Desktop Table View */}
-            <div className="hidden md:block rounded-md overflow-x-auto w-full shadow-sm" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                <div className="w-full">
-                    <table className="w-full" style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'auto' }}>
-                        <colgroup>
-                            <col style={{ width: '120px' }} />
-                            <col style={{ minWidth: '180px' }} />
-                            <col style={{ width: '140px' }} />
-                            <col style={{ width: '85px' }} />
-                            <col style={{ width: '90px' }} />
-                            <col style={{ width: '120px' }} />
-                            <col style={{ width: '100px' }} />
-                            <col style={{ width: '120px' }} />
-                            <col style={{ width: '120px' }} />
-                            <col style={{ width: '160px' }} />
-                        </colgroup>
+                {/* Desktop Table View inside Design System Card */}
+                <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full border-collapse text-left">
                         <thead>
-                            <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                {[
-                                    { label: t.table.proposalNo, align: 'left' as const },
-                                    { label: t.table.title, align: 'left' as const },
-                                    { label: t.table.category, align: 'left' as const },
-                                    { label: t.table.priority, align: 'left' as const },
-                                    { label: t.table.value, align: 'right' as const },
-                                    { label: t.table.submitter, align: 'left' as const },
-                                    { label: t.table.status, align: 'left' as const },
-                                    { label: t.table.submissionTime, align: 'left' as const },
-                                    { label: t.table.finalApproval, align: 'left' as const },
-                                    { label: t.table.actions, align: 'right' as const },
-                                ].map(col => (
-                                    <th key={col.label}
-                                        className="px-3 py-3 text-xs font-bold uppercase tracking-wider"
-                                        style={{ color: '#64748B', textAlign: col.align, whiteSpace: 'nowrap' }}>
-                                        {col.label}
-                                    </th>
-                                ))}
+                            <tr className="border-b border-lys-border bg-lys-subtle/60 text-[11px] font-bold uppercase tracking-wider text-lys-muted">
+                                <th className="px-4 py-3">{locale === 'en' ? 'Proposal' : 'Tờ Trình'}</th>
+                                <th className="px-3 py-3 w-[190px]">{t.table.category}</th>
+                                <th className="px-3 py-3 w-[110px] text-right">{t.table.value}</th>
+                                <th className="px-3 py-3 w-[165px]">{t.table.submitter}</th>
+                                <th className="px-3 py-3 w-[145px]">{t.table.status}</th>
+                                <th className="px-4 py-3 w-[155px] text-right">{t.table.actions}</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-lys-border">
                             {filtered.length === 0 ? (
                                 <tr>
-                                    <td colSpan={10}>
-                                        <div className="flex flex-col items-center py-12 gap-2">
-                                            <FileText size={32} style={{ color: '#E2E8F0' }} />
-                                            <p className="text-sm" style={{ color: '#64748B' }}>{t.table.empty}</p>
-                                        </div>
+                                    <td colSpan={6}>
+                                        <EmptyState icon={FileText} title={t.table.empty} />
                                     </td>
                                 </tr>
                             ) : (
@@ -1306,119 +1178,143 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                     const { main, sub } = formatBilingualTitle(p.title, locale)
 
                                     return (
-                                        <tr key={p.id}
+                                        <tr
+                                            key={p.id}
                                             onClick={() => openDetail(p.id)}
-                                            className={`transition-all cursor-pointer hover:bg-[#0891B2]/6 ${canApproveThis ? 'bg-[#B45309]/3' : ''}`}
-                                            style={{
-                                                borderBottom: '1px solid #E2E8F0',
-                                            }}
+                                            className={`group transition-colors cursor-pointer hover:bg-lys-subtle/70 ${
+                                                canApproveThis ? 'bg-tone-warning-bg/50' : ''
+                                            }`}
                                         >
-                                            <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-xs font-bold font-mono text-[#0891B2] whitespace-nowrap block truncate" title={p.proposalNo}>
-                                                    {p.proposalNo}
-                                                </span>
-                                            </td>
-                                            <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
-                                                <div>
-                                                    <p className="text-sm font-semibold text-slate-900 leading-tight" title={main}>
+                                            {/* Proposal Code + Title + Attachments */}
+                                            <td className="px-4 py-3 align-middle">
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-2 mb-0.5">
+                                                        <span className="text-xs font-bold type-number text-lys-teal-strong">
+                                                            {p.proposalNo}
+                                                        </span>
+                                                        {canApproveThis && (
+                                                            <Badge tone="warning">
+                                                                {locale === 'en' ? 'Review' : 'Chờ bạn duyệt'}
+                                                            </Badge>
+                                                        )}
+                                                        {p.attachmentCount > 0 && (
+                                                            <span className="inline-flex items-center gap-0.5 text-[11px] text-lys-dim">
+                                                                <Paperclip size={11} /> {p.attachmentCount}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-[13px] font-semibold text-lys-primary leading-snug line-clamp-1 group-hover:text-lys-teal-strong transition-colors" title={main}>
                                                         {main}
                                                     </p>
                                                     {sub && (
-                                                        <p className="text-[11px] font-normal text-slate-500 italic mt-0.5 line-clamp-1" title={sub}>
+                                                        <p className="text-[11px] text-lys-muted line-clamp-1 mt-0.5" title={sub}>
                                                             {sub}
                                                         </p>
                                                     )}
                                                 </div>
-                                                {p.attachmentCount > 0 && (
-                                                    <span className="text-[11px] text-slate-500 block mt-0.5">
-                                                        <Paperclip size={10} className="inline mr-1" />{p.attachmentCount} file{p.attachmentCount > 1 ? 's' : ''}
-                                                    </span>
-                                                )}
                                             </td>
-                                            <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-[11px] px-2 py-0.5 rounded-md font-semibold inline-block truncate max-w-full whitespace-nowrap shrink-0"
-                                                    style={{ background: catBadge.bg, color: catBadge.color, border: `1px solid ${catBadge.border}` }}
-                                                    title={getCategoryLabel(p.category, locale)}>
-                                                    {catBadge.label}
-                                                </span>
+
+                                            {/* Category + Urgent/High Priority */}
+                                            <td className="px-3 py-3 align-middle">
+                                                <div className="flex flex-col items-start gap-1">
+                                                    <Badge tone="neutral" className="truncate max-w-[180px]" title={getCategoryLabel(p.category, locale)}>
+                                                        {catBadge.label}
+                                                    </Badge>
+                                                    {(p.priority === 'URGENT' || p.priority === 'HIGH') && (
+                                                        <Badge tone={p.priority === 'URGENT' ? 'danger' : 'warning'}>
+                                                            {prioCfg.label}
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                             </td>
-                                            <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-[11px] px-1.5 py-0.5 rounded-full font-bold inline-block whitespace-nowrap"
-                                                    style={{ background: prioCfg.bg, color: prioCfg.color }}>
-                                                    {prioCfg.label}
-                                                </span>
-                                            </td>
-                                            <td className="px-2.5 py-3 text-right" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-xs font-bold block truncate text-slate-900">
+
+                                            {/* Estimated Value */}
+                                            <td className="px-3 py-3 text-right align-middle">
+                                                <span className="text-xs font-bold type-number text-lys-primary">
                                                     {p.estimatedAmount ? formatCompactVND(p.estimatedAmount, locale) : '—'}
                                                 </span>
                                             </td>
-                                            <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-xs truncate block text-slate-600" title={p.creatorName}>{p.creatorName}</span>
-                                            </td>
-                                            <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold inline-block whitespace-nowrap"
-                                                    style={{ background: statusCfg.bg, color: statusCfg.color }}>
-                                                    {statusCfg.label}
-                                                </span>
-                                            </td>
-                                            <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
-                                                <span className="text-[11px] whitespace-nowrap text-slate-600">
+
+                                            {/* Submitter + Time */}
+                                            <td className="px-3 py-3 align-middle">
+                                                <p className="text-xs font-medium text-lys-secondary truncate max-w-[155px]" title={p.creatorName}>
+                                                    {p.creatorName}
+                                                </p>
+                                                <p className="text-[11px] text-lys-dim mt-0.5 whitespace-nowrap">
                                                     {formatDateTime(p.submittedAt || p.createdAt)}
-                                                </span>
+                                                </p>
                                             </td>
-                                            <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }}>
-                                                {(p.status === 'APPROVED' || p.status === 'IN_PROGRESS' || p.status === 'CLOSED') ? (
-                                                    <span className="text-[11px] font-bold whitespace-nowrap text-[#15803D]" title={locale === 'en' ? 'Final CEO Approval Time' : 'Thời gian CEO phê duyệt hoàn tất'}>
+
+                                            {/* Status + Final Resolved Time */}
+                                            <td className="px-3 py-3 align-middle">
+                                                <StatusBadge
+                                                    status={p.status}
+                                                    label={statusCfg.label}
+                                                    toneOverrides={{
+                                                        SUBMITTED: 'info',
+                                                        REVIEWING: 'warning',
+                                                        RETURNED: 'warning',
+                                                        APPROVED_L1: 'brand',
+                                                        APPROVED_L2: 'brand',
+                                                        APPROVED: 'success',
+                                                        IN_PROGRESS: 'brand',
+                                                        REJECTED: 'danger',
+                                                    }}
+                                                />
+                                                {(p.status === 'APPROVED' || p.status === 'IN_PROGRESS' || p.status === 'CLOSED' || p.status === 'REJECTED') && p.resolvedAt && (
+                                                    <p className="text-[10px] text-lys-dim mt-1 whitespace-nowrap">
                                                         {formatDateTime(p.resolvedAt)}
-                                                    </span>
-                                                ) : p.status === 'REJECTED' ? (
-                                                    <span className="text-[11px] font-medium whitespace-nowrap text-[#B91C1C]" title={locale === 'en' ? 'Rejection Time' : 'Thời gian từ chối'}>
-                                                        {formatDateTime(p.resolvedAt)}
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-xs whitespace-nowrap text-slate-500" title={locale === 'en' ? 'Pending Approval' : 'Đang chờ duyệt'}>
-                                                        —
-                                                    </span>
+                                                    </p>
                                                 )}
                                             </td>
-                                            <td className="px-2.5 py-3" style={{ verticalAlign: 'middle' }} onClick={e => e.stopPropagation()}>
-                                                <div className="flex justify-end gap-1.5 flex-nowrap">
-                                                    <button onClick={() => openDetail(p.id)}
-                                                        className="px-2.5 py-1.5 text-xs font-medium rounded-lg transition-all whitespace-nowrap"
-                                                        style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
-                                                        <Eye size={12} className="inline mr-1" />{t.actions.detail}
-                                                    </button>
+
+                                            {/* Compact Actions */}
+                                            <td className="px-4 py-3 text-right align-middle" onClick={e => e.stopPropagation()}>
+                                                <div className="inline-flex items-center justify-end gap-1.5">
                                                     {canApproveThis && (
                                                         <>
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); handleApproval(p.id, 'APPROVE') }}
-                                                                disabled={actionLoading === p.id}
-                                                                className="px-2.5 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap text-white bg-tone-success-fg hover:opacity-90 cursor-pointer">
-                                                                {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} className="inline mr-1" />}
-                                                                {t.actions.approve}
-                                                            </button>
-                                                            <button
-                                                                onClick={(e) => {
+                                                            <Button
+                                                                size="sm"
+                                                                variant="primary"
+                                                                loading={actionLoading === p.id}
+                                                                onClick={e => { e.stopPropagation(); handleApproval(p.id, 'APPROVE') }}
+                                                                className="bg-tone-success-fg hover:bg-emerald-800"
+                                                                title={t.actions.approve}
+                                                            >
+                                                                <Check size={12} /> {t.actions.approve}
+                                                            </Button>
+                                                            <Button
+                                                                size="icon-sm"
+                                                                variant="danger-outline"
+                                                                onClick={e => {
                                                                     e.stopPropagation()
                                                                     const reason = prompt(locale === 'en' ? 'Reason for rejection:' : 'Lý do từ chối:')
                                                                     if (reason) handleApproval(p.id, 'REJECT', reason)
                                                                 }}
-                                                                className="px-2 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap bg-tone-danger-bg text-tone-danger-fg border border-tone-danger-border hover:bg-red-100 cursor-pointer">
-                                                                <XCircle size={12} className="inline mr-1" />{t.actions.reject}
-                                                            </button>
+                                                                title={t.actions.reject}
+                                                            >
+                                                                <X size={13} />
+                                                            </Button>
                                                         </>
                                                     )}
                                                     {(p.status === 'DRAFT' || p.status === 'RETURNED') && (
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); handleSubmitProposal(p.id) }}
-                                                            disabled={actionLoading === p.id}
-                                                            className="px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap"
-                                                            style={{ background: 'rgba(29,78,216,0.2)', color: '#1D4ED8', border: '1px solid rgba(29,78,216,0.4)' }}>
-                                                            {actionLoading === p.id ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} className="inline mr-1" />}
-                                                            {t.actions.submit}
-                                                        </button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="primary"
+                                                            loading={actionLoading === p.id}
+                                                            onClick={e => { e.stopPropagation(); handleSubmitProposal(p.id) }}
+                                                        >
+                                                            <Send size={12} /> {t.actions.submit}
+                                                        </Button>
                                                     )}
+                                                    <Button
+                                                        size="icon-sm"
+                                                        variant="secondary"
+                                                        onClick={() => openDetail(p.id)}
+                                                        title={t.actions.detail}
+                                                    >
+                                                        <Eye size={13} />
+                                                    </Button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -1428,6 +1324,109 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            {/* Mobile View - Clean Cards (Design System) */}
+            <div className="block md:hidden space-y-2.5">
+                {filtered.length === 0 ? (
+                    <div className="bg-lys-card border border-lys-border rounded-lg">
+                        <EmptyState icon={FileText} title={t.table.empty} />
+                    </div>
+                ) : (
+                    filtered.map(p => {
+                        const statusCfg = getStatusLabel(p.status, locale)
+                        const prioCfg = getPriorityLabel(p.priority, locale)
+                        const catBadge = getCategoryBadge(p.category)
+                        const isPending = ['SUBMITTED', 'REVIEWING', 'APPROVED_L1', 'APPROVED_L2'].includes(p.status)
+                        const canApproveThis = isPending && canApproveAtLevel(p.currentLevel, userRoles)
+                        const { main, sub } = formatBilingualTitle(p.title, locale)
+
+                        return (
+                            <div
+                                key={p.id}
+                                className={`p-3.5 rounded-lg bg-lys-card border space-y-2.5 transition-all cursor-pointer ${
+                                    canApproveThis ? 'border-tone-warning-border ring-1 ring-tone-warning-border' : 'border-lys-border'
+                                }`}
+                                onClick={() => openDetail(p.id)}
+                            >
+                                <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-xs font-bold type-number text-lys-teal-strong">{p.proposalNo}</span>
+                                        {canApproveThis && (
+                                            <Badge tone="warning">
+                                                {locale === 'en' ? 'Review' : 'Cần duyệt'}
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    <StatusBadge status={p.status} label={statusCfg.label} />
+                                </div>
+
+                                <div>
+                                    <p className="text-sm font-semibold text-lys-primary leading-snug">{main}</p>
+                                    {sub && <p className="text-[11px] text-lys-muted mt-0.5 line-clamp-1">{sub}</p>}
+                                </div>
+
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                    <Badge tone="neutral">{catBadge.label}</Badge>
+                                    {(p.priority === 'URGENT' || p.priority === 'HIGH') && (
+                                        <Badge tone={p.priority === 'URGENT' ? 'danger' : 'warning'}>
+                                            {prioCfg.label}
+                                        </Badge>
+                                    )}
+                                </div>
+
+                                <div className="flex items-center justify-between text-[11px] pt-2 border-t border-lys-border text-lys-secondary">
+                                    <span>
+                                        {p.creatorName} • {p.submittedAt ? new Date(p.submittedAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN') : '—'}
+                                    </span>
+                                    {p.estimatedAmount !== null && (
+                                        <span className="font-bold type-number text-lys-primary">
+                                            {formatCompactVND(p.estimatedAmount, locale)}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {(canApproveThis || p.status === 'DRAFT' || p.status === 'RETURNED') && (
+                                    <div className="flex justify-end gap-1.5 pt-1" onClick={e => e.stopPropagation()}>
+                                        {canApproveThis && (
+                                            <>
+                                                <Button
+                                                    size="sm"
+                                                    variant="primary"
+                                                    loading={actionLoading === p.id}
+                                                    onClick={() => handleApproval(p.id, 'APPROVE')}
+                                                    className="bg-tone-success-fg hover:bg-emerald-800"
+                                                >
+                                                    <CheckCircle2 size={12} /> {t.actions.approve}
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="danger-outline"
+                                                    onClick={() => {
+                                                        const reason = prompt(locale === 'en' ? 'Reason for rejection:' : 'Lý do từ chối:')
+                                                        if (reason) handleApproval(p.id, 'REJECT', reason)
+                                                    }}
+                                                >
+                                                    <XCircle size={12} /> {t.actions.reject}
+                                                </Button>
+                                            </>
+                                        )}
+                                        {(p.status === 'DRAFT' || p.status === 'RETURNED') && (
+                                            <Button
+                                                size="sm"
+                                                variant="primary"
+                                                loading={actionLoading === p.id}
+                                                onClick={() => handleSubmitProposal(p.id)}
+                                            >
+                                                <Send size={12} /> {t.actions.submit}
+                                            </Button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )
+                    })
+                )}
             </div>
 
             {/* Create Proposal Drawer */}
@@ -1448,7 +1447,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     onPrint={handlePrint}
                 />
             )}
-        </div>
+        </PageContainer>
     )
 }
 

@@ -599,9 +599,20 @@ erDiagram
     ARPayment {
         id          uuid PK
         invoice_id  uuid FK
+        batch_id    uuid FK
         amount      decimal
         paid_at     datetime
         method      enum
+    }
+    ARPaymentBatch {
+        id                  uuid PK
+        batch_no            string UK
+        customer_id         uuid FK
+        total_amount        decimal
+        allocated_amount    decimal
+        unallocated_amount  decimal
+        payment_date        datetime
+        status              enum
     }
     APInvoice {
         id              uuid PK
@@ -854,6 +865,7 @@ erDiagram
     ARInvoice }o--|| SalesOrder : "từ đơn bán"
     ARInvoice }o--|| Customer : "của KH"
     ARInvoice ||--o{ ARPayment : "có thanh toán"
+    ARPaymentBatch ||--o{ ARPayment : "phân bổ"
     APInvoice }o--|| PurchaseOrder : "từ đơn mua"
     APInvoice }o--|| Supplier : "của NCC"
     JournalEntry ||--o{ JournalLine : "bao gồm bút toán"

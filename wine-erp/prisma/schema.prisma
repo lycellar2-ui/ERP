@@ -124,6 +124,7 @@ model User {
   bankBatchesImported    BankStatementBatch[]
   bankTxnsPosted         BankTransaction[]          @relation("BankTxnPoster")
   bankRulesCreated       BankReconciliationRule[]   @relation("BankRuleCreator")
+  arPaymentBatches       ARPaymentBatch[]           @relation("ARBatchCreator")
   warehouseInspections   WarehouseInspection[]      @relation("WarehouseInspector")
   inspectionsApproved    WarehouseInspection[]      @relation("WarehouseInspectionApprover")
   inspectionsAssigned    WarehouseInspection[]      @relation("WarehouseInspectionAssigner")
@@ -590,6 +591,7 @@ model Customer {
   callPlans      SalesCallPlan[]
   bankTransactions BankTransaction[]
   bankReconciliationRules BankReconciliationRule[]
+  arPaymentBatches ARPaymentBatch[]
   historicalSkuSales HistoricalCustomerSkuSale[]
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
@@ -2255,8 +2257,42 @@ model ARPayment {
   paymentDate DateTime?
   paidAt      DateTime      @default(now())
   bankMatch   BankTransactionMatch?
+  batchId     String?
+  batch       ARPaymentBatch? @relation(fields: [batchId], references: [id])
 
+  @@index([batchId])
   @@map("ar_payments")
+}
+
+enum ARPaymentBatchStatus {
+  POSTED
+  PARTIALLY_ALLOCATED
+  REVERSED
+}
+
+model ARPaymentBatch {
+  id                String               @id @default(cuid())
+  batchNo           String               @unique
+  customerId        String
+  customer          Customer             @relation(fields: [customerId], references: [id])
+  totalAmount       Decimal
+  allocatedAmount   Decimal              @default(0)
+  unallocatedAmount Decimal              @default(0)
+  method            PaymentMethod        @default(BANK_TRANSFER)
+  paymentDate       DateTime
+  reference         String?
+  notes             String?
+  importHash        String?              @unique
+  status            ARPaymentBatchStatus @default(POSTED)
+  createdById       String?
+  createdBy         User?                @relation("ARBatchCreator", fields: [createdById], references: [id])
+  payments          ARPayment[]
+  createdAt         DateTime             @default(now())
+
+  @@index([customerId])
+  @@index([paymentDate])
+  @@index([status])
+  @@map("ar_payment_batches")
 }
 
 model APInvoice {

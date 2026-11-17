@@ -1,6 +1,6 @@
 # Wine Import & Distribution ERP — AI Context Index
 > Last updated: 2026-11-17
-> Status: Production — 32 modules, 154 DB models, 95 enums, 38 dashboard routes (46 page routes; 53 total app routes), 107 RBAC permissions, Pure Light Design System v4.1 + 100% System-Wide Bilingual VI/EN i18n (38/38 Dashboard Routes)
+> Status: Production — 32 modules, 155 DB models, 96 enums, 38 dashboard routes (46 page routes; 53 total app routes), 107 RBAC permissions, Pure Light Design System v4.1 + 100% System-Wide Bilingual VI/EN i18n (38/38 Dashboard Routes)
 
 ## Core Files (MUST READ IN ORDER)
 - docs/README.md — Project overview, module list, doc-update rules
@@ -11,7 +11,7 @@
  
 ## Tech Stack (Verified)
 - Next.js 16.1.6 (App Router) + React 19.2.3 + TypeScript
-- Prisma 7.4.2 + Supabase PostgreSQL (154 models, 95 enums)
+- Prisma 7.4.2 + Supabase PostgreSQL (155 models, 96 enums)
 - TailwindCSS v4 + Shadcn UI (Radix)
 - Supabase Auth (@supabase/ssr) — NOT NextAuth
 - ImgBB (product images) + Cloudflare R2 / Supabase Storage (private docs, scans & vouchers)

@@ -1,19 +1,20 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { DollarSign, TrendingDown, AlertCircle, Clock, CheckCircle2, ReceiptText, ArrowUpRight, ArrowDownRight, BookOpen, BarChart3, Wallet, Lock, Skull, Banknote, Table2, Search, FileCheck2, Building2 } from 'lucide-react'
+import { DollarSign, TrendingDown, AlertCircle, Clock, CheckCircle2, ReceiptText, ArrowUpRight, ArrowDownRight, BookOpen, BarChart3, Wallet, Lock, Skull, Banknote, Table2, Search, FileCheck2, Building2, FileSpreadsheet } from 'lucide-react'
 import { toast } from 'sonner'
 import { ARRow, APRow, getARInvoices, getAPInvoices, recordARPayment, recordAPPayment } from './actions'
 import { formatVND, formatDate } from '@/lib/utils'
 import { JournalEntryTab, ProfitLossTab, ExpenseTab, PeriodCloseTab, BalanceSheetTab, BadDebtTab, CashFlowTab, TrialBalanceTab, AccountLedgerTab } from './FinanceTabs'
 import { InvoiceReconciliationTab } from './InvoiceReconciliationTab'
 import { BankReconciliationTab } from './BankReconciliationTab'
+import { ParentPaymentImportTab } from './ParentPaymentImportTab'
 import { FilterBar } from '@/components/FilterBar'
 import { PageHeader, Pagination } from '@/components/ui'
 import { useAppLocale } from '@/lib/i18n'
 import { getFinanceLabels } from './i18n'
 
-type Tab = 'ar' | 'ap' | 'aging' | 'invoice-reconcile' | 'bank-reconcile' | 'journal' | 'pnl' | 'bs' | 'trialbalance' | 'ledger' | 'expense' | 'period' | 'baddebt' | 'cashflow'
+type Tab = 'ar' | 'ap' | 'aging' | 'invoice-reconcile' | 'bank-reconcile' | 'parent-payment' | 'journal' | 'pnl' | 'bs' | 'trialbalance' | 'ledger' | 'expense' | 'period' | 'baddebt' | 'cashflow'
 
 const AR_STATUS: Record<string, { label: string; labelEn: string; color: string }> = {
     UNPAID: { label: 'Chưa Thu', labelEn: 'Unpaid', color: '#B45309' },
@@ -331,7 +332,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search)
             const urlTab = params.get('tab') as Tab
-            if (urlTab && ['ar', 'ap', 'aging', 'invoice-reconcile', 'journal', 'pnl', 'bs', 'trialbalance', 'ledger', 'expense', 'period', 'baddebt', 'cashflow'].includes(urlTab)) {
+            if (urlTab && ['ar', 'ap', 'aging', 'invoice-reconcile', 'bank-reconcile', 'parent-payment', 'journal', 'pnl', 'bs', 'trialbalance', 'ledger', 'expense', 'period', 'baddebt', 'cashflow'].includes(urlTab)) {
                 setTab(urlTab)
             }
         }
@@ -427,6 +428,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
         { key: 'aging', label: 'AR Aging', icon: Clock, group: 'ops' },
         { key: 'invoice-reconcile', label: L.tabInvoiceRecon, icon: FileCheck2, group: 'ops' },
         { key: 'bank-reconcile', label: L.tabBankRecon, icon: Building2, group: 'ops' },
+        { key: 'parent-payment', label: L.tabParentPayment, icon: FileSpreadsheet, group: 'ops' },
         // Accounting — Kế toán (export to external SW)
         { key: 'journal', label: L.tabJournal, icon: BookOpen, group: 'acct' },
         { key: 'pnl', label: 'P&L', icon: BarChart3, group: 'acct' },
@@ -617,7 +619,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                                     <span className="text-xs font-bold" style={{ color: '#B45309' }}>{row.currency}</span>
                                                     {isMultiCurrency && (
                                                         <p className="text-xs" style={{ color: '#64748B' }}>
-                                                            ×{row.exchangeRate.toLocaleString()}
+                                                            ×{row.exchangeRate.toLocaleString('vi-VN')}
                                                         </p>
                                                     )}
                                                 </td>
@@ -694,6 +696,8 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
             {tab === 'invoice-reconcile' && <InvoiceReconciliationTab />}
 
             {tab === 'bank-reconcile' && <BankReconciliationTab />}
+
+            {tab === 'parent-payment' && <ParentPaymentImportTab onDataChanged={() => reloadAR()} />}
 
             {tab === 'journal' && <JournalEntryTab />}
 

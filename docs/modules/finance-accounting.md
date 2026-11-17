@@ -51,6 +51,20 @@ Phân hệ tài chính phục vụ 2 mục tiêu: **Kế toán quản trị nộ
 
 ---
 
+## 2.2. Import Bảng Kê Thu Tiền Theo Công Ty Mẹ (Parent Company Payment Import)
+
+**Mục tiêu:** Khi chưa kết nối API trực tiếp với phần mềm kế toán, cho phép tải lên bảng kê thu tiền (`.xlsx`/`.csv`) theo **Công ty mẹ** (`Customer` có `children` qua `CustomerHierarchy`) để phân bổ gạch nợ FIFO xuống các `ARInvoice` đang mở của công ty mẹ và toàn bộ chi nhánh con.
+
+| Thành phần | Đặc điểm & Xử lý |
+|---|---|
+| **Template & Parser** | `downloadParentPaymentTemplate` xuất file mẫu; `previewParentPaymentImport` nhận diện cột Mã KH / MST / Tên, Ngày Thu, Số Tiền, Phương Thức, Số Chứng Từ. Nếu dòng nhập mã chi nhánh con, tự động quy về Công ty mẹ (`parentId`). |
+| **Chống Trùng Lặp** | `importHash = SHA256(customerId + paymentDate + amount + reference)` kiểm tra trùng với các lô `ARPaymentBatch` đã ghi sổ. |
+| **Phân Bổ Cụm Mẹ + Con** | Gom `ARInvoice` mở (`UNPAID`, `PARTIALLY_PAID`, `OVERDUE`) của `[parentId, ...childrenIds]`, sắp xếp FIFO (`dueDate`, `createdAt`), tách thành các `ARPayment` gắn `batchId`. |
+| **Tiền Dư / Trả Trước** | Nếu số tiền thu lớn hơn tổng nợ mở, phần dư lưu vào `ARPaymentBatch.unallocatedAmount` (trạng thái `PARTIALLY_ALLOCATED`) và có nút **Phân bổ** 1-Click khi phát sinh hóa đơn mới. |
+| **Hoàn Tác (Rollback)** | `reverseParentPaymentBatch` xóa toàn bộ `ARPayment` thuộc `batchId`, tính lại `paidAmount` & trạng thái `ARInvoice` và `SalesOrder` an toàn. |
+
+---
+
 ## 3. COGS & Margin Tracking (Giá Vốn Thực)
 
 Đây là điểm khác biệt của Wine ERP so với phần mềm kế toán thông thường:
