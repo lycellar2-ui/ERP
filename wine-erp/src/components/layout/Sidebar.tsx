@@ -196,10 +196,7 @@ const DATA_PREFETCH_MAP: Record<string, (qc: any) => void> = {
 function LysLogo({ collapsed, isMobile, onCloseMobile }: { collapsed: boolean; isMobile?: boolean; onCloseMobile?: () => void }) {
     if (collapsed && !isMobile) {
         return (
-            <div
-                className="flex items-center justify-center w-full"
-                style={{ borderBottom: '1px solid #E2E8F0', height: '48px' }}
-            >
+            <div className="flex items-center justify-center w-full h-[42px] border-b border-lys-border shrink-0">
                 <Image
                     src="/logo/Ly's Cellars - Logo_icon blue green.png"
                     alt="LY's Cellars"
@@ -213,10 +210,7 @@ function LysLogo({ collapsed, isMobile, onCloseMobile }: { collapsed: boolean; i
     }
 
     return (
-        <div
-            className="flex items-center justify-between px-4 w-full"
-            style={{ borderBottom: '1px solid #E2E8F0', height: '48px' }}
-        >
+        <div className="flex items-center justify-between px-4 w-full h-[42px] border-b border-lys-border shrink-0">
             <Image
                 src="/logo/Ly's Cellars - Logo_tagline blue green.png"
                 alt="LY's Cellars"

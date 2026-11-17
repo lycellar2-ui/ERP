@@ -106,7 +106,7 @@ export default async function DashboardPage(props: PageProps) {
             : null
 
         return (
-            <div className="space-y-5 max-w-7xl mx-auto">
+            <div className="space-y-5 max-w-screen-2xl">
                 <DashboardHeaderNav
                     userName={user?.name}
                     roles={roles}
@@ -134,7 +134,7 @@ export default async function DashboardPage(props: PageProps) {
         const topCust = await getTopCustomers(8, filterOptions)
         const topCustomers = Array.isArray(topCust) ? topCust : []
         return (
-            <div className="space-y-5 max-w-7xl mx-auto">
+            <div className="space-y-5 max-w-screen-2xl">
                 <DashboardHeaderNav
                     userName={user?.name}
                     roles={roles}
@@ -223,7 +223,7 @@ export default async function DashboardPage(props: PageProps) {
     const pendingSub = pendingParts.length > 0 ? pendingParts.join(' · ') : 'Không có mục chờ'
 
     return (
-        <div className="space-y-5 max-w-7xl mx-auto">
+        <div className="space-y-5 max-w-screen-2xl">
             {/* Header & Bilingual Tabs */}
             <DashboardHeaderNav
                 userName={user?.name}
