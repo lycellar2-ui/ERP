@@ -1,4 +1,5 @@
-import { InvoicePayload } from './types'
+import { InvoiceItem, InvoicePayload } from './types'
+import { getVnptInvoiceProductName } from './product-invoice-names'
 
 /**
  * Escapes characters for XML compliance
@@ -79,46 +80,199 @@ export function readVndMoneyToWords(amount: number): string {
 }
 
 /**
+ * Formats numeric fields for VNPT XML without trailing unnecessary decimals
+ */
+export function formatXmlNumber(val: number, maxDecimals = 2): string {
+    if (!Number.isFinite(val)) return '0'
+    if (Number.isInteger(val)) return String(val)
+    return String(Number(val.toFixed(maxDecimals)))
+}
+
+export interface VnptLineCalcInput {
+    skuCode: string
+    productName: string
+    wineType?: string | null
+    unit?: string | null
+    qtyOrdered: number
+    unitPrice: number
+    lineDiscountPct?: number
+    vatRate?: number | null
+}
+
+export interface VnptOrderCalcInput {
+    channel: string
+    orderType?: string | null
+    orderDiscountPct?: number
+    defaultVatRate?: number
+    lines: VnptLineCalcInput[]
+}
+
+export interface CalculatedVnptLine extends InvoiceItem {
+    preVatBeforeDisc: number
+}
+
+export interface CalculatedVnptTotals {
+    isVatInclusive: boolean
+    items: CalculatedVnptLine[]
+    totalNet: number
+    totalVat: number
+    totalDiscount: number
+    totalAmount: number
+}
+
+const VAT_INCLUSIVE_CHANNELS = new Set(['RETAIL', 'DIRECT_INDIVIDUAL', 'POS'])
+
+/**
+ * Computes VNPT pre-VAT unit prices, discounts, VAT amounts, and integer-balanced totals
+ * consistent with SalesOrder pricing rules (VAT-inclusive for RETAIL/DIRECT_INDIVIDUAL/POS).
+ */
+export function calculateVnptInvoiceTotals(input: VnptOrderCalcInput): CalculatedVnptTotals {
+    const isVatInclusive = VAT_INCLUSIVE_CHANNELS.has(String(input.channel || '').toUpperCase())
+    const orderDiscPct = Math.max(0, Math.min(100, Number(input.orderDiscountPct || 0)))
+    const defaultVatRate = Number(input.defaultVatRate ?? 10)
+
+    let totalNet = 0
+    let totalVat = 0
+    let totalDiscount = 0
+
+    const items: CalculatedVnptLine[] = input.lines.map((line, idx) => {
+        const qty = Number(line.qtyOrdered || 0)
+        const rawPrice = Number(line.unitPrice || 0)
+        const lineDiscPct = Math.max(0, Math.min(100, Number(line.lineDiscountPct || 0)))
+
+        const effectiveDiscFactor = 1 - (1 - lineDiscPct / 100) * (1 - orderDiscPct / 100)
+        const effectiveDiscPct = Math.round((effectiveDiscFactor * 100 + 1e-9) * 100) / 100
+        const rateNum = Number(line.vatRate ?? defaultVatRate)
+        const vatRateStr = `${rateNum}%`
+
+        let preVatUnitPrice = 0
+        let preVatBeforeDisc = 0
+        let netAmount = 0
+        let vatAmount = 0
+        let discountAmount = 0
+
+        if (isVatInclusive) {
+            const grossAfterDisc = Math.round(qty * rawPrice * (1 - effectiveDiscFactor))
+            preVatUnitPrice = rawPrice === 0 ? 0 : Number((rawPrice / (1 + rateNum / 100)).toFixed(2))
+            netAmount = Math.round(grossAfterDisc / (1 + rateNum / 100))
+            vatAmount = grossAfterDisc - netAmount
+            preVatBeforeDisc = Math.round(qty * preVatUnitPrice)
+            discountAmount = Math.max(0, preVatBeforeDisc - netAmount)
+        } else {
+            preVatUnitPrice = Number(rawPrice.toFixed(2))
+            preVatBeforeDisc = Math.round(qty * preVatUnitPrice)
+            netAmount = Math.round(qty * rawPrice * (1 - effectiveDiscFactor))
+            discountAmount = Math.max(0, preVatBeforeDisc - netAmount)
+            vatAmount = Math.round(netAmount * (rateNum / 100))
+        }
+
+        const isFreeItem =
+            netAmount === 0 &&
+            (rawPrice === 0 || input.orderType === 'SAMPLE' || input.orderType === 'TASTING')
+
+        totalNet += netAmount
+        totalVat += vatAmount
+        totalDiscount += discountAmount
+
+        return {
+            lineNo: idx + 1,
+            itemType: isFreeItem ? 2 : 1,
+            productCode: line.skuCode,
+            productName: getVnptInvoiceProductName(line.skuCode, line.productName, line.wineType),
+            unit: line.unit || 'Chai',
+            quantity: qty,
+            unitPrice: preVatUnitPrice,
+            discountPct: effectiveDiscPct,
+            discountAmount,
+            amount: netAmount,
+            vatRate: vatRateStr,
+            vatAmount,
+            totalAmount: netAmount + vatAmount,
+            preVatBeforeDisc,
+        }
+    })
+
+    return {
+        isVatInclusive,
+        items,
+        totalNet,
+        totalVat,
+        totalDiscount,
+        totalAmount: totalNet + totalVat,
+    }
+}
+
+/**
  * Builds the <DSHDon> XML string for VNPT V5 Webservice (TT78 / NĐ70)
  */
 export function buildVnptDraftInvoiceXml(payload: InvoicePayload): string {
-    const { fkey, buyer, items, totalNet, totalVat, totalDiscount, totalAmount, paymentMethod } = payload
-    const amountInWords = payload.totalAmountInWords || readVndMoneyToWords(totalAmount)
+    const { fkey, buyer, items, paymentMethod } = payload
 
-    // Group items by VAT rate for <THTTLTSuat>
+    const normalizedItems = items.map((item, idx) => {
+        const roundedAmount = Math.round(item.amount)
+        const roundedVat = Math.round(item.vatAmount)
+        const roundedDisc = Math.round(item.discountAmount || 0)
+        return {
+            item,
+            idx,
+            roundedAmount,
+            roundedVat,
+            roundedDisc,
+            itemTotal: roundedAmount + roundedVat,
+        }
+    })
+
+    // Group rounded line totals by VAT rate so <HHDVu>, <LTSuat>, and <TToan> match exactly
     const vatGroups: Record<string, { net: number; vat: number }> = {}
-    for (const item of items) {
-        const rate = item.vatRate || '10%'
+    let sumNet = 0
+    let sumVat = 0
+    let sumDisc = 0
+
+    for (const entry of normalizedItems) {
+        const rate = entry.item.vatRate || '10%'
         if (!vatGroups[rate]) {
             vatGroups[rate] = { net: 0, vat: 0 }
         }
-        vatGroups[rate].net += item.amount
-        vatGroups[rate].vat += item.vatAmount
+        vatGroups[rate].net += entry.roundedAmount
+        vatGroups[rate].vat += entry.roundedVat
+        sumNet += entry.roundedAmount
+        sumVat += entry.roundedVat
+        sumDisc += entry.roundedDisc
     }
 
-    const itemsXml = items.map((item, idx) => `
+    const resolvedTotalNet = normalizedItems.length > 0 ? sumNet : Math.round(payload.totalNet)
+    const resolvedTotalVat = normalizedItems.length > 0 ? sumVat : Math.round(payload.totalVat)
+    const resolvedTotalDiscount = normalizedItems.length > 0 ? sumDisc : Math.round(payload.totalDiscount || 0)
+    const resolvedTotalAmount = normalizedItems.length > 0 ? sumNet + sumVat : Math.round(payload.totalAmount)
+    const amountInWords = payload.totalAmountInWords || readVndMoneyToWords(resolvedTotalAmount)
+
+    const itemsXml = normalizedItems.map(({ item, idx, roundedAmount, roundedVat, roundedDisc, itemTotal }) => `
                 <HHDVu>
-                    <TChat>1</TChat>
+                    <TChat>${item.itemType || 1}</TChat>
                     <STT>${item.lineNo || (idx + 1)}</STT>
                     <MHHDVu>${escapeXml(item.productCode)}</MHHDVu>
                     <THHDVu>${escapeXml(item.productName)}</THHDVu>
                     <DVTinh>${escapeXml(item.unit || 'Chai')}</DVTinh>
-                    <SLuong>${item.quantity}</SLuong>
-                    <DGia>${Math.round(item.unitPrice)}</DGia>
-                    <TLCKhau>${item.discountPct || 0}</TLCKhau>
-                    <STCKhau>${Math.round(item.discountAmount || 0)}</STCKhau>
-                    <ThTien>${Math.round(item.amount)}</ThTien>
+                    <SLuong>${formatXmlNumber(item.quantity, 2)}</SLuong>
+                    <DGia>${formatXmlNumber(item.unitPrice, 2)}</DGia>
+                    <TLCKhau>${formatXmlNumber(item.discountPct || 0, 2)}</TLCKhau>
+                    <STCKhau>${roundedDisc}</STCKhau>
+                    <ThTien>${roundedAmount}</ThTien>
                     <TSuat>${escapeXml(item.vatRate)}</TSuat>
-                    <TThue>${Math.round(item.vatAmount)}</TThue>
-                    <TSThue>${Math.round(item.amount + item.vatAmount)}</TSThue>
+                    <TThue>${roundedVat}</TThue>
+                    <TSThue>${itemTotal}</TSThue>
                 </HHDVu>`).join('')
 
     const vatSummaryXml = Object.entries(vatGroups).map(([rate, vals]) => `
                         <LTSuat>
                             <TSuat>${escapeXml(rate)}</TSuat>
-                            <ThTien>${Math.round(vals.net)}</ThTien>
-                            <TThue>${Math.round(vals.vat)}</TThue>
+                            <ThTien>${vals.net}</ThTien>
+                            <TThue>${vals.vat}</TThue>
                         </LTSuat>`).join('')
+
+    const noteXml = payload.note?.trim()
+        ? `\n                <TTKhac>\n                    <TTin>\n                        <TTruong>GhiChu</TTruong>\n                        <KDLieu>string</KDLieu>\n                        <DLieu>${escapeXml(payload.note.trim())}</DLieu>\n                    </TTin>\n                </TTKhac>`
+        : ''
 
     return `<?xml version="1.0" encoding="utf-8"?>
 <DSHDon>
@@ -145,13 +299,13 @@ export function buildVnptDraftInvoiceXml(payload: InvoicePayload): string {
                 <TToan>
                     <THTTLTSuat>${vatSummaryXml}
                     </THTTLTSuat>
-                    <TgTCThue>${Math.round(totalNet)}</TgTCThue>
-                    <TgTThue>${Math.round(totalVat)}</TgTThue>
-                    ${totalDiscount ? `<TTCKTMai>${Math.round(totalDiscount)}</TTCKTMai>` : ''}
-                    <TgTTTBSo>${Math.round(totalAmount)}</TgTTTBSo>
+                    <TgTCThue>${resolvedTotalNet}</TgTCThue>
+                    <TgTThue>${resolvedTotalVat}</TgTThue>
+                    ${resolvedTotalDiscount > 0 ? `<TTCKTMai>${resolvedTotalDiscount}</TTCKTMai>` : ''}
+                    <TgTTTBSo>${resolvedTotalAmount}</TgTTTBSo>
                     <TgTTTBChu>${escapeXml(amountInWords)}</TgTTTBChu>
                 </TToan>
-            </NDHDon>
+            </NDHDon>${noteXml}
         </DLHDon>
     </HDon>
 </DSHDon>`.trim()

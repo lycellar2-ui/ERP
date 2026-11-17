@@ -69,6 +69,7 @@ async function handleCronSync(req: NextRequest) {
                     select: {
                         id: true,
                         soNo: true,
+                        status: true,
                         legalEntityId: true,
                         legalEntity: { select: { code: true, name: true } },
                     },
@@ -165,6 +166,13 @@ async function handleCronSync(req: NextRequest) {
                         },
                     })
 
+                    if (['CONFIRMED', 'DELIVERED', 'PARTIALLY_DELIVERED'].includes(inv.so.status)) {
+                        await prisma.salesOrder.update({
+                            where: { id: inv.so.id },
+                            data: { status: 'INVOICED' },
+                        })
+                    }
+
                     entityStats.synced++
                     totalSynced++
 
@@ -192,6 +200,7 @@ async function handleCronSync(req: NextRequest) {
             revalidateCache('sales')
             revalidatePath('/dashboard/sales')
             revalidatePath('/dashboard/finance')
+            revalidatePath('/dashboard/reconciliation')
         }
 
         return NextResponse.json({

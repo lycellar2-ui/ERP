@@ -14,6 +14,7 @@ export const VNPT_ERROR_CODES: Record<string, string> = {
     'ERR:20': 'Pattern và Serial không phù hợp hoặc chưa đăng ký dải số trên hệ thống.',
     'ERR:21': 'Lỗi trùng số hóa đơn.',
     'ERR:22': 'Công ty chưa đăng ký chứng thư số.',
+    'ERR:23': 'Không tìm thấy dữ liệu hóa đơn đã ký số tương ứng với FKey.',
     'ERR:24': 'Chứng thư truyền lên không khớp với chứng thư đăng ký trong hệ thống.',
     'ERR:26': 'Chứng thư số (chữ ký số) đã hết hạn.',
     'ERR:27': 'Chứng thư số chưa đến thời điểm có hiệu lực.',
@@ -85,29 +86,51 @@ export function parseVnptResponse(rawResponse: string, fallbackFkey?: string): V
     const trimmed = rawResponse.trim()
 
     if (trimmed.startsWith('OK:')) {
-        // Format: OK:pattern;serial-fkey OR OK:pattern;serial-fkey_invNo
+        // Format: OK:pattern;serial-fkey OR OK:pattern;serial-fkey_invNo OR OK:fkey
         const content = trimmed.substring(3)
-        const [patSer, keyPart] = content.split('-')
-        const [pat, ser] = (patSer || '').split(';')
 
-        let fkey = fallbackFkey || ''
-        let invoiceNo = ''
+        if (content.includes(';')) {
+            const dashIdx = content.indexOf('-')
+            const patSer = dashIdx >= 0 ? content.substring(0, dashIdx) : content
+            const keyPart = dashIdx >= 0 ? content.substring(dashIdx + 1) : ''
+            const [pat, ser] = patSer.split(';')
 
-        if (keyPart) {
-            const parts = keyPart.split('_')
-            fkey = parts[0]
-            if (parts.length > 1) {
-                invoiceNo = parts[1]
+            let fkey = fallbackFkey || ''
+            let invoiceNo = ''
+
+            if (keyPart) {
+                if (fallbackFkey && keyPart.startsWith(fallbackFkey)) {
+                    fkey = fallbackFkey
+                    const suffix = keyPart.substring(fallbackFkey.length)
+                    if (suffix.startsWith('_')) {
+                        invoiceNo = suffix.substring(1)
+                    }
+                } else {
+                    const m = keyPart.match(/^(.*)_(\d+)$/)
+                    if (m) {
+                        fkey = m[1]
+                        invoiceNo = m[2]
+                    } else {
+                        fkey = keyPart
+                    }
+                }
+            }
+
+            return {
+                success: true,
+                rawResponse: trimmed,
+                pattern: pat || '',
+                serial: ser || '',
+                fkey,
+                invoiceNo,
             }
         }
 
         return {
             success: true,
             rawResponse: trimmed,
-            pattern: pat || '',
-            serial: ser || '',
-            fkey,
-            invoiceNo,
+            fkey: content || fallbackFkey || '',
+            invoiceNo: '',
         }
     }
 

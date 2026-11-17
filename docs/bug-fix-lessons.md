@@ -99,6 +99,9 @@
 90. [BUG-155: Rủi Ro XSS Khi Render HTML Chưa Lọc Trong MarkdownViewer](#bug-155-rủi-ro-xss-khi-render-html-chưa-lọc-trong-markdownviewer)
 91. [BUG-156: Bản In Modal Bị Trắng Trang & Bị Cắt Bảng Do Quy Tắc @media print Trong globals.css](#bug-156-bản-in-modal-bị-trắng-trang--bị-cắt-bảng-do-quy-tắc-media-print-trong-globalscss)
 92. [BUG-157: Lỗi UI/UX Toàn Hệ Thống — window.prompt, Vi Phạm Purple Ban, Tương Phản Nút #0891B2, Đa Thẻ H1, Hick's Law & Thiếu i18n Header](#bug-157-lỗi-uiux-toàn-hệ-thống--windowprompt-vi-phạm-purple-ban-tương-phản-nút-0891b2-đa-thẻ-h1-hicks-law--thiếu-i18n-header)
+93. [BUG-158: Middleware Chuyển Hướng Nhầm /partner-login Của Đối Tác Ngoại Bộ Về Trang /login Nhân Viên](#bug-158-middleware-chuyển-hướng-nhầm-partner-login-của-đối-tác-ngoại-bộ-về-trang-login-nhân-viên)
+94. [BUG-159: Lỗi React Hydration #418 Trên Production Do 138 Lời Gọi .toLocaleString() Không Chỉ Định Locale Trong 19 Client Components](#bug-159-lỗi-react-hydration-418-trên-production-do-138-lời-gọi-tolocalestring-không-chỉ-định-locale-trong-19-client-components)
+95. [BUG-160: Sai Lệch Thuế VAT Kênh Bán Lẻ, Bỏ Sót orderDiscount, Kẹt ERR:13 Khi Đẩy Lại Nháp VNPT & Rủi Ro Thuế 8% Tên Tự Công Bố](#bug-160-sai-lệch-thuế-vat-kênh-bán-lẻ-bỏ-sót-orderdiscount-kẹt-err13-khi-đẩy-lại-nháp-vnpt--rủi-ro-thuế-8-tên-tự-công-bố)
 
 ---
 
@@ -4555,3 +4558,69 @@ Qua đợt kiểm tra chuyên sâu toàn bộ 38 routes và tất cả component
 
 ### Bài học
 > ⚠️ **RULE 157: Tuyệt đối cấm `window.prompt`/class màu tím (`indigo`/`purple`), nút chữ trắng giữ tối thiểu `#0E7490`, mỗi route chỉ có duy nhất 1 `<h1>`, và mọi drawer input trên mobile phải đặt `text-base sm:text-sm`.**
+
+---
+
+## BUG-158: Middleware Chuyển Hướng Nhầm /partner-login Của Đối Tác Ngoại Bộ Về Trang /login Nhân Viên
+
+**Ngày:** 2026-11-15
+**Severity:** High — Đối tác ngoại bộ bị chặn không thể truy cập cổng đăng nhập `/partner-login`
+
+### Triệu chứng
+- Người dùng chưa đăng nhập hoặc trình duyệt kiểm thử E2E truy cập `/partner-login` bị middleware chuyển hướng `307`/`302` sang `/login` (trang đăng nhập nhân viên nội bộ).
+
+### Nguyên nhân gốc rễ
+- Trong `wine-erp/src/middleware.ts`, biến `isAgencyPath` chỉ kiểm tra `request.nextUrl.pathname.startsWith('/portal')` mà bỏ sót `request.nextUrl.pathname.startsWith('/partner-login')`.
+- Khi thiếu danh sách bypass cho `/partner-login`, luồng kiểm tra session Supabase nội bộ chạy trước và đẩy request chưa có session nhân viên về `/login`.
+
+### Cách fix
+1. Cập nhật `isAgencyPath` trong `wine-erp/src/middleware.ts` (dòng 78–80) để bao gồm cả `request.nextUrl.pathname.startsWith('/portal') || request.nextUrl.pathname.startsWith('/partner-login')`.
+2. Bổ sung kiểm thử hồi quy `REG-06: Middleware /partner-login agency bypass` trong `wine-erp/test/audit-regressions.test.ts` (kèm timeout `15_000` ms cho cold dynamic import).
+
+### Bài học
+> **RULE 158: Mọi route xác thực dành riêng cho đối tác ngoại bộ (như `/partner-login`, `/portal`) PHẢI được khai báo đầy đủ trong nhánh bypass auth nội bộ của `src/middleware.ts` để không bị redirect nhầm về `/login` của nhân viên.**
+
+---
+
+## BUG-159: Lỗi React Hydration #418 Trên Production Do 138 Lời Gọi .toLocaleString() Không Chỉ Định Locale Trong 19 Client Components
+
+**Ngày:** 2026-11-15
+**Severity:** High — `Minified React error #418 (args[]=text)` xuất hiện trên `/dashboard`, `/dashboard/procurement`, `/dashboard/warehouse` ở bản production `next start`
+
+### Triệu chứng
+- Trên bản build production (`npx next start`) chạy trên Windows Node SSR và mở bằng headless Chromium/Edge, trình duyệt ghi nhận `pageerror`: `Minified React error #418` (`text` mismatch) tại `/dashboard`, `/dashboard/procurement`, `/dashboard/warehouse` (và lan sang route kế tiếp nếu điều hướng sớm trước khi hydrate xong).
+
+### Nguyên nhân gốc rễ
+- Toàn hệ thống có **138 lời gọi `.toLocaleString()` rỗng tham số** rải rác trong **19 Client Components** (`.tsx`), ví dụ `DataPagination.tsx`, `CeoOverviewContent.tsx`, `SkuAnalyticsDashboard.tsx`, `ProcurementClient.tsx`, `FinanceClient.tsx`, `WarehouseClient.tsx` và các tab kho/thanh toán/kiểm kê.
+- Node.js trên Windows định dạng `.toLocaleString()` theo locale hệ điều hành `vi-VN` (`1.469`, `29.792,72`), trong khi headless Chromium/Edge mặc định dùng `en-US` (`1,469`, `29,792.72`), làm chuỗi DOM server SSR và client hydration lệch nhau.
+
+### Cách fix
+1. Chuẩn hóa toàn bộ **138 lời gọi** `.toLocaleString()` rỗng tham số trên toàn bộ **19 file `.tsx`** trong `wine-erp/src` sang `.toLocaleString('vi-VN')`.
+2. Bổ sung test hồi quy tĩnh `REG-07: No bare .toLocaleString() in TSX components (SSR/Client hydration safety)` trong `wine-erp/test/audit-regressions.test.ts`, quét đệ quy `src/**/*.tsx` để chặn regex `/\.toLocale(?:String|DateString|TimeString)\(\)/`.
+
+### Bài học
+> **RULE 159: Tuyệt đối cấm gọi `.toLocaleString()`, `.toLocaleDateString()`, `.toLocaleTimeString()` rỗng tham số trong các component `.tsx` — bắt buộc truyền locale tường minh (`'vi-VN'` hoặc biến locale đồng bộ) hoặc dùng helper `formatNumber`/`formatCurrency` để tránh lỗi React Hydration `#418` giữa Node SSR và trình duyệt.**
+
+---
+
+## BUG-160: Sai Lệch Thuế VAT Kênh Bán Lẻ, Bỏ Sót orderDiscount, Kẹt ERR:13 Khi Đẩy Lại Nháp VNPT & Rủi Ro Thuế 8% Tên Tự Công Bố
+
+**Ngày:** 2026-11-17
+**Severity:** Critical — Đẩy sai tổng tiền hóa đơn +10%/+8% cho kênh bán lẻ, kẹt `ERR:13` khi sửa nháp và nguy cơ xuất toán thuế 8%
+
+### Triệu chứng
+- Đơn kênh `RETAIL`, `DIRECT_INDIVIDUAL`, `POS` (giá dòng đã bao gồm VAT) khi đẩy nháp VNPT hoặc xuất Excel VNPT bị cộng thêm 10%/8% VAT lần thứ hai (VD: `SO-2608-0153` tổng thu `4.690.000 đ` bị đẩy thành `5.159.000 đ`).
+- Đơn có `orderDiscount > 0` bị bỏ sót chiết khấu toàn đơn khi đẩy VNPT; đơn có chiết khấu lẻ thập phân có thể lệch 1–3 đ giữa `<HHDVu><ThTien>` và `<LTSuat>/<TgTCThue>`.
+- Trên VNPT TT78, hàm `deleteInvoiceByFkey` trả `ERR:5` và `updateInvoice` đã deprecated; sau khi hủy nháp cục bộ hoặc bấm cập nhật lại bản nháp trên UI, hệ thống giữ nguyên `SO_${soNo}` nên bị chặn `ERR:13` (Trùng khóa FKey).
+- Hàm `parseVnptResponse` cắt chuỗi theo `-` và `_` làm đứt mã FKey chứa dấu gạch ngang (như `SO_SO-2609-0105`).
+- Mã `L10035`, `L10036` (VAT 8%) bị map tiền tố `"Rượu vang không cồn..."` thay vì `"Nước uống không cồn..."` (như hóa đơn thật `C26TTA-00001232` của Thắng Ân), và thiếu 18 SKU active trong bảng ánh xạ TCB.
+- `actions-vnpt.ts` còn export hàm đồng bộ `checkInvoiceDateDiscrepancy` trong file `'use server'`, thiếu kiểm tra RBAC/trạng thái đơn/miễn HĐ, và đồng bộ thành công chưa chuyển trạng thái SO sang `INVOICED`.
+
+### Cách fix
+1. Tạo helper chuẩn `calculateVnptInvoiceTotals` trong `src/lib/vnpt/xml-builder.ts` dùng chung cho `uploadDraftInvoiceToVnpt` (`actions-vnpt.ts`) và `exportVnptInvoiceExcel` (`sales/actions.ts`): tự động tách giá trước thuế cho `RETAIL`/`DIRECT_INDIVIDUAL`/`POS`, gộp chiết khấu dòng + `orderDiscount`, giữ tối đa 2 chữ số thập phân ở `<DGia>`, gắn `<TChat>2</TChat>` cho hàng mẫu `0đ`, xuất `<TTKhac>` cho `note`, và cộng tổng `<LTSuat>`/`<TToan>` từ chính các dòng đã làm tròn nguyên.
+2. Nâng cấp `actions-vnpt.ts` & `api/cron/sync-vnpt/route.ts`: thêm RBAC guard, chặn trạng thái chưa duyệt và đơn `isInvoiceExempt`, bỏ export đồng bộ khỏi file `'use server'`, tự động kiểm tra trạng thái ký số và tăng phiên bản FKey (`_V2.._V10`) khi gặp `ERR:13`, cập nhật `SalesOrder.status = 'INVOICED'` khi đồng bộ thành công.
+3. Sửa `parseVnptResponse` và bổ sung `ERR:23` trong `src/lib/vnpt/vnpt-client.ts`; cập nhật `L10035`/`L10036` sang `"Nước uống không cồn..."`, bổ sung 18 SKU vào `src/lib/vnpt/product-invoice-names.ts` (tổng 169 SKU) kèm tiền tố TCB fallback theo `wineType`.
+4. Bổ sung bộ test đơn vị `wine-erp/test/vnpt-invoice.test.ts`.
+
+### Bài học
+> **RULE 160: Mọi luồng đẩy API và xuất Excel hóa đơn điện tử (VNPT) BẮT BUỘC dùng chung công thức tách thuế VAT-inclusive cho kênh bán lẻ (`RETAIL`, `DIRECT_INDIVIDUAL`, `POS`), áp dụng đủ `orderDiscount`, tính tổng XML từ số đã làm tròn từng dòng, không gắn tên 'Rượu vang' cho mặt hàng hưởng VAT 8%, và hỗ trợ tự tăng phiên bản FKey (`_V2..`) sau khi xác minh chưa ký số nếu cổng TT78 không cho xóa nháp qua API.**

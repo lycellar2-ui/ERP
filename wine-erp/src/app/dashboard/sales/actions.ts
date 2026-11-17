@@ -11,7 +11,7 @@ import { SOCreateSchema, parseOrThrow } from '@/lib/validations'
 import { serialize } from '@/lib/serialize'
 import { requireAuth, getCurrentUser, hasRole } from '@/lib/session'
 import * as XLSX from 'xlsx'
-import { getVnptInvoiceProductName } from '@/lib/vnpt/product-invoice-names'
+import { calculateVnptInvoiceTotals } from '@/lib/vnpt/xml-builder'
 
 export type SOStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'PENDING_ACCOUNTING' | 'CONFIRMED' | 'PARTIALLY_DELIVERED' | 'DELIVERED' | 'INVOICED' | 'PAID' | 'CANCELLED'
 export type SalesChannel = 'HORECA' | 'WHOLESALE_DISTRIBUTOR' | 'VIP_RETAIL' | 'DIRECT_INDIVIDUAL' | 'CORPORATE' | 'RETAIL'
@@ -2862,7 +2862,7 @@ export async function exportSalesOrdersExcel(filters: {
             deliveryOrders: { select: { status: true } },
             lines: {
                 include: {
-                    product: { select: { skuCode: true, productName: true, country: true } },
+                    product: { select: { skuCode: true, productName: true, country: true, wineType: true } },
                 },
             },
         },
@@ -3067,7 +3067,7 @@ export async function exportMisaSmeExcel(filters: {
             warehouse: { select: { name: true, code: true } },
             lines: {
                 include: {
-                    product: { select: { skuCode: true, productName: true, country: true } },
+                    product: { select: { skuCode: true, productName: true, country: true, wineType: true } },
                 },
             },
         },
@@ -3245,7 +3245,7 @@ export async function exportVnptInvoiceExcel(filters: {
             warehouse: { select: { name: true, code: true } },
             lines: {
                 include: {
-                    product: { select: { skuCode: true, productName: true, country: true } },
+                    product: { select: { skuCode: true, productName: true, country: true, wineType: true } },
                 },
             },
         },
@@ -3322,22 +3322,24 @@ export async function exportVnptInvoiceExcel(filters: {
             })
             lineSeq++
         } else {
-            for (const line of o.lines) {
-                const qty = Number(line.qtyOrdered)
-                const price = Number(line.unitPrice)
-                const lineDiscPct = Number(line.lineDiscountPct || 0)
-                const totalBeforeDisc = qty * price
-                const discAmount = totalBeforeDisc * (lineDiscPct / 100)
-                const netBeforeVat = totalBeforeDisc - discAmount
-                const vatRate = Number(line.vatRate ?? orderVatRate)
-                const vatAmount = netBeforeVat * (vatRate / 100)
-                const grandTotal = netBeforeVat + vatAmount
+            const { items } = calculateVnptInvoiceTotals({
+                channel: o.channel,
+                orderType: o.orderType,
+                orderDiscountPct: Number(o.orderDiscount || 0),
+                defaultVatRate: orderVatRate,
+                lines: o.lines.map((line) => ({
+                    skuCode: line.product.skuCode,
+                    productName: line.product.productName,
+                    wineType: line.product.wineType,
+                    unit: 'Chai',
+                    qtyOrdered: Number(line.qtyOrdered),
+                    unitPrice: Number(line.unitPrice),
+                    lineDiscountPct: Number(line.lineDiscountPct || 0),
+                    vatRate: Number(line.vatRate ?? orderVatRate),
+                })),
+            })
 
-                const officialInvoiceName = getVnptInvoiceProductName(line.product.skuCode, line.product.productName)
-                const productNameWithVintage = line.vintage 
-                    ? `${officialInvoiceName} (Vintage ${line.vintage})` 
-                    : officialInvoiceName
-
+            for (const item of items) {
                 vnptRows.push({
                     'STT_HD': orderIndex,
                     'Mã_Cửa_Hàng': o.legalEntity?.code || whCode,
@@ -3350,17 +3352,17 @@ export async function exportVnptInvoiceExcel(filters: {
                     'Hình_Thức_Thanh_Toán': payMethod,
                     'Diễn_Giải': `Xuất hóa đơn bán hàng theo đơn số ${o.soNo}`,
                     'STT_Hang': lineSeq,
-                    'Mã_Hàng_Hóa': line.product.skuCode,
-                    'Tên_Hàng_Hóa': productNameWithVintage,
-                    'Đơn_Vị_Tính': 'Chai',
-                    'Số_Lượng': qty,
-                    'Đơn_Giá': price,
-                    'Thành_Tiền': Math.round(totalBeforeDisc),
-                    'Tỷ_Lệ_Chiết_Khấu': lineDiscPct,
-                    'Tiền_Chiết_Khấu': Math.round(discAmount),
-                    'Thuế_Suất': `${vatRate}%`,
-                    'Tiền_Thuế_GTGT': Math.round(vatAmount),
-                    'Tổng_Cộng': Math.round(grandTotal),
+                    'Mã_Hàng_Hóa': item.productCode,
+                    'Tên_Hàng_Hóa': item.productName,
+                    'Đơn_Vị_Tính': item.unit || 'Chai',
+                    'Số_Lượng': item.quantity,
+                    'Đơn_Giá': item.unitPrice,
+                    'Thành_Tiền': item.preVatBeforeDisc,
+                    'Tỷ_Lệ_Chiết_Khấu': item.discountPct ?? 0,
+                    'Tiền_Chiết_Khấu': item.discountAmount ?? 0,
+                    'Thuế_Suất': item.vatRate,
+                    'Tiền_Thuế_GTGT': item.vatAmount,
+                    'Tổng_Cộng': item.totalAmount ?? (item.amount + item.vatAmount),
                 })
 
                 vnptSystemRows.push({
@@ -3374,17 +3376,17 @@ export async function exportVnptInvoiceExcel(filters: {
                     'PaymentMethod': payMethod,
                     'Note': `Xuất hóa đơn bán hàng theo đơn số ${o.soNo}`,
                     'LineNo': lineSeq,
-                    'ProductCode': line.product.skuCode,
-                    'ProductName': productNameWithVintage,
-                    'Unit': 'Chai',
-                    'Quantity': qty,
-                    'Price': price,
-                    'Amount': Math.round(totalBeforeDisc),
-                    'DiscountRate': lineDiscPct,
-                    'DiscountAmount': Math.round(discAmount),
-                    'VatRate': `${vatRate}%`,
-                    'VatAmount': Math.round(vatAmount),
-                    'TotalAmount': Math.round(grandTotal),
+                    'ProductCode': item.productCode,
+                    'ProductName': item.productName,
+                    'Unit': item.unit || 'Chai',
+                    'Quantity': item.quantity,
+                    'Price': item.unitPrice,
+                    'Amount': item.preVatBeforeDisc,
+                    'DiscountRate': item.discountPct ?? 0,
+                    'DiscountAmount': item.discountAmount ?? 0,
+                    'VatRate': item.vatRate,
+                    'VatAmount': item.vatAmount,
+                    'TotalAmount': item.totalAmount ?? (item.amount + item.vatAmount),
                 })
                 lineSeq++
             }

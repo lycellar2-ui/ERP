@@ -103,8 +103,8 @@ export const VNPT_PRODUCT_INVOICE_NAMES: Record<string, string> = {
     "L10025": "Rượu vang nổ La Jara Prosecco Rose Millesimato Brut",
     "L10026": "Rượu vang nổ La Jara Pinot Noir Blanc de Noir Brut Nature",
     "L10027": "Rượu vang nổ La Jara Chardonnay Blanc de Blanc Brut Nature",
-    "L10035": "Rượu vang không cồn La Jara Offbeat ZERO Sparkling White",
-    "L10036": "Rượu vang không cồn La Jara Offbeat ZERO Sparkling Rosé",
+    "L10035": "Nước uống không cồn La Jara Offbeat ZERO Sparkling White",
+    "L10036": "Nước uống không cồn La Jara Offbeat ZERO Sparkling Rosé",
     "L10022": "Rượu vang trắng Collavini Ribolla Gialla Benedete IGT",
     "L10015": "Rượu vang trắng Collavini Chardonnay dei Sassi Cavi DOC",
     "L10017": "Rượu vang đỏ Collavini Cabernet Roncaccio IGT",
@@ -178,15 +178,57 @@ export const VNPT_PRODUCT_INVOICE_NAMES: Record<string, string> = {
     "L70003": "Rượu vang đỏ Duckhorn Vineyards Napa Valley Merlot",
     "L70004": "Rượu vang đỏ Duckhorn Vineyards Napa Valley Cabernet Sauvignon",
     "L70005": "Rượu vang trắng Decoy California Chardonnay",
+
+    // Bổ sung SKU phổ thông & Fine Wine
+    "L10002": "Rượu vang đỏ I Saltari Valpolicella Ripasso",
+    "L10003": "Rượu vang đỏ I Saltari Valpolicella Superior",
+    "L10006": "Rượu vang đỏ Arco dei Giovi Valpolicella",
+    "L10012": "Rượu vang trắng Sartori \"LA MUSINA\" Lugana DOC",
+    "L10013": "Rượu vang đỏ Sartori \"MONTEGRADELLA\" Valpolicella DOC",
+    "L20005": "Rượu vang đỏ Comtesse Duchatel Saint Julien",
+    "L20008": "Rượu vang hồng Oh La Vache Rosé",
+    "L20027": "Rượu vang đỏ Pardon & Fils Coteaux Bourguignons",
+    "L30004": "Rượu vang hồng Vina San Esteban Classic Rosé",
+    "MOUTON-2016-1500": "Rượu vang đỏ Château Mouton Rothschild 2016 Magnum",
+    "MOUTON-NV-750": "Rượu vang đỏ Château Mouton Rothschild",
+    "DRC-CC-NV-750": "Rượu vang đỏ DRC Chambolle-Musigny",
+    "VEUVE-YL-750": "Rượu vang nổ Veuve Clicquot Yellow Label Brut NV",
+    "SASSICAIA-NV-750": "Rượu vang đỏ Sassicaia",
+    "KRUG-MV-750": "Rượu vang nổ Krug Grande Cuvée 171ème Édition",
+    "CMARGAUX-NV-750": "Rượu vang đỏ Château Margaux",
+    "OPUSONE-NV-750": "Rượu vang đỏ Opus One",
+    "PETRUS-NV-750": "Rượu vang đỏ Château Pétrus",
+}
+
+const WINE_TYPE_TCB_PREFIX: Record<string, string> = {
+    RED: 'Rượu vang đỏ',
+    WHITE: 'Rượu vang trắng',
+    ROSE: 'Rượu vang hồng',
+    SPARKLING: 'Rượu vang nổ',
+    FORTIFIED: 'Rượu vang cường hóa',
+    DESSERT: 'Rượu vang ngọt',
 }
 
 /**
  * Lấy tên sản phẩm chuẩn Tự Công Bố phục vụ xuất hóa đơn điện tử VNPT.
  * Nếu SKU có trong danh mục chuẩn hóa 25.07 -> Trả về tên Tự Công Bố.
- * Nếu không có -> Fallback về tên sản phẩm hiện tại trong cơ sở dữ liệu.
+ * Nếu không có -> Fallback về tên sản phẩm hiện tại, tự động gắn tiền tố TCB theo wineType nếu cần.
  */
-export function getVnptInvoiceProductName(skuCode?: string, fallbackName?: string): string {
-    if (!skuCode) return fallbackName || ''
-    const cleanSku = skuCode.trim().toUpperCase()
-    return VNPT_PRODUCT_INVOICE_NAMES[cleanSku] || fallbackName || ''
+export function getVnptInvoiceProductName(skuCode?: string, fallbackName?: string, wineType?: string | null): string {
+    if (skuCode) {
+        const cleanSku = skuCode.trim().toUpperCase()
+        if (VNPT_PRODUCT_INVOICE_NAMES[cleanSku]) {
+            return VNPT_PRODUCT_INVOICE_NAMES[cleanSku]
+        }
+    }
+
+    const baseName = (fallbackName || '').trim()
+    if (!baseName) return ''
+
+    if (/^(rượu|nước uống|bia|hộp|túi|ly|phụ kiện|dịch vụ)/i.test(baseName)) {
+        return baseName
+    }
+
+    const prefix = wineType ? WINE_TYPE_TCB_PREFIX[wineType.trim().toUpperCase()] : undefined
+    return prefix ? `${prefix} ${baseName}` : baseName
 }

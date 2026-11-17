@@ -29,6 +29,7 @@ export interface InvoiceBuyer {
 
 export interface InvoiceItem {
     lineNo: number          // STT dòng
+    itemType?: 1 | 2 | 3 | 4 // Tính chất hàng hóa TT78: 1 = Hàng hóa/DV, 2 = Khuyến mại/hàng mẫu không thu tiền, 3 = Chiết khấu, 4 = Ghi chú
     productCode: string     // Mã hàng hóa (SKU)
     productName: string     // Tên hàng hóa
     unit: string            // Đơn vị tính (Chai, Thùng, Hộp...)

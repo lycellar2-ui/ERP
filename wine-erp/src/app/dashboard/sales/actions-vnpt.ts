@@ -4,20 +4,43 @@ import { prisma } from '@/lib/db'
 import { revalidateCache } from '@/lib/cache'
 import { revalidatePath } from 'next/cache'
 import { logAudit } from '@/lib/audit'
-import { requireAuth } from '@/lib/session'
+import { requireAuth, hasRole, hasPermission, type SessionUser } from '@/lib/session'
 import { getVnptConfigForEntity, uploadDraftToVnpt, deleteDraftFromVnpt, syncInvoiceStatusFromVnpt } from '@/lib/vnpt/vnpt-client'
-import { buildVnptDraftInvoiceXml } from '@/lib/vnpt/xml-builder'
-import { InvoiceBuyer, InvoiceItem, InvoicePayload, VnptDraftMetadata, InvoiceDateWarning } from '@/lib/vnpt/types'
+import { buildVnptDraftInvoiceXml, calculateVnptInvoiceTotals } from '@/lib/vnpt/xml-builder'
+import { InvoiceBuyer, InvoicePayload, VnptDraftMetadata } from '@/lib/vnpt/types'
 
 import { checkInvoiceDateDiscrepancy } from '@/lib/vnpt/date-utils'
-import { getVnptInvoiceProductName } from '@/lib/vnpt/product-invoice-names'
-export { checkInvoiceDateDiscrepancy }
+
+const BLOCKED_INVOICE_SO_STATUSES = new Set(['DRAFT', 'PENDING_APPROVAL', 'PENDING_ACCOUNTING', 'CANCELLED'])
+const SYNC_TRANSITION_SO_STATUSES = new Set(['CONFIRMED', 'DELIVERED', 'PARTIALLY_DELIVERED'])
+
+function canWriteVnptInvoice(user: SessionUser): boolean {
+    return (
+        hasRole(user, 'Admin', 'ADMIN', 'CEO', 'Kế Toán', 'KE_TOAN', 'Sales Admin', 'SALES_ADMIN', 'Sales Manager', 'SALES_MGR', 'TAX:WRITE', 'FIN:WRITE') ||
+        hasPermission(user, 'TAX', 'WRITE') ||
+        hasPermission(user, 'TAX', 'CREATE') ||
+        hasPermission(user, 'FIN', 'WRITE')
+    )
+}
+
+function getVnptFkeyVersion(fkey: string | undefined, baseFkey: string): number {
+    if (!fkey) return 0
+    if (fkey === baseFkey) return 1
+    if (fkey.startsWith(`${baseFkey}_V`)) {
+        const ver = Number(fkey.substring(baseFkey.length + 2))
+        return Number.isInteger(ver) && ver >= 2 ? ver : 0
+    }
+    return 0
+}
 
 /**
  * Đẩy hóa đơn nháp của đơn hàng lên hệ thống VNPT e-Invoice (V5 Webservice - TT78/NĐ70)
  */
 export async function uploadDraftInvoiceToVnpt(soId: string) {
     const user = await requireAuth()
+    if (!canWriteVnptInvoice(user)) {
+        return { success: false, error: 'Bạn không có quyền đẩy hóa đơn điện tử lên VNPT.' }
+    }
 
     const so = await prisma.salesOrder.findUnique({
         where: { id: soId },
@@ -53,7 +76,7 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
             arInvoices: { select: { id: true, invoiceNo: true, status: true, notes: true } },
             lines: {
                 include: {
-                    product: { select: { skuCode: true, productName: true, country: true } },
+                    product: { select: { skuCode: true, productName: true, country: true, wineType: true } },
                 },
             },
         },
@@ -63,12 +86,34 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
         return { success: false, error: 'Không tìm thấy đơn hàng trong hệ thống.' }
     }
 
+    if (BLOCKED_INVOICE_SO_STATUSES.has(so.status)) {
+        return {
+            success: false,
+            error: `Đơn hàng đang ở trạng thái ${so.status}, chưa đủ điều kiện xuất hóa đơn VNPT.`,
+        }
+    }
+
+    if (so.isInvoiceExempt) {
+        return {
+            success: false,
+            error: 'Đơn hàng đang được đánh dấu Miễn xuất hóa đơn VAT. Vui lòng hủy đánh dấu miễn hóa đơn trước khi đẩy VNPT.',
+        }
+    }
+
     if (so.lines.length === 0) {
         return { success: false, error: 'Đơn hàng chưa có dòng sản phẩm nào để xuất hóa đơn.' }
     }
 
-    // Kiểm tra nếu đơn hàng đã có hóa đơn chính thức đã thanh toán
-    const existingPublished = so.arInvoices.find(i => i.status === 'PAID' || (i.invoiceNo && !i.invoiceNo.startsWith('NHAP-') && !i.invoiceNo.startsWith('INV-')))
+    // Kiểm tra nếu đơn hàng đã có hóa đơn chính thức đã phát hành/thanh toán
+    const existingPublished = so.arInvoices.find(i => {
+        if (i.status === 'CANCELLED') return false
+        if (i.status === 'PAID') return true
+        try {
+            const parsed = JSON.parse(i.notes || '{}')
+            if (parsed.vnpt?.status === 'PUBLISHED') return true
+        } catch { }
+        return Boolean(i.invoiceNo && !i.invoiceNo.startsWith('NHAP-') && !i.invoiceNo.startsWith('INV-'))
+    })
     if (existingPublished) {
         return {
             success: false,
@@ -80,9 +125,31 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
     const legalEntityCode = so.legalEntity?.code || 'TA'
     const config = getVnptConfigForEntity(legalEntityCode)
 
-    // Khóa định danh liên kết duy nhất (FKey)
+    // Khóa định danh liên kết duy nhất (FKey) + hỗ trợ versioning khi bản nháp cũ còn kẹt trên portal VNPT
     const sanitizedSoNo = so.soNo.replace(/[^A-Za-z0-9_-]/g, '_')
-    const fkey = `SO_${sanitizedSoNo}`
+    const baseFkey = `SO_${sanitizedSoNo}`
+
+    let existingDraftMeta: VnptDraftMetadata | null = null
+    let maxCancelledVer = 0
+    let maxKnownVer = 0
+
+    for (const inv of so.arInvoices) {
+        try {
+            const parsed = JSON.parse(inv.notes || '{}')
+            const meta = parsed.vnpt as VnptDraftMetadata | undefined
+            if (!meta?.fkey) continue
+            const ver = getVnptFkeyVersion(meta.fkey, baseFkey)
+            if (ver > maxKnownVer) maxKnownVer = ver
+            if (meta.status === 'CANCELLED' && ver > maxCancelledVer) {
+                maxCancelledVer = ver
+            }
+            if (meta.status === 'DRAFT' || inv.invoiceNo.startsWith('NHAP-')) {
+                existingDraftMeta = meta
+            }
+        } catch { }
+    }
+
+    let fkey = existingDraftMeta?.fkey || (maxCancelledVer >= 1 ? `${baseFkey}_V${maxCancelledVer + 1}` : baseFkey)
 
     // Thông tin người mua: ƯU TIÊN TUYỆT ĐỐI thông tin pháp nhân của Công ty mẹ (Tên, MST, Địa chỉ VAT)
     const parent = so.customer.parent
@@ -115,48 +182,26 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
         customerCode: so.customer.code,
     }
 
-    // Xây dựng danh sách hàng hóa
-    const orderVatRate = Number(so.vatRate ?? 10)
-    let totalNet = 0
-    let totalVat = 0
-    let totalDiscount = 0
-
-    const items: InvoiceItem[] = so.lines.map((line, idx) => {
-        const qty = Number(line.qtyOrdered)
-        const unitPrice = Number(line.unitPrice)
-        const lineDiscPct = Number(line.lineDiscountPct || 0)
-        const lineBeforeDisc = qty * unitPrice
-        const lineDiscAmount = lineBeforeDisc * (lineDiscPct / 100)
-        const netAmount = lineBeforeDisc - lineDiscAmount
-
-        const rateNum = Number(line.vatRate ?? orderVatRate)
-        const vatRateStr = `${rateNum}%`
-        const vatAmount = Math.round(netAmount * (rateNum / 100))
-
-        totalNet += netAmount
-        totalVat += vatAmount
-        totalDiscount += lineDiscAmount
-
-        return {
-            lineNo: idx + 1,
-            productCode: line.product.skuCode,
-            productName: getVnptInvoiceProductName(line.product.skuCode, line.product.productName),
-            unit: (line.product as any).unit || 'Chai',
-            quantity: qty,
-            unitPrice,
-            discountPct: lineDiscPct,
-            discountAmount: lineDiscAmount,
-            amount: netAmount,
-            vatRate: vatRateStr,
-            vatAmount,
-            totalAmount: netAmount + vatAmount,
-        }
+    // Tính toán chi tiết từng dòng hàng và tổng tiền (bao gồm tách VAT kênh lẻ & chiết khấu toàn đơn)
+    const { items, totalNet, totalVat, totalDiscount, totalAmount } = calculateVnptInvoiceTotals({
+        channel: so.channel,
+        orderType: so.orderType,
+        orderDiscountPct: Number(so.orderDiscount || 0),
+        defaultVatRate: Number(so.vatRate ?? 10),
+        lines: so.lines.map((line) => ({
+            skuCode: line.product.skuCode,
+            productName: line.product.productName,
+            wineType: line.product.wineType,
+            unit: 'Chai',
+            qtyOrdered: Number(line.qtyOrdered),
+            unitPrice: Number(line.unitPrice),
+            lineDiscountPct: Number(line.lineDiscountPct || 0),
+            vatRate: Number(line.vatRate ?? so.vatRate ?? 10),
+        })),
     })
 
-    const totalAmount = Math.round(totalNet + totalVat)
     const payMethod = 'Chuyển khoản/Tiền mặt'
-
-    const payload: InvoicePayload = {
+    const basePayload: InvoicePayload = {
         fkey,
         pattern: config.pattern,
         serial: config.serial,
@@ -170,11 +215,54 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
         note: `Xuất hóa đơn GTGT đơn hàng ${so.soNo}`,
     }
 
-    // Sinh chuỗi XML DSHDon
-    const xmlData = buildVnptDraftInvoiceXml(payload)
+    // Sinh chuỗi XML DSHDon và gọi ASMX Web Service VNPT
+    let xmlData = buildVnptDraftInvoiceXml(basePayload)
+    let result = await uploadDraftToVnpt(config, xmlData, fkey)
+    let retriedDuplicateFkey = false
 
-    // Gọi ASMX Web Service VNPT
-    const result = await uploadDraftToVnpt(config, xmlData, fkey)
+    // Xử lý tự phục hồi nếu trùng FKey (ERR:13): kiểm tra xem đã ký số chưa trước khi nâng phiên bản FKey (_V2..)
+    if (!result.success && result.errorCode === 'ERR:13') {
+        const syncCheck = await syncInvoiceStatusFromVnpt(config, fkey, config.pattern)
+        if (syncCheck.success && !syncCheck.isDraft) {
+            return {
+                success: false,
+                error: `Đơn hàng này đã có hóa đơn ký số trên VNPT (${syncCheck.fullInvoiceNo}). Vui lòng bấm "Đồng bộ số HĐ" thay vì đẩy nháp mới.`,
+                errorCode: 'ALREADY_PUBLISHED',
+            }
+        }
+
+        const currentVer = getVnptFkeyVersion(fkey, baseFkey)
+        const startVer = Math.max(2, maxKnownVer + 1, currentVer + 1)
+
+        for (let ver = startVer; ver <= Math.max(10, startVer + 8); ver++) {
+            const nextFkey = `${baseFkey}_V${ver}`
+            const retryXml = buildVnptDraftInvoiceXml({ ...basePayload, fkey: nextFkey })
+            const retryRes = await uploadDraftToVnpt(config, retryXml, nextFkey)
+
+            if (retryRes.success) {
+                fkey = nextFkey
+                xmlData = retryXml
+                result = retryRes
+                retriedDuplicateFkey = true
+                break
+            }
+
+            if (retryRes.errorCode === 'ERR:13') {
+                const retrySyncCheck = await syncInvoiceStatusFromVnpt(config, nextFkey, config.pattern)
+                if (retrySyncCheck.success && !retrySyncCheck.isDraft) {
+                    return {
+                        success: false,
+                        error: `Đơn hàng này đã có hóa đơn ký số trên VNPT (${retrySyncCheck.fullInvoiceNo}). Vui lòng bấm "Đồng bộ số HĐ" thay vì đẩy nháp mới.`,
+                        errorCode: 'ALREADY_PUBLISHED',
+                    }
+                }
+                continue
+            }
+
+            result = retryRes
+            break
+        }
+    }
 
     if (!result.success) {
         return {
@@ -194,8 +282,10 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
         xmlSnapshot: xmlData,
     }
 
-    // Tìm xem đã có ARInvoice chưa
-    let targetInv = so.arInvoices[0]
+    // Chọn đúng bản ghi ARInvoice nháp hoặc đang mở để cập nhật
+    let targetInv =
+        so.arInvoices.find(i => i.invoiceNo.startsWith('NHAP-')) ||
+        so.arInvoices.find(i => i.status !== 'CANCELLED')
     const invoiceNo = `NHAP-${so.soNo}`
 
     if (!targetInv) {
@@ -221,7 +311,6 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
             },
         })
     } else {
-        // Cập nhật notes
         let existingNotes: any = {}
         try {
             existingNotes = JSON.parse(targetInv.notes || '{}')
@@ -230,9 +319,16 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
         }
         existingNotes.vnpt = draftMeta
 
+        let resolvedInvoiceNo = targetInv.invoiceNo
+        if (targetInv.invoiceNo.startsWith('INV-')) {
+            const conflict = await prisma.aRInvoice.findUnique({ where: { invoiceNo }, select: { id: true } })
+            if (!conflict) resolvedInvoiceNo = invoiceNo
+        }
+
         await prisma.aRInvoice.update({
             where: { id: targetInv.id },
             data: {
+                invoiceNo: resolvedInvoiceNo,
                 notes: JSON.stringify(existingNotes),
                 amount: totalNet,
                 vatAmount: totalVat,
@@ -257,12 +353,18 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
 
     revalidateCache('sales')
     revalidatePath('/dashboard/sales')
+    revalidatePath('/dashboard/finance')
+    revalidatePath('/dashboard/reconciliation')
+
+    const successMessage = config.isMock
+        ? `[GIẢ LẬP] Đã tạo hóa đơn nháp thành công trên VNPT (FKey: ${fkey})`
+        : retriedDuplicateFkey
+            ? `Đã đẩy lại hóa đơn nháp thành công lên cổng VNPT (FKey: ${fkey}). Lưu ý: bản nháp FKey cũ vẫn còn trên cổng web VNPT, vui lòng xóa bản nháp cũ trước khi ký số.`
+            : `Đã đẩy hóa đơn nháp thành công lên cổng VNPT e-Invoice (FKey: ${fkey})!`
 
     return {
         success: true,
-        message: config.isMock
-            ? `[GIẢ LẬP] Đã tạo hóa đơn nháp thành công trên VNPT (FKey: ${fkey})`
-            : `Đã đẩy hóa đơn nháp thành công lên cổng VNPT e-Invoice (FKey: ${fkey})!`,
+        message: successMessage,
         fkey,
         pattern: draftMeta.pattern,
         serial: draftMeta.serial,
@@ -277,6 +379,9 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
  */
 export async function deleteDraftInvoiceFromVnpt(soId: string) {
     const user = await requireAuth()
+    if (!canWriteVnptInvoice(user)) {
+        return { success: false, error: 'Bạn không có quyền hủy bản nháp hóa đơn VNPT.' }
+    }
 
     const so = await prisma.salesOrder.findUnique({
         where: { id: soId },
@@ -290,7 +395,9 @@ export async function deleteDraftInvoiceFromVnpt(soId: string) {
         return { success: false, error: 'Không tìm thấy hóa đơn của đơn hàng này.' }
     }
 
-    const inv = so.arInvoices[0]
+    const inv =
+        so.arInvoices.find(i => i.invoiceNo.startsWith('NHAP-') || Boolean(i.notes && i.notes.includes('"status":"DRAFT"'))) ||
+        so.arInvoices[0]
     let fkey = ''
     try {
         const parsed = JSON.parse(inv.notes || '{}')
@@ -305,7 +412,7 @@ export async function deleteDraftInvoiceFromVnpt(soId: string) {
     const result = await deleteDraftFromVnpt(config, fkey)
 
     // Nếu VNPT báo lỗi nhưng hóa đơn trong ERP là bản nháp (NHAP-), vẫn cho phép xóa bản ghi trong ERP
-    // để tránh tình trạng kẹt trạng thái Chờ Ký Số khi bản nháp không tồn tại trên VNPT
+    // để tránh tình trạng kẹt trạng thái Chờ Ký Số khi cổng VNPT TT78 trả ERR:5 / ERR:1
     if (!result.success && !inv.invoiceNo.startsWith('NHAP-')) {
         return { success: false, error: result.errorMessage || 'Không thể xóa bản nháp trên VNPT.' }
     }
@@ -332,15 +439,19 @@ export async function deleteDraftInvoiceFromVnpt(soId: string) {
         action: 'DELETE',
         entityType: 'ARInvoice',
         entityId: inv.id,
-        description: `Xóa hóa đơn nháp trên VNPT e-Invoice cho đơn hàng ${so.soNo} (FKey: ${fkey})`,
+        description: `Xóa hóa đơn nháp trên VNPT e-Invoice cho đơn hàng ${so.soNo} (FKey: ${fkey})${!result.success ? ` [VNPT ${result.errorCode || 'ERR'}: đã dọn nháp cục bộ]` : ''}`,
     })
 
     revalidateCache('sales')
     revalidatePath('/dashboard/sales')
+    revalidatePath('/dashboard/finance')
+    revalidatePath('/dashboard/reconciliation')
 
     return {
         success: true,
-        message: 'Đã xóa bản nháp trên VNPT e-Invoice thành công.',
+        message: result.success
+            ? 'Đã xóa bản nháp trên VNPT e-Invoice thành công.'
+            : `Đã xóa bản nháp trong ERP. Lưu ý: cổng VNPT không xóa được qua API (${result.errorCode || 'ERR:5'}), nếu đẩy lại bản nháp mới hệ thống sẽ tự tạo FKey phiên bản kế tiếp và bạn cần xóa nháp cũ trên portal VNPT.`,
     }
 }
 
@@ -399,6 +510,9 @@ export async function getVnptDraftInfo(soId: string) {
  */
 export async function syncVnptInvoiceForOrder(soId: string) {
     const user = await requireAuth()
+    if (!canWriteVnptInvoice(user)) {
+        return { success: false, error: 'Bạn không có quyền đồng bộ hóa đơn VNPT.' }
+    }
 
     const so = await prisma.salesOrder.findUnique({
         where: { id: soId },
@@ -413,8 +527,8 @@ export async function syncVnptInvoiceForOrder(soId: string) {
         return { success: false, error: 'Không tìm thấy đơn hàng trong hệ thống.' }
     }
 
-    // Tìm FKey và Pattern từ bản nháp ARInvoice hiện tại
-    let targetInv = so.arInvoices[0]
+    // Tìm FKey và Pattern từ bản nháp ARInvoice hiện tại (ưu tiên bản nháp NHAP- / DRAFT)
+    let targetInv = so.arInvoices.find(i => i.invoiceNo.startsWith('NHAP-')) || so.arInvoices[0]
     let fkey = ''
     let pattern = ''
     let existingVnpt: any = null
@@ -422,12 +536,14 @@ export async function syncVnptInvoiceForOrder(soId: string) {
     for (const inv of so.arInvoices) {
         try {
             const parsed = JSON.parse(inv.notes || '{}')
-            if (parsed.vnpt && parsed.vnpt.fkey) {
+            if (parsed.vnpt && parsed.vnpt.fkey && (inv.invoiceNo.startsWith('NHAP-') || parsed.vnpt.status === 'DRAFT' || !fkey)) {
                 targetInv = inv
                 fkey = parsed.vnpt.fkey
                 pattern = parsed.vnpt.pattern
                 existingVnpt = parsed.vnpt
-                break
+                if (inv.invoiceNo.startsWith('NHAP-') || parsed.vnpt.status === 'DRAFT') {
+                    break
+                }
             }
         } catch { }
     }
@@ -489,6 +605,13 @@ export async function syncVnptInvoiceForOrder(soId: string) {
         })
     }
 
+    if (SYNC_TRANSITION_SO_STATUSES.has(so.status)) {
+        await prisma.salesOrder.update({
+            where: { id: so.id },
+            data: { status: 'INVOICED' },
+        })
+    }
+
     await logAudit({
         userId: user.id,
         action: 'UPDATE',
@@ -499,6 +622,8 @@ export async function syncVnptInvoiceForOrder(soId: string) {
 
     revalidateCache('sales')
     revalidatePath('/dashboard/sales')
+    revalidatePath('/dashboard/finance')
+    revalidatePath('/dashboard/reconciliation')
 
     return {
         success: true,

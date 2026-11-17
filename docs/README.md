@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 157 Rules rút ra từ 120 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 160 Rules rút ra từ 123 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -52,11 +52,11 @@
 
 | Metric | Giá trị |
 |---|---|
-| **Prisma models** | 148 |
+| **Prisma models** | 154 |
 | **Prisma enums** | 95 |
-| **Dashboard routes** | 38 folders |
-| **Server Action files** | 48 files |
-| **Module spec files** | 31 files |
+| **Dashboard routes** | 38 folders (46 page routes; 53 total app routes) |
+| **Server Action files** | 62 files |
+| **Module spec files** | 32 files |
 | **Sidebar nav items** | 41 items (7 groups) |
 
 ### Bảng Module đầy đủ
@@ -138,7 +138,7 @@
 
 | Chủ đề | Quyết định |
 |---|---|
-| **Database** | Supabase PostgreSQL — 129 models, 82 enums |
+| **Database** | Supabase PostgreSQL — 154 models, 95 enums |
 | **Auth** | Supabase Auth — JWT, `@supabase/ssr` cho App Router |
 | **File Storage** | **ImgBB** (ảnh sản phẩm, public) + **Supabase Storage** (hợp đồng/chứng từ, private) |
 | **Deployment** | Vercel — Auto-deploy khi merge `main`, Preview URLs per PR |
@@ -184,7 +184,7 @@ docs/
 ├── wine-erp-testing.md            ← Kết quả unit test
 ├── wine-erp-performance-test-plan.md ← Kế hoạch test performance
 ├── file-storage-plan.md           ← ImgBB + Supabase Storage
-├── bug-fix-lessons.md             ← 34 Rules từ 17 bugs
+├── bug-fix-lessons.md             ← 160 Rules từ 123 bugs
 ├── llms.txt                       ← AI context index
 │
 ├── architecture/
@@ -196,13 +196,14 @@ docs/
 │   ├── ui-design-system.md        ← "Oceanic Cellar" design tokens
 │   └── data-scalability-plan.md   ← Performance optimization roadmap
 │
-└── modules/                       ← 27 spec files
+└── modules/                       ← 32 spec files
     ├── admin-auth-workflow.md     SYS
     ├── master-data.md             MDM
     ├── crm.md                     CRM
     ├── contract-management.md     CNT
     ├── market-price-tax-lookup.md TAX
-    ├── tax-and-landed-cost.md     PRC
+    ├── procurement.md             PRC
+    ├── tax-and-landed-cost.md     PRC/TAX
     ├── shipment-tracking.md       SHP
     ├── product-costing.md         CST
     ├── import-agency-portal.md    AGN
@@ -242,4 +243,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-11-14 | Wine ERP v12.48 - Full-Stack UI/UX, Logic, RBAC & Production E2E Audit Fixes*
+*Last updated: 2026-11-17 | Wine ERP v12.50 - VNPT e-Invoice VAT-Inclusive Separation, FKey Versioning, 169 TCB SKU Mapping & INVOICED Sync*
