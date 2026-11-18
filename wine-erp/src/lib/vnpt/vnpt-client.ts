@@ -318,6 +318,8 @@ export async function syncInvoiceStatusFromVnpt(
             taxStatusText: 'Đã được Cơ quan thuế chấp nhận',
             viewUrl: '#mock-view',
             pdfUrl: '#mock-pdf',
+            publishedAt: new Date().toISOString(),
+            publishedBy: config.account,
         }
     }
 
@@ -417,13 +419,14 @@ export async function syncInvoiceStatusFromVnpt(
         else if (taxStatus === '2') taxStatusText = 'Đã được CQT chấp nhận'
         else if (taxStatus === '3') taxStatusText = `Bị CQT từ chối${taxError ? ': ' + taxError : ''}`
 
-        // Step 2: Fetch view and download links from PortalService
+        // Step 2: Fetch view/download links and real signing timestamp in parallel from PortalService
         let viewUrl = ''
         let pdfUrl = ''
         let xmlUrl = ''
+        let publishedAt: string | undefined
+        let publishedBy: string | undefined
 
-        try {
-            const linkSoap = `<?xml version="1.0" encoding="utf-8"?>
+        const linkSoap = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
     <GetLinkInvViewFkey xmlns="http://tempuri.org/">
@@ -434,7 +437,20 @@ export async function syncInvoiceStatusFromVnpt(
   </soap:Body>
 </soap:Envelope>`.trim()
 
-            const linkRes = await fetch(config.portalUrl, {
+        const detailSoap = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetFullInvViewByDateByFkey xmlns="http://tempuri.org/">
+      <userName>${escapeSoap(config.username)}</userName>
+      <userPass>${escapeSoap(config.password)}</userPass>
+      <pattern>${escapeSoap(resolvedPattern)}</pattern>
+      <fkey>${escapeSoap(fkey)}</fkey>
+    </GetFullInvViewByDateByFkey>
+  </soap:Body>
+</soap:Envelope>`.trim()
+
+        const [linkSettled, detailSettled] = await Promise.allSettled([
+            fetch(config.portalUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'text/xml; charset=utf-8',
@@ -442,10 +458,21 @@ export async function syncInvoiceStatusFromVnpt(
                 },
                 body: linkSoap,
                 signal: AbortSignal.timeout(15000),
-            })
+            }),
+            fetch(config.portalUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/xml; charset=utf-8',
+                    'SOAPAction': 'http://tempuri.org/GetFullInvViewByDateByFkey',
+                },
+                body: detailSoap,
+                signal: AbortSignal.timeout(15000),
+            }),
+        ])
 
-            if (linkRes.ok) {
-                const linkText = await linkRes.text()
+        if (linkSettled.status === 'fulfilled' && linkSettled.value.ok) {
+            try {
+                const linkText = await linkSettled.value.text()
                 const linkMatch = linkText.match(/<GetLinkInvViewFkeyResult>(.*?)<\/GetLinkInvViewFkeyResult>/)
                 const linkRaw = linkMatch ? linkMatch[1].trim() : ''
 
@@ -465,9 +492,28 @@ export async function syncInvoiceStatusFromVnpt(
                     if (pMatch) pdfUrl = pMatch[1]
                     if (xMatch) xmlUrl = xMatch[1]
                 }
+            } catch {
+                // Ignore link parse error, main sync succeeded
             }
-        } catch {
-            // Ignore link fetch error, main sync succeeded
+        }
+
+        if (detailSettled.status === 'fulfilled' && detailSettled.value.ok) {
+            try {
+                const detailText = await detailSettled.value.text()
+                const detailMatch = detailText.match(/<GetFullInvViewByDateByFkeyResult>(.*?)<\/GetFullInvViewByDateByFkeyResult>/)
+                const detailRaw = detailMatch ? detailMatch[1].trim() : ''
+
+                if (detailRaw && !detailRaw.startsWith('ERR:')) {
+                    const decodedJson = Buffer.from(detailRaw, 'base64').toString('utf-8')
+                    const parsedDetail = JSON.parse(decodedJson)
+                    publishedAt = normalizeVnptTimestamp(parsedDetail?.PublishDate)
+                    if (typeof parsedDetail?.PublishBy === 'string' && parsedDetail.PublishBy.trim()) {
+                        publishedBy = parsedDetail.PublishBy.trim()
+                    }
+                }
+            } catch {
+                // Ignore detail parse error, main sync succeeded
+            }
         }
 
         return {
@@ -483,6 +529,8 @@ export async function syncInvoiceStatusFromVnpt(
             viewUrl,
             pdfUrl,
             xmlUrl,
+            publishedAt,
+            publishedBy,
             rawXml: xmlDecoded,
         }
     } catch (err: any) {
@@ -630,6 +678,17 @@ export async function fetchVnptInvoicesByRange(
             errorMessage: `Lỗi kết nối VNPT: ${formatFetchError(err)}`,
         }
     }
+}
+
+function normalizeVnptTimestamp(raw?: string | null): string | undefined {
+    if (!raw) return undefined
+    const trimmed = raw.trim()
+    if (!trimmed || trimmed.startsWith('0001-') || trimmed.startsWith('1957-')) {
+        return undefined
+    }
+    const hasTz = /([Zz]|[+-]\d{2}:\d{2})$/.test(trimmed)
+    const parsed = new Date(hasTz ? trimmed : `${trimmed}+07:00`)
+    return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString()
 }
 
 function formatFetchError(err: any): string {

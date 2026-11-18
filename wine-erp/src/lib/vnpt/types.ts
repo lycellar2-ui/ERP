@@ -83,6 +83,7 @@ export interface VnptDraftMetadata {
     pdfUrl?: string
     xmlUrl?: string
     publishedAt?: string
+    publishedBy?: string
     syncedAt?: string
     xmlSnapshot?: string
     lastError?: string
@@ -101,6 +102,8 @@ export interface VnptSyncResult {
     viewUrl?: string
     pdfUrl?: string
     xmlUrl?: string
+    publishedAt?: string
+    publishedBy?: string
     errorCode?: string
     errorMessage?: string
     rawXml?: string

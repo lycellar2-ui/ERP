@@ -147,7 +147,8 @@ async function handleCronSync(req: NextRequest) {
                         xmlUrl: syncRes.xmlUrl,
                         status: 'PUBLISHED',
                         syncedAt: new Date().toISOString(),
-                        publishedAt: new Date().toISOString(),
+                        publishedAt: syncRes.publishedAt || new Date().toISOString(),
+                        ...(syncRes.publishedBy ? { publishedBy: syncRes.publishedBy } : {}),
                     }
 
                     let notesObj: any = {}

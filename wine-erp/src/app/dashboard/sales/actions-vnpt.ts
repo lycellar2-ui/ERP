@@ -584,7 +584,8 @@ export async function syncVnptInvoiceForOrder(soId: string) {
         xmlUrl: syncRes.xmlUrl,
         status: 'PUBLISHED',
         syncedAt: new Date().toISOString(),
-        publishedAt: new Date().toISOString(),
+        publishedAt: syncRes.publishedAt || new Date().toISOString(),
+        ...(syncRes.publishedBy ? { publishedBy: syncRes.publishedBy } : {}),
         uploadedAt: existingVnpt?.uploadedAt || new Date().toISOString(),
     }
 
@@ -633,6 +634,8 @@ export async function syncVnptInvoiceForOrder(soId: string) {
         taxAuthorityCode: syncRes.taxAuthorityCode,
         viewUrl: syncRes.viewUrl,
         pdfUrl: syncRes.pdfUrl,
+        publishedAt: syncRes.publishedAt,
+        publishedBy: syncRes.publishedBy,
         message: `Đồng bộ thành công! Số hóa đơn chính thức: ${finalInvoiceNo}`,
     }
 }
