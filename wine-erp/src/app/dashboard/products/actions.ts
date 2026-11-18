@@ -546,6 +546,7 @@ export async function updateProductQuickPrices(input: {
 const productSchema = z.object({
     skuCode: z.string().min(3, 'SKU tối thiểu 3 ký tự'),
     productName: z.string().min(2, 'Tên sản phẩm bắt buộc'),
+    invoiceName: z.string().nullable().optional(),
     producerId: z.string().min(1, 'Nhà sản xuất bắt buộc'),
     supplierId: z.string().nullable().optional(),
 
@@ -606,6 +607,7 @@ export async function createProduct(input: ProductInput) {
             data: {
                 skuCode: data.skuCode,
                 productName: data.productName,
+                invoiceName: data.invoiceName?.trim() || null,
                 producerId: data.producerId,
                 supplierId: data.supplierId ?? null,
 
@@ -678,6 +680,7 @@ export async function updateProduct(id: string, input: Partial<ProductInput>) {
             select: {
                 skuCode: true,
                 productName: true,
+                invoiceName: true,
                 status: true,
                 abvPercent: true,
                 volumeMl: true,
@@ -695,6 +698,7 @@ export async function updateProduct(id: string, input: Partial<ProductInput>) {
             data: {
                 ...(data.skuCode && { skuCode: data.skuCode }),
                 ...(data.productName && { productName: data.productName }),
+                ...(data.invoiceName !== undefined && { invoiceName: data.invoiceName?.trim() || null }),
                 ...(data.producerId && { producerId: data.producerId }),
                 supplierId: data.supplierId !== undefined ? data.supplierId : undefined,
 

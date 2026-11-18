@@ -265,6 +265,7 @@ model GrapeVariety {
 model Product {
   id                   String                 @id @default(cuid())
   skuCode              String                 @unique
+  invoiceName          String?                // Tên xuất hóa đơn VAT (ưu tiên khi đẩy VNPT / xuất Excel)
   productName          String
   producerId           String
   producer             Producer               @relation(fields: [producerId], references: [id])

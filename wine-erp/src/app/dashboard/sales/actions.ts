@@ -2862,7 +2862,7 @@ export async function exportSalesOrdersExcel(filters: {
             deliveryOrders: { select: { status: true } },
             lines: {
                 include: {
-                    product: { select: { skuCode: true, productName: true, country: true, wineType: true } },
+                    product: { select: { skuCode: true, productName: true, invoiceName: true, country: true, wineType: true } },
                 },
             },
         },
@@ -3067,7 +3067,7 @@ export async function exportMisaSmeExcel(filters: {
             warehouse: { select: { name: true, code: true } },
             lines: {
                 include: {
-                    product: { select: { skuCode: true, productName: true, country: true, wineType: true } },
+                    product: { select: { skuCode: true, productName: true, invoiceName: true, country: true, wineType: true } },
                 },
             },
         },
@@ -3245,7 +3245,7 @@ export async function exportVnptInvoiceExcel(filters: {
             warehouse: { select: { name: true, code: true } },
             lines: {
                 include: {
-                    product: { select: { skuCode: true, productName: true, country: true, wineType: true } },
+                    product: { select: { skuCode: true, productName: true, invoiceName: true, country: true, wineType: true } },
                 },
             },
         },
@@ -3330,6 +3330,7 @@ export async function exportVnptInvoiceExcel(filters: {
                 lines: o.lines.map((line) => ({
                     skuCode: line.product.skuCode,
                     productName: line.product.productName,
+                    invoiceName: line.product.invoiceName,
                     wineType: line.product.wineType,
                     unit: 'Chai',
                     qtyOrdered: Number(line.qtyOrdered),

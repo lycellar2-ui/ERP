@@ -121,6 +121,7 @@ erDiagram
         id              uuid PK
         sku_code        string
         product_name    string
+        invoice_name    string
         producer_id     uuid FK
         appellation_id  uuid FK
         country         string

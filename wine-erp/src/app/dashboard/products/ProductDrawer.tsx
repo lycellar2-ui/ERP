@@ -77,6 +77,7 @@ interface ProductDrawerProps {
 interface ProductFormState {
     sku?: string          // → skuCode
     name?: string         // → productName
+    invoiceName?: string | null // → invoiceName (VNPT VAT invoice name)
     abv?: number | null   // → abvPercent
     wineType?: string
     volumeMl?: number
@@ -115,6 +116,7 @@ function formToInput(f: ProductFormState): ProductInput {
     return {
         skuCode: f.sku ?? '',
         productName: f.name ?? '',
+        invoiceName: f.invoiceName?.trim() || null,
         producerId: f.producerId ?? '',
         supplierId: f.supplierId ?? null,
         appellationId: f.regionId ?? null,
@@ -276,6 +278,7 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                 ...f,
                 sku: data.skuCode,
                 name: data.productName,
+                invoiceName: (data as any).invoiceName ?? null,
                 abv: data.abvPercent,
                 wineType: data.wineType,
                 volumeMl: data.volumeMl,
@@ -473,6 +476,14 @@ export function ProductDrawer({ open, editingId, initialData, onClose, onSaved }
                                 value={form.name ?? ''}
                                 onChange={e => set('name', e.target.value)}
                                 placeholder="Château Pétrus 2018"
+                            />
+                        </Field>
+
+                        <Field label={D.fieldInvoiceName}>
+                            <Input
+                                value={form.invoiceName ?? ''}
+                                onChange={e => set('invoiceName', e.target.value || null)}
+                                placeholder={D.placeholderInvoiceName}
                             />
                         </Field>
 

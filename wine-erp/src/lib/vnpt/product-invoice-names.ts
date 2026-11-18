@@ -211,10 +211,20 @@ const WINE_TYPE_TCB_PREFIX: Record<string, string> = {
 
 /**
  * Lấy tên sản phẩm chuẩn Tự Công Bố phục vụ xuất hóa đơn điện tử VNPT.
- * Nếu SKU có trong danh mục chuẩn hóa 25.07 -> Trả về tên Tự Công Bố.
- * Nếu không có -> Fallback về tên sản phẩm hiện tại, tự động gắn tiền tố TCB theo wineType nếu cần.
+ * Thứ tự ưu tiên:
+ * 1. Tên xuất hóa đơn cấu hình riêng trên sản phẩm (Product.invoiceName)
+ * 2. Danh mục chuẩn hóa 25.07 (VNPT_PRODUCT_INVOICE_NAMES)
+ * 3. Fallback về tên sản phẩm hiện tại, tự động gắn tiền tố TCB theo wineType nếu cần.
  */
-export function getVnptInvoiceProductName(skuCode?: string, fallbackName?: string, wineType?: string | null): string {
+export function getVnptInvoiceProductName(
+    skuCode?: string,
+    fallbackName?: string,
+    wineType?: string | null,
+    customInvoiceName?: string | null
+): string {
+    const custom = (customInvoiceName || '').trim()
+    if (custom) return custom
+
     if (skuCode) {
         const cleanSku = skuCode.trim().toUpperCase()
         if (VNPT_PRODUCT_INVOICE_NAMES[cleanSku]) {

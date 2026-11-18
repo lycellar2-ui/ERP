@@ -91,6 +91,7 @@ export function formatXmlNumber(val: number, maxDecimals = 2): string {
 export interface VnptLineCalcInput {
     skuCode: string
     productName: string
+    invoiceName?: string | null
     wineType?: string | null
     unit?: string | null
     qtyOrdered: number
@@ -178,7 +179,7 @@ export function calculateVnptInvoiceTotals(input: VnptOrderCalcInput): Calculate
             lineNo: idx + 1,
             itemType: isFreeItem ? 2 : 1,
             productCode: line.skuCode,
-            productName: getVnptInvoiceProductName(line.skuCode, line.productName, line.wineType),
+            productName: getVnptInvoiceProductName(line.skuCode, line.productName, line.wineType, line.invoiceName),
             unit: line.unit || 'Chai',
             quantity: qty,
             unitPrice: preVatUnitPrice,

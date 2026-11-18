@@ -201,6 +201,8 @@ describe('VNPT e-Invoice Calculation, XML Builder & Client Parser', () => {
         expect(getVnptInvoiceProductName('UNKNOWN-RED', 'Château Demo', 'RED')).toBe('Rượu vang đỏ Château Demo')
         expect(getVnptInvoiceProductName('UNKNOWN-SPK', 'Champagne Demo', 'SPARKLING')).toBe('Rượu vang nổ Champagne Demo')
         expect(getVnptInvoiceProductName('UNKNOWN-PRE', 'Rượu vang đỏ Đã Có Tiền Tố', 'RED')).toBe('Rượu vang đỏ Đã Có Tiền Tố')
+        expect(getVnptInvoiceProductName('L20046', 'Domaine de Rochebin Bourgogne Pinot Noir', 'RED', 'Rượu vang đỏ Custom Từ ERP')).toBe('Rượu vang đỏ Custom Từ ERP')
+        expect(getVnptInvoiceProductName('L20046', 'Domaine de Rochebin Bourgogne Pinot Noir', 'RED', '   ')).toBe('Rượu vang đỏ Domaine de Rochebin Bourgogne Pinot Noir')
     })
 
     it('sets <TChat>2</TChat> for 0 VND sample/tasting items and renders <TTKhac> note', () => {
