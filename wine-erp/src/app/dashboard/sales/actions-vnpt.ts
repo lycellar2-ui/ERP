@@ -173,16 +173,21 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
     // Nếu có công ty mẹ, buyerName ghi tên chi nhánh con (vd: Theodore Hotel) để thể hiện nơi nhận hàng
     const buyerName = parent ? so.customer.name : (isCorporate ? '' : so.customer.name)
 
-    // Địa chỉ đăng ký thuế VAT: ưu tiên vatAddress / địa chỉ chính của Công ty mẹ -> của KH -> địa chỉ giao hàng
+    // Địa chỉ đăng ký thuế VAT: nếu có Công ty mẹ thì CHỈ lấy từ Công ty mẹ, không fallback sang địa chỉ giao hàng/chi nhánh con
     const parentPrimaryAddress = parent?.addresses?.[0]?.address || ''
     const customerPrimaryAddress = so.customer.addresses?.[0]?.address || ''
-    const vatAddress =
-        parent?.vatAddress ||
-        parentPrimaryAddress ||
-        so.customer.vatAddress ||
-        customerPrimaryAddress ||
-        so.shippingAddress?.address ||
-        'Việt Nam'
+    const vatAddress = parent
+        ? (parent.vatAddress || parentPrimaryAddress || '')
+        : (so.customer.vatAddress || customerPrimaryAddress || (isCorporate ? '' : (so.shippingAddress?.address || 'Việt Nam')))
+
+    if (!vatAddress.trim()) {
+        return {
+            success: false,
+            error: parent
+                ? `Công ty mẹ (${companyName}) chưa có Địa chỉ đăng ký thuế VAT. Vui lòng cập nhật địa chỉ trên hồ sơ Công ty Mẹ trước khi đẩy hóa đơn VNPT.`
+                : `Khách hàng (${companyName}) chưa có Địa chỉ đăng ký thuế VAT. Vui lòng cập nhật địa chỉ trước khi đẩy hóa đơn VNPT.`,
+        }
+    }
 
     // Email nhận hóa đơn VAT: ưu tiên email của công ty mẹ
     const vatEmail = parent?.vatEmail || so.customer.vatEmail || ''
