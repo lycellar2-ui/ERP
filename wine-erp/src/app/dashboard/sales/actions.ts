@@ -2844,6 +2844,11 @@ export async function exportSalesOrdersExcel(filters: {
                     vatCompanyName: true,
                     vatAddress: true,
                     vatEmail: true,
+                    addresses: {
+                        select: { address: true },
+                        orderBy: [{ isBilling: 'desc' }, { isDefault: 'desc' }, { id: 'asc' }],
+                        take: 1,
+                    },
                     parent: {
                         select: {
                             name: true,
@@ -2851,6 +2856,11 @@ export async function exportSalesOrdersExcel(filters: {
                             vatCompanyName: true,
                             vatAddress: true,
                             vatEmail: true,
+                            addresses: {
+                                select: { address: true },
+                                orderBy: [{ isBilling: 'desc' }, { isDefault: 'desc' }, { id: 'asc' }],
+                                take: 1,
+                            },
                         },
                     },
                 },
@@ -2875,7 +2885,12 @@ export async function exportSalesOrdersExcel(filters: {
         const parent = o.customer.parent
         const vatCompanyName = parent?.vatCompanyName || parent?.name || o.customer.vatCompanyName || o.customer.name
         const taxId = parent?.taxId || o.customer.taxId || ''
-        const vatAddress = parent?.vatAddress || o.customer.vatAddress || ''
+        const vatAddress =
+            parent?.vatAddress ||
+            parent?.addresses?.[0]?.address ||
+            o.customer.vatAddress ||
+            o.customer.addresses?.[0]?.address ||
+            ''
         const vatEmail = parent?.vatEmail || o.customer.vatEmail || ''
 
         if (o.lines.length === 0) {
@@ -3051,6 +3066,11 @@ export async function exportMisaSmeExcel(filters: {
                     vatCompanyName: true,
                     vatAddress: true,
                     vatEmail: true,
+                    addresses: {
+                        select: { address: true },
+                        orderBy: [{ isBilling: 'desc' }, { isDefault: 'desc' }, { id: 'asc' }],
+                        take: 1,
+                    },
                     parent: {
                         select: {
                             name: true,
@@ -3058,6 +3078,11 @@ export async function exportMisaSmeExcel(filters: {
                             vatCompanyName: true,
                             vatAddress: true,
                             vatEmail: true,
+                            addresses: {
+                                select: { address: true },
+                                orderBy: [{ isBilling: 'desc' }, { isDefault: 'desc' }, { id: 'asc' }],
+                                take: 1,
+                            },
                         },
                     },
                 },
@@ -3082,7 +3107,12 @@ export async function exportMisaSmeExcel(filters: {
         const parent = o.customer.parent
         const vatCompanyName = parent?.vatCompanyName || parent?.name || o.customer.vatCompanyName || o.customer.name
         const taxId = parent?.taxId || o.customer.taxId || ''
-        const vatAddress = parent?.vatAddress || o.customer.vatAddress || ''
+        const vatAddress =
+            parent?.vatAddress ||
+            parent?.addresses?.[0]?.address ||
+            o.customer.vatAddress ||
+            o.customer.addresses?.[0]?.address ||
+            ''
         const whCode = o.warehouse?.code || 'KHO_TONG'
 
         if (o.lines.length === 0) {
@@ -3229,6 +3259,11 @@ export async function exportVnptInvoiceExcel(filters: {
                     vatCompanyName: true,
                     vatAddress: true,
                     vatEmail: true,
+                    addresses: {
+                        select: { address: true },
+                        orderBy: [{ isBilling: 'desc' }, { isDefault: 'desc' }, { id: 'asc' }],
+                        take: 1,
+                    },
                     parent: {
                         select: {
                             name: true,
@@ -3236,6 +3271,11 @@ export async function exportVnptInvoiceExcel(filters: {
                             vatCompanyName: true,
                             vatAddress: true,
                             vatEmail: true,
+                            addresses: {
+                                select: { address: true },
+                                orderBy: [{ isBilling: 'desc' }, { isDefault: 'desc' }, { id: 'asc' }],
+                                take: 1,
+                            },
                         },
                     },
                 },
@@ -3264,7 +3304,12 @@ export async function exportVnptInvoiceExcel(filters: {
         // Tên người mua: nếu có công ty mẹ thì ghi tên chi nhánh con; nếu không thì chỉ để tên khi là cá nhân
         const buyerName = parent ? o.customer.name : (isCorporate ? '' : o.customer.name)
         const companyName = parent?.vatCompanyName || parent?.name || o.customer.vatCompanyName || o.customer.name
-        const vatAddress = parent?.vatAddress || o.customer.vatAddress || ''
+        const vatAddress =
+            parent?.vatAddress ||
+            parent?.addresses?.[0]?.address ||
+            o.customer.vatAddress ||
+            o.customer.addresses?.[0]?.address ||
+            ''
         const vatEmail = parent?.vatEmail || o.customer.vatEmail || ''
         const whCode = o.warehouse?.code || 'KHO_TONG'
         const payMethod = 'Chuyển khoản/Tiền mặt'

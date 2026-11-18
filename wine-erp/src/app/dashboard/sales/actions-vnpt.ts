@@ -56,6 +56,11 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
                     vatCompanyName: true,
                     vatAddress: true,
                     vatEmail: true,
+                    addresses: {
+                        select: { address: true },
+                        orderBy: [{ isBilling: 'desc' }, { isDefault: 'desc' }, { id: 'asc' }],
+                        take: 1,
+                    },
                     parent: {
                         select: {
                             id: true,
@@ -66,6 +71,11 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
                             vatEmail: true,
                             purchasingPhone: true,
                             receiverPhone: true,
+                            addresses: {
+                                select: { address: true },
+                                orderBy: [{ isBilling: 'desc' }, { isDefault: 'desc' }, { id: 'asc' }],
+                                take: 1,
+                            },
                         },
                     },
                 },
@@ -163,8 +173,16 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
     // Nếu có công ty mẹ, buyerName ghi tên chi nhánh con (vd: Theodore Hotel) để thể hiện nơi nhận hàng
     const buyerName = parent ? so.customer.name : (isCorporate ? '' : so.customer.name)
 
-    // Địa chỉ đăng ký thuế VAT: ưu tiên địa chỉ thuế của công ty mẹ
-    const vatAddress = parent?.vatAddress || so.customer.vatAddress || so.shippingAddress?.address || 'Việt Nam'
+    // Địa chỉ đăng ký thuế VAT: ưu tiên vatAddress / địa chỉ chính của Công ty mẹ -> của KH -> địa chỉ giao hàng
+    const parentPrimaryAddress = parent?.addresses?.[0]?.address || ''
+    const customerPrimaryAddress = so.customer.addresses?.[0]?.address || ''
+    const vatAddress =
+        parent?.vatAddress ||
+        parentPrimaryAddress ||
+        so.customer.vatAddress ||
+        customerPrimaryAddress ||
+        so.shippingAddress?.address ||
+        'Việt Nam'
 
     // Email nhận hóa đơn VAT: ưu tiên email của công ty mẹ
     const vatEmail = parent?.vatEmail || so.customer.vatEmail || ''
