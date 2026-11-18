@@ -102,6 +102,7 @@
 93. [BUG-158: Middleware Chuyển Hướng Nhầm /partner-login Của Đối Tác Ngoại Bộ Về Trang /login Nhân Viên](#bug-158-middleware-chuyển-hướng-nhầm-partner-login-của-đối-tác-ngoại-bộ-về-trang-login-nhân-viên)
 94. [BUG-159: Lỗi React Hydration #418 Trên Production Do 138 Lời Gọi .toLocaleString() Không Chỉ Định Locale Trong 19 Client Components](#bug-159-lỗi-react-hydration-418-trên-production-do-138-lời-gọi-tolocalestring-không-chỉ-định-locale-trong-19-client-components)
 95. [BUG-160: Sai Lệch Thuế VAT Kênh Bán Lẻ, Bỏ Sót orderDiscount, Kẹt ERR:13 Khi Đẩy Lại Nháp VNPT & Rủi Ro Thuế 8% Tên Tự Công Bố](#bug-160-sai-lệch-thuế-vat-kênh-bán-lẻ-bỏ-sót-orderdiscount-kẹt-err13-khi-đẩy-lại-nháp-vnpt--rủi-ro-thuế-8-tên-tự-công-bố)
+96. [BUG-161: Audit Toàn Hệ Thống — Native Confirm/Prompt Còn Sót, Sinh Mã count()+1, Thiếu requireAuth() & Bare toLocaleString()](#bug-161-audit-toàn-hệ-thống--native-confirmprompt-còn-sót-sinh-mã-count1-thiếu-requireauth--bare-tolocalestring)
 
 ---
 
@@ -4617,10 +4618,32 @@ Qua đợt kiểm tra chuyên sâu toàn bộ 38 routes và tất cả component
 - `actions-vnpt.ts` còn export hàm đồng bộ `checkInvoiceDateDiscrepancy` trong file `'use server'`, thiếu kiểm tra RBAC/trạng thái đơn/miễn HĐ, và đồng bộ thành công chưa chuyển trạng thái SO sang `INVOICED`.
 
 ### Cách fix
-1. Tạo helper chuẩn `calculateVnptInvoiceTotals` trong `src/lib/vnpt/xml-builder.ts` dùng chung cho `uploadDraftInvoiceToVnpt` (`actions-vnpt.ts`) và `exportVnptInvoiceExcel` (`sales/actions.ts`): tự động tách giá trước thuế cho `RETAIL`/`DIRECT_INDIVIDUAL`/`POS`, gộp chiết khấu dòng + `orderDiscount`, giữ tối đa 2 chữ số thập phân ở `<DGia>`, gắn `<TChat>2</TChat>` cho hàng mẫu `0đ`, xuất `<TTKhac>` cho `note`, và cộng tổng `<LTSuat>`/`<TToan>` từ chính các dòng đã làm tròn nguyên.
+1. Tạo helper chuẩn `calculateVnptInvoiceTotals` trong `src/lib/vnpt/xml-builder.ts` dùng chung cho `uploadDraftInvoiceToVnpt` (`actions-vnpt.ts`) và `exportVnptInvoiceExcel` (`sales/actions.ts`): tự động tách giá trước thuế cho `RETAIL`/`DIRECT_INDIVIDUAL`/`POS`, gộp chiết khấu dòng + `orderDiscount`, giữ tối đa 2 chữ số thập phân ở `<DGia>`, gắn `<TChat>2</TChat>` cho hàng mẫu `0đ`, loại bỏ `<TTKhac>` dưới `<DLHDon>` (tránh lỗi XSD `The element 'DLHDon' has invalid child element 'TTKhac'` trên cổng production VNPT), và cộng tổng `<LTSuat>`/`<TToan>` từ chính các dòng đã làm tròn nguyên.
 2. Nâng cấp `actions-vnpt.ts` & `api/cron/sync-vnpt/route.ts`: thêm RBAC guard, chặn trạng thái chưa duyệt và đơn `isInvoiceExempt`, bỏ export đồng bộ khỏi file `'use server'`, tự động kiểm tra trạng thái ký số và tăng phiên bản FKey (`_V2.._V10`) khi gặp `ERR:13`, cập nhật `SalesOrder.status = 'INVOICED'` khi đồng bộ thành công.
 3. Sửa `parseVnptResponse` và bổ sung `ERR:23` trong `src/lib/vnpt/vnpt-client.ts`; cập nhật `L10035`/`L10036` sang `"Nước uống không cồn..."`, bổ sung 18 SKU vào `src/lib/vnpt/product-invoice-names.ts` (tổng 169 SKU) kèm tiền tố TCB fallback theo `wineType`.
 4. Bổ sung bộ test đơn vị `wine-erp/test/vnpt-invoice.test.ts`.
 
 ### Bài học
 > **RULE 160: Mọi luồng đẩy API và xuất Excel hóa đơn điện tử (VNPT) BẮT BUỘC dùng chung công thức tách thuế VAT-inclusive cho kênh bán lẻ (`RETAIL`, `DIRECT_INDIVIDUAL`, `POS`), áp dụng đủ `orderDiscount`, tính tổng XML từ số đã làm tròn từng dòng, không gắn tên 'Rượu vang' cho mặt hàng hưởng VAT 8%, và hỗ trợ tự tăng phiên bản FKey (`_V2..`) sau khi xác minh chưa ký số nếu cổng TT78 không cho xóa nháp qua API.**
+
+---
+
+## BUG-161: Audit Toàn Hệ Thống — Native Confirm/Prompt Còn Sót, Sinh Mã count()+1, Thiếu requireAuth() & Bare toLocaleString()
+
+**Ngày:** 2026-11-18
+**Severity:** High — Lỗ hổng phân quyền Server Actions, nguy cơ trùng mã chứng từ và vi phạm chuẩn Light Design System v4.2
+
+### Triệu chứng
+- Vẫn còn `window.confirm()` tại `ParentPaymentImportTab.tsx` và 9 lệnh `prompt()` gốc trình duyệt tại `CustomerRulesTab.tsx` (4), `ProposalsClient.tsx` (4), `WarehouseMapTab.tsx` (1).
+- `ExcelImportDialog.tsx` dùng viền `1px solid #FFFFFF` trên nền trắng; `TransferDetailDrawer.tsx` chứa 2 thẻ `<h1>` trong mẫu xem trước bản in; `ShowroomCountClient.tsx` còn 4 ký tự Unicode `✓`; `warehouse/i18n.ts` và 10 module server/API còn gọi `.toLocaleString()` không truyền locale.
+- `crm/actions.ts` (`createComplaintTicket`, `quickCreateLeadCustomer`), `procurement/actions.ts` (`importPOFromExcel`), `warehouse/actions-inspection.ts` vẫn sinh mã chứng từ bằng `count() + 1` dễ đụng khóa Unique khi xóa/đồng thời.
+- 11 module Server Actions (`contracts`, `declarations`, `market-price`, `media`, `shipment-actions`, `reports`, `actions-stock-velocity`, `sop`, `ai`, `audit-log`, `crm` complaint actions) thiếu gọi `await requireAuth()` ở điểm vào.
+
+### Cách fix
+1. Thay toàn bộ native `window.confirm` / `prompt` trong `ParentPaymentImportTab`, `CustomerRulesTab`, `ProposalsClient`, `WarehouseMapTab` bằng `useConfirmDialog` hoặc controlled Pure Light UI modal hỗ trợ `Escape` & validate.
+2. Sửa viền `#FFFFFF` -> `#E2E8F0` (`ExcelImportDialog`), `<h1>` -> `<h2>` (`TransferDetailDrawer`), thay Unicode `✓` -> `<Check />` Lucide (`ShowroomCountClient`), và truyền locale `'vi-VN'`/`'en-US'` vào toàn bộ `.toLocaleString()` còn lại trong `src/app` và `src/lib`.
+3. Chuyển các hàm sinh mã trong `crm/actions.ts`, `procurement/actions.ts`, `warehouse/actions-inspection.ts` sang `generateNextDocCode(prisma.<model>, ...)`.
+4. Bổ sung `await requireAuth()` cho toàn bộ mutation/query nhạy cảm tại 11 file Server Actions trên và cập nhật mock `@/lib/session` trong `test/business/sop-actions.test.ts` kèm test hồi quy `REG-08`, `REG-09` trong `test/audit-regressions.test.ts`.
+
+### Bài học
+> **RULE 161: Mọi tab/modal mới thêm sau đợt chuẩn hóa Design System (như `ParentPaymentImportTab`) PHẢI kiểm tra lại bằng audit tự động để bảo đảm 0 `window.confirm`/`prompt`, 0 `count() + 1`, 0 Server Action mutation thiếu `requireAuth()` và 0 `.toLocaleString()` rỗng.**

@@ -238,8 +238,7 @@ describe('VNPT e-Invoice Calculation, XML Builder & Client Parser', () => {
         })
 
         expect(xml).toContain('<TChat>2</TChat>')
-        expect(xml).toContain('<TTruong>GhiChu</TTruong>')
-        expect(xml).toContain('<DLieu>Hàng mẫu không thu tiền</DLieu>')
+        expect(xml).not.toContain('<TTKhac>')
         expect(formatXmlNumber(609090.9000)).toBe('609090.9')
         expect(formatXmlNumber(500000.00)).toBe('500000')
     })

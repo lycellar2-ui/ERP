@@ -270,10 +270,6 @@ export function buildVnptDraftInvoiceXml(payload: InvoicePayload): string {
                             <TThue>${vals.vat}</TThue>
                         </LTSuat>`).join('')
 
-    const noteXml = payload.note?.trim()
-        ? `\n                <TTKhac>\n                    <TTin>\n                        <TTruong>GhiChu</TTruong>\n                        <KDLieu>string</KDLieu>\n                        <DLieu>${escapeXml(payload.note.trim())}</DLieu>\n                    </TTin>\n                </TTKhac>`
-        : ''
-
     return `<?xml version="1.0" encoding="utf-8"?>
 <DSHDon>
     <HDon>
@@ -305,7 +301,7 @@ export function buildVnptDraftInvoiceXml(payload: InvoicePayload): string {
                     <TgTTTBSo>${resolvedTotalAmount}</TgTTTBSo>
                     <TgTTTBChu>${escapeXml(amountInWords)}</TgTTTBChu>
                 </TToan>
-            </NDHDon>${noteXml}
+            </NDHDon>
         </DLHDon>
     </HDon>
 </DSHDon>`.trim()
