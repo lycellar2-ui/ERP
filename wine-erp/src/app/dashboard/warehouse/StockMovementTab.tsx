@@ -409,7 +409,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                     <span>Tổng SKU</span>
                                     <Boxes size={14} className="text-emerald-600" />
                                 </div>
-                                <p className="text-xl font-extrabold font-mono text-slate-900">{summaryStats.totalProducts.toLocaleString()}</p>
+                                <p className="text-xl font-extrabold font-mono text-slate-900">{summaryStats.totalProducts.toLocaleString('vi-VN')}</p>
                                 <p className="text-[10px] text-slate-500 font-medium">Mặt hàng có dữ liệu</p>
                             </div>
 
@@ -418,7 +418,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                     <span>Tồn Đầu Kỳ</span>
                                     <Package size={14} className="text-amber-600" />
                                 </div>
-                                <p className="text-xl font-extrabold font-mono text-amber-600">{summaryStats.totalOpeningQty.toLocaleString()} <span className="text-xs font-normal">chai</span></p>
+                                <p className="text-xl font-extrabold font-mono text-amber-600">{summaryStats.totalOpeningQty.toLocaleString('vi-VN')} <span className="text-xs font-normal">chai</span></p>
                                 <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalOpeningValue)}</p>
                             </div>
 
@@ -427,7 +427,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                     <span>Nhập Trong Kỳ</span>
                                     <ArrowDownCircle size={14} className="text-emerald-600" />
                                 </div>
-                                <p className="text-xl font-extrabold font-mono text-emerald-600">+{summaryStats.totalInQty.toLocaleString()} <span className="text-xs font-normal">chai</span></p>
+                                <p className="text-xl font-extrabold font-mono text-emerald-600">+{summaryStats.totalInQty.toLocaleString('vi-VN')} <span className="text-xs font-normal">chai</span></p>
                                 <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalInValue)}</p>
                             </div>
 
@@ -436,7 +436,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                     <span>Xuất Trong Kỳ</span>
                                     <ArrowUpCircle size={14} className="text-rose-600" />
                                 </div>
-                                <p className="text-xl font-extrabold font-mono text-rose-600">-{summaryStats.totalOutQty.toLocaleString()} <span className="text-xs font-normal">chai</span></p>
+                                <p className="text-xl font-extrabold font-mono text-rose-600">-{summaryStats.totalOutQty.toLocaleString('vi-VN')} <span className="text-xs font-normal">chai</span></p>
                                 <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalOutValue)}</p>
                             </div>
 
@@ -445,7 +445,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                     <span>Tồn Cuối Kỳ</span>
                                     <TrendingUp size={14} className="text-teal-600" />
                                 </div>
-                                <p className="text-xl font-extrabold font-mono text-teal-600">{summaryStats.totalClosingQty.toLocaleString()} <span className="text-xs font-normal">chai</span></p>
+                                <p className="text-xl font-extrabold font-mono text-teal-600">{summaryStats.totalClosingQty.toLocaleString('vi-VN')} <span className="text-xs font-normal">chai</span></p>
                                 <p className="text-[10px] font-mono font-bold text-teal-700">{formatVND(summaryStats.totalClosingValue)}</p>
                             </div>
                         </div>
@@ -525,14 +525,14 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                                 
                                                 {/* Tồn Đầu Kỳ */}
                                                 <td className="px-2.5 py-2.5 text-right">
-                                                    <p className="text-xs font-bold font-mono text-amber-600">{item.openingQty.toLocaleString()}</p>
+                                                    <p className="text-xs font-bold font-mono text-amber-600">{item.openingQty.toLocaleString('vi-VN')}</p>
                                                     <p className="text-[10px] font-mono text-slate-400">{formatVND(item.openingValue)}</p>
                                                 </td>
 
                                                 {/* Nhập Trong Kỳ */}
                                                 <td className="px-2.5 py-2.5 text-right">
                                                     <p className={`text-xs font-bold font-mono ${item.inQty > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
-                                                        {item.inQty > 0 ? `+${item.inQty.toLocaleString()}` : '—'}
+                                                        {item.inQty > 0 ? `+${item.inQty.toLocaleString('vi-VN')}` : '—'}
                                                     </p>
                                                     {item.inQty > 0 && <p className="text-[10px] font-mono text-slate-400">{formatVND(item.inValue)}</p>}
                                                 </td>
@@ -540,14 +540,14 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                                 {/* Xuất Trong Kỳ */}
                                                 <td className="px-2.5 py-2.5 text-right">
                                                     <p className={`text-xs font-bold font-mono ${item.outQty > 0 ? 'text-rose-600' : 'text-slate-400'}`}>
-                                                        {item.outQty > 0 ? `-${item.outQty.toLocaleString()}` : '—'}
+                                                        {item.outQty > 0 ? `-${item.outQty.toLocaleString('vi-VN')}` : '—'}
                                                     </p>
                                                     {item.outQty > 0 && <p className="text-[10px] font-mono text-slate-400">{formatVND(item.outValue)}</p>}
                                                 </td>
 
                                                 {/* Tồn Cuối Kỳ */}
                                                 <td className="px-2.5 py-2.5 text-right">
-                                                    <p className="text-xs font-bold font-mono text-teal-600">{item.closingQty.toLocaleString()}</p>
+                                                    <p className="text-xs font-bold font-mono text-teal-600">{item.closingQty.toLocaleString('vi-VN')}</p>
                                                     <p className="text-[10px] font-mono font-bold text-teal-700">{formatVND(item.closingValue)}</p>
                                                 </td>
 
@@ -575,19 +575,19 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                                     TỔNG CỘNG TOÀN KHO ({summaryStats.totalProducts} SKU):
                                                 </td>
                                                 <td className="px-2.5 py-2.5 text-right">
-                                                    <p className="text-xs font-extrabold font-mono text-amber-600">{summaryStats.totalOpeningQty.toLocaleString()}</p>
+                                                    <p className="text-xs font-extrabold font-mono text-amber-600">{summaryStats.totalOpeningQty.toLocaleString('vi-VN')}</p>
                                                     <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalOpeningValue)}</p>
                                                 </td>
                                                 <td className="px-2.5 py-2.5 text-right">
-                                                    <p className="text-xs font-extrabold font-mono text-emerald-600">+{summaryStats.totalInQty.toLocaleString()}</p>
+                                                    <p className="text-xs font-extrabold font-mono text-emerald-600">+{summaryStats.totalInQty.toLocaleString('vi-VN')}</p>
                                                     <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalInValue)}</p>
                                                 </td>
                                                 <td className="px-2.5 py-2.5 text-right">
-                                                    <p className="text-xs font-extrabold font-mono text-rose-600">-{summaryStats.totalOutQty.toLocaleString()}</p>
+                                                    <p className="text-xs font-extrabold font-mono text-rose-600">-{summaryStats.totalOutQty.toLocaleString('vi-VN')}</p>
                                                     <p className="text-[10px] font-mono text-slate-500">{formatVND(summaryStats.totalOutValue)}</p>
                                                 </td>
                                                 <td className="px-2.5 py-2.5 text-right">
-                                                    <p className="text-xs font-extrabold font-mono text-teal-700">{summaryStats.totalClosingQty.toLocaleString()}</p>
+                                                    <p className="text-xs font-extrabold font-mono text-teal-700">{summaryStats.totalClosingQty.toLocaleString('vi-VN')}</p>
                                                     <p className="text-[10px] font-mono font-bold text-teal-700">{formatVND(summaryStats.totalClosingValue)}</p>
                                                 </td>
                                                 <td colSpan={2}></td>
@@ -706,19 +706,19 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
                             <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
                                 <p className="text-[10px] uppercase font-bold text-slate-500">Tồn Đầu Kỳ ({formatDate(dateFrom)})</p>
-                                <p className="text-lg font-extrabold font-mono mt-1 text-amber-600">{detailSummary.openingBalance.toLocaleString()} chai</p>
+                                <p className="text-lg font-extrabold font-mono mt-1 text-amber-600">{detailSummary.openingBalance.toLocaleString('vi-VN')} chai</p>
                             </div>
                             <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
                                 <p className="text-[10px] uppercase font-bold text-slate-500">Tổng Nhập Trong Kỳ</p>
-                                <p className="text-lg font-extrabold font-mono mt-1 text-emerald-600">+{detailSummary.totalIn.toLocaleString()} chai</p>
+                                <p className="text-lg font-extrabold font-mono mt-1 text-emerald-600">+{detailSummary.totalIn.toLocaleString('vi-VN')} chai</p>
                             </div>
                             <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
                                 <p className="text-[10px] uppercase font-bold text-slate-500">Tổng Xuất Trong Kỳ</p>
-                                <p className="text-lg font-extrabold font-mono mt-1 text-rose-600">-{detailSummary.totalOut.toLocaleString()} chai</p>
+                                <p className="text-lg font-extrabold font-mono mt-1 text-rose-600">-{detailSummary.totalOut.toLocaleString('vi-VN')} chai</p>
                             </div>
                             <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
                                 <p className="text-[10px] uppercase font-bold text-slate-500">Tồn Cuối Kỳ ({formatDate(dateTo)})</p>
-                                <p className="text-lg font-extrabold font-mono mt-1 text-teal-600">{detailSummary.closingBalance.toLocaleString()} chai</p>
+                                <p className="text-lg font-extrabold font-mono mt-1 text-teal-600">{detailSummary.closingBalance.toLocaleString('vi-VN')} chai</p>
                             </div>
                             <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
                                 <p className="text-[10px] uppercase font-bold text-slate-500">Giá Trị Tồn Cuối</p>
@@ -766,7 +766,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                                         <td colSpan={3} className="px-3.5 py-2 text-xs font-bold text-amber-700">--- TỒN ĐẦU KỲ ---</td>
                                                         <td className="px-3.5 py-2 text-center text-xs text-slate-400">—</td>
                                                         <td className="px-3.5 py-2 text-center text-xs text-slate-400">—</td>
-                                                        <td className="px-3.5 py-2 text-center text-xs font-extrabold font-mono text-amber-700">{detailSummary.openingBalance.toLocaleString()}</td>
+                                                        <td className="px-3.5 py-2 text-center text-xs font-extrabold font-mono text-amber-700">{detailSummary.openingBalance.toLocaleString('vi-VN')}</td>
                                                         <td colSpan={2} className="px-3.5 py-2 text-xs text-slate-500 font-medium">Mốc bắt đầu báo cáo</td>
                                                     </tr>
                                                 )}
@@ -790,17 +790,17 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                                             </td>
                                                             <td className="px-2.5 py-2 text-center">
                                                                 {m.qtyIn > 0 ? (
-                                                                    <span className="text-xs font-bold font-mono text-emerald-600">+{m.qtyIn.toLocaleString()}</span>
+                                                                    <span className="text-xs font-bold font-mono text-emerald-600">+{m.qtyIn.toLocaleString('vi-VN')}</span>
                                                                 ) : <span className="text-slate-400">—</span>}
                                                             </td>
                                                             <td className="px-2.5 py-2 text-center">
                                                                 {m.qtyOut > 0 ? (
-                                                                    <span className="text-xs font-bold font-mono text-rose-600">-{m.qtyOut.toLocaleString()}</span>
+                                                                    <span className="text-xs font-bold font-mono text-rose-600">-{m.qtyOut.toLocaleString('vi-VN')}</span>
                                                                 ) : <span className="text-slate-400">—</span>}
                                                             </td>
                                                             <td className="px-2.5 py-2 text-center">
                                                                 <span className="text-xs font-bold font-mono text-teal-600">
-                                                                    {m.balance.toLocaleString()}
+                                                                    {m.balance.toLocaleString('vi-VN')}
                                                                 </span>
                                                             </td>
                                                             <td className="px-2.5 py-2 text-xs font-mono text-slate-600 font-medium">
@@ -836,7 +836,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                                                     {formatFriendlyLocationName({ locationCode: loc.locationCode })}
                                                 </span>
                                                 <span className="text-xs font-bold font-mono text-emerald-600">
-                                                    {loc.qtyAvailable.toLocaleString()} chai
+                                                    {loc.qtyAvailable.toLocaleString('vi-VN')} chai
                                                 </span>
                                             </div>
                                             <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium">

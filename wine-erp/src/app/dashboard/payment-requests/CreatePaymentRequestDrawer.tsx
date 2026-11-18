@@ -1035,7 +1035,7 @@ export function CreatePaymentRequestDrawer({
                             <div className="flex items-center gap-4">
                                 <span className="text-slate-500">{isEn ? 'Grand Total:' : 'Tổng cộng thanh toán:'}</span>
                                 <span className="text-base font-bold text-[#B91C1C]">
-                                    {currency === 'VND' ? formatVND(grandTotalVND) : `${grandTotal.toLocaleString()} ${currency} (~${formatVND(grandTotalVND)})`}
+                                    {currency === 'VND' ? formatVND(grandTotalVND) : `${grandTotal.toLocaleString('vi-VN')} ${currency} (~${formatVND(grandTotalVND)})`}
                                 </span>
                             </div>
                         </div>

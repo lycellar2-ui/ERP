@@ -35,7 +35,7 @@ export function DataPagination({
             style={{ borderTop: '1px solid #E2E8F0', background: '#FFFFFF' }}>
             <div className="flex items-center gap-3">
                 <p className="text-xs" style={{ color: '#64748B' }}>
-                    Hiển thị <span style={{ color: '#475569' }}>{start}–{end}</span> trong <span style={{ color: '#475569' }}>{total.toLocaleString()}</span>
+                    Hiển thị <span style={{ color: '#475569' }}>{start}–{end}</span> trong <span style={{ color: '#475569' }}>{total.toLocaleString('vi-VN')}</span>
                 </p>
                 {onPageSizeChange && (
                     <select aria-label="Số dòng trên mỗi trang" value={pageSize} onChange={e => onPageSizeChange(Number(e.target.value))}

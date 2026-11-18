@@ -13,7 +13,7 @@ const PAGES = [
     { name: 'Reports', path: '/dashboard/reports', sla: 400 },
     { name: 'Contracts', path: '/dashboard/contracts', sla: 500 },
     { name: 'Agency', path: '/dashboard/agency', sla: 500 },
-    { name: 'Tax', path: '/dashboard/tax', sla: 400 },
+    { name: 'MarketPrice', path: '/dashboard/market-price', sla: 400 },
     { name: 'Delivery', path: '/dashboard/delivery', sla: 500 },
     { name: 'Consignment', path: '/dashboard/consignment', sla: 500 },
     { name: 'Stamps', path: '/dashboard/stamps', sla: 400 },
@@ -41,7 +41,8 @@ for (const page of PAGES) {
         // Assuming we do not need actual auth, or we just measure raw load with redirects
         // or if the pages are somewhat accessible in test environment
         const start = Date.now()
-        await p.goto(`http://localhost:3000${page.path}`, {
+        const baseUrl = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3100'
+        await p.goto(`${baseUrl}${page.path}`, {
             waitUntil: 'domcontentloaded',
         })
         const loadTime = Date.now() - start

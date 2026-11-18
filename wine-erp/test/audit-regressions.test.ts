@@ -245,3 +245,96 @@ describe('REG-05: Static UI/UX & Print CSS regression guards', () => {
         expect(addUnlisted.indexOf('if (!isOpen) return null')).toBeGreaterThan(addUnlisted.lastIndexOf('useEffect'))
     })
 })
+
+describe('REG-06: Middleware /partner-login agency bypass', () => {
+    it('allows unauthenticated requests to /partner-login without redirecting to /login', async () => {
+        process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co'
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'anon-test-key'
+        const { middleware } = await import('@/middleware')
+        const { NextRequest } = await import('next/server')
+
+        const req = new NextRequest('http://localhost:3100/partner-login')
+        const res = await middleware(req)
+
+        expect(res.status).toBe(200)
+        expect(res.headers.get('location')).toBeNull()
+    }, 15_000)
+})
+
+describe('REG-07: No bare .toLocaleString() in TSX components (SSR/Client hydration safety)', () => {
+    it('does not call .toLocaleString(), .toLocaleDateString(), or .toLocaleTimeString() without explicit locale in src/**/*.tsx', () => {
+        const srcRoot = path.resolve(process.cwd(), 'src')
+        const violations: string[] = []
+
+        function scan(dir: string) {
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+                const full = path.join(dir, entry.name)
+                if (entry.isDirectory()) {
+                    scan(full)
+                } else if (full.endsWith('.tsx')) {
+                    const content = fs.readFileSync(full, 'utf8')
+                    const lines = content.split(/\r?\n/)
+                    lines.forEach((line, idx) => {
+                        if (/\.toLocale(?:String|DateString|TimeString)\(\)/.test(line)) {
+                            violations.push(`${path.relative(process.cwd(), full)}:${idx + 1}`)
+                        }
+                    })
+                }
+            }
+        }
+
+        scan(srcRoot)
+        expect(violations).toEqual([])
+    })
+})
+
+describe('REG-08: Zero native confirm/prompt dialogs in audited client UI tabs', () => {
+    it('ensures ParentPaymentImportTab, CustomerRulesTab, ProposalsClient, WarehouseMapTab use controlled modals instead of native confirm/prompt', () => {
+        const files = [
+            'app/dashboard/finance/ParentPaymentImportTab.tsx',
+            'app/dashboard/price-list/CustomerRulesTab.tsx',
+            'app/dashboard/proposals/ProposalsClient.tsx',
+            'app/dashboard/warehouse/WarehouseMapTab.tsx',
+        ]
+        for (const rel of files) {
+            const content = fs.readFileSync(path.join(SRC_ROOT, rel), 'utf-8')
+            expect(content, `${rel} must not call window.confirm`).not.toMatch(/\bwindow\.confirm\s*\(/)
+            expect(content, `${rel} must not call window.alert`).not.toMatch(/\bwindow\.alert\s*\(/)
+            expect(content, `${rel} must not call native prompt(`).not.toMatch(/(?<![.\w])prompt\s*\(/)
+        }
+    })
+
+    it('ensures warehouse/i18n.ts does not contain bare .toLocaleString() calls', () => {
+        const i18nTxt = fs.readFileSync(path.join(SRC_ROOT, 'app/dashboard/warehouse/i18n.ts'), 'utf-8')
+        expect(i18nTxt).not.toMatch(/\.toLocaleString\(\s*\)/)
+    })
+})
+
+describe('REG-09: Server Action auth & collision-safe doc code guards', () => {
+    it('enforces requireAuth in newly hardened dashboard server action modules', () => {
+        const actionFiles = [
+            'app/dashboard/contracts/actions.ts',
+            'app/dashboard/declarations/actions.ts',
+            'app/dashboard/sop/actions.ts',
+            'app/dashboard/media/actions.ts',
+            'app/dashboard/market-price/actions.ts',
+            'app/dashboard/procurement/shipment-actions.ts',
+        ]
+        for (const rel of actionFiles) {
+            const txt = fs.readFileSync(path.join(SRC_ROOT, rel), 'utf-8')
+            expect(txt, `${rel} must call requireAuth()`).toContain('await requireAuth()')
+        }
+    })
+
+    it('uses generateNextDocCode instead of count()+1 in crm, procurement, and warehouse inspection actions', () => {
+        const files = [
+            'app/dashboard/crm/actions.ts',
+            'app/dashboard/procurement/actions.ts',
+            'app/dashboard/warehouse/actions-inspection.ts',
+        ]
+        for (const rel of files) {
+            const txt = fs.readFileSync(path.join(SRC_ROOT, rel), 'utf-8')
+            expect(txt, `${rel} must use generateNextDocCode`).toContain('generateNextDocCode(')
+        }
+    })
+})

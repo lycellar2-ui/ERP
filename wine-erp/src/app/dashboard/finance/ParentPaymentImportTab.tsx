@@ -18,6 +18,7 @@ import {
 import { toast } from 'sonner'
 import { formatVND, formatDate } from '@/lib/utils'
 import { useAppLocale } from '@/lib/i18n'
+import { useConfirmDialog } from '@/components/ui'
 import {
     ParentPaymentPreviewRow,
     ParentPaymentBatchRow,
@@ -37,6 +38,7 @@ const BATCH_STATUS: Record<string, { label: string; labelEn: string; color: stri
 
 export function ParentPaymentImportTab({ onDataChanged }: { onDataChanged?: () => void }) {
     const { isEn } = useAppLocale()
+    const { confirm, dialog } = useConfirmDialog()
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const [downloading, setDownloading] = useState(false)
@@ -222,7 +224,13 @@ export function ParentPaymentImportTab({ onDataChanged }: { onDataChanged?: () =
     }
 
     const handleReverseBatch = async (batchId: string, batchNo: string) => {
-        if (!window.confirm(isEn ? `Reverse batch ${batchNo}?` : `Xác nhận hoàn tác phiếu thu ${batchNo} và khôi phục công nợ các hóa đơn liên quan?`)) {
+        const ok = await confirm({
+            title: isEn ? 'Reverse Payment Batch' : 'Hoàn tác bảng kê thu tiền',
+            message: isEn ? `Reverse batch ${batchNo}?` : `Xác nhận hoàn tác phiếu thu ${batchNo} và khôi phục công nợ các hóa đơn liên quan?`,
+            confirmLabel: isEn ? 'Reverse' : 'Hoàn tác',
+            variant: 'danger',
+        })
+        if (!ok) {
             return
         }
         setActionBatchId(batchId)
@@ -285,7 +293,7 @@ export function ParentPaymentImportTab({ onDataChanged }: { onDataChanged?: () =
                     <button
                         onClick={() => fileInputRef.current?.click()}
                         disabled={parsing}
-                        className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-md bg-[#0E7490] hover:bg-[#0891B2] text-white transition-colors cursor-pointer disabled:opacity-50"
+                        className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-md bg-[#0E7490] hover:bg-[#155E75] text-white transition-colors cursor-pointer disabled:opacity-50"
                     >
                         {parsing ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                         {isEn ? 'Upload Payment Sheet' : 'Upload Bảng Kê (.xlsx)'}
@@ -300,7 +308,7 @@ export function ParentPaymentImportTab({ onDataChanged }: { onDataChanged?: () =
                         <div className="flex items-center gap-2.5">
                             <FileSpreadsheet size={15} className="text-[#0E7490]" />
                             <span className="text-xs font-bold text-slate-800">{fileName}</span>
-                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-cyan-50 text-[#0E7490] font-semibold">
+                            <span className="text-[11px] px-2 py-0.5 rounded-md bg-cyan-50 text-[#0E7490] font-semibold">
                                 {validPreviewCount}/{previewRows.length} {isEn ? 'valid rows' : 'dòng hợp lệ'}
                             </span>
                         </div>
@@ -623,6 +631,7 @@ export function ParentPaymentImportTab({ onDataChanged }: { onDataChanged?: () =
                     </div>
                 )}
             </div>
+            {dialog}
         </div>
     )
 }

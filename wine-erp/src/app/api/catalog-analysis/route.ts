@@ -283,7 +283,7 @@ export async function POST() {
                 qty90d: recent?.qty90d ?? 0,
                 currentStock: stock,
                 quotationCount: p._count.quotationLines,
-                prices: prices.slice(0, 3).map(pr => `${pr.channel}: ${pr.price.toLocaleString()}đ`),
+                prices: prices.slice(0, 3).map(pr => `${pr.channel}: ${pr.price.toLocaleString('vi-VN')}đ`),
                 daysSinceCreated: Math.round((now.getTime() - new Date(p.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
             }
         })
@@ -341,7 +341,7 @@ export async function POST() {
             .sort((a, b) => b.totalRevenue - a.totalRevenue)
             .map(p => {
                 const salesInfo = p.hasSalesData
-                    ? `Revenue: ${p.totalRevenue.toLocaleString()}đ | Qty sold: ${p.totalQtySold} | Orders: ${p.totalOrders} | Last 90d: ${p.revenue90d.toLocaleString()}đ (${p.qty90d} units)`
+                    ? `Revenue: ${p.totalRevenue.toLocaleString('vi-VN')}đ | Qty sold: ${p.totalQtySold} | Orders: ${p.totalOrders} | Last 90d: ${p.revenue90d.toLocaleString('vi-VN')}đ (${p.qty90d} units)`
                     : 'CHƯA CÓ DỮ LIỆU BÁN HÀNG'
                 const stockInfo = `Stock: ${p.currentStock} units${p.currentStock === 0 ? ' [HẾT HÀNG]' : ''}`
                 const priceInfo = p.prices.length > 0 ? `Prices: ${p.prices.join(', ')}` : 'No prices set'
@@ -353,7 +353,7 @@ export async function POST() {
         const supplierList = enrichedSuppliers
             .sort((a, b) => b.totalSpent - a.totalSpent)
             .map(s => {
-                return `${s.name} (${s.code}) | Type: ${s.type} | Country: ${s.country} | Trade: ${s.tradeAgreement ?? 'N/A'} | CO: ${s.coForm ?? 'N/A'} | Payment: ${s.paymentTerm ?? 'N/A'} | ${s.currency} | Incoterms: ${s.incoterms ?? 'N/A'} | Lead time: ${s.leadTimeDays}d | Total spent: ${s.totalSpent.toLocaleString()}đ | POs: ${s.poCount} | Contracts: ${s.contractCount} | AP outstanding: ${s.apOutstanding.toLocaleString()}đ | Products: [${s.products.join('; ')}] | Contact: ${s.primaryContact} | Status: ${s.status}`
+                return `${s.name} (${s.code}) | Type: ${s.type} | Country: ${s.country} | Trade: ${s.tradeAgreement ?? 'N/A'} | CO: ${s.coForm ?? 'N/A'} | Payment: ${s.paymentTerm ?? 'N/A'} | ${s.currency} | Incoterms: ${s.incoterms ?? 'N/A'} | Lead time: ${s.leadTimeDays}d | Total spent: ${s.totalSpent.toLocaleString('vi-VN')}đ | POs: ${s.poCount} | Contracts: ${s.contractCount} | AP outstanding: ${s.apOutstanding.toLocaleString('vi-VN')}đ | Products: [${s.products.join('; ')}] | Contact: ${s.primaryContact} | Status: ${s.status}`
             }).join('\n')
 
         const producerList = producers.map(p => `${p.name} (${p.country}) — ${p._count.products} products`).join(', ')
@@ -378,13 +378,13 @@ ${regionList}
 ===== THỐNG KÊ TỔNG HỢP =====
 - Products: ${totalProducts} (Active: ${activeProducts}, Out of stock: ${outOfStock})
 - Có dữ liệu bán hàng: ${productsWithSales} | Chưa có: ${productsNoSales}
-- Tổng doanh thu sản phẩm: ${totalProductRevenue.toLocaleString()} VND
+- Tổng doanh thu sản phẩm: ${totalProductRevenue.toLocaleString('vi-VN')} VND
 - Tổng hàng tồn kho: ${totalStock} units
 - Wine types: ${Object.entries(typeDist).map(([k, v]) => `${k}: ${v}`).join(', ')}
 - Countries: ${Object.entries(countryDist).map(([k, v]) => `${k}: ${v}`).join(', ')}
-- Revenue by type: ${Object.entries(revByType).map(([k, v]) => `${k}: ${v.toLocaleString()}đ`).join(', ')}
+- Revenue by type: ${Object.entries(revByType).map(([k, v]) => `${k}: ${v.toLocaleString('vi-VN')}đ`).join(', ')}
 - Suppliers: ${totalSuppliers} (Active: ${activeSuppliers}) | ${supplierCountries} quốc gia
-- Tổng chi NCC: ${totalSpending.toLocaleString()} VND
+- Tổng chi NCC: ${totalSpending.toLocaleString('vi-VN')} VND
 
 Hãy viết BÁO CÁO PHÂN TÍCH DANH MỤC & NGHIÊN CỨU THỊ TRƯỜNG CHO CEO bao gồm:
 
@@ -436,7 +436,7 @@ Yêu cầu:
         if (dbPrompt) {
             finalSystem = dbPrompt.systemPrompt
             finalPrompt = dbPrompt.userTemplate
-                .replace('{{data}}', `===== DANH MỤC SẢN PHẨM (${totalProducts}) =====\n${productList}\n\n===== NHÀ CUNG CẤP (${totalSuppliers}) =====\n${supplierList}\n\n===== NHÀ SẢN XUẤT =====\n${producerList}\n\n===== VÙNG & APPELLATION =====\n${regionList}\n\n===== THỐNG KÊ =====\nProducts: ${totalProducts} | Revenue: ${totalProductRevenue.toLocaleString()} VND | Stock: ${totalStock} | Suppliers: ${totalSuppliers} | Spending: ${totalSpending.toLocaleString()} VND`)
+                .replace('{{data}}', `===== DANH MỤC SẢN PHẨM (${totalProducts}) =====\n${productList}\n\n===== NHÀ CUNG CẤP (${totalSuppliers}) =====\n${supplierList}\n\n===== NHÀ SẢN XUẤT =====\n${producerList}\n\n===== VÙNG & APPELLATION =====\n${regionList}\n\n===== THỐNG KÊ =====\nProducts: ${totalProducts} | Revenue: ${totalProductRevenue.toLocaleString('vi-VN')} VND | Stock: ${totalStock} | Suppliers: ${totalSuppliers} | Spending: ${totalSpending.toLocaleString('vi-VN')} VND`)
             finalTemp = dbPrompt.temperature
             finalMax = dbPrompt.maxTokens
         } else {

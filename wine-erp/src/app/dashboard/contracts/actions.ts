@@ -6,6 +6,7 @@ import { cached, revalidateCache } from '@/lib/cache'
 import { parseOrThrow, ContractCreateSchema, ContractAmendmentSchema, DigitalSignatureSchema } from '@/lib/validations'
 import { uploadToStorage } from '@/lib/supabase-storage'
 import { serialize } from '@/lib/serialize'
+import { requireAuth } from '@/lib/session'
 
 export interface ContractRow {
     id: string
@@ -130,6 +131,7 @@ export async function getCounterparties() {
 // ── Create contract ───────────────────────────────
 export async function createContract(input: ContractCreateInput): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
+        await requireAuth()
         const validated = parseOrThrow(ContractCreateSchema, input)
 
         const contract = await prisma.contract.create({
@@ -167,6 +169,7 @@ export async function updateContractStatus(
     status: 'ACTIVE' | 'EXPIRED' | 'TERMINATED'
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         await prisma.contract.update({ where: { id }, data: { status } })
         revalidateCache('contracts')
         revalidatePath('/dashboard/contracts')
@@ -227,6 +230,7 @@ export async function getContractUtilization(contractId: string) {
 // ── Link Contract to SO ───────────────────────────
 export async function linkContractToSO(contractId: string, soId: string): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         const contract = await prisma.contract.findUnique({ where: { id: contractId } })
         if (!contract) return { success: false, error: 'Hợp đồng không tồn tại' }
         if (contract.status !== 'ACTIVE') return { success: false, error: 'Hợp đồng không active' }
@@ -245,6 +249,7 @@ export async function linkContractToSO(contractId: string, soId: string): Promis
 // ── Link Contract to PO ───────────────────────────
 export async function linkContractToPO(contractId: string, poId: string): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         const contract = await prisma.contract.findUnique({ where: { id: contractId } })
         if (!contract) return { success: false, error: 'Hợp đồng không tồn tại' }
         if (contract.status !== 'ACTIVE') return { success: false, error: 'Hợp đồng không active' }
@@ -358,6 +363,7 @@ export async function createContractAmendment(input: {
     fileUrl?: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         const validated = parseOrThrow(ContractAmendmentSchema, input)
 
         const contract = await prisma.contract.findUnique({
@@ -412,6 +418,7 @@ export async function getContractAmendments(contractId: string) {
 
 export async function uploadContractDocument(contractId: string, formData: FormData) {
     try {
+        await requireAuth()
         const file = formData.get('file') as File
         if (!file || file.size === 0) return { success: false, error: 'Chưa chọn file hợp đồng' }
         if (file.size > 10 * 1024 * 1024) return { success: false, error: 'File quá lớn (tối đa 10MB)' }
@@ -456,6 +463,7 @@ export async function getContractDocuments(contractId: string) {
 
 export async function signContract(contractId: string, signatureUrl: string) {
     try {
+        await requireAuth()
         await prisma.contract.update({
             where: { id: contractId },
             data: { signatureUrl, status: 'ACTIVE' },
@@ -480,6 +488,7 @@ export async function signContractInternal(input: {
     ipAddress?: string
 }): Promise<{ success: boolean; signatureHash?: string; error?: string }> {
     try {
+        await requireAuth()
         const validated = parseOrThrow(DigitalSignatureSchema, input)
 
         const contract = await prisma.contract.findUnique({ where: { id: validated.contractId } })

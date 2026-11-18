@@ -310,11 +310,11 @@ export async function generateCEONarrative(): Promise<{
     const prompt = `Viết báo cáo tổng hợp CEO cho ${monthName}, công ty LY's Cellars (nhập khẩu rượu vang):
 
 Dữ liệu:
-- Doanh thu tháng: ${rev.toLocaleString()} VND
+- Doanh thu tháng: ${rev.toLocaleString('vi-VN')} VND
 - Số đơn hàng: ${orders}
 - Khách hàng mới: ${newCustomers}
-- Công nợ phải thu: ${ar.toLocaleString()} VND
-- Giá trị tồn kho: ${sv.toLocaleString()} VND
+- Công nợ phải thu: ${ar.toLocaleString('vi-VN')} VND
+- Giá trị tồn kho: ${sv.toLocaleString('vi-VN')} VND
 
 Yêu cầu:
 - Viết bằng tiếng Việt, phong cách CEO briefing

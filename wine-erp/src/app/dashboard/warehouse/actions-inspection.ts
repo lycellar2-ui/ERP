@@ -6,6 +6,7 @@ import { serialize } from '@/lib/serialize'
 import { revalidatePath } from 'next/cache'
 import { notifyTelegram } from '@/lib/telegram'
 import { logAudit } from '@/lib/audit'
+import { generateNextDocCode } from '@/lib/doc-code'
 import ExcelJS from 'exceljs'
 
 const MANAGER_ROLES = ['Admin', 'ADMIN', 'Warehouse Manager', 'WAREHOUSE_MANAGER', 'CEO', 'Manager', 'MANAGER', 'Ban Giám Đốc', 'BAN_GIAM_DOC']
@@ -324,12 +325,7 @@ export async function createWarehouseInspectionAction(payload: CreateInspectionI
             const todayDate = new Date(payload.inspectionDate)
             const dateStr = todayDate.toISOString().slice(0, 10).replace(/-/g, '')
             const prefix = `KT-${dateStr}`
-            const countToday = await prisma.warehouseInspection.count({
-                where: {
-                    inspectionNo: { startsWith: prefix },
-                },
-            })
-            inspectionNo = `${prefix}-${String(countToday + 1).padStart(3, '0')}`
+            inspectionNo = await generateNextDocCode(prisma.warehouseInspection, 'inspectionNo', `${prefix}-`, 3)
         }
 
         const combinedIncidentNotes = [
@@ -711,12 +707,7 @@ export async function assignWarehouseInspectionAction(payload: AssignInspectionI
         const todayDate = new Date(payload.inspectionDate)
         const dateStr = todayDate.toISOString().slice(0, 10).replace(/-/g, '')
         const prefix = `KT-${dateStr}`
-        const countToday = await prisma.warehouseInspection.count({
-            where: {
-                inspectionNo: { startsWith: prefix },
-            },
-        })
-        const inspectionNo = `${prefix}-${String(countToday + 1).padStart(3, '0')}`
+        const inspectionNo = await generateNextDocCode(prisma.warehouseInspection, 'inspectionNo', `${prefix}-`, 3)
 
         const created = await prisma.warehouseInspection.create({
             data: {

@@ -431,11 +431,11 @@ export function SkuAnalyticsDashboard({
                                             </td>
                                             <td className="py-2 px-3 text-right font-mono tabular-nums">
                                                 <span className={`font-bold ${item.totalStock <= 0 ? 'text-red-600' : 'text-slate-900'}`}>
-                                                    {item.totalStock.toLocaleString()} {isEn ? 'btls' : 'chai'}
+                                                    {item.totalStock.toLocaleString('vi-VN')} {isEn ? 'btls' : 'chai'}
                                                 </span>
                                             </td>
                                             <td className="py-2 px-3 text-right font-mono font-semibold text-slate-800 tabular-nums">
-                                                {item.avgMonthlySales.toLocaleString()} {isEn ? 'btls/mo' : 'chai/tháng'}
+                                                {item.avgMonthlySales.toLocaleString('vi-VN')} {isEn ? 'btls/mo' : 'chai/tháng'}
                                             </td>
                                             <td className="py-2 px-3 text-right font-mono font-bold tabular-nums">
                                                 <span className={item.mosCurrent < 2 ? 'text-red-600' : item.mosCurrent < 3.5 ? 'text-amber-700' : 'text-slate-800'}>
@@ -443,7 +443,7 @@ export function SkuAnalyticsDashboard({
                                                 </span>
                                             </td>
                                             <td className="py-2 px-3 text-right font-mono font-bold text-cyan-700 tabular-nums">
-                                                {item.suggestedReorderBottles.toLocaleString()} {isEn ? 'btls' : 'chai'} ({item.suggestedReorderCases} {isEn ? 'cs' : 'thùng'})
+                                                {item.suggestedReorderBottles.toLocaleString('vi-VN')} {isEn ? 'btls' : 'chai'} ({item.suggestedReorderCases} {isEn ? 'cs' : 'thùng'})
                                             </td>
                                             <td className="py-2 px-3 text-right font-mono font-semibold text-slate-900 tabular-nums">
                                                 {item.estimatedReorderCostVnd > 0 ? formatVND(item.estimatedReorderCostVnd) : '—'}
@@ -535,7 +535,7 @@ export function SkuAnalyticsDashboard({
                                             onClick={() => setActiveSubTab('imports')}
                                             className="font-mono font-bold text-emerald-700 hover:underline cursor-pointer tabular-nums"
                                         >
-                                            {data.importKpis.totalImportedBottles.toLocaleString()} {isEn ? 'btls' : 'chai'} ({data.importKpis.totalImportBatches} {isEn ? 'batches' : 'đợt'})
+                                            {data.importKpis.totalImportedBottles.toLocaleString('vi-VN')} {isEn ? 'btls' : 'chai'} ({data.importKpis.totalImportBatches} {isEn ? 'batches' : 'đợt'})
                                         </button>
                                     </div>
                                 </div>
@@ -552,7 +552,7 @@ export function SkuAnalyticsDashboard({
                                             {isEn ? 'Total Stock' : 'Tổng Tồn Kho'}
                                         </div>
                                         <div className="text-sm font-bold text-slate-900">
-                                            {data.product.totalStock.toLocaleString()} <span className="text-[10px] font-normal text-slate-500">{isEn ? 'btls' : 'chai'}</span>
+                                            {data.product.totalStock.toLocaleString('vi-VN')} <span className="text-[10px] font-normal text-slate-500">{isEn ? 'btls' : 'chai'}</span>
                                         </div>
                                     </div>
                                     <div className="border-l border-slate-200 pl-3">
@@ -560,7 +560,7 @@ export function SkuAnalyticsDashboard({
                                             {isEn ? 'Thuong Tin' : 'Kho Thường Tín'}
                                         </div>
                                         <div className="text-sm font-semibold text-slate-700">
-                                            {data.product.stockTT.toLocaleString()}
+                                            {data.product.stockTT.toLocaleString('vi-VN')}
                                         </div>
                                     </div>
                                     <div className="border-l border-slate-200 pl-3">
@@ -568,7 +568,7 @@ export function SkuAnalyticsDashboard({
                                             {isEn ? 'Giang Vo (GVM)' : 'Kho GVM'}
                                         </div>
                                         <div className="text-sm font-semibold text-cyan-700">
-                                            {data.product.stockGVM.toLocaleString()}
+                                            {data.product.stockGVM.toLocaleString('vi-VN')}
                                         </div>
                                     </div>
                                     <div className="border-l border-slate-200 pl-3">
@@ -576,7 +576,7 @@ export function SkuAnalyticsDashboard({
                                             {isEn ? 'Other / SR' : 'Kho Khác'}
                                         </div>
                                         <div className="text-sm font-semibold text-slate-600">
-                                            {data.product.stockOther.toLocaleString()}
+                                            {data.product.stockOther.toLocaleString('vi-VN')}
                                         </div>
                                     </div>
                                 </div>
@@ -616,14 +616,14 @@ export function SkuAnalyticsDashboard({
                                 <Package size={15} className="text-emerald-600" />
                             </div>
                             <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
-                                {data.kpis.totalBottles.toLocaleString()} <span className="text-xs font-sans font-normal text-slate-500">{isEn ? 'bottles' : 'chai'}</span>
+                                {data.kpis.totalBottles.toLocaleString('vi-VN')} <span className="text-xs font-sans font-normal text-slate-500">{isEn ? 'bottles' : 'chai'}</span>
                             </div>
                             <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-slate-600 font-mono tabular-nums">
-                                <span>ERP: <strong>{data.kpis.liveCommercialBottles.toLocaleString()}</strong></span>
+                                <span>ERP: <strong>{data.kpis.liveCommercialBottles.toLocaleString('vi-VN')}</strong></span>
                                 <span>&bull;</span>
-                                <span>Tasting: <strong>{data.kpis.liveTastingBottles.toLocaleString()}</strong></span>
+                                <span>Tasting: <strong>{data.kpis.liveTastingBottles.toLocaleString('vi-VN')}</strong></span>
                                 <span>&bull;</span>
-                                <span>{isEn ? 'Pre-Aug:' : 'Trước T8:'} <strong>{data.kpis.historicalBottles.toLocaleString()}</strong></span>
+                                <span>{isEn ? 'Pre-Aug:' : 'Trước T8:'} <strong>{data.kpis.historicalBottles.toLocaleString('vi-VN')}</strong></span>
                             </div>
                         </div>
 
@@ -639,7 +639,7 @@ export function SkuAnalyticsDashboard({
                                 {formatVND(data.kpis.totalRevenue)}
                             </div>
                             <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500 font-mono tabular-nums">
-                                <span>{data.kpis.totalOrdersCount.toLocaleString()} {isEn ? 'orders/invoices' : 'đơn & hóa đơn'}</span>
+                                <span>{data.kpis.totalOrdersCount.toLocaleString('vi-VN')} {isEn ? 'orders/invoices' : 'đơn & hóa đơn'}</span>
                                 <span>TB: {formatVND(data.kpis.avgSellingPrice)}/{isEn ? 'btl' : 'chai'}</span>
                             </div>
                         </div>
@@ -665,7 +665,7 @@ export function SkuAnalyticsDashboard({
                                                     {ch.channel === 'HORECA' ? 'HORECA (Nhà hàng)' : ch.channel === 'CORPORATE' ? 'Corporate (DN)' : ch.label}
                                                 </span>
                                                 <span className="text-slate-900 font-semibold">
-                                                    {ch.bottles.toLocaleString()} {isEn ? 'btls' : 'chai'} ({ch.pct}%)
+                                                    {ch.bottles.toLocaleString('vi-VN')} {isEn ? 'btls' : 'chai'} ({ch.pct}%)
                                                 </span>
                                             </div>
                                             <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mt-0.5">
@@ -765,7 +765,7 @@ export function SkuAnalyticsDashboard({
                                                 </span>
                                             ) : (
                                                 <span>
-                                                    {isEn ? 'Current Stock:' : 'Tồn khả dụng:'} <strong>{data.product.totalStock.toLocaleString()}</strong> {isEn ? 'btls' : 'chai'}
+                                                    {isEn ? 'Current Stock:' : 'Tồn khả dụng:'} <strong>{data.product.totalStock.toLocaleString('vi-VN')}</strong> {isEn ? 'btls' : 'chai'}
                                                 </span>
                                             )}
                                         </div>
@@ -777,12 +777,12 @@ export function SkuAnalyticsDashboard({
                                             {isEn ? `AVG MONTHLY VELOCITY (${mosCycle}M)` : `TỐC ĐỘ TIÊU THỤ TB (${mosCycle} THÁNG QUA)`}
                                         </div>
                                         <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums mt-1">
-                                            {activeMos.avgMonthlySales.toLocaleString()}{' '}
+                                            {activeMos.avgMonthlySales.toLocaleString('vi-VN')}{' '}
                                             <span className="text-xs font-sans font-normal text-slate-500">{isEn ? 'btls / month' : 'chai / tháng'}</span>
                                         </div>
                                         <div className="text-[11px] text-slate-500 font-mono mt-1 tabular-nums">
                                             <span>
-                                                {isEn ? `Sold in ${mosCycle}M:` : `Tổng bán ${mosCycle}T:`} <strong>{activeMos.totalBottlesInCycle.toLocaleString()}</strong> {isEn ? 'btls' : 'chai'}
+                                                {isEn ? `Sold in ${mosCycle}M:` : `Tổng bán ${mosCycle}T:`} <strong>{activeMos.totalBottlesInCycle.toLocaleString('vi-VN')}</strong> {isEn ? 'btls' : 'chai'}
                                             </span>
                                             {activeMos.avgMonthlyTotalOutflow > activeMos.avgMonthlySales && (
                                                 <span className="ml-2 text-amber-700">
@@ -822,7 +822,7 @@ export function SkuAnalyticsDashboard({
                                         <div className="text-2xl font-bold text-cyan-700 font-mono tabular-nums mt-1">
                                             {activeMos.suggestedReorderBottles > 0 ? (
                                                 <>
-                                                    {activeMos.suggestedReorderBottles.toLocaleString()}{' '}
+                                                    {activeMos.suggestedReorderBottles.toLocaleString('vi-VN')}{' '}
                                                     <span className="text-xs font-sans font-normal text-slate-600">
                                                         {isEn ? `btls (~${activeMos.suggestedReorderCases} cases)` : `chai (~${activeMos.suggestedReorderCases} thùng)`}
                                                     </span>
@@ -1093,7 +1093,7 @@ export function SkuAnalyticsDashboard({
                                                             </td>
                                                             <td className="py-2.5 px-3 text-right font-mono tabular-nums whitespace-nowrap">
                                                                 <span className="text-sm font-bold text-slate-900">
-                                                                    {buyer.totalBottles.toLocaleString()}
+                                                                    {buyer.totalBottles.toLocaleString('vi-VN')}
                                                                 </span>
                                                             </td>
                                                             <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900 tabular-nums whitespace-nowrap">
@@ -1249,7 +1249,7 @@ export function SkuAnalyticsDashboard({
                                                             </div>
                                                         </td>
                                                         <td className="py-2 px-3 text-right font-mono font-bold text-slate-900 tabular-nums">
-                                                            {ord.qty.toLocaleString()}
+                                                            {ord.qty.toLocaleString('vi-VN')}
                                                         </td>
                                                         <td className="py-2 px-3 text-right font-mono text-slate-700 tabular-nums">
                                                             {ord.unitPrice > 0 ? formatVND(ord.unitPrice) : '0 ₫'}
@@ -1276,7 +1276,7 @@ export function SkuAnalyticsDashboard({
                                             {isEn ? 'TOTAL DIRECT IMPORTED VOLUME' : 'TỔNG SẢN LƯỢNG NHẬP KHẨU TRỰC TIẾP'}
                                         </div>
                                         <div className="text-xl font-bold text-slate-900 font-mono tabular-nums mt-1">
-                                            {data.importKpis.totalImportedBottles.toLocaleString()}{' '}
+                                            {data.importKpis.totalImportedBottles.toLocaleString('vi-VN')}{' '}
                                             <span className="text-xs font-sans font-normal text-slate-500">{isEn ? 'bottles' : 'chai'}</span>
                                         </div>
                                         <div className="text-[11px] text-slate-600 font-mono mt-1">
@@ -1298,7 +1298,7 @@ export function SkuAnalyticsDashboard({
                                         </div>
                                         <div className="text-[11px] text-slate-500 font-mono mt-1">
                                             {isEn ? "Internal Transfer (TA -> Ly's):" : "Mua nội bộ (TA -> Ly's):"}{' '}
-                                            <strong className="text-slate-700">{data.importKpis.totalInternalTransferBottles.toLocaleString()} {isEn ? 'btls' : 'chai'}</strong>
+                                            <strong className="text-slate-700">{data.importKpis.totalInternalTransferBottles.toLocaleString('vi-VN')} {isEn ? 'btls' : 'chai'}</strong>
                                         </div>
                                     </div>
 
@@ -1457,7 +1457,7 @@ export function SkuAnalyticsDashboard({
                                                         </td>
                                                         <td className="py-2 px-3 text-right font-mono tabular-nums whitespace-nowrap">
                                                             <div className="font-bold text-slate-900">
-                                                                {imp.qtyTotal.toLocaleString()}
+                                                                {imp.qtyTotal.toLocaleString('vi-VN')}
                                                             </div>
                                                             {imp.qtyFoc > 0 && (
                                                                 <div className="text-[10px] text-emerald-700">
@@ -1469,7 +1469,7 @@ export function SkuAnalyticsDashboard({
                                                             {imp.foreignUnitPrice !== null && imp.currency !== 'VND' ? (
                                                                 <div>
                                                                     <span className="font-semibold text-slate-900">
-                                                                        {imp.foreignUnitPrice.toLocaleString()} {imp.currency}
+                                                                        {imp.foreignUnitPrice.toLocaleString('vi-VN')} {imp.currency}
                                                                     </span>
                                                                     {imp.purchasePriceVnd > 0 && (
                                                                         <div className="text-[10px] text-slate-400">
@@ -1501,8 +1501,8 @@ export function SkuAnalyticsDashboard({
                                             <Warehouse size={14} className="text-cyan-600" />
                                             <span>
                                                 {isEn
-                                                    ? `Current Active Stock Lots in Warehouse (${data.stockLots.length} lots — ${data.product.totalStock.toLocaleString()} bottles)`
-                                                    : `Chi Tiết Các Lô Tồn Kho Hiện Tại Tại Kho (${data.stockLots.length} lô — ${data.product.totalStock.toLocaleString()} chai khả dụng)`}
+                                                    ? `Current Active Stock Lots in Warehouse (${data.stockLots.length} lots — ${data.product.totalStock.toLocaleString('vi-VN')} bottles)`
+                                                    : `Chi Tiết Các Lô Tồn Kho Hiện Tại Tại Kho (${data.stockLots.length} lô — ${data.product.totalStock.toLocaleString('vi-VN')} chai khả dụng)`}
                                             </span>
                                         </h4>
                                     </div>
@@ -1540,8 +1540,8 @@ export function SkuAnalyticsDashboard({
                                                             <td className="py-2 px-3 font-sans text-slate-700">{lot.legalEntityName}</td>
                                                             <td className="py-2 px-3 text-slate-600">{lot.vintage || 'NV'}</td>
                                                             <td className="py-2 px-3 text-slate-600">{formatDate(lot.receivedDate)}</td>
-                                                            <td className="py-2 px-3 text-right text-slate-600">{lot.qtyReceived.toLocaleString()}</td>
-                                                            <td className="py-2 px-3 text-right font-bold text-emerald-700">{lot.qtyAvailable.toLocaleString()}</td>
+                                                            <td className="py-2 px-3 text-right text-slate-600">{lot.qtyReceived.toLocaleString('vi-VN')}</td>
+                                                            <td className="py-2 px-3 text-right font-bold text-emerald-700">{lot.qtyAvailable.toLocaleString('vi-VN')}</td>
                                                             <td className="py-2 px-3 text-right text-slate-800">
                                                                 {lot.unitLandedCost > 0 ? formatVND(lot.unitLandedCost) : '—'}
                                                             </td>
@@ -1583,10 +1583,10 @@ export function SkuAnalyticsDashboard({
                                                         {isEn ? row.labelEn : row.labelVi}
                                                     </td>
                                                     <td className="py-2 px-3 text-right text-slate-700">
-                                                        {row.item.totalBottlesInCycle.toLocaleString()} {isEn ? 'btls' : 'chai'}
+                                                        {row.item.totalBottlesInCycle.toLocaleString('vi-VN')} {isEn ? 'btls' : 'chai'}
                                                     </td>
                                                     <td className="py-2 px-3 text-right font-bold text-slate-900">
-                                                        {row.item.avgMonthlySales.toLocaleString()} {isEn ? 'btls/mo' : 'chai/tháng'}
+                                                        {row.item.avgMonthlySales.toLocaleString('vi-VN')} {isEn ? 'btls/mo' : 'chai/tháng'}
                                                     </td>
                                                     <td className="py-2 px-3 text-right font-bold text-cyan-700">
                                                         {row.item.mosCurrentStock !== null ? `${row.item.mosCurrentStock} ${isEn ? 'mos' : 'tháng'}` : '∞'}
@@ -1599,7 +1599,7 @@ export function SkuAnalyticsDashboard({
                                                     </td>
                                                     <td className="py-2 px-3 text-right font-bold text-emerald-700">
                                                         {row.item.suggestedReorderBottles > 0
-                                                            ? `${row.item.suggestedReorderBottles.toLocaleString()} ${isEn ? 'btls' : 'chai'} (${row.item.suggestedReorderCases} ${isEn ? 'cs' : 'thùng'})`
+                                                            ? `${row.item.suggestedReorderBottles.toLocaleString('vi-VN')} ${isEn ? 'btls' : 'chai'} (${row.item.suggestedReorderCases} ${isEn ? 'cs' : 'thùng'})`
                                                             : (isEn ? 'Sufficient' : 'Đủ tồn')}
                                                     </td>
                                                 </tr>
@@ -1683,10 +1683,10 @@ export function SkuAnalyticsDashboard({
                                                                 {m.buyerCount > 0 ? `${m.buyerCount} ${isEn ? 'buyers' : 'nhà lấy'}` : '—'}
                                                             </td>
                                                             <td className="py-2 px-3 text-right font-bold text-slate-900">
-                                                                {m.commercialBottles.toLocaleString()}
+                                                                {m.commercialBottles.toLocaleString('vi-VN')}
                                                             </td>
                                                             <td className="py-2 px-3 text-right text-amber-700">
-                                                                {m.tastingBottles > 0 ? m.tastingBottles.toLocaleString() : '—'}
+                                                                {m.tastingBottles > 0 ? m.tastingBottles.toLocaleString('vi-VN') : '—'}
                                                             </td>
                                                             <td className="py-2 px-3 text-right font-semibold text-slate-900">
                                                                 {m.revenue > 0 ? formatVND(m.revenue) : '—'}

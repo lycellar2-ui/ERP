@@ -463,7 +463,7 @@ export function GoodsReceiptTab({ warehouses }: {
                             <span className="font-semibold" style={{ color: '#1D4ED8' }}>
                                 Tổng nhận: <strong className="font-mono text-emerald-700">
                                     {Math.round(rows.reduce((s, r) => s + (r.totalCases || r.totalQtyReceived / 6), 0) * 10) / 10} thùng
-                                </strong> ({rows.reduce((s, r) => s + r.totalQtyReceived, 0).toLocaleString()} chai)
+                                </strong> ({rows.reduce((s, r) => s + r.totalQtyReceived, 0).toLocaleString('vi-VN')} chai)
                             </span>
                         </div>
                     </div>
@@ -536,7 +536,7 @@ export function GoodsReceiptTab({ warehouses }: {
                     <GRStatCard
                         label="Tổng Thùng / Chai Nhận"
                         value={`${Math.round(totalCasesFiltered * 10) / 10} thùng`}
-                        sub={`${totalBottlesFiltered.toLocaleString()} chai thực nhận`}
+                        sub={`${totalBottlesFiltered.toLocaleString('vi-VN')} chai thực nhận`}
                         accent="#1D4ED8"
                     />
                 </div>
@@ -753,7 +753,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                                     {cases} thùng
                                                 </strong>
                                                 <span className="text-[11px] font-mono" style={{ color: '#475569' }}>
-                                                    ({gr.totalQtyReceived.toLocaleString()} chai)
+                                                    ({gr.totalQtyReceived.toLocaleString('vi-VN')} chai)
                                                 </span>
                                             </div>
                                         </td>
@@ -837,7 +837,7 @@ export function GoodsReceiptTab({ warehouses }: {
                         </span>
                         <div className="flex items-center gap-4">
                             <span>
-                                Tổng SL thực nhận: <strong className="font-mono text-sm" style={{ color: '#0891B2' }}>{Math.round(totalCasesFiltered * 10) / 10} thùng</strong> <span style={{ color: '#475569' }}>({totalBottlesFiltered.toLocaleString()} chai)</span>
+                                Tổng SL thực nhận: <strong className="font-mono text-sm" style={{ color: '#0891B2' }}>{Math.round(totalCasesFiltered * 10) / 10} thùng</strong> <span style={{ color: '#475569' }}>({totalBottlesFiltered.toLocaleString('vi-VN')} chai)</span>
                             </span>
                         </div>
                     </div>
@@ -895,7 +895,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                 <div className="flex items-center justify-between pt-2 text-xs border-t"
                                     style={{ borderColor: '#E2E8F0' }}>
                                     <span style={{ color: '#475569' }}>
-                                        {gr.lineCount} sản phẩm · <strong className="font-mono text-emerald-700">{cases} thùng</strong> ({gr.totalQtyReceived.toLocaleString()} chai)
+                                        {gr.lineCount} sản phẩm · <strong className="font-mono text-emerald-700">{cases} thùng</strong> ({gr.totalQtyReceived.toLocaleString('vi-VN')} chai)
                                     </span>
                                     <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
                                         <button
@@ -1053,7 +1053,7 @@ export function GoodsReceiptTab({ warehouses }: {
                                         <span className="text-xs" style={{ color: '#475569' }}>
                                             Tổng nhận: <strong className="font-mono text-emerald-700" style={{ color: '#0891B2' }}>
                                                 {Math.round(detailData.lines.reduce((s, l) => s + (l.casesReceived || (l.qtyReceived / (l.unitsPerCase || 6))), 0) * 10) / 10} thùng
-                                            </strong> ({detailData.lines.reduce((s, l) => s + l.qtyReceived, 0).toLocaleString()} chai)
+                                            </strong> ({detailData.lines.reduce((s, l) => s + l.qtyReceived, 0).toLocaleString('vi-VN')} chai)
                                         </span>
                                     </div>
 

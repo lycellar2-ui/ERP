@@ -283,7 +283,7 @@ export function TransfersTab() {
                                     <span className="text-lg sm:text-xl font-extrabold font-mono text-slate-900">{rows.length} phiếu</span>
                                 </div>
                                 <span className="text-[11px] text-slate-500 mt-1">
-                                    Tổng luân chuyển: <strong className="font-mono text-slate-700">{totalBottlesTransferred.toLocaleString()}</strong> chai
+                                    Tổng luân chuyển: <strong className="font-mono text-slate-700">{totalBottlesTransferred.toLocaleString('vi-VN')}</strong> chai
                                 </span>
                             </div>
 
@@ -460,7 +460,7 @@ export function TransfersTab() {
                                                 {r.lineCount} mã
                                             </td>
                                             <td className="p-3 text-center font-mono font-extrabold text-emerald-700 whitespace-nowrap">
-                                                {r.totalQty.toLocaleString()} chai
+                                                {r.totalQty.toLocaleString('vi-VN')} chai
                                             </td>
                                             <td className="p-3 text-center whitespace-nowrap">
                                                 <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 whitespace-nowrap"
@@ -531,7 +531,7 @@ export function TransfersTab() {
                                 <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
                                     <div>
                                         <span className="text-slate-500 text-[10px] uppercase block font-bold">Tổng số chai:</span>
-                                        <span className="font-mono font-black text-emerald-700 text-sm">{r.totalQty.toLocaleString()} chai</span>
+                                        <span className="font-mono font-black text-emerald-700 text-sm">{r.totalQty.toLocaleString('vi-VN')} chai</span>
                                     </div>
                                     <button
                                         onClick={e => { e.stopPropagation(); setSelectedId(r.id) }}

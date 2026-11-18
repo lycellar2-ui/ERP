@@ -1144,13 +1144,47 @@ function SODetailDrawer({
                             {/* Desktop Table View */}
                             <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
                                 <div style={{ overflowX: 'auto' }}>
-                                    <table className="w-full text-xs" style={{ borderCollapse: 'collapse', minWidth: 640 }}>
+                                    <table className="w-full text-xs" style={{ borderCollapse: 'collapse' }}>
                                         <thead><tr style={{ background: '#F8FAFC' }}>
                                             {(canSeeMargin 
-                                                ? (isEn ? ['SKU / Product Name', 'Qty', 'Unit Price', 'Price Source', 'Line Total', 'COGS', 'Profit', 'Margin %'] : ['SKU / Tên Sản Phẩm', 'SL', 'Giá Bán', 'Nguồn Giá', 'Thành Tiền', 'Giá Vốn', 'Lãi Gộp', 'Biên %']) 
-                                                : (isEn ? ['SKU / Product Name', 'Qty', 'Unit Price', 'Price Source', 'Line Total'] : ['SKU / Tên Sản Phẩm', 'SL', 'Giá Bán', 'Nguồn Giá', 'Thành Tiền'])
+                                                ? (isEn
+                                                    ? [
+                                                        { label: 'SKU / Product Name', align: 'text-left' },
+                                                        { label: 'Qty', align: 'text-right' },
+                                                        { label: 'Unit Price', align: 'text-right' },
+                                                        { label: 'Price Source', align: 'text-left' },
+                                                        { label: 'Line Total', align: 'text-right' },
+                                                        { label: 'COGS', align: 'text-right' },
+                                                        { label: 'Profit', align: 'text-right' },
+                                                        { label: 'Margin %', align: 'text-right' },
+                                                    ]
+                                                    : [
+                                                        { label: 'SKU / Tên Sản Phẩm', align: 'text-left' },
+                                                        { label: 'SL', align: 'text-right' },
+                                                        { label: 'Giá Bán', align: 'text-right' },
+                                                        { label: 'Nguồn Giá', align: 'text-left' },
+                                                        { label: 'Thành Tiền', align: 'text-right' },
+                                                        { label: 'Giá Vốn', align: 'text-right' },
+                                                        { label: 'Lãi Gộp', align: 'text-right' },
+                                                        { label: 'Biên %', align: 'text-right' },
+                                                    ])
+                                                : (isEn
+                                                    ? [
+                                                        { label: 'SKU / Product Name', align: 'text-left' },
+                                                        { label: 'Qty', align: 'text-right' },
+                                                        { label: 'Unit Price', align: 'text-right' },
+                                                        { label: 'Price Source', align: 'text-left' },
+                                                        { label: 'Line Total', align: 'text-right' },
+                                                    ]
+                                                    : [
+                                                        { label: 'SKU / Tên Sản Phẩm', align: 'text-left' },
+                                                        { label: 'SL', align: 'text-right' },
+                                                        { label: 'Giá Bán', align: 'text-right' },
+                                                        { label: 'Nguồn Giá', align: 'text-left' },
+                                                        { label: 'Thành Tiền', align: 'text-right' },
+                                                    ])
                                             ).map(h => (
-                                                <th key={h} className="px-2.5 py-2 text-left font-semibold whitespace-nowrap" style={{ color: '#64748B' }}>{h}</th>
+                                                <th key={h.label} className={`px-2 py-2 ${h.align} font-semibold whitespace-nowrap`} style={{ color: '#64748B' }}>{h.label}</th>
                                             ))}
                                         </tr></thead>
                                         <tbody>
@@ -1165,20 +1199,20 @@ function SODetailDrawer({
                                                 const custCode = (ml as any).customerItemCode || detail.lines.find(l => l.id === ml.lineId)?.customerItemCode
                                                 return (
                                                 <tr key={ml.lineId} style={{ borderTop: '1px solid #E2E8F0', background: ml.isNegative ? 'rgba(185,28,28,0.06)' : 'transparent' }}>
-                                                    <td className="px-2.5 py-2">
-                                                        <div className="font-semibold text-[#0891B2] font-mono flex items-center gap-1.5">
+                                                    <td className="px-2 py-2">
+                                                        <div className="font-semibold text-[#0891B2] font-mono flex items-center gap-1.5 whitespace-nowrap">
                                                             {custCode && (
-                                                                <span className="inline-block text-amber-700 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/40 text-[10px] font-bold whitespace-nowrap shrink-0">
+                                                                <span className="inline-block text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 text-[10px] font-bold whitespace-nowrap shrink-0">
                                                                     [{custCode}]
                                                                 </span>
                                                             )}
                                                             {ml.skuCode}
                                                         </div>
-                                                        <div className="text-[10px] text-slate-600 mt-0.5 max-w-[200px] truncate" title={ml.productName}>{ml.productName}</div>
+                                                        <div className="text-[10px] text-slate-600 mt-0.5 max-w-[155px] truncate" title={ml.productName}>{ml.productName}</div>
                                                     </td>
-                                                    <td className="px-2.5 py-2 text-right" style={{ color: '#0F172A' }}>{ml.qty}</td>
-                                                    <td className="px-2.5 py-2 text-right" style={{ color: '#475569' }}>{formatCurrency(ml.unitPrice)}</td>
-                                                    <td className="px-2.5 py-2">
+                                                    <td className="px-2 py-2 text-right whitespace-nowrap tabular-nums" style={{ color: '#0F172A' }}>{ml.qty}</td>
+                                                    <td className="px-2 py-2 text-right whitespace-nowrap tabular-nums" style={{ color: '#475569' }}>{formatCurrency(ml.unitPrice)}</td>
+                                                    <td className="px-2 py-2 whitespace-nowrap">
                                                         {ml.priceSource ? (
                                                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap shrink-0"
                                                                 style={getPriceBadgeStyle(ml.priceSource)}>
@@ -1188,19 +1222,19 @@ function SODetailDrawer({
                                                             <span className="text-[10px]" style={{ color: '#64748B' }}>{isEn ? 'Default' : 'Mặc định'}</span>
                                                         )}
                                                     </td>
-                                                    <td className="px-2.5 py-2 text-right font-bold" style={{ color: '#0891B2' }}>{formatCurrency(ml.revenue)}</td>
+                                                    <td className="px-2 py-2 text-right font-bold whitespace-nowrap tabular-nums" style={{ color: '#0891B2' }}>{formatCurrency(ml.revenue)}</td>
                                                     {canSeeMargin && (
-                                                        <td className="px-2.5 py-2 text-right" style={{ color: '#B45309' }}>
+                                                        <td className="px-2 py-2 text-right whitespace-nowrap tabular-nums" style={{ color: '#B45309' }}>
                                                             {ml.avgCost > 0 ? formatCurrency(ml.avgCost) : <span style={{ color: '#94A3B8' }}>—</span>}
                                                         </td>
                                                     )}
                                                     {canSeeMargin && (
-                                                        <td className="px-2.5 py-2 text-right font-bold" style={{ color: ml.margin > 0 ? '#15803D' : ml.margin < 0 ? '#B91C1C' : '#64748B' }}>
+                                                        <td className="px-2 py-2 text-right font-bold whitespace-nowrap tabular-nums" style={{ color: ml.margin > 0 ? '#15803D' : ml.margin < 0 ? '#B91C1C' : '#64748B' }}>
                                                             {ml.avgCost > 0 ? (ml.margin >= 0 ? '' : '-') + formatCurrency(Math.abs(ml.margin)) : '—'}
                                                         </td>
                                                     )}
                                                     {canSeeMargin && (
-                                                        <td className="px-2.5 py-2 text-right">
+                                                        <td className="px-2 py-2 text-right whitespace-nowrap">
                                                             {ml.avgCost > 0 ? (
                                                                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap shrink-0" style={{
                                                                     background: ml.marginPct >= 20 ? 'rgba(21,128,61,0.15)' : ml.marginPct >= 0 ? 'rgba(180,83,9,0.15)' : 'rgba(185,28,28,0.15)',

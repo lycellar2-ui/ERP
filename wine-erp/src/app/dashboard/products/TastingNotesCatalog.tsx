@@ -510,7 +510,7 @@ export function TastingNotesCatalog({
                             aria-label={L.filters.wineTypeLabel}
                             value={wineTypeFilter}
                             onChange={e => setWineTypeFilter(e.target.value)}
-                            className="w-32"
+                            className="w-36"
                         >
                             <option value="">{L.filters.allTypes}</option>
                             <option value="RED">{L.wineTypes.RED}</option>
@@ -522,7 +522,7 @@ export function TastingNotesCatalog({
                             aria-label={L.filters.countryLabel}
                             value={countryFilter}
                             onChange={e => setCountryFilter(e.target.value)}
-                            className="w-36"
+                            className="w-44"
                         >
                             <option value="">{L.filters.allCountries}</option>
                             {countries.map(c => (
@@ -691,12 +691,12 @@ export function TastingNotesCatalog({
                 <Table>
                     <THead>
                         <tr>
-                            <Th className="w-[260px]">{TC.table.colSkuProduct}</Th>
-                            <Th className="w-[230px]">{TC.table.colTnFlavor}</Th>
-                            <Th className="w-[210px]">{TC.table.colTcb}</Th>
-                            <Th className="w-[220px]">{TC.table.colAmendment}</Th>
-                            <Th className="w-[220px]">{TC.table.colTesting}</Th>
-                            <Th className="w-[115px]" align="center">
+                            <Th className="min-w-[230px]">{TC.table.colSkuProduct}</Th>
+                            <Th className="min-w-[205px]">{TC.table.colTnFlavor}</Th>
+                            <Th className="min-w-[190px]">{TC.table.colTcb}</Th>
+                            <Th className="min-w-[185px]">{TC.table.colAmendment}</Th>
+                            <Th className="min-w-[195px]">{TC.table.colTesting}</Th>
+                            <Th className="w-[130px] whitespace-nowrap" align="center">
                                 {TC.table.colDossier}
                             </Th>
                         </tr>
@@ -1012,7 +1012,7 @@ export function TastingNotesCatalog({
                                                     </p>
                                                 </div>
                                             ) : (
-                                                <div className="flex items-center gap-1.5">
+                                                <div className="flex items-center gap-1.5 whitespace-nowrap">
                                                     <span className="text-[11px] text-slate-400">
                                                         {TC.table.noAmendment}
                                                     </span>
@@ -1027,7 +1027,7 @@ export function TastingNotesCatalog({
                                                                     'AMENDMENT'
                                                                 )
                                                             }
-                                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
+                                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer shrink-0"
                                                         >
                                                             <Plus size={11} /> {TC.table.addShortBtn}
                                                         </button>
@@ -1101,7 +1101,7 @@ export function TastingNotesCatalog({
                                                     </p>
                                                 </div>
                                             ) : (
-                                                <div className="flex items-center gap-1.5">
+                                                <div className="flex items-center gap-1.5 whitespace-nowrap">
                                                     <span className="text-[11px] text-slate-400">
                                                         {TC.table.noTesting}
                                                     </span>
@@ -1116,7 +1116,7 @@ export function TastingNotesCatalog({
                                                                     'TESTING'
                                                                 )
                                                             }
-                                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
+                                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer shrink-0"
                                                         >
                                                             <Plus size={11} /> {TC.table.addShortBtn}
                                                         </button>
@@ -1131,20 +1131,21 @@ export function TastingNotesCatalog({
                                             className="py-2.5 align-top"
                                             onClick={e => e.stopPropagation()}
                                         >
-                                            <div className="flex items-center justify-center gap-1">
+                                            <div className="flex items-center justify-center gap-1 whitespace-nowrap">
                                                 <button
                                                     type="button"
                                                     onClick={() => openDossierDrawer(item.id, 'ALL')}
-                                                    className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold bg-[#0E7490] text-white hover:bg-[#155E75] transition-colors cursor-pointer"
+                                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold bg-[#0E7490] text-white hover:bg-[#155E75] transition-colors cursor-pointer whitespace-nowrap shrink-0"
                                                     title={TC.table.openDossierTooltip}
                                                 >
-                                                    <FolderOpen size={12} />
+                                                    <FolderOpen size={12} className="shrink-0" />
                                                     <span>{TC.table.dossierBtn} ({totalDocsCount})</span>
                                                 </button>
                                                 {canEdit && (
                                                     <Button
                                                         variant="ghost"
                                                         size="icon-sm"
+                                                        className="shrink-0"
                                                         title={TC.table.editProductTooltip}
                                                         onClick={() => onEditProduct(item.id)}
                                                     >

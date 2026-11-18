@@ -42,7 +42,7 @@
 | [llms.txt](./llms.txt) | Index AI-friendly — AI đọc file này đầu tiên để hiểu context dự án |
 | [data-flow.md](./architecture/data-flow.md) | Ràng buộc Database Constraints (Tuyệt đối không vi phạm khi viết Server Actions) |
 | [module-dependencies.md](./architecture/module-dependencies.md) | Domain Ownership — Module nào sở hữu bảng nào |
-| [bug-fix-lessons.md](./bug-fix-lessons.md) | 160 Rules rút ra từ 123 bugs — **PHẢI ĐỌC** trước khi code |
+| [bug-fix-lessons.md](./bug-fix-lessons.md) | 161 Rules rút ra từ 124 bugs — **PHẢI ĐỌC** trước khi code |
 
 ---
 
@@ -243,4 +243,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-11-17 | Wine ERP v12.50 - VNPT e-Invoice VAT-Inclusive Separation, FKey Versioning, 169 TCB SKU Mapping & INVOICED Sync*
+*Last updated: 2026-11-18 | Wine ERP v12.51 - System-Wide UI/UX, Design System v4.2, Auth & Logic Audit*

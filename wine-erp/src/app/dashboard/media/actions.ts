@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { cached, revalidateCache } from '@/lib/cache'
 import { uploadFileToImgBB } from '@/lib/imgbb'
+import { requireAuth } from '@/lib/session'
 
 // ─── Types ────────────────────────────────────────
 
@@ -128,6 +129,7 @@ export async function uploadMediaToProduct(
     mediaType: string = 'PRODUCT_MAIN'
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         const file = formData.get('file') as File
         if (!file || file.size === 0) return { success: false, error: 'Không có file' }
         if (file.size > 10 * 1024 * 1024) return { success: false, error: 'File quá lớn (max 10MB)' }
@@ -168,6 +170,7 @@ export async function saveMediaUrl(
     mediaType: string = 'PRODUCT_MAIN'
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         const existingCount = await prisma.productMedia.count({ where: { productId } })
 
         await prisma.productMedia.create({
@@ -195,6 +198,7 @@ export async function saveMediaUrl(
 
 export async function deleteMedia(mediaId: string): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         const media = await prisma.productMedia.findUnique({
             where: { id: mediaId },
             select: { productId: true, isPrimary: true },
@@ -232,6 +236,7 @@ export async function bulkDeleteMedia(
     mediaIds: string[]
 ): Promise<{ success: boolean; deleted: number; error?: string }> {
     try {
+        await requireAuth()
         const result = await prisma.productMedia.deleteMany({
             where: { id: { in: mediaIds } },
         })

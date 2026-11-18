@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { cached, revalidateCache } from '@/lib/cache'
+import { requireAuth } from '@/lib/session'
 
 export type MarketPriceRow = {
     id: string
@@ -96,6 +97,7 @@ export async function addMarketPrice(input: {
     enteredBy: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         await prisma.marketPrice.create({
             data: {
                 productId: input.productId,

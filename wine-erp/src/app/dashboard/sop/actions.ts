@@ -3,6 +3,7 @@
 import fs from 'fs'
 import path from 'path'
 import { revalidatePath } from 'next/cache'
+import { requireAuth } from '@/lib/session'
 import { type SopItem } from '@/data/sops'
 import { OFFICIAL_FORMS, type SopFormFile } from '@/data/forms-data'
 
@@ -34,6 +35,7 @@ export async function getSopsAction(): Promise<SopItem[]> {
  */
 export async function saveSopAction(sopData: SopItem): Promise<{ success: boolean; data?: SopItem; error?: string }> {
     try {
+        await requireAuth()
         let currentSops: SopItem[] = []
         if (fs.existsSync(STORE_PATH)) {
             const data = fs.readFileSync(STORE_PATH, 'utf8')
@@ -74,6 +76,7 @@ export async function saveSopAction(sopData: SopItem): Promise<{ success: boolea
  */
 export async function deleteSopAction(sopId: string): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         if (!fs.existsSync(STORE_PATH)) {
             return { success: false, error: 'Kho lưu trữ chưa khởi tạo' }
         }
@@ -272,6 +275,7 @@ export async function getOfficialFormsAction(): Promise<SopFormFile[]> {
  */
 export async function uploadFormAction(formData: FormData): Promise<{ success: boolean; data?: SopFormFile; error?: string }> {
     try {
+        await requireAuth()
         const file = formData.get('file') as File | null
         const targetFileName = (formData.get('targetFileName') as string) || (file ? file.name : '')
 

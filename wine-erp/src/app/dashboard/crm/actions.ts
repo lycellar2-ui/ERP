@@ -4,7 +4,8 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { cached, revalidateCache } from '@/lib/cache'
 import { parseOrThrow, CRMActivitySchema, CRMContactSchema, CRMComplaintSchema, CRMTastingEventSchema } from '@/lib/validations'
-import { getCurrentUser } from '@/lib/session'
+import { getCurrentUser, requireAuth } from '@/lib/session'
+import { generateNextDocCode } from '@/lib/doc-code'
 
 export type ActivityType = 'CALL' | 'EMAIL' | 'MEETING' | 'TASTING' | 'DELIVERY' | 'COMPLAINT' | 'OTHER'
 export type OpportunityStage = 'LEAD' | 'QUALIFIED' | 'PROPOSAL' | 'NEGOTIATION' | 'WON' | 'LOST'
@@ -781,8 +782,8 @@ export async function createComplaintTicket(input: {
     description: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
-        const count = await prisma.complaintTicket.count()
-        const ticketNo = `TK-${String(count + 1).padStart(5, '0')}`
+        await requireAuth()
+        const ticketNo = await generateNextDocCode(prisma.complaintTicket, 'ticketNo', 'TK-', 5)
         await prisma.complaintTicket.create({
             data: {
                 ticketNo,
@@ -804,6 +805,7 @@ export async function createComplaintTicket(input: {
 
 export async function resolveComplaintTicket(id: string, resolution: string): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         await prisma.complaintTicket.update({
             where: { id },
             data: {
@@ -1584,8 +1586,7 @@ export async function convertProspectToCustomerAction(data: {
         if (!user) return { success: false, error: 'Chưa đăng nhập' }
 
         const prefix = data.channel === 'CORPORATE' ? 'CORP' : 'RET'
-        const count = await prisma.customer.count()
-        const code = `${prefix}-${String(count + 1).padStart(5, '0')}`
+        const code = await generateNextDocCode(prisma.customer, 'code', `${prefix}-`, 5)
 
         const customer = await prisma.$transaction(async (tx) => {
             const newCust = await tx.customer.create({

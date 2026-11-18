@@ -1042,9 +1042,9 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                 </p>
                                             </div>
                                             <div className="text-right">
-                                                <h1 className="text-xl font-bold uppercase tracking-wider mb-0.5 text-black">
+                                                <h2 className="text-xl font-bold uppercase tracking-wider mb-0.5 text-black">
                                                     PHIẾU CHUYỂN KHO NỘI BỘ
-                                                </h1>
+                                                </h2>
                                                 <p className="text-xs font-bold font-mono text-slate-900">Mã: {detail.transferNo}</p>
                                                 <p className="text-[9px] text-slate-600 mt-0.5">Ngày lập: {formatDate(detail.createdAt)}</p>
                                             </div>
@@ -1183,9 +1183,9 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
                                                 </p>
                                             </div>
                                             <div className="text-right">
-                                                <h1 className="text-lg font-bold uppercase tracking-wider mb-0.5 text-black">
+                                                <h2 className="text-lg font-bold uppercase tracking-wider mb-0.5 text-black">
                                                     DANH SÁCH NHẶT HÀNG (PICK LIST)
-                                                </h1>
+                                                </h2>
                                                 <p className="text-xs font-bold font-mono text-slate-900">Phiếu: {detail.transferNo}</p>
                                                 <p className="text-[9px] text-slate-600 mt-0.5">Ngày nhặt hàng: {formatDate(new Date())}</p>
                                             </div>

@@ -1191,11 +1191,11 @@ export function CeoOverviewContent({
                                                     </td>
                                                     <td className="py-2 px-3 text-right font-mono tabular-nums">
                                                         <span className={`font-bold ${item.totalStock <= 0 ? 'text-red-600' : 'text-slate-900'}`}>
-                                                            {item.totalStock.toLocaleString()} {isEn ? 'btls' : 'chai'}
+                                                            {item.totalStock.toLocaleString('vi-VN')} {isEn ? 'btls' : 'chai'}
                                                         </span>
                                                     </td>
                                                     <td className="py-2 px-3 text-right font-mono font-semibold text-slate-800 tabular-nums">
-                                                        {item.avgMonthlySales.toLocaleString()} {isEn ? 'btls/mo' : 'chai/tháng'}
+                                                        {item.avgMonthlySales.toLocaleString('vi-VN')} {isEn ? 'btls/mo' : 'chai/tháng'}
                                                     </td>
                                                     <td className="py-2 px-3 text-right font-mono font-bold tabular-nums">
                                                         <span className={item.mosCurrent < 2 ? 'text-red-600' : item.mosCurrent < 3.5 ? 'text-amber-700' : 'text-slate-800'}>
@@ -1203,7 +1203,7 @@ export function CeoOverviewContent({
                                                         </span>
                                                     </td>
                                                     <td className="py-2 px-3 text-right font-mono font-bold text-cyan-700 tabular-nums">
-                                                        {item.suggestedReorderBottles.toLocaleString()} {isEn ? 'btls' : 'chai'} ({item.suggestedReorderCases} {isEn ? 'cs' : 'thùng'})
+                                                        {item.suggestedReorderBottles.toLocaleString('vi-VN')} {isEn ? 'btls' : 'chai'} ({item.suggestedReorderCases} {isEn ? 'cs' : 'thùng'})
                                                     </td>
                                                     <td className="py-2 px-3 text-right font-mono font-semibold text-slate-900 tabular-nums">
                                                         {item.estimatedReorderCostVnd > 0 ? formatCurrency(item.estimatedReorderCostVnd) : '—'}

@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { cached, revalidateCache } from '@/lib/cache'
+import { requireAuth } from '@/lib/session'
 
 // ── Top selling SKUs ─────────────────────────────
 export async function getTopSKUs(limit = 10) {
@@ -266,6 +267,7 @@ export async function createReportTemplate(input: {
     createdBy: string
 }): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
+        await requireAuth()
         const template = await prisma.reportTemplate.create({
             data: {
                 name: input.name,
@@ -287,6 +289,7 @@ export async function createReportTemplate(input: {
 
 export async function deleteReportTemplate(id: string): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         await prisma.reportSchedule.deleteMany({ where: { templateId: id } })
         await prisma.reportTemplate.delete({ where: { id } })
         revalidatePath('/dashboard/reports')
@@ -1105,6 +1108,7 @@ export async function createReportSchedule(input: {
     reportKey?: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         // Calculate next run time
         const now = new Date()
         let nextRun: Date
@@ -1142,6 +1146,7 @@ export async function createReportSchedule(input: {
 }
 
 export async function toggleScheduleStatus(id: string): Promise<{ success: boolean }> {
+    await requireAuth()
     const schedule = await prisma.reportSchedule.findUnique({ where: { id } })
     if (!schedule) return { success: false }
 
@@ -1154,6 +1159,7 @@ export async function toggleScheduleStatus(id: string): Promise<{ success: boole
 }
 
 export async function deleteReportSchedule(id: string): Promise<{ success: boolean }> {
+    await requireAuth()
     await prisma.reportSchedule.delete({ where: { id } })
     revalidatePath('/dashboard/reports')
     return { success: true }

@@ -2,6 +2,7 @@
 
 import { prisma, withRetry } from '@/lib/db'
 import { cached, revalidateCache } from '@/lib/cache'
+import { requireAuth } from '@/lib/session'
 import { revalidatePath } from 'next/cache'
 import * as XLSX from 'xlsx'
 import ExcelJS from 'exceljs'
@@ -491,6 +492,7 @@ export async function getStockVelocityReport(options?: { cycleMonths?: number })
 // ── UPLOAD & SYNC HISTORICAL STOCK EXCEL ────────────────────────────────────
 export async function uploadHistoricalStockExcel(formData: FormData): Promise<{ success: boolean; count?: number; error?: string }> {
     try {
+        await requireAuth()
         const file = formData.get('file') as File
         if (!file) {
             return { success: false, error: 'Không tìm thấy file tải lên.' }

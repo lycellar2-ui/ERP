@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { cached, revalidateCache } from '@/lib/cache'
+import { requireAuth } from '@/lib/session'
 
 // ═══════════════════════════════════════════════════
 // TYPES
@@ -249,6 +250,7 @@ export async function createShipment(input: {
     forwarderId?: string; customsBrokerId?: string
 }): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
+        await requireAuth()
         const incoterms = input.incoterms ?? 'EXW'
         const shipment = await prisma.shipment.create({
             data: {
@@ -307,6 +309,7 @@ export async function updateShipment(id: string, input: Partial<{
     status: string; forwarderId: string; customsBrokerId: string
 }>): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         const data: any = { ...input }
         if (input.etd) data.etd = new Date(input.etd)
         if (input.eta) data.eta = new Date(input.eta)
@@ -326,6 +329,7 @@ export async function updateShipment(id: string, input: Partial<{
 
 export async function completeMilestone(id: string, notes?: string): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         await prisma.shipmentMilestone.update({
             where: { id },
             data: { completedAt: new Date(), notes: notes ?? null },
@@ -339,6 +343,7 @@ export async function completeMilestone(id: string, notes?: string): Promise<{ s
 
 export async function uncompleteMilestone(id: string): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         await prisma.shipmentMilestone.update({
             where: { id },
             data: { completedAt: null, completedBy: null },
@@ -352,6 +357,7 @@ export async function uncompleteMilestone(id: string): Promise<{ success: boolea
 
 export async function addCustomMilestone(shipmentId: string, label: string): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         const maxSort = await prisma.shipmentMilestone.findFirst({
             where: { shipmentId },
             orderBy: { sortOrder: 'desc' },
@@ -382,6 +388,7 @@ export async function addCostItem(input: {
     paidTo?: string; invoiceNo?: string; paidAt?: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         const currency = input.currency ?? 'VND'
         const exchangeRate = input.exchangeRate ?? 1
         const amountVND = currency === 'VND' ? input.amount : Math.round(input.amount * exchangeRate)
@@ -408,6 +415,7 @@ export async function addCostItem(input: {
 }
 
 export async function deleteCostItem(id: string): Promise<{ success: boolean }> {
+    await requireAuth()
     await prisma.shipmentCostItem.delete({ where: { id } })
     revalidatePath('/dashboard/procurement')
     return { success: true }
@@ -481,6 +489,7 @@ export async function upsertCustomsDeclaration(shipmentId: string, input: {
     inspectionDate?: string; status?: string; notes?: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         const data: any = { ...input }
         if (input.registeredAt) data.registeredAt = new Date(input.registeredAt)
         if (input.clearedAt) data.clearedAt = new Date(input.clearedAt)
@@ -508,6 +517,7 @@ export async function upsertInsurancePolicy(shipmentId: string, input: {
     status?: string; claimAmount?: number; claimNotes?: string
 }): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         const data: any = { ...input }
         if (input.startDate) data.startDate = new Date(input.startDate)
         if (input.endDate) data.endDate = new Date(input.endDate)

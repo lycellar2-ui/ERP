@@ -1,4 +1,10 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+
+vi.mock('@/lib/session', () => ({
+    requireAuth: vi.fn().mockResolvedValue({ id: 'test-user', roles: ['CEO'], permissions: [] }),
+    getCurrentUser: vi.fn().mockResolvedValue({ id: 'test-user', roles: ['CEO'], permissions: [] }),
+}))
+
 import { getSopsAction, getOfficialFormsAction } from '@/app/dashboard/sop/actions'
 
 describe('SOP Actions & Forms Verification', () => {

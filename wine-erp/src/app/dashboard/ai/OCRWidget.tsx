@@ -246,7 +246,7 @@ function CustomsResultView({ result }: { result: OCRDeclarationResult }) {
         { label: t.fields.date, value: result.date },
         { label: t.fields.importerName, value: result.importerName },
         { label: t.fields.hsCode, value: result.hsCode, mono: true },
-        { label: t.fields.cifValue, value: result.cifValue ? `${result.cifValue.toLocaleString()} ${result.cifCurrency ?? 'USD'}` : undefined, mono: true },
+        { label: t.fields.cifValue, value: result.cifValue ? `${result.cifValue.toLocaleString('vi-VN')} ${result.cifCurrency ?? 'USD'}` : undefined, mono: true },
         { label: t.fields.importTax, value: result.importTax ? formatCurrency(result.importTax) : undefined, color: '#B45309' },
         { label: t.fields.sct, value: result.specialConsumptionTax ? formatCurrency(result.specialConsumptionTax) : undefined, color: '#B45309' },
         { label: t.fields.vat, value: result.vatTax ? formatCurrency(result.vatTax) : undefined, color: '#B45309' },
@@ -327,7 +327,7 @@ function LogisticsResultView({ result }: { result: OCRLogisticsResult }) {
                             }}>
                             <span className="text-xs" style={{ color: '#475569' }}>{item.description}</span>
                             <span className="text-sm font-bold" style={{ color: '#B45309' }}>
-                                {item.amount.toLocaleString()} {item.currency}
+                                {item.amount.toLocaleString('vi-VN')} {item.currency}
                             </span>
                         </div>
                     ))}
@@ -338,7 +338,7 @@ function LogisticsResultView({ result }: { result: OCRLogisticsResult }) {
                 <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'rgba(8,145,178,0.08)', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
                     <span className="text-xs font-semibold" style={{ color: '#0891B2' }}>{t.totalLabel}</span>
                     <span className="text-lg font-bold" style={{ color: '#0891B2' }}>
-                        {result.totalAmount.toLocaleString()} USD
+                        {result.totalAmount.toLocaleString('vi-VN')} USD
                     </span>
                 </div>
             )}

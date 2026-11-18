@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { cached } from '@/lib/cache'
+import { requireAuth } from '@/lib/session'
 
 // ═══════════════════════════════════════════════════
 // TYPES
@@ -47,6 +48,7 @@ export async function getAuditLogsDashboard(filters: AuditFilters = {}): Promise
     rows: AuditLogRow[]
     total: number
 }> {
+    await requireAuth()
     const { search, entityType, action, userId, dateFrom, dateTo, page = 1, pageSize = 30 } = filters
     const cacheKey = `audit:logs:${page}:${pageSize}:${search ?? ''}:${entityType ?? ''}:${action ?? ''}:${userId ?? ''}:${dateFrom ?? ''}:${dateTo ?? ''}`
 
@@ -120,6 +122,7 @@ export async function getAuditLogDetail(id: string): Promise<{
     oldValue: Record<string, unknown> | null
     newValue: Record<string, unknown> | null
 } | null> {
+    await requireAuth()
     const log = await prisma.auditLog.findUnique({
         where: { id },
         select: { oldValue: true, newValue: true },

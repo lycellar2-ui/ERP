@@ -204,7 +204,7 @@ export function ReplenishmentTab() {
                         {stats.totalAlerts} <span className="text-xs font-normal text-slate-500 font-sans">mặt hàng</span>
                     </div>
                     <div className="text-[11px] text-slate-500 mt-1">
-                        {totalSuggestedBottles.toLocaleString()} chai (~{totalSuggestedCases} thùng)
+                        {totalSuggestedBottles.toLocaleString('vi-VN')} chai (~{totalSuggestedCases} thùng)
                     </div>
                 </div>
 

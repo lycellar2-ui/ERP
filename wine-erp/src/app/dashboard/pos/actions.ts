@@ -162,7 +162,7 @@ export async function processPOSSale(input: {
         if (validated.paymentMethod === 'CASH') {
             const received = validated.cashReceived ?? 0
             if (received < totalAmount) {
-                return { success: false, error: `Tiền nhận (${received.toLocaleString()}) nhỏ hơn tổng tiền (${totalAmount.toLocaleString()})` }
+                return { success: false, error: `Tiền nhận (${received.toLocaleString('vi-VN')}) nhỏ hơn tổng tiền (${totalAmount.toLocaleString('vi-VN')})` }
             }
             change = received - totalAmount
         }
@@ -660,7 +660,7 @@ export async function redeemLoyaltyPoints(input: {
                     customerId: validated.customerId,
                     type: 'REDEEM',
                     points: -validated.points,
-                    description: `Đổi ${validated.points} điểm = ${(validated.points * POINT_VALUE_VND).toLocaleString()}đ`,
+                    description: `Đổi ${validated.points} điểm = ${(validated.points * POINT_VALUE_VND).toLocaleString('vi-VN')}đ`,
                 },
             })
 
@@ -719,7 +719,7 @@ export async function openShift(input: {
             action: 'CREATE',
             entityType: 'POSShift',
             entityId: shift.id,
-            description: `Ca bán hàng mở bởi ${input.cashierName}. Tiền đầu ca: ${input.openingCash.toLocaleString()}đ`,
+            description: `Ca bán hàng mở bởi ${input.cashierName}. Tiền đầu ca: ${input.openingCash.toLocaleString('vi-VN')}đ`,
             newValue: { cashierName: input.cashierName, openingCash: input.openingCash },
         }).catch(() => { })
 
@@ -778,7 +778,7 @@ export async function closeShift(input: {
             action: 'UPDATE',
             entityType: 'POSShift',
             entityId: shift.id,
-            description: `Ca bán hàng đóng bởi ${input.cashierName}. Doanh thu: ${totalRevenue.toLocaleString()}đ. Chênh lệch: ${cashVariance.toLocaleString()}đ`,
+            description: `Ca bán hàng đóng bởi ${input.cashierName}. Doanh thu: ${totalRevenue.toLocaleString('vi-VN')}đ. Chênh lệch: ${cashVariance.toLocaleString('vi-VN')}đ`,
             newValue: summary,
         }).catch(() => { })
 

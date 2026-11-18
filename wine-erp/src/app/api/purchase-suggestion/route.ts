@@ -96,7 +96,7 @@ export async function POST() {
         // 6. Build AI prompt
         const topItems = analysis.slice(0, 30) // limit to avoid token overflow
         const dataTable = topItems.map(a =>
-            `${a.name} (${a.sku}) | Tồn: ${a.currentStock} | Bán TB/tháng: ${a.monthlySalesAvg} | Đủ: ${a.weeksOfSupply} tuần | Cost: ${a.unitCost.toLocaleString()}đ`
+            `${a.name} (${a.sku}) | Tồn: ${a.currentStock} | Bán TB/tháng: ${a.monthlySalesAvg} | Đủ: ${a.weeksOfSupply} tuần | Cost: ${a.unitCost.toLocaleString('vi-VN')}đ`
         ).join('\n')
 
         const prompt = `Bạn là chuyên gia quản lý tồn kho rượu vang cho công ty LY's Cellars (nhập khẩu rượu vang).

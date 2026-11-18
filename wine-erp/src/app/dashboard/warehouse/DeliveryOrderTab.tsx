@@ -365,7 +365,7 @@ export function DeliveryOrderTab({ warehouses }: {
                             <span className="text-lg sm:text-xl font-extrabold font-mono text-amber-700">{pendingSOs.length} đơn</span>
                         </div>
                         <span className="text-[11px] text-slate-500 mt-1">
-                            Tổng cần nhặt: <strong className="font-mono text-slate-700">{totalPendingBottles.toLocaleString()}</strong> chai
+                            Tổng cần nhặt: <strong className="font-mono text-slate-700">{totalPendingBottles.toLocaleString('vi-VN')}</strong> chai
                         </span>
                     </div>
 
@@ -383,7 +383,7 @@ export function DeliveryOrderTab({ warehouses }: {
                         <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Đã Xuất Kho / Đã Giao</span>
                         <div className="mt-1">
                             <span className="text-lg sm:text-xl font-extrabold font-mono text-emerald-700">
-                                {(historyCounts.CONFIRMED + historyCounts.SHIPPED).toLocaleString()} phiếu
+                                {(historyCounts.CONFIRMED + historyCounts.SHIPPED).toLocaleString('vi-VN')} phiếu
                             </span>
                         </div>
                         <span className="text-[11px] text-slate-500 mt-1">
@@ -395,7 +395,7 @@ export function DeliveryOrderTab({ warehouses }: {
                         <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Tổng Chai Đã Xuất Kho</span>
                         <div className="mt-1">
                             <span className="text-lg sm:text-xl font-extrabold font-mono text-slate-900">
-                                {totalShippedBottles.toLocaleString()} <span className="text-xs font-semibold text-slate-500">chai</span>
+                                {totalShippedBottles.toLocaleString('vi-VN')} <span className="text-xs font-semibold text-slate-500">chai</span>
                             </span>
                         </div>
                         <span className="text-[11px] text-slate-500 mt-1">
@@ -625,10 +625,10 @@ export function DeliveryOrderTab({ warehouses }: {
                                             <td className="px-2.5 py-2.5 text-slate-600 truncate max-w-[160px]" title={d.warehouseName}>{d.warehouseName}</td>
                                             <td className="px-3 py-2.5 font-mono text-slate-600">{d.lineCount}</td>
                                             <td className="px-3 py-2.5 font-mono text-slate-600">
-                                                {d.totalQtyOrdered.toLocaleString()}
+                                                {d.totalQtyOrdered.toLocaleString('vi-VN')}
                                             </td>
                                             <td className="px-3 py-2.5 font-bold font-mono text-slate-900">
-                                                {d.totalQtyShipped.toLocaleString()}
+                                                {d.totalQtyShipped.toLocaleString('vi-VN')}
                                             </td>
                                             <td className="px-3 py-2.5 whitespace-nowrap">
                                                 <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap shrink-0" style={{ color: st.color, background: st.bg }}>{st.label}</span>
@@ -1171,7 +1171,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
                     Sản Phẩm Cần Nhặt ({selectedSO!.lines.length} mặt hàng)
                 </p>
                 <span className="text-xs font-bold font-mono text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                    Tổng nhặt: {totalPicked.toLocaleString()} chai
+                    Tổng nhặt: {totalPicked.toLocaleString('vi-VN')} chai
                 </span>
             </div>
 

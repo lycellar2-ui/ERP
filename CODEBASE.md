@@ -124,20 +124,20 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 □ Bug fix đã bổ sung vào bug-fix-lessons.md?
 ```
 
-### Số liệu hiện tại cần đồng nhất (2026-10-11)
+### Số liệu hiện tại cần đồng nhất (2026-11-18)
 
 | Metric | Giá trị | Nơi ghi nhận |
 |---|---|---|
-| Prisma models | **149** | README.md, llms.txt, tech-stack.md |
-| Prisma enums | **95** | README.md, llms.txt |
-| Dashboard routes | **35** | README.md, wine-erp-plan.md |
-| Server Action files | **43** | README.md |
-| Module spec files | **27** | README.md |
-| Total modules (codes) | **29** | README.md, llms.txt, wine-erp-plan.md |
+| Prisma models | **155** | README.md, llms.txt, tech-stack.md |
+| Prisma enums | **96** | README.md, llms.txt, tech-stack.md |
+| Dashboard routes | **38** (46 page routes; 53 total app routes) | README.md, llms.txt, wine-erp-plan.md |
+| Server Action files | **63** | README.md |
+| Module spec files | **32** | README.md |
+| Total modules (codes) | **32** | README.md, llms.txt, wine-erp-plan.md |
 | Next.js version | **16.1.6** | tech-stack.md, wine-erp-plan.md |
 | Auth | **Supabase Auth** | tech-stack.md, wine-erp-plan.md |
 | Image storage | **ImgBB** | tech-stack.md, file-storage-plan.md |
-| Doc storage | **Supabase Storage** | tech-stack.md, file-storage-plan.md |
+| Doc storage | **Cloudflare R2 + Supabase Storage** | tech-stack.md, file-storage-plan.md |
 
 > ⚠️ Khi bất kỳ số liệu nào ở trên thay đổi → CẬP NHẬT TẤT CẢ CÁC FILE trong cột "Nơi ghi nhận".
 

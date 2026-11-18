@@ -1180,7 +1180,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                         <div>
                             <p className="text-[10px] text-slate-500 uppercase font-bold">Tổng SL Chai</p>
                             <p className="font-mono font-bold text-slate-900 text-sm">
-                                {totalAllBottles.toLocaleString()} chai
+                                {totalAllBottles.toLocaleString('vi-VN')} chai
                             </p>
                             {totalFocBottles > 0 && (
                                 <p className="text-[10px] text-amber-700 font-medium">
@@ -1847,7 +1847,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                 <div>
                                     <p className="text-[10px] text-slate-500 uppercase font-bold">Tổng SL Chai</p>
                                     <p className="font-mono font-bold text-slate-900 text-sm">
-                                        {totalAllBottles.toLocaleString()} chai
+                                        {totalAllBottles.toLocaleString('vi-VN')} chai
                                     </p>
                                     {totalFocBottles > 0 && (
                                         <p className="text-[10px] text-amber-700 font-medium">
@@ -2570,12 +2570,12 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                         {/* Col 3: Quantity & Goods Receipt */}
                                         <td className="px-4 py-3">
                                             <div className="text-xs font-bold text-slate-900">
-                                                <span className="text-slate-600 font-mono">{row.lineCount} SKU</span> · <span className="font-mono text-slate-900">{row.totalQty.toLocaleString()}</span> {dict.table.bottleUnit}
+                                                <span className="text-slate-600 font-mono">{row.lineCount} SKU</span> · <span className="font-mono text-slate-900">{row.totalQty.toLocaleString('vi-VN')}</span> {dict.table.bottleUnit}
                                             </div>
                                             {row.hasFoc && (
                                                 <div className="mt-0.5">
                                                     <span className="inline-block text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300 whitespace-nowrap shrink-0">
-                                                        FOC: {(row.totalFocQty ?? 0).toLocaleString()} {dict.table.bottleUnit}
+                                                        FOC: {(row.totalFocQty ?? 0).toLocaleString('vi-VN')} {dict.table.bottleUnit}
                                                     </span>
                                                 </div>
                                             )}
@@ -2583,7 +2583,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                 <div className="flex justify-between items-center text-[10px]">
                                                     <span className="text-slate-500">{dict.detailDrawer.receivedQty}:</span>
                                                     <span className="font-mono font-bold text-[#0891B2]">
-                                                        {row.totalQtyReceived.toLocaleString()}/{row.totalQty.toLocaleString()}
+                                                        {row.totalQtyReceived.toLocaleString('vi-VN')}/{row.totalQty.toLocaleString('vi-VN')}
                                                     </span>
                                                 </div>
                                                 <div className="w-full h-1.5 bg-white rounded-full overflow-hidden">
@@ -2610,7 +2610,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                 ≈ {formatVND(row.totalAmount * row.exchangeRate)}
                                             </p>
                                             <p className="text-[10px] text-slate-500 font-mono">
-                                                {dict.detailDrawer.exchangeRate}: {row.exchangeRate.toLocaleString()}
+                                                {dict.detailDrawer.exchangeRate}: {row.exchangeRate.toLocaleString('vi-VN')}
                                             </p>
                                         </td>
 
@@ -2710,9 +2710,9 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                             <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/40 text-xs">
                                 <div>
                                     <span className="text-[10px] text-slate-500 block">{dict.detailDrawer.totalQty}:</span>
-                                    <span className="font-mono text-slate-900 font-bold">{row.totalQty.toLocaleString()} {dict.table.bottleUnit}</span>
+                                    <span className="font-mono text-slate-900 font-bold">{row.totalQty.toLocaleString('vi-VN')} {dict.table.bottleUnit}</span>
                                     {row.hasFoc && (
-                                        <span className="text-[10px] text-amber-700 font-bold ml-1">({(row.totalFocQty ?? 0).toLocaleString()} FOC)</span>
+                                        <span className="text-[10px] text-amber-700 font-bold ml-1">({(row.totalFocQty ?? 0).toLocaleString('vi-VN')} FOC)</span>
                                     )}
                                     <span className="text-[10px] text-[#0891B2] ml-1">({row.receivedPercentage}%)</span>
                                 </div>
@@ -2721,7 +2721,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                     <span className="font-mono text-[#0891B2] font-bold">{formatVND(row.totalAmount * row.exchangeRate)}</span>
                                     {row.discountAmount && row.discountAmount > 0 && (
                                         <span className="text-[10px] text-amber-700 block font-mono">
-                                            -{row.discountAmount.toLocaleString()} {row.currency}
+                                            -{row.discountAmount.toLocaleString('vi-VN')} {row.currency}
                                         </span>
                                     )}
                                 </div>
@@ -2759,7 +2759,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 </div>
                                 {poDetail && (
                                     <p className="text-xs text-slate-600 mt-0.5">
-                                        {poDetail.supplierName} · {poDetail.currency} ({dict.detailDrawer.exchangeRate}: {poDetail.exchangeRate.toLocaleString()})
+                                        {poDetail.supplierName} · {poDetail.currency} ({dict.detailDrawer.exchangeRate}: {poDetail.exchangeRate.toLocaleString('vi-VN')})
                                     </p>
                                 )}
                             </div>
@@ -2796,7 +2796,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-4 bg-white border-b border-slate-200 text-xs">
                                     <div>
                                         <span className="text-[10px] text-slate-500 block font-bold uppercase">{dict.detailDrawer.totalQty}</span>
-                                        <span className="font-mono font-bold text-slate-900">{poDetail.totalQty.toLocaleString()} {dict.table.bottleUnit}</span>
+                                        <span className="font-mono font-bold text-slate-900">{poDetail.totalQty.toLocaleString('vi-VN')} {dict.table.bottleUnit}</span>
                                         {Boolean(poDetail.totalFocQty && poDetail.totalFocQty > 0) && (
                                             <span className="text-[10px] text-amber-700 font-bold ml-1">({poDetail.totalFocQty} FOC)</span>
                                         )}
@@ -2804,10 +2804,10 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                     </div>
                                     <div>
                                         <span className="text-[10px] text-slate-500 block font-bold uppercase">{dict.detailDrawer.foreignAmount}</span>
-                                        <span className="font-mono font-bold text-slate-900">{poDetail.totalAmount.toLocaleString()} {poDetail.currency}</span>
+                                        <span className="font-mono font-bold text-slate-900">{poDetail.totalAmount.toLocaleString('vi-VN')} {poDetail.currency}</span>
                                         {Boolean(poDetail.discountAmount && poDetail.discountAmount > 0) && (
                                             <span className="text-[10px] text-amber-700 block font-mono">
-                                                ({dict.detailDrawer.discounted} {poDetail.discountAmount?.toLocaleString()} {poDetail.currency})
+                                                ({dict.detailDrawer.discounted} {poDetail.discountAmount?.toLocaleString('vi-VN')} {poDetail.currency})
                                             </span>
                                         )}
                                     </div>
@@ -2932,7 +2932,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                 </div>
                                                 {Boolean(poDetail.totalFocQty && poDetail.totalFocQty > 0) && (
                                                     <p className="text-[11px] text-amber-800 font-medium pt-1 border-t border-slate-200/40 italic">
-                                                        Đơn hàng có {poDetail.totalFocQty?.toLocaleString()} chai FOC (hàng tặng không tính tiền).
+                                                        Đơn hàng có {poDetail.totalFocQty?.toLocaleString('vi-VN')} chai FOC (hàng tặng không tính tiền).
                                                     </p>
                                                 )}
                                             </div>
@@ -3300,8 +3300,8 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                         <span className="font-bold text-slate-900">{fx.currency}</span>
                                         <span className="inline-block text-[10px] px-1.5 py-0.2 rounded font-bold bg-amber-500/20 text-[#B45309] whitespace-nowrap shrink-0">{fx.poCount} PO</span>
                                     </div>
-                                    <div className="flex justify-between text-slate-500"><span>Trung bình:</span><strong className="text-[#0891B2] font-mono">{fx.avgRate.toLocaleString()}</strong></div>
-                                    <div className="flex justify-between text-slate-500"><span>Tổng ngoại tệ:</span><strong className="text-slate-900 font-mono">{fx.totalForeignValue.toLocaleString()} {fx.currency}</strong></div>
+                                    <div className="flex justify-between text-slate-500"><span>Trung bình:</span><strong className="text-[#0891B2] font-mono">{fx.avgRate.toLocaleString('vi-VN')}</strong></div>
+                                    <div className="flex justify-between text-slate-500"><span>Tổng ngoại tệ:</span><strong className="text-slate-900 font-mono">{fx.totalForeignValue.toLocaleString('vi-VN')} {fx.currency}</strong></div>
                                     <div className="flex justify-between text-slate-500 pt-1 border-t border-slate-200"><span>Quy VNĐ:</span><strong className="text-[#0891B2] font-mono">{formatVND(fx.totalVNDValue)}</strong></div>
                                 </div>
                             ))}

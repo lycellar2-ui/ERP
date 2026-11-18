@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma } from '@/lib/db'
+import { requireAuth } from '@/lib/session'
 
 /**
  * Get regulated documents linked to a specific supplier.
@@ -178,6 +179,7 @@ export async function getShipmentDocChecklist(shipmentId: string) {
  * If checked=false → delete the DRAFT placeholder (only if DRAFT).
  */
 export async function toggleShipmentDocRequired(shipmentId: string, docType: string, checked: boolean) {
+    await requireAuth()
     if (checked) {
         const existing = await prisma.regulatedDocument.findFirst({
             where: { shipmentId, scope: 'SHIPMENT', type: docType as any },
@@ -219,6 +221,7 @@ export async function activateShipmentDoc(docId: string, data: {
     issueDate?: string
     expiryDate?: string
 }) {
+    await requireAuth()
     const doc = await prisma.regulatedDocument.update({
         where: { id: docId },
         data: {

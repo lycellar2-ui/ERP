@@ -169,6 +169,17 @@ export function WarehouseMapTab({
     const [searchResults, setSearchResults] = useState<{ skuCode: string; productName: string; totalQty: number; locationIds: string[] }[]>([])
     const [showLocModal, setShowLocModal] = useState(false)
     const [showLegendDrawer, setShowLegendDrawer] = useState(false)
+    const [pendingLabelPos, setPendingLabelPos] = useState<{ x: number; y: number } | null>(null)
+    const [labelInputText, setLabelInputText] = useState('')
+
+    useEffect(() => {
+        if (!pendingLabelPos) return
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setPendingLabelPos(null)
+        }
+        window.addEventListener('keydown', onKeyDown)
+        return () => window.removeEventListener('keydown', onKeyDown)
+    }, [pendingLabelPos])
 
     // Toast
     const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null)
@@ -286,12 +297,8 @@ export function WarehouseMapTab({
             setLayoutCfg(prev => ({ ...prev, doors: [...prev.doors, newDoor] }))
             setHasChanges(true)
         } else if (tool === 'label') {
-            const text = prompt('Nhập nội dung nhãn/chú thích trên sơ đồ:')
-            if (text) {
-                const newLabel: Label = { id: uid(), x: snap(pos.x), y: snap(pos.y), text, fontSize: 14 }
-                setLayoutCfg(prev => ({ ...prev, labels: [...prev.labels, newLabel] }))
-                setHasChanges(true)
-            }
+            setLabelInputText('')
+            setPendingLabelPos({ x: snap(pos.x), y: snap(pos.y) })
         } else if (tool === 'eraser') {
             const threshold = 20
             const px = pos.x, py = pos.y
@@ -1146,6 +1153,85 @@ export function WarehouseMapTab({
                                 className="px-5 py-2 rounded-lg text-xs font-extrabold bg-[#0E7490] text-white cursor-pointer shadow-xs"
                             >
                                 Đóng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Map Label Modal */}
+            {pendingLabelPos && (
+                <div
+                    role="dialog"
+                    aria-modal="true"
+                    className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4"
+                    onClick={() => setPendingLabelPos(null)}
+                >
+                    <div
+                        className="w-full max-w-sm rounded-lg bg-white border border-slate-200 shadow-lg p-5 space-y-4 animate-modal-in"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-bold text-slate-900">Thêm nhãn trên sơ đồ kho</h3>
+                            <button
+                                type="button"
+                                onClick={() => setPendingLabelPos(null)}
+                                className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                                aria-label="Đóng"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+                        <input
+                            type="text"
+                            autoFocus
+                            value={labelInputText}
+                            onChange={e => setLabelInputText(e.target.value)}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter' && labelInputText.trim()) {
+                                    const newLabel: Label = {
+                                        id: uid(),
+                                        x: pendingLabelPos.x,
+                                        y: pendingLabelPos.y,
+                                        text: labelInputText.trim(),
+                                        fontSize: 14,
+                                    }
+                                    setLayoutCfg(prev => ({ ...prev, labels: [...prev.labels, newLabel] }))
+                                    setHasChanges(true)
+                                    setPendingLabelPos(null)
+                                }
+                            }}
+                            placeholder="VD: Khu vực kiểm hàng, Cửa nhập..."
+                            className="w-full px-3 py-2 text-base sm:text-sm rounded-md border border-slate-300 bg-white text-slate-900 focus:outline-none focus:border-[#0891B2]"
+                        />
+                        <div className="flex items-center justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setPendingLabelPos(null)}
+                                className="px-3.5 py-2 text-xs font-semibold rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const trimmed = labelInputText.trim()
+                                    if (!trimmed) return
+                                    const newLabel: Label = {
+                                        id: uid(),
+                                        x: pendingLabelPos.x,
+                                        y: pendingLabelPos.y,
+                                        text: trimmed,
+                                        fontSize: 14,
+                                    }
+                                    setLayoutCfg(prev => ({ ...prev, labels: [...prev.labels, newLabel] }))
+                                    setHasChanges(true)
+                                    setPendingLabelPos(null)
+                                }}
+                                disabled={!labelInputText.trim()}
+                                className="px-4 py-2 text-xs font-bold rounded-md bg-[#0E7490] hover:bg-[#155E75] text-white disabled:opacity-50"
+                            >
+                                Thêm nhãn
                             </button>
                         </div>
                     </div>

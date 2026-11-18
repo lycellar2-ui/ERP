@@ -76,7 +76,9 @@ export async function middleware(request: NextRequest) {
         return NextResponse.next({ request: { headers: requestHeaders } })
     }
     const isPublic = publicPaths.some(p => request.nextUrl.pathname.startsWith(p))
-    const isAgencyPath = request.nextUrl.pathname.startsWith('/portal')
+    const isAgencyPath =
+        request.nextUrl.pathname.startsWith('/portal') ||
+        request.nextUrl.pathname.startsWith('/partner-login')
     const isApiPath = request.nextUrl.pathname.startsWith('/api')
     const isPublicApi = request.nextUrl.pathname.startsWith('/api/telegram') || 
                         request.nextUrl.pathname.startsWith('/api/cron') ||

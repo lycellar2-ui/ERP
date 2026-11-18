@@ -69,7 +69,7 @@ export function AICRMAnalysis() {
         }
     }
 
-    const fmtVND = (v: number) => v >= 1e9 ? `${(v / 1e9).toFixed(1)}B` : v >= 1e6 ? `${(v / 1e6).toFixed(0)}M` : `${v.toLocaleString()}`
+    const fmtVND = (v: number) => v >= 1e9 ? `${(v / 1e9).toFixed(1)}B` : v >= 1e6 ? `${(v / 1e6).toFixed(0)}M` : `${v.toLocaleString('vi-VN')}`
 
     const TIER_COLORS: Record<string, string> = { PLATINUM: '#0F172A', GOLD: '#B45309', SILVER: '#475569', BRONZE: '#87685A' }
 

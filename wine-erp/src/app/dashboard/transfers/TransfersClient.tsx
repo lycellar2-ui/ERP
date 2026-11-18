@@ -101,7 +101,7 @@ function TransferMobileCard({
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                     <span className="text-slate-500 text-[11px]">{r.lineCount} {t.unitLine}</span>
-                    <span className="font-mono font-bold text-emerald-700">{r.totalQty.toLocaleString()} {t.unitBottle}</span>
+                    <span className="font-mono font-bold text-emerald-700">{r.totalQty.toLocaleString('vi-VN')} {t.unitBottle}</span>
                 </div>
             </div>
 
@@ -458,7 +458,7 @@ export function TransfersClient({ initialRows, currentUserRoles = [] }: {
                                             {r.lineCount} {t.unitLine}
                                         </Td>
                                         <Td align="center" className="font-mono font-bold text-emerald-700 whitespace-nowrap">
-                                            {r.totalQty.toLocaleString()} {t.unitBottle}
+                                            {r.totalQty.toLocaleString('vi-VN')} {t.unitBottle}
                                         </Td>
                                         <Td align="center" className="whitespace-nowrap">
                                             <Badge tone={st.tone}>{st.label}</Badge>

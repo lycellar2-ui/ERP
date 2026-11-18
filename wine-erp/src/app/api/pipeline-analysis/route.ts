@@ -78,7 +78,7 @@ export async function POST() {
         const dealList = opportunities.map(o => {
             const daysInStage = Math.round((now.getTime() - new Date(o.stageChangedAt).getTime()) / (1000 * 60 * 60 * 24))
             const totalAge = Math.round((now.getTime() - new Date(o.createdAt).getTime()) / (1000 * 60 * 60 * 24))
-            return `${o.name} | ${o.customer.name} (${o.customer.customerType}) | Stage: ${o.stage} (${daysInStage}d in stage${o.previousStage ? ', from ' + o.previousStage : ''}) | Value: ${Number(o.expectedValue).toLocaleString()}đ | Prob: ${o.probability}% | Sales: ${o.assignee.name} | Close: ${o.closeDate ? new Date(o.closeDate).toLocaleDateString('vi-VN') : 'N/A'} | Total age: ${totalAge}d`
+            return `${o.name} | ${o.customer.name} (${o.customer.customerType}) | Stage: ${o.stage} (${daysInStage}d in stage${o.previousStage ? ', from ' + o.previousStage : ''}) | Value: ${Number(o.expectedValue).toLocaleString('vi-VN')}đ | Prob: ${o.probability}% | Sales: ${o.assignee.name} | Close: ${o.closeDate ? new Date(o.closeDate).toLocaleDateString('vi-VN') : 'N/A'} | Total age: ${totalAge}d`
         }).join('\n')
 
         const prompt = `Bạn là Sales Director / CRM Manager cho LY's Cellars, công ty nhập khẩu rượu vang cao cấp tại Việt Nam.
@@ -88,10 +88,10 @@ Phân tích Sales Pipeline sau đây:
 ${dealList}
 
 ===== THỐNG KÊ =====
-- Tổng giá trị pipeline (active): ${totalPipelineValue.toLocaleString()} VND
-- Giá trị weighted: ${totalWeightedValue.toLocaleString()} VND
+- Tổng giá trị pipeline (active): ${totalPipelineValue.toLocaleString('vi-VN')} VND
+- Giá trị weighted: ${totalWeightedValue.toLocaleString('vi-VN')} VND
 - Win rate: ${winRate.toFixed(1)}%
-- Avg deal size: ${avgDealSize.toLocaleString()} VND
+- Avg deal size: ${avgDealSize.toLocaleString('vi-VN')} VND
 - Deals stale (>14 ngày không chuyển stage): ${stale.length}
 - Active deals: ${active.length} | Won: ${won.length} | Lost: ${lost.length}
 - Pipeline velocity: ${velocitySummary}
@@ -131,7 +131,7 @@ Yêu cầu:
         if (dbPrompt) {
             finalSystem = dbPrompt.systemPrompt
             finalPrompt = dbPrompt.userTemplate
-                .replace('{{data}}', `${dealList}\n\n===== THỐNG KÊ =====\n- Tổng giá trị pipeline (active): ${totalPipelineValue.toLocaleString()} VND\n- Giá trị weighted: ${totalWeightedValue.toLocaleString()} VND\n- Win rate: ${winRate.toFixed(1)}%\n- Avg deal size: ${avgDealSize.toLocaleString()} VND\n- Deals stale (>14 ngày không chuyển stage): ${stale.length}\n- Active deals: ${active.length} | Won: ${won.length} | Lost: ${lost.length}\n- Pipeline velocity: ${velocitySummary}`)
+                .replace('{{data}}', `${dealList}\n\n===== THỐNG KÊ =====\n- Tổng giá trị pipeline (active): ${totalPipelineValue.toLocaleString('vi-VN')} VND\n- Giá trị weighted: ${totalWeightedValue.toLocaleString('vi-VN')} VND\n- Win rate: ${winRate.toFixed(1)}%\n- Avg deal size: ${avgDealSize.toLocaleString('vi-VN')} VND\n- Deals stale (>14 ngày không chuyển stage): ${stale.length}\n- Active deals: ${active.length} | Won: ${won.length} | Lost: ${lost.length}\n- Pipeline velocity: ${velocitySummary}`)
             finalTemp = dbPrompt.temperature
             finalMax = dbPrompt.maxTokens
         } else {

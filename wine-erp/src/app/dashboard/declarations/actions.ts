@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { cached, revalidateCache } from '@/lib/cache'
 import { findHierarchicalTaxRate } from '@/lib/tax-utils'
+import { requireAuth } from '@/lib/session'
 
 // ─── Types ────────────────────────────────────────
 export type DeclarationRow = {
@@ -68,6 +69,7 @@ export async function createDeclaration(input: {
     createdBy: string
 }): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
+        await requireAuth()
         const decl = await prisma.taxDeclaration.create({
             data: {
                 type: input.type,
@@ -92,6 +94,7 @@ export async function updateDeclarationStatus(
     fileUrl?: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         await prisma.taxDeclaration.update({
             where: { id },
             data: {
@@ -491,6 +494,7 @@ import { uploadFile } from '@/lib/storage'
 
 export async function uploadTaxDocument(taxId: string, formData: FormData) {
     try {
+        await requireAuth()
         const file = formData.get('file') as File
         if (!file) return { success: false, error: 'Chưa chọn file tờ khai' }
 
@@ -516,6 +520,7 @@ export async function uploadTaxDocument(taxId: string, formData: FormData) {
 
 export async function signTaxDeclaration(taxId: string, signatureUrl: string) {
     try {
+        await requireAuth()
         await prisma.taxDeclaration.update({
             where: { id: taxId },
             data: { signatureUrl, status: 'APPROVED' },

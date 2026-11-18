@@ -344,7 +344,7 @@ function ContractMobileCard({
                 <div>
                     <span className="text-[10px] uppercase font-semibold text-lys-muted block">{t.table.contractValueLabel}</span>
                     <span className="font-bold text-lys-title">
-                        {row.currency === 'VND' ? formatCurrency(row.value) : `$${row.value.toLocaleString()} ${row.currency}`}
+                        {row.currency === 'VND' ? formatCurrency(row.value) : `$${row.value.toLocaleString('vi-VN')} ${row.currency}`}
                     </span>
                 </div>
                 <div className="text-right">
@@ -582,7 +582,7 @@ export function ContractsClient({ initialRows, initialTotal: _initialTotal, stat
                                             </p>
                                         </Td>
                                         <Td align="right" className="font-semibold text-lys-title">
-                                            {row.currency === 'VND' ? formatCurrency(row.value) : `$${row.value.toLocaleString()} ${row.currency}`}
+                                            {row.currency === 'VND' ? formatCurrency(row.value) : `$${row.value.toLocaleString('vi-VN')} ${row.currency}`}
                                         </Td>
                                         <Td align="center">
                                             <Button

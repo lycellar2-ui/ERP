@@ -260,7 +260,7 @@ export function ExcelImportDialog({ open, onClose, title, templateColumns, templ
                                         <div className="max-h-48 overflow-y-auto rounded-lg" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                                             {result.errors.map((err, idx) => (
                                                 <div key={idx} className="flex items-start gap-3 px-4 py-2.5 text-xs"
-                                                    style={{ borderBottom: idx < result.errors.length - 1 ? '1px solid #FFFFFF' : 'none' }}>
+                                                    style={{ borderBottom: idx < result.errors.length - 1 ? '1px solid #E2E8F0' : 'none' }}>
                                                     <span className="font-bold flex-shrink-0 w-14 font-mono" style={{ color: '#B91C1C' }}>
                                                         {err.row > 0 ? `Dòng ${err.row}` : 'Chung'}
                                                     </span>

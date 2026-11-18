@@ -252,7 +252,7 @@ export async function collectCODPayment(input: {
         const outstanding = Number(invoice.totalAmount) - alreadyPaid
 
         if (validated.collectedAmount > outstanding) {
-            return { success: false, error: `Số tiền thu (${validated.collectedAmount.toLocaleString()}) vượt quá công nợ (${outstanding.toLocaleString()})` }
+            return { success: false, error: `Số tiền thu (${validated.collectedAmount.toLocaleString('vi-VN')}) vượt quá công nợ (${outstanding.toLocaleString('vi-VN')})` }
         }
 
         const newTotalPaid = alreadyPaid + validated.collectedAmount
@@ -282,7 +282,7 @@ export async function collectCODPayment(input: {
                 docType: 'COD_COLLECTION',
                 docId: payment.id,
                 periodId: period.id,
-                description: `Thu COD ${invoice.invoiceNo} — ${validated.collectedAmount.toLocaleString()} VND`,
+                description: `Thu COD ${invoice.invoiceNo} — ${validated.collectedAmount.toLocaleString('vi-VN')} VND`,
                 createdBy: validated.collectedBy,
                 lines: {
                     create: [
@@ -429,7 +429,7 @@ export async function createManualJournal(input: {
         const totalDebit = lines.reduce((s, l) => s + (l.debit || 0), 0)
         const totalCredit = lines.reduce((s, l) => s + (l.credit || 0), 0)
         if (Math.abs(totalDebit - totalCredit) > 0.01) {
-            return { success: false, error: `Nợ (${totalDebit.toLocaleString()}) ≠ Có (${totalCredit.toLocaleString()})` }
+            return { success: false, error: `Nợ (${totalDebit.toLocaleString('vi-VN')}) ≠ Có (${totalCredit.toLocaleString('vi-VN')})` }
         }
 
         const date = postedAt ?? new Date()

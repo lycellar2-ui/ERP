@@ -442,7 +442,7 @@ function StockTable({
                                         {/* Cột 1: Sổ Sách */}
                                         <td className="px-2 py-2.5 text-center whitespace-nowrap">
                                             <span className="text-xs font-bold font-mono text-slate-700">
-                                                {bookQty.toLocaleString()}
+                                                {bookQty.toLocaleString('vi-VN')}
                                             </span>
                                         </td>
 
@@ -450,7 +450,7 @@ function StockTable({
                                         <td className="px-2 py-2.5 text-center whitespace-nowrap">
                                             <div className="flex flex-col items-center">
                                                 <span className="text-xs font-bold font-mono text-slate-900">
-                                                    {onHandQty.toLocaleString()}
+                                                    {onHandQty.toLocaleString('vi-VN')}
                                                 </span>
                                                 {variance !== 0 && (
                                                     <span className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded mt-0.5 border ${
@@ -471,7 +471,7 @@ function StockTable({
                                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                                         : 'bg-slate-100 text-slate-500 border-slate-200'
                                                 )}>
-                                                    {lot.qtyAvailable.toLocaleString()}
+                                                    {lot.qtyAvailable.toLocaleString('vi-VN')}
                                                 </span>
                                                 {lot.qtyReserved > 0 && (
                                                     <span className="text-[9px] text-blue-600 font-bold mt-0.5">
@@ -598,13 +598,13 @@ function StockTable({
                                             </td>
                                             <td className="px-2 py-2.5 text-center whitespace-nowrap">
                                                 <span className="text-xs font-bold font-mono text-slate-700">
-                                                    {group.qtyBook.toLocaleString()}
+                                                    {group.qtyBook.toLocaleString('vi-VN')}
                                                 </span>
                                             </td>
                                             <td className="px-2 py-2.5 text-center whitespace-nowrap">
                                                 <div className="flex flex-col items-center">
                                                     <span className="text-xs font-bold font-mono text-slate-900">
-                                                        {group.qtyOnHand.toLocaleString()}
+                                                        {group.qtyOnHand.toLocaleString('vi-VN')}
                                                     </span>
                                                     {group.variance !== 0 && (
                                                         <span className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded mt-0.5 border ${
@@ -623,7 +623,7 @@ function StockTable({
                                                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                                             : 'bg-slate-100 text-slate-500 border-slate-200'
                                                     )}>
-                                                        {group.qtyAvailable.toLocaleString()}
+                                                        {group.qtyAvailable.toLocaleString('vi-VN')}
                                                     </span>
                                                     {group.qtyReserved > 0 && (
                                                         <span className="text-[9px] text-blue-600 font-bold mt-0.5">
@@ -672,16 +672,16 @@ function StockTable({
                                                             )}
                                                         </span>
                                                     </td>
-                                                    <td className="px-2 py-1.5 text-center font-mono text-slate-600">{subBook.toLocaleString()}</td>
+                                                    <td className="px-2 py-1.5 text-center font-mono text-slate-600">{subBook.toLocaleString('vi-VN')}</td>
                                                     <td className="px-2 py-1.5 text-center font-mono text-slate-800">
-                                                        {subOnHand.toLocaleString()}
+                                                        {subOnHand.toLocaleString('vi-VN')}
                                                         {subVar !== 0 && (
                                                             <span className={`ml-1 text-[9px] font-bold ${subVar < 0 ? 'text-rose-600' : 'text-amber-700'}`}>
                                                                 ({subVar > 0 ? `+${subVar}` : subVar})
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td className="px-2 py-1.5 text-center font-mono font-bold text-emerald-700">{subLot.qtyAvailable.toLocaleString()}</td>
+                                                    <td className="px-2 py-1.5 text-center font-mono font-bold text-emerald-700">{subLot.qtyAvailable.toLocaleString('vi-VN')}</td>
                                                     {canSeeCost && (
                                                         <td className="px-3 py-1.5 text-right font-mono text-slate-600">
                                                             {subVal > 0 ? formatCurrency(subVal) : '—'}
@@ -749,13 +749,13 @@ function StockTable({
                                 <div className="text-center bg-slate-50 py-1 px-1.5 rounded border border-slate-200/80">
                                     <span className="text-slate-500 text-[9px] uppercase font-bold block">Sổ sách</span>
                                     <span className="font-bold font-mono text-xs text-slate-700">
-                                        {bookQty.toLocaleString()}
+                                        {bookQty.toLocaleString('vi-VN')}
                                     </span>
                                 </div>
                                 <div className="text-center bg-slate-50 py-1 px-1.5 rounded border border-slate-200/80">
                                     <span className="text-slate-600 text-[9px] uppercase font-bold block">Thực tế</span>
                                     <span className="font-bold font-mono text-xs text-slate-900">
-                                        {onHandQty.toLocaleString()}
+                                        {onHandQty.toLocaleString('vi-VN')}
                                     </span>
                                     {variance !== 0 && (
                                         <span className={`text-[9px] font-bold ml-1 ${variance < 0 ? 'text-rose-600' : 'text-amber-700'}`}>
@@ -766,7 +766,7 @@ function StockTable({
                                 <div className="text-center bg-emerald-50 py-1 px-1.5 rounded border border-emerald-200">
                                     <span className="text-emerald-700 text-[9px] uppercase font-bold block">Khả dụng</span>
                                     <span className="font-extrabold font-mono text-xs text-emerald-800">
-                                        {lot.qtyAvailable.toLocaleString()}
+                                        {lot.qtyAvailable.toLocaleString('vi-VN')}
                                     </span>
                                     {lot.qtyReserved > 0 && (
                                         <span className="text-[9px] text-blue-600 ml-1 font-semibold">
@@ -884,7 +884,7 @@ function QuarantinePanel({ lots, loading, onRefresh }: { lots: any[]; loading: b
                                         <td className="px-4 py-3 font-medium text-slate-700">
                                             {lot.location?.locationCode ? formatFriendlyLocationName({ locationCode: lot.location.locationCode }) : '—'}
                                         </td>
-                                        <td className="px-4 py-3 font-mono font-bold text-rose-700">{Number(lot.qtyAvailable).toLocaleString()} chai</td>
+                                        <td className="px-4 py-3 font-mono font-bold text-rose-700">{Number(lot.qtyAvailable).toLocaleString('vi-VN')} chai</td>
                                         <td className="px-4 py-3 text-slate-500">{formatDateLocale(lot.receivedDate)}</td>
                                         <td className="px-4 py-3">
                                             <div className="flex gap-2 justify-end">
@@ -1474,13 +1474,13 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
 
     const statCards: { label: string; value: React.ReactNode; sub?: string; tone: Tone; icon: any }[] = [
         { label: t.stats.warehouses, value: stats.warehouses, sub: 'kho hoạt động', tone: 'neutral', icon: Warehouse },
-        { label: t.stats.totalStock, value: stats.availableBottles.toLocaleString(), sub: `${t.bottlesUnit} khả dụng`, tone: 'success', icon: Package },
+        { label: t.stats.totalStock, value: stats.availableBottles.toLocaleString('vi-VN'), sub: `${t.bottlesUnit} khả dụng`, tone: 'success', icon: Package },
         ...(canSeeCost ? [
             { label: t.stats.inventoryValue, value: formatStatCurrency(stats.inventoryValue), sub: formatCurrency(stats.inventoryValue), tone: 'brand' as Tone, icon: DollarSign }
         ] : [
-            { label: 'Tổng số lô tồn', value: stats.totalLots.toLocaleString(), sub: 'lô hàng trong kho', tone: 'brand' as Tone, icon: Box }
+            { label: 'Tổng số lô tồn', value: stats.totalLots.toLocaleString('vi-VN'), sub: 'lô hàng trong kho', tone: 'brand' as Tone, icon: Box }
         ]),
-        { label: t.stats.reserved, value: stats.reservedBottles.toLocaleString(), sub: `${t.bottlesUnit} giữ chỗ`, tone: 'info', icon: Box },
+        { label: t.stats.reserved, value: stats.reservedBottles.toLocaleString('vi-VN'), sub: `${t.bottlesUnit} giữ chỗ`, tone: 'info', icon: Box },
         { label: t.stats.lowStock, value: stats.lowStockCount, sub: stats.lowStockCount > 0 ? 'cần nhập thêm' : 'mức an toàn', tone: stats.lowStockCount > 0 ? 'warning' : 'neutral', icon: AlertTriangle },
         { label: t.stats.slowMoving, value: stats.slowMovingCount, sub: stats.slowMovingCount > 0 ? '> 90 ngày' : 'lưu thông tốt', tone: stats.slowMovingCount > 0 ? 'danger' : 'neutral', icon: Clock },
     ]
@@ -1547,7 +1547,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                                 <option value="">{t.allWarehousesCount(stats.warehouses)}</option>
                                 {warehouses.map(w => (
                                     <option key={w.id} value={w.id}>
-                                        {w.name} ({w.totalStock.toLocaleString()} {t.bottlesUnit})
+                                        {w.name} ({w.totalStock.toLocaleString('vi-VN')} {t.bottlesUnit})
                                     </option>
                                 ))}
                             </select>
@@ -1681,7 +1681,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                                 <option value="">{t.allWarehousesCount(stats.warehouses)}</option>
                                 {warehouses.map(w => (
                                     <option key={w.id} value={w.id}>
-                                        {w.name} {w.allowSales === false ? '[Chỉ Điều Chuyển]' : w.isDefault ? '[Mặc Định]' : ''} ({w.totalStock.toLocaleString()} {t.bottlesUnit})
+                                        {w.name} {w.allowSales === false ? '[Chỉ Điều Chuyển]' : w.isDefault ? '[Mặc Định]' : ''} ({w.totalStock.toLocaleString('vi-VN')} {t.bottlesUnit})
                                     </option>
                                 ))}
                             </select>
@@ -2138,7 +2138,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                                                     <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Tồn Thực Tế / Sổ Sách</span>
                                                     <div className="mt-1 flex items-baseline gap-2">
                                                         <span className="text-lg sm:text-xl font-extrabold font-mono text-slate-900">
-                                                            {totalOnHandQty.toLocaleString()} <span className="text-xs font-semibold text-slate-500">{t.bottlesUnit}</span>
+                                                            {totalOnHandQty.toLocaleString('vi-VN')} <span className="text-xs font-semibold text-slate-500">{t.bottlesUnit}</span>
                                                         </span>
                                                         {totalVarianceQty !== 0 && (
                                                             <span className={cn(
@@ -2150,7 +2150,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                                                         )}
                                                     </div>
                                                     <span className="text-[11px] text-slate-500 mt-1">
-                                                        Tồn sổ sách: <strong className="font-mono text-slate-700">{totalBookQty.toLocaleString()}</strong> {t.bottlesUnit}
+                                                        Tồn sổ sách: <strong className="font-mono text-slate-700">{totalBookQty.toLocaleString('vi-VN')}</strong> {t.bottlesUnit}
                                                     </span>
                                                 </div>
 
@@ -2158,11 +2158,11 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                                                     <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Tồn Khả Dụng Bán</span>
                                                     <div className="mt-1 flex items-baseline gap-2">
                                                         <span className="text-lg sm:text-xl font-extrabold font-mono text-emerald-700">
-                                                            {totalAvailableQty.toLocaleString()} <span className="text-xs font-semibold text-emerald-600">{t.bottlesUnit}</span>
+                                                            {totalAvailableQty.toLocaleString('vi-VN')} <span className="text-xs font-semibold text-emerald-600">{t.bottlesUnit}</span>
                                                         </span>
                                                     </div>
                                                     <span className="text-[11px] text-slate-500 mt-1">
-                                                        Đang giữ chỗ đơn SO: <strong className="font-mono text-blue-700">{totalReservedQty.toLocaleString()}</strong> {t.bottlesUnit}
+                                                        Đang giữ chỗ đơn SO: <strong className="font-mono text-blue-700">{totalReservedQty.toLocaleString('vi-VN')}</strong> {t.bottlesUnit}
                                                     </span>
                                                 </div>
 
@@ -2172,11 +2172,11 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                                                     </span>
                                                     <div className="mt-1">
                                                         <span className="text-lg sm:text-xl font-extrabold font-mono text-slate-900">
-                                                            {canSeeCost ? formatStatCurrency(totalFilteredValue) : `${filteredLots.length.toLocaleString()} lô`}
+                                                            {canSeeCost ? formatStatCurrency(totalFilteredValue) : `${filteredLots.length.toLocaleString('vi-VN')} lô`}
                                                         </span>
                                                     </div>
                                                     <span className="text-[11px] text-slate-500 mt-1 truncate">
-                                                        {canSeeCost ? formatCurrency(totalFilteredValue) : `Trên tổng số ${lots.length.toLocaleString()} lô toàn kho`}
+                                                        {canSeeCost ? formatCurrency(totalFilteredValue) : `Trên tổng số ${lots.length.toLocaleString('vi-VN')} lô toàn kho`}
                                                     </span>
                                                 </div>
                                             </div>
@@ -2287,7 +2287,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                                                     <option value="">Tất cả Vintage ({vintageOptions.length})</option>
                                                     {vintageOptions.map(v => (
                                                         <option key={v.value} value={v.value}>
-                                                            {v.label} — {v.avail.toLocaleString()} chai ({v.count} vị trí)
+                                                            {v.label} — {v.avail.toLocaleString('vi-VN')} chai ({v.count} vị trí)
                                                         </option>
                                                     ))}
                                                 </select>
@@ -2306,7 +2306,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                                                     <option value="">Tất cả Vị Trí Kệ ({locationOptions.length})</option>
                                                     {locationOptions.map(loc => (
                                                         <option key={loc.code} value={loc.code}>
-                                                            {loc.friendly} — {loc.avail.toLocaleString()} chai ({loc.count} lô)
+                                                            {loc.friendly} — {loc.avail.toLocaleString('vi-VN')} chai ({loc.count} lô)
                                                         </option>
                                                     ))}
                                                 </select>

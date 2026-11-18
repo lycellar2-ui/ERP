@@ -234,15 +234,15 @@ export async function POST() {
                 const flags: string[] = []
                 if (c.isChurning) flags.push('[CHURNING]')
                 if (c.openComplaints > 0) flags.push(`[${c.openComplaints} complaints]`)
-                if (c.overdueAmount > 0) flags.push(`[overdue: ${c.overdueAmount.toLocaleString()}đ]`)
+                if (c.overdueAmount > 0) flags.push(`[overdue: ${c.overdueAmount.toLocaleString('vi-VN')}đ]`)
                 if (c.creditHold) flags.push('[CREDIT-HOLD]')
 
-                return `${c.name} (${c.code}) | ${c.type}/${c.channel ?? 'N/A'} | Tier: ${c.tier} | Revenue: ${c.totalRevenue.toLocaleString()}đ (tháng này: ${c.monthRevenue.toLocaleString()}đ, growth: ${c.revenueGrowth}%) | Orders: ${c.totalOrders} | Last order: ${c.daysSinceLastOrder !== null ? c.daysSinceLastOrder + 'd ago' : 'Never'} | AR: ${c.arOutstanding.toLocaleString()}đ | Sales Rep: ${c.salesRep} | Tags: [${c.tags.join(', ')}] | Activities (30d): ${c.recentActivities} | Opps: ${c.oppCount} ${flags.length > 0 ? '| ' + flags.join(' ') : ''}`
+                return `${c.name} (${c.code}) | ${c.type}/${c.channel ?? 'N/A'} | Tier: ${c.tier} | Revenue: ${c.totalRevenue.toLocaleString('vi-VN')}đ (tháng này: ${c.monthRevenue.toLocaleString('vi-VN')}đ, growth: ${c.revenueGrowth}%) | Orders: ${c.totalOrders} | Last order: ${c.daysSinceLastOrder !== null ? c.daysSinceLastOrder + 'd ago' : 'Never'} | AR: ${c.arOutstanding.toLocaleString('vi-VN')}đ | Sales Rep: ${c.salesRep} | Tags: [${c.tags.join(', ')}] | Activities (30d): ${c.recentActivities} | Opps: ${c.oppCount} ${flags.length > 0 ? '| ' + flags.join(' ') : ''}`
             }).join('\n')
 
         const oppList = opportunities.map(o => {
             const cust = enriched.find(c => c.name && customers.find(cu => cu.id === o.customerId)?.name === c.name)
-            return `${o.name} | Customer: ${cust?.name ?? 'N/A'} | Stage: ${o.stage} | Value: ${Number(o.expectedValue).toLocaleString()}đ | Prob: ${o.probability}%`
+            return `${o.name} | Customer: ${cust?.name ?? 'N/A'} | Stage: ${o.stage} | Value: ${Number(o.expectedValue).toLocaleString('vi-VN')}đ | Prob: ${o.probability}%`
         }).join('\n')
 
         const prompt = `Bạn là CRM Director / Chief Revenue Officer cho LY's Cellars, công ty nhập khẩu rượu vang cao cấp tại Việt Nam.
@@ -256,11 +256,11 @@ ${customerList}
 ${oppList || 'Không có cơ hội nào'}
 
 ===== THỐNG KÊ TỔNG HỢP =====
-- Tổng doanh thu tích lũy: ${totalRevenue.toLocaleString()} VND
-- Doanh thu tháng này: ${totalMonthRev.toLocaleString()} VND (tháng trước: ${totalPrevMonthRev.toLocaleString()} VND, tăng trưởng: ${totalPrevMonthRev > 0 ? Math.round((totalMonthRev - totalPrevMonthRev) / totalPrevMonthRev * 100) : 'N/A'}%)
-- Doanh thu TB/khách: ${avgRevPerCustomer.toLocaleString()} VND
-- Tổng công nợ phải thu: ${totalAR.toLocaleString()} VND
-- Công nợ quá hạn: ${totalOverdue.toLocaleString()} VND
+- Tổng doanh thu tích lũy: ${totalRevenue.toLocaleString('vi-VN')} VND
+- Doanh thu tháng này: ${totalMonthRev.toLocaleString('vi-VN')} VND (tháng trước: ${totalPrevMonthRev.toLocaleString('vi-VN')} VND, tăng trưởng: ${totalPrevMonthRev > 0 ? Math.round((totalMonthRev - totalPrevMonthRev) / totalPrevMonthRev * 100) : 'N/A'}%)
+- Doanh thu TB/khách: ${avgRevPerCustomer.toLocaleString('vi-VN')} VND
+- Tổng công nợ phải thu: ${totalAR.toLocaleString('vi-VN')} VND
+- Công nợ quá hạn: ${totalOverdue.toLocaleString('vi-VN')} VND
 - Khách hàng churning (>60 ngày không mua): ${churning.length}
 - Khiếu nại đang mở: ${complaintsTotal}
 - Credit hold: ${creditHoldCount}
@@ -301,7 +301,7 @@ Yêu cầu:
         if (dbPrompt) {
             finalSystem = dbPrompt.systemPrompt
             finalPrompt = dbPrompt.userTemplate
-                .replace('{{data}}', `${customerList}\n\n=== CƠ HỘI BÁN HÀNG ĐANG MỞ ===\n${oppList || 'Không có cơ hội nào'}\n\n===== THỐNG KÊ TỔNG HỢP =====\n- Tổng doanh thu tích lũy: ${totalRevenue.toLocaleString()} VND\n- Doanh thu tháng này: ${totalMonthRev.toLocaleString()} VND\n- Công nợ quá hạn: ${totalOverdue.toLocaleString()} VND\n- Churning: ${churning.length}\n- Complaints mở: ${complaintsTotal}`)
+                .replace('{{data}}', `${customerList}\n\n=== CƠ HỘI BÁN HÀNG ĐANG MỞ ===\n${oppList || 'Không có cơ hội nào'}\n\n===== THỐNG KÊ TỔNG HỢP =====\n- Tổng doanh thu tích lũy: ${totalRevenue.toLocaleString('vi-VN')} VND\n- Doanh thu tháng này: ${totalMonthRev.toLocaleString('vi-VN')} VND\n- Công nợ quá hạn: ${totalOverdue.toLocaleString('vi-VN')} VND\n- Churning: ${churning.length}\n- Complaints mở: ${complaintsTotal}`)
             finalTemp = dbPrompt.temperature
             finalMax = dbPrompt.maxTokens
         } else {

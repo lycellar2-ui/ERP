@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { cached, revalidateCache } from '@/lib/cache'
 import { parseOrThrow, RegDocCreateSchema, RegDocUpdateSchema, RegDocRenewSchema } from '@/lib/validations'
 import { uploadToStorage } from '@/lib/supabase-storage'
+import { requireAuth } from '@/lib/session'
 
 // ═══════════════════════════════════════════════════
 // Type Definitions
@@ -151,6 +152,7 @@ export async function getRegDocStats() {
 
 export async function createRegulatedDoc(input: unknown): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
+        await requireAuth()
         const validated = parseOrThrow(RegDocCreateSchema, input)
 
         const doc = await prisma.regulatedDocument.create({
@@ -188,6 +190,7 @@ export async function createRegulatedDoc(input: unknown): Promise<{ success: boo
 
 export async function updateRegulatedDoc(input: unknown): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         const validated = parseOrThrow(RegDocUpdateSchema, input)
         const { id, ...data } = validated
 
@@ -213,6 +216,7 @@ export async function updateRegulatedDoc(input: unknown): Promise<{ success: boo
 
 export async function deleteRegulatedDoc(id: string): Promise<{ success: boolean; error?: string }> {
     try {
+        await requireAuth()
         await prisma.regulatedDocument.delete({ where: { id } })
         revalidateCache('regdocs')
         revalidatePath('/dashboard/contracts')
@@ -228,6 +232,7 @@ export async function deleteRegulatedDoc(id: string): Promise<{ success: boolean
 
 export async function renewRegulatedDoc(input: unknown): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
+        await requireAuth()
         const validated = parseOrThrow(RegDocRenewSchema, input)
 
         const original = await prisma.regulatedDocument.findUnique({
@@ -293,6 +298,7 @@ export async function renewRegulatedDoc(input: unknown): Promise<{ success: bool
 
 export async function uploadRegDocFile(regDocId: string, formData: FormData) {
     try {
+        await requireAuth()
         const file = formData.get('file') as File
         if (!file || file.size === 0) return { success: false, error: 'Chưa chọn file' }
         if (file.size > 10 * 1024 * 1024) return { success: false, error: 'File quá lớn (max 10MB)' }

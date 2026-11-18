@@ -464,7 +464,7 @@ export function PaymentRequestDetailModal({
                                 <div className="text-2xl font-bold text-[#B91C1C]">{formatVND(detail.totalAmountVND)}</div>
                                 {detail.currency !== 'VND' && (
                                     <div className="text-xs text-slate-500">
-                                        {isEn ? 'Original currency' : 'Nguyên tệ'}: {detail.totalAmount.toLocaleString()} {detail.currency} ({isEn ? 'Rate' : 'Tỷ giá'}: {detail.exchangeRate.toLocaleString()})
+                                        {isEn ? 'Original currency' : 'Nguyên tệ'}: {detail.totalAmount.toLocaleString('vi-VN')} {detail.currency} ({isEn ? 'Rate' : 'Tỷ giá'}: {detail.exchangeRate.toLocaleString('vi-VN')})
                                     </div>
                                 )}
                             </div>

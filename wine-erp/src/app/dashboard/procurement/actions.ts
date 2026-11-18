@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { cached, revalidateCache } from '@/lib/cache'
 import { requireAuth, hasRole, requirePermission } from '@/lib/session'
 import { findHierarchicalTaxRate } from '@/lib/tax-utils'
+import { generateNextDocCode } from '@/lib/doc-code'
 
 import { DEFAULT_PO_ROUTING, type PORouteConfig } from '@/app/dashboard/settings/approval-matrix/constants'
 import {
@@ -1227,8 +1228,7 @@ export async function importPOFromExcel(data: {
         }
         const legalEntityId = defaultEntity.id
 
-        const count = await prisma.purchaseOrder.count()
-        const poNo = `PO-${String(count + 1).padStart(6, '0')}`
+        const poNo = await generateNextDocCode(prisma.purchaseOrder, 'poNo', 'PO-', 6)
 
         const po = await prisma.purchaseOrder.create({
             data: {

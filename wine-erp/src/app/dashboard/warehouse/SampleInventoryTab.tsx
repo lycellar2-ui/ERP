@@ -288,7 +288,7 @@ export function SampleInventoryTab() {
                                 <span>Mặt Hàng Mẫu</span>
                                 <Layers size={14} className="text-emerald-600" />
                             </div>
-                            <p className="text-xl font-extrabold font-mono text-slate-900">{stats.totalProducts.toLocaleString()} SKU</p>
+                            <p className="text-xl font-extrabold font-mono text-slate-900">{stats.totalProducts.toLocaleString('vi-VN')} SKU</p>
                             <p className="text-[10px] text-slate-500 font-medium">Tổng danh mục hàng mẫu</p>
                         </div>
 
@@ -297,7 +297,7 @@ export function SampleInventoryTab() {
                                 <span>Chính Ngạch</span>
                                 <ShieldCheck size={14} className="text-emerald-600" />
                             </div>
-                            <p className="text-xl font-extrabold font-mono text-emerald-600">{stats.totalFormalQty.toLocaleString()} chai</p>
+                            <p className="text-xl font-extrabold font-mono text-emerald-600">{stats.totalFormalQty.toLocaleString('vi-VN')} chai</p>
                             <p className="text-[10px] text-emerald-600 font-medium">Hàng mẫu nhập chính ngạch</p>
                         </div>
 
@@ -306,7 +306,7 @@ export function SampleInventoryTab() {
                                 <span>Tiểu Ngạch / Xách Tay</span>
                                 <AlertTriangle size={14} className="text-amber-600" />
                             </div>
-                            <p className="text-xl font-extrabold font-mono text-amber-600">{stats.totalInformalQty.toLocaleString()} chai</p>
+                            <p className="text-xl font-extrabold font-mono text-amber-600">{stats.totalInformalQty.toLocaleString('vi-VN')} chai</p>
                             <p className="text-[10px] text-amber-600 font-medium">Mẫu winery gửi / xách tay</p>
                         </div>
 
@@ -324,7 +324,7 @@ export function SampleInventoryTab() {
                                 <span>Xuất Tháng Này</span>
                                 <TrendingDown size={14} className="text-rose-600" />
                             </div>
-                            <p className="text-xl font-extrabold font-mono text-rose-600">-{stats.monthlyOutboundQty.toLocaleString()} chai</p>
+                            <p className="text-xl font-extrabold font-mono text-rose-600">-{stats.monthlyOutboundQty.toLocaleString('vi-VN')} chai</p>
                             <p className="text-[10px] text-slate-500 font-medium">Thử nếm & biếu tặng</p>
                         </div>
                     </div>
@@ -496,7 +496,7 @@ export function SampleInventoryTab() {
 
                                                 <td className="px-3 py-2.5 text-right">
                                                     <span className={`text-xs font-extrabold font-mono ${p.qtyOnHand > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
-                                                        {p.qtyOnHand.toLocaleString()} chai
+                                                        {p.qtyOnHand.toLocaleString('vi-VN')} chai
                                                     </span>
                                                 </td>
                                                 <td className="px-3 py-2.5 text-right text-xs font-mono text-slate-600 font-medium">

@@ -475,7 +475,7 @@ export async function approveBankTransactionMatch(params: {
 
             const totalAllocated = params.allocations.reduce((sum, a) => sum + a.allocatedAmount, 0)
             if (totalAllocated > Number(bankTxn.amount) + 10000) {
-                throw new Error(`Tổng số tiền phân bổ (${totalAllocated.toLocaleString()} đ) vượt quá số tiền giao dịch (${Number(bankTxn.amount).toLocaleString()} đ).`)
+                throw new Error(`Tổng số tiền phân bổ (${totalAllocated.toLocaleString('vi-VN')} đ) vượt quá số tiền giao dịch (${Number(bankTxn.amount).toLocaleString('vi-VN')} đ).`)
             }
 
             const targetCustomerId = params.customerId || bankTxn.matchedCustomerId

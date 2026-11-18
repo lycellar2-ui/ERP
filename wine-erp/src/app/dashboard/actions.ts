@@ -4061,31 +4061,31 @@ export async function getProductAnalyticsForDashboard(
         riskLabelVi = 'Hết hàng tồn kho (Out of Stock)'
         riskLabelEn = 'Out of Stock (0 btls)'
         recommendationVi = m6.avgMonthlySales > 0
-            ? `Đang đứt hàng! Tốc độ tiêu thụ 6T là ${m6.avgMonthlySales} chai/tháng — cần nhập bổ sung ngay ~${m6.suggestedReorderBottles.toLocaleString()} chai (${m6.suggestedReorderCases} thùng).`
+            ? `Đang đứt hàng! Tốc độ tiêu thụ 6T là ${m6.avgMonthlySales} chai/tháng — cần nhập bổ sung ngay ~${m6.suggestedReorderBottles.toLocaleString('vi-VN')} chai (${m6.suggestedReorderCases} thùng).`
             : 'Hiện không còn tồn kho tại các kho.'
         recommendationEn = m6.avgMonthlySales > 0
-            ? `Out of stock! 6M velocity is ${m6.avgMonthlySales} btls/mo — reorder ~${m6.suggestedReorderBottles.toLocaleString()} btls (${m6.suggestedReorderCases} cases).`
+            ? `Out of stock! 6M velocity is ${m6.avgMonthlySales} btls/mo — reorder ~${m6.suggestedReorderBottles.toLocaleString('en-US')} btls (${m6.suggestedReorderCases} cases).`
             : 'Currently zero stock across all warehouses.'
     } else if (m6.avgMonthlySales <= 0 && m12.avgMonthlySales <= 0) {
         riskStatus = 'NO_SALES'
         riskLabelVi = 'Tồn chậm luân chuyển (Chưa phát sinh bán 12T)'
         riskLabelEn = 'Slow Moving (No Sales in 12M)'
-        recommendationVi = `Đang tồn ${totalStock.toLocaleString()} chai nhưng chưa phát sinh sản lượng bán trong 12 tháng qua — ưu tiên chương trình đẩy hàng / by-the-glass.`
-        recommendationEn = `${totalStock.toLocaleString()} btls in stock with zero sales in the last 12M — consider promotional push.`
+        recommendationVi = `Đang tồn ${totalStock.toLocaleString('vi-VN')} chai nhưng chưa phát sinh sản lượng bán trong 12 tháng qua — ưu tiên chương trình đẩy hàng / by-the-glass.`
+        recommendationEn = `${totalStock.toLocaleString('en-US')} btls in stock with zero sales in the last 12M — consider promotional push.`
     } else {
         const refMos = m6.mosCurrentStock ?? m12.mosCurrentStock ?? 0
         if (refMos < 2) {
             riskStatus = 'CRITICAL'
             riskLabelVi = 'Báo động thiếu hàng (MOS < 2 tháng)'
             riskLabelEn = 'Critical Low Stock (MOS < 2M)'
-            recommendationVi = `Tồn kho chỉ đủ bán ~${refMos} tháng (Lead time nhập khẩu ~${leadTimeDays} ngày) — cần lên PO nhập gấp tối thiểu ${m6.suggestedReorderBottles.toLocaleString()} chai (${m6.suggestedReorderCases} thùng).`
-            recommendationEn = `Only ~${refMos} months of supply left (Lead time ~${leadTimeDays}d) — urgent PO recommended for ${m6.suggestedReorderBottles.toLocaleString()} btls (${m6.suggestedReorderCases} cases).`
+            recommendationVi = `Tồn kho chỉ đủ bán ~${refMos} tháng (Lead time nhập khẩu ~${leadTimeDays} ngày) — cần lên PO nhập gấp tối thiểu ${m6.suggestedReorderBottles.toLocaleString('vi-VN')} chai (${m6.suggestedReorderCases} thùng).`
+            recommendationEn = `Only ~${refMos} months of supply left (Lead time ~${leadTimeDays}d) — urgent PO recommended for ${m6.suggestedReorderBottles.toLocaleString('en-US')} btls (${m6.suggestedReorderCases} cases).`
         } else if (refMos < 3.5) {
             riskStatus = 'LOW'
             riskLabelVi = 'Sắp chạm điểm đặt hàng (MOS 2 – 3.5 tháng)'
             riskLabelEn = 'Reorder Point Approaching (MOS 2 – 3.5M)'
-            recommendationVi = `Tồn kho còn ~${refMos} tháng — nên chuẩn bị kế hoạch đặt hàng thêm ~${m6.suggestedReorderBottles.toLocaleString()} chai (${m6.suggestedReorderCases} thùng) để duy trì chuẩn 6 tháng.`
-            recommendationEn = `~${refMos} months of supply remaining — plan next PO of ~${m6.suggestedReorderBottles.toLocaleString()} btls (${m6.suggestedReorderCases} cases).`
+            recommendationVi = `Tồn kho còn ~${refMos} tháng — nên chuẩn bị kế hoạch đặt hàng thêm ~${m6.suggestedReorderBottles.toLocaleString('vi-VN')} chai (${m6.suggestedReorderCases} thùng) để duy trì chuẩn 6 tháng.`
+            recommendationEn = `~${refMos} months of supply remaining — plan next PO of ~${m6.suggestedReorderBottles.toLocaleString('en-US')} btls (${m6.suggestedReorderCases} cases).`
         } else if (refMos <= 6) {
             riskStatus = 'OPTIMAL'
             riskLabelVi = 'Tồn kho chuẩn an toàn (MOS 3.5 – 6 tháng)'

@@ -130,6 +130,30 @@ export function CustomerRulesTab({ currentUser }: Props) {
     const [cloneSearchTarget, setCloneSearchTarget] = useState('')
     const [cloning, setCloning] = useState(false)
 
+    // Controlled Prompt Dialog state (replaces window.prompt)
+    const [promptDialog, setPromptDialog] = useState<{
+        title: string
+        message: string
+        placeholder: string
+        required: boolean
+        confirmLabel: string
+        danger?: boolean
+        onSubmit: (val: string) => Promise<void>
+    } | null>(null)
+    const [promptText, setPromptText] = useState('')
+    const [promptSubmitting, setPromptSubmitting] = useState(false)
+
+    useEffect(() => {
+        if (!promptDialog) return
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && !promptSubmitting) {
+                setPromptDialog(null)
+            }
+        }
+        window.addEventListener('keydown', onKeyDown)
+        return () => window.removeEventListener('keydown', onKeyDown)
+    }, [promptDialog, promptSubmitting])
+
     // Permissions check (RBAC)
     const userRoles = currentUser?.roles ?? []
     const userPerms = currentUser?.permissions ?? []
@@ -278,62 +302,73 @@ export function CustomerRulesTab({ currentUser }: Props) {
         setPolicySaving(false)
     }
 
-    const handleApprovePolicyL2 = async (proposalId: string, proposalNo: string, currentLevel: number) => {
+    const handleApprovePolicyL2 = (proposalId: string, proposalNo: string, currentLevel: number) => {
         const stepLabel = getStepTitle(currentLevel)
-        const comment = prompt(
-            isEn
+        setPromptText('')
+        setPromptDialog({
+            title: isEn ? `Approve ${stepLabel}` : `Phê duyệt ${stepLabel}`,
+            message: isEn
                 ? `Approve ${stepLabel} for Level 2 Pricing Proposal ${proposalNo} (Optional comment):`
-                : `Xác nhận phê duyệt ${stepLabel} cho Tờ trình Cơ chế giá ${proposalNo} (Nhập ghi chú tùy chọn):`
-        )
-        if (comment === null) return
-        setLoading(true)
-        const res = await approveCustomerPricingPolicyL2(proposalId, comment)
-        if (res.success) {
-            if (res.newStatus === 'APPROVED') {
-                toast.success(
-                    isEn
-                        ? `Final Step 3 (CEO) approved! Level 2 pricing policy (${proposalNo}) is now active.`
-                        : `Đã phê duyệt hoàn tất Cấp 3 (CEO)! Cơ chế giá Level 2 của tờ trình ${proposalNo} đã chính thức có hiệu lực.`
-                )
-            } else {
-                toast.success(
-                    isEn
-                        ? `Approved ${stepLabel} for ${proposalNo}. Forwarded to next approval level.`
-                        : `Đã duyệt ${stepLabel} cho tờ trình ${proposalNo}. Đã chuyển sang cấp duyệt tiếp theo.`
-                )
-            }
-            await loadData()
-            if (drawerCustomer) await refreshDrawer()
-        } else {
-            toast.error(i18n.general.errorPrefix + res.error)
-        }
-        setLoading(false)
+                : `Xác nhận phê duyệt ${stepLabel} cho Tờ trình Cơ chế giá ${proposalNo} (Nhập ghi chú tùy chọn):`,
+            placeholder: isEn ? 'Optional approval note...' : 'Ghi chú phê duyệt (tùy chọn)...',
+            required: false,
+            confirmLabel: isEn ? 'Approve' : 'Phê duyệt',
+            danger: false,
+            onSubmit: async (comment: string) => {
+                setLoading(true)
+                const res = await approveCustomerPricingPolicyL2(proposalId, comment)
+                if (res.success) {
+                    if (res.newStatus === 'APPROVED') {
+                        toast.success(
+                            isEn
+                                ? `Final Step 3 (CEO) approved! Level 2 pricing policy (${proposalNo}) is now active.`
+                                : `Đã phê duyệt hoàn tất Cấp 3 (CEO)! Cơ chế giá Level 2 của tờ trình ${proposalNo} đã chính thức có hiệu lực.`
+                        )
+                    } else {
+                        toast.success(
+                            isEn
+                                ? `Approved ${stepLabel} for ${proposalNo}. Forwarded to next approval level.`
+                                : `Đã duyệt ${stepLabel} cho tờ trình ${proposalNo}. Đã chuyển sang cấp duyệt tiếp theo.`
+                        )
+                    }
+                    await loadData()
+                    if (drawerCustomer) await refreshDrawer()
+                } else {
+                    toast.error(i18n.general.errorPrefix + res.error)
+                }
+                setLoading(false)
+            },
+        })
     }
 
-    const handleRejectPolicyL2 = async (proposalId: string, proposalNo: string) => {
-        const comment = prompt(
-            isEn
+    const handleRejectPolicyL2 = (proposalId: string, proposalNo: string) => {
+        setPromptText('')
+        setPromptDialog({
+            title: isEn ? 'Reject Pricing Proposal' : 'Từ chối Tờ trình Cơ chế giá',
+            message: isEn
                 ? `Enter rejection reason for Proposal ${proposalNo} (required):`
-                : `Nhập lý do từ chối Tờ trình Cơ chế giá ${proposalNo} (bắt buộc):`
-        )
-        if (!comment) {
-            if (comment !== null) toast.warning(cr.dialogs.rejectReasonRequired)
-            return
-        }
-        setLoading(true)
-        const res = await rejectCustomerPricingPolicyL2(proposalId, comment)
-        if (res.success) {
-            toast.success(
-                isEn
-                    ? `Rejected proposal ${proposalNo}. Previous active policy remains unchanged.`
-                    : `Đã từ chối tờ trình ${proposalNo}. Chính sách giá cũ của khách hàng vẫn được giữ nguyên.`
-            )
-            await loadData()
-            if (drawerCustomer) await refreshDrawer()
-        } else {
-            toast.error(i18n.general.errorPrefix + res.error)
-        }
-        setLoading(false)
+                : `Nhập lý do từ chối Tờ trình Cơ chế giá ${proposalNo} (bắt buộc):`,
+            placeholder: isEn ? 'Enter rejection reason...' : 'Nhập lý do từ chối...',
+            required: true,
+            confirmLabel: isEn ? 'Reject' : 'Từ chối',
+            danger: true,
+            onSubmit: async (comment: string) => {
+                setLoading(true)
+                const res = await rejectCustomerPricingPolicyL2(proposalId, comment)
+                if (res.success) {
+                    toast.success(
+                        isEn
+                            ? `Rejected proposal ${proposalNo}. Previous active policy remains unchanged.`
+                            : `Đã từ chối tờ trình ${proposalNo}. Chính sách giá cũ của khách hàng vẫn được giữ nguyên.`
+                    )
+                    await loadData()
+                    if (drawerCustomer) await refreshDrawer()
+                } else {
+                    toast.error(i18n.general.errorPrefix + res.error)
+                }
+                setLoading(false)
+            },
+        })
     }
 
     // Create Rule Action inside Drawer (Level 3)
@@ -367,37 +402,52 @@ export function CustomerRulesTab({ currentUser }: Props) {
         setSaving(false)
     }
 
-    const handleApprove = async (id: string) => {
-        const comment = prompt(cr.dialogs.approvePrompt)
-        if (comment === null) return
-        setLoading(true)
-        const res = await approveCustomerPriceRule(id, comment)
-        if (res.success) {
-            toast.success(cr.dialogs.toastApproved)
-            await loadData()
-            if (drawerCustomer) await refreshDrawer()
-        } else {
-            toast.error(i18n.general.errorPrefix + res.error)
-        }
-        setLoading(false)
+    const handleApprove = (id: string) => {
+        setPromptText('')
+        setPromptDialog({
+            title: isEn ? 'Approve Special Price Rule' : 'Phê duyệt Chính sách Giá Đặc Biệt',
+            message: cr.dialogs.approvePrompt,
+            placeholder: isEn ? 'Optional approval note...' : 'Ghi chú phê duyệt (tùy chọn)...',
+            required: false,
+            confirmLabel: isEn ? 'Approve' : 'Phê duyệt',
+            danger: false,
+            onSubmit: async (comment: string) => {
+                setLoading(true)
+                const res = await approveCustomerPriceRule(id, comment)
+                if (res.success) {
+                    toast.success(cr.dialogs.toastApproved)
+                    await loadData()
+                    if (drawerCustomer) await refreshDrawer()
+                } else {
+                    toast.error(i18n.general.errorPrefix + res.error)
+                }
+                setLoading(false)
+            },
+        })
     }
 
-    const handleReject = async (id: string) => {
-        const comment = prompt(cr.dialogs.rejectPrompt)
-        if (!comment) {
-            if (comment !== null) toast.warning(cr.dialogs.rejectReasonRequired)
-            return
-        }
-        setLoading(true)
-        const res = await rejectCustomerPriceRule(id, comment)
-        if (res.success) {
-            toast.success(cr.dialogs.toastRejected)
-            await loadData()
-            if (drawerCustomer) await refreshDrawer()
-        } else {
-            toast.error(i18n.general.errorPrefix + res.error)
-        }
-        setLoading(false)
+    const handleReject = (id: string) => {
+        setPromptText('')
+        setPromptDialog({
+            title: isEn ? 'Reject Special Price Rule' : 'Từ chối Chính sách Giá Đặc Biệt',
+            message: cr.dialogs.rejectPrompt,
+            placeholder: isEn ? 'Enter rejection reason...' : 'Nhập lý do từ chối...',
+            required: true,
+            confirmLabel: isEn ? 'Reject' : 'Từ chối',
+            danger: true,
+            onSubmit: async (comment: string) => {
+                setLoading(true)
+                const res = await rejectCustomerPriceRule(id, comment)
+                if (res.success) {
+                    toast.success(cr.dialogs.toastRejected)
+                    await loadData()
+                    if (drawerCustomer) await refreshDrawer()
+                } else {
+                    toast.error(i18n.general.errorPrefix + res.error)
+                }
+                setLoading(false)
+            },
+        })
     }
 
     const handleDelete = (id: string) => {
@@ -1990,6 +2040,80 @@ export function CustomerRulesTab({ currentUser }: Props) {
                                 className="flex items-center gap-2 px-5 py-2 text-xs font-bold rounded-md bg-[#0E7490] text-white hover:bg-[#155E75] transition disabled:opacity-50"
                             >
                                 {cloning ? <Loader2 size={14} className="animate-spin" /> : `${cr.cloneModal.executeBtnPrefix} ${cloneTargetCustomers.length} ${cr.cloneModal.executeBtnSuffix}`}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {promptDialog && (
+                <div
+                    role="dialog"
+                    aria-modal="true"
+                    className="fixed inset-0 z-[70] bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4"
+                    onClick={() => { if (!promptSubmitting) setPromptDialog(null) }}
+                >
+                    <div
+                        className="w-full max-w-md rounded-lg bg-white border border-slate-200 shadow-lg p-5 space-y-4 animate-modal-in"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="flex items-start justify-between gap-3">
+                            <div>
+                                <h3 className="type-section-title text-lys-primary">{promptDialog.title}</h3>
+                                <p className="text-xs text-lys-secondary mt-1">{promptDialog.message}</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => { if (!promptSubmitting) setPromptDialog(null) }}
+                                className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                                aria-label={i18n.general.cancel}
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        <textarea
+                            autoFocus
+                            rows={3}
+                            value={promptText}
+                            onChange={e => setPromptText(e.target.value)}
+                            placeholder={promptDialog.placeholder}
+                            className="w-full px-3 py-2 text-base sm:text-sm rounded-md border border-slate-300 bg-white text-slate-900 focus:outline-none focus:border-[#0891B2]"
+                        />
+
+                        <div className="flex items-center justify-end gap-2">
+                            <button
+                                type="button"
+                                disabled={promptSubmitting}
+                                onClick={() => setPromptDialog(null)}
+                                className="px-4 py-2 text-xs font-semibold rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                            >
+                                {i18n.general.cancel}
+                            </button>
+                            <button
+                                type="button"
+                                disabled={promptSubmitting}
+                                onClick={async () => {
+                                    const trimmed = promptText.trim()
+                                    if (promptDialog.required && !trimmed) {
+                                        toast.warning(cr.dialogs.rejectReasonRequired)
+                                        return
+                                    }
+                                    setPromptSubmitting(true)
+                                    try {
+                                        await promptDialog.onSubmit(trimmed)
+                                        setPromptDialog(null)
+                                    } finally {
+                                        setPromptSubmitting(false)
+                                    }
+                                }}
+                                className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-md text-white transition disabled:opacity-50 ${
+                                    promptDialog.danger
+                                        ? 'bg-red-700 hover:bg-red-800'
+                                        : 'bg-[#0E7490] hover:bg-[#155E75]'
+                                }`}
+                            >
+                                {promptSubmitting && <Loader2 size={13} className="animate-spin" />}
+                                {promptDialog.confirmLabel}
                             </button>
                         </div>
                     </div>

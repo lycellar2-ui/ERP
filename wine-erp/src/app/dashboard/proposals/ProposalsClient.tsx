@@ -94,6 +94,20 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
     const [detail, setDetail] = useState<ProposalDetail | null>(null)
     const [loading, setLoading] = useState(false)
     const [actionLoading, setActionLoading] = useState<string | null>(null)
+    const [reasonModal, setReasonModal] = useState<{
+        proposalId: string
+        action: 'REJECT' | 'RETURN'
+    } | null>(null)
+    const [reasonText, setReasonText] = useState('')
+
+    useEffect(() => {
+        if (!reasonModal) return
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setReasonModal(null)
+        }
+        window.addEventListener('keydown', onKeyDown)
+        return () => window.removeEventListener('keydown', onKeyDown)
+    }, [reasonModal])
 
     // Sync state if server initialProposals updates
     useEffect(() => {
@@ -1288,8 +1302,8 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                                 variant="danger-outline"
                                                                 onClick={e => {
                                                                     e.stopPropagation()
-                                                                    const reason = prompt(locale === 'en' ? 'Reason for rejection:' : 'Lý do từ chối:')
-                                                                    if (reason) handleApproval(p.id, 'REJECT', reason)
+                                                                    setReasonText('')
+                                                                    setReasonModal({ proposalId: p.id, action: 'REJECT' })
                                                                 }}
                                                                 title={t.actions.reject}
                                                             >
@@ -1403,8 +1417,8 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                                                     size="sm"
                                                     variant="danger-outline"
                                                     onClick={() => {
-                                                        const reason = prompt(locale === 'en' ? 'Reason for rejection:' : 'Lý do từ chối:')
-                                                        if (reason) handleApproval(p.id, 'REJECT', reason)
+                                                        setReasonText('')
+                                                        setReasonModal({ proposalId: p.id, action: 'REJECT' })
                                                     }}
                                                 >
                                                     <XCircle size={12} /> {t.actions.reject}
@@ -1443,9 +1457,89 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     isCEO={isCEO}
                     userRoles={userRoles}
                     onApproval={async (action, comment) => { if (detailId) await handleApproval(detailId, action, comment); }}
+                    onRequestReason={(action) => {
+                        if (detailId) {
+                            setReasonText('')
+                            setReasonModal({ proposalId: detailId, action })
+                        }
+                    }}
                     onRefresh={async () => { await refreshList(); if (detailId) await openDetail(detailId) }}
                     onPrint={handlePrint}
                 />
+            )}
+
+            {/* Controlled Reject / Return Reason Modal */}
+            {reasonModal && (
+                <div
+                    role="dialog"
+                    aria-modal="true"
+                    className="fixed inset-0 z-[70] bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4"
+                    onClick={() => setReasonModal(null)}
+                >
+                    <div
+                        className="w-full max-w-md rounded-lg bg-white border border-slate-200 shadow-lg p-5 space-y-4 animate-modal-in"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="flex items-start justify-between gap-3">
+                            <div>
+                                <h3 className="type-section-title text-lys-primary">
+                                    {reasonModal.action === 'RETURN'
+                                        ? (locale === 'en' ? 'Return Proposal for Revision' : 'Trả lại tờ trình')
+                                        : (locale === 'en' ? 'Reject Proposal' : 'Từ chối tờ trình')}
+                                </h3>
+                                <p className="text-xs text-lys-secondary mt-1">
+                                    {reasonModal.action === 'RETURN'
+                                        ? (locale === 'en' ? 'Enter revision notes for the requester (required):' : 'Nhập ghi chú yêu cầu chỉnh sửa khi trả lại (bắt buộc):')
+                                        : (locale === 'en' ? 'Enter reason for rejection (required):' : 'Nhập lý do từ chối tờ trình (bắt buộc):')}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setReasonModal(null)}
+                                className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                                aria-label={t.actions.cancel}
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        <textarea
+                            autoFocus
+                            rows={3}
+                            value={reasonText}
+                            onChange={e => setReasonText(e.target.value)}
+                            placeholder={reasonModal.action === 'RETURN'
+                                ? (locale === 'en' ? 'Notes for return...' : 'Ghi chú khi trả lại...')
+                                : (locale === 'en' ? 'Reason for rejection...' : 'Lý do từ chối...')}
+                            className="w-full px-3 py-2 text-base sm:text-sm rounded-md border border-slate-300 bg-white text-slate-900 focus:outline-none focus:border-[#0891B2]"
+                        />
+
+                        <div className="flex items-center justify-end gap-2">
+                            <Button size="sm" variant="secondary" onClick={() => setReasonModal(null)}>
+                                {t.actions.cancel}
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant={reasonModal.action === 'REJECT' ? 'danger' : 'primary'}
+                                loading={actionLoading === reasonModal.proposalId}
+                                onClick={async () => {
+                                    const trimmed = reasonText.trim()
+                                    if (!trimmed) {
+                                        toast.warning(locale === 'en' ? 'Please enter a reason' : 'Vui lòng nhập lý do')
+                                        return
+                                    }
+                                    const target = reasonModal
+                                    setReasonModal(null)
+                                    await handleApproval(target.proposalId, target.action, trimmed)
+                                }}
+                            >
+                                {reasonModal.action === 'RETURN'
+                                    ? (locale === 'en' ? 'Confirm Return' : 'Xác nhận Trả lại')
+                                    : (locale === 'en' ? 'Confirm Reject' : 'Xác nhận Từ chối')}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
             )}
         </PageContainer>
     )
@@ -3039,7 +3133,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 }
 
 // ─── Detail Drawer ───────────────────────────────
-function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, userRoles, onApproval, onRefresh, onPrint }: {
+function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, userRoles, onApproval, onRequestReason, onRefresh, onPrint }: {
     detail: ProposalDetail | null
     loading: boolean
     actionLoading?: string | null
@@ -3048,6 +3142,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
     isCEO: boolean
     userRoles: string[]
     onApproval: (action: 'APPROVE' | 'REJECT' | 'RETURN', comment?: string) => void
+    onRequestReason: (action: 'REJECT' | 'RETURN') => void
     onRefresh: () => void
     onPrint: (lang?: 'BILINGUAL' | 'VI' | 'EN') => void
 }) {
@@ -3701,20 +3796,14 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                 </button>
                                 <div className="flex items-center gap-2 w-full sm:w-auto">
                                     <button
-                                        onClick={() => {
-                                            const reason = prompt(locale === 'en' ? 'Notes for return:' : 'Ghi chú khi trả lại:')
-                                            if (reason) onApproval('RETURN', reason)
-                                        }}
+                                        onClick={() => onRequestReason('RETURN')}
                                         disabled={Boolean(actionLoading)}
                                         className="flex-1 sm:flex-initial px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:opacity-90"
                                         style={{ background: 'rgba(196,90,42,0.1)', color: '#B45309', border: '1px solid rgba(196,90,42,0.2)' }}>
                                         <RotateCcw size={14} className="inline mr-1" /> {locale === 'en' ? 'Return' : 'Trả Lại'}
                                     </button>
                                     <button
-                                        onClick={() => {
-                                            const reason = prompt(locale === 'en' ? 'Reason for rejection:' : 'Lý do từ chối:')
-                                            if (reason) onApproval('REJECT', reason)
-                                        }}
+                                        onClick={() => onRequestReason('REJECT')}
                                         disabled={Boolean(actionLoading)}
                                         className="flex-1 sm:flex-initial px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:opacity-90"
                                         style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.2)' }}>

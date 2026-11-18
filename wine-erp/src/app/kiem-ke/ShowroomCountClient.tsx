@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Camera, ChevronLeft, KeyRound, Mic, Minus, Plus, Search, Sparkles, Square, X } from 'lucide-react'
+import { Camera, Check, ChevronLeft, KeyRound, Mic, Minus, Plus, Search, Sparkles, Square, X } from 'lucide-react'
 import {
     addShowroomPosmItem, addShowroomVintage, addShowroomWineItem, auditShowroomWithAi, getShowroomAiKeyStatus, getShowroomCount,
     identifyShowroomWineImageWithAi, parseShowroomVoiceWithAi, renameShowroomSpots,
@@ -859,7 +859,7 @@ function SpotsView(props: {
                                                         : 'Chưa đếm'}
                                                     {ss?.cells ? (
                                                         <span className={`block ${ss.rechecked < ss.cells ? 'font-bold text-tone-danger-fg' : 'font-medium text-lys-muted'}`}>
-                                                            {ss.rechecked < ss.cells ? 'kiểm lại' : '✓ kiểm lại'} {ss.rechecked}/{ss.cells}
+                                                            {ss.rechecked < ss.cells ? 'kiểm lại' : <><Check size={11} className="inline mr-0.5" />kiểm lại</>} {ss.rechecked}/{ss.cells}
                                                         </span>
                                                     ) : null}
                                                 </span>
@@ -1348,7 +1348,7 @@ function Recheck({ check, total, canCheck, busy, error, onChange }: {
         <div className="col-span-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
             {state === 'ok' ? (
                 <>
-                    <span className="rounded-md bg-tone-success-fg px-2 py-1 font-semibold text-white">✓ Đã kiểm lại · {check!.checkedBy} · {when(check!.checkedAt)}</span>
+                    <span className="inline-flex items-center gap-1 rounded-md bg-tone-success-fg px-2 py-1 font-semibold text-white"><Check size={12} /> Đã kiểm lại · {check!.checkedBy} · {when(check!.checkedAt)}</span>
                     <button disabled={busy} onClick={() => onChange(false)} className="py-1 font-semibold text-lys-muted underline disabled:opacity-50">Bỏ tích</button>
                 </>
             ) : (
@@ -2775,7 +2775,7 @@ function AiVoicePanel({
                                         <div className="mt-1 text-xs">
                                             {done ? (
                                                 <span className="font-bold text-tone-success-fg">
-                                                    ✓ Đã lưu vào kệ · Tổng trên kệ hiện tại:{' '}
+                                                    <Check size={12} className="inline mr-1" />Đã lưu vào kệ · Tổng trên kệ hiện tại:{' '}
                                                     {rowT2
                                                         ? `${cur.totalCases} thùng + ${cur.totalLoose} lẻ = ${cur.totalQty} chai`
                                                         : `${cur.totalQty} chai`}
@@ -3234,7 +3234,7 @@ function AiVisionPanel({
                                             <div className="mt-0.5 text-xs">
                                                 {done ? (
                                                     <span className="font-bold text-tone-success-fg">
-                                                        ✓ Đã lưu vào kệ · Tổng trên kệ hiện tại:{' '}
+                                                        <Check size={12} className="inline mr-1" />Đã lưu vào kệ · Tổng trên kệ hiện tại:{' '}
                                                         {isT2
                                                             ? `${cur.totalCases} thùng + ${cur.totalLoose} lẻ = ${cur.totalQty} chai`
                                                             : `${cur.totalQty} chai`}

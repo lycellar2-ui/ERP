@@ -1,27 +1,39 @@
-# 🧪 Thực thi và Kết quả Unit Test Nghiệp Vụ (Business Logic)
-**Dự án:** Wine ERP - LYS Cellars  
-**Cập nhật lần cuối:** 2026-03-05  
-**Framework:** Vitest + Prisma Mocking (AAA Pattern)  
-**Tình trạng:** ✅ **Hoàn thành (100% Xanh)** — Sẵn sàng cho Môi trường Production
+# Thực thi và Kết quả Kiểm thử Nghiệp vụ & E2E
+**Dự án:** Wine ERP - LYS Cellars
+**Cập nhật lần cuối:** 2026-11-18
+**Framework:** Vitest + Prisma Mocking + Playwright Production E2E
+**Tình trạng:** [PASS] 100% — Vitest Safe Suite (34 Files / 322 Tests) & Playwright Read-Only Production E2E (15 Specs / 53 Routes)
 
 ---
 
-## 🎯 1. Chiến Lược Kiểm Thử (Test Strategy)
-Hệ thống Wine ERP quản lý luồng dữ liệu vật lý phức tạp (Hàng hóa, Tiền tệ, Thuế, Quota, Tem). Chiến lược kiểm thử tập trung vào **Core Business Logic** thay vì các file CRUD đơn thuần.
+## 1. Chiến Lược Kiểm Thử (Test Strategy)
+Hệ thống Wine ERP quản lý luồng dữ liệu vật lý phức tạp (Hàng hóa, Tiền tệ, Thuế, Quota, Tem). Chiến lược kiểm thử kết hợp hai tầng độc lập:
 
-- **Mocking Database:** Sử dụng `vi.mock('@/lib/db')` để cô lập logic với DB thật, cho phép test chạy dưới 3 giây. Hỗ trợ đầy đủ Prisma `$transaction`.
-- **Nguyên lý AAA (Arrange - Act - Assert):** Setup dữ liệu ảo chính xác → Gọi Server Actions nội bộ → Kiểm tra kết quả trả về và các câu lệnh Prisma được thực thi tương ứng.
-- **Data Integrity:** Đảm bảo không xảy ra thất thoát quy trình (ví dụ: Xuất kho phải trừ đúng Lot, Bán POS Cash phải thu đủ tiền, Tạo hóa đơn phải sinh Journal Debit/Credit cân bằng).
+- **Tầng 1 — Unit & Regression Tests (Vitest + Prisma Mocking, AAA Pattern):** Sử dụng `vi.mock('@/lib/db')` để cô lập logic khỏi DB thật, đảm bảo invariant nghiệp vụ (FIFO `StockLot`, POS 5-in-1 transaction, VAT/TTĐB, double-entry Journal) và các guard chống hồi quy bảo mật/hydration (`test/audit-regressions.test.ts`: `REG-01`–`REG-09`). Khi bảo vệ dữ liệu Supabase live, 3 file E2E ghi DB thật (`test/business/e2e-real-db.test.ts`, `test/business/full-flow-audit.test.ts`, `test/business/stress-and-edge-cases.test.ts`) được loại trừ khỏi lần chạy safe read-only.
+- **Tầng 2 — Read-Only Production E2E (Playwright trên `next build` + `next start -p 3100`):** Kiểm tra thực tế toàn bộ **32 phân hệ / 53 routes** (`46` route `/dashboard/*` + `7` route public/auth/portal) với chế độ 0-mutation, đối chiếu đếm bản ghi DB PostgreSQL trước và sau E2E (`EXACT_MATCH`), kiểm tra i18n `VI`/`EN`, tương tác tab/drawer/modal không submit, API guards (`401`/`403`/`400`), và cô lập RBAC (`thukho`).
 
 ---
 
-## 📊 2. Báo Cáo Kết Quả (Test Results)
+## 2. Báo Cáo Kết Quả (Test Results)
 
-| Số Test Suite | Số Test Case | Failed | Tỷ Lệ Pass | Thời gian chạy |
-| :--- | :--- | :--- | :--- | :--- |
-| **22 Files** | **188 Tests** | **0** | **100%** ✅ | **~2.6 giây** ⚡ |
+### 2.1 Unit & Regression Tests (Vitest Safe Read-Only Mode)
 
-*(Chi tiết logs báo cáo nằm ở file `test_report.md` trong artifact history).*
+| Metric | Kết quả | Ghi chú |
+| :--- | :--- | :--- |
+| **Test Suites** | **34 / 34 Files Passed** | Exclude 3 file ghi DB thật trong chế độ Read-Only (`vnpt-invoice.test.ts` + `audit-regressions.test.ts` `REG-01`–`REG-09`) |
+| **Test Cases** | **322 / 322 Tests Passed (100%)** | `0 Failed`, `0 Skipped` |
+| **Regression Suite (`audit-regressions.test.ts`)** | `REG-01` – `REG-09` **Passed (18 tests)** | Bổ sung `REG-08` (zero native confirm/prompt & i18n hydration) và `REG-09` (`requireAuth` & `generateNextDocCode`) |
+| **Thời gian chạy** | **13.10s** | Chạy tuần tự trên 34 file safe mode |
+
+### 2.2 Playwright Read-Only Production E2E (`tests/e2e/all-modules-readonly.spec.ts`)
+
+| Metric | Kết quả | Ghi chú |
+| :--- | :--- | :--- |
+| **E2E Specs** | **15 / 15 Specs Passed (100%)** | `0 Failed`, `0 Flaky` (Single worker, Microsoft Edge headless) |
+| **Độ phủ Routes** | **53 / 53 Page Routes + API Guards** | `7` root/auth/public/portal + `46` `/dashboard/*` (0 `pageerror`, 0 HTTP 5xx, 0 Hydration `#418`) |
+| **Tương tác UI & i18n** | **Passed** | Toggle `EN`/`VI`, chuyển tab `/dashboard/warehouse`, `/dashboard/finance`, `/dashboard/price-list`, `/dashboard/sop`, mở/đóng drawer `/dashboard/sales` bằng `Escape` |
+| **RBAC & DB Integrity** | **Passed (`EXACT_MATCH`)** | `thukho` bị chặn khỏi `/dashboard/settings` và `/dashboard/hr`; toàn bộ 8 bảng kiểm baseline khớp 100% sau E2E |
+| **Thời gian chạy** | **1.0m** (Group B 46 routes trong `30.4s`) | Target `http://localhost:3100` (`next start`) |
 
 ---
 

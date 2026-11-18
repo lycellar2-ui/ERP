@@ -5,6 +5,7 @@ Phân hệ này mở ra một cổng web riêng biệt (subdomain hoặc section
 ## 1. Mô Hình Truy Cập (Access Model)
 - Agency được cấp tài khoản loại `EXTERNAL_PARTNER` — **không phải** tài khoản nội bộ
 - Tài khoản Agency chỉ thấy đúng lô hàng mà họ được chỉ định phụ trách (`Shipment Scope Lock`)
+- Các route dành riêng cho cổng đối tác (`/partner-login` và `/portal`) được khai báo trong `isAgencyPath` tại `wine-erp/src/middleware.ts` để bỏ qua redirect sang `/login` nội bộ và xác thực độc lập bằng `agency_token` (`ExternalPartner`)
 - Mọi thao tác của Agency đều được Audit Trail ghi lại, và bộ phận Thu mua nội bộ phải **Review & Confirm** trước khi số liệu có hiệu lực trong ERP
 
 ---
@@ -97,5 +98,5 @@ Phân hệ này mở ra một cổng web riêng biệt (subdomain hoặc section
 
 ---
 
-*Last updated: 2026-03-08 00:45*
+*Last updated: 2026-11-15*
 

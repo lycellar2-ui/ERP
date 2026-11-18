@@ -781,7 +781,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                 <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200">
                                     <span className="text-[10px] text-slate-500 uppercase font-bold block">{t.client.metricTotalStock}</span>
                                     <span className="text-lg font-black text-slate-900 font-mono mt-1 block">
-                                        {cycleProgress.totalBottles.toLocaleString()} {t.common.bottles}
+                                        {cycleProgress.totalBottles.toLocaleString('vi-VN')} {t.common.bottles}
                                     </span>
                                 </div>
                             </div>
@@ -861,7 +861,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                     </span>
                                                 )}
                                                 <strong className="font-mono text-slate-900 shrink-0 min-w-[70px] text-right">
-                                                    {(p.totalQty ?? 0).toLocaleString()} {t.common.bottles}
+                                                    {(p.totalQty ?? 0).toLocaleString('vi-VN')} {t.common.bottles}
                                                 </strong>
                                             </div>
                                         </div>
@@ -1546,7 +1546,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                                 </div>
 
                                                 <div className="text-right shrink-0">
-                                                    <strong className="font-mono text-slate-900">{p.totalQty.toLocaleString()} chai</strong>
+                                                    <strong className="font-mono text-slate-900">{p.totalQty.toLocaleString('vi-VN')} chai</strong>
                                                 </div>
                                             </label>
                                         )

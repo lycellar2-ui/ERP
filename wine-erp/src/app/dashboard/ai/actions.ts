@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma } from '@/lib/db'
+import { requireAuth } from '@/lib/session'
 
 // ═══════════════════════════════════════════════════
 // AI FEATURES — Demand forecast + Pricing suggestion
@@ -8,6 +9,7 @@ import { prisma } from '@/lib/db'
 
 // Simple moving average demand forecast (no external AI dependency)
 export async function forecastDemand(productId: string, monthsAhead: number = 3) {
+    await requireAuth()
     const sixMonthsAgo = new Date()
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
 
@@ -88,6 +90,7 @@ export async function forecastDemand(productId: string, monthsAhead: number = 3)
 
 // AI pricing suggestion based on market data + costs + demand
 export async function suggestPricing(productId: string) {
+    await requireAuth()
     // Get current stock costs
     const lots = await prisma.stockLot.findMany({
         where: { productId, status: 'AVAILABLE', qtyAvailable: { gt: 0 } },
@@ -188,6 +191,7 @@ export type AnomalyAlert = {
 }
 
 export async function detectAnomalies(): Promise<AnomalyAlert[]> {
+    await requireAuth()
     const alerts: AnomalyAlert[] = []
     const now = new Date()
     const thirtyDaysAgo = new Date()
@@ -208,7 +212,7 @@ export async function detectAnomalies(): Promise<AnomalyAlert[]> {
                         type: 'unusual_order',
                         severity: 'high',
                         title: `Đơn hàng bất thường: ${order.soNo}`,
-                        description: `${order.customer.name} — ₫${Number(order.totalAmount).toLocaleString()} (gấp ${(Number(order.totalAmount) / avg).toFixed(1)}x TB)`,
+                        description: `${order.customer.name} — ₫${Number(order.totalAmount).toLocaleString('vi-VN')} (gấp ${(Number(order.totalAmount) / avg).toFixed(1)}x TB)`,
                         entityId: order.id,
                         detectedAt: now,
                     })
@@ -235,7 +239,7 @@ export async function detectAnomalies(): Promise<AnomalyAlert[]> {
                         type: 'duplicate_invoice',
                         severity: 'medium',
                         title: `Hóa đơn trùng: ${inv.invoiceNo}`,
-                        description: `Cùng khách hàng + cùng số tiền ₫${Number(inv.amount).toLocaleString()} trong ${daysDiff.toFixed(0)} ngày`,
+                        description: `Cùng khách hàng + cùng số tiền ₫${Number(inv.amount).toLocaleString('vi-VN')} trong ${daysDiff.toFixed(0)} ngày`,
                         entityId: inv.id,
                         detectedAt: now,
                     })
@@ -280,7 +284,7 @@ export async function detectAnomalies(): Promise<AnomalyAlert[]> {
                 type: 'expense_spike',
                 severity: 'medium',
                 title: `Chi phí lớn chưa duyệt: ${exp.expenseNo}`,
-                description: `₫${Number(exp.amount).toLocaleString()} — ${exp.description ?? exp.category}`,
+                description: `₫${Number(exp.amount).toLocaleString('vi-VN')} — ${exp.description ?? exp.category}`,
                 entityId: exp.id,
                 detectedAt: now,
             })
@@ -314,6 +318,7 @@ export type OCRDeclarationResult = {
 
 export async function ocrCustomsDeclaration(textContent: string): Promise<OCRDeclarationResult> {
     try {
+        await requireAuth()
         const { callGemini } = await import('@/lib/ai-service')
         const result = await callGemini({
             prompt: `Trích xuất thông tin từ tờ khai hải quan sau. Trả về JSON (không markdown):
@@ -363,6 +368,7 @@ export type OCRLogisticsResult = {
 
 export async function ocrLogisticsInvoice(textContent: string): Promise<OCRLogisticsResult> {
     try {
+        await requireAuth()
         const { callGemini } = await import('@/lib/ai-service')
         const result = await callGemini({
             prompt: `Trích xuất chi phí logistics từ hóa đơn sau. Trả về JSON (không markdown):
@@ -430,6 +436,7 @@ const COUNTRY_KW: Record<string, string> = {
 }
 
 export async function smartProductSearch(query: string): Promise<SmartSearchResult[]> {
+    await requireAuth()
     const q = query.toLowerCase().trim()
 
     let detectedTypes: string[] = []
@@ -496,6 +503,7 @@ export async function smartProductSearch(query: string): Promise<SmartSearchResu
 // ═══════════════════════════════════════════════════
 
 export async function generateCEOSummary() {
+    await requireAuth()
     const now = new Date()
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
 

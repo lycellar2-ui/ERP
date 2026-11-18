@@ -200,7 +200,7 @@ export const WAREHOUSE_I18N = {
             restore: 'Đưa Lại Kho Bán',
             writeOff: 'Xuất Hủy (Bể/Hỏng)',
             unassigned: 'Chưa gán vị trí',
-            quarantineCountBadge: (count: number) => `Hàng lỗi: ${count.toLocaleString()} chai`,
+            quarantineCountBadge: (count: number) => `Hàng lỗi: ${count.toLocaleString('vi-VN')} chai`,
         },
 
         locationsPanel: {
@@ -412,7 +412,7 @@ export const WAREHOUSE_I18N = {
             restore: 'Restore',
             writeOff: 'Write-off',
             unassigned: 'Unassigned',
-            quarantineCountBadge: (count: number) => `Quarantine: ${count.toLocaleString()} btls`,
+            quarantineCountBadge: (count: number) => `Quarantine: ${count.toLocaleString('en-US')} btls`,
         },
 
         locationsPanel: {
