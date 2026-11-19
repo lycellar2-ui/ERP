@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import {
     createProposal, submitProposal, processProposalApproval, addProposalComment,
-    getProposalDetail, updateProposalStatus, getProposals,
+    getProposalDetail, updateProposalStatus, getProposals, getCreatableProposalCategories,
 } from './actions'
 import { CATEGORY_LABELS, PRIORITY_LABELS, STATUS_LABELS, getCategoryLabel, getPriorityLabel, getStatusLabel } from './constants'
 import { PROPOSALS_I18N, formatBilingualTitle } from './i18n'
@@ -17,7 +17,7 @@ import { useAppLocale, type AppLocale } from '@/lib/i18n'
 import { formatVND } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'next/navigation'
-import { getCustomersForSO, getProductsWithStock } from '../sales/actions'
+import { getCustomersForSO, getProductsWithStock, createBulkTradeVisitDraftSOs } from '../sales/actions'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase'
 import {
@@ -142,6 +142,8 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 return { label: isEn ? 'Tasting (Sample)' : 'Tasting (Thử Rượu)', bg: '#FEF3C7', color: '#92400E', border: '#FDE68A' }
             case 'INTERNAL_TRAINING':
                 return { label: isEn ? 'Internal Training' : 'Đào Tạo Nội Bộ', bg: '#ECFDF5', color: '#065F46', border: '#A7F3D0' }
+            case 'TRADE_VISIT':
+                return { label: 'Trade Visit', bg: '#ECFEFF', color: '#0F766E', border: '#99F6E4' }
             case 'SPECIAL_EVENT':
                 return { label: isEn ? 'Special Event' : 'Sự Kiện / Event', bg: '#F1F5F9', color: '#334155', border: '#CBD5E1' }
             case 'PRICE_ADJUSTMENT':
@@ -337,10 +339,17 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             return
         }
 
-        const isTasting = detail.category === 'TASTING' || detail.category === 'SPECIAL_EVENT' || detail.category === 'INTERNAL_TRAINING'
+        const isTradeVisit = detail.category === 'TRADE_VISIT'
+        const isTasting = detail.category === 'TASTING' || detail.category === 'SPECIAL_EVENT' || detail.category === 'INTERNAL_TRAINING' || isTradeVisit
         const isTraining = detail.category === 'INTERNAL_TRAINING'
         const isSpecialPriceCategory = (detail.category as string) === 'SPECIAL_PRICE'
         const isPriceAdjustment = detail.category === 'PRICE_ADJUSTMENT' || isSpecialPriceCategory
+
+        const escHtml = (s: any) => String(s ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
 
         let titleVi = detail.title || ''
         let titleEn = ''
@@ -361,6 +370,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             ? 'PROPOSAL FOR SPECIAL SKU PRICING (LEVEL 3)'
             : detail.category === 'PRICE_ADJUSTMENT'
                 ? 'PROPOSAL FOR CUSTOMER PRICING MECHANISM (LEVEL 2)'
+                : detail.category === 'TRADE_VISIT' ? 'TRADE VISIT & WINE SAMPLES PROPOSAL'
                 : detail.category === 'INTERNAL_TRAINING' ? 'INTERNAL TRAINING & SAMPLES PROPOSAL'
                 : detail.category === 'BUDGET_REQUEST' ? 'BUDGET ALLOCATION PROPOSAL'
                 : detail.category === 'CAPITAL_EXPENDITURE' ? 'CAPITAL EXPENDITURE PROPOSAL'
@@ -418,7 +428,59 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             return new Intl.NumberFormat('vi-VN').format(amount) + ' đ'
         }
 
-        if (detail.priceItems && detail.priceItems.length > 0) {
+        const tvCustomers: any[] = Array.isArray((detail as any).tradeVisitCustomers) ? (detail as any).tradeVisitCustomers : []
+        if (isTradeVisit && tvCustomers.length > 0) {
+            let stt = 0
+            const unitText = lang === 'VI' ? 'Chai' : lang === 'EN' ? 'Bottle' : 'Chai/Btl'
+            const defaultPurposeText = lang === 'VI'
+                ? 'Trade Visit & giới thiệu mẫu KH'
+                : lang === 'EN'
+                    ? 'Customer trade visit sample'
+                    : 'Trade Visit & giới thiệu mẫu KH / Customer trade visit sample'
+
+            tableRows = tvCustomers.map((cust: any) => {
+                const items = Array.isArray(cust.items) ? cust.items : []
+                if (items.length === 0) return ''
+                const visitDateLabel = cust.visitDate || exportDateStr
+                const custCodeStr = cust.customerCode ? ` (${escHtml(cust.customerCode)})` : ''
+                const custPurpose = cust.purpose ? escHtml(cust.purpose) : defaultPurposeText
+
+                return items.map((item: any, itemIdx: number) => {
+                    stt++
+                    const wholesale = item.wholesalePrice || 0
+                    const qty = item.quantity ? Number(item.quantity) : 1
+                    const lineTotal = wholesale * qty
+                    totalRefValue += lineTotal
+
+                    const customerAndDateTd = itemIdx === 0 ? `
+                        <td rowspan="${items.length}" style="border: 1px solid #000; padding: 6px 8px; text-align: center; vertical-align: middle; background-color: #ffffff;">
+                            <div style="font-weight: bold; font-size: 9.5pt; color: #000;">${escHtml(cust.customerName || 'Khách hàng')}${custCodeStr}</div>
+                            <div style="font-size: 8.5pt; color: #333; margin-top: 4px; white-space: nowrap;">
+                                ${lang === 'VI' ? `Ngày thăm: ${escHtml(visitDateLabel)}` : lang === 'EN' ? `Visit Date: ${escHtml(visitDateLabel)}` : `Ngày thăm / Date: ${escHtml(visitDateLabel)}`}
+                            </div>
+                        </td>
+                    ` : ''
+
+                    const purposeTd = itemIdx === 0 ? `
+                        <td rowspan="${items.length}" style="border: 1px solid #000; padding: 5px 4px; font-size: 9pt; vertical-align: middle; word-break: normal; overflow-wrap: break-word;">${custPurpose}</td>
+                    ` : ''
+
+                    return `
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 5px 3px; text-align: center; white-space: nowrap;">${stt}</td>
+                            ${customerAndDateTd}
+                            <td style="border: 1px solid #000; padding: 5px 3px; font-family: monospace; font-weight: bold; text-align: center; white-space: nowrap;">${escHtml(item.skuCode || '')}</td>
+                            <td style="border: 1px solid #000; padding: 5px 4px; font-weight: bold; word-break: normal; overflow-wrap: break-word;">${escHtml(item.productName || '')}</td>
+                            <td style="border: 1px solid #000; padding: 5px 3px; text-align: center; white-space: nowrap;">${unitText}</td>
+                            <td style="border: 1px solid #000; padding: 5px 3px; text-align: center; font-weight: bold; white-space: nowrap;">${qty}</td>
+                            <td style="border: 1px solid #000; padding: 5px 4px; text-align: right; white-space: nowrap;">${formatVNDPrint(wholesale)}</td>
+                            <td style="border: 1px solid #000; padding: 5px 4px; text-align: right; font-weight: bold; white-space: nowrap;">${formatVNDPrint(lineTotal)}</td>
+                            ${purposeTd}
+                        </tr>
+                    `
+                }).join('')
+            }).join('')
+        } else if (detail.priceItems && detail.priceItems.length > 0) {
             tableRows = detail.priceItems.map((item: any, i: number) => {
                 const wholesale = item.product?.wholesalePrice || 0
                 const qty = item.quantity ? Number(item.quantity) : 1
@@ -479,7 +541,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
         const htmlContent = isTasting ? `
             <html>
             <head>
-                <title>To_Trinh_Hang_Mau_Tasting_${detail.proposalNo}</title>
+                <title>${isTradeVisit ? `To_Trinh_Trade_Visit_${detail.proposalNo}` : `To_Trinh_Hang_Mau_Tasting_${detail.proposalNo}`}</title>
                 <style>
                     @page { size: A4 portrait; margin: 12mm 10mm 12mm 10mm; }
                     body { font-family: Calibri, Arial, sans-serif; color: #000; margin: 0; padding: 0; font-size: 11pt; line-height: 1.35; }
@@ -539,10 +601,14 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 </table>
 
                 <!-- Main Title -->
-                <div class="doc-title">${lang === 'EN' ? (isTraining ? 'SUBMISSION FOR INTERNAL TRAINING & SAMPLES' : 'SUBMISSION FOR FREE WINE-TASTING SAMPLES') : (isTraining ? 'TỜ TRÌNH ĐÀO TẠO NỘI BỘ' : 'TỜ TRÌNH XUẤT HÀNG MẪU RƯỢU')}</div>
-                ${lang === 'BILINGUAL' ? `<div style="font-size: 11pt; font-weight: bold; text-align: center; text-transform: uppercase; color: #334155; margin-bottom: 3px;">${isTraining ? 'SUBMISSION FOR INTERNAL TRAINING & SAMPLES' : 'SUBMISSION FOR FREE WINE-TASTING SAMPLES'}</div>` : ''}
+                <div class="doc-title">${lang === 'EN' ? (isTradeVisit ? 'SUBMISSION FOR TRADE VISIT & WINE SAMPLES' : isTraining ? 'SUBMISSION FOR INTERNAL TRAINING & SAMPLES' : 'SUBMISSION FOR FREE WINE-TASTING SAMPLES') : (isTradeVisit ? 'TỜ TRÌNH TRADE VISIT & XUẤT HÀNG MẪU' : isTraining ? 'TỜ TRÌNH ĐÀO TẠO NỘI BỘ' : 'TỜ TRÌNH XUẤT HÀNG MẪU RƯỢU')}</div>
+                ${lang === 'BILINGUAL' ? `<div style="font-size: 11pt; font-weight: bold; text-align: center; text-transform: uppercase; color: #334155; margin-bottom: 3px;">${isTradeVisit ? 'SUBMISSION FOR TRADE VISIT & WINE SAMPLES' : isTraining ? 'SUBMISSION FOR INTERNAL TRAINING & SAMPLES' : 'SUBMISSION FOR FREE WINE-TASTING SAMPLES'}</div>` : ''}
                 <div class="doc-subtitle">
-                    ${isTraining ? (
+                    ${isTradeVisit ? (
+                        lang === 'VI' ? `(V/v: Phê duyệt kế hoạch Trade Visit khách hàng & xuất hàng mẫu không thu tiền${titleVi ? ` — ${escHtml(titleVi)}` : ''})` :
+                        lang === 'EN' ? `(Re: Approval for customer trade visit plan & free wine-tasting samples${titleEn || titleVi ? ` — ${escHtml(titleEn || titleVi)}` : ''})` :
+                        `(V/v: Phê duyệt kế hoạch Trade Visit khách hàng & xuất hàng mẫu không thu tiền${titleVi ? ` — ${escHtml(titleVi)}` : ''} /<br/>Approval for customer trade visit plan & free wine-tasting samples${titleEn ? ` — ${escHtml(titleEn)}` : ''})`
+                    ) : isTraining ? (
                         lang === 'VI' ? `(V/v: Phê duyệt kế hoạch đào tạo nội bộ & mẫu thử nếm${titleVi ? ` — ${titleVi}` : ''})` :
                         lang === 'EN' ? `(Re: Approval for internal training program & tasting samples${titleEn || titleVi ? ` — ${titleEn || titleVi}` : ''})` :
                         `(V/v: Phê duyệt kế hoạch đào tạo nội bộ & mẫu thử nếm${titleVi ? ` — ${titleVi}` : ''} /<br/>Approval for internal training program & tasting samples${titleEn ? ` — ${titleEn}` : ''})`
@@ -1130,6 +1196,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                             >
                                 <option value="ALL">{t.filters.allCategories}</option>
                                 <option value="INTERNAL_TRAINING">{locale === 'en' ? 'Internal Training' : 'Đào Tạo Nội Bộ'}</option>
+                                <option value="TRADE_VISIT">{locale === 'en' ? 'Trade Visit' : 'Trade Visit'}</option>
                                 <option value="TASTING">{locale === 'en' ? 'Wine Tasting & Sample' : 'Tasting (Thử Rượu)'}</option>
                                 <option value="SPECIAL_EVENT">{locale === 'en' ? 'Special Event' : 'Sự Kiện / Event'}</option>
                                 <option value="PRICE_ADJUSTMENT">{locale === 'en' ? 'Pricing Mechanism' : 'Cơ Chế Giá & Giá Đặc Biệt'}</option>
@@ -1809,10 +1876,12 @@ function BatchProductPickerModal({
     products,
     onAddItems,
     onClose,
+    hidePriceEdit = false,
 }: {
     products: any[]
     onAddItems: (items: { productId: string; proposedPrice: number; quantity: number }[]) => void
     onClose: () => void
+    hidePriceEdit?: boolean
 }) {
     const [search, setSearch] = useState('')
     const [selected, setSelected] = useState<Record<string, { proposedPrice: number; quantity: number }>>({})
@@ -1865,7 +1934,9 @@ function BatchProductPickerModal({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
             <div className="w-full max-w-4xl max-h-[90vh] rounded-lg flex flex-col shadow-2xl bg-white border border-slate-200 animate-in zoom-in-95 duration-150">
                 <div className="flex items-center justify-between p-3.5 sm:p-5 border-b border-slate-200">
-                    <h4 className="text-sm sm:text-base font-bold text-slate-900 pr-2">Chọn Nhanh Sản Phẩm Đề Xuất Giá (Batch Picker)</h4>
+                    <h4 className="text-sm sm:text-base font-bold text-slate-900 pr-2">
+                        {hidePriceEdit ? 'Chọn Nhanh Danh Mục Rượu Mẫu (Batch Picker)' : 'Chọn Nhanh Sản Phẩm Đề Xuất Giá (Batch Picker)'}
+                    </h4>
                     <button onClick={onClose} className="p-1 rounded hover:bg-slate-100 cursor-pointer shrink-0"><X size={20} className="text-slate-400" /></button>
                 </div>
 
@@ -1882,13 +1953,15 @@ function BatchProductPickerModal({
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500">
-                        <span>Đã chọn: <strong className="text-[#0891B2]">{selectedCount}</strong> chai</span>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[11px]">Giảm nhanh:</span>
-                            <button type="button" onClick={() => handleApplyDiscountAll(5)} className="inline-block px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-[11px] font-semibold text-amber-700 border border-amber-200 cursor-pointer whitespace-nowrap shrink-0">-5%</button>
-                            <button type="button" onClick={() => handleApplyDiscountAll(10)} className="inline-block px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-[11px] font-semibold text-amber-700 border border-amber-200 cursor-pointer whitespace-nowrap shrink-0">-10%</button>
-                            <button type="button" onClick={() => handleApplyDiscountAll(15)} className="inline-block px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-[11px] font-semibold text-amber-700 border border-amber-200 cursor-pointer whitespace-nowrap shrink-0">-15%</button>
-                        </div>
+                        <span>Đã chọn: <strong className="text-[#0891B2]">{selectedCount}</strong> {hidePriceEdit ? 'mã rượu' : 'chai'}</span>
+                        {!hidePriceEdit && (
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[11px]">Giảm nhanh:</span>
+                                <button type="button" onClick={() => handleApplyDiscountAll(5)} className="inline-block px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-[11px] font-semibold text-amber-700 border border-amber-200 cursor-pointer whitespace-nowrap shrink-0">-5%</button>
+                                <button type="button" onClick={() => handleApplyDiscountAll(10)} className="inline-block px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-[11px] font-semibold text-amber-700 border border-amber-200 cursor-pointer whitespace-nowrap shrink-0">-10%</button>
+                                <button type="button" onClick={() => handleApplyDiscountAll(15)} className="inline-block px-2 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-[11px] font-semibold text-amber-700 border border-amber-200 cursor-pointer whitespace-nowrap shrink-0">-15%</button>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 border border-slate-200/40 rounded p-2">
@@ -1934,28 +2007,30 @@ function BatchProductPickerModal({
                                                 />
                                             </div>
 
-                                            <div className="flex-1 sm:flex-initial sm:w-28 min-w-0">
-                                                <div className="flex items-center justify-between gap-1 mb-1">
-                                                    <label className="text-[10px] text-slate-500 font-semibold truncate">Giá đề xuất</label>
-                                                    <span className={`text-[10px] font-bold px-1 rounded shrink-0 ${diffPct < 0 ? 'bg-red-500/10 text-red-700' : 'bg-green-500/10 text-green-700'}`}>
-                                                        {diffPct > 0 ? '+' : ''}{diffPct.toFixed(1)}%
-                                                    </span>
+                                            {!hidePriceEdit && (
+                                                <div className="flex-1 sm:flex-initial sm:w-28 min-w-0">
+                                                    <div className="flex items-center justify-between gap-1 mb-1">
+                                                        <label className="text-[10px] text-slate-500 font-semibold truncate">Giá đề xuất</label>
+                                                        <span className={`text-[10px] font-bold px-1 rounded shrink-0 ${diffPct < 0 ? 'bg-red-500/10 text-red-700' : 'bg-green-500/10 text-green-700'}`}>
+                                                            {diffPct > 0 ? '+' : ''}{diffPct.toFixed(1)}%
+                                                        </span>
+                                                    </div>
+                                                    <input
+                                                        type="number"
+                                                        inputMode="numeric"
+                                                        value={currentPrice}
+                                                        onChange={e => {
+                                                            const val = parseFloat(e.target.value) || 0
+                                                            setSelected(prev => ({
+                                                                ...prev,
+                                                                [p.id]: { ...(prev[p.id] || { quantity: 1 }), proposedPrice: val }
+                                                            }))
+                                                        }}
+                                                        className="w-full px-2 py-1.5 text-base sm:text-xs font-bold font-mono outline-none rounded"
+                                                        style={{ background: '#FFFFFF', border: '1px solid #0E7490', color: '#0891B2' }}
+                                                    />
                                                 </div>
-                                                <input
-                                                    type="number"
-                                                    inputMode="numeric"
-                                                    value={currentPrice}
-                                                    onChange={e => {
-                                                        const val = parseFloat(e.target.value) || 0
-                                                        setSelected(prev => ({
-                                                            ...prev,
-                                                            [p.id]: { ...(prev[p.id] || { quantity: 1 }), proposedPrice: val }
-                                                        }))
-                                                    }}
-                                                    className="w-full px-2 py-1.5 text-base sm:text-xs font-bold font-mono outline-none rounded"
-                                                    style={{ background: '#FFFFFF', border: '1px solid #0E7490', color: '#0891B2' }}
-                                                />
-                                            </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -2011,6 +2086,19 @@ function CreateDrawer({ onClose, userId, onCreated }: {
     const searchParams = useSearchParams()
     const initialCategory = searchParams?.get('category') || 'BUDGET_REQUEST'
 
+    const { data: creatableCategories } = useQuery({
+        queryKey: ['proposal_creatable_categories'],
+        queryFn: () => getCreatableProposalCategories(),
+        staleTime: 60_000,
+    })
+
+    const allowedCategoryKeys = useMemo(() => {
+        const allKeys = Object.keys(CATEGORY_LABELS)
+        if (!creatableCategories) return allKeys
+        if (creatableCategories.length === 0) return []
+        return allKeys.filter(k => creatableCategories.includes(k))
+    }, [creatableCategories])
+
     const [form, setForm] = useState({
         category: initialCategory,
         priority: 'NORMAL',
@@ -2027,11 +2115,29 @@ function CreateDrawer({ onClose, userId, onCreated }: {
         scope: initialCategory === 'SPECIAL_PRICE' ? 'SPECIFIC_PRODUCTS' : 'ENTIRE_PORTFOLIO',
         discountPct: '',
     })
+
+    useEffect(() => {
+        if (allowedCategoryKeys.length > 0 && !allowedCategoryKeys.includes(form.category)) {
+            setForm(f => ({ ...f, category: allowedCategoryKeys[0] }))
+        }
+    }, [allowedCategoryKeys, form.category])
+
     const [basePriceListType, setBasePriceListType] = useState<'BY_CHANNEL' | 'WHOLESALE' | 'RETAIL' | 'HORECA'>('BY_CHANNEL')
     const [additionalBranches, setAdditionalBranches] = useState<string[]>([])
     const [priceLines, setPriceLines] = useState<{ productId: string; proposedPrice: number; quantity: number }[]>([])
     const [saving, setSaving] = useState(false)
     const [batchPickerOpen, setBatchPickerOpen] = useState(false)
+
+    // Trade Visit multi-customer state
+    const [tradeVisitBlocks, setTradeVisitBlocks] = useState<{
+        customerId: string
+        visitDate: string
+        purpose: string
+        items: { productId: string; quantity: number }[]
+    }[]>([
+        { customerId: '', visitDate: '', purpose: '', items: [{ productId: '', quantity: 1 }] }
+    ])
+    const [tradeVisitBatchIdx, setTradeVisitBatchIdx] = useState<number | null>(null)
 
     // Promotion Campaign (CTKM 1 mã, Buy X Get Y & Quota)
     const [promoConfig, setPromoConfig] = useState({
@@ -2113,6 +2219,51 @@ function CreateDrawer({ onClose, userId, onCreated }: {
         return customers.filter((c: any) => !isParentCustomer(c))
     }, [customers])
 
+    const totalTradeVisitStats = useMemo(() => {
+        const custCount = tradeVisitBlocks.filter(b => Boolean(b.customerId)).length
+        let totalBottles = 0
+        let totalRefValue = 0
+        for (const block of tradeVisitBlocks) {
+            for (const item of block.items) {
+                const qty = Math.max(0, Number(item.quantity) || 0)
+                totalBottles += qty
+                if (item.productId) {
+                    const prod = products.find(p => p.id === item.productId)
+                    totalRefValue += qty * (prod?.wholesalePrice || 0)
+                }
+            }
+        }
+        return { custCount, totalBottles, totalRefValue }
+    }, [tradeVisitBlocks, products])
+
+    const handleAutoFillTradeVisitContent = () => {
+        const selectedBlocks = tradeVisitBlocks.filter(b => b.customerId)
+        if (selectedBlocks.length === 0) {
+            toast.warning(locale === 'en' ? 'Please select at least one customer first' : 'Vui lòng chọn ít nhất 1 khách hàng trước')
+            return
+        }
+        const custLabels = selectedBlocks.map(b => {
+            const c = usableCustomers.find((x: any) => x.id === b.customerId)
+            const bottleCount = b.items.reduce((s, it) => s + (Number(it.quantity) || 0), 0)
+            return `- ${c ? `[${c.code}] ${c.name}` : b.customerId} (${bottleCount} ${locale === 'en' ? 'bottles' : 'chai'}${b.visitDate ? ` · ${b.visitDate}` : ''}${b.purpose ? ` · ${b.purpose}` : ''})`
+        })
+
+        const autoTitle = `Tờ trình Trade Visit & Hàng mẫu (${selectedBlocks.length} khách hàng · ${totalTradeVisitStats.totalBottles} chai)`
+        const autoTitleEn = `Trade Visit & Sample Proposal (${selectedBlocks.length} customers · ${totalTradeVisitStats.totalBottles} bottles)`
+        const autoContent = locale === 'en'
+            ? `Trade Visit & Sample Distribution Plan:\n- Total Customers: ${selectedBlocks.length}\n- Total Sample Bottles: ${totalTradeVisitStats.totalBottles}\n${custLabels.join('\n')}`
+            : `Kế hoạch Trade Visit và xuất hàng mẫu không thu tiền cho danh sách khách hàng:\n- Tổng số khách hàng: ${selectedBlocks.length}\n- Tổng số lượng rượu mẫu: ${totalTradeVisitStats.totalBottles} chai\n${custLabels.join('\n')}`
+
+        setForm(f => ({
+            ...f,
+            title: autoTitle,
+            titleEn: autoTitleEn,
+            content: autoContent,
+            estimatedAmount: totalTradeVisitStats.totalRefValue > 0 ? String(totalTradeVisitStats.totalRefValue) : f.estimatedAmount,
+        }))
+        toast.success(locale === 'en' ? 'Auto-filled Trade Visit title and content' : 'Đã điền nhanh tiêu đề và nội dung Trade Visit')
+    }
+
     const selectedCustForProposal = useMemo(() => {
         return usableCustomers.find((c: any) => c.id === form.customerId)
     }, [usableCustomers, form.customerId])
@@ -2152,7 +2303,36 @@ function CreateDrawer({ onClose, userId, onCreated }: {
         }
         const isTastingCategory = form.category === 'TASTING' || form.category === 'SPECIAL_EVENT'
         const isTrainingCategory = form.category === 'INTERNAL_TRAINING'
+        const isTradeVisitCategory = form.category === 'TRADE_VISIT'
         const isPromotionCategory = form.category === 'PROMOTION_CAMPAIGN'
+
+        if (isTradeVisitCategory) {
+            if (tradeVisitBlocks.length === 0) {
+                toast.warning(locale === 'en' ? 'Please add at least 1 customer' : 'Vui lòng thêm ít nhất 1 khách hàng cho tờ trình Trade Visit')
+                return
+            }
+            const seenCustIds = new Set<string>()
+            for (let i = 0; i < tradeVisitBlocks.length; i++) {
+                const block = tradeVisitBlocks[i]
+                if (!block.customerId) {
+                    toast.warning(locale === 'en' ? `Please select customer #${i + 1}` : `Vui lòng chọn khách hàng cho khối #${i + 1}`)
+                    return
+                }
+                if (seenCustIds.has(block.customerId)) {
+                    toast.warning(locale === 'en' ? 'Duplicate customer selected in Trade Visit list' : 'Có khách hàng bị chọn trùng trong danh sách Trade Visit')
+                    return
+                }
+                seenCustIds.add(block.customerId)
+                if (!block.items || block.items.length === 0) {
+                    toast.warning(locale === 'en' ? `Please add at least 1 wine SKU for customer #${i + 1}` : `Vui lòng thêm ít nhất 1 mã rượu cho khách hàng #${i + 1}`)
+                    return
+                }
+                if (block.items.some(it => !it.productId || (Number(it.quantity) || 0) < 1)) {
+                    toast.warning(locale === 'en' ? `Please select wine SKU and valid bottle quantity (>= 1) for customer #${i + 1}` : `Vui lòng chọn đầy đủ mã rượu và số lượng (>= 1) cho khách hàng #${i + 1}`)
+                    return
+                }
+            }
+        }
 
         if (isPromotionCategory) {
             if (!promoConfig.buyProductId) {
@@ -2214,10 +2394,42 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                 maxTotalQty: promoConfig.maxTotalQty,
                 maxQtyPerOrder: promoConfig.maxQtyPerOrder,
             })
+        } else if (isTradeVisitCategory) {
+            finalScope = JSON.stringify({
+                subType: 'TRADE_VISIT',
+                customers: tradeVisitBlocks.map(block => {
+                    const cust = usableCustomers.find((c: any) => c.id === block.customerId)
+                    return {
+                        customerId: block.customerId,
+                        customerCode: cust?.code || undefined,
+                        customerName: cust?.name || undefined,
+                        visitDate: block.visitDate || undefined,
+                        purpose: block.purpose?.trim() || undefined,
+                        items: block.items.map(it => ({
+                            productId: it.productId,
+                            quantity: Math.max(1, Math.round(Number(it.quantity) || 1)),
+                        })),
+                    }
+                }),
+            })
         }
 
         let finalPriceItems = priceLines
-        if (isPromotionCategory) {
+        if (isTradeVisitCategory) {
+            const aggregatedMap = new Map<string, number>()
+            for (const block of tradeVisitBlocks) {
+                for (const it of block.items) {
+                    if (!it.productId) continue
+                    const qty = Math.max(1, Math.round(Number(it.quantity) || 1))
+                    aggregatedMap.set(it.productId, (aggregatedMap.get(it.productId) || 0) + qty)
+                }
+            }
+            finalPriceItems = Array.from(aggregatedMap.entries()).map(([productId, quantity]) => ({
+                productId,
+                proposedPrice: 0,
+                quantity,
+            }))
+        } else if (isPromotionCategory) {
             const activeGiftId = promoConfig.giftType === 'SAME_PRODUCT' ? promoConfig.buyProductId : promoConfig.giftProductId
             const buyProd = products.find(p => p.id === promoConfig.buyProductId)
             finalPriceItems = [
@@ -2240,17 +2452,20 @@ function CreateDrawer({ onClose, userId, onCreated }: {
 
         const finalEstimated = isPromotionCategory && calculatedPromoBudget > 0
             ? calculatedPromoBudget
-            : (form.estimatedAmount ? parseFloat(form.estimatedAmount) : undefined)
+            : isTradeVisitCategory
+                ? (form.estimatedAmount ? parseFloat(form.estimatedAmount) : (totalTradeVisitStats.totalRefValue || undefined))
+                : (form.estimatedAmount ? parseFloat(form.estimatedAmount) : undefined)
 
         const result = await createProposal({
             ...form,
+            customerId: isTradeVisitCategory ? tradeVisitBlocks[0]?.customerId : form.customerId,
             title: finalTitle,
             scope: finalScope,
             estimatedAmount: finalEstimated,
             discountPct: form.category === 'PRICE_ADJUSTMENT' && form.discountPct !== '' ? parseFloat(form.discountPct) : undefined,
             startDate: form.startDate || undefined,
             endDate: form.endDate || undefined,
-            priceItems: (isTastingCategory || isTrainingCategory || form.category === 'SPECIAL_PRICE' || isPromotionCategory) && finalPriceItems.length > 0
+            priceItems: (isTastingCategory || isTrainingCategory || isTradeVisitCategory || form.category === 'SPECIAL_PRICE' || isPromotionCategory) && finalPriceItems.length > 0
                 ? finalPriceItems 
                 : undefined,
             createdBy: userId,
@@ -2277,10 +2492,15 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                     <div>
                         <label className="text-xs font-semibold uppercase mb-1.5 block" style={{ color: '#64748B' }}>{t.createDrawer.categoryLabel}</label>
                         <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} style={inputStyle} className="text-base sm:text-sm">
-                            {Object.entries(CATEGORY_LABELS).map(([k]) => (
+                            {allowedCategoryKeys.map(k => (
                                 <option key={k} value={k}>{getCategoryLabel(k, locale)}</option>
                             ))}
                         </select>
+                        {creatableCategories && allowedCategoryKeys.length === 0 && (
+                            <p className="text-xs text-red-700 mt-1">
+                                {locale === 'en' ? 'Your role does not have permission to create proposals.' : 'Vai trò của bạn chưa được phân quyền tạo tờ trình.'}
+                            </p>
+                        )}
                     </div>
 
                     {/* Promotion Campaign (CTKM 1 Mã, Mua X Tặng Y, Kênh, Quota) */}
@@ -2696,6 +2916,253 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                         </div>
                     )}
 
+                    {/* Trade Visit Multi-Customer Custom Fields */}
+                    {form.category === 'TRADE_VISIT' && (
+                        <div className="space-y-4 p-3.5 sm:p-4 rounded-md border border-teal-200 bg-teal-50/30 shadow-xs">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-teal-200/80 pb-3 gap-2">
+                                <div>
+                                    <h4 className="text-xs sm:text-sm font-bold uppercase text-teal-900 flex items-center gap-2 tracking-wide">
+                                        <Building2 size={16} className="text-teal-700 shrink-0" />
+                                        <span>{locale === 'en' ? 'TRADE VISIT CUSTOMERS & WINE SAMPLES' : 'DANH SÁCH KHÁCH HÀNG & RƯỢU MẪU TRADE VISIT'}</span>
+                                    </h4>
+                                    <p className="text-xs text-teal-800 mt-0.5">
+                                        {locale === 'en'
+                                            ? 'Select multiple customers, each with its own wine sample catalog, bottle quantities, optional visit date and purpose.'
+                                            : 'Chọn nhiều khách hàng; mỗi khách hàng thiết lập riêng danh mục mã rượu, số lượng chai, ngày thăm và mục đích (tùy chọn).'}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2 flex-wrap shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={handleAutoFillTradeVisitContent}
+                                        className="px-3 py-1.5 rounded-md bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                                    >
+                                        <Sparkles size={14} />
+                                        {locale === 'en' ? 'Auto-fill Content' : 'Điền nhanh tiêu đề & nội dung'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setTradeVisitBlocks(prev => [...prev, { customerId: '', visitDate: '', purpose: '', items: [{ productId: '', quantity: 1 }] }])}
+                                        className="px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer hover:opacity-90"
+                                        style={{ background: 'rgba(8, 145, 178, 0.1)', color: '#0E7490', border: '1px solid rgba(8, 145, 178, 0.3)' }}
+                                    >
+                                        <Plus size={14} />
+                                        {locale === 'en' ? 'Add Customer' : 'Thêm khách hàng'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3.5">
+                                {tradeVisitBlocks.map((block, bIdx) => {
+                                    const blockBottles = block.items.reduce((s, it) => s + (Number(it.quantity) || 0), 0)
+                                    const blockRefValue = block.items.reduce((s, it) => {
+                                        const p = products.find(pr => pr.id === it.productId)
+                                        return s + (Number(it.quantity) || 0) * (p?.wholesalePrice || 0)
+                                    }, 0)
+
+                                    return (
+                                        <div key={bIdx} className="p-3 sm:p-4 rounded-lg bg-white border border-teal-200/90 shadow-2xs space-y-3">
+                                            <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="text-xs font-bold uppercase tracking-wider text-teal-900">
+                                                        {locale === 'en' ? `Customer #${bIdx + 1}` : `Khách hàng #${bIdx + 1}`}
+                                                    </span>
+                                                    <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-teal-50 text-teal-800 border border-teal-200">
+                                                        {blockBottles} {locale === 'en' ? 'bottles' : 'chai'} · {formatVND(blockRefValue)}
+                                                    </span>
+                                                </div>
+                                                {tradeVisitBlocks.length > 1 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setTradeVisitBlocks(prev => prev.filter((_, idx) => idx !== bIdx))}
+                                                        className="px-2 py-1 rounded text-xs font-medium text-rose-600 hover:bg-rose-50 flex items-center gap-1 cursor-pointer"
+                                                        title={locale === 'en' ? 'Remove customer' : 'Xóa khách hàng'}
+                                                    >
+                                                        <Trash2 size={14} />
+                                                        <span className="hidden sm:inline">{locale === 'en' ? 'Remove' : 'Xóa KH'}</span>
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            <div>
+                                                <label className="text-[11px] font-bold uppercase text-slate-600 mb-1 block">
+                                                    {locale === 'en' ? 'Customer *' : 'Khách hàng áp dụng *'}
+                                                </label>
+                                                <SearchableCustomerCombobox
+                                                    customers={usableCustomers}
+                                                    selectedCustomerId={block.customerId}
+                                                    onSelect={(cust: any) => {
+                                                        if (cust.id && tradeVisitBlocks.some((other, i) => i !== bIdx && other.customerId === cust.id)) {
+                                                            toast.warning(locale === 'en' ? 'This customer is already added in another block' : 'Khách hàng này đã được chọn ở mục khác trong tờ trình')
+                                                            return
+                                                        }
+                                                        setTradeVisitBlocks(prev => prev.map((b, i) => i === bIdx ? { ...b, customerId: cust.id } : b))
+                                                    }}
+                                                />
+                                            </div>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="text-[11px] font-semibold text-slate-600 mb-1 block">
+                                                        {locale === 'en' ? 'Planned Visit / Issue Date (Optional)' : 'Ngày dự kiến thăm / xuất mẫu (Tùy chọn)'}
+                                                    </label>
+                                                    <input
+                                                        type="date"
+                                                        value={block.visitDate}
+                                                        onChange={e => {
+                                                            const val = e.target.value
+                                                            setTradeVisitBlocks(prev => prev.map((b, i) => i === bIdx ? { ...b, visitDate: val } : b))
+                                                        }}
+                                                        style={{ ...inputStyle, padding: '8px 10px' }}
+                                                        className="text-base sm:text-xs"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[11px] font-semibold text-slate-600 mb-1 block">
+                                                        {locale === 'en' ? 'Purpose / Specific Note (Optional)' : 'Mục đích / Ghi chú riêng (Tùy chọn)'}
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={block.purpose}
+                                                        onChange={e => {
+                                                            const val = e.target.value
+                                                            setTradeVisitBlocks(prev => prev.map((b, i) => i === bIdx ? { ...b, purpose: val } : b))
+                                                        }}
+                                                        placeholder={locale === 'en' ? 'e.g. Introduce new Italian menu SKUs' : 'VD: Giới thiệu danh mục vang Ý mới'}
+                                                        style={{ ...inputStyle, padding: '8px 10px' }}
+                                                        className="text-base sm:text-xs"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2.5 pt-2 border-t border-slate-100">
+                                                <div className="flex items-center justify-between flex-wrap gap-2">
+                                                    <label className="text-[11px] font-bold uppercase tracking-wider text-teal-900">
+                                                        {locale === 'en' ? 'Wine Catalog & Bottle Quantity *' : 'Danh Mục Rượu & Số Lượng Chai *'}
+                                                    </label>
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setTradeVisitBatchIdx(bIdx)}
+                                                            className="text-xs flex items-center gap-1.5 px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer hover:opacity-90"
+                                                            style={{ background: 'rgba(180,83,9,0.14)', color: '#B45309', border: '1px solid rgba(180,83,9,0.4)' }}
+                                                        >
+                                                            <Search size={13} /> {locale === 'en' ? 'Batch Pick' : 'Chọn nhanh hàng loạt'}
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setTradeVisitBlocks(prev => prev.map((b, i) => i === bIdx ? { ...b, items: [...b.items, { productId: '', quantity: 1 }] } : b))
+                                                            }}
+                                                            className="text-xs flex items-center gap-1.5 px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer hover:opacity-90"
+                                                            style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}
+                                                        >
+                                                            <Plus size={13} /> {locale === 'en' ? 'Add Line' : 'Thêm dòng'}
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {block.items.length === 0 ? (
+                                                    <div className="p-3 text-center rounded-md border border-dashed border-teal-300 bg-teal-50/20 text-xs text-slate-600">
+                                                        {locale === 'en' ? 'No wine SKU added yet. Click "Add Line" or "Batch Pick".' : 'Chưa có mã rượu nào. Bấm "Thêm dòng" hoặc "Chọn nhanh hàng loạt".'}
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-2">
+                                                        {block.items.map((line, lIdx) => {
+                                                            const selectedProd = products.find(p => p.id === line.productId)
+                                                            const wholesale = selectedProd ? selectedProd.wholesalePrice : 0
+                                                            return (
+                                                                <div
+                                                                    key={lIdx}
+                                                                    className="flex flex-col sm:flex-row gap-2.5 sm:items-end p-2.5 rounded-lg bg-slate-50/60 border border-slate-200 relative"
+                                                                    style={{ zIndex: block.items.length - lIdx + 10 }}
+                                                                >
+                                                                    <div className="flex-1 min-w-0 w-full">
+                                                                        <SearchableProductCombobox
+                                                                            products={products}
+                                                                            selectedProductId={line.productId}
+                                                                            onSelect={p => {
+                                                                                setTradeVisitBlocks(prev => prev.map((b, i) => i === bIdx ? {
+                                                                                    ...b,
+                                                                                    items: b.items.map((it, j) => j === lIdx ? { ...it, productId: p.id } : it),
+                                                                                } : b))
+                                                                            }}
+                                                                        />
+                                                                    </div>
+                                                                    <div className="flex items-end justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/70">
+                                                                        <div className="w-28 text-center flex-shrink-0">
+                                                                            <label className="text-[10px] block text-amber-800 font-bold mb-1">
+                                                                                {locale === 'en' ? 'Qty (bottles)' : 'Số lượng (chai)'}
+                                                                            </label>
+                                                                            <input
+                                                                                type="number"
+                                                                                min={1}
+                                                                                value={line.quantity || 1}
+                                                                                onChange={e => {
+                                                                                    const qty = Math.max(1, parseInt(e.target.value) || 1)
+                                                                                    setTradeVisitBlocks(prev => prev.map((b, i) => i === bIdx ? {
+                                                                                        ...b,
+                                                                                        items: b.items.map((it, j) => j === lIdx ? { ...it, quantity: qty } : it),
+                                                                                    } : b))
+                                                                                }}
+                                                                                className="text-base sm:text-xs"
+                                                                                style={{
+                                                                                    width: '100%',
+                                                                                    padding: '6px 8px',
+                                                                                    background: '#FFFFFF',
+                                                                                    border: '1px solid #B45309',
+                                                                                    fontWeight: 'bold',
+                                                                                    color: '#B45309',
+                                                                                    textAlign: 'center',
+                                                                                    borderRadius: '6px',
+                                                                                    outline: 'none',
+                                                                                }}
+                                                                            />
+                                                                        </div>
+                                                                        <div className="text-right flex flex-col justify-end pb-1.5 px-1 min-w-[85px] sm:min-w-[95px] flex-shrink-0">
+                                                                            <span className="text-[10px] block text-slate-500 font-medium mb-0.5">
+                                                                                {locale === 'en' ? 'List Price' : 'Giá niêm yết'}
+                                                                            </span>
+                                                                            <span className="text-xs block font-mono font-bold text-slate-900">{formatVND(wholesale)}</span>
+                                                                        </div>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                setTradeVisitBlocks(prev => prev.map((b, i) => i === bIdx ? {
+                                                                                    ...b,
+                                                                                    items: b.items.filter((_, j) => j !== lIdx),
+                                                                                } : b))
+                                                                            }}
+                                                                            className="p-2 rounded text-rose-500 hover:bg-rose-50 transition-all flex-shrink-0 cursor-pointer mb-0.5"
+                                                                            title={locale === 'en' ? 'Remove line' : 'Xóa dòng'}
+                                                                        >
+                                                                            <Trash2 size={15} />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-white border border-teal-200 flex items-center justify-between flex-wrap gap-2 text-xs">
+                                <span className="font-semibold text-teal-900">
+                                    {locale === 'en'
+                                        ? `Summary: ${totalTradeVisitStats.custCount} customers · ${totalTradeVisitStats.totalBottles} bottles`
+                                        : `Tổng cộng: ${totalTradeVisitStats.custCount} khách hàng · ${totalTradeVisitStats.totalBottles} chai`}
+                                </span>
+                                <span className="font-mono font-bold text-teal-800">
+                                    {locale === 'en' ? 'Ref. Value: ' : 'Giá trị tham khảo: '}{formatVND(totalTradeVisitStats.totalRefValue)}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Level 2 (PRICE_ADJUSTMENT) or Level 3 (SPECIAL_PRICE) custom fields */}
                     {(form.category === 'PRICE_ADJUSTMENT' || form.category === 'SPECIAL_PRICE') && (
                         <div className="space-y-4 p-3.5 sm:p-4 rounded-md border border-slate-200 bg-white">
@@ -2998,21 +3465,41 @@ function CreateDrawer({ onClose, userId, onCreated }: {
                                     </div>
                                 </div>
                             )}
-
-                            {batchPickerOpen && (
-                                <BatchProductPickerModal
-                                    products={products}
-                                    onClose={() => setBatchPickerOpen(false)}
-                                    onAddItems={newItems => {
-                                        // Merge new items avoiding duplicates
-                                        const existingIds = new Set(priceLines.filter(l => l.productId).map(l => l.productId))
-                                        const filteredNew = newItems.filter(item => !existingIds.has(item.productId))
-                                        const validLines = priceLines.filter(l => l.productId)
-                                        setPriceLines([...validLines, ...filteredNew])
-                                    }}
-                                />
-                            )}
                         </div>
+                    )}
+
+                    {batchPickerOpen && (
+                        <BatchProductPickerModal
+                            products={products}
+                            hidePriceEdit={form.category === 'TASTING' || form.category === 'SPECIAL_EVENT' || form.category === 'INTERNAL_TRAINING'}
+                            onClose={() => setBatchPickerOpen(false)}
+                            onAddItems={newItems => {
+                                const existingIds = new Set(priceLines.filter(l => l.productId).map(l => l.productId))
+                                const filteredNew = newItems.filter(item => !existingIds.has(item.productId))
+                                const validLines = priceLines.filter(l => l.productId)
+                                setPriceLines([...validLines, ...filteredNew])
+                            }}
+                        />
+                    )}
+
+                    {tradeVisitBatchIdx !== null && (
+                        <BatchProductPickerModal
+                            products={products}
+                            hidePriceEdit
+                            onClose={() => setTradeVisitBatchIdx(null)}
+                            onAddItems={newItems => {
+                                const targetIdx = tradeVisitBatchIdx
+                                setTradeVisitBlocks(prev => prev.map((b, i) => {
+                                    if (i !== targetIdx) return b
+                                    const existingIds = new Set(b.items.filter(it => it.productId).map(it => it.productId))
+                                    const filteredNew = newItems
+                                        .filter(item => !existingIds.has(item.productId))
+                                        .map(item => ({ productId: item.productId, quantity: item.quantity || 1 }))
+                                    const validItems = b.items.filter(it => it.productId)
+                                    return { ...b, items: [...validItems, ...filteredNew] }
+                                }))
+                            }}
+                        />
                     )}
 
                     {/* Priority */}
@@ -3151,6 +3638,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
     const [comment, setComment] = useState('')
     const [sendingComment, setSendingComment] = useState(false)
     const [printMenuOpen, setPrintMenuOpen] = useState(false)
+    const [creatingBulkSO, setCreatingBulkSO] = useState(false)
 
     const handleComment = async () => {
         if (!comment.trim() || !detail) return
@@ -3526,6 +4014,220 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                 </div>
                             )}
 
+                            {/* Trade Visit Multi-Customer Breakdown & Bulk SO Action */}
+                            {detail.category === 'TRADE_VISIT' && (() => {
+                                const tvCustomers: any[] = Array.isArray((detail as any).tradeVisitCustomers) ? (detail as any).tradeVisitCustomers : []
+                                const activeSOs: any[] = Array.isArray((detail as any).salesOrders)
+                                    ? (detail as any).salesOrders.filter((so: any) => so.status !== 'CANCELLED')
+                                    : []
+                                const soByCustomerId = new Map<string, any>()
+                                for (const so of activeSOs) {
+                                    if (so.customerId && !soByCustomerId.has(so.customerId)) {
+                                        soByCustomerId.set(so.customerId, so)
+                                    }
+                                }
+                                const remainingCustomersCount = tvCustomers.filter(c => c.customerId && !soByCustomerId.has(c.customerId)).length
+                                const totalBottles = tvCustomers.reduce(
+                                    (sum, c) => sum + (c.items || []).reduce((s: number, it: any) => s + (Number(it.quantity) || 0), 0),
+                                    0
+                                )
+                                const isApprovedState = ['APPROVED', 'IN_PROGRESS', 'CLOSED'].includes(detail.status)
+
+                                const handleCreateBulkSOs = async () => {
+                                    setCreatingBulkSO(true)
+                                    try {
+                                        const res = await createBulkTradeVisitDraftSOs(detail.id)
+                                        if (res.success) {
+                                            const createdCount = res.created?.length || 0
+                                            const codes = (res.created || []).map(c => c.soNo).join(', ')
+                                            if (createdCount > 0) {
+                                                toast.success(
+                                                    locale === 'en'
+                                                        ? `Created ${createdCount} draft sample orders: ${codes}`
+                                                        : `Đã tạo ${createdCount} đơn nháp 0 VNĐ: ${codes}`
+                                                )
+                                            } else if (res.skippedCount) {
+                                                toast.info(
+                                                    locale === 'en'
+                                                        ? 'All customers in this proposal already have sample orders.'
+                                                        : 'Toàn bộ khách hàng trong tờ trình đều đã có đơn xuất mẫu.'
+                                                )
+                                            }
+                                            if (res.errors && res.errors.length > 0) {
+                                                toast.warning(res.errors.map(e => `${e.customerName}: ${e.error}`).join(' | '))
+                                            }
+                                            onRefresh()
+                                        } else {
+                                            toast.error(res.error || 'Không thể tạo hàng loạt đơn nháp')
+                                        }
+                                    } catch (err: any) {
+                                        toast.error(err?.message || 'Lỗi hệ thống khi tạo đơn nháp')
+                                    } finally {
+                                        setCreatingBulkSO(false)
+                                    }
+                                }
+
+                                return (
+                                    <div className="space-y-3">
+                                        <div
+                                            className="p-4 rounded-md space-y-2.5 shadow-sm"
+                                            style={{
+                                                background: 'linear-gradient(135deg, #F0FDFA 0%, #CCFBF1 100%)',
+                                                border: '1.5px solid #0F766E',
+                                            }}
+                                        >
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                                                <div>
+                                                    <p className="text-xs font-extrabold uppercase flex items-center gap-1.5 tracking-wide text-teal-900">
+                                                        <Building2 size={14} className="text-teal-800 shrink-0" />
+                                                        <span>
+                                                            {locale === 'en'
+                                                                ? 'TRADE VISIT & MULTI-CUSTOMER SAMPLES'
+                                                                : 'TỜ TRÌNH TRADE VISIT & HÀNG MẪU ĐA KHÁCH HÀNG'}
+                                                        </span>
+                                                    </p>
+                                                    <p className="text-xs font-medium text-teal-900/80 mt-1">
+                                                        {locale === 'en'
+                                                            ? `${tvCustomers.length} customers · ${totalBottles} sample bottles total`
+                                                            : `${tvCustomers.length} khách hàng · Tổng cộng ${totalBottles} chai rượu mẫu`}
+                                                    </p>
+                                                </div>
+
+                                                {isApprovedState && (
+                                                    <button
+                                                        type="button"
+                                                        disabled={creatingBulkSO || remainingCustomersCount === 0}
+                                                        onClick={handleCreateBulkSOs}
+                                                        className={`px-3.5 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 shadow-sm transition-all shrink-0 ${
+                                                            remainingCustomersCount === 0
+                                                                ? 'bg-emerald-700/20 text-emerald-900 border border-emerald-700/30 cursor-default'
+                                                                : 'bg-teal-700 hover:bg-teal-800 text-white cursor-pointer active:scale-95 disabled:opacity-60'
+                                                        }`}
+                                                    >
+                                                        {creatingBulkSO ? (
+                                                            <Loader2 size={14} className="animate-spin shrink-0" />
+                                                        ) : remainingCustomersCount === 0 ? (
+                                                            <CheckCircle2 size={14} className="shrink-0" />
+                                                        ) : (
+                                                            <ShoppingBag size={14} className="shrink-0" />
+                                                        )}
+                                                        <span>
+                                                            {remainingCustomersCount === 0
+                                                                ? (locale === 'en'
+                                                                    ? `Orders created for all ${tvCustomers.length} customers`
+                                                                    : `Đã tạo đủ đơn cho ${tvCustomers.length} KH`)
+                                                                : (locale === 'en'
+                                                                    ? `Bulk Create 0 VND Draft Orders (${remainingCustomersCount})`
+                                                                    : `Tạo Hàng Loạt Đơn Nháp 0 VNĐ (${remainingCustomersCount} KH)`)}
+                                                        </span>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {tvCustomers.length > 0 && (
+                                            <div className="space-y-3">
+                                                {tvCustomers.map((cust: any, cIdx: number) => {
+                                                    const matchedSo = soByCustomerId.get(cust.customerId)
+                                                    const custItems: any[] = Array.isArray(cust.items) ? cust.items : []
+                                                    const custBottles = custItems.reduce((s, it) => s + (Number(it.quantity) || 0), 0)
+
+                                                    return (
+                                                        <div key={cust.customerId || cIdx} className="p-3.5 rounded-md bg-white border border-slate-200 space-y-2.5">
+                                                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 pb-2 border-b border-slate-100">
+                                                                <div className="min-w-0 space-y-1">
+                                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-teal-50 text-teal-800 border border-teal-200">
+                                                                            #{cIdx + 1}
+                                                                        </span>
+                                                                        <span className="text-xs font-bold text-slate-900">
+                                                                            {cust.customerName}
+                                                                        </span>
+                                                                        {cust.customerCode && (
+                                                                            <span className="text-[11px] font-mono text-slate-500">({cust.customerCode})</span>
+                                                                        )}
+                                                                        <span className="text-[11px] font-mono font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                                                            {custBottles} {locale === 'en' ? 'bottles' : 'chai'}
+                                                                        </span>
+                                                                    </div>
+                                                                    {(cust.visitDate || cust.purpose) && (
+                                                                        <div className="flex items-center gap-3 flex-wrap text-[11px] text-slate-600">
+                                                                            {cust.visitDate && (
+                                                                                <span className="inline-flex items-center gap-1">
+                                                                                    <Calendar size={12} className="text-teal-700 shrink-0" />
+                                                                                    {locale === 'en' ? 'Visit: ' : 'Ngày thăm: '}<strong>{cust.visitDate}</strong>
+                                                                                </span>
+                                                                            )}
+                                                                            {cust.purpose && (
+                                                                                <span>
+                                                                                    {locale === 'en' ? 'Purpose: ' : 'Mục đích: '}<strong>{cust.purpose}</strong>
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="shrink-0">
+                                                                    {matchedSo ? (
+                                                                        <a
+                                                                            href={`/dashboard/sales?search=${matchedSo.soNo}`}
+                                                                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 whitespace-nowrap"
+                                                                        >
+                                                                            <CheckCircle2 size={12} className="shrink-0" />
+                                                                            <span>{locale === 'en' ? `Order: ${matchedSo.soNo}` : `Đã lên đơn: ${matchedSo.soNo}`}</span>
+                                                                        </a>
+                                                                    ) : isApprovedState ? (
+                                                                        <a
+                                                                            href={`/dashboard/sales?action=createTasting&proposalId=${detail.id}&customerId=${cust.customerId || ''}`}
+                                                                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-bold bg-teal-700 hover:bg-teal-800 text-white whitespace-nowrap shadow-2xs"
+                                                                        >
+                                                                            <Plus size={12} className="shrink-0" />
+                                                                            <span>{locale === 'en' ? 'Create Sample Order' : 'Lên Đơn Xuất Mẫu'}</span>
+                                                                        </a>
+                                                                    ) : null}
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="overflow-x-auto rounded-lg border border-slate-200">
+                                                                <table className="w-full text-xs text-left">
+                                                                    <thead className="bg-slate-50 text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
+                                                                        <tr>
+                                                                            <th className="p-2 text-center w-8">#</th>
+                                                                            <th className="p-2">{locale === 'en' ? 'Product Name & SKU' : 'Sản Phẩm & Mã SKU'}</th>
+                                                                            <th className="p-2 text-center w-16">{locale === 'en' ? 'Qty' : 'SL Chai'}</th>
+                                                                            <th className="p-2 text-right w-28">{locale === 'en' ? 'Ref. Unit Price' : 'Đơn Giá TK'}</th>
+                                                                            <th className="p-2 text-right w-28">{locale === 'en' ? 'Total Ref.' : 'Thành Tiền TK'}</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody className="divide-y divide-slate-100 text-slate-900">
+                                                                        {custItems.map((item: any, idx: number) => {
+                                                                            const qty = Number(item.quantity) || 1
+                                                                            const price = Number(item.wholesalePrice) || 0
+                                                                            return (
+                                                                                <tr key={`${item.productId}-${idx}`} className="hover:bg-slate-50/60">
+                                                                                    <td className="p-2 text-center font-mono text-gray-400">{idx + 1}</td>
+                                                                                    <td className="p-2">
+                                                                                        <div className="font-semibold text-slate-900">{item.productName}</div>
+                                                                                        <div className="text-[10px] font-mono text-slate-500">{item.skuCode}</div>
+                                                                                    </td>
+                                                                                    <td className="p-2 text-center font-bold text-amber-700">{qty}</td>
+                                                                                    <td className="p-2 text-right font-mono text-slate-600">{formatVND(price)}</td>
+                                                                                    <td className="p-2 text-right font-mono font-bold text-slate-900">{formatVND(qty * price)}</td>
+                                                                                </tr>
+                                                                            )
+                                                                        })}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            })()}
+
                             {/* Tasting / Training Proposal Quick Action & Linked SOs */}
                             {(detail.category === 'TASTING' || detail.category === 'SPECIAL_EVENT' || detail.category === 'INTERNAL_TRAINING') && (
                                 <div className="p-4 rounded-md space-y-2.5 shadow-sm transition-all" style={{
@@ -3613,12 +4315,17 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
                                     <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
                                         {(detail as any).salesOrders.map((so: any) => (
                                             <div key={so.id} className="flex justify-between items-center p-2 rounded bg-white text-xs border border-slate-200/40">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-mono font-bold text-[#0891B2]">{so.soNo}</span>
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <span className="font-mono font-bold text-[#0891B2] shrink-0">{so.soNo}</span>
+                                                    {so.customer?.name && (
+                                                        <span className="text-[11px] font-medium text-slate-700 truncate max-w-[180px]" title={so.customer.name}>
+                                                            {so.customer.name}
+                                                        </span>
+                                                    )}
                                                     {so.orderType === 'TASTING' && (
                                                         <span className="inline-block px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-amber-950 text-amber-700 border border-amber-500/40 whitespace-nowrap shrink-0">Tasting</span>
                                                     )}
-                                                    <span className="text-[10px] text-gray-400">{new Date(so.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')}</span>
+                                                    <span className="text-[10px] text-gray-400 shrink-0">{new Date(so.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')}</span>
                                                 </div>
                                                 <div className="flex items-center gap-3">
                                                     <span className="font-bold text-slate-900">{formatVND(Number(so.totalAmount))}</span>

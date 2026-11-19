@@ -4,6 +4,7 @@ import type { AppLocale } from '@/lib/i18n'
 export const CATEGORY_LABELS: Record<string, string> = {
     TASTING: 'Tờ Trình Tasting (Thử Rượu / Hàng Mẫu)',
     INTERNAL_TRAINING: 'Tờ Trình Đào Tạo Nội Bộ (Internal Training)',
+    TRADE_VISIT: 'Tờ Trình Trade Visit (Thăm Khách Hàng & Hàng Mẫu)',
     SPECIAL_EVENT: 'Tờ Trình Tổ Chức Sự Kiện / Event',
     PRICE_ADJUSTMENT: 'Tờ Trình Cơ Chế Giá Khách Hàng (Level 2 - Giảm % Toàn Kho)',
     SPECIAL_PRICE: 'Tờ Trình Giá Đặc Biệt Theo Mã (Level 3 - Giá Riêng Từng Chai)',
@@ -24,6 +25,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
 export const CATEGORY_LABELS_EN: Record<string, string> = {
     TASTING: 'Wine Tasting & Sample Proposal',
     INTERNAL_TRAINING: 'Internal Training Proposal',
+    TRADE_VISIT: 'Trade Visit & Multi-Customer Sample Proposal',
     SPECIAL_EVENT: 'Special Event Proposal',
     PRICE_ADJUSTMENT: 'Customer Pricing Mechanism (Level 2 - Portfolio % Discount)',
     SPECIAL_PRICE: 'Special SKU Pricing (Level 3 - Per-Product Deal)',
@@ -102,4 +104,36 @@ export function getStatusLabel(status: string, locale: AppLocale = 'vi') {
         return STATUS_LABELS_EN[status] || STATUS_LABELS_EN.DRAFT
     }
     return STATUS_LABELS[status] || STATUS_LABELS.DRAFT
+}
+
+export interface TradeVisitSkuItem {
+    productId: string
+    quantity: number
+}
+
+export interface TradeVisitCustomerEntry {
+    customerId: string
+    customerCode?: string
+    customerName?: string
+    visitDate?: string
+    purpose?: string
+    items: TradeVisitSkuItem[]
+}
+
+export interface TradeVisitScopeData {
+    subType: 'TRADE_VISIT'
+    customers: TradeVisitCustomerEntry[]
+}
+
+export function parseTradeVisitScope(scope: string | null | undefined): TradeVisitScopeData | null {
+    if (!scope || typeof scope !== 'string' || !scope.startsWith('{')) return null
+    try {
+        const parsed = JSON.parse(scope)
+        if (parsed && parsed.subType === 'TRADE_VISIT' && Array.isArray(parsed.customers)) {
+            return parsed as TradeVisitScopeData
+        }
+    } catch {
+        return null
+    }
+    return null
 }

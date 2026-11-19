@@ -711,6 +711,13 @@ Triển khai hoàn tất Phase 2 theo kế hoạch chuẩn hóa song ngữ toàn
 | **Loại bỏ bước Kế Toán Duyệt (`PENDING_ACCOUNTING`)** | `src/app/dashboard/sales/actions.ts`, `SalesClient.tsx`, `i18n.ts` | Khi `Sale Admin` (hoặc `Sales Manager` / `CEO`) duyệt đơn hàng (`approveSalesOrder` — bao gồm chọn kho xuất `warehouseId` và niên vụ `vintage`), đơn hàng chuyển thẳng sang trạng thái **`CONFIRMED` (`Đã Duyệt / Chờ Kho Xuất`)** và gửi thông báo ngay cho `Thủ Kho` (`notifySOConfirmed`) để xuất kho mà không cần chờ Kế Toán duyệt. |
 | **Duyệt trực tiếp 1-bước cho `Sale Admin` từ trạng thái Nháp (`DRAFT`)** | `SalesClient.tsx`, `sales/actions.ts` | Khi `Sale Admin` tạo đơn mới (`DRAFT`) hoặc xem đơn nháp, hiển thị nút **`Duyệt`** ngay trên dòng/thẻ đơn nháp để `Sale Admin` chọn kho xuất & vintage và duyệt thẳng sang `CONFIRMED`. Đã migrate toàn bộ 10 đơn hàng đang kẹt ở `PENDING_ACCOUNTING` trên Supabase sang `CONFIRMED`. |
 
-*Last updated: 2026-11-10 19:05 | Wine ERP v12.45*
+#### Session 22 — Tích Hợp Tạo Đơn Xuất Mẫu Từ Tờ Trình Trade Visit Đa Khách Hàng (`TRADE_VISIT`) (19/11/2026)
+
+| Tính năng | File code | Ghi chú |
+|---|---|---|
+| **Tạo Hàng Loạt Đơn Nháp 0 VNĐ (`createBulkTradeVisitDraftSOs`)** | `src/app/dashboard/sales/actions.ts`, `ProposalsClient.tsx` | Từ Tờ trình Trade Visit đã duyệt, tạo hàng loạt đơn nháp (`orderType: 'TASTING'`, `unitPrice: 0`, `priceSource: 'TASTING_FREE'`, `paymentTerm: 'TASTING - Không thu tiền'`) cho toàn bộ khách hàng chưa có đơn SO hợp lệ (idempotent, tự động bỏ qua khách đã lên đơn). |
+| **Nạp Danh Mục Rượu Theo Từng Khách Hàng (`getProposalWithItemsForSO`)** | `src/app/dashboard/sales/actions.ts`, `CreateSODrawer.tsx` | Hỗ trợ tham số `targetCustomerId` để tự động phân giải và nạp đúng danh mục SKU + số lượng chai riêng của từng khách hàng trong Tờ trình `TRADE_VISIT`, đồng thời bảo toàn đơn giá 0 VNĐ khi `loadPrices` chạy hoặc khi đổi khách hàng trên `CreateSODrawer`. |
+
+*Last updated: 2026-11-19 19:20 | Wine ERP v12.53*
 
 

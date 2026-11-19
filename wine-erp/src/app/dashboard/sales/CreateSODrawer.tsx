@@ -302,9 +302,16 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
             })))
 
             if (cloneData.proposalId && cloneData.lines.length === 0) {
-                getProposalWithItemsForSO(cloneData.proposalId).then(prop => {
+                getProposalWithItemsForSO(cloneData.proposalId, cloneData.customerId || undefined).then(prop => {
                     if (prop) {
-                        setNotes(prop.category === 'INTERNAL_TRAINING' ? `Đơn xuất mẫu Đào tạo kèm Tờ trình ${prop.proposalNo}: ${prop.title}` : `Đơn Tasting kèm Tờ trình ${prop.proposalNo}: ${prop.title}`)
+                        const catStr = prop.category as string
+                        setNotes(
+                            catStr === 'TRADE_VISIT'
+                                ? `Đơn xuất mẫu Trade Visit kèm Tờ trình ${prop.proposalNo}: ${prop.title}${prop.purpose ? ` (${prop.purpose})` : ''}`
+                                : catStr === 'INTERNAL_TRAINING'
+                                    ? `Đơn xuất mẫu Đào tạo kèm Tờ trình ${prop.proposalNo}: ${prop.title}`
+                                    : `Đơn Tasting kèm Tờ trình ${prop.proposalNo}: ${prop.title}`
+                        )
                         if (prop.priceItems && prop.priceItems.length > 0) {
                             const loadedLines = prop.priceItems.map((item: any) => ({
                                 productId: item.productId,
@@ -426,8 +433,11 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
             if (custId) {
                 const resolvedPrices = await getCustomerResolvedPrices(custId)
                 setPriceMap(resolvedPrices)
-                // Auto-update existing lines to resolved prices and source
+                // Auto-update existing lines to resolved prices and source (preserve 0 VND tasting/sample lines)
                 setLines(prev => prev.map(l => {
+                    if (l.priceSource === 'TASTING_FREE') {
+                        return { ...l, unitPrice: 0, lineDiscountPct: 0, priceSource: 'TASTING_FREE' }
+                    }
                     const resolved = resolvedPrices[l.productId]
                     if (resolved && resolved.price > 0) {
                         return { ...l, unitPrice: resolved.price, lineDiscountPct: 0, priceSource: resolved.source }
@@ -444,8 +454,11 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                     }
                 }
                 setPriceMap(converted)
-                // Auto-update existing lines to resolved prices and source
+                // Auto-update existing lines to resolved prices and source (preserve 0 VND tasting/sample lines)
                 setLines(prev => prev.map(l => {
+                    if (l.priceSource === 'TASTING_FREE') {
+                        return { ...l, unitPrice: 0, lineDiscountPct: 0, priceSource: 'TASTING_FREE' }
+                    }
                     const resolved = converted[l.productId]
                     if (resolved) {
                         return { ...l, unitPrice: resolved.price, lineDiscountPct: 0, priceSource: resolved.source }
@@ -508,13 +521,36 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
             // Auto-update existing lines to resolved prices and customer item codes
             setLines(prev => prev.map(l => {
                 if (!l.productId) return l
-                const resolved = resolvedPrices[l.productId]
                 const custCode = (codesRes.map as Record<string, string>)?.[l.productId] || l.customerItemCode
+                if (orderType === 'TASTING' || l.priceSource === 'TASTING_FREE') {
+                    return { ...l, unitPrice: 0, lineDiscountPct: 0, priceSource: 'TASTING_FREE', customerItemCode: custCode }
+                }
+                const resolved = resolvedPrices[l.productId]
                 if (resolved && resolved.price > 0) {
                     return { ...l, unitPrice: resolved.price, lineDiscountPct: 0, priceSource: resolved.source, customerItemCode: custCode }
                 }
                 return { ...l, customerItemCode: custCode }
             }))
+
+            if (orderType === 'TASTING' && proposalId) {
+                getProposalWithItemsForSO(proposalId, id).then(prop => {
+                    if (prop && (prop.category as string) === 'TRADE_VISIT' && prop.priceItems && prop.priceItems.length > 0) {
+                        setNotes(`Đơn xuất mẫu Trade Visit kèm Tờ trình ${prop.proposalNo}: ${prop.title}${prop.purpose ? ` (${prop.purpose})` : ''}`)
+                        setLines(prop.priceItems.map((item: any) => ({
+                            productId: item.productId,
+                            productName: item.productName,
+                            skuCode: item.skuCode,
+                            qtyOrdered: item.quantity || 1,
+                            unitPrice: 0,
+                            lineDiscountPct: 0,
+                            vatRate: 10,
+                            priceSource: 'TASTING_FREE',
+                            stock: 100,
+                            customerItemCode: (codesRes.map as Record<string, string>)?.[item.productId] || null,
+                        })))
+                    }
+                }).catch(() => {})
+            }
         } else {
             setCustomerCodesMap({})
             loadPrices(null, channel)
@@ -952,17 +988,23 @@ export function CreateSODrawer({ open, onClose, onSaved, userId, userRoles = [],
                                                     setProposalId(selectedId)
                                                     if (!selectedId) return
                                                     try {
-                                                        const fullProp = await getProposalWithItemsForSO(selectedId)
+                                                        const fullProp = await getProposalWithItemsForSO(selectedId, customerId || undefined)
                                                         if (fullProp) {
-                                                            setNotes(`Đơn Tasting kèm Tờ trình ${fullProp.proposalNo}: ${fullProp.title}`)
+                                                            const catStr = fullProp.category as string
+                                                            setNotes(
+                                                                catStr === 'TRADE_VISIT'
+                                                                    ? `Đơn xuất mẫu Trade Visit kèm Tờ trình ${fullProp.proposalNo}: ${fullProp.title}${fullProp.purpose ? ` (${fullProp.purpose})` : ''}`
+                                                                    : `Đơn Tasting kèm Tờ trình ${fullProp.proposalNo}: ${fullProp.title}`
+                                                            )
                                                             const isCurrentCustApplicable = customerId && (
                                                                 fullProp.customerId === customerId ||
                                                                 Boolean(fullProp.scope && fullProp.scope.includes(customerId))
                                                             )
                                                             if (!customerId || !isCurrentCustApplicable) {
-                                                                if (fullProp.customerId) {
-                                                                    setCustomerId(fullProp.customerId)
-                                                                    const foundCust = sortedCustomersForSelect.find(c => c.id === fullProp.customerId)
+                                                                const targetCustId = fullProp.customer?.id || fullProp.customerId
+                                                                if (targetCustId) {
+                                                                    setCustomerId(targetCustId)
+                                                                    const foundCust = sortedCustomersForSelect.find(c => c.id === targetCustId)
                                                                     if (foundCust) setSelectedCustomer(foundCust)
                                                                 }
                                                             }

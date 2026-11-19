@@ -5,7 +5,9 @@ import { revalidatePath } from 'next/cache'
 import { logAudit } from '@/lib/audit'
 import { cached, revalidateCache } from '@/lib/cache'
 import { createNotification, triggerNotificationForRole } from '@/lib/notifications'
-import { requireAuth, hasRole } from '@/lib/session'
+import { requireAuth, hasRole, getCurrentUser } from '@/lib/session'
+import { CATEGORY_LABELS, parseTradeVisitScope } from './constants'
+import { DEFAULT_ROUTING_FULL } from '../settings/approval-matrix/constants'
 
 // ═══════════════════════════════════════════════════
 // PRO — TỜ TRÌNH (Proposals / Submissions)
@@ -15,6 +17,7 @@ import { requireAuth, hasRole } from '@/lib/session'
 const CATEGORY_ROUTING: Record<string, number[]> = {
     TASTING: [1, 2, 3],               // TP Sales → Kế toán → CEO
     INTERNAL_TRAINING: [1, 2, 3],     // Trưởng Bộ Phận → Kế toán trưởng → CEO
+    TRADE_VISIT: [1, 2, 3],           // Quản Lý KD → Kế toán trưởng → CEO
     BUDGET_REQUEST: [1, 2, 3],        // TP → KT Trưởng → CEO
     CAPITAL_EXPENDITURE: [1, 2, 3],
     PRICE_ADJUSTMENT: [1, 2, 3],      // Level 2: Cơ chế giá giảm % toàn kho
@@ -32,12 +35,15 @@ const CATEGORY_ROUTING: Record<string, number[]> = {
     OTHER: [1, 3],
 }
 
-// Helper: Resolve whether a PRICE_ADJUSTMENT DB row is Level 2 (PRICE_ADJUSTMENT) or Level 3 (SPECIAL_PRICE)
+// Helper: Resolve whether a DB Proposal row maps to a sub-category (TRADE_VISIT / SPECIAL_PRICE / PRICE_ADJUSTMENT)
 function resolveProposalCategory(p: {
     category: string
     scope?: string | null
     discountPct?: any
 }): string {
+    if (parseTradeVisitScope(p.scope)) {
+        return 'TRADE_VISIT'
+    }
     if (p.category !== 'PRICE_ADJUSTMENT') return p.category
     const scopeStr = p.scope || ''
     if (scopeStr.includes('SPECIFIC_PRODUCTS') || scopeStr.includes('LEVEL_3_SKU')) {
@@ -80,6 +86,39 @@ async function resolveDynamicStepsForCategory(effectiveCategory: string): Promis
         }
     }
     return steps
+}
+
+async function getCreatorRolesForCategory(category: string): Promise<string[]> {
+    const config = await prisma.approvalConfig.findUnique({
+        where: { configKey: `proposal.${category}` },
+    })
+    if (config?.value && typeof config.value === 'object') {
+        const val = config.value as any
+        if (Array.isArray(val.creatorRoles)) {
+            return val.creatorRoles
+        }
+    }
+    return DEFAULT_ROUTING_FULL[category]?.creatorRoles ?? []
+}
+
+export async function getCreatableProposalCategories(): Promise<string[]> {
+    const user = await getCurrentUser()
+    if (!user) return []
+
+    const configs = await prisma.approvalConfig.findMany({
+        where: { configKey: { startsWith: 'proposal.' } },
+    })
+    const configMap = new Map(configs.map(c => [c.configKey, c.value]))
+
+    return Object.keys(CATEGORY_LABELS).filter(cat => {
+        const dbVal = configMap.get(`proposal.${cat}`) as any
+        const creatorRoles: string[] = dbVal && Array.isArray(dbVal.creatorRoles)
+            ? dbVal.creatorRoles
+            : (DEFAULT_ROUTING_FULL[cat]?.creatorRoles ?? [])
+
+        if (creatorRoles.length === 0) return true
+        return hasRole(user, ...creatorRoles, 'CEO', 'ADMIN', 'TRO_LY')
+    })
 }
 
 // ─── Generate proposal number ────────────────────
@@ -125,7 +164,9 @@ export async function getProposals(filters?: {
         const where: any = {}
         if (filters?.status) where.status = filters.status
         if (filters?.category) {
-            where.category = filters.category === 'SPECIAL_PRICE' ? 'PRICE_ADJUSTMENT' : filters.category
+            if (filters.category === 'SPECIAL_PRICE') where.category = 'PRICE_ADJUSTMENT'
+            else if (filters.category === 'TRADE_VISIT') where.category = 'INTERNAL_TRAINING'
+            else where.category = filters.category
         }
         if (filters?.priority) where.priority = filters.priority
         if (filters?.createdBy) where.createdBy = filters.createdBy
@@ -143,6 +184,16 @@ export async function getProposals(filters?: {
 
         const mapped = proposals.map(p => {
             const displayCategory = resolveProposalCategory(p)
+            let resolvedCustomerName = p.customer?.name ?? null
+            if (displayCategory === 'TRADE_VISIT') {
+                const tv = parseTradeVisitScope(p.scope)
+                if (tv && tv.customers.length > 0) {
+                    const firstCustName = tv.customers[0]?.customerName || p.customer?.name || ''
+                    resolvedCustomerName = tv.customers.length > 1
+                        ? `${firstCustName} (+${tv.customers.length - 1} KH)`
+                        : (firstCustName || null)
+                }
+            }
             return {
                 id: p.id,
                 proposalNo: p.proposalNo,
@@ -158,7 +209,7 @@ export async function getProposals(filters?: {
                 currentLevel: p.currentLevel,
                 creatorName: p.creator.name ?? p.creator.email,
                 departmentName: p.department?.name ?? null,
-                customerName: p.customer?.name ?? null,
+                customerName: resolvedCustomerName,
                 scope: p.scope,
                 discountPct: p.discountPct ? Number(p.discountPct) : null,
                 attachmentCount: p._count.attachments,
@@ -169,7 +220,12 @@ export async function getProposals(filters?: {
             }
         })
 
-        if (filters?.category === 'SPECIAL_PRICE' || filters?.category === 'PRICE_ADJUSTMENT') {
+        if (
+            filters?.category === 'SPECIAL_PRICE' ||
+            filters?.category === 'PRICE_ADJUSTMENT' ||
+            filters?.category === 'TRADE_VISIT' ||
+            filters?.category === 'INTERNAL_TRAINING'
+        ) {
             return mapped.filter(m => m.category === filters.category)
         }
         return mapped
@@ -202,6 +258,8 @@ export async function getProposalDetail(id: string) {
                 select: {
                     id: true,
                     soNo: true,
+                    customerId: true,
+                    customer: { select: { id: true, name: true, code: true } },
                     orderType: true,
                     status: true,
                     totalAmount: true,
@@ -230,12 +288,98 @@ export async function getProposalDetail(id: string) {
         ? dynamicSteps.map(s => s.level)
         : (CATEGORY_ROUTING[effectiveCategory] ?? [1, 3])
 
+    let tradeVisitCustomers: {
+        customerId: string
+        customerCode: string
+        customerName: string
+        visitDate: string | null
+        purpose: string | null
+        items: {
+            productId: string
+            skuCode: string
+            productName: string
+            country: string
+            wholesalePrice: number
+            quantity: number
+        }[]
+    }[] = []
+
+    if (effectiveCategory === 'TRADE_VISIT') {
+        const tv = parseTradeVisitScope(p.scope)
+        if (tv && tv.customers.length > 0) {
+            const custIds = Array.from(new Set(tv.customers.map(c => c.customerId).filter(Boolean)))
+            const custRows = custIds.length > 0
+                ? await prisma.customer.findMany({
+                    where: { id: { in: custIds } },
+                    select: { id: true, code: true, name: true },
+                })
+                : []
+            const custMap = new Map(custRows.map(c => [c.id, c]))
+
+            const prodMap = new Map<string, { skuCode: string; productName: string; country: string; wholesalePrice: number }>()
+            for (const pi of p.priceItems || []) {
+                if (pi.product) {
+                    prodMap.set(pi.productId, {
+                        skuCode: pi.product.skuCode,
+                        productName: pi.product.productName,
+                        country: pi.product.country,
+                        wholesalePrice: pi.product.marginPrice ? Number(pi.product.marginPrice.wholesalePrice) : 0,
+                    })
+                }
+            }
+
+            const allProdIds = Array.from(new Set(tv.customers.flatMap(c => (c.items || []).map(it => it.productId)).filter(Boolean)))
+            const missingProdIds = allProdIds.filter(pid => !prodMap.has(pid))
+            if (missingProdIds.length > 0) {
+                const extraProds = await prisma.product.findMany({
+                    where: { id: { in: missingProdIds } },
+                    select: { id: true, skuCode: true, productName: true, country: true, marginPrice: { select: { wholesalePrice: true } } },
+                })
+                for (const ep of extraProds) {
+                    prodMap.set(ep.id, {
+                        skuCode: ep.skuCode,
+                        productName: ep.productName,
+                        country: ep.country,
+                        wholesalePrice: ep.marginPrice ? Number(ep.marginPrice.wholesalePrice) : 0,
+                    })
+                }
+            }
+
+            tradeVisitCustomers = tv.customers.map(entry => {
+                const c = custMap.get(entry.customerId)
+                return {
+                    customerId: entry.customerId,
+                    customerCode: c?.code ?? entry.customerCode ?? '',
+                    customerName: c?.name ?? entry.customerName ?? 'Khách hàng',
+                    visitDate: entry.visitDate || null,
+                    purpose: entry.purpose || null,
+                    items: (entry.items || []).map(it => {
+                        const prod = prodMap.get(it.productId)
+                        return {
+                            productId: it.productId,
+                            skuCode: prod?.skuCode ?? '',
+                            productName: prod?.productName ?? '',
+                            country: prod?.country ?? '',
+                            wholesalePrice: prod?.wholesalePrice ?? 0,
+                            quantity: Number(it.quantity) || 1,
+                        }
+                    }),
+                }
+            })
+        }
+    }
+
     return {
         ...p,
         category: effectiveCategory as any,
         branchCustomers,
+        tradeVisitCustomers,
         estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : null,
         discountPct: p.discountPct ? Number(p.discountPct) : null,
+        salesOrders: (p.salesOrders || []).map(so => ({
+            ...so,
+            totalAmount: Number(so.totalAmount),
+        })),
         priceItems: p.priceItems?.map((item: any) => ({
             ...item,
             proposedPrice: Number(item.proposedPrice),
@@ -270,9 +414,18 @@ export async function createProposal(input: {
     priceItems?: { productId: string; proposedPrice: number; quantity?: number }[]
 }): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
+        const currentUser = await getCurrentUser()
+        if (currentUser) {
+            const allowedCreatorRoles = await getCreatorRolesForCategory(input.category)
+            if (allowedCreatorRoles.length > 0 && !hasRole(currentUser, ...allowedCreatorRoles, 'CEO', 'ADMIN', 'TRO_LY')) {
+                return { success: false, error: 'Bạn không có quyền tạo loại tờ trình này theo Ma trận phân quyền.' }
+            }
+        }
+
         const proposalNo = await generateProposalNo()
         const isSpecialPriceL3 = input.category === 'SPECIAL_PRICE'
-        const dbCategory = isSpecialPriceL3 ? 'PRICE_ADJUSTMENT' : input.category
+        const isTradeVisit = input.category === 'TRADE_VISIT'
+        const dbCategory = isSpecialPriceL3 ? 'PRICE_ADJUSTMENT' : isTradeVisit ? 'INTERNAL_TRAINING' : input.category
         let normalizedScope = input.scope ?? null
         if (isSpecialPriceL3) {
             if (!normalizedScope || !normalizedScope.includes('SPECIFIC_PRODUCTS')) {
@@ -351,7 +504,8 @@ export async function updateProposal(id: string, input: {
         }
 
         const isSpecialPriceL3 = input.category === 'SPECIAL_PRICE'
-        const dbCategory = isSpecialPriceL3 ? 'PRICE_ADJUSTMENT' : input.category
+        const isTradeVisit = input.category === 'TRADE_VISIT'
+        const dbCategory = isSpecialPriceL3 ? 'PRICE_ADJUSTMENT' : isTradeVisit ? 'INTERNAL_TRAINING' : input.category
 
         await prisma.$transaction(async (tx) => {
             await tx.proposal.update({
@@ -740,7 +894,7 @@ export async function syncProposalToCustomerPriceRules(proposalId: string) {
         },
     })
 
-    if (!proposal || !proposal.customerId) {
+    if (!proposal || proposal.category !== 'PRICE_ADJUSTMENT' || !proposal.customerId) {
         return { count: 0 }
     }
 

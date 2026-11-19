@@ -76,6 +76,15 @@ export const DEFAULT_ROUTING_FULL: Record<string, ProposalRouteConfig> = {
             { level: 3, role: 'CEO', label: 'Tổng Giám Đốc' },
         ]
     },
+    TRADE_VISIT: {
+        category: 'TRADE_VISIT',
+        creatorRoles: ['SALES_REP', 'SALES_ADMIN', 'SALES_MGR', 'ADMIN'],
+        steps: [
+            { level: 1, role: 'SALES_MGR', label: 'Quản Lý Kinh Doanh' },
+            { level: 2, role: 'KE_TOAN', label: 'Kế Toán Trưởng' },
+            { level: 3, role: 'CEO', label: 'Tổng Giám Đốc' },
+        ]
+    },
     PRICE_ADJUSTMENT: {
         category: 'PRICE_ADJUSTMENT',
         creatorRoles: ['SALES_REP', 'SALES_ADMIN', 'SALES_MGR', 'ADMIN'],

@@ -65,6 +65,7 @@ Hệ thống hỗ trợ **cấu hình hoàn toàn động** tại trang **Ma Tr�
 | Loại Tờ Trình | Code | Cấp Duyệt Mặc Định | Role Tạo Mặc Định |
 |---|---|---|---|
 | **Đào Tạo Nội Bộ** | `INTERNAL_TRAINING` | Cấp 1 (TP Bộ Phận) ➔ Cấp 2 (KT.Trưởng) ➔ Cấp 3 (CEO) | Tất cả nhân viên |
+| **Tờ Trình Trade Visit (Thăm Khách Hàng & Hàng Mẫu)** | `TRADE_VISIT` | Cấp 1 (TP.KD) ➔ Cấp 2 (KT.Trưởng) ➔ Cấp 3 (CEO) | Sales Rep, Sales Admin, CBO, Admin |
 | **Tờ Trình Tasting (Thử Rượu)** | `TASTING` | Cấp 1 (TP.KD) ➔ Cấp 2 (KT.Trưởng) ➔ Cấp 3 (CEO) | Sales Rep, Sales Admin, CBO, Admin |
 | **Tờ Trình Cơ Chế Giá Khách Hàng (Level 2 - Giảm % Toàn Kho)** | `PRICE_ADJUSTMENT` | Cấp 1 (TP.KD) ➔ Cấp 2 (KT.Trưởng) ➔ Cấp 3 (CEO) (Cấu hình 1–3 cấp tại `proposal.PRICE_ADJUSTMENT`) | Sales Rep, Sales Admin, CBO, Admin |
 | **Tờ Trình Giá Đặc Biệt Theo Mã (Level 3 - Giá Riêng Từng Chai)** | `SPECIAL_PRICE` | Cấp 1 (TP.KD) ➔ Cấp 2 (KT.Trưởng) ➔ Cấp 3 (CEO) (Cấu hình 1–3 cấp tại `proposal.SPECIAL_PRICE`) | Sales Rep, Sales Admin, CBO, Admin |
@@ -78,7 +79,15 @@ Hệ thống hỗ trợ **cấu hình hoàn toàn động** tại trang **Ma Tr�
 > **Quy trình Tờ Trình Đào Tạo Nội Bộ & Hàng Mẫu Thử Nếm (Training Samples)**:
 > 1. Nhân viên các phòng ban lập **Tờ Trình Đào Tạo Nội Bộ (`category: INTERNAL_TRAINING`)**, có thể đính kèm danh sách rượu vang dùng thử nếm trong buổi đào tạo (SKUs & Số lượng chai).
 > 2. Luồng duyệt tự động 3 cấp: **Trưởng Bộ Phận (Cấp 1)** ➔ **Kế Toán Trưởng (Cấp 2 - kiểm soát ngân sách/chi phí mẫu)** ➔ **Tổng Giám Đốc (Cấp 3 - phê duyệt cuối)**.
-> 3. Sau khi được duyệt (`APPROVED`), Drawer chi tiết hiển thị danh sách rượu mẫu kèm nút **`🍷 + Lên Đơn Xuất Mẫu Training`** để tạo nhanh đơn xuất hàng mẫu thử nếm 0 VNĐ trên hệ thống.
+> 3. Sau khi được duyệt (`APPROVED`), Drawer chi tiết hiển thị danh sách rượu mẫu kèm nút **`+ Lên Đơn Xuất Mẫu Training`** để tạo nhanh đơn xuất hàng mẫu thử nếm 0 VNĐ trên hệ thống.
+
+> **Quy trình Tờ Trình Trade Visit Đa Khách Hàng & Tạo Hàng Loạt Đơn Nháp Xuất Mẫu (0 VNĐ)**:
+> 1. Khối Kinh doanh (`SALES_REP`, `SALES_ADMIN`, `SALES_MGR`, `ADMIN`, cấu hình động qua `proposal.TRADE_VISIT` tại Ma trận phân quyền; `getCreatableProposalCategories` lọc form theo role) lập **Tờ Trình Trade Visit (`category: TRADE_VISIT`)**.
+> 2. Trong cùng 1 tờ trình, người tạo chọn **nhiều khách hàng**; mỗi khách hàng sở hữu danh sách mã rượu riêng biệt (hỗ trợ chọn nhanh hàng loạt qua `BatchProductPickerModal`), số lượng chai từng SKU, cùng 2 trường tùy chọn **Ngày dự kiến thăm/xuất mẫu (`visitDate`)** và **Mục đích/Ghi chú riêng (`purpose`)**. Dữ liệu được lưu trữ zero-downtime dưới DB (`category: INTERNAL_TRAINING`, `scope` JSON `{"subType":"TRADE_VISIT","customers":[...]}` và `proposal_price_items` tổng hợp theo SKU), ánh xạ tự động qua `resolveProposalCategory()`.
+> 3. Luồng duyệt tự động 3 cấp: **Quản Lý Kinh Doanh (Cấp 1)** ➔ **Kế Toán Trưởng (Cấp 2)** ➔ **Tổng Giám Đốc (Cấp 3)**.
+> 4. Sau khi tờ trình được duyệt (`APPROVED` / `IN_PROGRESS` / `CLOSED`), trên Drawer chi tiết:
+>    - Bấm nút **`Tạo Hàng Loạt Đơn Nháp 0 VNĐ`** (`createBulkTradeVisitDraftSOs` tại `sales/actions.ts`) để tự động tạo các đơn nháp `orderType: 'TASTING'`, `unitPrice: 0`, `priceSource: 'TASTING_FREE'`, `paymentTerm: 'TASTING - Không thu tiền'` cho toàn bộ khách hàng chưa có đơn (tự động bỏ qua khách đã lên đơn, đảm bảo idempotent).
+>    - Hoặc bấm nút **`+ Lên Đơn Xuất Mẫu`** riêng trên từng thẻ khách hàng để mở `CreateSODrawer` tự động nạp đúng danh mục rượu và số lượng của khách hàng đó.
 
 > **Quy trình Liên Kết Tờ Trình Tasting & Đơn Hàng Tasting (0 VNĐ)**:
 > 1. Sales lập **Tờ Trình Tasting (`category: TASTING`)** chọn Khách hàng và **chọn chi tiết các mã sản phẩm (SKUs) kèm Số Lượng (chai)** cần nếm thử (thủ công hoặc chọn nhanh hàng loạt).
@@ -152,6 +161,7 @@ Hệ thống hỗ trợ **cấu hình hoàn toàn động** tại trang **Ma Tr�
   - Hỗ trợ in văn bản song ngữ A4 chuẩn hành chính - thương mại quốc tế (Việt - Anh)
   - Bộ chọn chế độ in linh hoạt: **Bản Song Ngữ (Mặc định)**, **Bản Tiếng Việt**, **Bản Tiếng Anh**
   - Mẫu in **Tờ trình Tasting** (`TASTING`): Song ngữ toàn bộ bảng sản phẩm (SKU, Tên SP, ĐVT, SL, Giá tham khảo, Thành tiền, Mục đích), căn cứ pháp lý, quy chế ngân sách, lưu ý thuế GTGT & TNDN theo NĐ 181/2025/NĐ-CP & NĐ 70/2025/NĐ-CP, chữ ký 4 bên và Digital Audit Trail.
+  - Mẫu in **Tờ trình Trade Visit** (`TRADE_VISIT`): Sử dụng mẫu in A4 song ngữ (Song ngữ / VI / EN) theo cấu trúc chuẩn Thắng Ân, tự động gộp ô (`rowspan`) cột **Khách hàng & Ngày thăm** và cột **Mục đích / Lý do** theo từng khối khách hàng cùng tổng giá trị tham khảo toàn tờ trình.
   - Mẫu in **Tờ trình Cơ chế giá** (`PRICE_ADJUSTMENT`): Song ngữ thông tin khách hàng, phạm vi, thời hạn, % chiết khấu, bảng giá đề xuất theo SKU, căn cứ đề xuất, kết quả kỳ vọng và bảng tiến trình ký duyệt điện tử.
 
 ### 5.3 Tích hợp CEO Dashboard
@@ -221,7 +231,8 @@ Hệ thống hỗ trợ **cấu hình hoàn toàn động** tại trang **Ma Tr�
 | Tờ trình CTKM 1 mã (Mua X tặng Y, Kênh bán buôn/DN/bán lẻ/Horeca, Quota, Gợi ý quà tặng SO) | ✅ Hoàn thành (09/10/2026) |
 | Đồng bộ Tờ trình Cơ chế giá (`PRICE_ADJUSTMENT`) chuẩn Thang Giá 4 Tầng: Tách biệt Level 2 (Giảm % toàn kho + Thời hạn hiệu lực + Kế thừa Công ty mẹ -> Chi nhánh con qua `ApprovalConfig`) và Level 3 (Giá đặc biệt theo từng SKU qua `CustomerPriceRule`) | ✅ Hoàn thành (18/10/2026) |
 | Tách bạch 2 luồng tờ trình độc lập trên Giao diện Tờ Trình & Ma Trận Phân Quyền: `PRICE_ADJUSTMENT` (Tờ trình Cơ chế giá khách hàng — Level 2 giảm % toàn kho) và `SPECIAL_PRICE` (Tờ trình Giá đặc biệt theo mã — Level 3 giá riêng từng chai) | ✅ Hoàn thành (19/10/2026) |
+| Tờ trình Trade Visit đa khách hàng (`TRADE_VISIT`): Chọn nhiều khách hàng với danh mục rượu & số lượng chai riêng từng khách, tùy chọn ngày thăm & mục đích, lọc quyền tạo theo Ma trận phân quyền, mẫu in A4 song ngữ gộp dòng (`rowspan`), tạo hàng loạt & đơn lẻ xuất mẫu 0 VNĐ | Hoàn thành (19/11/2026) |
 
 ---
 
-*Last updated: 2026-10-19 13:45 | Wine ERP v11.5*
+*Last updated: 2026-11-19 19:20 | Wine ERP v12.53*

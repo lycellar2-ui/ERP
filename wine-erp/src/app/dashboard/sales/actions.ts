@@ -12,6 +12,7 @@ import { serialize } from '@/lib/serialize'
 import { requireAuth, getCurrentUser, hasRole } from '@/lib/session'
 import * as XLSX from 'xlsx'
 import { calculateVnptInvoiceTotals } from '@/lib/vnpt/xml-builder'
+import { parseTradeVisitScope } from '../proposals/constants'
 
 export type SOStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'PENDING_ACCOUNTING' | 'CONFIRMED' | 'PARTIALLY_DELIVERED' | 'DELIVERED' | 'INVOICED' | 'PAID' | 'CANCELLED'
 export type SalesChannel = 'HORECA' | 'WHOLESALE_DISTRIBUTOR' | 'VIP_RETAIL' | 'DIRECT_INDIVIDUAL' | 'CORPORATE' | 'RETAIL'
@@ -3997,22 +3998,26 @@ export async function getApprovedProposalsForSO(customerId?: string) {
         orderBy: { createdAt: 'desc' },
         take: 50
     })
-    return proposals.map(p => ({
-        ...p,
-        estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : 0,
-        priceItems: (p.priceItems || []).map((item: any) => ({
-            id: item.id,
-            productId: item.productId,
-            productName: item.product?.productName || '',
-            skuCode: item.product?.skuCode || '',
-            proposedPrice: Number(item.proposedPrice || 0),
-            quantity: item.quantity ? Number(item.quantity) : 1,
-            wholesalePrice: item.product?.marginPrice ? Number(item.product.marginPrice.wholesalePrice) : 0,
-        }))
-    }))
+    return proposals.map(p => {
+        const tv = parseTradeVisitScope(p.scope)
+        return {
+            ...p,
+            category: tv ? ('TRADE_VISIT' as any) : p.category,
+            estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : 0,
+            priceItems: (p.priceItems || []).map((item: any) => ({
+                id: item.id,
+                productId: item.productId,
+                productName: item.product?.productName || '',
+                skuCode: item.product?.skuCode || '',
+                proposedPrice: Number(item.proposedPrice || 0),
+                quantity: item.quantity ? Number(item.quantity) : 1,
+                wholesalePrice: item.product?.marginPrice ? Number(item.product.marginPrice.wholesalePrice) : 0,
+            }))
+        }
+    })
 }
 
-export async function getProposalWithItemsForSO(proposalId: string) {
+export async function getProposalWithItemsForSO(proposalId: string, targetCustomerId?: string) {
     const p = await prisma.proposal.findUnique({
         where: { id: proposalId },
         include: {
@@ -4032,8 +4037,69 @@ export async function getProposalWithItemsForSO(proposalId: string) {
         }
     })
     if (!p) return null
+
+    const tv = parseTradeVisitScope(p.scope)
+    if (tv && tv.customers.length > 0) {
+        const matched = (targetCustomerId ? tv.customers.find(c => c.customerId === targetCustomerId) : null) || tv.customers[0]
+        const matchedCustomer = matched.customerId
+            ? await prisma.customer.findUnique({
+                where: { id: matched.customerId },
+                select: { id: true, name: true, code: true, channel: true, paymentTerm: true },
+            })
+            : p.customer
+
+        const prodMap = new Map<string, { skuCode: string; productName: string; wholesalePrice: number }>()
+        for (const pi of p.priceItems || []) {
+            if (pi.product) {
+                prodMap.set(pi.productId, {
+                    skuCode: pi.product.skuCode,
+                    productName: pi.product.productName,
+                    wholesalePrice: pi.product.marginPrice ? Number(pi.product.marginPrice.wholesalePrice) : 0,
+                })
+            }
+        }
+        const missingIds = (matched.items || []).map(it => it.productId).filter(pid => pid && !prodMap.has(pid))
+        if (missingIds.length > 0) {
+            const extraProds = await prisma.product.findMany({
+                where: { id: { in: missingIds } },
+                select: { id: true, skuCode: true, productName: true, marginPrice: { select: { wholesalePrice: true } } },
+            })
+            for (const ep of extraProds) {
+                prodMap.set(ep.id, {
+                    skuCode: ep.skuCode,
+                    productName: ep.productName,
+                    wholesalePrice: ep.marginPrice ? Number(ep.marginPrice.wholesalePrice) : 0,
+                })
+            }
+        }
+
+        return {
+            ...p,
+            category: 'TRADE_VISIT' as any,
+            customer: matchedCustomer ?? p.customer,
+            customerId: matched.customerId,
+            visitDate: matched.visitDate ?? null,
+            purpose: matched.purpose ?? null,
+            estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : 0,
+            priceItems: (matched.items || []).map((it, idx) => {
+                const prod = prodMap.get(it.productId)
+                return {
+                    id: `${matched.customerId}-${it.productId}-${idx}`,
+                    productId: it.productId,
+                    productName: prod?.productName || '',
+                    skuCode: prod?.skuCode || '',
+                    proposedPrice: 0,
+                    quantity: Number(it.quantity) || 1,
+                    wholesalePrice: prod?.wholesalePrice || 0,
+                }
+            }),
+        }
+    }
+
     return {
         ...p,
+        visitDate: null as string | null,
+        purpose: null as string | null,
         estimatedAmount: p.estimatedAmount ? Number(p.estimatedAmount) : 0,
         priceItems: (p.priceItems || []).map((item: any) => ({
             id: item.id,
@@ -4044,6 +4110,151 @@ export async function getProposalWithItemsForSO(proposalId: string) {
             quantity: item.quantity ? Number(item.quantity) : 1,
             wholesalePrice: item.product?.marginPrice ? Number(item.product.marginPrice.wholesalePrice) : 0,
         }))
+    }
+}
+
+const VALID_SO_CHANNELS: SalesChannel[] = ['HORECA', 'WHOLESALE_DISTRIBUTOR', 'VIP_RETAIL', 'DIRECT_INDIVIDUAL', 'CORPORATE', 'RETAIL']
+
+export async function createBulkTradeVisitDraftSOs(proposalId: string): Promise<{
+    success: boolean
+    created?: { customerId: string; customerName: string; soId: string; soNo: string }[]
+    skippedCount?: number
+    errors?: { customerName: string; error: string }[]
+    error?: string
+}> {
+    try {
+        const user = await requireAuth()
+        if (hasRole(user, 'THU_KHO') && !hasRole(user, 'CEO', 'ADMIN', 'TRO_LY', 'CBO', 'SALES_MGR', 'SALES_ADMIN', 'SALES_REP', 'KE_TOAN') && !user.roles.includes('Operation Manager')) {
+            return { success: false, error: 'Thủ kho không có quyền tạo đơn xuất mẫu Trade Visit.' }
+        }
+
+        const proposal = await prisma.proposal.findUnique({
+            where: { id: proposalId },
+            include: {
+                salesOrders: {
+                    where: { status: { not: 'CANCELLED' } },
+                    select: { id: true, soNo: true, customerId: true },
+                },
+            },
+        })
+
+        if (!proposal) {
+            return { success: false, error: 'Tờ trình không tồn tại' }
+        }
+
+        const tv = parseTradeVisitScope(proposal.scope)
+        if (!tv || tv.customers.length === 0) {
+            return { success: false, error: 'Tờ trình không có danh sách khách hàng Trade Visit hợp lệ.' }
+        }
+
+        if (!['APPROVED', 'IN_PROGRESS', 'CLOSED'].includes(proposal.status)) {
+            return { success: false, error: 'Chỉ được tạo hàng loạt đơn xuất mẫu sau khi tờ trình đã được phê duyệt.' }
+        }
+
+        const entities = await prisma.legalEntity.findMany({ orderBy: { name: 'asc' } })
+        const defaultEntity = entities.find(e => e.code === 'TA') ?? entities[0]
+        if (!defaultEntity) {
+            return { success: false, error: 'Không tìm thấy pháp nhân xuất tuyến mặc định trong hệ thống.' }
+        }
+
+        const existingCustomerIds = new Set(proposal.salesOrders.map(so => so.customerId))
+        const custIds = Array.from(new Set(tv.customers.map(c => c.customerId).filter(Boolean)))
+        const customerRows = await prisma.customer.findMany({
+            where: { id: { in: custIds } },
+            select: {
+                id: true,
+                name: true,
+                code: true,
+                channel: true,
+                entityType: true,
+                allowDirectSO: true,
+                addresses: {
+                    where: { isBilling: false },
+                    orderBy: { isDefault: 'desc' },
+                    take: 1,
+                    select: { id: true },
+                },
+            },
+        })
+        const custMap = new Map(customerRows.map(c => [c.id, c]))
+
+        const created: { customerId: string; customerName: string; soId: string; soNo: string }[] = []
+        const errors: { customerName: string; error: string }[] = []
+        let skippedCount = 0
+
+        for (const entry of tv.customers) {
+            if (existingCustomerIds.has(entry.customerId)) {
+                skippedCount++
+                continue
+            }
+
+            const cust = custMap.get(entry.customerId)
+            const custDisplayName = cust?.name || entry.customerName || entry.customerId
+            if (!cust) {
+                errors.push({ customerName: custDisplayName, error: 'Khách hàng không tồn tại trong hệ thống' })
+                continue
+            }
+
+            if (!entry.items || entry.items.length === 0) {
+                errors.push({ customerName: custDisplayName, error: 'Không có danh mục rượu mẫu' })
+                continue
+            }
+
+            const legalEntityId = defaultEntity.id
+            const resolvedChannel: SalesChannel = VALID_SO_CHANNELS.includes(cust.channel as SalesChannel)
+                ? (cust.channel as SalesChannel)
+                : 'HORECA'
+            const rawNotes = `Đơn xuất mẫu Trade Visit kèm Tờ trình ${proposal.proposalNo}: ${proposal.title}${entry.visitDate ? ` | Ngày thăm: ${entry.visitDate}` : ''}${entry.purpose ? ` | Mục đích: ${entry.purpose}` : ''}`
+            const notes = rawNotes.slice(0, 950)
+
+            const soRes = await createSalesOrder({
+                orderDate: entry.visitDate || undefined,
+                customerId: entry.customerId,
+                salesRepId: proposal.createdBy || user.id,
+                channel: resolvedChannel,
+                paymentTerm: 'TASTING - Không thu tiền',
+                shippingAddressId: cust.addresses[0]?.id || undefined,
+                orderDiscount: 0,
+                legalEntityId,
+                orderType: 'TASTING',
+                proposalId: proposal.id,
+                notes,
+                lines: entry.items.map(it => ({
+                    productId: it.productId,
+                    qtyOrdered: Math.max(1, Math.round(Number(it.quantity) || 1)),
+                    unitPrice: 0,
+                    lineDiscountPct: 0,
+                    priceSource: 'TASTING_FREE',
+                    vatRate: 10,
+                })),
+            })
+
+            if (soRes.success && soRes.soId && soRes.soNo) {
+                created.push({
+                    customerId: entry.customerId,
+                    customerName: custDisplayName,
+                    soId: soRes.soId,
+                    soNo: soRes.soNo,
+                })
+                existingCustomerIds.add(entry.customerId)
+            } else {
+                errors.push({ customerName: custDisplayName, error: soRes.error || 'Lỗi tạo đơn nháp' })
+            }
+        }
+
+        revalidatePath('/dashboard/proposals')
+        revalidatePath('/dashboard/sales')
+        revalidateCache('proposals')
+        revalidateCache('sales')
+
+        return serialize({
+            success: true,
+            created,
+            skippedCount,
+            errors,
+        })
+    } catch (err: any) {
+        return { success: false, error: err.message }
     }
 }
 
