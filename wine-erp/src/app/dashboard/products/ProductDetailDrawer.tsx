@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { getProductViewDetails, type ProductViewDetails, type ProductRow } from './actions'
 import { formatVND } from '@/lib/utils'
+import { getVnptInvoiceProductName } from '@/lib/vnpt/product-invoice-names'
 import { Badge, Button, Drawer, StatusBadge } from '@/components/ui'
 import { WineTypeBadge } from '@/components/WineTypeBadge'
 import { useAppLocale } from '@/lib/i18n'
@@ -101,6 +102,13 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
     const effectiveProfile = data?.profile ?? activeProduct.profile ?? null
     const effectiveSelfDeclarationUrl = data?.selfDeclarationUrl ?? initialData?.selfDeclarationUrl ?? (activeProduct as any)?.selfDeclarationUrl ?? null
     const effectiveTastingNoteUrl = data?.tastingNoteUrl ?? initialData?.tastingNoteUrl ?? (activeProduct as any)?.tastingNoteUrl ?? null
+    const customInvoiceName = data?.invoiceName ?? null
+    const effectiveInvoiceName = getVnptInvoiceProductName(
+        activeProduct.skuCode,
+        activeProduct.productName,
+        activeProduct.wineType,
+        customInvoiceName
+    )
 
     return (
         <Drawer
@@ -216,6 +224,19 @@ export function ProductDetailDrawer({ open, productId, initialData, cachedData, 
                                     <span className="font-semibold text-right flex items-center justify-end font-sans tabular-nums" style={{ color: '#0F172A' }}>{spec.value}</span>
                                 </div>
                             ))}
+                            <div className="sm:col-span-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 pt-2 mt-1 border-t border-slate-200/40">
+                                <span className="shrink-0 flex items-center gap-1.5" style={{ color: '#64748B' }}>
+                                    {D.specInvoiceName}
+                                    {data && !customInvoiceName && (
+                                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200/80">
+                                            {D.specInvoiceNameAuto}
+                                        </span>
+                                    )}
+                                </span>
+                                <span className="font-semibold sm:text-right font-sans" style={{ color: '#0F172A' }}>
+                                    {effectiveInvoiceName || '—'}
+                                </span>
+                            </div>
                         </div>
                     </div>
 

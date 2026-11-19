@@ -1396,7 +1396,7 @@ export async function uploadProductSelfDeclaration(
     }
 }
 
-export type ProductLegalDocGroup = 'TCB' | 'AMENDMENT' | 'TESTING'
+export type ProductLegalDocGroup = 'TCB' | 'AMENDMENT'
 
 export type ProductLegalDocItem = {
     id: string
@@ -1427,8 +1427,7 @@ export async function uploadProductLegalDoc(
         }
 
         const groupRaw = String(formData.get('group') || 'TCB').toUpperCase()
-        const group: ProductLegalDocGroup =
-            groupRaw === 'AMENDMENT' || groupRaw === 'TESTING' ? groupRaw : 'TCB'
+        const group: ProductLegalDocGroup = groupRaw === 'AMENDMENT' ? 'AMENDMENT' : 'TCB'
         const customTitle = String(formData.get('name') || '').trim()
         const customDocNo = String(formData.get('docNo') || '').trim()
         const description = String(formData.get('description') || '').trim() || null
@@ -1454,19 +1453,12 @@ export async function uploadProductLegalDoc(
         })
         const nextVersion = existingCount + 1
 
-        const docType =
-            group === 'TCB'
-                ? 'QUALITY_DECLARATION'
-                : group === 'AMENDMENT'
-                ? 'STANDARDS_COMPLIANCE'
-                : 'QUALITY_TEST_REPORT'
+        const docType = group === 'AMENDMENT' ? 'STANDARDS_COMPLIANCE' : 'QUALITY_DECLARATION'
 
         const defaultTitle =
-            group === 'TCB'
-                ? `Bản Tự Công Bố — ${product.skuCode}`
-                : group === 'AMENDMENT'
+            group === 'AMENDMENT'
                 ? `Thông báo thay đổi sau TCB — ${product.skuCode}`
-                : `Phiếu kết quả Kiểm nghiệm ATTP — ${product.skuCode}`
+                : `Bản Tự Công Bố — ${product.skuCode}`
 
         const docNo = customDocNo
             ? `${group}-${product.skuCode}-${customDocNo.replace(/[^a-zA-Z0-9-_/.]/g, '-')}-${Date.now().toString().slice(-4)}`
@@ -1484,11 +1476,9 @@ export async function uploadProductLegalDoc(
                 issueDate,
                 issuingAuthority:
                     issuingAuthority ||
-                    (group === 'TCB'
-                        ? 'Tự công bố ATTP'
-                        : group === 'AMENDMENT'
+                    (group === 'AMENDMENT'
                         ? 'Ban Quản lý ATTP / Chi cục ATTP'
-                        : 'Trung tâm Kiểm nghiệm'),
+                        : 'Tự công bố ATTP'),
                 referenceNo: group,
                 status: 'ACTIVE',
                 version: nextVersion,
@@ -1594,7 +1584,6 @@ export type TastingNoteCatalogItem = {
     selfDeclarationUrl: string | null
     tcbDocs: ProductLegalDocItem[]
     amendmentDocs: ProductLegalDocItem[]
-    testingDocs: ProductLegalDocItem[]
     profile: {
         grapes: string | null
         color: string | null
@@ -1608,11 +1597,11 @@ export type TastingNoteCatalogItem = {
 }
 
 /**
- * Fetch complete catalog of products, Tasting Notes, TCB, Amendments, and Lab Testing reports
+ * Fetch complete catalog of products, Tasting Notes, TCB, and Amendments
  */
 export async function getTastingNoteCatalog(): Promise<TastingNoteCatalogItem[]> {
     await requirePermission('MDM', 'READ')
-    return cached('products:tasting-note-catalog:v2', async () => {
+    return cached('products:tasting-note-catalog:v3', async () => {
         const products = await prisma.product.findMany({
             where: {
                 deletedAt: null,
@@ -1642,18 +1631,16 @@ export async function getTastingNoteCatalog(): Promise<TastingNoteCatalogItem[]>
         return products.map(p => {
             const tcbDocs: ProductLegalDocItem[] = []
             const amendmentDocs: ProductLegalDocItem[] = []
-            const testingDocs: ProductLegalDocItem[] = []
 
             for (const rd of p.regulatedDocs) {
                 const file = rd.files[0]
                 if (!file?.fileUrl) continue
+                if (rd.referenceNo === 'TESTING' || rd.type === 'QUALITY_TEST_REPORT') continue
 
-                let group: ProductLegalDocGroup = 'TCB'
-                if (rd.referenceNo === 'AMENDMENT' || rd.type === 'STANDARDS_COMPLIANCE') {
-                    group = 'AMENDMENT'
-                } else if (rd.referenceNo === 'TESTING' || rd.type === 'QUALITY_TEST_REPORT') {
-                    group = 'TESTING'
-                }
+                const group: ProductLegalDocGroup =
+                    rd.referenceNo === 'AMENDMENT' || rd.type === 'STANDARDS_COMPLIANCE'
+                        ? 'AMENDMENT'
+                        : 'TCB'
 
                 const mapped: ProductLegalDocItem = {
                     id: rd.id,
@@ -1669,8 +1656,7 @@ export async function getTastingNoteCatalog(): Promise<TastingNoteCatalogItem[]>
                 }
 
                 if (group === 'TCB') tcbDocs.push(mapped)
-                else if (group === 'AMENDMENT') amendmentDocs.push(mapped)
-                else testingDocs.push(mapped)
+                else amendmentDocs.push(mapped)
             }
 
             // Fallback if product has selfDeclarationUrl but no RegulatedDocument record yet
@@ -1702,7 +1688,6 @@ export async function getTastingNoteCatalog(): Promise<TastingNoteCatalogItem[]>
                 selfDeclarationUrl: p.selfDeclarationUrl ?? tcbDocs[0]?.fileUrl ?? null,
                 tcbDocs,
                 amendmentDocs,
-                testingDocs,
                 profile: p.profile
                     ? {
                           grapes: p.profile.grapes ?? null,
@@ -2039,6 +2024,7 @@ export type ProductViewDetails = {
     wineType: string
     classification: string | null
     vatRate?: number
+    invoiceName: string | null
     selfDeclarationUrl: string | null
     tastingNoteUrl: string | null
     profile: {
@@ -2066,7 +2052,7 @@ export type ProductViewDetails = {
 
 export async function getProductViewDetails(id: string): Promise<ProductViewDetails | null> {
     await requirePermission('MDM', 'READ')
-    const cacheKey = `products:details:v2:${id}`
+    const cacheKey = `products:details:v3:${id}`
     return cached(cacheKey, async () => {
         const [p, productDoc, mediaRes, awardsRes, stockRes, warehouses, unfulfilledSoLines] = await Promise.all([
             prisma.productDetailView.findUnique({
@@ -2074,7 +2060,7 @@ export async function getProductViewDetails(id: string): Promise<ProductViewDeta
             }),
             prisma.product.findUnique({
                 where: { id },
-                select: { selfDeclarationUrl: true, tastingNoteUrl: true, vatRate: true },
+                select: { selfDeclarationUrl: true, tastingNoteUrl: true, vatRate: true, invoiceName: true },
             }),
             prisma.productMedia.findMany({
                 where: { productId: id },
@@ -2193,6 +2179,7 @@ export async function getProductViewDetails(id: string): Promise<ProductViewDeta
             wineType: p.wineType,
             classification: p.classification,
             vatRate: productDoc?.vatRate ? Number(productDoc.vatRate) : 10,
+            invoiceName: productDoc?.invoiceName ?? null,
             selfDeclarationUrl: productDoc?.selfDeclarationUrl ?? null,
             tastingNoteUrl: productDoc?.tastingNoteUrl ?? null,
             status: p.status,

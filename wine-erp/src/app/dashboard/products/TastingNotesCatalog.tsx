@@ -19,7 +19,6 @@ import {
     Plus,
     Trash2,
     FileCheck,
-    FlaskConical,
     FileDiff,
     Calendar,
     Building2,
@@ -58,7 +57,6 @@ type DocFilter =
     | 'HAS_TCB'
     | 'MISSING_TCB'
     | 'HAS_AMENDMENT'
-    | 'HAS_TESTING'
 
 interface TastingNotesCatalogProps {
     canEdit: boolean
@@ -93,7 +91,6 @@ function getPreviewUrl(url: string): { type: 'image' | 'office' | 'pdf'; src: st
 const GROUP_BADGE_CLASS: Record<ProductLegalDocGroup, string> = {
     TCB: 'bg-emerald-50 text-emerald-800 border-emerald-200',
     AMENDMENT: 'bg-amber-50 text-amber-800 border-amber-200',
-    TESTING: 'bg-sky-50 text-sky-800 border-sky-200',
 }
 
 export function TastingNotesCatalog({
@@ -181,13 +178,11 @@ export function TastingNotesCatalog({
         const hasAmendment = items.filter(
             i => i.amendmentDocs && i.amendmentDocs.length > 0
         ).length
-        const hasTesting = items.filter(i => i.testingDocs && i.testingDocs.length > 0).length
         const totalTcbFiles = items.reduce((acc, i) => acc + (i.tcbDocs?.length || 0), 0)
         const totalAmendmentFiles = items.reduce(
             (acc, i) => acc + (i.amendmentDocs?.length || 0),
             0
         )
-        const totalTestingFiles = items.reduce((acc, i) => acc + (i.testingDocs?.length || 0), 0)
 
         return {
             total,
@@ -196,10 +191,8 @@ export function TastingNotesCatalog({
             hasTcb,
             missingTcb,
             hasAmendment,
-            hasTesting,
             totalTcbFiles,
             totalAmendmentFiles,
-            totalTestingFiles,
         }
     }, [items])
 
@@ -221,14 +214,12 @@ export function TastingNotesCatalog({
             const itemHasTcb =
                 Boolean(item.selfDeclarationUrl) || (item.tcbDocs && item.tcbDocs.length > 0)
             const itemHasAmendment = item.amendmentDocs && item.amendmentDocs.length > 0
-            const itemHasTesting = item.testingDocs && item.testingDocs.length > 0
 
             if (docFilter === 'HAS_TN' && !item.tastingNoteUrl) return false
             if (docFilter === 'MISSING_TN' && item.tastingNoteUrl) return false
             if (docFilter === 'HAS_TCB' && !itemHasTcb) return false
             if (docFilter === 'MISSING_TCB' && itemHasTcb) return false
             if (docFilter === 'HAS_AMENDMENT' && !itemHasAmendment) return false
-            if (docFilter === 'HAS_TESTING' && !itemHasTesting) return false
             if (countryFilter && item.country !== countryFilter) return false
             if (wineTypeFilter && item.wineType !== wineTypeFilter) return false
 
@@ -236,7 +227,6 @@ export function TastingNotesCatalog({
                 const legalHaystack = [
                     ...(item.tcbDocs || []),
                     ...(item.amendmentDocs || []),
-                    ...(item.testingDocs || []),
                 ]
                     .map(
                         d =>
@@ -485,18 +475,6 @@ export function TastingNotesCatalog({
                             {TC.pills.hasAmendment} ({counts.hasAmendment} SKU · {counts.totalAmendmentFiles}{' '}
                             {TC.pills.copiesUnit})
                         </button>
-                        <button
-                            type="button"
-                            onClick={() => setDocFilter('HAS_TESTING')}
-                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
-                                docFilter === 'HAS_TESTING'
-                                    ? 'bg-[#0E7490] text-white'
-                                    : 'bg-sky-50 text-sky-800 hover:bg-sky-100 border border-sky-200'
-                            }`}
-                        >
-                            <FlaskConical size={13} />
-                            {TC.pills.hasTesting} ({counts.hasTesting} SKU · {counts.totalTestingFiles} {TC.pills.testingUnit})
-                        </button>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
@@ -562,12 +540,10 @@ export function TastingNotesCatalog({
                     filteredItems.map(item => {
                         const latestTcb = item.tcbDocs?.[0] || null
                         const latestAmendment = item.amendmentDocs?.[0] || null
-                        const latestTesting = item.testingDocs?.[0] || null
                         const totalDocsCount =
                             (item.tastingNoteUrl ? 1 : 0) +
                             (item.tcbDocs?.length || 0) +
-                            (item.amendmentDocs?.length || 0) +
-                            (item.testingDocs?.length || 0)
+                            (item.amendmentDocs?.length || 0)
 
                         return (
                             <div
@@ -669,16 +645,6 @@ export function TastingNotesCatalog({
                                             {item.amendmentDocs.length} {TC.table.amendmentCountUnit}
                                         </button>
                                     )}
-
-                                    {latestTesting && (
-                                        <button
-                                            type="button"
-                                            onClick={() => openDossierDrawer(item.id, 'TESTING')}
-                                            className="px-2 py-0.5 rounded text-[10px] font-semibold bg-sky-50 text-sky-800 border border-sky-200"
-                                        >
-                                            {item.testingDocs.length} {TC.table.testingCountUnit}
-                                        </button>
-                                    )}
                                 </div>
                             </div>
                         )
@@ -695,7 +661,6 @@ export function TastingNotesCatalog({
                             <Th className="min-w-[205px]">{TC.table.colTnFlavor}</Th>
                             <Th className="min-w-[190px]">{TC.table.colTcb}</Th>
                             <Th className="min-w-[185px]">{TC.table.colAmendment}</Th>
-                            <Th className="min-w-[195px]">{TC.table.colTesting}</Th>
                             <Th className="w-[130px] whitespace-nowrap" align="center">
                                 {TC.table.colDossier}
                             </Th>
@@ -703,11 +668,11 @@ export function TastingNotesCatalog({
                     </THead>
                     <TBody>
                         {isLoading ? (
-                            <TableMessageRow colSpan={6}>
-                                <TableSkeleton rows={8} cols={6} />
+                            <TableMessageRow colSpan={5}>
+                                <TableSkeleton rows={8} cols={5} />
                             </TableMessageRow>
                         ) : filteredItems.length === 0 ? (
-                            <TableMessageRow colSpan={6}>
+                            <TableMessageRow colSpan={5}>
                                 <div className="py-8 text-center text-xs text-slate-500">
                                     {TC.table.emptyFiltered}
                                 </div>
@@ -718,16 +683,13 @@ export function TastingNotesCatalog({
                                 const isUploadingTn = uploadingKey === `${item.id}:TN`
                                 const isUploadingTcb = uploadingKey === `${item.id}:TCB`
                                 const isUploadingAmendment = uploadingKey === `${item.id}:AMENDMENT`
-                                const isUploadingTesting = uploadingKey === `${item.id}:TESTING`
 
                                 const latestTcb = item.tcbDocs?.[0] || null
                                 const latestAmendment = item.amendmentDocs?.[0] || null
-                                const latestTesting = item.testingDocs?.[0] || null
                                 const totalDocsCount =
                                     (item.tastingNoteUrl ? 1 : 0) +
                                     (item.tcbDocs?.length || 0) +
-                                    (item.amendmentDocs?.length || 0) +
-                                    (item.testingDocs?.length || 0)
+                                    (item.amendmentDocs?.length || 0)
 
                                 return (
                                     <Tr
@@ -1036,96 +998,7 @@ export function TastingNotesCatalog({
                                             )}
                                         </Td>
 
-                                        {/* Column 5: Phiếu Kiểm định / Kiểm nghiệm */}
-                                        <Td className="py-2.5 align-top" onClick={e => e.stopPropagation()}>
-                                            {latestTesting ? (
-                                                <div className="flex flex-col gap-1 max-w-[215px]">
-                                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                setPreviewDoc({
-                                                                    url: latestTesting.fileUrl,
-                                                                    title: `${latestTesting.name} — ${item.skuCode}`,
-                                                                })
-                                                            }
-                                                            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold bg-sky-50 text-sky-800 border border-sky-200 hover:bg-sky-100 transition-colors cursor-pointer"
-                                                        >
-                                                            <Eye size={12} /> {TC.table.viewTesting}
-                                                        </button>
-                                                        {item.testingDocs.length > 1 && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    openDossierDrawer(item.id, 'TESTING')
-                                                                }
-                                                                className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-900 hover:bg-sky-200 cursor-pointer"
-                                                            >
-                                                                {item.testingDocs.length} {TC.table.testingCountUnit}
-                                                            </button>
-                                                        )}
-                                                        {canEdit && (
-                                                            <button
-                                                                type="button"
-                                                                disabled={isUploadingTesting}
-                                                                onClick={() =>
-                                                                    openDossierDrawer(
-                                                                        item.id,
-                                                                        'TESTING',
-                                                                        'TESTING'
-                                                                    )
-                                                                }
-                                                                className="inline-flex items-center justify-center w-6 h-6 rounded text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
-                                                                title={TC.table.addTestingTooltip}
-                                                            >
-                                                                <Plus size={12} />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                    <p
-                                                        className="text-[11px] font-medium text-slate-700 truncate"
-                                                        title={latestTesting.name}
-                                                    >
-                                                        {latestTesting.name}
-                                                    </p>
-                                                    <p
-                                                        className="text-[10px] text-slate-500 truncate"
-                                                        title={
-                                                            latestTesting.issuingAuthority ||
-                                                            latestTesting.description ||
-                                                            ''
-                                                        }
-                                                    >
-                                                        {latestTesting.issuingAuthority ||
-                                                            formatShortDate(latestTesting.issueDate)}
-                                                    </p>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center gap-1.5 whitespace-nowrap">
-                                                    <span className="text-[11px] text-slate-400">
-                                                        {TC.table.noTesting}
-                                                    </span>
-                                                    {canEdit && (
-                                                        <button
-                                                            type="button"
-                                                            disabled={isUploadingTesting}
-                                                            onClick={() =>
-                                                                openDossierDrawer(
-                                                                    item.id,
-                                                                    'TESTING',
-                                                                    'TESTING'
-                                                                )
-                                                            }
-                                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer shrink-0"
-                                                        >
-                                                            <Plus size={11} /> {TC.table.addShortBtn}
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </Td>
-
-                                        {/* Column 6: Open Full Dossier Drawer + Edit Product */}
+                                        {/* Column 5: Open Full Dossier Drawer + Edit Product */}
                                         <Td
                                             align="center"
                                             className="py-2.5 align-top"
@@ -1169,8 +1042,7 @@ export function TastingNotesCatalog({
                 <span>
                     {TC.footer.r2SummaryPrefix} <strong>{formatNumber(counts.hasTn)}</strong> Tasting Note ·{' '}
                     <strong>{formatNumber(counts.totalTcbFiles)}</strong> {TC.footer.tcbLabel} ·{' '}
-                    <strong>{formatNumber(counts.totalAmendmentFiles)}</strong> {TC.footer.amendmentLabel} ·{' '}
-                    <strong>{formatNumber(counts.totalTestingFiles)}</strong> {TC.footer.testingLabel}
+                    <strong>{formatNumber(counts.totalAmendmentFiles)}</strong> {TC.footer.amendmentLabel}
                 </span>
             </div>
 
@@ -1293,17 +1165,6 @@ export function TastingNotesCatalog({
                                         }`}
                                     >
                                         {TC.dossierDrawer.tabAmendment} ({activeDossierItem.amendmentDocs.length})
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setActiveDossierSection('TESTING')}
-                                        className={`px-2.5 py-1 rounded text-xs font-semibold cursor-pointer transition-colors ${
-                                            activeDossierSection === 'TESTING'
-                                                ? 'bg-[#0E7490] text-white'
-                                                : 'bg-sky-50 text-sky-800 hover:bg-sky-100'
-                                        }`}
-                                    >
-                                        {TC.dossierDrawer.tabTesting} ({activeDossierItem.testingDocs.length})
                                     </button>
                                 </div>
                             </div>
@@ -1562,8 +1423,8 @@ export function TastingNotesCatalog({
                                     </div>
                                 )}
 
-                                {/* Legal Document Sections: TCB, AMENDMENT, TESTING */}
-                                {(['TCB', 'AMENDMENT', 'TESTING'] as ProductLegalDocGroup[]).map(
+                                {/* Legal Document Sections: TCB, AMENDMENT */}
+                                {(['TCB', 'AMENDMENT'] as ProductLegalDocGroup[]).map(
                                     (group, idx) => {
                                         if (
                                             activeDossierSection !== 'ALL' &&
@@ -1575,17 +1436,11 @@ export function TastingNotesCatalog({
                                         const docs =
                                             group === 'TCB'
                                                 ? activeDossierItem.tcbDocs
-                                                : group === 'AMENDMENT'
-                                                ? activeDossierItem.amendmentDocs
-                                                : activeDossierItem.testingDocs
+                                                : activeDossierItem.amendmentDocs
 
                                         const sectionNumber = idx + 2
                                         const GroupIcon =
-                                            group === 'TCB'
-                                                ? FileCheck
-                                                : group === 'AMENDMENT'
-                                                ? FileDiff
-                                                : FlaskConical
+                                            group === 'TCB' ? FileCheck : FileDiff
 
                                         return (
                                             <div
@@ -1599,9 +1454,7 @@ export function TastingNotesCatalog({
                                                             className={
                                                                 group === 'TCB'
                                                                     ? 'text-emerald-700'
-                                                                    : group === 'AMENDMENT'
-                                                                    ? 'text-amber-700'
-                                                                    : 'text-sky-700'
+                                                                    : 'text-amber-700'
                                                             }
                                                         />
                                                         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
