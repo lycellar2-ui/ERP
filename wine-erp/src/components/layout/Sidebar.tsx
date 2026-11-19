@@ -38,7 +38,7 @@ import {
     Layers, Brain, LogOut, Target, Calculator, Handshake, Stamp, Tag,
     ArrowRightLeft, RotateCcw, ClipboardList, TrendingUp, Wine, QrCode,
     Image as ImageIcon, Megaphone, Ship, ClipboardCheck, Shield, ScrollText, MapPin,
-    FileCheck2, CreditCard, BookOpen, X
+    FileCheck2, CreditCard, BookOpen, X, PlayCircle
 } from 'lucide-react'
 
 import { useAppLocale } from '@/lib/i18n'
@@ -426,8 +426,32 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate, isMobile
                 })}
             </nav>
 
-            {/* Bottom: Language Switcher + Logout + Toggle */}
+            {/* Bottom: Video Guides + Language Switcher + Logout + Toggle */}
             <div className="border-t border-lys-border">
+                {/* Video Guides Link */}
+                <Link
+                    href="/dashboard/guides"
+                    prefetch={false}
+                    onClick={onNavigate}
+                    onMouseEnter={() => handlePrefetch('/dashboard/guides')}
+                    title={effectiveCollapsed ? (locale === 'en' ? 'Video Guides' : 'Hướng dẫn sử dụng') : undefined}
+                    aria-current={pathname.startsWith('/dashboard/guides') ? 'page' : undefined}
+                    className={`flex items-center gap-2.5 border-b border-lys-border transition-colors duration-150 ${
+                        effectiveCollapsed ? 'justify-center py-2.5 px-1' : 'px-4 py-2.5'
+                    } ${
+                        pathname.startsWith('/dashboard/guides')
+                            ? 'bg-lys-teal-soft text-lys-teal-strong font-semibold'
+                            : 'text-lys-secondary hover:bg-lys-subtle hover:text-lys-primary'
+                    }`}
+                >
+                    <PlayCircle size={16} className="flex-shrink-0 text-lys-teal-strong" />
+                    {!effectiveCollapsed && (
+                        <span className="text-xs font-medium truncate">
+                            {locale === 'en' ? 'Video Guides' : 'Hướng dẫn sử dụng'}
+                        </span>
+                    )}
+                </Link>
+
                 {/* Language Switcher */}
                 <div
                     className={`flex items-center transition-all border-b border-lys-border bg-lys-subtle/60 ${

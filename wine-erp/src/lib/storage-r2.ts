@@ -137,6 +137,83 @@ export async function getPresignedUploadUrl(
     }
 }
 
+const ALLOWED_VIDEO_MIMES = new Set([
+    'video/mp4',
+    'video/webm',
+    'video/quicktime',
+    'video/x-m4v',
+    'video/ogg',
+])
+
+/**
+ * Generate a direct Presigned PUT URL for uploading tutorial videos to Cloudflare R2.
+ * Supports up to 500MB and stores under video-guides/{screenKey}/.
+ */
+export async function getVideoGuidePresignedUploadUrl(
+    fileName: string,
+    mimeType: string,
+    fileSize: number,
+    screenKey: string = 'general'
+): Promise<PresignedUploadResult> {
+    try {
+        if (!fileName) {
+            return { success: false, error: 'Tên file không hợp lệ' }
+        }
+
+        const contentType = (mimeType || '').toLowerCase()
+        if (!ALLOWED_VIDEO_MIMES.has(contentType) && !/\.(mp4|webm|mov|m4v|ogg)$/i.test(fileName)) {
+            return { success: false, error: 'Chỉ hỗ trợ định dạng video MP4, WebM, MOV, M4V' }
+        }
+
+        const maxBytes = 500 * 1024 * 1024 // 500MB
+        if (fileSize <= 0 || fileSize > maxBytes) {
+            return { success: false, error: 'Dung lượng video phải từ 1B đến tối đa 500MB' }
+        }
+
+        const r2 = getR2Client()
+        if (!r2) {
+            return { success: false, error: 'Không thể kết nối máy chủ lưu trữ Cloudflare R2' }
+        }
+
+        const safeScreen = screenKey.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40) || 'general'
+        const timestamp = Date.now()
+        const safeName = fileName
+            .replace(/[^a-zA-Z0-9.-]/g, '_')
+            .replace(/_+/g, '_')
+            .slice(0, 80)
+
+        const storagePath = `video-guides/${safeScreen}/${timestamp}_${safeName}`
+        const resolvedMime = ALLOWED_VIDEO_MIMES.has(contentType) ? contentType : 'video/mp4'
+
+        const uploadUrl = await getSignedUrl(
+            r2.client,
+            new PutObjectCommand({
+                Bucket: r2.bucketName,
+                Key: storagePath,
+                ContentType: resolvedMime,
+            }),
+            { expiresIn: 1800 } // 30 minutes for large video uploads
+        )
+
+        const viewUrl = r2.publicDomain
+            ? `${r2.publicDomain.replace(/\/+$/, '')}/${storagePath}`
+            : `/api/r2-file/${storagePath}`
+
+        return {
+            success: true,
+            uploadUrl,
+            storagePath,
+            viewUrl,
+            fileName,
+            fileSize,
+            mimeType: resolvedMime,
+        }
+    } catch (err: any) {
+        console.error('[Storage R2] Video presigned upload URL error:', err)
+        return { success: false, error: err.message || 'Lỗi khi khởi tạo đường dẫn upload video' }
+    }
+}
+
 /**
  * Upload a payment document (invoice, receipt, UNC, contract) via Server Action
  * Priority: Cloudflare R2 -> Fallback: Supabase Storage

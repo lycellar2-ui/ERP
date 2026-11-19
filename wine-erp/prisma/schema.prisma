@@ -4180,3 +4180,29 @@ model HistoricalSkuImport {
   @@index([receiptDate])
   @@map("historical_sku_imports")
 }
+
+// -------------------------------------------------------------
+// VIDEO GUIDES (Hướng dẫn sử dụng theo màn hình, lưu trên Cloudflare R2)
+// -------------------------------------------------------------
+model VideoGuide {
+  id             String   @id @default(cuid())
+  screenKey      String
+  screenLabel    String
+  title          String
+  description    String?
+  storagePath    String
+  fileName       String
+  fileSize       Int
+  mimeType       String
+  durationSec    Int?
+  sortOrder      Int      @default(0)
+  isPublished    Boolean  @default(true)
+  uploadedById   String?
+  uploadedByName String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([screenKey])
+  @@index([isPublished])
+  @@map("video_guides")
+}

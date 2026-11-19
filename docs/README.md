@@ -52,12 +52,12 @@
 
 | Metric | Giá trị |
 |---|---|
-| **Prisma models** | 155 |
+| **Prisma models** | 156 |
 | **Prisma enums** | 96 |
-| **Dashboard routes** | 38 folders (46 page routes; 53 total app routes) |
-| **Server Action files** | 63 files |
-| **Module spec files** | 32 files |
-| **Sidebar nav items** | 41 items (7 groups) |
+| **Dashboard routes** | 39 folders (47 page routes; 54 total app routes) |
+| **Server Action files** | 65 files |
+| **Module spec files** | 33 files |
+| **Sidebar nav items** | 42 items (7 groups + footer guides) |
 
 ### Bảng Module đầy đủ
 
@@ -95,8 +95,9 @@
 | 30 | `HRM` | Quản Lý Hồ Sơ & Giấy Tờ Nhân Viên | [hr.md](./modules/hr.md) | `/hr` |
 | 31 | `PRQ` | Đề Nghị Thanh Toán & Quản Lý Ngân Sách | [payment-requests.md](./modules/payment-requests.md) | `/payment-requests` |
 | 32 | `SOP` | Quy Trình Doanh Nghiệp (SOP Knowledge Hub) | [sop.md](./modules/sop.md) | `/sop` |
+| 33 | `GDE` | Video Hướng Dẫn Sử Dụng (R2 Streaming) | [guides.md](./modules/guides.md) | `/guides` |
 
-**Tổng: 32 modules** (tất cả 32 đều có spec file riêng)
+**Tổng: 33 modules** (tất cả 33 đều có spec file riêng)
 
 ---
 
@@ -228,7 +229,8 @@ docs/
     ├── hr.md                      HRM (NEW)
     ├── payment-requests.md        PRQ (NEW)
     ├── stamp-management.md        STP (NEW)
-    └── sop.md                     SOP (NEW)
+    ├── sop.md                     SOP (NEW)
+    └── guides.md                  GDE (NEW)
 ```
 
 ---
@@ -243,4 +245,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-11-18 | Wine ERP v12.51 - System-Wide UI/UX, Design System v4.2, Auth & Logic Audit*
+*Last updated: 2026-11-19 | Wine ERP v12.52 - Video User Guides (Cloudflare R2 Screen-based Streaming)*

@@ -34,8 +34,18 @@ function inferMimeType(filename: string): string {
         case 'jpeg': return 'image/jpeg'
         case 'webp': return 'image/webp'
         case 'gif': return 'image/gif'
+        case 'mp4': return 'video/mp4'
+        case 'webm': return 'video/webm'
+        case 'mov': return 'video/quicktime'
+        case 'm4v': return 'video/x-m4v'
+        case 'ogg': return 'video/ogg'
         default: return 'application/octet-stream'
     }
+}
+
+function isVideoFile(filename: string): boolean {
+    const ext = filename.split('.').pop()?.toLowerCase()
+    return ext === 'mp4' || ext === 'webm' || ext === 'mov' || ext === 'm4v' || ext === 'ogg'
 }
 
 export async function GET(
@@ -63,6 +73,26 @@ export async function GET(
         const disposition = isDownload
             ? `attachment; filename="${encodeURIComponent(customFileName)}"`
             : `inline; filename="${encodeURIComponent(customFileName)}"`
+
+        // Stream large videos or Range requests directly from R2 via redirect (supports 206 Partial Content seeking)
+        const hasRangeHeader = Boolean(request.headers.get('range'))
+        if (isVideoFile(customFileName) || hasRangeHeader) {
+            if (r2.publicDomain && !isDownload) {
+                const domain = r2.publicDomain.replace(/\/+$/, '')
+                return NextResponse.redirect(`${domain}/${storagePath}`, 302)
+            }
+            const presignedUrl = await getSignedUrl(
+                r2.client,
+                new GetObjectCommand({
+                    Bucket: r2.bucketName,
+                    Key: storagePath,
+                    ResponseContentDisposition: disposition,
+                    ResponseContentType: inferMimeType(customFileName),
+                }),
+                { expiresIn: 3600 }
+            )
+            return NextResponse.redirect(presignedUrl, 302)
+        }
 
         try {
             const obj = await r2.client.send(

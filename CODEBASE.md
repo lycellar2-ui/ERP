@@ -33,6 +33,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 - **Sales Field**: `wine-erp/src/app/dashboard/sales/visits` (**Field Visit Check-in/Check-out**, GPS, Camera)
 - **HR & Personnel**: `wine-erp/src/app/dashboard/hr` (**Hồ sơ & Giấy tờ nhân sự**, HĐLĐ, CCCD, KSK, Cảnh báo thời hạn tự động, Liên kết User ERP)
 - **SOP Knowledge Hub**: `wine-erp/src/app/dashboard/sop` (**Quy trình vận hành chuẩn doanh nghiệp**, Sơ đồ luồng trực quan, Ma trận RACI, Self-Audit Checklist, Hướng dẫn tự học không cần training)
+- **Video Guides (R2)**: `wine-erp/src/app/dashboard/guides` (**Video hướng dẫn sử dụng theo màn hình**, upload trực tiếp lên Cloudflare R2 qua Presigned PUT URL & stream trực tiếp)
 - **AI & Features**: `wine-erp/src/app/dashboard/ai` (API Key Vault, Gemini 3.1 Pro, **Prompt Template CRUD**, **AI Reports History**), `wine-erp/src/app/api/ceo-summary` (**AI CEO Briefing**), `wine-erp/src/app/api/purchase-suggestion` (**AI Purchase Suggestion**), `wine-erp/src/app/api/pipeline-analysis` (**AI Pipeline Analysis**), `wine-erp/src/app/api/crm-analysis` (**AI CRM Analysis**), `wine-erp/src/app/api/catalog-analysis` (**AI Catalog & Market Intelligence**), `wine-erp/src/app/api/ai/status` (**AI Toggle Check**), `wine-erp/src/app/api/ai/reports` (**AI Report Save**)
 - **POS & QR**: `wine-erp/src/app/dashboard/pos` (Barcode scan, VAT Invoice, **Loyalty Program**), `wine-erp/src/app/dashboard/pos/loyalty`, `wine-erp/src/app/dashboard/qr-codes` (Anti-counterfeit)
 - **External Portal**: `wine-erp/src/app/partner-login` (**External Partner Login & Portal**)
@@ -131,7 +132,7 @@ Khi User yêu cầu Code / Chỉnh sửa Logic / Thêm Flow:
 | Prisma models | **155** | README.md, llms.txt, tech-stack.md |
 | Prisma enums | **96** | README.md, llms.txt, tech-stack.md |
 | Dashboard routes | **38** (46 page routes; 53 total app routes) | README.md, llms.txt, wine-erp-plan.md |
-| Server Action files | **63** | README.md |
+| Server Action files | **64** | README.md |
 | Module spec files | **32** | README.md |
 | Total modules (codes) | **32** | README.md, llms.txt, wine-erp-plan.md |
 | Next.js version | **16.1.6** | tech-stack.md, wine-erp-plan.md |
