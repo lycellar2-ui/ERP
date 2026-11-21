@@ -23,17 +23,21 @@ export type CustomerRow = {
     vatCompanyName: string | null
     vatAddress: string | null
     vatEmail: string | null
+    vatBuyerName: string | null
     resolvedVatInfo?: {
         taxId: string | null
         vatCompanyName: string | null
         vatAddress: string | null
         vatEmail: string | null
+        vatBuyerName: string | null
         isInherited: boolean
     }
     customerType: string | null
     channel: string | null
     paymentTerm: string
     creditLimit: number
+    arBalance: number
+    overdueBalance: number
     salesRepId: string | null
     salesRepName: string | null
     status: string
@@ -161,7 +165,7 @@ export async function getCustomers(params?: CustomerFilters): Promise<{ rows: Cu
                     salesRep: { select: { id: true, name: true } },
                     salesOrders: { select: { id: true } },
                     addresses: { where: { isDefault: true }, take: 1 },
-                    parent: { select: { id: true, name: true, code: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, addresses: { where: { isDefault: true }, take: 1 } } },
+                    parent: { select: { id: true, name: true, code: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, vatBuyerName: true, addresses: { where: { isDefault: true }, take: 1 } } },
                     children: { where: { deletedAt: null }, select: { id: true } },
                 },
                 orderBy,
@@ -171,11 +175,59 @@ export async function getCustomers(params?: CustomerFilters): Promise<{ rows: Cu
             prisma.customer.count({ where }),
         ])
 
+        // Fetch open AR invoices for the current page customers + their children in one query
+        const allTargetIds = new Set<string>()
+        for (const c of items) {
+            allTargetIds.add(c.id)
+            for (const ch of c.children) {
+                allTargetIds.add(ch.id)
+            }
+        }
+
+        const openInvoices = allTargetIds.size > 0
+            ? await prisma.aRInvoice.findMany({
+                where: {
+                    customerId: { in: Array.from(allTargetIds) },
+                    status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] },
+                },
+                select: {
+                    customerId: true,
+                    totalAmount: true,
+                    paidAmount: true,
+                    dueDate: true,
+                    status: true,
+                },
+            })
+            : []
+
+        const nowMs = Date.now()
+        const arByCustomer = new Map<string, { balance: number; overdue: number }>()
+        for (const inv of openInvoices) {
+            const outstanding = Math.max(0, Number(inv.totalAmount) - Number(inv.paidAmount))
+            if (outstanding <= 0) continue
+            const isOverdue = inv.status === 'OVERDUE' || inv.dueDate.getTime() < nowMs
+            const cur = arByCustomer.get(inv.customerId) ?? { balance: 0, overdue: 0 }
+            cur.balance += outstanding
+            if (isOverdue) cur.overdue += outstanding
+            arByCustomer.set(inv.customerId, cur)
+        }
+
         let rows: CustomerRow[] = items.map(c => {
             const hasSelfVat = Boolean(c.taxId || c.vatCompanyName)
             const isInherited = Boolean(c.parentId && !hasSelfVat)
             const defaultAddress = c.addresses?.[0]?.address ?? null
             const parentDefaultAddress = c.parent?.addresses?.[0]?.address ?? null
+
+            const selfAr = arByCustomer.get(c.id) ?? { balance: 0, overdue: 0 }
+            let totalArBalance = selfAr.balance
+            let totalOverdueBalance = selfAr.overdue
+            for (const ch of c.children) {
+                const chAr = arByCustomer.get(ch.id)
+                if (chAr) {
+                    totalArBalance += chAr.balance
+                    totalOverdueBalance += chAr.overdue
+                }
+            }
 
             return {
                 id: c.id,
@@ -186,17 +238,21 @@ export async function getCustomers(params?: CustomerFilters): Promise<{ rows: Cu
                 vatCompanyName: c.vatCompanyName,
                 vatAddress: c.vatAddress,
                 vatEmail: c.vatEmail,
+                vatBuyerName: c.vatBuyerName,
                 resolvedVatInfo: {
                     taxId: c.taxId || c.parent?.taxId || null,
                     vatCompanyName: c.vatCompanyName || c.parent?.vatCompanyName || (c.parent ? c.parent.name : c.name),
                     vatAddress: c.vatAddress || c.parent?.vatAddress || defaultAddress || parentDefaultAddress || null,
                     vatEmail: c.vatEmail || c.parent?.vatEmail || null,
+                    vatBuyerName: c.vatBuyerName || c.parent?.vatBuyerName || null,
                     isInherited
                 },
                 customerType: c.customerType,
                 channel: c.channel,
                 paymentTerm: c.paymentTerm,
                 creditLimit: Number(c.creditLimit),
+                arBalance: totalArBalance,
+                overdueBalance: totalOverdueBalance,
                 salesRepId: c.salesRepId,
                 salesRepName: c.salesRep?.name ?? null,
                 status: c.status,
@@ -238,7 +294,7 @@ export async function getCustomerById(id: string) {
             salesRep: { select: { id: true, name: true } },
             contacts: { where: { isPrimary: true }, take: 1 },
             addresses: { where: { isDefault: true }, take: 1 },
-            parent: { select: { id: true, code: true, name: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, addresses: { where: { isDefault: true }, take: 1 } } },
+            parent: { select: { id: true, code: true, name: true, taxId: true, vatCompanyName: true, vatAddress: true, vatEmail: true, vatBuyerName: true, addresses: { where: { isDefault: true }, take: 1 } } },
             children: { where: { deletedAt: null }, select: { id: true, code: true, name: true, status: true, channel: true }, orderBy: { name: 'asc' } },
         },
     })
@@ -261,11 +317,13 @@ export async function getCustomerById(id: string) {
         vatCompanyName: c.vatCompanyName,
         vatAddress: c.vatAddress,
         vatEmail: c.vatEmail,
+        vatBuyerName: c.vatBuyerName,
         resolvedVatInfo: {
             taxId: c.taxId || c.parent?.taxId || null,
             vatCompanyName: c.vatCompanyName || c.parent?.vatCompanyName || (c.parent ? c.parent.name : c.name),
             vatAddress: c.vatAddress || c.parent?.vatAddress || defaultAddress || parentDefaultAddress || null,
             vatEmail: c.vatEmail || c.parent?.vatEmail || null,
+            vatBuyerName: c.vatBuyerName || c.parent?.vatBuyerName || null,
             isInherited
         },
         customerType: c.customerType,
@@ -277,6 +335,16 @@ export async function getCustomerById(id: string) {
         parentId: c.parentId,
         parentCode: c.parent?.code ?? null,
         parentName: c.parent?.name ?? null,
+        parentInfo: c.parent ? {
+            id: c.parent.id,
+            code: c.parent.code,
+            name: c.parent.name,
+            taxId: c.parent.taxId,
+            vatCompanyName: c.parent.vatCompanyName,
+            vatAddress: c.parent.vatAddress || parentDefaultAddress || null,
+            vatEmail: c.parent.vatEmail,
+            vatBuyerName: c.parent.vatBuyerName,
+        } : null,
         contactName: contact?.name ?? null,
         contactTitle: contact?.title ?? null,
         email: contact?.email ?? null,
@@ -310,6 +378,8 @@ export type CustomerStats = {
     active: number
     withCredit: number
     totalCreditLimit: number
+    totalArBalance: number
+    totalOverdueBalance: number
     topTypes: { type: string; label: string; count: number }[]
     pendingApproval?: number
     rejected?: number
@@ -330,7 +400,7 @@ export async function getCustomerStats(): Promise<CustomerStats> {
             where.salesRepId = user.id
         }
 
-        const [total, active, pendingApproval, rejected, withCredit, creditSum, typeCounts] = await Promise.all([
+        const [total, active, pendingApproval, rejected, withCredit, creditSum, typeCounts, openArInvoices] = await Promise.all([
             prisma.customer.count({ where }),
             prisma.customer.count({ where: { ...where, status: 'ACTIVE' } }),
             prisma.customer.count({ where: { ...where, status: 'PENDING_APPROVAL' } }),
@@ -343,13 +413,34 @@ export async function getCustomerStats(): Promise<CustomerStats> {
                 _count: { id: true },
                 orderBy: { _count: { id: 'desc' } },
             }),
+            prisma.aRInvoice.findMany({
+                where: {
+                    customer: where,
+                    status: { in: ['UNPAID', 'PARTIALLY_PAID', 'OVERDUE'] },
+                },
+                select: { totalAmount: true, paidAmount: true, dueDate: true, status: true },
+            }),
         ])
+
+        const nowMs = Date.now()
+        let totalArBalance = 0
+        let totalOverdueBalance = 0
+        for (const inv of openArInvoices) {
+            const outstanding = Math.max(0, Number(inv.totalAmount) - Number(inv.paidAmount))
+            if (outstanding <= 0) continue
+            totalArBalance += outstanding
+            if (inv.status === 'OVERDUE' || inv.dueDate.getTime() < nowMs) {
+                totalOverdueBalance += outstanding
+            }
+        }
 
         return {
             total,
             active,
             withCredit,
             totalCreditLimit: Number(creditSum._sum.creditLimit ?? 0),
+            totalArBalance,
+            totalOverdueBalance,
             topTypes: typeCounts.map(t => ({
                 type: t.channel ?? 'N/A',
                 label: typeLabels[t.channel ?? ''] ?? t.channel ?? 'N/A',
@@ -395,7 +486,7 @@ export async function getParentCandidates(currentId?: string) {
     try {
         const where: any = {
             deletedAt: null,
-            status: { in: ['ACTIVE', 'PENDING_APPROVAL'] },
+            status: { in: ['ACTIVE', 'PENDING_APPROVAL', 'CREDIT_HOLD'] },
             OR: [
                 { entityType: 'COMPANY' },
                 { parentId: null }
@@ -422,6 +513,7 @@ export async function getParentCandidates(currentId?: string) {
                 vatCompanyName: true,
                 vatAddress: true,
                 vatEmail: true,
+                vatBuyerName: true,
                 _count: {
                     select: {
                         children: { where: { deletedAt: null } }
@@ -440,6 +532,7 @@ export async function getParentCandidates(currentId?: string) {
             vatCompanyName: c.vatCompanyName,
             vatAddress: c.vatAddress,
             vatEmail: c.vatEmail,
+            vatBuyerName: c.vatBuyerName,
             childrenCount: (c as any)._count?.children ?? 0,
         }))
     } catch (err) {
@@ -469,6 +562,7 @@ export async function exportCustomersData() {
                     vatCompanyName: true,
                     vatAddress: true,
                     vatEmail: true,
+                    vatBuyerName: true,
                 },
             },
         },
@@ -503,6 +597,7 @@ export async function exportCustomersData() {
             'Tên Cty Xuất HĐ VAT': c.vatCompanyName || c.parent?.vatCompanyName || '',
             'Địa Chỉ Xuất HĐ VAT': c.vatAddress || c.parent?.vatAddress || '',
             'Email Nhận HĐ VAT': c.vatEmail || c.parent?.vatEmail || '',
+            'Tên Người Mua Hàng (VAT)': c.vatBuyerName || c.parent?.vatBuyerName || '',
             'Bảng giá mặc định': c.basePriceType ?? '',
             'Chiết khấu mặc định (%)': Number(c.defaultDiscountPct),
             'Thanh Toán': c.paymentTerm,
@@ -545,6 +640,7 @@ const customerSchema = z.object({
     vatCompanyName: z.string().nullable().optional(),
     vatAddress: z.string().nullable().optional(),
     vatEmail: z.string().nullable().optional(),
+    vatBuyerName: z.string().nullable().optional(),
     channel: z.enum(['HORECA', 'CORPORATE', 'RETAIL']).default('HORECA'),
     basePriceType: z.string().nullable().optional(),
     defaultDiscountPct: z.number().nullable().optional(),
@@ -659,6 +755,7 @@ export async function createCustomer(input: CustomerInput) {
                             vatCompanyName: data.vatCompanyName !== undefined ? data.vatCompanyName : null,
                             vatAddress: data.vatAddress !== undefined ? data.vatAddress : null,
                             vatEmail: data.vatEmail !== undefined ? data.vatEmail : null,
+                            vatBuyerName: data.vatBuyerName !== undefined ? data.vatBuyerName : null,
                             channel: data.channel,
                             paymentTerm: data.paymentTerm,
                             creditLimit: data.creditLimit,
@@ -683,6 +780,10 @@ export async function createCustomer(input: CustomerInput) {
                     name: data.name,
                     shortName: data.shortName !== undefined ? data.shortName : null,
                     taxId: data.taxId !== undefined ? data.taxId : null,
+                    vatCompanyName: data.vatCompanyName !== undefined ? data.vatCompanyName : null,
+                    vatAddress: data.vatAddress !== undefined ? data.vatAddress : null,
+                    vatEmail: data.vatEmail !== undefined ? data.vatEmail : null,
+                    vatBuyerName: data.vatBuyerName !== undefined ? data.vatBuyerName : null,
                     channel: data.channel,
                     paymentTerm: data.paymentTerm,
                     creditLimit: finalCreditLimit,
@@ -764,6 +865,7 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
                 vatCompanyName: true,
                 vatAddress: true,
                 vatEmail: true,
+                vatBuyerName: true,
                 entityType: true,
                 allowDirectSO: true,
                 parentId: true,
@@ -829,6 +931,7 @@ export async function updateCustomer(id: string, input: Partial<CustomerInput>) 
         if (customerData.vatCompanyName !== undefined) updateData.vatCompanyName = customerData.vatCompanyName
         if (customerData.vatAddress !== undefined) updateData.vatAddress = customerData.vatAddress
         if (customerData.vatEmail !== undefined) updateData.vatEmail = customerData.vatEmail
+        if (customerData.vatBuyerName !== undefined) updateData.vatBuyerName = customerData.vatBuyerName
         if (customerData.channel !== undefined) updateData.channel = customerData.channel
         if (customerData.paymentTerm !== undefined) updateData.paymentTerm = customerData.paymentTerm
         if (customerData.creditLimit !== undefined) updateData.creditLimit = customerData.creditLimit

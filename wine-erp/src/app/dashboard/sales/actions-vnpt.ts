@@ -56,6 +56,7 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
                     vatCompanyName: true,
                     vatAddress: true,
                     vatEmail: true,
+                    vatBuyerName: true,
                     addresses: {
                         select: { address: true },
                         orderBy: [{ isBilling: 'desc' }, { isDefault: 'desc' }, { id: 'asc' }],
@@ -69,6 +70,7 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
                             vatCompanyName: true,
                             vatAddress: true,
                             vatEmail: true,
+                            vatBuyerName: true,
                             purchasingPhone: true,
                             receiverPhone: true,
                             addresses: {
@@ -169,9 +171,8 @@ export async function uploadDraftInvoiceToVnpt(soId: string) {
     // Tên đơn vị mua hàng xuất HĐ: ưu tiên Tên VAT công ty mẹ -> Tên công ty mẹ -> Tên VAT con -> Tên con
     const companyName = parent?.vatCompanyName || parent?.name || so.customer.vatCompanyName || so.customer.name
 
-    // Tên người mua hàng / Chi nhánh giao nhận:
-    // Nếu có công ty mẹ, buyerName ghi tên chi nhánh con (vd: Theodore Hotel) để thể hiện nơi nhận hàng
-    const buyerName = parent ? so.customer.name : (isCorporate ? '' : so.customer.name)
+    // Tên người mua hàng (<HVTNMHang>): chỉ xuất khi có nhập trường vatBuyerName (ưu tiên chi nhánh con -> công ty mẹ), để trống nếu không nhập
+    const buyerName = (so.customer.vatBuyerName || parent?.vatBuyerName || '').trim()
 
     // Địa chỉ đăng ký thuế VAT: nếu có Công ty mẹ thì CHỈ lấy từ Công ty mẹ, không fallback sang địa chỉ giao hàng/chi nhánh con
     const parentPrimaryAddress = parent?.addresses?.[0]?.address || ''

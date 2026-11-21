@@ -543,6 +543,7 @@ model Customer {
   vatCompanyName String?               // Tên Công Ty Xuất Hóa Đơn VAT
   vatAddress     String?               // Địa Chỉ Đăng Ký Thuế VAT
   vatEmail       String?               // Email Nhận Hóa Đơn VAT
+  vatBuyerName   String?               // Tên Người Mua Hàng (HVTNMHang trên HĐ VAT)
   customerType  CustomerType?
   channel       SalesChannel           @default(HORECA)
   basePriceType String?                @default("BY_CHANNEL") // BY_CHANNEL, WHOLESALE, RETAIL, HORECA

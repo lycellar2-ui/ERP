@@ -197,6 +197,7 @@ erDiagram
         code            string
         name            string
         tax_id          string
+        vat_buyer_name  string
         customer_type   enum
         channel         enum
         base_price_type string

@@ -6,7 +6,7 @@ import Link from 'next/link'
 import {
     Plus, Users, Building2, CreditCard, ShoppingBag, X, Save, Loader2, AlertCircle, BarChart3,
     Upload, Download, Search, Edit2, Trash2, Printer, ChevronDown, FileText, Tag, ArrowUpRight,
-    CornerDownRight, UtensilsCrossed, Scale, Sparkles, Info
+    CornerDownRight, UtensilsCrossed, Scale, Sparkles, Info, Wallet
 } from 'lucide-react'
 import {
     CustomerRow, CustomerInput, CustomerStats, CustomerFilters,
@@ -193,6 +193,18 @@ function CustomerMobileCard({
                 </div>
 
                 <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">{L.table.arBalance}</span>
+                    <span className={cn('font-mono font-bold mt-0.5 block', row.overdueBalance > 0 ? 'text-rose-700' : row.arBalance > 0 ? 'text-amber-700' : 'text-slate-400')}>
+                        {row.arBalance > 0 ? formatCurrency(row.arBalance) : '0 ₫'}
+                    </span>
+                    {row.overdueBalance > 0 && (
+                        <span className="text-[10px] font-medium text-rose-600 block">
+                            {L.table.overduePrefix} {formatCurrency(row.overdueBalance)}
+                        </span>
+                    )}
+                </div>
+
+                <div>
                     <span className="text-slate-400 block text-[10px] uppercase font-semibold">{L.badges.ordersLabel}</span>
                     <span className="font-mono font-bold text-emerald-700 mt-0.5 block">
                         {formatNumber(row.orderCount)} <span className="text-[10px] text-slate-400 font-sans">{L.badges.ordersUnit}</span>
@@ -259,9 +271,23 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
         vatCompanyName?: string | null
         vatAddress?: string | null
         vatEmail?: string | null
+        vatBuyerName?: string | null
         childrenCount?: number
     }[]>([])
     const [loadedChildren, setLoadedChildren] = useState<{ id: string; code: string; name: string; status: string; channel: string }[]>([])
+    const [loadedParentInfo, setLoadedParentInfo] = useState<{
+        id: string
+        name: string
+        code: string
+        taxId?: string | null
+        vatCompanyName?: string | null
+        vatAddress?: string | null
+        vatEmail?: string | null
+        vatBuyerName?: string | null
+    } | null>(null)
+
+    const selectedParent = parentCandidates.find(p => p.id === form.parentId)
+        || (loadedParentInfo && loadedParentInfo.id === form.parentId ? loadedParentInfo : undefined)
 
     const isEdit = !!editingId
 
@@ -297,6 +323,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
             getCustomerById(editingId).then(data => {
                 if (data) {
                     setLoadedChildren((data as any).children || [])
+                    setLoadedParentInfo((data as any).parentInfo || null)
                     const loadedForm: Partial<CustomerInput> = {
                         code: data.code,
                         name: data.name,
@@ -305,6 +332,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                         vatCompanyName: data.vatCompanyName,
                         vatAddress: data.vatAddress,
                         vatEmail: data.vatEmail,
+                        vatBuyerName: data.vatBuyerName,
                         channel: (data.channel as any) || 'HORECA',
                         paymentTerm: data.paymentTerm,
                         creditLimit: data.creditLimit,
@@ -337,6 +365,8 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                 }
             }).finally(() => setLoading(false))
         } else {
+            setLoadedChildren([])
+            setLoadedParentInfo(null)
             const newForm: Partial<CustomerInput> = { paymentTerm: 'NET30', creditLimit: 0, status: isSalesRep ? 'PENDING_APPROVAL' : 'ACTIVE', channel: 'HORECA', parentId: null, entityType: 'RESTAURANT', allowDirectSO: false, brandGroup: null, orderChannel: 'ZALO', vatCompanyName: null, vatAddress: null, vatEmail: null, taxId: null, basePriceType: 'BY_CHANNEL', defaultDiscountPct: 0 }
             setForm(newForm)
             initialFormRef.current = null
@@ -1038,6 +1068,16 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                 }}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                         </div>
+
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
+                                                {L.drawer.vatBuyerNameLabel}
+                                            </label>
+                                            <input className={inputCls} style={inputStyle} value={form.vatBuyerName ?? ''}
+                                                placeholder={L.drawer.vatBuyerNamePlaceholder}
+                                                onChange={e => set('vatBuyerName', e.target.value || null)}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                        </div>
                                     </div>
 
                                     {/* Tên thương hiệu / Viết tắt & Liên hệ kế toán */}
@@ -1296,14 +1336,11 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                             <p className="text-xs uppercase tracking-widest font-bold flex items-center gap-1.5" style={{ color: '#B45309' }}>
                                                 <FileText size={14} /> {L.drawer.vatInvoiceSectionTitle}
                                             </p>
-                                            {form.parentId && (() => {
-                                                const parent = parentCandidates.find(p => p.id === form.parentId)
-                                                return (
-                                                    <span className="inline-block text-[11px] font-medium text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded border border-amber-300 whitespace-nowrap shrink-0">
-                                                        {parent?.taxId ? L.drawer.inheritedTaxBadge(parent.taxId) : L.drawer.inheritEmptyHint}
-                                                    </span>
-                                                )
-                                            })()}
+                                            {form.parentId && (
+                                                <span className="inline-block text-[11px] font-medium text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded border border-amber-300 whitespace-nowrap shrink-0">
+                                                    {selectedParent?.taxId ? L.drawer.inheritedTaxBadge(selectedParent.taxId) : L.drawer.inheritEmptyHint}
+                                                </span>
+                                            )}
                                         </div>
 
                                         <div>
@@ -1311,7 +1348,7 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                 {L.drawer.vatCompanyNameLabel}
                                             </label>
                                             <input className={inputCls} style={inputStyle} value={form.vatCompanyName ?? ''} 
-                                                placeholder={form.parentId ? (parentCandidates.find(p => p.id === form.parentId)?.vatCompanyName ? `${L.drawer.parentCompanyNamePrefix} ${parentCandidates.find(p => p.id === form.parentId)?.vatCompanyName}` : L.drawer.autoUseParentNamePlaceholder) : L.drawer.defaultCompanyPlaceholder}
+                                                placeholder={form.parentId ? (selectedParent?.vatCompanyName ? `${L.drawer.parentCompanyNamePrefix} ${selectedParent.vatCompanyName}` : L.drawer.autoUseParentNamePlaceholder) : L.drawer.defaultCompanyPlaceholder}
                                                 onChange={e => set('vatCompanyName', e.target.value || null)}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                         </div>
@@ -1334,11 +1371,11 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                     </button>
                                                 </div>
                                                 <input className={inputCls} style={inputStyle} value={form.taxId ?? ''} 
-                                                    placeholder={form.parentId ? (parentCandidates.find(p => p.id === form.parentId)?.taxId ? L.drawer.inheritedParentTaxPlaceholder(parentCandidates.find(p => p.id === form.parentId)!.taxId!) : L.drawer.autoUseParentTaxPlaceholder) : "0302012345"}
+                                                    placeholder={form.parentId ? (selectedParent?.taxId ? L.drawer.inheritedParentTaxPlaceholder(selectedParent.taxId) : L.drawer.autoUseParentTaxPlaceholder) : "0302012345"}
                                                     onChange={e => set('taxId', e.target.value || null)}
                                                     onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                                 {(() => {
-                                                    const parent = parentCandidates.find(p => p.id === form.parentId)
+                                                    const parent = selectedParent
                                                     if (parent?.taxId && !form.taxId) {
                                                         return (
                                                             <div className="mt-1 inline-flex items-center justify-between text-[11px] text-amber-800 bg-amber-50 px-2 py-1 rounded border border-amber-200 whitespace-nowrap shrink-0">
@@ -1389,8 +1426,18 @@ function CustomerDrawer({ open, editingId, salesReps, legalEntities, onClose, on
                                                 {L.drawer.vatAddressLabel}
                                             </label>
                                             <input className={inputCls} style={inputStyle} value={form.vatAddress ?? ''} 
-                                                placeholder={form.parentId ? (parentCandidates.find(p => p.id === form.parentId)?.vatAddress ? `${L.drawer.parentAddressPrefix} ${parentCandidates.find(p => p.id === form.parentId)?.vatAddress}` : L.drawer.autoUseParentAddressPlaceholder) : L.drawer.vatAddressPlaceholder}
+                                                placeholder={form.parentId ? (selectedParent?.vatAddress ? `${L.drawer.parentAddressPrefix} ${selectedParent.vatAddress}` : L.drawer.autoUseParentAddressPlaceholder) : L.drawer.vatAddressPlaceholder}
                                                 onChange={e => set('vatAddress', e.target.value || null)}
+                                                onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                                        </div>
+
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#475569' }}>
+                                                {L.drawer.vatBuyerNameLabel}
+                                            </label>
+                                            <input className={inputCls} style={inputStyle} value={form.vatBuyerName ?? ''}
+                                                placeholder={L.drawer.vatBuyerNamePlaceholder}
+                                                onChange={e => set('vatBuyerName', e.target.value || null)}
                                                 onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')} onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
                                         </div>
                                     </div>
@@ -1642,7 +1689,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
 
     const rows = queryData?.rows ?? []
     const total = queryData?.total ?? 0
-    const stats = queryData?.stats ?? { total: 0, active: 0, withCredit: 0, totalCreditLimit: 0, topTypes: [] }
+    const stats = queryData?.stats ?? { total: 0, active: 0, withCredit: 0, totalCreditLimit: 0, totalArBalance: 0, totalOverdueBalance: 0, topTypes: [] }
     const channels = queryData?.channels ?? []
     const salesReps = queryData?.salesReps ?? []
 
@@ -1750,7 +1797,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
     const sortFor = (key: CustomerFilters['sortBy']) => (filters.sortBy === key ? filters.sortDir ?? 'asc' : false)
     const refetching = loading && rows.length > 0
     const hasFilters = !!(search || typeFilter || statusFilter || channelFilter || hierarchyFilter || parentFilter)
-    const COL_COUNT = 7
+    const COL_COUNT = 8
 
     return (
         <div className="flex flex-col gap-4 max-w-screen-2xl">
@@ -1794,7 +1841,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
             />
 
             {showStats && (
-                <StatGrid className="grid-cols-2 lg:grid-cols-4 animate-fade-in">
+                <StatGrid className="grid-cols-2 lg:grid-cols-5 animate-fade-in">
                     <StatCard icon={Users} tone="brand" label={L.header.statTotal} value={formatNumber(stats.total)} />
                     <StatCard icon={Building2} tone="success" label={L.header.statActive} value={formatNumber(stats.active)} />
                     <StatCard icon={ShoppingBag} tone="warning" label={L.header.statPending} value={formatNumber(stats.pendingApproval ?? 0)} />
@@ -1803,6 +1850,12 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                     ) : (
                         <StatCard icon={CreditCard} tone="brand" label={L.header.statCreditLimit} value={formatCurrency(stats.totalCreditLimit)} />
                     )}
+                    <StatCard
+                        icon={Wallet}
+                        tone={(stats.totalOverdueBalance ?? 0) > 0 ? 'danger' : 'warning'}
+                        label={L.header.statArBalance}
+                        value={formatCurrency(stats.totalArBalance ?? 0)}
+                    />
                 </StatGrid>
             )}
 
@@ -1950,6 +2003,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                             <Th className="min-w-[220px]" sort={sortFor('name')} onSort={() => handleSort('name')}>{L.table.customer}</Th>
                             <Th className="w-[110px]">{L.table.salesRep}</Th>
                             <Th className="w-[130px]" align="right" sort={sortFor('creditLimit')} onSort={() => handleSort('creditLimit')}>{L.table.creditAndPayment}</Th>
+                            <Th className="w-[140px]" align="right">{L.table.arBalance}</Th>
                             <Th className="w-[75px]" align="center" sort={sortFor('orderCount')} onSort={() => handleSort('orderCount')}>{L.table.orders}</Th>
                             <Th className="w-[100px]">{L.table.status}</Th>
                             <Th className="w-[65px]"><span className="sr-only">{L.table.actions}</span></Th>
@@ -2069,6 +2123,21 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
                                             {row.creditLimit > 0 ? formatCurrency(row.creditLimit) : '—'}
                                         </span>
                                         <span className="text-[11px] text-lys-muted">{row.paymentTerm}</span>
+                                    </div>
+                                </Td>
+                                <Td align="right" className="whitespace-nowrap">
+                                    <div className="flex flex-col items-end gap-0.5">
+                                        <span className={cn(
+                                            'font-mono text-xs font-semibold',
+                                            row.overdueBalance > 0 ? 'text-tone-danger-fg' : row.arBalance > 0 ? 'text-tone-warning-fg' : 'text-lys-dim'
+                                        )}>
+                                            {row.arBalance > 0 ? formatCurrency(row.arBalance) : '—'}
+                                        </span>
+                                        {row.overdueBalance > 0 && (
+                                            <span className="text-[10px] font-medium text-tone-danger-fg">
+                                                {L.table.overduePrefix} {formatCurrency(row.overdueBalance)}
+                                            </span>
+                                        )}
                                     </div>
                                 </Td>
                                 <Td align="center" className={cn('whitespace-nowrap type-number font-semibold', row.orderCount > 0 ? 'text-tone-success-fg' : 'text-lys-dim')}>
