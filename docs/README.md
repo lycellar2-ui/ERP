@@ -245,4 +245,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-11-19 | Wine ERP v12.52 - Video User Guides (Cloudflare R2 Screen-based Streaming)*
+*Last updated: 2026-11-21 | Wine ERP v12.53 - KNBS Thắng Ân Cash-In Payment Sync & VAT Buyer Name*

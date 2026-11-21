@@ -8,7 +8,7 @@ export default async function CustomersPage() {
     const [data, stats, channels, salesReps, currentUser] = await Promise.all([
         getCustomers({ pageSize: 25 }).catch(() => ({ rows: [] as any[], total: 0 })),
         getCustomerStats().catch(() => ({
-            total: 0, active: 0, withCredit: 0, totalCreditLimit: 0, topTypes: [] as any[],
+            total: 0, active: 0, withCredit: 0, totalCreditLimit: 0, totalArBalance: 0, totalOverdueBalance: 0, topTypes: [] as any[],
         })),
         getCustomerChannels().catch(() => []),
         getSalesRepList().catch(() => []),

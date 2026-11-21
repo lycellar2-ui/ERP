@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { DollarSign, TrendingDown, AlertCircle, Clock, CheckCircle2, ReceiptText, ArrowUpRight, ArrowDownRight, BookOpen, BarChart3, Wallet, Lock, Skull, Banknote, Table2, Search, FileCheck2, Building2, FileSpreadsheet } from 'lucide-react'
+import { DollarSign, TrendingDown, AlertCircle, Clock, CheckCircle2, ReceiptText, ArrowUpRight, ArrowDownRight, BookOpen, BarChart3, Wallet, Lock, Skull, Banknote, Table2, Search, FileCheck2, Building2, FileSpreadsheet, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { ARRow, APRow, getARInvoices, getAPInvoices, recordARPayment, recordAPPayment } from './actions'
+import { syncKnbsTaPaymentsAction } from './actions-knbs-sync'
 import { formatVND, formatDate } from '@/lib/utils'
 import { JournalEntryTab, ProfitLossTab, ExpenseTab, PeriodCloseTab, BalanceSheetTab, BadDebtTab, CashFlowTab, TrialBalanceTab, AccountLedgerTab } from './FinanceTabs'
 import { InvoiceReconciliationTab } from './InvoiceReconciliationTab'
@@ -377,6 +378,35 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
         setApTotal(result.total)
     }, [apSearch, apStatus, apPage])
 
+    const [knbsSyncing, setKnbsSyncing] = useState(false)
+
+    const handleKnbsSync = async () => {
+        if (knbsSyncing) return
+        setKnbsSyncing(true)
+        try {
+            const res = await syncKnbsTaPaymentsAction()
+            if (!res.success || !res.data) {
+                toast.error(res.error || 'Đồng bộ KNBS thất bại')
+                return
+            }
+            const d = res.data
+            if (d.syncedCount > 0) {
+                await reloadAR()
+                toast.success(
+                    `Đã đồng bộ ${d.syncedCount} chứng từ thu tiền Thắng Ân (${formatVND(d.totalSyncedAmount)}). Bỏ qua: ${d.skippedCount}, trùng: ${d.alreadySyncedCount}.`
+                )
+            } else {
+                toast.info(
+                    `KNBS Thắng Ân: không có chứng từ thu tiền mới (tổng quét: ${d.totalFetched}, trùng: ${d.alreadySyncedCount}, bỏ qua MST: ${d.skippedCount}).`
+                )
+            }
+        } catch (err: any) {
+            toast.error(`Lỗi đồng bộ KNBS: ${err?.message || 'Không xác định'}`)
+        } finally {
+            setKnbsSyncing(false)
+        }
+    }
+
     const handlePayment = async () => {
         if (!paymentModal || !payAmount) return
         setPayLoading(true)
@@ -452,13 +482,29 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                 title={L.headerTitle}
                 description={L.headerSubtitle}
                 actions={
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-amber-50 border border-amber-200">
-                        <div className="w-2 h-2 rounded-full bg-amber-600" />
-                        <div>
-                            <p className="text-xs font-bold text-amber-800">Export-Only</p>
-                            <p className="text-[10px] text-slate-500">
-                                {isEn ? 'Export GL entries → Accounting SW' : 'Xuất bút toán → PM kế toán'}
-                            </p>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                        <button
+                            onClick={handleKnbsSync}
+                            disabled={knbsSyncing}
+                            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md transition-colors disabled:opacity-60"
+                            style={{
+                                background: '#0891B2',
+                                color: '#FFFFFF',
+                            }}
+                        >
+                            <RefreshCw size={14} className={knbsSyncing ? 'animate-spin' : ''} />
+                            {knbsSyncing
+                                ? (isEn ? 'Syncing KNBS...' : 'Đang đồng bộ KNBS...')
+                                : (isEn ? 'Sync KNBS (Thang An)' : 'Đồng bộ KNBS (Thắng Ân)')}
+                        </button>
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-amber-50 border border-amber-200">
+                            <div className="w-2 h-2 rounded-full bg-amber-600" />
+                            <div>
+                                <p className="text-xs font-bold text-amber-800">Export-Only</p>
+                                <p className="text-[10px] text-slate-500">
+                                    {isEn ? 'Export GL entries → Accounting SW' : 'Xuất bút toán → PM kế toán'}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 }

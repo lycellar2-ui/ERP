@@ -383,6 +383,17 @@ DỰ BÁO CUỐI THÁNG: ₫ 1,125,500,000
 | **Kẹt hóa đơn nháp (Chờ ký số ảo) & Trùng FKey `ERR:13`** | Bản nháp cũ (`NHAP-`) khi không tồn tại trên VNPT bị chặn không xóa được do VNPT TT78 trả về lỗi `ERR:5`/`ERR:1`. Bổ sung nút **"Hủy Nháp"** trực tiếp trên màn hình Đối Chiếu, cho phép xóa bản nháp cục bộ trong ERP và tự động kiểm tra chữ ký + tăng phiên bản FKey (`_V2.._V10`) khi đẩy lại để không kẹt `ERR:13`. | Kế toán dọn dẹp nháp lỗi hoặc đẩy lại đơn sau chỉnh sửa thông suốt, không bị treo trạng thái `Chờ Ký Số`. |
 | **Sai lệch VAT kênh lẻ, thiếu `orderDiscount`, tên hàng 8% & trạng thái `INVOICED`** | Chuẩn hóa `calculateVnptInvoiceTotals` (tách ngược VAT kênh `RETAIL`/`DIRECT_INDIVIDUAL`/`POS`, gộp `orderDiscount`, cân bằng làm tròn nguyên XML), chuẩn hóa 169 SKU (`L10035`/`L10036` VAT 8% thành `Nước uống không cồn...`), và tự chuyển `SalesOrder.status` sang `INVOICED` khi `syncVnptInvoiceForOrder` / cron đồng bộ thành công. | Đẩy hóa đơn chính xác tuyệt đối 2 chiều và đồng bộ trạng thái đơn hàng tức thì sau khi ký số. |
 
+### ✅ Đã triển khai — Đồng bộ Hạch Toán Tiền Về từ Accounting KNBS (Thắng Ân)
+
+- **Library**: `wine-erp/src/lib/knbs/knbs-client.ts` (Keycloak OIDC login qua `KNBS_TA_USERNAME` / `KNBS_TA_PASSWORD`, cache token 45 phút, tự retry 401, phân trang `size=50` cho `/cash/deposit/get-list` và `/bank/deposit/get-list` với `includeDetail=true`).
+- **Sync Engine**: `wine-erp/src/lib/knbs/sync-ta-payments.ts` (`syncKnbsTaPayments`):
+  - Khớp chính xác khách hàng theo Mã số thuế (`Customer.taxId`), bỏ qua & báo cáo nếu thiếu hoặc không khớp MST.
+  - Chống trùng bằng `ARPaymentBatch.importHash = sha256("KNBS_TA|" + knbsId)`.
+  - Tự động phân bổ FIFO vào các `ARInvoice` chưa thu của Thắng Ân, cập nhật `ARInvoice.paidAmount` / `status`, `SalesOrder.status = PAID`, và sinh bút toán `JournalEntry` (`DR 111/112` / `CR 131`).
+- **Triggers**:
+  - Thủ công: `syncKnbsTaPaymentsAction()` (`src/app/dashboard/finance/actions-knbs-sync.ts`) qua nút **"Đồng bộ KNBS (Thắng Ân)"** trên `FinanceClient.tsx`.
+  - Định kỳ: `GET/POST /api/cron/sync-knbs` (`vercel.json` schedule `0 */2 * * *`).
+
 ### ❌ Chưa triển khai
 
 | Tính năng | Ưu tiên |
