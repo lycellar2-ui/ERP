@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import {
     Sparkles, Plus, ArrowUpRight, ArrowDownLeft, Search, RefreshCw,
     AlertTriangle, Tag, History, X, Layers, Boxes, Edit2, ShieldAlert,
@@ -1223,246 +1224,233 @@ export function PosmInventoryTab() {
             )}
 
             {/* ═══ MODAL 4: PHIẾU XUẤT KHO POSM (PRINTABLE VOUCHER) ═══ */}
-            {showPrintVoucherModal && selectedVoucherForPrint && (
-                <div className="print-modal fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto print:static print:bg-white print:p-0 print:overflow-visible">
-                    <div className="bg-white rounded-lg shadow-2xl border border-slate-200 w-full max-w-3xl my-6 overflow-hidden animate-in fade-in zoom-in-95 duration-150 print:my-0 print:shadow-none print:border-0">
-                        {/* Top Toolbar (No-Print) */}
-                        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50 no-print">
-                            <div className="flex items-center gap-2">
-                                <span className="p-1.5 rounded-lg bg-blue-100 text-blue-700">
-                                    <Printer size={16} />
-                                </span>
-                                <div>
-                                    <h3 className="font-bold text-slate-900 text-xs sm:text-sm">
-                                        Phiếu Xuất Kho POSM & Biên Bản Bàn Giao
-                                    </h3>
-                                    <p className="text-[11px] text-slate-500 font-mono">
-                                        Mã số: {selectedVoucherForPrint.docNo}
-                                    </p>
-                                </div>
+            {showPrintVoucherModal && selectedVoucherForPrint && (() => {
+                const voucherPaper = (
+                    <div
+                        id="posm-print-voucher"
+                        className="p-6 sm:p-10 print:p-0 bg-white text-slate-900 text-xs space-y-6"
+                        style={{ fontFamily: "'Times New Roman', Times, serif" }}
+                    >
+                        {/* Header */}
+                        <div className="flex justify-between items-start border-b border-slate-300 pb-4">
+                            <div>
+                                <h4 className="text-sm font-bold uppercase tracking-wide text-slate-900">
+                                    CÔNG TY TNHH LY&apos;S CELLAR
+                                </h4>
+                                <p className="text-[11px] text-slate-600">
+                                    Hệ Thống Nhập Khẩu & Phân Phối Vang Cao Cấp
+                                </p>
+                                <p className="text-[11px] text-slate-600">
+                                    Bộ Phận: Kho Vận & Tiếp Thị (WMS - Marketing POSM)
+                                </p>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => window.print()}
-                                    className="px-3.5 py-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow-2xs cursor-pointer flex items-center gap-1.5"
-                                >
-                                    <Printer size={14} />
-                                    <span>In Phiếu Xuất (Print)</span>
-                                </button>
-                                <button
-                                    onClick={() => setShowPrintVoucherModal(false)}
-                                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 cursor-pointer"
-                                >
-                                    <X size={18} />
-                                </button>
+                            <div className="text-right text-[11px] space-y-0.5">
+                                <p className="font-bold">Mẫu số: 02 - VT</p>
+                                <p className="italic text-slate-500">(Ban hành theo TT 200/2014/TT-BTC)</p>
+                                <p className="font-mono font-bold text-slate-900 mt-1">
+                                    Số: <span className="text-blue-900">{selectedVoucherForPrint.docNo}</span>
+                                </p>
+                                <p className="text-slate-600">
+                                    Ngày: {formatDate(selectedVoucherForPrint.performedAt)}
+                                </p>
                             </div>
                         </div>
 
-                        {/* Printable Paper Area */}
-                        <div
-                            id="posm-print-voucher"
-                            className="p-6 sm:p-10 bg-white text-slate-900 text-xs space-y-6"
-                            style={{ fontFamily: "'Times New Roman', Times, serif" }}
-                        >
-                            {/* Header */}
-                            <div className="flex justify-between items-start border-b border-slate-300 pb-4">
-                                <div>
-                                    <h4 className="text-sm font-bold uppercase tracking-wide text-slate-900">
-                                        CÔNG TY TNHH LY&apos;S CELLAR
-                                    </h4>
-                                    <p className="text-[11px] text-slate-600">
-                                        Hệ Thống Nhập Khẩu & Phân Phối Vang Cao Cấp
-                                    </p>
-                                    <p className="text-[11px] text-slate-600">
-                                        Bộ Phận: Kho Vận & Tiếp Thị (WMS - Marketing POSM)
-                                    </p>
-                                </div>
-                                <div className="text-right text-[11px] space-y-0.5">
-                                    <p className="font-bold">Mẫu số: 02 - VT</p>
-                                    <p className="italic text-slate-500">(Ban hành theo TT 200/2014/TT-BTC)</p>
-                                    <p className="font-mono font-bold text-slate-900 mt-1">
-                                        Số: <span className="text-blue-900">{selectedVoucherForPrint.docNo}</span>
-                                    </p>
-                                    <p className="text-slate-600">
-                                        Ngày: {formatDate(selectedVoucherForPrint.performedAt)}
-                                    </p>
-                                </div>
-                            </div>
+                        {/* Title */}
+                        <div className="text-center space-y-1 py-1">
+                            <h2 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-slate-900">
+                                PHIẾU XUẤT KHO VẬT PHẨM POSM
+                            </h2>
+                            <p className="italic text-slate-600 text-xs">
+                                (Kiêm Biên Bản Bàn Giao Vật Phẩm Tiếp Thị & Quà Tặng)
+                            </p>
+                        </div>
 
-                            {/* Title */}
-                            <div className="text-center space-y-1 py-1">
-                                <h2 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-slate-900">
-                                    PHIẾU XUẤT KHO VẬT PHẨM POSM
-                                </h2>
-                                <p className="italic text-slate-600 text-xs">
-                                    (Kiêm Biên Bản Bàn Giao Vật Phẩm Tiếp Thị & Quà Tặng)
-                                </p>
+                        {/* Meta Information */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-y-2 gap-x-4 text-xs">
+                            <div>
+                                <span className="font-bold">Người nhận / Đơn vị: </span>
+                                <span>{selectedVoucherForPrint.recipient || '....................................................................'}</span>
                             </div>
-
-                            {/* Meta Information */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 text-xs">
-                                <div>
-                                    <span className="font-bold">Người nhận / Đơn vị: </span>
-                                    <span>{selectedVoucherForPrint.recipient || '....................................................................'}</span>
-                                </div>
-                                <div>
-                                    <span className="font-bold">Nhân viên đề xuất: </span>
-                                    <span>{selectedVoucherForPrint.requestedBy || '....................................................................'}</span>
-                                </div>
-                                <div>
-                                    <span className="font-bold">Mục đích xuất: </span>
-                                    <span>{POSM_REASON_LABELS[selectedVoucherForPrint.reason]?.label || selectedVoucherForPrint.reason}</span>
-                                </div>
-                                <div>
-                                    <span className="font-bold">Kho xuất: </span>
-                                    <span>Kho Tổng Ly&apos;s Cellar (Khu Vực POSM)</span>
-                                </div>
-                                <div className="sm:col-span-2">
-                                    <span className="font-bold">Ghi chú / Đơn hàng liên quan: </span>
-                                    <span>{selectedVoucherForPrint.notes || 'Cấp phát sử dụng theo quy định quản lý tiếp thị.'}</span>
-                                </div>
+                            <div>
+                                <span className="font-bold">Nhân viên đề xuất: </span>
+                                <span>{selectedVoucherForPrint.requestedBy || '....................................................................'}</span>
                             </div>
-
-                            {/* Items Table */}
-                            <div className="border border-slate-800">
-                                <table className="w-full text-left border-collapse text-xs">
-                                    <thead>
-                                        <tr className="border-b border-slate-800 bg-slate-100 text-slate-900 font-bold text-center">
-                                            <th className="p-2 border-r border-slate-800 w-10">STT</th>
-                                            <th className="p-2 border-r border-slate-800 w-28">Mã POSM</th>
-                                            <th className="p-2 border-r border-slate-800">Tên Vật Phẩm Tiếp Thị</th>
-                                            <th className="p-2 border-r border-slate-800 w-24">Danh Mục</th>
-                                            <th className="p-2 border-r border-slate-800 w-16">ĐVT</th>
-                                            <th className="p-2 border-r border-slate-800 w-20">Số Lượng</th>
-                                            <th className="p-2 border-r border-slate-800 w-24">Đơn Giá</th>
-                                            <th className="p-2 w-28">Thành Tiền</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr className="border-b border-slate-300">
-                                            <td className="p-2 border-r border-slate-800 text-center">1</td>
-                                            <td className="p-2 border-r border-slate-800 font-mono font-bold text-center">
-                                                {selectedVoucherForPrint.posmProductCode}
-                                            </td>
-                                            <td className="p-2 border-r border-slate-800 font-semibold">
-                                                {selectedVoucherForPrint.posmProductName}
-                                            </td>
-                                            <td className="p-2 border-r border-slate-800 text-center">
-                                                {POSM_CATEGORY_CONFIG[selectedVoucherForPrint.category]?.label || selectedVoucherForPrint.category}
-                                            </td>
-                                            <td className="p-2 border-r border-slate-800 text-center">
-                                                {selectedVoucherForPrint.unit}
-                                            </td>
-                                            <td className="p-2 border-r border-slate-800 text-center font-bold">
-                                                {selectedVoucherForPrint.qty}
-                                            </td>
-                                            <td className="p-2 border-r border-slate-800 text-right font-mono">
-                                                {selectedVoucherForPrint.unitCost > 0 ? formatVND(selectedVoucherForPrint.unitCost) : '—'}
-                                            </td>
-                                            <td className="p-2 text-right font-mono font-bold">
-                                                {selectedVoucherForPrint.totalCost > 0 ? formatVND(selectedVoucherForPrint.totalCost) : '—'}
-                                            </td>
-                                        </tr>
-                                        {/* Filler row for classic form aesthetic */}
-                                        <tr className="border-b border-slate-200">
-                                            <td className="p-2 border-r border-slate-800 text-center text-slate-300">2</td>
-                                            <td className="p-2 border-r border-slate-800"></td>
-                                            <td className="p-2 border-r border-slate-800"></td>
-                                            <td className="p-2 border-r border-slate-800"></td>
-                                            <td className="p-2 border-r border-slate-800"></td>
-                                            <td className="p-2 border-r border-slate-800"></td>
-                                            <td className="p-2 border-r border-slate-800"></td>
-                                            <td className="p-2"></td>
-                                        </tr>
-                                    </tbody>
-                                    <tfoot>
-                                        <tr className="font-bold border-t border-slate-800 bg-slate-50">
-                                            <td colSpan={5} className="p-2 text-right border-r border-slate-800">
-                                                Tổng cộng:
-                                            </td>
-                                            <td className="p-2 text-center border-r border-slate-800">
-                                                {selectedVoucherForPrint.qty}
-                                            </td>
-                                            <td className="p-2 border-r border-slate-800"></td>
-                                            <td className="p-2 text-right font-mono">
-                                                {selectedVoucherForPrint.totalCost > 0 ? formatVND(selectedVoucherForPrint.totalCost) : '—'}
-                                            </td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
+                            <div>
+                                <span className="font-bold">Mục đích xuất: </span>
+                                <span>{POSM_REASON_LABELS[selectedVoucherForPrint.reason]?.label || selectedVoucherForPrint.reason}</span>
                             </div>
-
-                            {/* Amount in words & terms */}
-                            <div className="space-y-1 text-xs">
-                                <p>
-                                    <span className="font-bold">Tổng số lượng (viết bằng chữ): </span>
-                                    <span className="italic">{selectedVoucherForPrint.qty} ({selectedVoucherForPrint.unit})</span>
-                                </p>
-                                <p className="italic text-slate-600 text-[11px]">
-                                    * Vật phẩm POSM bàn giao đúng quy cách, bên nhận có trách nhiệm bảo quản và sử dụng đúng mục đích.
-                                </p>
+                            <div>
+                                <span className="font-bold">Kho xuất: </span>
+                                <span>Kho Tổng Ly&apos;s Cellar (Khu Vực POSM)</span>
                             </div>
+                            <div className="sm:col-span-2 print:col-span-2">
+                                <span className="font-bold">Ghi chú / Đơn hàng liên quan: </span>
+                                <span>{selectedVoucherForPrint.notes || 'Cấp phát sử dụng theo quy định quản lý tiếp thị.'}</span>
+                            </div>
+                        </div>
 
-                            {/* Signature Blocks */}
-                            <div className="grid grid-cols-4 gap-2 pt-6 text-center text-xs">
-                                <div>
-                                    <p className="font-bold">Người Lập Phiếu</p>
-                                    <p className="italic text-[10px] text-slate-500">(Ký, họ tên)</p>
-                                    <div className="h-16"></div>
-                                    <p className="font-semibold text-slate-700">{selectedVoucherForPrint.requestedBy || 'Người lập'}</p>
-                                </div>
-                                <div>
-                                    <p className="font-bold">Người Nhận Hàng</p>
-                                    <p className="italic text-[10px] text-slate-500">(Ký, họ tên)</p>
-                                    <div className="h-16"></div>
-                                    <p className="font-semibold text-slate-700">{selectedVoucherForPrint.recipient || 'Người nhận'}</p>
-                                </div>
-                                <div>
-                                    <p className="font-bold">Thủ Kho Xuất</p>
-                                    <p className="italic text-[10px] text-slate-500">(Ký, họ tên)</p>
-                                    <div className="h-16"></div>
-                                    <p className="font-semibold text-slate-700">Thủ kho</p>
-                                </div>
-                                <div>
-                                    <p className="font-bold">Kế Toán / Quản Lý</p>
-                                    <p className="italic text-[10px] text-slate-500">(Ký, họ tên)</p>
-                                    <div className="h-16"></div>
-                                    <p className="font-semibold text-slate-700">Quản lý kho</p>
-                                </div>
+                        {/* Items Table */}
+                        <div className="border border-slate-800">
+                            <table className="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr className="border-b border-slate-800 bg-slate-100 text-slate-900 font-bold text-center">
+                                        <th className="p-2 border-r border-slate-800 w-10">STT</th>
+                                        <th className="p-2 border-r border-slate-800 w-28">Mã POSM</th>
+                                        <th className="p-2 border-r border-slate-800">Tên Vật Phẩm Tiếp Thị</th>
+                                        <th className="p-2 border-r border-slate-800 w-24">Danh Mục</th>
+                                        <th className="p-2 border-r border-slate-800 w-16">ĐVT</th>
+                                        <th className="p-2 border-r border-slate-800 w-20">Số Lượng</th>
+                                        <th className="p-2 border-r border-slate-800 w-24">Đơn Giá</th>
+                                        <th className="p-2 w-28">Thành Tiền</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr className="border-b border-slate-300">
+                                        <td className="p-2 border-r border-slate-800 text-center">1</td>
+                                        <td className="p-2 border-r border-slate-800 font-mono font-bold text-center">
+                                            {selectedVoucherForPrint.posmProductCode}
+                                        </td>
+                                        <td className="p-2 border-r border-slate-800 font-semibold">
+                                            {selectedVoucherForPrint.posmProductName}
+                                        </td>
+                                        <td className="p-2 border-r border-slate-800 text-center">
+                                            {POSM_CATEGORY_CONFIG[selectedVoucherForPrint.category]?.label || selectedVoucherForPrint.category}
+                                        </td>
+                                        <td className="p-2 border-r border-slate-800 text-center">
+                                            {selectedVoucherForPrint.unit}
+                                        </td>
+                                        <td className="p-2 border-r border-slate-800 text-center font-bold">
+                                            {selectedVoucherForPrint.qty}
+                                        </td>
+                                        <td className="p-2 border-r border-slate-800 text-right font-mono">
+                                            {selectedVoucherForPrint.unitCost > 0 ? formatVND(selectedVoucherForPrint.unitCost) : '—'}
+                                        </td>
+                                        <td className="p-2 text-right font-mono font-bold">
+                                            {selectedVoucherForPrint.totalCost > 0 ? formatVND(selectedVoucherForPrint.totalCost) : '—'}
+                                        </td>
+                                    </tr>
+                                    {/* Filler row for classic form aesthetic */}
+                                    <tr className="border-b border-slate-200">
+                                        <td className="p-2 border-r border-slate-800 text-center text-slate-300">2</td>
+                                        <td className="p-2 border-r border-slate-800"></td>
+                                        <td className="p-2 border-r border-slate-800"></td>
+                                        <td className="p-2 border-r border-slate-800"></td>
+                                        <td className="p-2 border-r border-slate-800"></td>
+                                        <td className="p-2 border-r border-slate-800"></td>
+                                        <td className="p-2 border-r border-slate-800"></td>
+                                        <td className="p-2"></td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr className="font-bold border-t border-slate-800 bg-slate-50">
+                                        <td colSpan={5} className="p-2 text-right border-r border-slate-800">
+                                            Tổng cộng:
+                                        </td>
+                                        <td className="p-2 text-center border-r border-slate-800">
+                                            {selectedVoucherForPrint.qty}
+                                        </td>
+                                        <td className="p-2 border-r border-slate-800"></td>
+                                        <td className="p-2 text-right font-mono">
+                                            {selectedVoucherForPrint.totalCost > 0 ? formatVND(selectedVoucherForPrint.totalCost) : '—'}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        {/* Amount in words & terms */}
+                        <div className="space-y-1 text-xs">
+                            <p>
+                                <span className="font-bold">Tổng số lượng (viết bằng chữ): </span>
+                                <span className="italic">{selectedVoucherForPrint.qty} ({selectedVoucherForPrint.unit})</span>
+                            </p>
+                            <p className="italic text-slate-600 text-[11px]">
+                                * Vật phẩm POSM bàn giao đúng quy cách, bên nhận có trách nhiệm bảo quản và sử dụng đúng mục đích.
+                            </p>
+                        </div>
+
+                        {/* Signature Blocks */}
+                        <div className="grid grid-cols-4 gap-2 pt-6 text-center text-xs break-inside-avoid">
+                            <div>
+                                <p className="font-bold">Người Lập Phiếu</p>
+                                <p className="italic text-[10px] text-slate-500">(Ký, họ tên)</p>
+                                <div className="h-16"></div>
+                                <p className="font-semibold text-slate-700">{selectedVoucherForPrint.requestedBy || 'Người lập'}</p>
+                            </div>
+                            <div>
+                                <p className="font-bold">Người Nhận Hàng</p>
+                                <p className="italic text-[10px] text-slate-500">(Ký, họ tên)</p>
+                                <div className="h-16"></div>
+                                <p className="font-semibold text-slate-700">{selectedVoucherForPrint.recipient || 'Người nhận'}</p>
+                            </div>
+                            <div>
+                                <p className="font-bold">Thủ Kho Xuất</p>
+                                <p className="italic text-[10px] text-slate-500">(Ký, họ tên)</p>
+                                <div className="h-16"></div>
+                                <p className="font-semibold text-slate-700">Thủ kho</p>
+                            </div>
+                            <div>
+                                <p className="font-bold">Kế Toán / Quản Lý</p>
+                                <p className="italic text-[10px] text-slate-500">(Ký, họ tên)</p>
+                                <div className="h-16"></div>
+                                <p className="font-semibold text-slate-700">Quản lý kho</p>
                             </div>
                         </div>
                     </div>
+                )
 
-                    {/* Scoped CSS for printing */}
-                    <style jsx global>{`
-                        @media print {
-                            body * {
-                                visibility: hidden !important;
-                            }
-                            #posm-print-voucher, #posm-print-voucher * {
-                                visibility: visible !important;
-                            }
-                            #posm-print-voucher {
-                                position: fixed !important;
-                                left: 0 !important;
-                                top: 0 !important;
-                                width: 100% !important;
-                                height: auto !important;
-                                margin: 0 !important;
-                                padding: 15mm 15mm !important;
-                                background: #ffffff !important;
-                                color: #000000 !important;
-                                border: none !important;
-                                box-shadow: none !important;
-                                z-index: 999999 !important;
-                            }
-                            .no-print {
-                                display: none !important;
-                            }
-                        }
-                    `}</style>
-                </div>
-            )}
+                return (
+                    <>
+                        <div className="print-modal fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto no-print">
+                            <div className="bg-white rounded-lg shadow-2xl border border-slate-200 w-full max-w-3xl my-6 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                                {/* Top Toolbar */}
+                                <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50">
+                                    <div className="flex items-center gap-2">
+                                        <span className="p-1.5 rounded-lg bg-blue-100 text-blue-700">
+                                            <Printer size={16} />
+                                        </span>
+                                        <div>
+                                            <h3 className="font-bold text-slate-900 text-xs sm:text-sm">
+                                                Phiếu Xuất Kho POSM & Biên Bản Bàn Giao
+                                            </h3>
+                                            <p className="text-[11px] text-slate-500 font-mono">
+                                                Mã số: {selectedVoucherForPrint.docNo}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => window.print()}
+                                            className="px-3.5 py-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow-2xs cursor-pointer flex items-center gap-1.5"
+                                        >
+                                            <Printer size={14} />
+                                            <span>In Phiếu Xuất (Print)</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setShowPrintVoucherModal(false)}
+                                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 cursor-pointer"
+                                        >
+                                            <X size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Printable Paper Preview */}
+                                {voucherPaper}
+                            </div>
+                        </div>
+
+                        {/* Dedicated Print Portal mounted directly on document.body */}
+                        {typeof document !== 'undefined' && createPortal(
+                            <div className="print-portal-root hidden print:block">
+                                {voucherPaper}
+                            </div>,
+                            document.body
+                        )}
+                    </>
+                )
+            })()}
         </div>
     )
 }

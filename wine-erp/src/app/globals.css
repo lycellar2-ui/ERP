@@ -401,8 +401,26 @@ a,
   }
 
   /* ── Global Reset for Print ── */
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
   html {
     color-scheme: light;
+  }
+
+  /* Isolate dedicated print portals directly mounted under <body> */
+  body:has(.print-portal-root) > *:not(.print-portal-root) {
+    display: none !important;
+  }
+
+  .print-portal-root {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    background: #fff !important;
   }
 
   body {

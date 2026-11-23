@@ -56,7 +56,7 @@ export function DashboardShell({ children, currentUser }: { children: React.Reac
     }, [])
 
     return (
-        <div className="flex h-screen overflow-hidden bg-lys-bg">
+        <div className="flex h-screen overflow-hidden bg-lys-bg print:block print:h-auto print:overflow-visible">
             <NavigationProgress />
 
             {/* Mobile backdrop overlay */}
@@ -84,7 +84,7 @@ export function DashboardShell({ children, currentUser }: { children: React.Reac
                 />
             </div>
 
-            <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+            <div className="flex flex-col flex-1 min-w-0 overflow-hidden print:overflow-visible">
                 <Header
                     currentUser={currentUser}
                     mobileMenuButton={
@@ -99,7 +99,7 @@ export function DashboardShell({ children, currentUser }: { children: React.Reac
                     }
                 />
 
-                <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto p-2.5 sm:p-3 md:p-4 outline-none">
+                <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto p-2.5 sm:p-3 md:p-4 outline-none print:overflow-visible print:p-0">
                     <Suspense fallback={<PageSkeleton />}>{children}</Suspense>
                 </main>
             </div>

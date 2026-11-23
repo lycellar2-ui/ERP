@@ -103,6 +103,7 @@
 94. [BUG-159: Lỗi React Hydration #418 Trên Production Do 138 Lời Gọi .toLocaleString() Không Chỉ Định Locale Trong 19 Client Components](#bug-159-lỗi-react-hydration-418-trên-production-do-138-lời-gọi-tolocalestring-không-chỉ-định-locale-trong-19-client-components)
 95. [BUG-160: Sai Lệch Thuế VAT Kênh Bán Lẻ, Bỏ Sót orderDiscount, Kẹt ERR:13 Khi Đẩy Lại Nháp VNPT & Rủi Ro Thuế 8% Tên Tự Công Bố](#bug-160-sai-lệch-thuế-vat-kênh-bán-lẻ-bỏ-sót-orderdiscount-kẹt-err13-khi-đẩy-lại-nháp-vnpt--rủi-ro-thuế-8-tên-tự-công-bố)
 96. [BUG-161: Audit Toàn Hệ Thống — Native Confirm/Prompt Còn Sót, Sinh Mã count()+1, Thiếu requireAuth() & Bare toLocaleString()](#bug-161-audit-toàn-hệ-thống--native-confirmprompt-còn-sót-sinh-mã-count1-thiếu-requireauth--bare-tolocalestring)
+97. [BUG-162: Bản In Phiếu Xuất POSM Bị Trắng Trang 1/1 Do visibility:hidden + position:fixed Trong DashboardShell](#bug-162-bản-in-phiếu-xuất-posm-bị-trắng-trang-11-do-visibilityhidden--positionfixed-trong-dashboardshell)
 
 ---
 
@@ -4647,3 +4648,27 @@ Qua đợt kiểm tra chuyên sâu toàn bộ 38 routes và tất cả component
 
 ### Bài học
 > **RULE 161: Mọi tab/modal mới thêm sau đợt chuẩn hóa Design System (như `ParentPaymentImportTab`) PHẢI kiểm tra lại bằng audit tự động để bảo đảm 0 `window.confirm`/`prompt`, 0 `count() + 1`, 0 Server Action mutation thiếu `requireAuth()` và 0 `.toLocaleString()` rỗng.**
+
+---
+
+## BUG-162: Bản In Phiếu Xuất POSM Bị Trắng Trang 1/1 Do visibility:hidden + position:fixed Trong DashboardShell
+
+**Ngày:** 2026-11-23
+**Severity:** High — Không thể in Phiếu Xuất Kho POSM tại `/dashboard/warehouse`
+
+### Triệu chứng
+- Khi bấm **In Phiếu Xuất (Print)** trong modal Phiếu Xuất Kho POSM (`PosmInventoryTab.tsx`), hộp thoại Print Preview của trình duyệt hiển thị hoàn toàn **trắng trang (1/1)** ngoài header/footer mặc định.
+- Ngoài ra, `DashboardShell.tsx` giữ `h-screen overflow-hidden` khi in và các modal in ở `CreateSODrawer`, `EditSODrawer`, `TransferDetailDrawer` thiếu `print:static print:inset-auto print:overflow-visible` nên dễ bị cắt khi in nhiều trang.
+
+### Nguyên nhân gốc
+1. `PosmInventoryTab.tsx` dùng `<style jsx global>` với `body * { visibility: hidden !important; }` và ép `#posm-print-voucher` thành `position: fixed !important; top: 0; left: 0;`, trong khi phần tử này nằm lồng bên trong `DashboardShell` (`h-screen overflow-hidden`) và container modal (`overflow-hidden animate-in fade-in zoom-in-95`). Thuộc tính `overflow-hidden` và `transform` khiến vùng in `position: fixed` bị cắt hoặc ẩn khỏi trang in.
+2. `globals.css` chưa reset `html, body { height: auto !important; overflow: visible !important; }` trong `@media print`.
+
+### Cách fix
+1. Cập nhật `wine-erp/src/app/dashboard/warehouse/PosmInventoryTab.tsx`: bỏ `<style jsx global>` và `visibility: hidden`, dùng `createPortal` gắn vùng in vào `document.body` với class `.print-portal-root hidden print:block`, dùng chung JSX `voucherPaper` với modal xem trước.
+2. Cập nhật `wine-erp/src/app/globals.css`: reset `html, body` trong `@media print` và thêm quy tắc `body:has(.print-portal-root) > *:not(.print-portal-root) { display: none !important; }`.
+3. Cập nhật `wine-erp/src/components/layout/DashboardShell.tsx`: bổ sung `print:block print:h-auto print:overflow-visible` trên wrapper chính và `print:overflow-visible` trên cột nội dung/`<main>`.
+4. Bổ sung `print:static print:inset-auto print:overflow-visible` cho modal in của `CreateSODrawer.tsx`, `EditSODrawer.tsx` và `TransferDetailDrawer.tsx`.
+
+### Bài học
+> **RULE 162: Tuyệt đối KHÔNG dùng `body * { visibility: hidden }` kết hợp `position: fixed` bên trong `DashboardShell` (`h-screen overflow-hidden`) để in modal. Hãy dùng `createPortal` gắn vùng in trực tiếp vào `document.body` với `.print-portal-root`, hoặc đặt `print:static print:inset-auto print:overflow-visible` đồng bộ từ `DashboardShell` xuống modal in.**

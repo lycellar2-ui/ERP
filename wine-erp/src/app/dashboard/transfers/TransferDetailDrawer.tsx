@@ -986,8 +986,8 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
 
             {/* Printable A4 Modal for signing and picking */}
             {printModalOpen && detail && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto print-modal print:block print:p-0 print:bg-transparent">
-                    <div className="bg-white border border-slate-200 rounded-lg max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden print:shadow-none print:border-none print:max-h-none print:bg-white print:m-0 print:w-full print:max-w-none">
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto print-modal print:static print:inset-auto print:overflow-visible print:block print:p-0 print:bg-transparent">
+                    <div className="bg-white border border-slate-200 rounded-lg max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden print:overflow-visible print:shadow-none print:border-none print:max-h-none print:bg-white print:m-0 print:w-full print:max-w-none">
                         {/* Header bar (Non-printable) */}
                         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white print:hidden">
                             <div className="flex items-center gap-3">
