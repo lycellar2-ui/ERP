@@ -1011,7 +1011,7 @@ export function DailyCallPlannerView({
             {/* MODAL 1: BÁO CÁO KẾT QUẢ CUỘC GỌI (CALL REPORT BOTTOMSHEET / MODAL)       */}
             {/* ========================================================================= */}
             {reportModalOpen && activePlan && (
-                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/35 backdrop-blur-[2px] animate-in fade-in duration-150">
                     <div
                         className="w-full max-w-lg bg-white rounded-t-lg sm:rounded-lg shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-150"
                         onClick={e => e.stopPropagation()}
@@ -1195,7 +1195,7 @@ export function DailyCallPlannerView({
             {/* MODAL 2: THÊM KHÁCH VÀO KẾ HOẠCH NGÀY (ADD SINGLE PLAN ITEM)               */}
             {/* ========================================================================= */}
             {addModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/35 backdrop-blur-[2px] animate-in fade-in duration-150">
                     <div
                         className="w-full max-w-lg bg-white rounded-t-lg sm:rounded-lg shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-150"
                         onClick={e => e.stopPropagation()}
@@ -1462,7 +1462,7 @@ export function DailyCallPlannerView({
             {/* MODAL 3: QUẢN LÝ PHÂN BỔ DANH SÁCH GỌI HÀNG LOẠT (MANAGER BATCH ASSIGN)     */}
             {/* ========================================================================= */}
             {assignBatchModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/35 backdrop-blur-[2px] animate-in fade-in duration-150">
                     <div
                         className="w-full max-w-xl bg-white rounded-t-lg sm:rounded-lg shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-150"
                         onClick={e => e.stopPropagation()}

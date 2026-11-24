@@ -1439,7 +1439,7 @@ export default function MobileLocationCounter({ detail, onBack, onRefreshed, onO
                 ZONE VARIANCE REPORT MODAL (ĐỐI SOÁT TẠI CHỖ — BLIND-SAFE)
             ═══════════════════════════════════════════════════════════════ */}
             {showZoneReportModal && zoneReport && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
+                <div className="fixed inset-0 bg-slate-900/35 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
                     <div className="bg-white border border-slate-200 rounded-lg max-w-md w-full p-5 text-slate-900 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto animate-modal-in">
                         <div className="flex justify-between items-center pb-3 border-b border-slate-200">
                             <div>

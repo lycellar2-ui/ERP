@@ -711,7 +711,7 @@ export function DeliveryOrderTab({ warehouses }: {
 
             {/* Detail Drawer */}
             {(detailData || detailLoading) && (
-                <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-[2px] animate-fade-in">
+                <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/35 backdrop-blur-[2px] animate-fade-in">
                     <div className="w-full sm:w-[560px] max-w-full h-full overflow-hidden shadow-2xl flex flex-col bg-white animate-drawer-in">
                         <div className="flex items-center justify-between p-5 shrink-0" style={{ borderBottom: '1px solid #E2E8F0' }}>
                             <div>
@@ -1372,7 +1372,7 @@ function CreateDODrawer({ warehouses, initialSOId, onClose, onCreated }: {
     )
 
     return (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-[2px] animate-fade-in">
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/35 backdrop-blur-[2px] animate-fade-in">
             <div className="w-full sm:w-[680px] max-w-full h-full flex flex-col shadow-2xl bg-white border-l border-slate-200 animate-drawer-in">
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3.5 sm:px-5 sm:py-4 shrink-0 border-b border-slate-200 bg-white">
@@ -1533,7 +1533,7 @@ function SwapDefectLotModal({
     }
 
     return (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs" onClick={onClose}>
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-[2px]" onClick={onClose}>
             <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 border border-slate-200" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between border-b pb-3 border-slate-100">
                     <div className="flex items-center gap-2">

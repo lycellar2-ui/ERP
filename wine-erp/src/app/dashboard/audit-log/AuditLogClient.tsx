@@ -228,7 +228,7 @@ export function AuditLogClient({ initialRows, initialTotal, stats, filterOptions
     const hasActiveFilters = Object.values(filters).some(v => v)
 
     return (
-        <div className={cn('space-y-5 max-w-screen-2xl transition-opacity duration-150', isPending && 'opacity-70')}>
+        <div className={cn('space-y-5 max-w-screen-2xl w-full mx-auto transition-opacity duration-150', isPending && 'opacity-70')}>
             {/* Header */}
             <PageHeader
                 description={i18n.description}

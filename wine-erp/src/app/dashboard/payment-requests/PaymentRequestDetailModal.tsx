@@ -176,7 +176,7 @@ export function PaymentRequestDetailModal({
     const isPdf = currentAttachment?.mimeType === 'application/pdf' || currentAttachment?.fileName.toLowerCase().endsWith('.pdf')
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-0 sm:p-4 backdrop-blur-sm animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 p-0 sm:p-4 backdrop-blur-[2px] animate-in fade-in duration-150">
             <div className="flex h-full sm:h-[92vh] w-full max-w-[1450px] flex-col overflow-hidden rounded-none sm:rounded-md border border-slate-200 bg-white shadow-2xl">
                 {/* ═══ Header ═══ */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 bg-slate-50 px-4 sm:px-6 py-3 gap-2">
@@ -601,7 +601,7 @@ export function PaymentRequestDetailModal({
 
             {/* ═══ Action Modal (Duyệt / Từ chối / Trả lại) ═══ */}
             {actionType && (
-                <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
+                <div className="fixed inset-0 z-60 flex items-center justify-center bg-slate-900/35 backdrop-blur-[2px] p-4">
                     <div className="w-full max-w-md rounded-md bg-white p-5 shadow-xl border border-slate-200 animate-in zoom-in-95">
                         <h3 className="text-base font-bold text-slate-900 mb-1">
                             {actionType === 'APPROVE'
@@ -649,7 +649,7 @@ export function PaymentRequestDetailModal({
 
             {/* ═══ Settlement Modal (Kế toán chi tiền) ═══ */}
             {showSettleModal && (
-                <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
+                <div className="fixed inset-0 z-60 flex items-center justify-center bg-slate-900/35 backdrop-blur-[2px] p-4">
                     <div className="w-full max-w-lg rounded-md bg-white p-6 shadow-xl border border-slate-200 animate-in zoom-in-95">
                         <h3 className="text-base font-bold text-slate-900 mb-1">
                             {isEn ? 'Confirm Disbursement & Attach Payment Order (UNC)' : 'Xác Nhận Giải Ngân & Đính Kèm Ủy Nhiệm Chi (UNC)'}

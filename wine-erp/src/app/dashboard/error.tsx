@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { Button } from '@/components/ui'
 
 export default function DashboardError({
     error,
@@ -15,72 +16,35 @@ export default function DashboardError({
     }, [error])
 
     return (
-        <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '60vh',
-        }}>
-            <div style={{
-                maxWidth: '520px',
-                textAlign: 'center',
-                padding: '48px 32px',
-                background: '#FFFFFF',
-                border: '1px solid #E2E8F0',
-                borderRadius: '8px',
-            }}>
-                <div className="w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center bg-rose-50 text-rose-600">
-                    <AlertTriangle size={24} />
+        <div className="flex items-center justify-center min-h-[60vh] p-4">
+            <div className="w-full max-w-lg text-center p-8 sm:p-10 bg-lys-surface border border-lys-border rounded-lg shadow-sm">
+                <div className="w-12 h-12 mx-auto mb-4 rounded-lg flex items-center justify-center bg-tone-danger-bg border border-tone-danger-border text-tone-danger-fg">
+                    <AlertTriangle size={24} aria-hidden />
                 </div>
-                <h2 style={{ color: '#0F172A', fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>
+                <h1 className="text-xl font-semibold text-lys-primary mb-2">
                     Không thể tải Dashboard
-                </h2>
-                <p style={{ color: '#64748B', fontSize: '14px', marginBottom: '8px', lineHeight: 1.6 }}>
+                </h1>
+                <p className="text-sm text-lys-muted mb-3 leading-relaxed">
                     Có thể do mất kết nối database hoặc lỗi server. Vui lòng thử lại.
                 </p>
                 {error.message && (
-                    <p className="font-mono" style={{ color: '#B91C1C', fontSize: '12px', marginBottom: '16px', background: 'rgba(185,28,28,0.08)', padding: '8px 12px', borderRadius: '6px', textAlign: 'left', wordBreak: 'break-all' }}>
+                    <p className="font-mono text-xs text-tone-danger-fg bg-tone-danger-bg border border-tone-danger-border px-3 py-2 rounded-md mb-4 text-left break-all">
                         {error.message.slice(0, 300)}
                     </p>
                 )}
                 {error.digest && (
-                    <p className="font-mono" style={{ color: '#64748B', fontSize: '11px', marginBottom: '16px' }}>
+                    <p className="font-mono text-[11px] text-lys-muted mb-4">
                         Digest: {error.digest}
                     </p>
                 )}
-                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                    <button
-                        onClick={reset}
-                        style={{
-                            padding: '10px 24px',
-                            background: 'rgba(8, 145, 178, 0.08)',
-                            color: '#0E7490',
-                            border: '1px solid rgba(8, 145, 178, 0.25)',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '14px',
-                            fontWeight: 600,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                        }}
-                    >
-                        <RefreshCw size={14} /> Thử lại
-                    </button>
-                    <button
-                        onClick={() => window.location.href = '/login'}
-                        style={{
-                            padding: '10px 24px',
-                            background: '#FFFFFF',
-                            color: '#475569',
-                            border: '1px solid #E2E8F0',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '14px',
-                        }}
-                    >
+                <div className="flex flex-wrap gap-3 justify-center mt-5">
+                    <Button variant="primary" onClick={reset}>
+                        <RefreshCw size={14} aria-hidden />
+                        Thử lại
+                    </Button>
+                    <Button variant="secondary" onClick={() => { window.location.href = '/login' }}>
                         Về trang đăng nhập
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>

@@ -780,18 +780,38 @@ export default function StampsClient({
     })
 
     return (
-        <div className="p-3 sm:p-6 md:p-8 max-w-[1440px] mx-auto">
+        <div className="max-w-screen-2xl w-full mx-auto">
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
                 <div>
-                    <h1 className="text-lg sm:text-2xl font-bold text-lys-primary tracking-tight">
-                        {t.header.title}
-                    </h1>
-                    <p className="hidden sm:block text-xs sm:text-sm text-lys-muted mt-0.5">
+                    <p className="text-xs sm:text-sm text-lys-muted">
                         {t.header.subtitle}
                     </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleExportLogbook}
+                        disabled={exportingLogbook}
+                        className="flex-1 sm:flex-none justify-center"
+                    >
+                        <FileSpreadsheet size={14} className="mr-1.5" />
+                        <span className="hidden sm:inline">{t.header.exportLogbookFull}</span>
+                        <span className="sm:hidden">{t.header.exportLogbookShort}</span>
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                            setActiveTab('batches')
+                            setShowAddForm(!showAddForm)
+                        }}
+                        className="flex-1 sm:flex-none justify-center"
+                    >
+                        <Plus size={14} className="mr-1.5" />
+                        {t.header.addBatch}
+                    </Button>
                     <Button
                         variant="primary"
                         size="sm"
@@ -809,29 +829,6 @@ export default function StampsClient({
                     >
                         <Stamp size={14} className="mr-1.5" />
                         {t.header.allocatePO}
-                    </Button>
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => {
-                            setActiveTab('batches')
-                            setShowAddForm(!showAddForm)
-                        }}
-                        className="flex-1 sm:flex-none justify-center"
-                    >
-                        <Plus size={14} className="mr-1.5" />
-                        {t.header.addBatch}
-                    </Button>
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={handleExportLogbook}
-                        disabled={exportingLogbook}
-                        className="flex-1 sm:flex-none justify-center"
-                    >
-                        <FileSpreadsheet size={14} className="mr-1.5" />
-                        <span className="hidden sm:inline">{t.header.exportLogbookFull}</span>
-                        <span className="sm:hidden">{t.header.exportLogbookShort}</span>
                     </Button>
                 </div>
             </div>
@@ -2419,7 +2416,7 @@ export default function StampsClient({
             {/* MODAL / VIEW: PHIẾU CHỈ DẪN DÁN TEM CHO NHÂN VIÊN */}
             {stickingGuideAlloc && (
                 <div
-                    className="print-modal fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto no-scrollbar print:p-0 print:bg-white print:static"
+                    className="print-modal fixed inset-0 bg-slate-900/35 backdrop-blur-[2px] z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto no-scrollbar print:p-0 print:bg-white print:static"
                     onClick={() => setStickingGuideAlloc(null)}
                 >
                     <div

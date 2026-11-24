@@ -808,7 +808,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
             </div>
 
             {/* KPI Summary Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 2xl:grid-cols-6 gap-2.5">
                 <div className="p-3 bg-white border border-slate-200 rounded-lg shadow-2xs">
                     <div className="flex items-center justify-between text-slate-500 mb-1">
                         <span className="text-[11px] font-medium">Tỷ lệ đạt chuẩn</span>
@@ -1597,7 +1597,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
 
             {/* MODAL 1: Quick Daily Inspection Form */}
             {openDailyModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4 backdrop-blur-xs">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 p-3 sm:p-4 backdrop-blur-[2px]">
                     <div className="bg-white border border-slate-200 rounded-lg w-full max-w-lg max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
                         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 bg-slate-50">
                             <div>
@@ -1823,7 +1823,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
 
             {/* MODAL 2: Periodic Audit Checklist Form (T2 & T5) */}
             {openPeriodicModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4 backdrop-blur-xs">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 p-3 sm:p-4 backdrop-blur-[2px]">
                     <div className="bg-white border border-slate-200 rounded-lg w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
                         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 bg-slate-50">
                             <div>
@@ -2040,7 +2040,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
 
             {/* MODAL 3: Detail Modal */}
             {openDetailModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-4 backdrop-blur-xs">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 p-3 sm:p-4 backdrop-blur-[2px]">
                     <div className="bg-white border border-slate-200 rounded-lg w-full max-w-xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
                         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 bg-slate-50">
                             <div>
@@ -2175,7 +2175,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
 
             {/* MODAL 4: Manager Approval Modal */}
             {openApproveModal && approveInspection && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-4 backdrop-blur-xs">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 p-3 sm:p-4 backdrop-blur-[2px]">
                     <div className="bg-white border border-slate-200 rounded-lg w-full max-w-lg shadow-2xl overflow-hidden">
                         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 bg-rose-50">
                             <div>
@@ -2247,7 +2247,7 @@ export function InspectionTab({ warehouses, selectedWarehouseId, isAdmin }: Prop
 
             {/* MODAL 6: Assign / Reassign Warehouse Inspection */}
             {openAssignModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4 backdrop-blur-xs">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 p-3 sm:p-4 backdrop-blur-[2px]">
                     <div className="bg-white border border-slate-200 rounded-lg w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
                         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 bg-sky-50">
                             <div className="flex items-center gap-2">

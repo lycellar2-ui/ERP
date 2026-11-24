@@ -22,7 +22,7 @@ import {
     createBankAccount
 } from './actions-bank-reconciliation'
 import { formatVND, formatDate } from '@/lib/utils'
-import { useConfirmDialog } from '@/components/ui'
+import { Drawer, Modal, Button, Badge, useConfirmDialog } from '@/components/ui'
 import { useAppLocale } from '@/lib/i18n'
 
 interface BankAccountItem {
@@ -569,10 +569,10 @@ export function BankReconciliationTab() {
                                 <div className="flex items-start justify-between gap-2">
                                     <div>
                                         <div className="flex items-center gap-1.5">
-                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">{txn.bankAccount.bankCode}</span>
+                                            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700">{txn.bankAccount.bankCode}</span>
                                             <span className="text-xs font-semibold text-slate-800">{formatDate(txn.txnDate)}</span>
                                         </div>
-                                        <p className="text-[10px] font-mono text-slate-400 mt-0.5">{txn.txnRef ? `Ref: ${txn.txnRef}` : txn.bankAccount.accountNumber}</p>
+                                        <p className="text-[11px] font-mono text-slate-400 mt-0.5">{txn.txnRef ? `Ref: ${txn.txnRef}` : txn.bankAccount.accountNumber}</p>
                                     </div>
                                     <span className={`font-mono font-bold text-sm ${isCredit ? 'text-emerald-700' : 'text-rose-600'}`}>
                                         {isCredit ? '+' : '-'}{formatVND(txn.amount)}
@@ -584,13 +584,13 @@ export function BankReconciliationTab() {
                                 <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 text-xs">
                                     <div>
                                         {isPosted ? (
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800">
-                                                <CheckCircle2 size={11} /> {isEn ? 'Posted' : 'Đã Hạch Toán'}
-                                            </span>
+                                            <Badge tone="success" icon={CheckCircle2}>
+                                                {isEn ? 'Posted' : 'Đã Hạch Toán'}
+                                            </Badge>
                                         ) : isIgnored ? (
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-200 text-slate-600">
+                                            <Badge tone="neutral">
                                                 {isEn ? 'Ignored' : 'Đã bỏ qua'}
-                                            </span>
+                                            </Badge>
                                         ) : (
                                             <span className="text-[11px] text-slate-600 font-medium">
                                                 {score > 0 ? `${score}% • ` : ''}{txn.matchedCustomer?.name || txn.suggestedReason || (isEn ? 'Unmatched' : 'Chưa nhận diện')}
@@ -686,7 +686,7 @@ export function BankReconciliationTab() {
                                         >
                                             <td className="px-3.5 py-3 whitespace-nowrap">
                                                 <p className="font-semibold text-slate-800">{formatDate(txn.txnDate)}</p>
-                                                <p className="text-[10px] font-mono text-slate-400">
+                                                <p className="text-[11px] font-mono text-slate-400">
                                                     {txn.txnRef ? `Ref: ${txn.txnRef}` : '–'}
                                                 </p>
                                             </td>
@@ -695,7 +695,7 @@ export function BankReconciliationTab() {
                                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 whitespace-nowrap shrink-0">
                                                     {txn.bankAccount.bankCode}
                                                 </span>
-                                                <p className="text-[10px] text-slate-500 mt-0.5">{txn.bankAccount.accountNumber}</p>
+                                                <p className="text-[11px] text-slate-500 mt-0.5">{txn.bankAccount.accountNumber}</p>
                                             </td>
 
                                             <td className="px-3.5 py-3 whitespace-nowrap">
@@ -710,7 +710,7 @@ export function BankReconciliationTab() {
                                                     </span>
                                                 </div>
                                                 {txn.balanceAfter !== null && (
-                                                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                                                    <p className="text-[11px] text-slate-400 font-mono mt-0.5">
                                                         {isEn ? 'Bal:' : 'Dư:'} {formatVND(txn.balanceAfter)}
                                                     </p>
                                                 )}
@@ -725,9 +725,9 @@ export function BankReconciliationTab() {
                                             <td className="px-3.5 py-3 min-w-[200px]">
                                                 {isPosted ? (
                                                     <div className="space-y-1">
-                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 whitespace-nowrap shrink-0">
-                                                            <CheckCircle2 size={12} /> {isEn ? 'Posted' : 'Đã Hạch Toán'}
-                                                        </span>
+                                                        <Badge tone="success" icon={CheckCircle2}>
+                                                            {isEn ? 'Posted' : 'Đã Hạch Toán'}
+                                                        </Badge>
                                                         {txn.paymentMatches && txn.paymentMatches.length > 0 && (
                                                             <div className="text-[11px] text-slate-600">
                                                                 {txn.paymentMatches.map(m => (
@@ -741,14 +741,12 @@ export function BankReconciliationTab() {
                                                         )}
                                                     </div>
                                                 ) : isIgnored ? (
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-200 text-slate-600 whitespace-nowrap shrink-0">
-                                                        {isEn ? 'Ignored' : 'Đã bỏ qua'}
-                                                    </span>
+                                                    <Badge tone="neutral">{isEn ? 'Ignored' : 'Đã bỏ qua'}</Badge>
                                                 ) : (
                                                     <div className="space-y-1">
                                                         {score > 0 && (
                                                             <div className="flex items-center gap-1.5">
-                                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeColor} whitespace-nowrap shrink-0`}>
+                                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold border ${badgeColor} whitespace-nowrap shrink-0`}>
                                                                     {score}% {isEn ? 'Match' : 'Khớp'}
                                                                 </span>
                                                                 {txn.matchedCustomer && (
@@ -851,117 +849,107 @@ export function BankReconciliationTab() {
             </div>
 
             {/* MODAL: UPLOAD BANK STATEMENT */}
-            {showUploadModal && (
-                <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-                    <div className="bg-white rounded-lg shadow-xl border border-slate-200 max-w-lg w-full p-6 space-y-4">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                            <div className="flex items-center gap-2 text-emerald-800">
-                                <FileSpreadsheet size={20} />
-                                <h3 className="font-bold text-base text-slate-900">
-                                    {isEn ? 'Upload Bank Statement' : 'Nạp File Sao Kê Ngân Hàng'}
-                                </h3>
-                            </div>
-                            <button onClick={() => setShowUploadModal(false)} className="text-slate-400 hover:text-slate-600">
-                                <X size={18} />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleUploadSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                                    {isEn ? 'Receiving Bank Account *' : 'Tài khoản ngân hàng nhận tiền *'}
-                                </label>
-                                <select
-                                    value={uploadAccountId}
-                                    onChange={(e) => setUploadAccountId(e.target.value)}
-                                    className="w-full text-xs px-3 py-2 rounded-md border border-slate-200 bg-white"
-                                    required
-                                >
-                                    {accounts.map(acc => (
-                                        <option key={acc.id} value={acc.id}>
-                                            {acc.bankCode} - {acc.accountNumber} ({acc.bankName})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                                    {isEn ? 'Select statement file (Excel .xlsx, .xls or .csv) *' : 'Chọn file sao kê (Excel .xlsx, .xls hoặc .csv) *'}
-                                </label>
-                                <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-emerald-600 transition-colors">
-                                    <Upload size={28} className="mx-auto text-slate-400 mb-2" />
-                                    <input
-                                        type="file"
-                                        accept=".xlsx,.xls,.csv"
-                                        onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-                                        className="text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
-                                        required
-                                    />
-                                    {uploadFile && (
-                                        <p className="text-xs font-medium text-emerald-700 mt-2">
-                                            {isEn ? 'Selected:' : 'Đã chọn:'} {uploadFile.name} ({(uploadFile.size / 1024).toFixed(1)} KB)
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="p-3 rounded-md bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-1">
-                                <p className="font-semibold text-slate-800 flex items-center gap-1">
-                                    <Info size={13} className="text-emerald-600" /> {isEn ? 'Automated detection:' : 'Hệ thống tự động nhận diện:'}
-                                </p>
-                                <p>{isEn ? '• Supported banks: Vietcombank, Techcombank, ACB, BIDV, MBBank, VPBank...' : '• Các ngân hàng: Vietcombank, Techcombank, ACB, BIDV, MBBank, VPBank...'}</p>
-                                <p>{isEn ? '• Automatic deduplication against previously imported transactions.' : '• Tự động chống nạp trùng lặp các giao dịch đã import trước đó.'}</p>
-                                <p>{isEn ? '• Runs Heuristic/AI engine to score matches against open AR invoices.' : '• Chạy bộ não AI/Heuristic chấm điểm khớp với các hóa đơn mở.'}</p>
-                            </div>
-
-                            <div className="flex items-center justify-end gap-2 pt-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowUploadModal(false)}
-                                    className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-md"
-                                >
-                                    {isEn ? 'Close' : 'Đóng'}
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="px-4 py-2 text-xs font-semibold text-white bg-emerald-700 hover:bg-emerald-800 rounded-md shadow-xs flex items-center gap-1.5"
-                                >
-                                    {loading ? <RefreshCw size={14} className="animate-spin" /> : <Upload size={14} />}
-                                    {isEn ? 'Upload & Analyze' : 'Tải Lên & Phân Tích'}
-                                </button>
-                            </div>
-                        </form>
+            <Modal
+                open={showUploadModal}
+                onClose={() => setShowUploadModal(false)}
+                title={isEn ? 'Upload Bank Statement' : 'Nạp File Sao Kê Ngân Hàng'}
+                size="lg"
+                footer={
+                    <>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setShowUploadModal(false)}>
+                            {isEn ? 'Close' : 'Đóng'}
+                        </Button>
+                        <Button type="submit" form="bank-upload-form" variant="primary" size="sm" loading={loading}>
+                            {!loading && <Upload size={14} />}
+                            {isEn ? 'Upload & Analyze' : 'Tải Lên & Phân Tích'}
+                        </Button>
+                    </>
+                }
+            >
+                <form id="bank-upload-form" onSubmit={handleUploadSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-xs font-semibold text-lys-secondary mb-1.5">
+                            {isEn ? 'Receiving Bank Account *' : 'Tài khoản ngân hàng nhận tiền *'}
+                        </label>
+                        <select
+                            value={uploadAccountId}
+                            onChange={(e) => setUploadAccountId(e.target.value)}
+                            className="w-full text-xs px-3 py-2 rounded-md border border-lys-border bg-white focus:border-lys-teal focus:outline-none"
+                            required
+                        >
+                            {accounts.map(acc => (
+                                <option key={acc.id} value={acc.id}>
+                                    {acc.bankCode} - {acc.accountNumber} ({acc.bankName})
+                                </option>
+                            ))}
+                        </select>
                     </div>
-                </div>
-            )}
 
-            {/* DRAWER: PHÂN BỔ THỦ CÔNG & GỘP ĐƠN (MANUAL ALLOCATION DRAWER) */}
-            {allocatingTxn && (
-                <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex justify-end">
-                    <div className="bg-white w-full max-w-xl h-full shadow-2xl border-l border-slate-200 flex flex-col p-6 overflow-y-auto space-y-5">
-                        <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                            <div>
-                                <h3 className="font-bold text-base text-slate-900">{isEn ? 'Allocate & Post AR Payment' : 'Phân Bổ & Ghi Nhận Thanh Toán'}</h3>
-                                <p className="text-xs text-slate-500">{isEn ? 'Reconcile bank transaction against open AR invoices' : 'Đối soát giao dịch sao kê vào công nợ hóa đơn'}</p>
-                            </div>
-                            <button onClick={() => setAllocatingTxn(null)} className="text-slate-400 hover:text-slate-600">
-                                <X size={20} />
-                            </button>
+                    <div>
+                        <label className="block text-xs font-semibold text-lys-secondary mb-1.5">
+                            {isEn ? 'Select statement file (Excel .xlsx, .xls or .csv) *' : 'Chọn file sao kê (Excel .xlsx, .xls hoặc .csv) *'}
+                        </label>
+                        <div className="border-2 border-dashed border-lys-border rounded-lg p-6 text-center hover:border-lys-teal transition-colors">
+                            <Upload size={28} className="mx-auto text-lys-dim mb-2" />
+                            <input
+                                type="file"
+                                accept=".xlsx,.xls,.csv"
+                                onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                                className="text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-lys-teal-soft file:text-lys-teal-strong hover:file:bg-lys-teal/15 cursor-pointer"
+                                required
+                            />
+                            {uploadFile && (
+                                <p className="text-xs font-medium text-lys-teal-strong mt-2">
+                                    {isEn ? 'Selected:' : 'Đã chọn:'} {uploadFile.name} ({(uploadFile.size / 1024).toFixed(1)} KB)
+                                </p>
+                            )}
                         </div>
+                    </div>
 
+                    <div className="p-3 rounded-md bg-lys-subtle border border-lys-border text-[11px] text-lys-secondary space-y-1">
+                        <p className="font-semibold text-lys-primary flex items-center gap-1">
+                            <Info size={13} className="text-lys-teal" /> {isEn ? 'Automated detection:' : 'Hệ thống tự động nhận diện:'}
+                        </p>
+                        <p>{isEn ? '• Supported banks: Vietcombank, Techcombank, ACB, BIDV, MBBank, VPBank...' : '• Các ngân hàng: Vietcombank, Techcombank, ACB, BIDV, MBBank, VPBank...'}</p>
+                        <p>{isEn ? '• Automatic deduplication against previously imported transactions.' : '• Tự động chống nạp trùng lặp các giao dịch đã import trước đó.'}</p>
+                        <p>{isEn ? '• Runs Heuristic/AI engine to score matches against open AR invoices.' : '• Chạy bộ não AI/Heuristic chấm điểm khớp với các hóa đơn mở.'}</p>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* DRAWER: PHÂN BỔ THỦ CÔNG & GỘP ĐƠN */}
+            <Drawer
+                open={Boolean(allocatingTxn)}
+                onClose={() => setAllocatingTxn(null)}
+                title={isEn ? 'Allocate & Post AR Payment' : 'Phân Bổ & Ghi Nhận Thanh Toán'}
+                description={isEn ? 'Reconcile bank transaction against open AR invoices' : 'Đối soát giao dịch sao kê vào công nợ hóa đơn'}
+                size="lg"
+                className="bg-lys-bg"
+                footer={
+                    <>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setAllocatingTxn(null)}>
+                            {isEn ? 'Close' : 'Đóng'}
+                        </Button>
+                        <Button type="button" variant="primary" size="sm" loading={isPending} onClick={handleConfirmAllocation}>
+                            {!isPending && <Check size={14} />}
+                            {isEn ? 'Confirm & Post AR' : 'Xác Nhận Ghi Sổ AR'}
+                        </Button>
+                    </>
+                }
+            >
+                {allocatingTxn && (
+                    <div className="space-y-5">
                         {/* Transaction Card */}
-                        <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
+                        <div className="p-4 rounded-lg bg-white border border-lys-border space-y-2 shadow-xs">
                             <div className="flex items-center justify-between">
-                                <span className="text-xs font-semibold text-slate-500">{isEn ? 'Transfer Amount' : 'Số tiền chuyển khoản'}</span>
-                                <span className="text-lg font-bold font-mono text-emerald-700">+{formatVND(allocatingTxn.amount)}</span>
+                                <span className="text-xs font-semibold text-lys-muted">{isEn ? 'Transfer Amount' : 'Số tiền chuyển khoản'}</span>
+                                <span className="text-lg font-bold font-mono text-tone-success-fg">+{formatVND(allocatingTxn.amount)}</span>
                             </div>
-                            <div className="text-xs text-slate-700">
-                                <span className="text-slate-400">{isEn ? 'Raw narrative: ' : 'Nội dung gốc: '}</span>
-                                <span className="font-mono text-slate-900 font-medium">{allocatingTxn.rawNarrative}</span>
+                            <div className="text-xs text-lys-secondary">
+                                <span className="text-lys-muted">{isEn ? 'Raw narrative: ' : 'Nội dung gốc: '}</span>
+                                <span className="font-mono text-lys-primary font-medium">{allocatingTxn.rawNarrative}</span>
                             </div>
-                            <div className="flex items-center gap-4 text-[11px] text-slate-500 pt-1 border-t border-slate-200">
+                            <div className="flex items-center gap-4 text-[11px] text-lys-muted pt-1 border-t border-lys-border">
                                 <span>{isEn ? 'Date:' : 'Ngày:'} {formatDate(allocatingTxn.txnDate)}</span>
                                 <span>{isEn ? 'Bank:' : 'Ngân hàng:'} {allocatingTxn.bankAccount.bankCode}</span>
                                 {allocatingTxn.txnRef && <span>{isEn ? 'Tx Ref:' : 'Mã GD:'} {allocatingTxn.txnRef}</span>}
@@ -970,30 +958,30 @@ export function BankReconciliationTab() {
 
                         {/* Customer Selection */}
                         <div className="space-y-2">
-                            <label className="block text-xs font-bold text-slate-800">{isEn ? 'Paying Customer' : 'Khách Hàng Nộp Tiền'}</label>
+                            <label className="block text-xs font-bold text-lys-primary">{isEn ? 'Paying Customer' : 'Khách Hàng Nộp Tiền'}</label>
                             <div className="relative">
-                                <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-lys-dim" />
                                 <input
                                     type="text"
                                     placeholder={isEn ? 'Search customer name, code, phone...' : 'Tìm theo tên KH, mã KH, SĐT...'}
                                     value={custSearch}
                                     onChange={(e) => handleCustomerSearch(e.target.value)}
-                                    className="w-full text-xs pl-8 pr-3 py-2 rounded-md border border-slate-200 focus:outline-none focus:border-emerald-600"
+                                    className="w-full text-xs pl-8 pr-3 py-2 rounded-md bg-white border border-lys-border focus:outline-none focus:border-lys-teal"
                                 />
                                 {custResults.length > 0 && (
-                                    <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-white border border-slate-200 rounded-md shadow-lg max-h-48 overflow-y-auto divide-y divide-slate-100">
+                                    <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-white border border-lys-border rounded-md shadow-lg max-h-48 overflow-y-auto divide-y divide-lys-border">
                                         {custResults.map(c => (
                                             <button
                                                 key={c.id}
                                                 type="button"
                                                 onClick={() => handleSelectCustomer(c)}
-                                                className="w-full text-left p-2.5 hover:bg-slate-50 text-xs flex items-center justify-between"
+                                                className="w-full text-left p-2.5 hover:bg-lys-subtle text-xs flex items-center justify-between cursor-pointer"
                                             >
                                                 <div>
-                                                    <p className="font-semibold text-slate-900">{c.name}</p>
-                                                    <p className="text-[10px] text-slate-400">{c.code} {c.purchasingPhone ? `• ${c.purchasingPhone}` : ''}</p>
+                                                    <p className="font-semibold text-lys-primary">{c.name}</p>
+                                                    <p className="text-[11px] text-lys-muted">{c.code} {c.purchasingPhone ? `• ${c.purchasingPhone}` : ''}</p>
                                                 </div>
-                                                <ChevronRight size={14} className="text-slate-400" />
+                                                <ChevronRight size={14} className="text-lys-dim" />
                                             </button>
                                         ))}
                                     </div>
@@ -1004,29 +992,29 @@ export function BankReconciliationTab() {
                         {/* Open Invoices Table */}
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <label className="text-xs font-bold text-slate-800">
+                                <label className="text-xs font-bold text-lys-primary">
                                     {isEn ? `Open AR Invoices (${custInvoices.length})` : `Danh Sách Hóa Đơn Đang Nợ (${custInvoices.length})`}
                                 </label>
-                                <span className="text-[11px] text-slate-500">
+                                <span className="text-[11px] text-lys-muted">
                                     {isEn ? 'Check to allocate payment' : 'Tick chọn để phân bổ số tiền'}
                                 </span>
                             </div>
 
                             {custInvoices.length === 0 ? (
-                                <p className="text-xs text-slate-500 text-center py-6 border border-dashed border-slate-200 rounded-lg">
+                                <p className="text-xs text-lys-muted text-center py-6 bg-white border border-dashed border-lys-border rounded-lg">
                                     {selectedCustId
                                         ? (isEn ? 'This customer has no open AR invoices.' : 'Khách hàng này hiện không có hóa đơn nợ nào.')
                                         : (isEn ? 'Please select a customer to load open invoices.' : 'Vui lòng chọn khách hàng để tải hóa đơn nợ.')}
                                 </p>
                             ) : (
-                                <div className="border border-slate-200 rounded-lg overflow-hidden divide-y divide-slate-100 max-h-60 overflow-y-auto">
+                                <div className="bg-white border border-lys-border rounded-lg overflow-hidden divide-y divide-lys-border max-h-60 overflow-y-auto">
                                     {custInvoices.map((inv: any) => {
                                         const remaining = Number(inv.totalAmount) - Number(inv.paidAmount)
                                         const isChecked = Boolean(selectedInvoices[inv.id])
                                         const currentAlloc = selectedInvoices[inv.id] || 0
 
                                         return (
-                                            <div key={inv.id} className={`p-3 text-xs space-y-2 ${isChecked ? 'bg-emerald-50/40' : ''}`}>
+                                            <div key={inv.id} className={`p-3 text-xs space-y-2 ${isChecked ? 'bg-lys-teal-soft' : ''}`}>
                                                 <div className="flex items-start justify-between">
                                                     <label className="flex items-center gap-2 cursor-pointer">
                                                         <input
@@ -1046,25 +1034,25 @@ export function BankReconciliationTab() {
                                                                     })
                                                                 }
                                                             }}
-                                                            className="rounded border-slate-300 text-emerald-700 focus:ring-emerald-600"
+                                                            className="rounded border-lys-border-strong text-lys-teal focus:ring-lys-teal"
                                                         />
                                                         <div>
-                                                            <p className="font-bold text-slate-900">{inv.invoiceNo}</p>
-                                                            <p className="text-[10px] text-slate-500">
+                                                            <p className="font-bold text-lys-primary font-mono">{inv.invoiceNo}</p>
+                                                            <p className="text-[11px] text-lys-muted">
                                                                 {inv.so ? `SO: ${inv.so.soNo}` : ''} • {isEn ? 'Due:' : 'Hạn TT:'} {formatDate(inv.dueDate)}
                                                             </p>
                                                         </div>
                                                     </label>
 
                                                     <div className="text-right">
-                                                        <p className="font-bold text-slate-800 font-mono">{formatVND(remaining)}</p>
-                                                        <p className="text-[10px] text-slate-400">{isEn ? 'Total:' : 'Tổng:'} {formatVND(inv.totalAmount)}</p>
+                                                        <p className="font-bold text-lys-primary font-mono">{formatVND(remaining)}</p>
+                                                        <p className="text-[11px] text-lys-muted">{isEn ? 'Total:' : 'Tổng:'} {formatVND(inv.totalAmount)}</p>
                                                     </div>
                                                 </div>
 
                                                 {isChecked && (
-                                                    <div className="flex items-center justify-between pt-1 border-t border-slate-100">
-                                                        <span className="text-[11px] text-slate-500 font-medium">{isEn ? 'Allocated amount:' : 'Số tiền phân bổ:'}</span>
+                                                    <div className="flex items-center justify-between pt-1 border-t border-lys-border">
+                                                        <span className="text-[11px] text-lys-secondary font-medium">{isEn ? 'Allocated amount:' : 'Số tiền phân bổ:'}</span>
                                                         <input
                                                             type="number"
                                                             value={currentAlloc}
@@ -1072,7 +1060,7 @@ export function BankReconciliationTab() {
                                                                 const val = parseFloat(e.target.value) || 0
                                                                 setSelectedInvoices(prev => ({ ...prev, [inv.id]: val }))
                                                             }}
-                                                            className="w-32 text-xs font-mono font-bold px-2 py-1 border border-slate-200 rounded text-right focus:outline-none focus:border-emerald-600"
+                                                            className="w-32 text-xs font-mono font-bold px-2 py-1 border border-lys-border rounded text-right focus:outline-none focus:border-lys-teal"
                                                         />
                                                     </div>
                                                 )}
@@ -1084,18 +1072,18 @@ export function BankReconciliationTab() {
                         </div>
 
                         {/* Edge Case: Bank Fee Difference */}
-                        <div className="p-3 rounded-lg bg-amber-50/60 border border-amber-200 text-xs space-y-1.5">
+                        <div className="p-3 rounded-lg bg-tone-warning-bg border border-tone-warning-border text-xs space-y-1.5">
                             <div className="flex items-center justify-between">
-                                <span className="font-semibold text-amber-900">{isEn ? 'Bank fee tolerance (if any):' : 'Dung sai cấn trừ phí ngân hàng (nếu có):'}</span>
+                                <span className="font-semibold text-tone-warning-fg">{isEn ? 'Bank fee tolerance (if any):' : 'Dung sai cấn trừ phí ngân hàng (nếu có):'}</span>
                                 <input
                                     type="number"
                                     placeholder="0"
                                     value={feeDiffTolerance || ''}
                                     onChange={(e) => setFeeDiffTolerance(parseFloat(e.target.value) || 0)}
-                                    className="w-28 text-xs font-mono px-2 py-1 bg-white border border-amber-300 rounded text-right focus:outline-none"
+                                    className="w-28 text-xs font-mono px-2 py-1 bg-white border border-tone-warning-border rounded text-right focus:outline-none focus:border-lys-teal"
                                 />
                             </div>
-                            <p className="text-[11px] text-amber-700">
+                            <p className="text-[11px] text-tone-warning-fg">
                                 {isEn
                                     ? 'E.g. if customer transfer is short by 5,500 VND due to bank fees, enter 5500 to mark invoice as PAID.'
                                     : 'Ví dụ khách chuyển thiếu 5.500đ do trừ phí ngân hàng, nhập 5.500đ để hóa đơn vẫn chuyển thành Đã Thu Đủ (PAID).'}
@@ -1103,8 +1091,8 @@ export function BankReconciliationTab() {
                         </div>
 
                         {/* Edge Case: Remember Rule */}
-                        <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-2">
-                            <label className="flex items-center gap-2 cursor-pointer font-semibold text-slate-800">
+                        <div className="p-3 rounded-lg bg-white border border-lys-border text-xs space-y-2">
+                            <label className="flex items-center gap-2 cursor-pointer font-semibold text-lys-primary">
                                 <input
                                     type="checkbox"
                                     checked={Boolean(rememberKeyword)}
@@ -1112,7 +1100,7 @@ export function BankReconciliationTab() {
                                         if (!e.target.checked) setRememberKeyword('')
                                         else setRememberKeyword(allocatingTxn.rawNarrative.slice(0, 25))
                                     }}
-                                    className="rounded border-slate-300 text-emerald-700"
+                                    className="rounded border-lys-border-strong text-lys-teal"
                                 />
                                 {isEn ? 'Remember matching rule for future statements' : 'Ghi nhớ quy tắc học cho các lần sau'}
                             </label>
@@ -1122,92 +1110,60 @@ export function BankReconciliationTab() {
                                     placeholder={isEn ? 'Keyword (e.g. Le Thi Thao, 0903123456...)' : 'Từ khóa nhận diện (VD: Lê Thị Thảo, 0903123456...)'}
                                     value={rememberKeyword}
                                     onChange={(e) => setRememberKeyword(e.target.value)}
-                                    className="w-full text-xs px-2.5 py-1.5 rounded border border-slate-200 bg-white"
+                                    className="w-full text-xs px-2.5 py-1.5 rounded border border-lys-border bg-white focus:outline-none focus:border-lys-teal"
                                 />
                             )}
                         </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 mt-auto">
-                            <button
-                                type="button"
-                                onClick={() => setAllocatingTxn(null)}
-                                className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-md"
-                            >
-                                {isEn ? 'Close' : 'Đóng'}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleConfirmAllocation}
-                                disabled={isPending}
-                                className="px-5 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-md shadow-xs flex items-center gap-1.5"
-                            >
-                                {isPending ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />}
-                                {isEn ? 'Confirm & Post AR' : 'Xác Nhận Ghi Sổ AR'}
-                            </button>
-                        </div>
                     </div>
-                </div>
-            )}
+                )}
+            </Drawer>
 
             {/* MODAL: RULES MANAGEMENT */}
-            {showRulesModal && (
-                <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-                    <div className="bg-white rounded-lg shadow-xl border border-slate-200 max-w-lg w-full p-6 space-y-4">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                            <div className="flex items-center gap-2 text-slate-800">
-                                <BookOpen size={20} className="text-emerald-700" />
-                                <h3 className="font-bold text-base text-slate-900">
-                                    {isEn ? 'Learned Auto-Reconciliation Rules' : 'Quy Tắc Nhận Diện Tự Động Đã Học'}
-                                </h3>
-                            </div>
-                            <button onClick={() => setShowRulesModal(false)} className="text-slate-400 hover:text-slate-600">
-                                <X size={18} />
-                            </button>
-                        </div>
+            <Modal
+                open={showRulesModal}
+                onClose={() => setShowRulesModal(false)}
+                title={isEn ? 'Learned Auto-Reconciliation Rules' : 'Quy Tắc Nhận Diện Tự Động Đã Học'}
+                size="lg"
+                footer={
+                    <Button type="button" variant="secondary" size="sm" onClick={() => setShowRulesModal(false)}>
+                        {isEn ? 'Close' : 'Đóng'}
+                    </Button>
+                }
+            >
+                <div className="space-y-3">
+                    <p className="text-xs text-lys-muted">
+                        {isEn
+                            ? 'Keywords or sender names saved by accounting; the system automatically maps matching narratives to the linked customer.'
+                            : 'Các từ khóa hoặc tên cá nhân/tài khoản do kế toán gán nhớ, hệ thống sẽ tự động gán vào khách hàng tương ứng khi đọc sao kê.'}
+                    </p>
 
-                        <p className="text-xs text-slate-500">
-                            {isEn
-                                ? 'Keywords or sender names saved by accounting; the system automatically maps matching narratives to the linked customer.'
-                                : 'Các từ khóa hoặc tên cá nhân/tài khoản do kế toán gán nhớ, hệ thống sẽ tự động gán vào khách hàng tương ứng khi đọc sao kê.'}
-                        </p>
-
-                        <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 border border-slate-200 rounded-lg">
-                            {rules.length === 0 ? (
-                                <p className="text-xs text-slate-500 text-center py-8">{isEn ? 'No learned rules yet.' : 'Chưa có quy tắc nhớ nào.'}</p>
-                            ) : (
-                                rules.map((r: any) => (
-                                    <div key={r.id} className="p-3 text-xs flex items-center justify-between hover:bg-slate-50">
-                                        <div>
-                                            <p className="font-bold text-slate-800 font-mono">"{r.keyword}"</p>
-                                            <p className="text-[11px] text-emerald-700 font-medium">
-                                                → {r.customer?.name} ({r.customer?.code})
-                                            </p>
-                                        </div>
-                                        <button
-                                            onClick={() => handleDeleteRule(r.id)}
-                                            className="text-slate-400 hover:text-rose-600 p-1"
-                                            title={isEn ? 'Delete rule' : 'Xóa quy tắc'}
-                                        >
-                                            <X size={14} />
-                                        </button>
+                    <div className="max-h-72 overflow-y-auto divide-y divide-lys-border border border-lys-border rounded-lg">
+                        {rules.length === 0 ? (
+                            <p className="text-xs text-lys-muted text-center py-8">{isEn ? 'No learned rules yet.' : 'Chưa có quy tắc nhớ nào.'}</p>
+                        ) : (
+                            rules.map((r: any) => (
+                                <div key={r.id} className="p-3 text-xs flex items-center justify-between hover:bg-lys-subtle">
+                                    <div>
+                                        <p className="font-bold text-lys-primary font-mono">&ldquo;{r.keyword}&rdquo;</p>
+                                        <p className="text-[11px] text-tone-success-fg font-medium">
+                                            → {r.customer?.name} ({r.customer?.code})
+                                        </p>
                                     </div>
-                                ))
-                            )}
-                        </div>
-
-                        <div className="flex justify-end pt-2">
-                            <button
-                                type="button"
-                                onClick={() => setShowRulesModal(false)}
-                                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md"
-                            >
-                                {isEn ? 'Close' : 'Đóng'}
-                            </button>
-                        </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDeleteRule(r.id)}
+                                        className="text-lys-dim hover:text-tone-danger-fg p-1 cursor-pointer"
+                                        title={isEn ? 'Delete rule' : 'Xóa quy tắc'}
+                                        aria-label={isEn ? 'Delete rule' : 'Xóa quy tắc'}
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
-            )}
+            </Modal>
             {dialog}
         </div>
     )

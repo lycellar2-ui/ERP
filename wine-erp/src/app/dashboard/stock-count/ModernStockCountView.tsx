@@ -310,9 +310,9 @@ export function ModernStockCountView({ detail, onBack, onRefreshed }: Props) {
                         </button>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h1 className="text-sm font-bold text-slate-900 truncate max-w-xs sm:max-w-md">
+                                <h2 className="text-sm font-bold text-slate-900 truncate max-w-xs sm:max-w-md">
                                     {detail.title}
-                                </h1>
+                                </h2>
                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                                     status === 'APPROVED'
                                         ? 'bg-emerald-100 text-emerald-800'
@@ -1046,7 +1046,7 @@ export function ModernStockCountView({ detail, onBack, onRefreshed }: Props) {
 
             {/* Note Edit Modal */}
             {activeNoteLine && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-[2px]">
                     <div className="bg-white rounded-lg shadow-2xl border border-slate-200 w-full max-w-md p-5 space-y-4">
                         <div className="flex items-center justify-between">
                             <h3 className="font-bold text-sm text-slate-900">
@@ -1094,7 +1094,7 @@ export function ModernStockCountView({ detail, onBack, onRefreshed }: Props) {
 
             {/* Approve Confirmation Modal */}
             {showApproveModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in-50">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-[2px] animate-in fade-in-50">
                     <div className="bg-white rounded-lg shadow-2xl border border-slate-200 w-full max-w-lg p-5 space-y-4">
                         <div className="flex items-center gap-3">
                             <div className="p-2.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">

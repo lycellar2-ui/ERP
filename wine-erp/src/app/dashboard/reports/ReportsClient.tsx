@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAppLocale } from '@/lib/i18n'
-import { PageHeader, StatGrid, StatCard } from '@/components/ui'
+import { PageContainer, PageHeader, StatGrid, StatCard, StatusTabs } from '@/components/ui'
 import { exportReportExcel, getReportSchedules, toggleScheduleStatus, type ScheduleRow } from './actions'
 import { REPORT_CATALOG, type ReportKey } from './constants'
 import { getReportsDictionary } from './i18n'
@@ -133,34 +133,17 @@ export function ReportsClient({
     }
 
     return (
-        <div className="space-y-6 max-w-screen-2xl">
+        <PageContainer>
             <PageHeader
-                title={t.title}
                 description={t.subtitle}
             />
 
             {/* Tabs */}
-            <div className="flex gap-1 p-1 rounded-lg overflow-x-auto no-scrollbar whitespace-nowrap" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                {tabs.map((tabItem) => {
-                    const Icon = tabItem.icon
-                    const isActive = tab === tabItem.key
-                    return (
-                        <button
-                            key={tabItem.key}
-                            onClick={() => (tabItem.key === 'schedule' ? loadSchedules() : setTab(tabItem.key))}
-                            className="flex items-center gap-2 px-3 sm:px-4 py-2 text-xs font-semibold rounded-md transition-all flex-1 justify-center cursor-pointer whitespace-nowrap"
-                            style={{
-                                background: isActive ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
-                                color: isActive ? '#0891B2' : '#64748B',
-                                border: isActive ? '1px solid rgba(8, 145, 178, 0.2)' : '1px solid transparent',
-                            }}
-                        >
-                            <Icon size={14} />
-                            {tabItem.label}
-                        </button>
-                    )
-                })}
-            </div>
+            <StatusTabs
+                items={tabs.map(tItem => ({ value: tItem.key, label: tItem.label, icon: tItem.icon }))}
+                value={tab}
+                onChange={v => (v === 'schedule' ? loadSchedules() : setTab(v))}
+            />
 
             {tab === 'overview' && (
                 <>
@@ -190,59 +173,53 @@ export function ReportsClient({
 
                     {/* Financial Summary */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div
-                            className="p-4 rounded-md"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #15803D' }}
-                        >
+                        <div className="p-4 rounded-lg bg-lys-card border border-lys-border border-l-[3px] border-l-tone-success-fg shadow-xs">
                             <div className="flex justify-between items-center mb-3">
-                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
+                                <p className="text-xs font-semibold uppercase tracking-wide text-lys-muted">
                                     {t.financial.arTitle}
                                 </p>
-                                <Wallet size={16} style={{ color: '#15803D' }} />
+                                <Wallet size={16} className="text-tone-success-fg" />
                             </div>
                             <div className="flex items-center gap-8">
                                 <div>
-                                    <p className="text-[11px]" style={{ color: '#64748B' }}>
+                                    <p className="text-[11px] text-lys-muted">
                                         {t.financial.totalUnpaid}
                                     </p>
-                                    <p className="text-lg font-bold font-mono" style={{ color: '#0F172A' }}>
+                                    <p className="text-lg font-bold font-mono text-lys-primary">
                                         {formatCurrency(financialSummary.ar.unpaid)}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-[11px]" style={{ color: '#B91C1C' }}>
+                                    <p className="text-[11px] text-tone-danger-fg">
                                         {t.financial.overdue}
                                     </p>
-                                    <p className="text-lg font-bold font-mono" style={{ color: '#B91C1C' }}>
+                                    <p className="text-lg font-bold font-mono text-tone-danger-fg">
                                         {formatCurrency(financialSummary.ar.overdue)}
                                     </p>
                                 </div>
                             </div>
                         </div>
-                        <div
-                            className="p-4 rounded-md"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid #B45309' }}
-                        >
+                        <div className="p-4 rounded-lg bg-lys-card border border-lys-border border-l-[3px] border-l-tone-warning-fg shadow-xs">
                             <div className="flex justify-between items-center mb-3">
-                                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>
+                                <p className="text-xs font-semibold uppercase tracking-wide text-lys-muted">
                                     {t.financial.apTitle}
                                 </p>
-                                <Wallet size={16} style={{ color: '#B45309' }} />
+                                <Wallet size={16} className="text-tone-warning-fg" />
                             </div>
                             <div className="flex items-center gap-8">
                                 <div>
-                                    <p className="text-[11px]" style={{ color: '#64748B' }}>
+                                    <p className="text-[11px] text-lys-muted">
                                         {t.financial.totalUnpaidAP}
                                     </p>
-                                    <p className="text-lg font-bold font-mono" style={{ color: '#0F172A' }}>
+                                    <p className="text-lg font-bold font-mono text-lys-primary">
                                         {formatCurrency(financialSummary.ap.unpaid)}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-[11px]" style={{ color: '#B91C1C' }}>
+                                    <p className="text-[11px] text-tone-danger-fg">
                                         {t.financial.overdue}
                                     </p>
-                                    <p className="text-lg font-bold font-mono" style={{ color: '#B91C1C' }}>
+                                    <p className="text-lg font-bold font-mono text-tone-danger-fg">
                                         {formatCurrency(financialSummary.ap.overdue)}
                                     </p>
                                 </div>
@@ -252,13 +229,10 @@ export function ReportsClient({
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
                         {/* Monthly revenue bar chart */}
-                        <div
-                            className="lg:col-span-8 p-4 sm:p-5 rounded-md"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}
-                        >
+                        <div className="lg:col-span-8 p-4 sm:p-5 rounded-lg bg-lys-card border border-lys-border shadow-xs">
                             <div className="flex items-center gap-2 mb-5">
-                                <BarChart3 size={18} style={{ color: '#0891B2' }} />
-                                <h3 className="font-semibold" style={{ color: '#0F172A' }}>
+                                <BarChart3 size={18} className="text-lys-teal-strong" />
+                                <h3 className="font-semibold text-lys-primary">
                                     {t.analytics.monthlyRevTitle}
                                 </h3>
                             </div>
@@ -857,6 +831,6 @@ export function ReportsClient({
                     )}
                 </div>
             )}
-        </div>
+        </PageContainer>
     )
 }

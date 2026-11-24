@@ -27,7 +27,7 @@ export default async function HrPage() {
     ])
 
     return (
-        <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+        <div className="max-w-screen-2xl w-full mx-auto">
             <HrClient
                 initialEmployees={employees}
                 initialStats={stats}

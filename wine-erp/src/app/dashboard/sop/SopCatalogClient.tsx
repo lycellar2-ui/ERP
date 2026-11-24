@@ -282,36 +282,33 @@ export function SopCatalogClient({
     }, [markdownDocs])
 
     return (
-        <div className="space-y-6 max-w-screen-2xl">
-            {/* Header: Clean Luxury B2B ERP Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
-                <div>
-                    <div className="text-[11px] uppercase tracking-wider font-bold text-slate-500 mb-1">
+        <div className="space-y-5 max-w-screen-2xl w-full mx-auto">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-lys-border">
+                <p className="text-[13px] text-lys-secondary max-w-2xl leading-relaxed">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded bg-lys-teal-soft text-lys-teal-strong text-[11px] font-semibold border border-tone-brand-border mr-2 align-middle">
                         {L.headerKicker}
-                    </div>
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-                        {L.headerTitle}
-                    </h1>
-                    <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
-                        {L.headerSubtitle(markdownDocs.length > 0 ? markdownDocs.length : '114')}
-                    </p>
-                </div>
+                    </span>
+                    {L.headerSubtitle(markdownDocs.length > 0 ? markdownDocs.length : '114')}
+                </p>
 
                 {/* Header Action Buttons */}
                 <div className="flex items-center gap-2 self-start md:self-auto">
                     <button
+                        type="button"
                         onClick={() => {
                             setTargetUploadFile(null)
                             setShowUploadModal(true)
                         }}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-sm transition"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-lys-border-strong bg-white hover:bg-lys-subtle text-lys-secondary text-xs font-semibold shadow-xs transition cursor-pointer"
                     >
-                        <Upload className="w-3.5 h-3.5 text-slate-500" />
+                        <Upload className="w-3.5 h-3.5 text-lys-muted" />
                         <span>{L.uploadFormBtn}</span>
                     </button>
                     <button
+                        type="button"
                         onClick={() => setIsCreatingSop(true)}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#0E7490] hover:bg-[#155E75] text-white text-xs font-semibold shadow-sm transition"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-lys-teal-strong hover:bg-lys-teal-hover text-white text-xs font-semibold shadow-xs transition cursor-pointer"
                     >
                         <Plus className="w-3.5 h-3.5" />
                         <span>{L.addSopBtn}</span>

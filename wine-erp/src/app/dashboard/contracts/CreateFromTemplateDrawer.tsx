@@ -410,18 +410,18 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
         >
             {/* Step Indicator */}
             <div className="px-6 py-3 bg-slate-50 border-b border-lys-border flex items-center justify-between text-xs">
-                <div className={`flex items-center gap-2 font-medium ${step === 1 ? 'text-lys-primary font-semibold' : 'text-slate-500'}`}>
-                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step === 1 ? 'bg-lys-primary text-white' : 'bg-slate-200'}`}>1</span>
+                <div className={`flex items-center gap-2 font-medium ${step === 1 ? 'text-lys-teal-strong font-semibold' : 'text-slate-500'}`}>
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step === 1 ? 'bg-lys-teal-strong text-white' : 'bg-slate-200'}`}>1</span>
                     {w.step1Title}
                 </div>
                 <div className="w-8 h-[1px] bg-slate-300" />
-                <div className={`flex items-center gap-2 font-medium ${step === 2 ? 'text-lys-primary font-semibold' : 'text-slate-500'}`}>
-                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step === 2 ? 'bg-lys-primary text-white' : 'bg-slate-200'}`}>2</span>
+                <div className={`flex items-center gap-2 font-medium ${step === 2 ? 'text-lys-teal-strong font-semibold' : 'text-slate-500'}`}>
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step === 2 ? 'bg-lys-teal-strong text-white' : 'bg-slate-200'}`}>2</span>
                     {w.step2Title}
                 </div>
                 <div className="w-8 h-[1px] bg-slate-300" />
-                <div className={`flex items-center gap-2 font-medium ${step === 3 ? 'text-lys-primary font-semibold' : 'text-slate-500'}`}>
-                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step === 3 ? 'bg-lys-primary text-white' : 'bg-slate-200'}`}>3</span>
+                <div className={`flex items-center gap-2 font-medium ${step === 3 ? 'text-lys-teal-strong font-semibold' : 'text-slate-500'}`}>
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step === 3 ? 'bg-lys-teal-strong text-white' : 'bg-slate-200'}`}>3</span>
                     {w.step3Title}
                 </div>
             </div>
@@ -444,12 +444,12 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                                         onClick={() => handleSelectTemplate(tpl)}
                                         className={`cursor-pointer rounded-lg border p-5 transition-all relative flex flex-col justify-between ${
                                             isSelected
-                                                ? 'border-lys-primary bg-amber-50/40 ring-2 ring-lys-primary/20 shadow-md'
+                                                ? 'border-lys-teal-strong bg-lys-teal-soft/40 ring-2 ring-lys-teal/20 shadow-md'
                                                 : 'border-lys-border bg-white hover:border-slate-400 hover:shadow-sm'
                                         }`}
                                     >
                                         {isSelected && (
-                                            <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-lys-primary text-white flex items-center justify-center">
+                                            <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-lys-teal-strong text-white flex items-center justify-center">
                                                 <Check className="w-3.5 h-3.5" />
                                             </div>
                                         )}
@@ -508,14 +508,14 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
                                         <button
                                             type="button"
                                             onClick={() => { setCounterpartyType('customer'); setSelectedCounterpartyId(''); }}
-                                            className={`px-2.5 py-1 ${counterpartyType === 'customer' ? 'bg-lys-primary text-white font-medium' : 'bg-white text-slate-600'}`}
+                                            className={`px-2.5 py-1 ${counterpartyType === 'customer' ? 'bg-lys-teal-strong text-white font-medium' : 'bg-white text-slate-600'}`}
                                         >
                                             {w.customerBtn}
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => { setCounterpartyType('supplier'); setSelectedCounterpartyId(''); }}
-                                            className={`px-2.5 py-1 ${counterpartyType === 'supplier' ? 'bg-lys-primary text-white font-medium' : 'bg-white text-slate-600'}`}
+                                            className={`px-2.5 py-1 ${counterpartyType === 'supplier' ? 'bg-lys-teal-strong text-white font-medium' : 'bg-white text-slate-600'}`}
                                         >
                                             {w.supplierBtn}
                                         </button>
@@ -523,7 +523,7 @@ export function CreateFromTemplateDrawer({ open, onClose, onSuccess, initialTemp
 
                                     {counterparties && (
                                         <select
-                                            className="px-2.5 py-1 text-xs border border-lys-border rounded-md bg-white focus:outline-none focus:border-lys-primary"
+                                            className="px-2.5 py-1 text-xs border border-lys-border rounded-md bg-white focus:outline-none focus:border-lys-teal"
                                             value={selectedCounterpartyId}
                                             onChange={(e) => handleCounterpartyChange(counterpartyType, e.target.value)}
                                         >

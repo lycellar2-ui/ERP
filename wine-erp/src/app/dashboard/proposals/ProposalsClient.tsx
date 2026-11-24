@@ -24,6 +24,7 @@ import {
     PageContainer,
     PageHeader,
     StatCard,
+    StatGrid,
     StatusTabs,
     Badge,
     StatusBadge,
@@ -1098,7 +1099,6 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
         <PageContainer className="w-full max-w-screen-2xl mx-auto">
             {/* Header */}
             <PageHeader
-                title={t.header.title}
                 description={t.header.subtitle}
                 actions={
                     <Button
@@ -1112,7 +1112,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
             />
 
             {/* Interactive Stat Cards (Design System) */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <StatGrid cols={5}>
                 <StatCard
                     label={t.stats.total}
                     value={currentStats.total}
@@ -1152,13 +1152,12 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                     tone="danger"
                     active={filter === 'REJECTED'}
                     onClick={() => setFilter('REJECTED')}
-                    className="col-span-2 sm:col-span-1"
                 />
-            </div>
+            </StatGrid>
 
             {/* Status Tabs + Filter Toolbar (Design System) */}
             <div className="bg-lys-card border border-lys-border rounded-lg shadow-xs overflow-hidden">
-                <div className="px-4 pt-1 border-b border-lys-border flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
+                <div className="px-4 pt-1 border-b border-lys-border">
                     <StatusTabs
                         value={filter}
                         onChange={setFilter}
@@ -1171,61 +1170,61 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                             { value: 'REJECTED', label: t.tabs.rejected, count: currentStats.rejected },
                         ]}
                     />
+                </div>
 
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pb-2 lg:pb-1">
-                        <div className="relative min-w-[200px] sm:w-56">
-                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-lys-muted" />
-                            <input
-                                type="text"
-                                value={search}
-                                onChange={e => setSearch(e.target.value)}
-                                placeholder={t.filters.searchPlaceholder}
-                                className="w-full h-8 pl-8 pr-3 text-xs rounded-md border border-lys-border bg-lys-bg focus:bg-lys-surface focus:border-lys-teal text-lys-primary outline-none transition-colors"
-                            />
-                        </div>
+                <div className="px-4 py-2.5 bg-lys-subtle/40 border-b border-lys-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="relative w-full sm:w-64">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-lys-muted" />
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            placeholder={t.filters.searchPlaceholder}
+                            className="w-full h-9 pl-8 pr-3 text-xs rounded-md border border-lys-border-strong bg-white focus:border-lys-teal focus:ring-2 focus:ring-lys-teal/20 text-lys-primary outline-none transition-colors"
+                        />
+                    </div>
 
-                        <div className="grid grid-cols-2 sm:flex items-center gap-2 shrink-0">
-                            <select
-                                value={categoryFilter}
-                                onChange={e => setCategoryFilter(e.target.value)}
-                                className={`h-8 px-2.5 text-xs font-medium rounded-md border outline-none cursor-pointer truncate max-w-[180px] ${
-                                    categoryFilter === 'ALL'
-                                        ? 'bg-lys-surface border-lys-border text-lys-secondary'
-                                        : 'bg-lys-teal-soft border-tone-brand-border text-lys-teal-strong font-semibold'
-                                }`}
-                            >
-                                <option value="ALL">{t.filters.allCategories}</option>
-                                <option value="INTERNAL_TRAINING">{locale === 'en' ? 'Internal Training' : 'Đào Tạo Nội Bộ'}</option>
-                                <option value="TRADE_VISIT">{locale === 'en' ? 'Trade Visit' : 'Trade Visit'}</option>
-                                <option value="TASTING">{locale === 'en' ? 'Wine Tasting & Sample' : 'Tasting (Thử Rượu)'}</option>
-                                <option value="SPECIAL_EVENT">{locale === 'en' ? 'Special Event' : 'Sự Kiện / Event'}</option>
-                                <option value="PRICE_ADJUSTMENT">{locale === 'en' ? 'Pricing Mechanism' : 'Cơ Chế Giá & Giá Đặc Biệt'}</option>
-                                <option value="BUDGET_REQUEST">{locale === 'en' ? 'Budget Request' : 'Xin Ngân Sách'}</option>
-                                <option value="CAPITAL_EXPENDITURE">{locale === 'en' ? 'CAPEX' : 'Mua Sắm TSCĐ'}</option>
-                                <option value="NEW_SUPPLIER">{locale === 'en' ? 'New Supplier' : 'Nhà Cung Cấp Mới'}</option>
-                                <option value="NEW_PRODUCT">{locale === 'en' ? 'New Product' : 'Sản Phẩm Mới'}</option>
-                                <option value="POLICY_CHANGE">{locale === 'en' ? 'Policy Change' : 'Thay Đổi Quy Trình'}</option>
-                                <option value="PAYMENT_SCHEDULE">{locale === 'en' ? 'Payment Schedule' : 'Lịch Thanh Toán'}</option>
-                                <option value="PROMOTION_CAMPAIGN">{locale === 'en' ? 'Promotion' : 'Chương Trình KM'}</option>
-                                <option value="OTHER">{locale === 'en' ? 'Other' : 'Khác'}</option>
-                            </select>
+                    <div className="grid grid-cols-2 sm:flex items-center gap-2 shrink-0">
+                        <select
+                            value={categoryFilter}
+                            onChange={e => setCategoryFilter(e.target.value)}
+                            className={`h-9 px-2.5 text-xs font-medium rounded-md border outline-none cursor-pointer truncate max-w-[190px] ${
+                                categoryFilter === 'ALL'
+                                    ? 'bg-white border-lys-border-strong text-lys-secondary'
+                                    : 'bg-lys-teal-soft border-tone-brand-border text-lys-teal-strong font-semibold'
+                            }`}
+                        >
+                            <option value="ALL">{t.filters.allCategories}</option>
+                            <option value="INTERNAL_TRAINING">{locale === 'en' ? 'Internal Training' : 'Đào Tạo Nội Bộ'}</option>
+                            <option value="TRADE_VISIT">{locale === 'en' ? 'Trade Visit' : 'Trade Visit'}</option>
+                            <option value="TASTING">{locale === 'en' ? 'Wine Tasting & Sample' : 'Tasting (Thử Rượu)'}</option>
+                            <option value="SPECIAL_EVENT">{locale === 'en' ? 'Special Event' : 'Sự Kiện / Event'}</option>
+                            <option value="PRICE_ADJUSTMENT">{locale === 'en' ? 'Pricing Mechanism' : 'Cơ Chế Giá & Giá Đặc Biệt'}</option>
+                            <option value="BUDGET_REQUEST">{locale === 'en' ? 'Budget Request' : 'Xin Ngân Sách'}</option>
+                            <option value="CAPITAL_EXPENDITURE">{locale === 'en' ? 'CAPEX' : 'Mua Sắm TSCĐ'}</option>
+                            <option value="NEW_SUPPLIER">{locale === 'en' ? 'New Supplier' : 'Nhà Cung Cấp Mới'}</option>
+                            <option value="NEW_PRODUCT">{locale === 'en' ? 'New Product' : 'Sản Phẩm Mới'}</option>
+                            <option value="POLICY_CHANGE">{locale === 'en' ? 'Policy Change' : 'Thay Đổi Quy Trình'}</option>
+                            <option value="PAYMENT_SCHEDULE">{locale === 'en' ? 'Payment Schedule' : 'Lịch Thanh Toán'}</option>
+                            <option value="PROMOTION_CAMPAIGN">{locale === 'en' ? 'Promotion' : 'Chương Trình KM'}</option>
+                            <option value="OTHER">{locale === 'en' ? 'Other' : 'Khác'}</option>
+                        </select>
 
-                            <select
-                                value={priorityFilter}
-                                onChange={e => setPriorityFilter(e.target.value)}
-                                className={`h-8 px-2.5 text-xs font-medium rounded-md border outline-none cursor-pointer ${
-                                    priorityFilter === 'ALL'
-                                        ? 'bg-lys-surface border-lys-border text-lys-secondary'
-                                        : 'bg-tone-warning-bg border-tone-warning-border text-tone-warning-fg font-semibold'
-                                }`}
-                            >
-                                <option value="ALL">{t.filters.allPriorities}</option>
-                                <option value="URGENT">{locale === 'en' ? 'Urgent' : 'Khẩn cấp'}</option>
-                                <option value="HIGH">{locale === 'en' ? 'High' : 'Cao'}</option>
-                                <option value="NORMAL">{locale === 'en' ? 'Normal' : 'Bình thường'}</option>
-                                <option value="LOW">{locale === 'en' ? 'Low' : 'Thấp'}</option>
-                            </select>
-                        </div>
+                        <select
+                            value={priorityFilter}
+                            onChange={e => setPriorityFilter(e.target.value)}
+                            className={`h-9 px-2.5 text-xs font-medium rounded-md border outline-none cursor-pointer ${
+                                priorityFilter === 'ALL'
+                                    ? 'bg-white border-lys-border-strong text-lys-secondary'
+                                    : 'bg-tone-warning-bg border-tone-warning-border text-tone-warning-fg font-semibold'
+                            }`}
+                        >
+                            <option value="ALL">{t.filters.allPriorities}</option>
+                            <option value="URGENT">{locale === 'en' ? 'Urgent' : 'Khẩn cấp'}</option>
+                            <option value="HIGH">{locale === 'en' ? 'High' : 'Cao'}</option>
+                            <option value="NORMAL">{locale === 'en' ? 'Normal' : 'Bình thường'}</option>
+                            <option value="LOW">{locale === 'en' ? 'Low' : 'Thấp'}</option>
+                        </select>
                     </div>
                 </div>
 
@@ -1540,7 +1539,7 @@ export default function ProposalsClient({ initialProposals, stats, userId, userN
                 <div
                     role="dialog"
                     aria-modal="true"
-                    className="fixed inset-0 z-[70] bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4"
+                    className="fixed inset-0 z-[70] bg-slate-900/35 backdrop-blur-[2px] flex items-center justify-center p-4"
                     onClick={() => setReasonModal(null)}
                 >
                     <div
@@ -1931,7 +1930,7 @@ function BatchProductPickerModal({
     const selectedCount = Object.keys(selected).length
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/35 backdrop-blur-[2px] transition-opacity animate-in fade-in duration-200">
             <div className="w-full max-w-4xl max-h-[90vh] rounded-lg flex flex-col shadow-2xl bg-white border border-slate-200 animate-in zoom-in-95 duration-150">
                 <div className="flex items-center justify-between p-3.5 sm:p-5 border-b border-slate-200">
                     <h4 className="text-sm sm:text-base font-bold text-slate-900 pr-2">
@@ -2476,7 +2475,7 @@ function CreateDrawer({ onClose, userId, onCreated }: {
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/35 backdrop-blur-[2px] transition-opacity animate-in fade-in duration-200">
             <div className="w-full max-w-4xl h-full flex flex-col overflow-hidden shadow-2xl bg-white border-l border-slate-200">
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-200 bg-slate-50/50 shrink-0">
@@ -3671,7 +3670,7 @@ function DetailDrawer({ detail, loading, actionLoading, onClose, userId, isCEO, 
     }, [detail])
 
     return (
-        <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
+        <div className="fixed inset-0 bg-slate-900/35 backdrop-blur-[2px] z-50 flex justify-end">
             <div className="w-full max-w-2xl h-full overflow-y-auto" style={{ background: '#FFFFFF', borderLeft: '1px solid #E2E8F0' }}>
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 sm:p-5 gap-2" style={{ borderBottom: '1px solid #E2E8F0' }}>

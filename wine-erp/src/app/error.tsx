@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { Button } from '@/components/ui'
 
 export default function GlobalError({
     error,
@@ -15,52 +16,30 @@ export default function GlobalError({
     }, [error])
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#F8FAFC',
-        }}>
-            <div style={{
-                maxWidth: '480px',
-                textAlign: 'center',
-                padding: '48px 32px',
-                background: '#FFFFFF',
-                border: '1px solid #E2E8F0',
-                borderRadius: '8px',
-            }}>
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
-                    <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(180,83,9,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#B45309' }}>
-                        <AlertTriangle size={32} />
+        <div className="min-h-[100dvh] flex items-center justify-center p-4 bg-lys-bg">
+            <div className="w-full max-w-md text-center p-8 sm:p-10 bg-lys-surface border border-lys-border rounded-lg shadow-sm">
+                <div className="flex justify-center mb-4">
+                    <div className="w-14 h-14 rounded-lg bg-tone-warning-bg border border-tone-warning-border flex items-center justify-center text-tone-warning-fg">
+                        <AlertTriangle size={28} aria-hidden />
                     </div>
                 </div>
-                <h2 style={{ color: '#0F172A', fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>
+                <h1 className="text-xl font-semibold text-lys-primary mb-2">
                     Đã xảy ra lỗi
-                </h2>
-                <p style={{ color: '#64748B', fontSize: '14px', marginBottom: '24px', lineHeight: 1.6 }}>
+                </h1>
+                <p className="text-sm text-lys-muted mb-6 leading-relaxed">
                     Hệ thống gặp sự cố khi tải trang. Vui lòng thử lại hoặc liên hệ quản trị viên.
                 </p>
                 {error.digest && (
-                    <p className="font-mono" style={{ color: '#64748B', fontSize: '11px', marginBottom: '16px' }}>
+                    <p className="font-mono text-[11px] text-lys-muted mb-4">
                         Mã lỗi: {error.digest}
                     </p>
                 )}
-                <button
-                    onClick={reset}
-                    style={{
-                        padding: '10px 24px',
-                        background: 'rgba(8, 145, 178, 0.08)',
-                        color: '#0E7490',
-                        border: '1px solid rgba(8, 145, 178, 0.25)',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                    }}
-                >
-                    Thử lại
-                </button>
+                <div className="flex justify-center">
+                    <Button variant="primary" onClick={reset}>
+                        <RefreshCw size={15} aria-hidden />
+                        Thử lại
+                    </Button>
+                </div>
             </div>
         </div>
     )

@@ -2,8 +2,8 @@
 
 import React, { useState, useCallback } from 'react'
 import {
-    Shield, Users, Settings, Bell, Plus, X, Save, Loader2,
-    User, ChevronDown, CheckCircle2, AlertCircle, Search, Eye,
+    Shield, Users, Settings, Bell, Plus, Save, Loader2,
+    User, ChevronDown, CheckCircle2, AlertCircle, Eye,
     ClipboardCheck, Check, XCircle, Building2, CreditCard,
     HardDrive, Database, RefreshCw, ExternalLink, FolderOpen
 } from 'lucide-react'
@@ -17,28 +17,16 @@ import {
 } from './actions'
 import { getAuditLogs, getFieldChanges } from '@/lib/audit'
 import { type SessionUser } from '@/lib/session'
-import { PageHeader, StatGrid, StatCard, Button } from '@/components/ui'
+import {
+    PageContainer, PageHeader, StatGrid, StatCard, StatusTabs, StatusBadge,
+    Badge, Button, Drawer, Field, Input, Select, Card, SearchInput,
+} from '@/components/ui'
 import { useAppLocale } from '@/lib/i18n'
 import { SETTINGS_I18N } from './i18n'
 
 // ── Shared Style Tokens ──────────────────────────
 const card = { background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px' }
-const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '10px 12px', borderRadius: '6px',
-    border: '1px solid #E2E8F0', background: '#FFFFFF', color: '#0F172A',
-    fontSize: '14px', outline: 'none',
-}
-
-const focusHandler = {
-    onFocus: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => e.currentTarget.style.borderColor = '#0891B2',
-    onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => e.currentTarget.style.borderColor = '#E2E8F0',
-}
-
-const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
-    ACTIVE: { color: '#15803D', bg: 'rgba(21,128,61,0.15)' },
-    INACTIVE: { color: '#64748B', bg: 'rgba(100,116,139,0.15)' },
-    SUSPENDED: { color: '#B91C1C', bg: 'rgba(185,28,28,0.15)' },
-}
+const USER_STATUS_TONES = { ACTIVE: 'success', INACTIVE: 'neutral', SUSPENDED: 'danger' } as const
 
 type Tab = 'users' | 'roles' | 'approvals' | 'audit' | 'entities' | 'storage'
 
@@ -96,65 +84,69 @@ function CreateUserDrawer({ open, onClose, onCreated, roles }: {
         setSaving(false)
     }
 
-    if (!open) return null
     return (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-md h-full overflow-y-auto p-6 bg-white border-l border-slate-200 shadow-2xl">
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>{i18n.createUserTitle}</h3>
-                    <button onClick={onClose}><X size={18} style={{ color: '#64748B' }} /></button>
-                </div>
-
+        <Drawer
+            open={open}
+            onClose={onClose}
+            title={i18n.createUserTitle}
+            size="sm"
+            className="bg-lys-bg"
+            footer={
+                <Button type="button" variant="primary" className="w-full" loading={saving} onClick={handleSave}>
+                    {!saving && <Save size={15} />}
+                    {saving ? i18n.btnSaving : i18n.createUserTitle}
+                </Button>
+            }
+        >
+            <div className="space-y-4">
                 {error && (
-                    <div className="mb-4 p-3 rounded text-sm flex items-center gap-2"
-                        style={{ background: 'rgba(185,28,28,0.15)', border: '1px solid rgba(185,28,28,0.3)', color: '#B91C1C' }}>
-                        <AlertCircle size={14} /> {error}
+                    <div className="p-3 rounded-md text-xs flex items-center gap-2 bg-tone-danger-bg border border-tone-danger-border text-tone-danger-fg">
+                        <AlertCircle size={14} className="shrink-0" /> {error}
                     </div>
                 )}
 
-                <div className="space-y-4">
-                    <div>
-                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelEmail}</label>
-                        <input style={inputStyle} {...focusHandler} type="email" placeholder="ten@lyscellars.com"
-                            value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
-                    </div>
-                    <div>
-                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelFullName}</label>
-                        <input style={inputStyle} {...focusHandler} placeholder="Nguyễn Văn A"
-                            value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-                    </div>
-                    <div>
-                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelPassword}</label>
-                        <input style={inputStyle} {...focusHandler} type="password" placeholder={i18n.placeholderPasswordMin}
-                            value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
-                    </div>
-                    <div>
-                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelRoles}</label>
-                        <div className="grid grid-cols-2 gap-2">
-                            {roles.map(r => (
-                                <button key={r.id} onClick={() => toggleRole(r.id)}
-                                    className="text-left px-3 py-2 rounded text-xs font-semibold font-mono transition-all"
-                                    style={{
-                                        background: form.roleIds.includes(r.id) ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
-                                        border: form.roleIds.includes(r.id) ? '1px solid #0E7490' : '1px solid #E2E8F0',
-                                        color: form.roleIds.includes(r.id) ? '#0E7490' : '#475569',
-                                    }}>
-                                    {form.roleIds.includes(r.id) && <CheckCircle2 size={12} className="inline mr-1" />}
+                <Card className="p-4 space-y-4">
+                    <Field label={i18n.labelEmail}>
+                        {id => (
+                            <Input id={id} type="email" placeholder="ten@lyscellars.com"
+                                value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+                        )}
+                    </Field>
+                    <Field label={i18n.labelFullName}>
+                        {id => (
+                            <Input id={id} placeholder="Nguyễn Văn A"
+                                value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+                        )}
+                    </Field>
+                    <Field label={i18n.labelPassword}>
+                        {id => (
+                            <Input id={id} type="password" placeholder={i18n.placeholderPasswordMin}
+                                value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
+                        )}
+                    </Field>
+                </Card>
+
+                <Card className="p-4 space-y-2.5">
+                    <label className="type-caption text-lys-secondary block">{i18n.labelRoles}</label>
+                    <div className="grid grid-cols-2 gap-2">
+                        {roles.map(r => {
+                            const active = form.roleIds.includes(r.id)
+                            return (
+                                <button key={r.id} type="button" onClick={() => toggleRole(r.id)}
+                                    className={`text-left px-3 py-2 rounded-md text-xs font-semibold font-mono transition-all cursor-pointer border ${
+                                        active
+                                            ? 'bg-lys-teal-soft border-lys-teal-strong text-lys-teal-strong'
+                                            : 'bg-white border-lys-border text-lys-secondary hover:bg-lys-subtle'
+                                    }`}>
+                                    {active && <CheckCircle2 size={12} className="inline mr-1" />}
                                     {r.name}
                                 </button>
-                            ))}
-                        </div>
+                            )
+                        })}
                     </div>
-                </div>
-
-                <button onClick={handleSave} disabled={saving}
-                    className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all"
-                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                    {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                    {saving ? i18n.btnSaving : i18n.createUserTitle}
-                </button>
+                </Card>
             </div>
-        </div>
+        </Drawer>
     )
 }
 
@@ -267,34 +259,28 @@ function RolePermissionSelector({
     return (
         <div className="space-y-3">
             <div className="space-y-2">
-                <div className="relative">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#94A3B8' }} />
-                    <input
-                        style={{ ...inputStyle, paddingLeft: '32px' }}
-                        className="text-xs"
-                        placeholder={i18n.searchPermPlaceholder}
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                    />
-                </div>
+                <SearchInput
+                    placeholder={i18n.searchPermPlaceholder}
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="w-full"
+                />
                 <div className="flex items-center justify-between text-xs px-1">
-                    <span className="font-semibold" style={{ color: '#475569' }}>
+                    <span className="font-semibold text-lys-secondary">
                         {i18n.selectedPermsCount(selectedPerms.length, permissions.length)}
                     </span>
                     <div className="flex items-center gap-1.5">
                         <button
                             type="button"
                             onClick={selectAll}
-                            className="px-2 py-1 rounded text-xs font-semibold cursor-pointer transition-all hover:opacity-80"
-                            style={{ background: 'rgba(8, 145, 178, 0.1)', color: '#0891B2' }}
+                            className="px-2 py-1 rounded-md text-xs font-semibold cursor-pointer transition-colors bg-lys-teal-soft text-lys-teal-strong hover:bg-lys-teal/15"
                         >
                             {i18n.btnSelectAll}
                         </button>
                         <button
                             type="button"
                             onClick={deselectAll}
-                            className="px-2 py-1 rounded text-xs font-semibold cursor-pointer transition-all hover:opacity-80"
-                            style={{ background: '#F1F5F9', color: '#64748B' }}
+                            className="px-2 py-1 rounded-md text-xs font-semibold cursor-pointer transition-colors bg-lys-subtle text-lys-muted hover:text-lys-primary"
                         >
                             {i18n.btnDeselectAll}
                         </button>
@@ -318,7 +304,7 @@ function RolePermissionSelector({
                                 <div className="flex items-center justify-between px-3 py-2 bg-slate-50 border-b border-slate-200">
                                     <div className="flex items-center gap-2">
                                         <span className="text-xs font-bold" style={{ color: '#0F172A' }}>{group.name}</span>
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-slate-200 text-slate-700">
+                                        <span className="text-[11px] px-1.5 py-0.5 rounded-md font-bold bg-lys-border text-lys-secondary">
                                             {groupSelectedCount}/{groupPerms.length}
                                         </span>
                                     </div>
@@ -326,7 +312,7 @@ function RolePermissionSelector({
                                         type="button"
                                         onClick={() => toggleGroup(group.modules)}
                                         className="text-xs font-medium hover:underline cursor-pointer"
-                                        style={{ color: '#0891B2' }}
+                                        style={{ color: '#0E7490' }}
                                     >
                                         {isAllGroupSelected ? i18n.btnDeselectGroup : i18n.btnSelectGroup}
                                     </button>
@@ -346,7 +332,7 @@ function RolePermissionSelector({
                                                     className="flex items-center justify-between w-full text-left cursor-pointer"
                                                 >
                                                     <span className="text-xs font-semibold flex items-center gap-1.5" style={{ color: '#1E293B' }}>
-                                                        <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-700">{mod}</span>
+                                                        <span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-700">{mod}</span>
                                                         <span>{i18n.modules[mod] ?? mod}</span>
                                                     </span>
                                                     <span className="text-xs font-semibold" style={{ color: isAllModSelected ? '#0891B2' : '#94A3B8' }}>
@@ -369,7 +355,7 @@ function RolePermissionSelector({
                                                                     fontWeight: active ? '600' : '500',
                                                                 }}
                                                             >
-                                                                <span className="font-mono text-[10px] opacity-80">{p.code}</span>
+                                                                <span className="font-mono text-[11px] opacity-80">{p.code}</span>
                                                                 <span>· {i18n.actions[p.action] ?? p.action}</span>
                                                             </button>
                                                         )
@@ -410,42 +396,40 @@ function CreateRoleDrawer({ open, onClose, onCreated, permissions }: {
         setSaving(false)
     }
 
-    if (!open) return null
     return (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-lg h-full overflow-y-auto p-6 bg-white border-l border-slate-200 shadow-2xl flex flex-col justify-between">
-                <div>
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>{i18n.createRoleTitle}</h3>
-                        <button onClick={onClose}><X size={18} style={{ color: '#64748B' }} /></button>
-                    </div>
-
-                    <div className="space-y-4">
-                        <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelRoleName}</label>
-                            <input style={inputStyle} {...focusHandler} placeholder={i18n.placeholderRoleName}
-                                value={name} onChange={e => setName(e.target.value)} />
-                        </div>
-
-                        <div>
-                            <label className="text-xs font-semibold mb-2 block" style={{ color: '#475569' }}>{i18n.labelPermByModule}</label>
-                            <RolePermissionSelector
-                                permissions={permissions}
-                                selectedPerms={selectedPerms}
-                                onChange={setSelectedPerms}
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                <button onClick={handleSave} disabled={saving || !name}
-                    className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all shrink-0 cursor-pointer"
-                    style={{ background: name ? '#0E7490' : '#E2E8F0', color: name ? '#FFFFFF' : '#64748B' }}>
-                    {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+        <Drawer
+            open={open}
+            onClose={onClose}
+            title={i18n.createRoleTitle}
+            size="lg"
+            className="bg-lys-bg"
+            footer={
+                <Button type="button" variant="primary" className="w-full" loading={saving} disabled={!name} onClick={handleSave}>
+                    {!saving && <Save size={15} />}
                     {saving ? i18n.btnSaving : i18n.btnCreateRoleCount(selectedPerms.length)}
-                </button>
+                </Button>
+            }
+        >
+            <div className="space-y-4">
+                <Card className="p-4">
+                    <Field label={i18n.labelRoleName}>
+                        {id => (
+                            <Input id={id} placeholder={i18n.placeholderRoleName}
+                                value={name} onChange={e => setName(e.target.value)} />
+                        )}
+                    </Field>
+                </Card>
+
+                <Card className="p-4 space-y-2">
+                    <label className="type-caption text-lys-secondary block">{i18n.labelPermByModule}</label>
+                    <RolePermissionSelector
+                        permissions={permissions}
+                        selectedPerms={selectedPerms}
+                        onChange={setSelectedPerms}
+                    />
+                </Card>
             </div>
-        </div>
+        </Drawer>
     )
 }
 
@@ -493,47 +477,35 @@ function EditRolePermissionsDrawer({ open, onClose, onUpdated, role, permissions
         setSaving(false)
     }
 
-    if (!open || !role) return null
-
     return (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-lg h-full overflow-y-auto p-6 bg-white border-l border-slate-200 shadow-2xl flex flex-col justify-between">
-                <div>
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
-                                {i18n.editRoleTitle}
-                            </h3>
-                            <p className="text-xs" style={{ color: '#64748B' }}>
-                                {i18n.editRoleSubtitle} <strong className="font-mono" style={{ color: '#0891B2' }}>{role.name}</strong>
-                            </p>
-                        </div>
-                        <button onClick={onClose}><X size={18} style={{ color: '#64748B' }} /></button>
-                    </div>
-
-                    {loading ? (
-                        <div className="flex items-center justify-center py-16">
-                            <Loader2 size={24} className="animate-spin" style={{ color: '#0891B2' }} />
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                            <RolePermissionSelector
-                                permissions={permissions}
-                                selectedPerms={selectedPerms}
-                                onChange={setSelectedPerms}
-                            />
-                        </div>
-                    )}
-                </div>
-
-                <button onClick={handleSave} disabled={saving || loading}
-                    className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all shrink-0 cursor-pointer"
-                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                    {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+        <Drawer
+            open={Boolean(open && role)}
+            onClose={onClose}
+            title={i18n.editRoleTitle}
+            description={role ? <>{i18n.editRoleSubtitle} <strong className="font-mono text-lys-teal-strong">{role.name}</strong></> : undefined}
+            size="lg"
+            className="bg-lys-bg"
+            footer={
+                <Button type="button" variant="primary" className="w-full" loading={saving} disabled={loading} onClick={handleSave}>
+                    {!saving && <Save size={15} />}
                     {saving ? i18n.btnSaving : i18n.btnSavePermsCount(selectedPerms.length)}
-                </button>
-            </div>
-        </div>
+                </Button>
+            }
+        >
+            {loading ? (
+                <div className="flex items-center justify-center py-16">
+                    <Loader2 size={24} className="animate-spin text-lys-teal" />
+                </div>
+            ) : (
+                <Card className="p-4">
+                    <RolePermissionSelector
+                        permissions={permissions}
+                        selectedPerms={selectedPerms}
+                        onChange={setSelectedPerms}
+                    />
+                </Card>
+            )}
+        </Drawer>
     )
 }
 
@@ -570,11 +542,8 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
         }
     }, [user, roles])
 
-    if (!open || !user) return null
-
     const isAdmin = currentUser?.permissions.includes('SYS:ADMIN') || false
-    const statusStyle = STATUS_STYLE[user.status] ?? STATUS_STYLE.ACTIVE
-    const statusLabel = i18n.statuses[user.status] ?? user.status
+    const statusLabel = user ? (i18n.statuses[user.status] ?? user.status) : ''
 
     const toggleRole = (id: string) => {
         if (!isAdmin) return
@@ -623,121 +592,107 @@ function UserDetailDrawer({ open, onClose, user, roles, currentUser, onUpdated }
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between shadow-2xl bg-white border-l border-slate-200">
-                <div>
-                    <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                        <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
-                            {isAdmin ? i18n.editUserTitle : i18n.userDetailTitle}
-                        </h3>
-                        <button onClick={onClose} className="hover:opacity-80 transition-opacity"><X size={18} style={{ color: '#64748B' }} /></button>
-                    </div>
-
+        <Drawer
+            open={Boolean(open && user)}
+            onClose={onClose}
+            title={isAdmin ? i18n.editUserTitle : i18n.userDetailTitle}
+            size="sm"
+            className="bg-lys-bg"
+            footer={isAdmin ? (
+                <Button type="button" variant="primary" className="w-full" loading={saving} onClick={handleSave}>
+                    {!saving && <Save size={15} />}
+                    {saving ? i18n.btnSaving : i18n.btnSaveChanges}
+                </Button>
+            ) : undefined}
+        >
+            {user && (
+                <div className="space-y-4">
                     {error && (
-                        <div className="mb-4 p-3 rounded text-sm flex items-center gap-2"
-                            style={{ background: 'rgba(185,28,28,0.15)', border: '1px solid rgba(185,28,28,0.3)', color: '#B91C1C' }}>
-                            <AlertCircle size={14} /> {error}
+                        <div className="p-3 rounded-md text-xs flex items-center gap-2 bg-tone-danger-bg border border-tone-danger-border text-tone-danger-fg">
+                            <AlertCircle size={14} className="shrink-0" /> {error}
                         </div>
                     )}
 
-                    <div className="space-y-4">
-                        <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelEmail}</label>
-                            <div className="text-sm font-semibold p-3 rounded-md font-mono" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
+                    <Card className="p-4 space-y-4">
+                        <Field label={i18n.labelEmail}>
+                            <div className="text-sm font-semibold px-3 py-2 rounded-md font-mono bg-lys-subtle border border-lys-border text-lys-primary">
                                 {user.email}
                             </div>
-                        </div>
+                        </Field>
 
-                        <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelFullName}</label>
+                        <Field label={i18n.labelFullName}>
                             {isAdmin ? (
-                                <input style={inputStyle} {...focusHandler} placeholder={i18n.placeholderFullName}
+                                <Input placeholder={i18n.placeholderFullName}
                                     value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
                             ) : (
-                                <div className="text-sm font-semibold p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }}>
+                                <div className="text-sm font-semibold px-3 py-2 rounded-md bg-lys-subtle border border-lys-border text-lys-primary">
                                     {user.name || '—'}
                                 </div>
                             )}
-                        </div>
+                        </Field>
 
-                        <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelStatus}</label>
+                        <Field label={i18n.labelStatus}>
                             {isAdmin ? (
-                                <select style={inputStyle} {...focusHandler}
-                                    value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as any }))}>
+                                <Select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as any }))}>
                                     <option value="ACTIVE">{i18n.statuses.ACTIVE}</option>
                                     <option value="INACTIVE">{i18n.statusInactiveFull}</option>
                                     <option value="SUSPENDED">{i18n.statuses.SUSPENDED}</option>
-                                </select>
+                                </Select>
                             ) : (
-                                <div className="p-3 rounded-md flex items-center" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                    <span className="inline-block text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap shrink-0"
-                                        style={{ background: statusStyle.bg, color: statusStyle.color }}>
-                                        {statusLabel}
-                                    </span>
+                                <div className="pt-1">
+                                    <StatusBadge status={user.status} label={statusLabel} toneOverrides={USER_STATUS_TONES} />
                                 </div>
                             )}
-                        </div>
+                        </Field>
+                    </Card>
 
-                        <div>
-                            <label className="text-xs font-semibold mb-2 block" style={{ color: '#475569' }}>{i18n.labelRoles}</label>
-                            {isAdmin ? (
-                                <div className="grid grid-cols-2 gap-2">
-                                    {roles.map(r => {
-                                        const selected = form.roleIds.includes(r.id)
-                                        return (
-                                            <button key={r.id} onClick={() => toggleRole(r.id)}
-                                                className="text-left px-3 py-2 rounded text-xs font-semibold font-mono transition-all"
-                                                style={{
-                                                    background: selected ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
-                                                    border: selected ? '1px solid #0E7490' : '1px solid #E2E8F0',
-                                                    color: selected ? '#0E7490' : '#475569',
-                                                }}>
-                                                {selected && <CheckCircle2 size={12} className="inline mr-1" />}
-                                                {r.name}
-                                            </button>
-                                        )
-                                    })}
-                                </div>
-                            ) : (
-                                <div className="flex flex-wrap gap-1.5 p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                    {user.roles.map(r => (
-                                        <span key={r} className="inline-block text-xs px-2 py-0.5 rounded font-semibold font-mono whitespace-nowrap shrink-0"
-                                            style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
-                                            {r}
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {isAdmin && (
-                            <div>
-                                <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelResetPassword}</label>
-                                <input style={inputStyle} {...focusHandler} type="password" placeholder={i18n.placeholderResetPassword}
-                                    value={resetPassword} onChange={e => setResetPassword(e.target.value)} />
+                    <Card className="p-4 space-y-2.5">
+                        <label className="type-caption text-lys-secondary block">{i18n.labelRoles}</label>
+                        {isAdmin ? (
+                            <div className="grid grid-cols-2 gap-2">
+                                {roles.map(r => {
+                                    const selected = form.roleIds.includes(r.id)
+                                    return (
+                                        <button key={r.id} type="button" onClick={() => toggleRole(r.id)}
+                                            className={`text-left px-3 py-2 rounded-md text-xs font-semibold font-mono transition-all cursor-pointer border ${
+                                                selected
+                                                    ? 'bg-lys-teal-soft border-lys-teal-strong text-lys-teal-strong'
+                                                    : 'bg-white border-lys-border text-lys-secondary hover:bg-lys-subtle'
+                                            }`}>
+                                            {selected && <CheckCircle2 size={12} className="inline mr-1" />}
+                                            {r.name}
+                                        </button>
+                                    )
+                                })}
+                            </div>
+                        ) : (
+                            <div className="flex flex-wrap gap-1.5">
+                                {user.roles.map(r => (
+                                    <Badge key={r} tone="brand" className="font-mono">{r}</Badge>
+                                ))}
                             </div>
                         )}
+                    </Card>
 
-                        <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelCreatedAt}</label>
-                            <div className="text-sm p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569' }}>
+                    <Card className="p-4 space-y-4">
+                        {isAdmin && (
+                            <Field label={i18n.labelResetPassword}>
+                                {id => (
+                                    <Input id={id} type="password" placeholder={i18n.placeholderResetPassword}
+                                        value={resetPassword} onChange={e => setResetPassword(e.target.value)} />
+                                )}
+                            </Field>
+                        )}
+
+                        <Field label={i18n.labelCreatedAt}>
+                            <div className="text-xs px-3 py-2 rounded-md bg-lys-subtle border border-lys-border text-lys-secondary">
                                 {formatDate(user.createdAt)}
                             </div>
-                        </div>
-                    </div>
+                        </Field>
+                    </Card>
                 </div>
-
-                {isAdmin && (
-                    <button onClick={handleSave} disabled={saving}
-                        className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all hover:opacity-90"
-                        style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                        {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                        {saving ? i18n.btnSaving : i18n.btnSaveChanges}
-                    </button>
-                )}
-            </div>
-        </div>
+            )}
+        </Drawer>
     )
 }
 
@@ -875,41 +830,41 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
         !search || u.name?.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase())
     )
 
-    const tabs: { key: Tab; label: string; icon: React.FC<any> }[] = [
-        { key: 'users', label: i18n.tabUsers, icon: Users },
-        { key: 'roles', label: i18n.tabRoles, icon: Shield },
-        { key: 'approvals', label: i18n.tabApprovals, icon: ClipboardCheck },
-        { key: 'entities', label: i18n.tabEntities, icon: Building2 },
-        { key: 'storage', label: i18n.tabStorage, icon: HardDrive },
-        { key: 'audit', label: i18n.tabAudit, icon: Eye },
+    const tabs = [
+        { value: 'users' as Tab, label: i18n.tabUsers, icon: Users },
+        { value: 'roles' as Tab, label: i18n.tabRoles, icon: Shield },
+        { value: 'approvals' as Tab, label: i18n.tabApprovals, icon: ClipboardCheck },
+        { value: 'entities' as Tab, label: i18n.tabEntities, icon: Building2 },
+        { value: 'storage' as Tab, label: i18n.tabStorage, icon: HardDrive },
+        { value: 'audit' as Tab, label: i18n.tabAudit, icon: Eye },
     ]
 
     return (
-        <div className="space-y-6 max-w-screen-2xl">
+        <PageContainer>
             <PageHeader
-                title={i18n.pageTitle}
                 description={i18n.pageDesc}
                 actions={
                     <div className="flex items-center gap-2 flex-wrap">
-                        <button
+                        <Button
                             type="button"
+                            variant="secondary"
+                            size="sm"
                             onClick={() => {
                                 setTab('storage')
                                 if (!infraStatus && !infraLoading) loadInfrastructure()
                             }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all border border-cyan-200 bg-cyan-50 text-cyan-800 hover:bg-cyan-100 cursor-pointer"
                         >
-                            <HardDrive size={13} /> {i18n.btnCheckStorage}
-                        </button>
+                            <HardDrive size={13} className="text-lys-teal" /> {i18n.btnCheckStorage}
+                        </Button>
                         <a href="/dashboard/settings/approval-matrix"
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                            className="inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold rounded-md transition-colors border border-lys-border-strong bg-white text-lys-primary hover:bg-lys-subtle"
                             style={{ textDecoration: 'none' }}>
-                            <Shield size={13} style={{ color: '#0891B2' }} /> {i18n.btnApprovalMatrix}
+                            <Shield size={13} className="text-lys-teal" /> {i18n.btnApprovalMatrix}
                         </a>
                         <a href="/dashboard/settings/telegram"
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                            className="inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold rounded-md transition-colors border border-lys-border-strong bg-white text-lys-primary hover:bg-lys-subtle"
                             style={{ textDecoration: 'none' }}>
-                            <Bell size={13} style={{ color: '#0891B2' }} /> {i18n.btnTelegramBot}
+                            <Bell size={13} className="text-lys-teal" /> {i18n.btnTelegramBot}
                         </a>
                     </div>
                 }
@@ -924,47 +879,31 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
             </StatGrid>
 
             {/* Tabs */}
-            <div className="flex gap-1 p-1 rounded-lg overflow-x-auto no-scrollbar whitespace-nowrap" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                {tabs.map(t => {
-                    const Icon = t.icon
-                    const active = tab === t.key
-                    return (
-                        <button key={t.key}
-                            onClick={() => {
-                                setTab(t.key)
-                                if (t.key === 'audit' && !auditLoaded) loadAudit()
-                                if (t.key === 'approvals' && !approvalsLoaded) loadApprovals()
-                                if (t.key === 'entities' && !entitiesLoaded) loadEntities()
-                                if (t.key === 'storage' && !infraStatus && !infraLoading) loadInfrastructure()
-                            }}
-                            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all flex-1 justify-center cursor-pointer whitespace-nowrap shrink-0"
-                            style={{
-                                background: active ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
-                                color: active ? '#0891B2' : '#64748B',
-                                border: active ? '1px solid rgba(8, 145, 178, 0.2)' : '1px solid transparent',
-                            }}>
-                            <Icon size={14} /> {t.label}
-                        </button>
-                    )
-                })}
-            </div>
+            <StatusTabs
+                items={tabs}
+                value={tab}
+                onChange={nextTab => {
+                    setTab(nextTab)
+                    if (nextTab === 'audit' && !auditLoaded) loadAudit()
+                    if (nextTab === 'approvals' && !approvalsLoaded) loadApprovals()
+                    if (nextTab === 'entities' && !entitiesLoaded) loadEntities()
+                    if (nextTab === 'storage' && !infraStatus && !infraLoading) loadInfrastructure()
+                }}
+            />
 
             {/* ── Users Tab ────────────────────────── */}
             {tab === 'users' && (
                 <div className="space-y-4">
                     <div className="flex items-center gap-3">
-                        <div className="relative flex-1">
-                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
-                            <input className="w-full pl-9 pr-3 py-2 text-sm rounded-md"
-                                style={{ ...inputStyle, width: '100%' }}
-                                placeholder={i18n.searchUserPlaceholder}
-                                value={search} onChange={e => setSearch(e.target.value)} />
-                        </div>
-                        <button onClick={() => setShowCreateUser(true)}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md shrink-0"
-                            style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                            <Plus size={16} /> {i18n.btnAddUser}
-                        </button>
+                        <SearchInput
+                            className="flex-1"
+                            placeholder={i18n.searchUserPlaceholder}
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                        />
+                        <Button type="button" variant="primary" size="md" className="shrink-0" onClick={() => setShowCreateUser(true)}>
+                            <Plus size={15} /> {i18n.btnAddUser}
+                        </Button>
                     </div>
 
                     {/* Desktop Table */}
@@ -984,33 +923,25 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                         {i18n.emptyUsers}
                                     </td></tr>
                                 ) : filteredUsers.map(u => {
-                                    const st = STATUS_STYLE[u.status] ?? STATUS_STYLE.ACTIVE
                                     const statusLabel = i18n.statuses[u.status] ?? u.status
                                     return (
-                                        <tr key={u.id} className="hover:bg-cyan-50/40 transition-colors" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                            <td className="px-3 py-2.5 text-sm font-semibold cursor-pointer hover:underline hover:text-[#0891B2] transition-all"
-                                                style={{ color: '#0F172A' }}
+                                        <tr key={u.id} className="hover:bg-lys-subtle/70 transition-colors border-b border-lys-border">
+                                            <td className="px-3 py-2.5 text-sm font-semibold text-lys-primary cursor-pointer hover:underline hover:text-lys-teal-strong transition-all"
                                                 onClick={() => setSelectedUser(u)}>
                                                 {u.name || '—'}
                                             </td>
-                                            <td className="px-3 py-2.5 text-xs" style={{ color: '#475569' }}>
+                                            <td className="px-3 py-2.5 text-xs text-lys-secondary">
                                                 {u.email}
                                             </td>
                                             <td className="px-3 py-2.5">
                                                 <div className="flex flex-wrap gap-1">
                                                     {u.roles.map(r => (
-                                                        <span key={r} className="inline-block text-xs px-2 py-0.5 rounded font-semibold font-mono whitespace-nowrap shrink-0"
-                                                            style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
-                                                            {r}
-                                                        </span>
+                                                        <Badge key={r} tone="brand" className="font-mono">{r}</Badge>
                                                     ))}
                                                 </div>
                                             </td>
                                             <td className="px-3 py-2.5">
-                                                <span className="inline-block text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap shrink-0"
-                                                    style={{ background: st.bg, color: st.color }}>
-                                                    {statusLabel}
-                                                </span>
+                                                <StatusBadge status={u.status} label={statusLabel} toneOverrides={USER_STATUS_TONES} />
                                             </td>
                                             <td className="px-3 py-2.5 text-xs" style={{ color: '#64748B' }}>
                                                 {formatDate(u.createdAt)}
@@ -1041,26 +972,19 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                 {i18n.emptyUsers}
                             </div>
                         ) : filteredUsers.map(u => {
-                            const st = STATUS_STYLE[u.status] ?? STATUS_STYLE.ACTIVE
                             const statusLabel = i18n.statuses[u.status] ?? u.status
                             return (
-                                <div key={u.id} className="p-3.5 rounded-lg border border-slate-200 bg-white space-y-2">
+                                <Card key={u.id} className="p-3.5 space-y-2">
                                     <div className="flex items-start justify-between gap-2">
                                         <div onClick={() => setSelectedUser(u)} className="cursor-pointer min-w-0">
-                                            <p className="text-sm font-bold text-slate-900 truncate">{u.name || '—'}</p>
-                                            <p className="text-xs text-slate-500 truncate">{u.email}</p>
+                                            <p className="text-sm font-bold text-lys-primary truncate">{u.name || '—'}</p>
+                                            <p className="text-xs text-lys-muted truncate">{u.email}</p>
                                         </div>
-                                        <span className="inline-block text-[11px] px-2 py-0.5 rounded font-bold shrink-0"
-                                            style={{ background: st.bg, color: st.color }}>
-                                            {statusLabel}
-                                        </span>
+                                        <StatusBadge status={u.status} label={statusLabel} toneOverrides={USER_STATUS_TONES} />
                                     </div>
                                     <div className="flex flex-wrap gap-1">
                                         {u.roles.map(r => (
-                                            <span key={r} className="inline-block text-[11px] px-2 py-0.5 rounded font-semibold font-mono"
-                                                style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
-                                                {r}
-                                            </span>
+                                            <Badge key={r} tone="brand" className="font-mono">{r}</Badge>
                                         ))}
                                     </div>
                                     <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs text-slate-500">
@@ -1075,7 +999,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                             <option value="SUSPENDED">{i18n.statuses.SUSPENDED}</option>
                                         </select>
                                     </div>
-                                </div>
+                                </Card>
                             )
                         })}
                     </div>
@@ -1108,7 +1032,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                     <h4 className="font-bold font-mono" style={{ color: '#0F172A' }}>{r.name}</h4>
                                     <div className="flex items-center gap-2">
                                         <span className="inline-block text-xs px-2 py-0.5 rounded whitespace-nowrap shrink-0"
-                                            style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
+                                            style={{ background: 'rgba(8,145,178,0.1)', color: '#0E7490' }}>
                                             {i18n.permsBadge(r.permissionCount)}
                                         </span>
                                         <span className="inline-block text-xs px-2 py-0.5 rounded whitespace-nowrap shrink-0"
@@ -1146,7 +1070,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                     <div>
                         <h3 className="text-sm font-bold mb-3" style={{ color: '#0F172A' }}>{i18n.pendingApprovalsTitle}</h3>
                         {!approvalsLoaded ? (
-                            <div className="flex items-center justify-center py-8"><Loader2 size={20} className="animate-spin" style={{ color: '#0891B2' }} /></div>
+                            <div className="flex items-center justify-center py-8"><Loader2 size={20} className="animate-spin" style={{ color: '#0E7490' }} /></div>
                         ) : pendingApprovals.length === 0 ? (
                             <div className="flex flex-col items-center py-8 gap-2 rounded-md" style={{ border: '1px dashed #E2E8F0' }}>
                                 <CheckCircle2 size={24} style={{ color: '#15803D' }} />
@@ -1202,7 +1126,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                         <div className="space-y-1">
                                             {(tpl.steps || []).map((step: any, i: number) => (
                                                 <div key={i} className="flex items-center gap-2 text-xs font-mono" style={{ color: '#475569' }}>
-                                                    <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                                                    <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold"
                                                         style={{ background: '#ECFEFF', color: '#0E7490' }}>{i + 1}</span>
                                                     {step.approverRole}
                                                     {step.threshold && <span style={{ color: '#64748B' }}>(≥{(step.threshold / 1e6).toFixed(0)}M)</span>}
@@ -1265,7 +1189,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                     {log.action}
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-2.5 text-xs font-semibold font-mono" style={{ color: '#0891B2' }}>
+                                            <td className="px-3 py-2.5 text-xs font-semibold font-mono" style={{ color: '#0E7490' }}>
                                                 {log.entityType}
                                             </td>
                                             <td className="px-3 py-2.5 text-xs font-mono" style={{ color: '#64748B' }}>
@@ -1281,7 +1205,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                             <tr><td colSpan={6} style={{ background: '#F8FAFC', padding: '12px 16px' }}>
                                                 {loadingChanges ? (
                                                     <div className="flex items-center gap-2 py-2">
-                                                        <Loader2 size={14} className="animate-spin" style={{ color: '#0891B2' }} />
+                                                        <Loader2 size={14} className="animate-spin" style={{ color: '#0E7490' }} />
                                                         <span className="text-xs" style={{ color: '#64748B' }}>{i18n.loadingDetails}</span>
                                                     </div>
                                                 ) : fieldChanges.length === 0 ? (
@@ -1291,7 +1215,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                         <p className="text-xs font-semibold mb-2" style={{ color: '#B45309' }}>{i18n.fieldChangesTitle}</p>
                                                         {fieldChanges.slice(0, 20).map((fc: any, i: number) => (
                                                              <div key={i} className="flex items-start gap-3 py-1" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                                                <span className="text-xs font-bold shrink-0" style={{ color: '#0891B2', minWidth: '100px' }}>{fc.field}</span>
+                                                                <span className="text-xs font-bold shrink-0" style={{ color: '#0E7490', minWidth: '100px' }}>{fc.field}</span>
                                                                 <span className="text-xs" style={{ color: '#B91C1C' }}>{String(fc.oldValue ?? i18n.emptyVal).slice(0, 40)}</span>
                                                                 <span className="text-xs" style={{ color: '#64748B' }}>→</span>
                                                                 <span className="text-xs" style={{ color: '#15803D' }}>{String(fc.newValue ?? i18n.emptyVal).slice(0, 40)}</span>
@@ -1356,7 +1280,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                             </div>
                                             <button onClick={() => setEditingEntity(ent)}
                                                 className="px-3 py-1.5 text-xs font-semibold rounded-md transition-all"
-                                                style={{ border: '1px solid #E2E8F0', color: '#0891B2' }}>
+                                                style={{ border: '1px solid #E2E8F0', color: '#0E7490' }}>
                                                 {i18n.btnEdit}
                                             </button>
                                         </div>
@@ -1384,7 +1308,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                             </div>
                                             <div className="flex justify-between items-center">
                                                 <span>{i18n.labelAccountNumberColon}</span>
-                                                <span className="text-[#0891B2] font-mono font-bold">{ent.bankAccountNumber || '—'}</span>
+                                                <span className="text-lys-teal-strong font-mono font-bold">{ent.bankAccountNumber || '—'}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1408,8 +1332,8 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                 <div>
                                                     <p className="text-sm font-bold flex items-center gap-2 flex-wrap" style={{ color: '#0F172A' }}>
                                                         {w.name}
-                                                        {w.isDefault && <span className="inline-block text-[10px] bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded font-mono font-bold whitespace-nowrap shrink-0">{i18n.defaultWarehouseBadge}</span>}
-                                                        {w.allowSales === false && <span className="inline-block text-[10px] bg-rose-100 text-rose-800 border border-rose-300 px-1.5 py-0.5 rounded font-mono font-bold whitespace-nowrap shrink-0">{i18n.transferOnlyBadge}</span>}
+                                                        {w.isDefault && <span className="inline-block text-[11px] bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded font-mono font-bold whitespace-nowrap shrink-0">{i18n.defaultWarehouseBadge}</span>}
+                                                        {w.allowSales === false && <span className="inline-block text-[11px] bg-rose-100 text-rose-800 border border-rose-300 px-1.5 py-0.5 rounded font-mono font-bold whitespace-nowrap shrink-0">{i18n.transferOnlyBadge}</span>}
                                                     </p>
                                                     <p className="text-[11px] font-mono mt-0.5" style={{ color: '#64748B' }}>{i18n.codePrefix} {w.code}{w.address ? ` · ${i18n.labelAddressColon} ${w.address}` : ''}</p>
                                                 </div>
@@ -1527,7 +1451,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                         {i18n.r2CardTitle}
                                                     </h4>
                                                     <span
-                                                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                                        className={`px-2 py-0.5 rounded text-[11px] font-bold ${
                                                             infraStatus.r2.connected
                                                                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                                                 : 'bg-rose-50 text-rose-700 border border-rose-200'
@@ -1602,7 +1526,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                         {i18n.dbCardTitle}
                                                     </h4>
                                                     <span
-                                                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                                        className={`px-2 py-0.5 rounded text-[11px] font-bold ${
                                                             infraStatus.database.connected
                                                                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                                                 : 'bg-rose-50 text-rose-700 border border-rose-200'
@@ -1695,7 +1619,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                 <p className="text-xs font-bold font-mono text-slate-900">
                                                     {formatNumber(item.val)}
                                                 </p>
-                                                <p className="text-[10px] text-slate-500 truncate">
+                                                <p className="text-[11px] text-slate-500 truncate">
                                                     {item.label}
                                                 </p>
                                             </div>
@@ -1767,7 +1691,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                             </td>
                                                             <td className="px-3 py-2.5 text-right font-mono text-slate-900">
                                                                 {formatBytes(f.totalBytes)}{' '}
-                                                                <span className="text-[10px] text-slate-400">
+                                                                <span className="text-[11px] text-slate-400">
                                                                     ({sharePct}%)
                                                                 </span>
                                                             </td>
@@ -1832,7 +1756,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                                                         >
                                                             {file.key.split('/').pop()}
                                                         </p>
-                                                        <p className="text-[10px] text-slate-500 font-mono truncate">
+                                                        <p className="text-[11px] text-slate-500 font-mono truncate">
                                                             {formatBytes(file.size)} ·{' '}
                                                             {new Date(
                                                                 file.lastModified
@@ -1887,7 +1811,7 @@ export function SettingsClient({ initialUsers, initialRoles, permissions, stats,
                 currentUser={currentUser}
                 onUpdated={reload}
             />
-        </div>
+        </PageContainer>
     )
 }
 
@@ -1917,68 +1841,56 @@ function EditEntityDrawer({ open, onClose, onSave, entity, saving }: {
         }
     }, [entity])
 
-    if (!open || !entity) return null
     return (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-            <div className="w-full max-w-md h-full overflow-y-auto p-6 flex flex-col justify-between bg-white border-l border-slate-200 shadow-2xl">
-                <div>
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>{i18n.editEntityDrawerTitle}</h3>
-                        <button onClick={onClose}><X size={18} style={{ color: '#64748B' }} /></button>
-                    </div>
-
-                    <div className="space-y-4">
-                        <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelEntityNameReq}</label>
-                            <input style={inputStyle} {...focusHandler} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-                        </div>
-                        <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelTaxId}</label>
-                            <input style={inputStyle} {...focusHandler} value={form.taxId} onChange={e => setForm(f => ({ ...f, taxId: e.target.value }))} />
-                        </div>
-                        <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelAddress}</label>
-                            <input style={inputStyle} {...focusHandler} value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                                <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelPhone}</label>
-                                <input style={inputStyle} {...focusHandler} placeholder="e.g. 024.3933.8888" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
-                            </div>
-                            <div>
-                                <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelEmail}</label>
-                                <input style={inputStyle} {...focusHandler} placeholder="e.g. orders@lyscellars.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
-                            </div>
-                        </div>
-                        <div className="pt-4 border-t border-slate-200">
-                            <p className="text-xs font-bold uppercase mb-3 flex items-center gap-1.5" style={{ color: '#B45309' }}>
-                                <CreditCard size={12} /> {i18n.secPaymentAccount}
-                            </p>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelBankNameBranch}</label>
-                                    <input style={inputStyle} {...focusHandler} placeholder="e.g. Vietcombank - Chi nhánh HCM" value={form.bankName} onChange={e => setForm(f => ({ ...f, bankName: e.target.value }))} />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelAccountHolder}</label>
-                                    <input style={inputStyle} {...focusHandler} placeholder="e.g. CONG TY TNHH LY'S CELLARS" value={form.bankAccountName} onChange={e => setForm(f => ({ ...f, bankAccountName: e.target.value }))} />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>{i18n.labelAccountNumber}</label>
-                                    <input style={inputStyle} {...focusHandler} placeholder="e.g. 1023456789" value={form.bankAccountNumber} onChange={e => setForm(f => ({ ...f, bankAccountNumber: e.target.value }))} />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <button onClick={() => onSave(entity.id, form)} disabled={saving}
-                    className="w-full mt-6 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all"
-                    style={{ background: '#0E7490', color: '#FFFFFF' }}>
-                    {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+        <Drawer
+            open={Boolean(open && entity)}
+            onClose={onClose}
+            title={i18n.editEntityDrawerTitle}
+            size="sm"
+            className="bg-lys-bg"
+            footer={entity ? (
+                <Button type="button" variant="primary" className="w-full" loading={saving} onClick={() => onSave(entity.id, form)}>
+                    {!saving && <Save size={15} />}
                     {saving ? i18n.btnSaving : i18n.btnSaveChanges}
-                </button>
+                </Button>
+            ) : undefined}
+        >
+            <div className="space-y-4">
+                <Card className="p-4 space-y-4">
+                    <Field label={i18n.labelEntityNameReq}>
+                        {id => <Input id={id} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />}
+                    </Field>
+                    <Field label={i18n.labelTaxId}>
+                        {id => <Input id={id} value={form.taxId} onChange={e => setForm(f => ({ ...f, taxId: e.target.value }))} />}
+                    </Field>
+                    <Field label={i18n.labelAddress}>
+                        {id => <Input id={id} value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />}
+                    </Field>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Field label={i18n.labelPhone}>
+                            {id => <Input id={id} placeholder="e.g. 024.3933.8888" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />}
+                        </Field>
+                        <Field label={i18n.labelEmail}>
+                            {id => <Input id={id} placeholder="e.g. orders@lyscellars.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />}
+                        </Field>
+                    </div>
+                </Card>
+
+                <Card className="p-4 space-y-4">
+                    <p className="text-xs font-bold uppercase flex items-center gap-1.5 text-tone-warning-fg">
+                        <CreditCard size={12} /> {i18n.secPaymentAccount}
+                    </p>
+                    <Field label={i18n.labelBankNameBranch}>
+                        {id => <Input id={id} placeholder="e.g. Vietcombank - Chi nhánh HCM" value={form.bankName} onChange={e => setForm(f => ({ ...f, bankName: e.target.value }))} />}
+                    </Field>
+                    <Field label={i18n.labelAccountHolder}>
+                        {id => <Input id={id} placeholder="e.g. CONG TY TNHH LY'S CELLARS" value={form.bankAccountName} onChange={e => setForm(f => ({ ...f, bankAccountName: e.target.value }))} />}
+                    </Field>
+                    <Field label={i18n.labelAccountNumber}>
+                        {id => <Input id={id} placeholder="e.g. 1023456789" value={form.bankAccountNumber} onChange={e => setForm(f => ({ ...f, bankAccountNumber: e.target.value }))} />}
+                    </Field>
+                </Card>
             </div>
-        </div>
+        </Drawer>
     )
 }

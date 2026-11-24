@@ -19,14 +19,14 @@ function PageSkeleton() {
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="p-5 rounded-lg bg-white border border-lys-border">
+                    <div key={i} className="p-4 rounded-lg bg-lys-card border border-lys-border shadow-xs">
                         <div className="h-3 w-24 rounded mb-3 bg-slate-200/70" />
-                        <div className="h-8 w-20 rounded bg-slate-200" />
+                        <div className="h-7 w-20 rounded bg-slate-200" />
                     </div>
                 ))}
             </div>
-            <div className="h-12 rounded-lg bg-white border border-lys-border" />
-            <div className="h-72 rounded-lg bg-white border border-lys-border" />
+            <div className="h-12 rounded-lg bg-lys-card border border-lys-border shadow-xs" />
+            <div className="h-72 rounded-lg bg-lys-card border border-lys-border shadow-xs" />
         </div>
     )
 }
@@ -56,7 +56,7 @@ export function DashboardShell({ children, currentUser }: { children: React.Reac
     }, [])
 
     return (
-        <div className="flex h-screen overflow-hidden bg-lys-bg print:block print:h-auto print:overflow-visible">
+        <div className="flex h-[100dvh] overflow-hidden bg-lys-bg print:block print:h-auto print:overflow-visible">
             <NavigationProgress />
 
             {/* Mobile backdrop overlay */}
@@ -92,14 +92,14 @@ export function DashboardShell({ children, currentUser }: { children: React.Reac
                             type="button"
                             onClick={() => setMobileOpen(true)}
                             aria-label="Mở menu điều hướng"
-                            className="p-1.5 rounded-md mr-1.5 text-lys-teal-strong hover:bg-lys-subtle transition-colors cursor-pointer md:hidden flex items-center justify-center shrink-0"
+                            className="w-9 h-9 p-2 rounded-md mr-1.5 text-lys-teal-strong hover:bg-lys-subtle transition-colors cursor-pointer md:hidden flex items-center justify-center shrink-0"
                         >
                             <Menu size={20} />
                         </button>
                     }
                 />
 
-                <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto p-2.5 sm:p-3 md:p-4 outline-none print:overflow-visible print:p-0">
+                <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-5 outline-none print:overflow-visible print:p-0">
                     <Suspense fallback={<PageSkeleton />}>{children}</Suspense>
                 </main>
             </div>

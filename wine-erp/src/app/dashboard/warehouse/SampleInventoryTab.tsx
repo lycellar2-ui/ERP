@@ -282,7 +282,7 @@ export function SampleInventoryTab() {
 
                 {/* KPI Stat Cards */}
                 {stats && (
-                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
                         <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs space-y-1">
                             <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500">
                                 <span>Mặt Hàng Mẫu</span>
@@ -612,7 +612,7 @@ export function SampleInventoryTab() {
 
             {/* MODAL 1: KHAI BÁO / NHẬP HÀNG MẪU NGUYÊN LÔ */}
             {showAddModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-[2px]">
                     <div className="w-full max-w-lg p-5 sm:p-6 rounded-lg space-y-4 bg-white border border-slate-200 shadow-xl max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                             <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
@@ -776,7 +776,7 @@ export function SampleInventoryTab() {
 
             {/* MODAL 2: KIỂM TRA & NGHIỆM THU HÀNG MẪU */}
             {showInspectionModal && selectedProductForInspection && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-[2px]">
                     <div className="w-full max-w-lg p-5 sm:p-6 rounded-lg space-y-4 bg-white border border-slate-200 shadow-xl max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                             <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
@@ -967,7 +967,7 @@ export function SampleInventoryTab() {
 
             {/* MODAL 3: XUẤT SỬ DỤNG HÀNG MẪU */}
             {showOutboundModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-[2px]">
                     <div className="w-full max-w-lg p-5 sm:p-6 rounded-lg space-y-4 bg-white border border-slate-200 shadow-xl max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                             <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">

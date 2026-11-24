@@ -1596,7 +1596,7 @@ export function SalesVisitsClient({
 
                 {/* 2. COMPACT KPI SUMMARY CARDS */}
                 {teamMetrics && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-3">
                         <div className="p-2.5 sm:p-3 rounded-md bg-white border border-slate-200 space-y-0.5 shadow-xs">
                             <span className="text-[10px] font-semibold text-slate-500">{t.kpis.totalSalesReps}</span>
                             <div className="text-xl font-black text-slate-900 font-mono">
@@ -3143,7 +3143,7 @@ export function SalesVisitsClient({
 
                     {/* 2. Compact KPI Metrics Ribbon (Thanh chỉ số KPI liền mạch) */}
                     <div className="bg-white rounded-md border border-slate-200 shadow-xs p-2 sm:p-2.5">
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
                             {/* 1. Kế hoạch */}
                             <div className="px-3 py-1.5 flex flex-col justify-center">
                                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">

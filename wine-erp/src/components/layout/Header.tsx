@@ -1,15 +1,15 @@
 'use client'
 
-import { Bell, LogOut, User, Key, X, Save, Loader2, AlertCircle } from 'lucide-react'
+import { Bell, LogOut, User, Key, Save, AlertCircle, ChevronRight } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { createPortal } from 'react-dom'
 import { type SessionUser } from '@/lib/session'
 import { signOut } from '@/app/login/actions'
 import { updatePersonalProfile } from '@/app/dashboard/settings/actions'
 import { toast } from 'sonner'
 import { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from '@/lib/notifications'
 import { useAppLocale } from '@/lib/i18n'
+import { Badge, Button, Drawer, Field, Input } from '@/components/ui'
 
 interface HeaderProps {
     title?: string
@@ -150,63 +150,76 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
         window.location.href = '/login'
     }, [])
 
-    // Dynamic title mapper based on pathname
-    const getHeaderTitle = (): string => {
-        if (customTitle && customTitle !== "LY's Cellars") return customTitle
+    // Dynamic group & title mapper based on pathname
+    const getHeaderMeta = (): { group: string; title: string } => {
+        const isEn = locale === 'en'
+        if (customTitle && customTitle !== "LY's Cellars") {
+            return { group: isEn ? 'System' : 'Hệ Thống', title: customTitle }
+        }
 
-        if (pathname === '/dashboard/margin') return locale === 'en' ? 'Margin Calculator' : 'Kiểm Tra Biên Lợi Nhuận'
+        if (pathname === '/dashboard/margin') {
+            return {
+                group: isEn ? 'Sales & CRM' : 'Bán Hàng & CRM',
+                title: isEn ? 'Margin Calculator' : 'Kiểm Tra Biên Lợi Nhuận',
+            }
+        }
 
-        const routes = [
-            { path: '/dashboard/proposals', title: locale === 'en' ? 'Proposals & Submissions' : 'Tờ Trình — Đề Xuất' },
-            { path: '/dashboard/sop', title: locale === 'en' ? 'SOP & Guidelines' : 'Quy Trình Chuẩn (SOP)' },
-            { path: '/dashboard/hr', title: locale === 'en' ? 'HR & Documents' : 'Nhân Sự & Giấy Tờ' },
-            { path: '/dashboard/pipeline', title: locale === 'en' ? 'Sales Pipeline' : 'Pipeline Bán Hàng' },
-            { path: '/dashboard/products', title: locale === 'en' ? 'Product Catalog' : 'Sản Phẩm' },
-            { path: '/dashboard/suppliers', title: locale === 'en' ? 'Suppliers' : 'Nhà Cung Cấp' },
-            { path: '/dashboard/customers', title: locale === 'en' ? 'Customers' : 'Khách Hàng' },
-            { path: '/dashboard/contracts', title: locale === 'en' ? 'Contracts' : 'Hợp Đồng' },
-            { path: '/dashboard/procurement', title: locale === 'en' ? 'Purchase Orders' : 'Đơn Mua Hàng' },
-            { path: '/dashboard/shipments', title: locale === 'en' ? 'Shipments' : 'Lô Hàng' },
-            { path: '/dashboard/agency', title: locale === 'en' ? 'Agency Portal' : 'Cổng Đối Tác' },
-            { path: '/dashboard/costing', title: locale === 'en' ? 'Costing (CST)' : 'Tính Giá Vốn (CST)' },
-            { path: '/dashboard/warehouse', title: locale === 'en' ? 'Warehouses & Stock' : 'Kho Hàng' },
-            { path: '/dashboard/transfers', title: locale === 'en' ? 'Transfers' : 'Chuyển Kho' },
-            { path: '/dashboard/stock-count', title: locale === 'en' ? 'Stock Auditing' : 'Kiểm Kê' },
-            { path: '/dashboard/sales/visits', title: locale === 'en' ? 'Field Check-in Management' : 'Quản Lý Check-in Thị Trường' },
-            { path: '/dashboard/sales', title: locale === 'en' ? 'Sales Orders' : 'Đơn Bán Hàng' },
-            { path: '/dashboard/quotations', title: locale === 'en' ? 'Quotations' : 'Báo Giá' },
-            { path: '/dashboard/price-list', title: locale === 'en' ? 'Price Lists' : 'Bảng Giá' },
-            { path: '/dashboard/crm', title: locale === 'en' ? 'CRM — Customers' : 'CRM — Khách Hàng' },
-            { path: '/dashboard/consignment', title: locale === 'en' ? 'Consignments (CSG)' : 'Ký Gửi (CSG)' },
-            { path: '/dashboard/allocation', title: locale === 'en' ? 'Allocation Engine' : 'Phân Bổ Hàng Hóa' },
-            { path: '/dashboard/delivery/shipper', title: locale === 'en' ? 'Shipper E-POD' : 'Giao Hàng (Shipper)' },
-            { path: '/dashboard/delivery', title: locale === 'en' ? 'Deliveries & Logistics' : 'Vận Chuyển' },
-            { path: '/dashboard/returns', title: locale === 'en' ? 'Returns & CN' : 'Trả Hàng & CN' },
-            { path: '/dashboard/pos/loyalty', title: locale === 'en' ? 'POS Loyalty Program' : 'POS — Khách Hàng Thân Thiết' },
-            { path: '/dashboard/pos', title: locale === 'en' ? 'POS Showroom' : 'POS Showroom' },
-            { path: '/dashboard/qr-codes', title: locale === 'en' ? 'QR Traceability' : 'QR Truy Xuất' },
-            { path: '/dashboard/payment-requests', title: locale === 'en' ? 'Payment Requests & Budgets' : 'Đề Nghị Thanh Toán & Ngân Sách' },
-            { path: '/dashboard/finance', title: locale === 'en' ? 'Finance & Accounting' : 'Công Nợ & Kế Toán' },
-            { path: '/dashboard/reconciliation', title: locale === 'en' ? 'Reconciliation' : 'Đối Chiếu Hóa Đơn' },
-            { path: '/dashboard/declarations', title: locale === 'en' ? 'Customs Declarations' : 'Tờ Khai Thuế' },
-            { path: '/dashboard/stamps', title: locale === 'en' ? 'Stamp Management' : 'Quản Lý Tem' },
-            { path: '/dashboard/reports', title: locale === 'en' ? 'Reports' : 'Báo Cáo' },
-            { path: '/dashboard/market-price', title: locale === 'en' ? 'Market Prices' : 'Giá Thị Trường' },
-            { path: '/dashboard/kpi', title: locale === 'en' ? 'KPI Targets' : 'KPI Chỉ Tiêu' },
-            { path: '/dashboard/media', title: locale === 'en' ? 'Media Library' : 'Thư Viện Ảnh' },
-            { path: '/dashboard/audit-log', title: locale === 'en' ? 'Audit Log' : 'Nhật Ký Hệ Thống' },
-            { path: '/dashboard/ai', title: locale === 'en' ? 'AI & Prompt' : 'Trợ Lý AI & Prompt' },
-            { path: '/dashboard/settings/approval-matrix', title: locale === 'en' ? 'Approval Matrix' : 'Ma Trận Phân Quyền' },
-            { path: '/dashboard/settings/telegram', title: locale === 'en' ? 'Telegram Bot Settings' : 'Cấu Hình Telegram Bot' },
-            { path: '/dashboard/settings', title: locale === 'en' ? 'Settings & RBAC' : 'Cài Đặt & RBAC' },
-            { path: '/dashboard', title: locale === 'en' ? 'Executive Dashboard (CEO)' : 'Dashboard CEO' },
+        const routes: Array<{ path: string; group: string; title: string }> = [
+            { path: '/dashboard/proposals', group: isEn ? 'Overview' : 'Tổng Quan', title: isEn ? 'Proposals & Submissions' : 'Tờ Trình — Đề Xuất' },
+            { path: '/dashboard/sop', group: isEn ? 'Overview' : 'Tổng Quan', title: isEn ? 'SOP & Guidelines' : 'Quy Trình Chuẩn (SOP)' },
+            { path: '/dashboard/hr', group: isEn ? 'System' : 'Hệ Thống', title: isEn ? 'HR & Documents' : 'Nhân Sự & Giấy Tờ' },
+            { path: '/dashboard/pipeline', group: isEn ? 'Sales & CRM' : 'Bán Hàng & CRM', title: isEn ? 'Sales Pipeline' : 'Pipeline Bán Hàng' },
+            { path: '/dashboard/products', group: isEn ? 'Master Data' : 'Danh Mục', title: isEn ? 'Product Catalog' : 'Sản Phẩm' },
+            { path: '/dashboard/suppliers', group: isEn ? 'Master Data' : 'Danh Mục', title: isEn ? 'Suppliers' : 'Nhà Cung Cấp' },
+            { path: '/dashboard/customers', group: isEn ? 'Master Data' : 'Danh Mục', title: isEn ? 'Customers' : 'Khách Hàng' },
+            { path: '/dashboard/contracts', group: isEn ? 'Master Data' : 'Danh Mục', title: isEn ? 'Contracts' : 'Hợp Đồng' },
+            { path: '/dashboard/procurement', group: isEn ? 'Procurement' : 'Mua Hàng', title: isEn ? 'Purchase Orders' : 'Đơn Mua Hàng' },
+            { path: '/dashboard/shipments', group: isEn ? 'Procurement' : 'Mua Hàng', title: isEn ? 'Shipments' : 'Lô Hàng' },
+            { path: '/dashboard/agency', group: isEn ? 'Procurement' : 'Mua Hàng', title: isEn ? 'Agency Portal' : 'Cổng Đối Tác' },
+            { path: '/dashboard/costing', group: isEn ? 'Procurement' : 'Mua Hàng', title: isEn ? 'Costing (CST)' : 'Tính Giá Vốn (CST)' },
+            { path: '/dashboard/warehouse/print', group: isEn ? 'Warehouse & Logistics' : 'Kho Vận & Logistics', title: isEn ? 'Print Warehouse Slip' : 'In Phiếu Kho' },
+            { path: '/dashboard/warehouse', group: isEn ? 'Warehouse & Logistics' : 'Kho Vận & Logistics', title: isEn ? 'Warehouses & Stock' : 'Kho Hàng' },
+            { path: '/dashboard/transfers', group: isEn ? 'Warehouse & Logistics' : 'Kho Vận & Logistics', title: isEn ? 'Transfers' : 'Chuyển Kho' },
+            { path: '/dashboard/stock-count', group: isEn ? 'Warehouse & Logistics' : 'Kho Vận & Logistics', title: isEn ? 'Stock Auditing' : 'Kiểm Kê' },
+            { path: '/dashboard/sales/print', group: isEn ? 'Sales & CRM' : 'Bán Hàng & CRM', title: isEn ? 'Print Sales Order' : 'In Đơn Bán Hàng' },
+            { path: '/dashboard/sales/visits', group: isEn ? 'Sales & CRM' : 'Bán Hàng & CRM', title: isEn ? 'Field Check-in Management' : 'Quản Lý Check-in Thị Trường' },
+            { path: '/dashboard/sales', group: isEn ? 'Sales & CRM' : 'Bán Hàng & CRM', title: isEn ? 'Sales Orders' : 'Đơn Bán Hàng' },
+            { path: '/dashboard/quotations', group: isEn ? 'Sales & CRM' : 'Bán Hàng & CRM', title: isEn ? 'Quotations' : 'Báo Giá' },
+            { path: '/dashboard/price-list', group: isEn ? 'Sales & CRM' : 'Bán Hàng & CRM', title: isEn ? 'Price Lists' : 'Bảng Giá' },
+            { path: '/dashboard/crm', group: isEn ? 'Sales & CRM' : 'Bán Hàng & CRM', title: isEn ? 'CRM — Customers' : 'CRM — Khách Hàng' },
+            { path: '/dashboard/consignment', group: isEn ? 'Warehouse & Logistics' : 'Kho Vận & Logistics', title: isEn ? 'Consignments (CSG)' : 'Ký Gửi (CSG)' },
+            { path: '/dashboard/allocation', group: isEn ? 'Sales & CRM' : 'Bán Hàng & CRM', title: isEn ? 'Allocation Engine' : 'Phân Bổ Hàng Hóa' },
+            { path: '/dashboard/delivery/shipper', group: isEn ? 'Warehouse & Logistics' : 'Kho Vận & Logistics', title: isEn ? 'Shipper E-POD' : 'Giao Hàng (Shipper)' },
+            { path: '/dashboard/delivery', group: isEn ? 'Warehouse & Logistics' : 'Kho Vận & Logistics', title: isEn ? 'Deliveries & Logistics' : 'Vận Chuyển' },
+            { path: '/dashboard/returns', group: isEn ? 'Warehouse & Logistics' : 'Kho Vận & Logistics', title: isEn ? 'Returns & CN' : 'Trả Hàng & CN' },
+            { path: '/dashboard/pos/loyalty', group: isEn ? 'Sales & CRM' : 'Bán Hàng & CRM', title: isEn ? 'POS Loyalty Program' : 'POS — Khách Hàng Thân Thiết' },
+            { path: '/dashboard/pos', group: isEn ? 'Sales & CRM' : 'Bán Hàng & CRM', title: 'POS Showroom' },
+            { path: '/dashboard/qr-codes', group: isEn ? 'Warehouse & Logistics' : 'Kho Vận & Logistics', title: isEn ? 'QR Traceability' : 'QR Truy Xuất' },
+            { path: '/dashboard/payment-requests', group: isEn ? 'Finance' : 'Tài Chính', title: isEn ? 'Payment Requests & Budgets' : 'Đề Nghị Thanh Toán & Ngân Sách' },
+            { path: '/dashboard/finance', group: isEn ? 'Finance' : 'Tài Chính', title: isEn ? 'Finance & Accounting' : 'Công Nợ & Kế Toán' },
+            { path: '/dashboard/reconciliation', group: isEn ? 'Finance' : 'Tài Chính', title: isEn ? 'Reconciliation' : 'Đối Chiếu Hóa Đơn' },
+            { path: '/dashboard/declarations', group: isEn ? 'Finance' : 'Tài Chính', title: isEn ? 'Customs Declarations' : 'Tờ Khai Thuế' },
+            { path: '/dashboard/stamps', group: isEn ? 'Finance' : 'Tài Chính', title: isEn ? 'Stamp Management' : 'Quản Lý Tem' },
+            { path: '/dashboard/reports', group: isEn ? 'Finance' : 'Tài Chính', title: isEn ? 'Reports' : 'Báo Cáo' },
+            { path: '/dashboard/market-price', group: isEn ? 'Finance' : 'Tài Chính', title: isEn ? 'Market Prices' : 'Giá Thị Trường' },
+            { path: '/dashboard/kpi', group: isEn ? 'Finance' : 'Tài Chính', title: isEn ? 'KPI Targets' : 'KPI Chỉ Tiêu' },
+            { path: '/dashboard/media', group: isEn ? 'System' : 'Hệ Thống', title: isEn ? 'Media Library' : 'Thư Viện Ảnh' },
+            { path: '/dashboard/audit-log', group: isEn ? 'System' : 'Hệ Thống', title: isEn ? 'Audit Log' : 'Nhật Ký Hệ Thống' },
+            { path: '/dashboard/ai', group: isEn ? 'System' : 'Hệ Thống', title: isEn ? 'AI & Prompt' : 'Trợ Lý AI & Prompt' },
+            { path: '/dashboard/guides', group: isEn ? 'System' : 'Hệ Thống', title: isEn ? 'Video Guides' : 'Video Hướng Dẫn' },
+            { path: '/dashboard/settings/approval-matrix', group: isEn ? 'System' : 'Hệ Thống', title: isEn ? 'Approval Matrix' : 'Ma Trận Phân Quyền' },
+            { path: '/dashboard/settings/telegram', group: isEn ? 'System' : 'Hệ Thống', title: isEn ? 'Telegram Bot Settings' : 'Cấu Hình Telegram Bot' },
+            { path: '/dashboard/settings', group: isEn ? 'System' : 'Hệ Thống', title: isEn ? 'Settings & RBAC' : 'Cài Đặt & RBAC' },
+            { path: '/dashboard', group: isEn ? 'Overview' : 'Tổng Quan', title: isEn ? 'Executive Dashboard (CEO)' : 'Dashboard CEO' },
         ]
 
         const matched = routes.find(r => pathname.startsWith(r.path))
-        return matched ? matched.title : (locale === 'en' ? 'System' : 'Hệ Thống')
+        return matched
+            ? { group: matched.group, title: matched.title }
+            : { group: isEn ? 'Workspace' : 'Hệ Thống', title: isEn ? 'System' : 'Hệ Thống' }
     }
 
-    const title = getHeaderTitle()
+    const { group, title } = getHeaderMeta()
 
     // Click outside to close dropdowns
     useEffect(() => {
@@ -224,13 +237,17 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
 
     return (
         <header
-            className="sticky top-0 z-10 flex items-center justify-between px-2.5 sm:px-4 h-[42px] bg-white/95 backdrop-blur-md border-b border-lys-border"
+            className="sticky top-0 z-30 flex items-center justify-between px-3 sm:px-5 h-12 bg-white/95 backdrop-blur-md border-b border-lys-border"
         >
-            {/* Page title */}
-            <div className="flex items-center min-w-0 mr-1.5 sm:mr-3">
+            {/* Page breadcrumb & title */}
+            <div className="flex items-center min-w-0 mr-2 sm:mr-4">
                 {mobileMenuButton}
-                <div className="min-w-0">
-                    <h1 className="text-[13px] sm:text-[15px] font-semibold leading-none text-lys-primary truncate max-w-[120px] xs:max-w-[180px] sm:max-w-none">
+                <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="hidden sm:inline text-xs font-medium text-lys-muted shrink-0">
+                        {group}
+                    </span>
+                    <ChevronRight size={13} className="hidden sm:inline text-lys-dim shrink-0" aria-hidden />
+                    <h1 className="text-sm sm:text-[15px] font-semibold leading-none text-lys-primary truncate">
                         {title}
                     </h1>
                 </div>
@@ -240,14 +257,14 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 {/* Global Language Switcher */}
                 {pathname.startsWith('/dashboard') && (
-                    <div className="flex items-center p-0.5 rounded-lg bg-white border border-slate-200 text-[11px] font-bold shadow-xs">
+                    <div className="flex items-center p-0.5 rounded-md bg-lys-subtle border border-lys-border text-[11px] font-semibold">
                         <button
                             type="button"
                             onClick={() => setLocale('vi')}
-                            className={`px-1.5 sm:px-2 py-0.5 rounded transition-all cursor-pointer ${
+                            className={`px-2 py-1 rounded transition-all cursor-pointer ${
                                 locale === 'vi'
                                     ? 'bg-lys-teal-strong text-white shadow-xs'
-                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                                    : 'text-lys-secondary hover:text-lys-primary hover:bg-white/70'
                             }`}
                             title="Tiếng Việt"
                         >
@@ -256,10 +273,10 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                         <button
                             type="button"
                             onClick={() => setLocale('en')}
-                            className={`px-1.5 sm:px-2 py-0.5 rounded transition-all cursor-pointer ${
+                            className={`px-2 py-1 rounded transition-all cursor-pointer ${
                                 locale === 'en'
                                     ? 'bg-lys-teal-strong text-white shadow-xs'
-                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                                    : 'text-lys-secondary hover:text-lys-primary hover:bg-white/70'
                             }`}
                             title="English"
                         >
@@ -275,12 +292,12 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                         type="button"
                         onClick={handleToggleNoti}
                         aria-label={locale === 'en' ? 'Notifications' : 'Thông báo'}
-                        className="relative flex items-center justify-center w-8 h-8 rounded-md bg-white border border-lys-border text-lys-secondary transition-all duration-150 hover:border-lys-teal hover:text-lys-teal-strong active:scale-90 cursor-pointer"
+                        className="relative flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 rounded-md bg-white border border-lys-border text-lys-secondary transition-all duration-150 hover:border-lys-teal hover:text-lys-teal-strong active:scale-95 cursor-pointer"
                     >
                         <Bell size={15} />
                         {/* Notification badge */}
                         {unreadCount > 0 && (
-                            <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold inline-flex items-center justify-center text-white bg-tone-danger-fg whitespace-nowrap shrink-0 animate-pop">
+                            <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full text-[11px] font-bold leading-none inline-flex items-center justify-center text-white bg-tone-danger-fg whitespace-nowrap shrink-0 animate-pop">
                                 {unreadCount > 9 ? '9+' : unreadCount}
                             </span>
                         )}
@@ -295,6 +312,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                 </span>
                                 {unreadCount > 0 && (
                                     <button
+                                        type="button"
                                         onClick={handleMarkAllAsRead}
                                         className="text-[11px] font-semibold hover:underline text-lys-teal-strong cursor-pointer"
                                     >
@@ -344,6 +362,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                         ))}
                                         {hasMore && (
                                             <button
+                                                type="button"
                                                 onClick={() => fetchNotifications(true)}
                                                 disabled={loadingNoti}
                                                 className="w-full py-2 text-center text-[11px] font-semibold border-t border-lys-border hover:underline text-lys-teal-strong cursor-pointer"
@@ -364,7 +383,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                         type="button"
                         onClick={() => setShowProfile(!showProfile)}
                         aria-label={locale === 'en' ? 'Account menu' : 'Menu tài khoản'}
-                        className="flex items-center gap-1.5 pl-0.5 pr-2.5 py-0.5 rounded-md bg-white border border-lys-border transition-all duration-150 hover:border-lys-teal active:scale-95 cursor-pointer"
+                        className="flex items-center gap-1.5 h-9 sm:h-8 pl-1 pr-2.5 rounded-md bg-white border border-lys-border transition-all duration-150 hover:border-lys-teal active:scale-95 cursor-pointer"
                     >
                         <div className="w-6 h-6 flex items-center justify-center text-[11px] font-bold rounded bg-lys-teal-soft text-lys-teal-strong border border-tone-brand-border">
                             {(currentUser?.name?.[0] || 'A').toUpperCase()}
@@ -400,9 +419,9 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                             return true
                                         })
                                     )).map(r => (
-                                        <span key={r} className="inline-block text-[11px] px-1.5 py-0.5 rounded font-semibold bg-lys-teal-soft text-lys-teal-strong whitespace-nowrap shrink-0">
+                                        <Badge key={r} tone="brand">
                                             {r}
-                                        </span>
+                                        </Badge>
                                     ))}
                                 </div>
                             </div>
@@ -413,7 +432,7 @@ export function Header({ title: customTitle, subtitle, mobileMenuButton, current
                                         setShowProfile(false)
                                         setShowMyAccount(true)
                                     }}
-                                    className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold rounded transition-colors duration-150 text-left text-slate-700 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
+                                    className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold rounded transition-colors duration-150 text-left text-lys-primary hover:bg-lys-subtle cursor-pointer"
                                 >
                                     <User size={14} className="text-lys-teal-strong" />
                                     {locale === 'en' ? 'My Account' : 'Tài khoản của tôi'}
@@ -462,11 +481,6 @@ function MyAccountDrawer({ open, onClose, currentUser, locale = 'vi' }: MyAccoun
     const [name, setName] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
-    const [mounted, setMounted] = useState(false)
-
-    useEffect(() => {
-        setMounted(true)
-    }, [])
 
     useEffect(() => {
         if (currentUser) {
@@ -476,20 +490,6 @@ function MyAccountDrawer({ open, onClose, currentUser, locale = 'vi' }: MyAccoun
             setError('')
         }
     }, [currentUser, open])
-
-    useEffect(() => {
-        if (!open) return
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && !saving) onClose()
-        }
-        window.addEventListener('keydown', handleKeyDown)
-        return () => window.removeEventListener('keydown', handleKeyDown)
-    }, [open, saving, onClose])
-
-    if (!open || !currentUser || !mounted) return null
-
-    const inputClassName =
-        'w-full px-3 py-2.5 rounded-md border border-slate-200 bg-white text-slate-900 text-base sm:text-sm outline-none focus:border-[#0891B2] transition-colors'
 
     async function handleSave() {
         setError('')
@@ -526,130 +526,105 @@ function MyAccountDrawer({ open, onClose, currentUser, locale = 'vi' }: MyAccoun
         }
     }
 
-    return createPortal(
-        <div
-            className="fixed inset-0 z-[9999] flex justify-end"
-            style={{ background: 'rgba(15, 23, 42, 0.45)' }}
-            onClick={() => { if (!saving) onClose() }}
+    if (!currentUser) return null
+
+    return (
+        <Drawer
+            open={open}
+            onClose={() => { if (!saving) onClose() }}
+            size="sm"
+            className="bg-lys-bg"
+            title={
+                <span className="inline-flex items-center gap-2">
+                    <User size={18} className="text-lys-teal" aria-hidden />
+                    <span>{isEn ? 'My Account' : 'Tài Khoản Của Tôi'}</span>
+                </span>
+            }
+            footer={
+                <>
+                    <Button variant="secondary" onClick={onClose} disabled={saving}>
+                        {isEn ? 'Cancel' : 'Hủy'}
+                    </Button>
+                    <Button variant="primary" onClick={handleSave} loading={saving}>
+                        {!saving && <Save size={15} aria-hidden />}
+                        {saving
+                            ? (isEn ? 'Saving changes...' : 'Đang lưu thay đổi...')
+                            : (isEn ? 'Save Changes' : 'Lưu Thay Đổi')}
+                    </Button>
+                </>
+            }
         >
-            <div
-                role="dialog"
-                aria-modal="true"
-                className="w-full max-w-md h-full overflow-y-auto p-4 sm:p-6 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-250"
-                style={{ background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}
-                onClick={e => e.stopPropagation()}
-            >
-                <div>
-                    <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
-                        <div className="flex items-center gap-2">
-                            <User size={18} style={{ color: '#0891B2' }} />
-                            <h3 className="text-lg font-bold" style={{ color: '#0F172A' }}>
-                                {isEn ? 'My Account' : 'Tài Khoản Của Tôi'}
-                            </h3>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            aria-label={isEn ? 'Close' : 'Đóng'}
-                            className="p-1.5 rounded-md hover:bg-slate-200/70 transition-colors cursor-pointer"
-                        >
-                            <X size={18} style={{ color: '#64748B' }} />
-                        </button>
-                    </div>
-
-                    {error && (
-                        <div className="mb-4 p-3 rounded text-sm flex items-center gap-2"
-                            style={{ background: 'rgba(185,28,28,0.15)', border: '1px solid rgba(185,28,28,0.3)', color: '#B91C1C' }}>
-                            <AlertCircle size={14} /> {error}
-                        </div>
-                    )}
-
-                    <div className="space-y-4">
-                        <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>Email</label>
-                            <div className="text-sm font-semibold p-3 rounded-md font-mono" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569' }}>
-                                {currentUser.email}
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>
-                                {isEn ? 'Role' : 'Vai Trò'}
-                            </label>
-                            <div className="flex flex-wrap gap-1 p-3 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                {(currentUser.roles || []).map(r => (
-                                    <span key={r} className="inline-block text-xs px-2 py-0.5 rounded font-bold whitespace-nowrap shrink-0"
-                                        style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0E7490' }}>
-                                        {r}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#475569' }}>
-                                {isEn ? 'Full Name *' : 'Họ Tên *'}
-                            </label>
-                            <input
-                                className={inputClassName}
-                                placeholder={isEn ? 'Your full name' : 'Họ và tên của bạn'}
-                                value={name}
-                                onChange={e => setName(e.target.value)}
-                            />
-                        </div>
-
-                        <div className="pt-4 border-t" style={{ borderColor: '#E2E8F0' }}>
-                            <div className="flex items-center gap-1.5 mb-3">
-                                <Key size={14} style={{ color: '#0891B2' }} />
-                                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#475569' }}>
-                                    {isEn ? 'Change Password' : 'Đổi Mật Khẩu'}
-                                </span>
-                            </div>
-
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="text-[11px] font-semibold mb-1 block" style={{ color: '#64748B' }}>
-                                        {isEn ? 'New Password' : 'Mật Khẩu Mới'}
-                                    </label>
-                                    <input
-                                        className={inputClassName}
-                                        type="password"
-                                        placeholder={isEn ? 'Enter new password (min 6 chars)' : 'Nhập mật khẩu mới (tối thiểu 6 ký tự)'}
-                                        value={password}
-                                        onChange={e => setPassword(e.target.value)}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-[11px] font-semibold mb-1 block" style={{ color: '#64748B' }}>
-                                        {isEn ? 'Confirm New Password' : 'Xác Nhận Mật Khẩu Mới'}
-                                    </label>
-                                    <input
-                                        className={inputClassName}
-                                        type="password"
-                                        placeholder={isEn ? 'Confirm new password' : 'Xác nhận mật khẩu mới'}
-                                        value={confirmPassword}
-                                        onChange={e => setConfirmPassword(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="w-full mt-8 flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-md transition-all hover:opacity-90 disabled:opacity-50 cursor-pointer"
-                    style={{ background: '#0E7490', color: '#FFFFFF' }}
+            {error && (
+                <div
+                    role="alert"
+                    className="mb-4 p-3 rounded-md text-sm flex items-center gap-2 bg-tone-danger-bg border border-tone-danger-border text-tone-danger-fg"
                 >
-                    {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                    {saving
-                        ? (isEn ? 'Saving changes...' : 'Đang lưu thay đổi...')
-                        : (isEn ? 'Save Changes' : 'Lưu Thay Đổi')}
-                </button>
+                    <AlertCircle size={14} className="shrink-0" aria-hidden />
+                    <span>{error}</span>
+                </div>
+            )}
+
+            <div className="space-y-4">
+                <Field label="Email">
+                    <div className="text-sm font-semibold px-3 py-2.5 rounded-md font-mono bg-lys-card border border-lys-border text-lys-secondary">
+                        {currentUser.email}
+                    </div>
+                </Field>
+
+                <Field label={isEn ? 'Role' : 'Vai Trò'}>
+                    <div className="flex flex-wrap gap-1.5 p-3 rounded-md bg-lys-card border border-lys-border">
+                        {(currentUser.roles || []).map(r => (
+                            <Badge key={r} tone="brand">
+                                {r}
+                            </Badge>
+                        ))}
+                    </div>
+                </Field>
+
+                <Field label={isEn ? 'Full Name' : 'Họ Tên'} required>
+                    {id => (
+                        <Input
+                            id={id}
+                            placeholder={isEn ? 'Your full name' : 'Họ và tên của bạn'}
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                        />
+                    )}
+                </Field>
+
+                <div className="pt-4 border-t border-lys-border space-y-3">
+                    <div className="flex items-center gap-1.5">
+                        <Key size={14} className="text-lys-teal" aria-hidden />
+                        <span className="text-xs font-bold uppercase tracking-wider text-lys-secondary">
+                            {isEn ? 'Change Password' : 'Đổi Mật Khẩu'}
+                        </span>
+                    </div>
+
+                    <Field label={isEn ? 'New Password' : 'Mật Khẩu Mới'}>
+                        {id => (
+                            <Input
+                                id={id}
+                                type="password"
+                                placeholder={isEn ? 'Enter new password (min 6 chars)' : 'Nhập mật khẩu mới (tối thiểu 6 ký tự)'}
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                            />
+                        )}
+                    </Field>
+
+                    <Field label={isEn ? 'Confirm New Password' : 'Xác Nhận Mật Khẩu Mới'}>
+                        {id => (
+                            <Input
+                                id={id}
+                                type="password"
+                                placeholder={isEn ? 'Confirm new password' : 'Xác nhận mật khẩu mới'}
+                                value={confirmPassword}
+                                onChange={e => setConfirmPassword(e.target.value)}
+                            />
+                        )}
+                    </Field>
+                </div>
             </div>
-        </div>,
-        document.body
+        </Drawer>
     )
 }

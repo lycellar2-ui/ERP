@@ -350,7 +350,7 @@ export function ShipmentsClient({ initialRows, initialTotal, stats }: Props) {
     }
 
     return (
-        <div className="flex flex-col gap-4 max-w-screen-2xl">
+        <div className="flex flex-col gap-4 max-w-screen-2xl w-full mx-auto">
             <PageHeader
                 description={L.header.description}
                 actions={

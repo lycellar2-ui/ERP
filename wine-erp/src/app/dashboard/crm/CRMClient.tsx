@@ -18,7 +18,7 @@ import { WeeklyVisitPlannerPanel } from './WeeklyVisitPlannerPanel'
 import { PipelinePanel } from './PipelinePanel'
 import { TelesalesProspectingPanel } from './TelesalesProspectingPanel'
 import { formatVND, formatDate } from '@/lib/utils'
-import { PageHeader, StatGrid, StatCard, Button } from '@/components/ui'
+import { PageHeader, StatGrid, StatCard, StatusTabs, Button } from '@/components/ui'
 import { useAppLocale } from '@/lib/i18n'
 
 const TYPE_CFG: Record<string, { label: string; labelEn: string; color: string; bg: string }> = {
@@ -261,10 +261,9 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
     }
 
     return (
-        <div className="space-y-4 max-w-screen-2xl">
+        <div className="space-y-4 max-w-screen-2xl w-full mx-auto">
             {/* Header */}
             <PageHeader
-                title={isEn ? 'CRM – Customer Relationship Management' : 'CRM – Quan Hệ Khách Hàng'}
                 description={isEn ? '360° Customer View – Transaction history, interactions, sales pipeline & customer care' : '360° Customer View – Lịch sử giao dịch, tương tác, cơ hội bán hàng & chăm sóc khách hàng'}
                 actions={
                     <Button
@@ -323,28 +322,18 @@ export function CRMClient({ initialRows, initialTotal, stats }: Props) {
             </StatGrid>
 
             {/* CRM Tabs */}
-            <div className="flex gap-1 p-1 bg-white rounded-lg border border-lys-border w-fit overflow-x-auto max-w-full">
-                {([
-                    { key: 'customers' as const, label: isEn ? 'Customers' : 'Khách Hàng', icon: Users },
-                    { key: 'calls' as const, label: isEn ? 'Targets & Calls' : 'Mục Tiêu & Cuộc Gọi', icon: PhoneCall },
-                    { key: 'pipeline' as const, label: isEn ? 'Sales Pipeline' : 'Cơ hội bán hàng (Pipeline)', icon: Target },
-                    { key: 'visits' as const, label: isEn ? 'Weekly Planner' : 'Kế hoạch tuần', icon: Calendar },
-                    { key: 'events' as const, label: isEn ? 'Tasting Events' : 'Sự Kiện Thử Rượu', icon: Wine },
-                    { key: 'complaints' as const, label: isEn ? 'Complaint Tickets' : 'Phiếu Khiếu Nại', icon: AlertTriangle },
-                ]).map(tab => (
-                    <button
-                        key={tab.key}
-                        onClick={() => setCrmTab(tab.key)}
-                        className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap ${
-                            crmTab === tab.key
-                                ? 'bg-lys-primary/10 text-lys-primary border-b-2 border-lys-primary font-bold'
-                                : 'text-lys-muted hover:text-lys-title hover:bg-lys-bg'
-                        }`}
-                    >
-                        <tab.icon size={13} /> {tab.label}
-                    </button>
-                ))}
-            </div>
+            <StatusTabs
+                items={[
+                    { value: 'customers' as const, label: isEn ? 'Customers' : 'Khách Hàng', icon: Users },
+                    { value: 'calls' as const, label: isEn ? 'Targets & Calls' : 'Mục Tiêu & Cuộc Gọi', icon: PhoneCall },
+                    { value: 'pipeline' as const, label: isEn ? 'Sales Pipeline' : 'Cơ hội bán hàng (Pipeline)', icon: Target },
+                    { value: 'visits' as const, label: isEn ? 'Weekly Planner' : 'Kế hoạch tuần', icon: Calendar },
+                    { value: 'events' as const, label: isEn ? 'Tasting Events' : 'Sự Kiện Thử Rượu', icon: Wine },
+                    { value: 'complaints' as const, label: isEn ? 'Complaint Tickets' : 'Phiếu Khiếu Nại', icon: AlertTriangle },
+                ]}
+                value={crmTab}
+                onChange={setCrmTab}
+            />
 
             {/* Tab: Telesales & Prospecting (Corporate & Retail Calls & Targets) */}
             {crmTab === 'calls' && <TelesalesProspectingPanel />}

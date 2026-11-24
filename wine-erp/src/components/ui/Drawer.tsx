@@ -80,7 +80,7 @@ export function Drawer({ open, onClose, title, description, headerExtra, actions
 
     return createPortal(
         <div className="fixed inset-0 z-50 flex justify-end">
-            <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-[1px] animate-fade-in" onClick={onClose} aria-hidden />
+            <div className="absolute inset-0 bg-slate-900/35 backdrop-blur-[2px] animate-fade-in" onClick={onClose} aria-hidden />
             <div
                 ref={panelRef}
                 role="dialog"
@@ -107,7 +107,7 @@ export function Drawer({ open, onClose, title, description, headerExtra, actions
                             type="button"
                             onClick={onClose}
                             aria-label="Đóng"
-                            className="flex items-center justify-center w-8 h-8 rounded-md text-lys-muted hover:bg-lys-subtle hover:text-lys-primary active:scale-90 transition-all duration-100 cursor-pointer shrink-0"
+                            className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 rounded-md text-lys-muted hover:bg-lys-subtle hover:text-lys-primary active:scale-90 transition-all duration-100 cursor-pointer shrink-0"
                         >
                             <X size={18} />
                         </button>

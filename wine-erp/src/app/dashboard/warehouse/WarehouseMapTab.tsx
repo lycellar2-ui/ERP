@@ -1071,7 +1071,7 @@ export function WarehouseMapTab({
             {/* POPUP MODAL: Detailed Location Inventory Modal */}
             {/* ═══════════════════════════════════════════════════ */}
             {showLocModal && selectedLoc && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[999] flex items-center justify-center p-3 sm:p-4">
+                <div className="fixed inset-0 bg-slate-900/35 backdrop-blur-[2px] z-[999] flex items-center justify-center p-3 sm:p-4">
                     <div className="rounded-lg shadow-2xl max-w-2xl w-full overflow-hidden bg-white border border-slate-200 text-slate-900 flex flex-col max-h-[85vh]">
                         {/* Modal Header */}
                         <div className="flex items-center justify-between p-3.5 sm:p-4 bg-slate-50 border-b border-slate-200">
@@ -1164,7 +1164,7 @@ export function WarehouseMapTab({
                 <div
                     role="dialog"
                     aria-modal="true"
-                    className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4"
+                    className="fixed inset-0 z-[100] bg-slate-900/35 backdrop-blur-[2px] flex items-center justify-center p-4"
                     onClick={() => setPendingLabelPos(null)}
                 >
                     <div

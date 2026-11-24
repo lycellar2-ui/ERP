@@ -118,7 +118,7 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
     const totalPages = Math.ceil(total / pageSize)
 
     return (
-        <div className="flex flex-col gap-4 max-w-screen-2xl">
+        <div className="flex flex-col gap-4 max-w-screen-2xl w-full mx-auto">
             <PageHeader
                 description={L.header.description}
                 actions={
@@ -185,7 +185,7 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
                     <Loader2 size={24} className="animate-spin text-lys-teal-strong" />
                 </div>
             ) : items.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
                     {items.map(item => {
                         const typeLabel = (L.mediaTypes as Record<string, string>)[item.mediaType] ?? item.mediaType
                         return (
@@ -278,7 +278,7 @@ export function MediaClient({ initialItems, initialTotal, stats }: MediaClientPr
             {/* Lightbox */}
             {lightbox && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 backdrop-blur-[2px] p-4"
                     onClick={() => setLightbox(null)}
                 >
                     <div className="relative max-w-4xl max-h-[90vh] bg-white p-4 rounded-lg border border-lys-border shadow-lg" onClick={e => e.stopPropagation()}>

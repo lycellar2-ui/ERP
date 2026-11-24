@@ -288,7 +288,7 @@ export function PipelinePanel() {
             </div>
 
             {/* Kanban Board */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2" style={{ minHeight: '450px' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-2" style={{ minHeight: '450px' }}>
                 {STAGES.map(stage => {
                     const stageRows = filteredRows.filter(r => r.stage === stage.key)
                     const stageValue = stageRows.reduce((s, r) => s + r.expectedValue, 0)
@@ -358,7 +358,7 @@ export function PipelinePanel() {
             {/* ═══ Detail Drawer ═══ */}
             {(detail || detailLoading) && (
                 <>
-                    <div className="fixed inset-0 z-40" style={{ background: 'rgba(15,23,42,0.4)' }} onClick={() => { setDetail(null); setEditing(false) }} />
+                    <div className="fixed inset-0 bg-slate-900/35 backdrop-blur-[2px] z-40" onClick={() => { setDetail(null); setEditing(false) }} />
                     <div className="fixed top-0 right-0 h-full z-50 w-full max-w-lg overflow-y-auto"
                         style={{ background: '#F8FAFC', borderLeft: '1px solid #E2E8F0', animation: 'slideInRight 0.2s ease-out' }}>
                         {detailLoading ? (
@@ -544,7 +544,7 @@ export function PipelinePanel() {
             {/* ═══ Lost Reason Modal ═══ */}
             {lostModal && (
                 <>
-                    <div className="fixed inset-0 z-[60]" style={{ background: 'rgba(15,23,42,0.4)' }} onClick={() => setLostModal(null)} />
+                    <div className="fixed inset-0 bg-slate-900/35 backdrop-blur-[2px] z-[60]" onClick={() => setLostModal(null)} />
                     <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-full max-w-sm p-6 rounded-lg"
                         style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                         <div className="flex items-center gap-2 mb-4">
@@ -577,7 +577,7 @@ export function PipelinePanel() {
             {/* ═══ Create Modal ═══ */}
             {createOpen && (
                 <>
-                    <div className="fixed inset-0 z-40" style={{ background: 'rgba(15,23,42,0.4)' }} onClick={() => setCreateOpen(false)} />
+                    <div className="fixed inset-0 bg-slate-900/35 backdrop-blur-[2px] z-40" onClick={() => setCreateOpen(false)} />
                     <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md p-6 rounded-lg"
                         style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                         <div className="flex items-center justify-between mb-4">

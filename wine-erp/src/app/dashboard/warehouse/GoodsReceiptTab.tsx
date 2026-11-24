@@ -198,17 +198,18 @@ function FilterTabs({ active, counts, onChange }: { active: string; counts: Reco
                         key={tab}
                         onClick={() => onChange(tab === 'ALL' ? '' : tab)}
                         className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg whitespace-nowrap transition-all cursor-pointer"
+                        type="button"
                         style={{
-                            background: isActive ? 'rgba(8, 145, 178, 0.1)' : 'transparent',
-                            color: isActive ? '#0891B2' : '#475569',
-                            border: isActive ? '1px solid rgba(8, 145, 178, 0.35)' : '1px solid transparent',
+                            background: isActive ? 'rgba(14, 116, 144, 0.1)' : 'transparent',
+                            color: isActive ? '#0E7490' : '#475569',
+                            border: isActive ? '1px solid rgba(14, 116, 144, 0.35)' : '1px solid transparent',
                         }}
                     >
                         <span>{TAB_LABELS[tab]}</span>
                         <span
-                            className="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold"
+                            className="px-1.5 py-0.5 rounded-md text-[11px] font-mono font-bold"
                             style={{
-                                background: isActive ? '#0891B2' : '#E2E8F0',
+                                background: isActive ? '#0E7490' : '#E2E8F0',
                                 color: isActive ? '#FFFFFF' : '#475569',
                             }}
                         >
@@ -924,7 +925,7 @@ export function GoodsReceiptTab({ warehouses }: {
 
             {/* ── 6. Detail Slide-over Drawer (Matching Sales/Procurement) ── */}
             {(detailData || detailLoading) && (
-                <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/35 backdrop-blur-[2px] transition-opacity animate-in fade-in duration-200">
                     <div className="w-full sm:w-[780px] max-w-full h-full overflow-y-auto border-l border-slate-200 bg-white shadow-2xl flex flex-col">
                         {/* Drawer Header */}
                         <div className="flex items-center justify-between p-5 border-b border-slate-200 bg-slate-50/50 flex-shrink-0">
@@ -1319,7 +1320,7 @@ function CreateGRDrawer({ warehouses, onClose, onCreated }: {
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/35 backdrop-blur-[2px] transition-opacity animate-in fade-in duration-200">
             <div className="w-full sm:w-[740px] max-w-full h-full overflow-hidden border-l border-slate-200 bg-white shadow-2xl flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-200 bg-slate-50 flex-shrink-0">

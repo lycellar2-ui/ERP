@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 /** Compact data table primitives (row ≈ 40px, 13px text, sticky header). */
 export function Table({ className, children, ...props }: HTMLAttributes<HTMLTableElement>) {
     return (
-        <div className="relative w-full overflow-auto bg-lys-card border border-lys-border rounded-lg">
+        <div className="relative w-full overflow-auto bg-lys-card border border-lys-border rounded-lg shadow-xs">
             <table className={cn('w-full border-collapse type-table text-lys-primary', className)} {...props}>
                 {children}
             </table>
@@ -14,7 +14,7 @@ export function Table({ className, children, ...props }: HTMLAttributes<HTMLTabl
 }
 
 export function THead({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
-    return <thead className={cn('sticky top-0 z-10 bg-lys-subtle', className)} {...props} />
+    return <thead className={cn('sticky top-0 z-10 bg-lys-subtle/95 backdrop-blur-[2px]', className)} {...props} />
 }
 
 export function TBody({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {

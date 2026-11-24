@@ -85,7 +85,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
 
     if (isLoading || !detail) {
         return (
-            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
+            <div className="fixed inset-0 bg-slate-900/35 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
                 <div className="bg-white p-6 rounded-lg flex items-center gap-3 text-slate-700 font-bold shadow-2xl animate-modal-in">
                     <RefreshCw className="w-5 h-5 animate-spin text-emerald-600" />
                     {t.tableModal.loading}
@@ -183,7 +183,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
     }
 
     return (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-50 flex items-center justify-center p-2 sm:p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-900/35 backdrop-blur-[2px] z-50 flex items-center justify-center p-2 sm:p-4 animate-fade-in">
             <div className="bg-white border border-slate-200 rounded-lg w-full max-w-[96vw] h-[94vh] flex flex-col text-slate-900 shadow-2xl overflow-hidden animate-modal-in">
                 {/* MODAL HEADER FOR LEAD COMMAND CENTER */}
                 <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
@@ -624,7 +624,7 @@ export function StockCountTableModal({ sessionId, onClose, onOpenMobileView, onO
 
             {/* ZONE VARIANCE SUMMARY MODAL */}
             {showZoneReportModal && zoneReport && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
+                <div className="fixed inset-0 bg-slate-900/35 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
                     <div className="bg-white border border-slate-200 rounded-lg max-w-lg w-full p-6 text-slate-900 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto animate-modal-in">
                         <div className="flex justify-between items-center pb-3 border-b border-slate-200">
                             <div>

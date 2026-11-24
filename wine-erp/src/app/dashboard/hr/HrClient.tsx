@@ -3,7 +3,7 @@
 import React, { useState, useTransition } from 'react'
 import {
     Users, UserCheck, Clock, AlertTriangle, FileText, Plus,
-    Search, Filter, BellRing, Building, ChevronRight, Eye, Edit,
+    Filter, BellRing, Building, ChevronRight, Eye, Edit,
     Trash2, Upload, HeartPulse, RefreshCw, Shield, AlertCircle
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -14,7 +14,7 @@ import {
 import { EmployeeDetailDrawer } from './EmployeeDetailDrawer'
 import { EmployeeFormModal } from './EmployeeFormModal'
 import { DocumentUploadModal } from './DocumentUploadModal'
-import { PageHeader, Button, useConfirmDialog } from '@/components/ui'
+import { PageHeader, StatGrid, StatCard, Button, SearchInput, Select, useConfirmDialog } from '@/components/ui'
 import { useAppLocale } from '@/lib/i18n'
 import { HR_I18N } from './i18n'
 
@@ -289,103 +289,51 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
         <div className="space-y-6">
             {/* Header */}
             <PageHeader
-                title={i18n.pageTitle}
                 description={i18n.pageDesc}
                 actions={
                     <div className="flex items-center gap-2">
-                        <button
+                        <Button
+                            variant="secondary"
+                            size="sm"
                             onClick={handleSendBellNotifications}
                             disabled={isSendingAlerts}
-                            className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-md bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 transition-all cursor-pointer"
                             title={i18n.btnSendAlertsTitle}
                         >
-                            <BellRing className={`w-3.5 h-3.5 text-amber-600 ${isSendingAlerts ? 'animate-bounce' : ''}`} />
+                            <BellRing className={`w-3.5 h-3.5 text-tone-warning-fg ${isSendingAlerts ? 'animate-bounce' : ''}`} />
                             <span>{i18n.btnSendAlerts}</span>
-                        </button>
+                        </Button>
                         <Button
                             variant="primary"
                             size="sm"
                             onClick={handleOpenCreate}
                         >
-                            <Plus className="w-3.5 h-3.5 mr-1" /> {i18n.btnAddEmployee}
+                            <Plus className="w-3.5 h-3.5" /> {i18n.btnAddEmployee}
                         </Button>
                     </div>
                 }
             />
 
             {/* KPI Stat Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                {/* 1. Total */}
-                <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-xs">
-                    <div className="flex items-center justify-between text-slate-600 mb-1.5">
-                        <span className="text-[11px] font-semibold">{i18n.kpiTotal}</span>
-                        <Users className="w-4 h-4 text-[#0891B2]" />
-                    </div>
-                    <p className="text-2xl font-black text-slate-900">{stats.totalEmployees}</p>
-                    <p className="text-[10px] text-slate-600 mt-0.5">{i18n.kpiTotalSub}</p>
-                </div>
-
-                {/* 2. Active */}
-                <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-xs">
-                    <div className="flex items-center justify-between text-slate-600 mb-1.5">
-                        <span className="text-[11px] font-semibold">{i18n.kpiActive}</span>
-                        <UserCheck className="w-4 h-4 text-emerald-700" />
-                    </div>
-                    <p className="text-2xl font-black text-emerald-700">{stats.activeEmployees}</p>
-                    <p className="text-[10px] text-slate-600 mt-0.5">{i18n.kpiActiveSub}</p>
-                </div>
-
-                {/* 3. Probation */}
-                <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-xs">
-                    <div className="flex items-center justify-between text-slate-600 mb-1.5">
-                        <span className="text-[11px] font-semibold">{i18n.kpiProbation}</span>
-                        <Clock className="w-4 h-4 text-blue-700" />
-                    </div>
-                    <p className="text-2xl font-black text-blue-700">{stats.probationEmployees}</p>
-                    <p className="text-[10px] text-slate-600 mt-0.5">{i18n.kpiProbationSub}</p>
-                </div>
-
-                {/* 4. Expiring Soon */}
-                <div
+            <StatGrid cols={6}>
+                <StatCard label={i18n.kpiTotal} value={stats.totalEmployees} sub={i18n.kpiTotalSub} icon={Users} tone="brand" />
+                <StatCard label={i18n.kpiActive} value={stats.activeEmployees} sub={i18n.kpiActiveSub} icon={UserCheck} tone="success" />
+                <StatCard label={i18n.kpiProbation} value={stats.probationEmployees} sub={i18n.kpiProbationSub} icon={Clock} tone="info" />
+                <StatCard
+                    label={i18n.kpiExpiring}
+                    value={stats.expiringContracts}
+                    sub={i18n.kpiExpiringSub}
+                    icon={AlertTriangle}
+                    tone="warning"
+                    active={contractExpiringOnly}
                     onClick={() => {
                         const newVal = !contractExpiringOnly
                         setContractExpiringOnly(newVal)
                         fetchFilteredEmployees(search, deptId, status, newVal)
                     }}
-                    className={`p-4 rounded-lg border transition-all cursor-pointer shadow-xs ${
-                        contractExpiringOnly
-                            ? 'bg-amber-500/20 border-amber-400 ring-2 ring-amber-400/40'
-                            : 'bg-white border-amber-500/30 hover:border-amber-400'
-                    }`}
-                >
-                    <div className="flex items-center justify-between text-amber-800 mb-1.5">
-                        <span className="text-[11px] font-bold">{i18n.kpiExpiring}</span>
-                        <AlertTriangle className="w-4 h-4 text-amber-600" />
-                    </div>
-                    <p className="text-2xl font-black text-amber-700">{stats.expiringContracts}</p>
-                    <p className="text-[10px] text-amber-700/80 mt-0.5">{i18n.kpiExpiringSub}</p>
-                </div>
-
-                {/* 5. Expired */}
-                <div className="p-4 rounded-lg bg-white border border-rose-500/30 shadow-xs">
-                    <div className="flex items-center justify-between text-rose-800 mb-1.5">
-                        <span className="text-[11px] font-bold">{i18n.kpiExpired}</span>
-                        <AlertCircle className="w-4 h-4 text-rose-600" />
-                    </div>
-                    <p className="text-2xl font-black text-rose-700">{stats.expiredContracts}</p>
-                    <p className="text-[10px] text-rose-700/80 mt-0.5">{i18n.kpiExpiredSub}</p>
-                </div>
-
-                {/* 6. Documents Vault */}
-                <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-xs">
-                    <div className="flex items-center justify-between text-slate-600 mb-1.5">
-                        <span className="text-[11px] font-semibold">{i18n.kpiDocs}</span>
-                        <FileText className="w-4 h-4 text-[#0891B2]" />
-                    </div>
-                    <p className="text-2xl font-black text-[#0891B2]">{stats.totalDocs}</p>
-                    <p className="text-[10px] text-slate-600 mt-0.5">{i18n.kpiDocsSub}</p>
-                </div>
-            </div>
+                />
+                <StatCard label={i18n.kpiExpired} value={stats.expiredContracts} sub={i18n.kpiExpiredSub} icon={AlertCircle} tone="danger" />
+                <StatCard label={i18n.kpiDocs} value={stats.totalDocs} sub={i18n.kpiDocsSub} icon={FileText} tone="brand" />
+            </StatGrid>
 
             {/* Urgent Alert Banner */}
             {(stats.expiringContracts > 0 || stats.expiredContracts > 0 || stats.expiringHealthChecks > 0) && (
@@ -416,68 +364,60 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
             )}
 
             {/* Filter Bar */}
-            <div className="p-4 rounded-lg bg-white border border-slate-200 space-y-3">
-                <form onSubmit={handleSearch} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                    {/* Search Input */}
-                    <div className="relative">
-                        <Search className="w-4 h-4 text-slate-600 absolute left-3 top-1/2 -translate-y-1/2" />
-                        <input
-                            type="text"
-                            placeholder={i18n.searchPlaceholder}
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
-                        />
-                    </div>
+            <div className="p-3.5 rounded-lg bg-lys-card border border-lys-border shadow-xs">
+                <form onSubmit={handleSearch} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 items-center">
+                    <SearchInput
+                        placeholder={i18n.searchPlaceholder}
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        className="w-full sm:w-full"
+                    />
 
-                    {/* Department Dropdown */}
-                    <div>
-                        <select
-                            value={deptId}
-                            onChange={e => {
-                                setDeptId(e.target.value)
-                                fetchFilteredEmployees(search, e.target.value, status, contractExpiringOnly)
-                            }}
-                            className="w-full px-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
-                        >
-                            <option value="ALL">{i18n.allDepts}</option>
-                            {departments.map(d => (
-                                <option key={d.id} value={d.id}>{d.name}</option>
-                            ))}
-                        </select>
-                    </div>
+                    <Select
+                        value={deptId}
+                        onChange={e => {
+                            setDeptId(e.target.value)
+                            fetchFilteredEmployees(search, e.target.value, status, contractExpiringOnly)
+                        }}
+                        className="w-full"
+                    >
+                        <option value="ALL">{i18n.allDepts}</option>
+                        {departments.map(d => (
+                            <option key={d.id} value={d.id}>{d.name}</option>
+                        ))}
+                    </Select>
 
-                    {/* Status Dropdown */}
-                    <div>
-                        <select
-                            value={status}
-                            onChange={e => {
-                                setStatus(e.target.value)
-                                fetchFilteredEmployees(search, deptId, e.target.value, contractExpiringOnly)
-                            }}
-                            className="w-full px-3 py-2 text-xs rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-hidden focus:border-[#0E7490]"
-                        >
-                            <option value="ALL">{i18n.allStatuses}</option>
-                            <option value="ACTIVE">{i18n.statusesFilter.ACTIVE}</option>
-                            <option value="PROBATION">{i18n.statusesFilter.PROBATION}</option>
-                            <option value="ON_LEAVE">{i18n.statusesFilter.ON_LEAVE}</option>
-                            <option value="RESIGNED">{i18n.statusesFilter.RESIGNED}</option>
-                        </select>
-                    </div>
+                    <Select
+                        value={status}
+                        onChange={e => {
+                            setStatus(e.target.value)
+                            fetchFilteredEmployees(search, deptId, e.target.value, contractExpiringOnly)
+                        }}
+                        className="w-full"
+                    >
+                        <option value="ALL">{i18n.allStatuses}</option>
+                        <option value="ACTIVE">{i18n.statusesFilter.ACTIVE}</option>
+                        <option value="PROBATION">{i18n.statusesFilter.PROBATION}</option>
+                        <option value="ON_LEAVE">{i18n.statusesFilter.ON_LEAVE}</option>
+                        <option value="RESIGNED">{i18n.statusesFilter.RESIGNED}</option>
+                    </Select>
 
-                    {/* Submit / Reset buttons */}
                     <div className="flex items-center gap-2">
-                        <button
+                        <Button
                             type="submit"
+                            variant="primary"
+                            size="sm"
                             disabled={isPending}
-                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#0E7490] text-white font-bold text-xs hover:bg-[#68B9A5] transition-colors cursor-pointer"
+                            className="h-9 flex-1"
                         >
                             <Filter className="w-3.5 h-3.5" />
                             <span>{i18n.btnFilter}</span>
-                        </button>
+                        </Button>
                         {(search || deptId !== 'ALL' || status !== 'ALL' || contractExpiringOnly) && (
-                            <button
+                            <Button
                                 type="button"
+                                variant="secondary"
+                                size="sm"
                                 onClick={() => {
                                     setSearch('')
                                     setDeptId('ALL')
@@ -485,11 +425,11 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
                                     setContractExpiringOnly(false)
                                     fetchFilteredEmployees('', 'ALL', 'ALL', false)
                                 }}
-                                className="p-2 rounded-lg bg-white text-slate-600 hover:text-slate-900 border border-slate-200 transition-colors cursor-pointer"
+                                className="h-9 px-2.5"
                                 title={i18n.btnClearFilterTitle}
                             >
                                 <RefreshCw className="w-3.5 h-3.5" />
-                            </button>
+                            </Button>
                         )}
                     </div>
                 </form>
@@ -518,10 +458,10 @@ export function HrClient({ initialEmployees, initialStats, departments, availabl
             </div>
 
             {/* Employee Data Table - Desktop */}
-            <div className="hidden md:block rounded-lg border border-slate-200 bg-white overflow-hidden shadow-md">
+            <div className="hidden md:block rounded-lg border border-lys-border bg-lys-card overflow-hidden shadow-xs">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
-                        <thead className="bg-white text-slate-600 uppercase text-[10px] tracking-wider border-b border-slate-200">
+                        <thead className="bg-lys-subtle text-lys-muted uppercase text-[11px] tracking-wider border-b border-lys-border">
                             <tr>
                                 <th className="px-4 py-3.5 font-bold">{i18n.colEmployee}</th>
                                 <th className="px-3 py-3.5 font-bold">{i18n.colCode}</th>

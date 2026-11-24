@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { ExcelImportDialog } from '@/components/ExcelImportDialog'
 import { MarginProductRow, getMarginProducts, bulkImportMarginPrices } from './actions'
 import { WineTypeBadge } from '@/components/WineTypeBadge'
-import { useConfirmDialog } from '@/components/ui'
+import { Button, useConfirmDialog } from '@/components/ui'
 import { useAppLocale } from '@/lib/i18n'
 import { getMarginI18n, MarginI18n } from './i18n'
 
@@ -381,9 +381,9 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
     }
 
     return (
-        <div className="space-y-4 max-w-screen-2xl text-slate-900">
+        <div className="space-y-4 max-w-screen-2xl w-full mx-auto text-lys-primary">
             {/* Select & Workbench Section */}
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 relative overflow-hidden space-y-4">
+            <div className="bg-lys-card border border-lys-border rounded-lg p-4 relative shadow-xs space-y-4">
                 {/* Selector Row */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
                     {/* Supplier Filter */}
@@ -398,7 +398,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                     setSearchQuery('')
                                 }
                             }}
-                            className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-lg text-xs outline-none cursor-pointer text-slate-900 focus:border-[#B45309] transition-colors"
+                            className="w-full h-9 px-2.5 bg-white border border-lys-border-strong rounded-md text-xs outline-none cursor-pointer text-lys-primary focus:border-lys-teal focus:ring-2 focus:ring-lys-teal/20 transition-colors"
                         >
                             <option value="">{i18n.selector.allSuppliers}</option>
                             {uniqueSuppliers.map(s => (
@@ -434,7 +434,7 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
                                     setIsOpenDropdown(true)
                                 }}
                                 onFocus={() => setIsOpenDropdown(true)}
-                                className="w-full h-8 pl-8 pr-8 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-[#B45309]/30 transition-all font-sans"
+                                className="w-full h-9 pl-8 pr-8 bg-white border border-lys-border-strong rounded-md text-xs text-lys-primary placeholder:text-lys-dim focus:outline-none focus:border-lys-teal focus:ring-2 focus:ring-lys-teal/20 transition-all font-sans"
                             />
                             <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
                             <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
@@ -496,30 +496,28 @@ export function MarginClient({ initialRows, suppliers, isAdmin }: { initialRows:
 
                     {isAdmin && (
                         <div className="md:col-span-4 grid grid-cols-2 gap-2 w-full">
-                            {/* Refresh DB */}
-                            <div className="space-y-1">
-                                <span className="hidden md:block text-[10px] font-bold text-transparent select-none h-4">DB</span>
-                                <button
-                                    onClick={reloadData}
-                                    disabled={loading}
-                                    className="w-full h-8 flex items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition-all duration-150 bg-white hover:bg-slate-50 border border-slate-200 text-[#0891B2] disabled:opacity-50"
-                                >
-                                    <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
-                                    <span>{i18n.selector.refreshDb}</span>
-                                </button>
-                            </div>
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                onClick={reloadData}
+                                disabled={loading}
+                                className="h-9 w-full"
+                            >
+                                <RefreshCw size={13} className={loading ? 'animate-spin text-lys-teal-strong' : 'text-lys-teal-strong'} />
+                                <span>{i18n.selector.refreshDb}</span>
+                            </Button>
 
-                            {/* Import Excel */}
-                            <div className="space-y-1">
-                                <span className="hidden md:block text-[10px] font-bold text-transparent select-none h-4">Excel</span>
-                                <button
-                                    onClick={() => setImportOpen(true)}
-                                    className="w-full h-8 flex items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition-all duration-150 bg-white hover:bg-slate-50 border border-slate-200 text-[#B45309]"
-                                >
-                                    <Upload size={13} />
-                                    <span>{i18n.selector.importExcel}</span>
-                                </button>
-                            </div>
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => setImportOpen(true)}
+                                className="h-9 w-full"
+                            >
+                                <Upload size={13} className="text-tone-warning-fg" />
+                                <span>{i18n.selector.importExcel}</span>
+                            </Button>
                         </div>
                     )}
                 </div>

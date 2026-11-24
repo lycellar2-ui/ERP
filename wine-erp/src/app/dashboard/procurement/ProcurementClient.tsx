@@ -27,28 +27,30 @@ import { ShipmentDetailDrawer } from './ShipmentDetailDrawer'
 import { formatVND, formatDate, formatDateTime } from '@/lib/utils'
 import { getSuppliers } from '@/app/dashboard/suppliers/actions'
 import { getProducts } from '@/app/dashboard/products/actions'
-import { useConfirmDialog } from '@/components/ui'
+import {
+    PageContainer, StatGrid, StatCard, StatusTabs, StatusBadge, Badge,
+    Button, Drawer, Modal, Textarea, Card, useConfirmDialog,
+} from '@/components/ui'
 import Link from 'next/link'
 import { useAppLocale } from '@/lib/i18n'
 import { getProcurementDict } from './i18n'
 
-// ── Incoterms Config ───────────────────────────────
-const INCOTERMS_CFG: Record<string, { label: string; bg: string; color: string; border: string }> = {
-    EXW: { label: 'EXW', bg: 'rgba(180,83,9,0.15)', color: '#B45309', border: 'rgba(180,83,9,0.3)' },
-    FOB: { label: 'FOB', bg: 'rgba(29,78,216,0.15)', color: '#1D4ED8', border: 'rgba(29,78,216,0.3)' },
-    CIF: { label: 'CIF', bg: 'rgba(21,128,61,0.15)', color: '#15803D', border: 'rgba(21,128,61,0.3)' },
-    DDP: { label: 'DDP', bg: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: 'rgba(8, 145, 178, 0.25)' },
+// ── Incoterms Tones ────────────────────────────────
+const INCOTERMS_TONE: Record<string, 'warning' | 'info' | 'success' | 'brand'> = {
+    EXW: 'warning',
+    FOB: 'info',
+    CIF: 'success',
+    DDP: 'brand',
 }
 
-// ── Status config ─────────────────────────────────
-const PO_STATUS: Record<string, { label: string; color: string; bg: string; icon: React.FC<any> }> = {
-    DRAFT: { label: 'Nháp', color: '#475569', bg: 'rgba(100,116,139,0.12)', icon: FileText },
-    PENDING_APPROVAL: { label: 'Chờ duyệt', color: '#B45309', bg: 'rgba(180,83,9,0.15)', icon: Clock },
-    APPROVED: { label: 'Đã duyệt', color: '#15803D', bg: 'rgba(21,128,61,0.15)', icon: CheckCircle2 },
-    IN_TRANSIT: { label: 'Đang trên tàu', color: '#1D4ED8', bg: 'rgba(29,78,216,0.15)', icon: Ship },
-    PARTIALLY_RECEIVED: { label: 'Nhận 1 phần', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)', icon: Package },
-    RECEIVED: { label: 'Đã nhận đủ', color: '#15803D', bg: 'rgba(21,128,61,0.25)', icon: CheckCircle2 },
-    CANCELLED: { label: 'Đã huỷ', color: '#B91C1C', bg: 'rgba(232,93,93,0.12)', icon: X },
+const PO_STATUS_LABELS: Record<string, string> = {
+    DRAFT: 'Nháp',
+    PENDING_APPROVAL: 'Chờ duyệt',
+    APPROVED: 'Đã duyệt',
+    IN_TRANSIT: 'Đang trên tàu',
+    PARTIALLY_RECEIVED: 'Nhận 1 phần',
+    RECEIVED: 'Đã nhận đủ',
+    CANCELLED: 'Đã huỷ',
 }
 
 export type DatePresetKey = 
@@ -153,71 +155,17 @@ export function getDatePresetRange(preset: DatePresetKey): { dateFrom: string; d
     }
 }
 
-function POStatCard({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent: string }) {
-    return (
-        <div className="p-4 rounded-md flex items-center gap-4"
-            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-            <div className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
-                style={{ background: `${accent}20` }}>
-                <div className="w-3 h-3 rounded-sm" style={{ background: accent }} />
-            </div>
-            <div>
-                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{label}</p>
-                <p className="text-xl font-bold mt-0.5 font-mono" style={{ color: '#0F172A' }}>{value}</p>
-                {sub && <p className="text-xs mt-0.5" style={{ color: '#64748B' }}>{sub}</p>}
-            </div>
-        </div>
-    )
-}
-
 const TAB_ORDER = ['ALL', 'DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'IN_TRANSIT', 'PARTIALLY_RECEIVED', 'RECEIVED', 'CANCELLED'] as const
-const TAB_LABELS: Record<string, string> = {
-    ALL: 'Tất cả',
-    DRAFT: 'Nháp',
-    PENDING_APPROVAL: 'Chờ duyệt',
-    APPROVED: 'Đã duyệt',
-    IN_TRANSIT: 'Đang trên tàu',
-    PARTIALLY_RECEIVED: 'Nhận 1 phần',
-    RECEIVED: 'Đã nhận đủ',
-    CANCELLED: 'Đã huỷ',
-}
-
-function FilterTabs({ active, counts, onChange }: { active: string; counts: Record<string, number>; onChange: (s: string) => void }) {
-    const { locale } = useAppLocale()
-    const dict = getProcurementDict(locale)
-    const visibleTabs = TAB_ORDER.filter(tab => tab === 'ALL' || tab === active || (counts[tab] ?? 0) > 0)
-
-    return (
-        <div className="flex items-center gap-1 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-            {visibleTabs.map(tab => {
-                const isActive = (tab === 'ALL' && active === '') || tab === active
-                const count = tab === 'ALL' ? (counts.ALL ?? 0) : (counts[tab] ?? 0)
-                return (
-                    <button key={tab} onClick={() => onChange(tab === 'ALL' ? '' : tab)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap transition-all flex-shrink-0 ${
-                            isActive ? 'bg-[#0891B2]/8 text-[#0E7490] border border-[#0891B2]/25' : 'bg-transparent text-[#64748B] border border-transparent hover:bg-[#0891B2]/6'
-                        }`}>
-                        {(dict.statusTabs as Record<string, string>)[tab] ?? TAB_LABELS[tab]}
-                        <span className="inline-block px-1.5 py-0.5 text-[10px] rounded-full font-bold whitespace-nowrap shrink-0"
-                            style={{ background: isActive ? 'rgba(8, 145, 178, 0.15)' : 'rgba(100,116,139,0.15)', color: isActive ? '#0E7490' : '#64748B' }}>
-                            {count}
-                        </span>
-                    </button>
-                )
-            })}
-        </div>
-    )
-}
 
 function SortHeader({ label, field, current, dir, onSort, style }: { label: string; field: string; current: string; dir: string; onSort: (f: string) => void; style?: React.CSSProperties }) {
     const isActive = current === field
     return (
-        <th className="px-4 py-2.5 text-xs uppercase tracking-wider font-semibold cursor-pointer select-none"
-            style={{ color: isActive ? '#0E7490' : '#475569', ...style }}
+        <th className={`px-4 py-2.5 text-[11px] uppercase tracking-wider font-semibold cursor-pointer select-none ${isActive ? 'text-lys-teal-strong' : 'text-lys-secondary'}`}
+            style={style}
             onClick={() => onSort(field)}>
             <span className="inline-flex items-center gap-1">
                 {label}
-                {isActive ? (dir === 'asc' ? <ChevronUp size={11} /> : <ChevronDown size={11} />) : <ArrowUpDown size={10} style={{ opacity: 0.4 }} />}
+                {isActive ? (dir === 'asc' ? <ChevronUp size={11} /> : <ChevronDown size={11} />) : <ArrowUpDown size={10} className="opacity-40" />}
             </span>
         </th>
     )
@@ -226,13 +174,20 @@ function SortHeader({ label, field, current, dir, onSort, style }: { label: stri
 function POStatusBadge({ status }: { status: string }) {
     const { locale } = useAppLocale()
     const dict = getProcurementDict(locale)
-    const cfg = PO_STATUS[status] ?? { label: status, color: '#475569', bg: 'rgba(168,152,128,0.15)', icon: FileText }
-    const Icon = cfg.icon
     return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap"
-            style={{ color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.color}30` }}>
-            <Icon size={11} />{dict.status[status] ?? cfg.label}
-        </span>
+        <StatusBadge
+            status={status}
+            label={dict.status[status] ?? PO_STATUS_LABELS[status] ?? status}
+            toneOverrides={{
+                DRAFT: 'neutral',
+                PENDING_APPROVAL: 'warning',
+                APPROVED: 'success',
+                IN_TRANSIT: 'info',
+                PARTIALLY_RECEIVED: 'brand',
+                RECEIVED: 'success',
+                CANCELLED: 'danger',
+            }}
+        />
     )
 }
 
@@ -349,22 +304,19 @@ function StatusStepper({ current, poId, onUpdate, onEdit }: { current: string; p
             <>
                 <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                     {onEdit && (
-                        <button onClick={() => onEdit(poId)} disabled={updating}
-                            className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold transition-all hover:bg-amber-500/20"
-                            style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}
+                        <button type="button" onClick={() => onEdit(poId)} disabled={updating}
+                            className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold transition-colors bg-tone-warning-bg text-tone-warning-fg border border-tone-warning-border hover:bg-amber-100 cursor-pointer"
                             title="Chỉnh sửa đơn mua hàng nháp">
                             <Pencil size={11} /> Sửa
                         </button>
                     )}
-                    <button onClick={handleSubmit} disabled={updating}
-                        className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold transition-all hover:bg-emerald-500/20"
-                        style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)' }}
+                    <button type="button" onClick={handleSubmit} disabled={updating}
+                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold transition-colors bg-lys-teal-soft text-lys-teal-strong border border-lys-teal/25 hover:bg-lys-teal/15 cursor-pointer"
                         title="Gửi duyệt PO">
                         {updating ? <Loader2 size={10} className="animate-spin" /> : <><Send size={11} /> Gửi Duyệt</>}
                     </button>
-                    <button onClick={handleDeleteDraft} disabled={updating}
-                        className="flex items-center gap-0.5 px-1.5 py-1 rounded text-[11px] font-semibold transition-all hover:bg-rose-900/30"
-                        style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.25)' }}
+                    <button type="button" onClick={handleDeleteDraft} disabled={updating}
+                        className="flex items-center gap-0.5 px-1.5 py-1 rounded-md text-[11px] font-semibold transition-colors bg-tone-danger-bg text-tone-danger-fg border border-tone-danger-border hover:bg-red-100 cursor-pointer"
                         title="Xoá đơn mua hàng nháp">
                         <Trash2 size={11} />
                     </button>
@@ -378,49 +330,48 @@ function StatusStepper({ current, poId, onUpdate, onEdit }: { current: string; p
         return (
             <>
                 <div className="flex items-center gap-1 relative" onClick={e => e.stopPropagation()}>
-                    <button onClick={handleApprove} disabled={updating}
-                        className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold transition-all hover:bg-emerald-500/25"
-                        style={{ background: 'rgba(21,128,61,0.2)', color: '#15803D', border: '1px solid rgba(21,128,61,0.4)' }}
+                    <button type="button" onClick={handleApprove} disabled={updating}
+                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold transition-colors bg-tone-success-bg text-tone-success-fg border border-tone-success-border hover:bg-emerald-100 cursor-pointer"
                         title="Duyệt PO">
                         {updating ? <Loader2 size={10} className="animate-spin" /> : <><CheckCircle2 size={11} /> Duyệt</>}
                     </button>
-                    <button onClick={() => setRejectDialogOpen(true)} disabled={updating}
-                        className="flex items-center gap-0.5 px-1.5 py-1 rounded text-[11px] font-semibold transition-all hover:bg-rose-900/30"
-                        style={{ background: 'rgba(185,28,28,0.15)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.35)' }}
+                    <button type="button" onClick={() => setRejectDialogOpen(true)} disabled={updating}
+                        className="flex items-center gap-0.5 px-1.5 py-1 rounded-md text-[11px] font-semibold transition-colors bg-tone-danger-bg text-tone-danger-fg border border-tone-danger-border hover:bg-red-100 cursor-pointer"
                         title="Từ chối PO">
                         {updating ? <Loader2 size={10} className="animate-spin" /> : <><X size={11} /> Từ Chối</>}
                     </button>
-                    <button onClick={handleRevert} disabled={updating}
-                        className="flex items-center gap-0.5 px-1.5 py-1 rounded text-[11px] font-semibold transition-all hover:bg-amber-500/20"
-                        style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}
+                    <button type="button" onClick={handleRevert} disabled={updating}
+                        className="flex items-center gap-0.5 px-1.5 py-1 rounded-md text-[11px] font-semibold transition-colors bg-tone-warning-bg text-tone-warning-fg border border-tone-warning-border hover:bg-amber-100 cursor-pointer"
                         title="Thu hồi về Nháp để chỉnh sửa">
                         <RotateCcw size={10} /> Thu Hồi
                     </button>
 
-                    {rejectDialogOpen && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4" onClick={() => setRejectDialogOpen(false)}>
-                            <div className="w-full max-w-sm p-4 rounded-lg bg-white border border-slate-200 space-y-3 shadow-2xl" onClick={e => e.stopPropagation()}>
-                                <h4 className="text-sm font-bold text-slate-900">Từ Chối Phê Duyệt PO</h4>
-                                <p className="text-xs text-slate-600">Nhập lý do từ chối để gửi trả lại nhân viên tạo đơn điều chỉnh:</p>
-                                <textarea
-                                    value={reason}
-                                    onChange={e => setReason(e.target.value)}
-                                    placeholder="Nhập lý do từ chối (bắt buộc)..."
-                                    rows={3}
-                                    className="w-full px-3 py-2 text-xs rounded-lg outline-none bg-white border border-slate-200 text-slate-900"
-                                />
-                                <div className="flex justify-end gap-2">
-                                    <button onClick={() => setRejectDialogOpen(false)} className="inline-block px-3 py-1.5 text-xs text-slate-600 hover:bg-white rounded-lg whitespace-nowrap shrink-0">
-                                        Đóng
-                                    </button>
-                                    <button onClick={handleReject} disabled={updating || !reason.trim()}
-                                        className="px-3 py-1.5 text-xs font-bold text-white bg-[#B91C1C] rounded-lg disabled:opacity-50">
-                                        Xác Nhận Từ Chối
-                                    </button>
-                                </div>
-                            </div>
+                    <Modal
+                        open={rejectDialogOpen}
+                        onClose={() => setRejectDialogOpen(false)}
+                        title="Từ Chối Phê Duyệt PO"
+                        size="sm"
+                        footer={
+                            <>
+                                <Button type="button" variant="ghost" size="sm" onClick={() => setRejectDialogOpen(false)}>
+                                    Đóng
+                                </Button>
+                                <Button type="button" variant="danger" size="sm" loading={updating} disabled={!reason.trim()} onClick={handleReject}>
+                                    Xác Nhận Từ Chối
+                                </Button>
+                            </>
+                        }
+                    >
+                        <div className="space-y-2.5">
+                            <p className="text-xs text-lys-secondary">Nhập lý do từ chối để gửi trả lại nhân viên tạo đơn điều chỉnh:</p>
+                            <Textarea
+                                value={reason}
+                                onChange={e => setReason(e.target.value)}
+                                placeholder="Nhập lý do từ chối (bắt buộc)..."
+                                rows={3}
+                            />
                         </div>
-                    )}
+                    </Modal>
                 </div>
                 {confirmDialog}
             </>
@@ -517,7 +468,7 @@ function PODiscountSection({
                 <div className="flex items-center gap-1.5">
                     <span className="text-xs font-bold text-slate-900">Chiết khấu / Giảm giá đơn hàng</span>
                     {computedDiscount > 0 && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300 font-mono inline-block whitespace-nowrap shrink-0">
+                        <span className="text-[11px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300 font-mono inline-block whitespace-nowrap shrink-0">
                             -{computedDiscount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
                         </span>
                     )}
@@ -564,7 +515,7 @@ function PODiscountSection({
             {discountType === 'PERCENT' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200/40">
                     <div>
-                        <label className="text-[10px] font-semibold text-slate-600 block mb-1">
+                        <label className="text-[11px] font-semibold text-slate-600 block mb-1">
                             Tỷ lệ chiết khấu (%) trên tổng tiền hàng
                         </label>
                         <div className="relative">
@@ -586,7 +537,7 @@ function PODiscountSection({
                         <span className="text-slate-500 text-[11px]">Trị giá chiết khấu được trừ:</span>
                         <p className="font-mono font-bold text-amber-700 text-sm">
                             -{computedDiscount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
-                            <span className="text-[11px] text-[#0891B2] ml-1 font-normal">
+                            <span className="text-[11px] text-lys-teal-strong ml-1 font-normal">
                                 (≈ {formatVND(computedDiscount * exchangeRate)})
                             </span>
                         </p>
@@ -597,7 +548,7 @@ function PODiscountSection({
             {discountType === 'AMOUNT' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200/40">
                     <div>
-                        <label className="text-[10px] font-semibold text-slate-600 block mb-1">
+                        <label className="text-[11px] font-semibold text-slate-600 block mb-1">
                             Số tiền giảm trực tiếp ({currency})
                         </label>
                         <input
@@ -806,36 +757,56 @@ function CreatePODrawer({ open, onClose, onCreated }: {
     const inputCls = "w-full px-3 py-2 rounded-lg text-xs outline-none transition-all"
     const inputStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }
 
-    if (!open) return null
-
     return (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs" onClick={onClose}>
-            <div className="w-full sm:w-[760px] max-w-full h-full overflow-y-auto flex flex-col"
-                style={{ background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}
-                onClick={e => e.stopPropagation()}>
-
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0 border-b border-slate-200">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(8, 145, 178, 0.08)' }}>
-                            <ShoppingCart size={18} style={{ color: '#0891B2' }} />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h3 className="font-bold text-base" style={{ color: '#0F172A' }}>Tạo Đơn Mua Hàng (PO)</h3>
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-[#B45309] border border-amber-500/30 inline-block whitespace-nowrap shrink-0">
-                                    Bản Nháp (Draft)
+        <Drawer
+            open={open}
+            onClose={onClose}
+            title="Tạo Đơn Mua Hàng (PO)"
+            description="Hỗ trợ giá theo Thùng/Chai, chiết khấu đơn hàng và hàng quà tặng FOC"
+            headerExtra={<Badge tone="warning">Bản Nháp (Draft)</Badge>}
+            size="xl"
+            className="bg-lys-bg"
+            footer={
+                <div className="flex w-full flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="min-w-0">
+                        <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+                            <span className="font-mono font-bold text-lys-primary text-xs">
+                                {totalAllBottles.toLocaleString('vi-VN')} chai
+                            </span>
+                            {totalFocBottles > 0 && (
+                                <span className="text-[11px] text-tone-warning-fg font-semibold">
+                                    ({totalPurchasedBottles} mua + {totalFocBottles} FOC)
                                 </span>
-                            </div>
-                            <p className="text-xs" style={{ color: '#64748B' }}>Hỗ trợ giá theo Thùng/Chai, chiết khấu đơn hàng và hàng quà tặng FOC</p>
+                            )}
+                            <span className="text-lys-dim">·</span>
+                            <span className="font-mono font-bold text-lys-teal-strong text-sm">
+                                {formatVND(totalVND)}
+                            </span>
                         </div>
+                        <p className="text-[11px] font-mono text-lys-muted truncate">
+                            Subtotal {subtotalFOB.toLocaleString('en-US', { minimumFractionDigits: 2 })} {currency}
+                            {computedDiscount > 0 && ` · CK -${computedDiscount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+                            {` · Net ${finalPayableFOB.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${currency}`}
+                        </p>
                     </div>
-                    <button onClick={onClose} className="p-1.5 rounded-lg text-slate-600 hover:bg-white"><X size={18} /></button>
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        <Button type="button" variant="secondary" size="sm" onClick={onClose}>
+                            Huỷ
+                        </Button>
+                        <Button type="button" variant="secondary" size="sm" className="bg-tone-warning-bg text-tone-warning-fg border-tone-warning-border hover:bg-amber-100" loading={saving} onClick={() => handleSave(false)} title="Lưu bản nháp để có thể xem lại và chỉnh sửa tiếp">
+                            {!saving && <Save size={14} />}
+                            Lưu Bản Nháp
+                        </Button>
+                        <Button type="button" variant="primary" size="sm" loading={saving} onClick={() => handleSave(true)} title="Tạo đơn và gửi trình duyệt ngay">
+                            {!saving && <Send size={14} />}
+                            Tạo & Gửi Trình Duyệt
+                        </Button>
+                    </div>
                 </div>
-
-                {/* Body */}
-                <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-                    <p className="text-[11px] uppercase tracking-wider font-bold text-[#0891B2]">── Thông Tin Chung</p>
+            }
+        >
+            <div className="space-y-4">
+                    <p className="text-[11px] uppercase tracking-wider font-bold text-lys-teal-strong">── Thông Tin Chung</p>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
@@ -894,7 +865,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
 
                     {/* Product Lines */}
                     <div className="flex items-center justify-between pt-2">
-                        <p className="text-[11px] uppercase tracking-wider font-bold text-[#0891B2]">── Danh Sách Sản Phẩm</p>
+                        <p className="text-[11px] uppercase tracking-wider font-bold text-lys-teal-strong">── Danh Sách Sản Phẩm</p>
                         <button onClick={addLine} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap shrink-0"
                             style={{ color: '#0891B2', border: '1px solid rgba(8, 145, 178, 0.25)', background: 'rgba(8,145,178,0.1)' }}>
                             <Plus size={12} /> Thêm Sản Phẩm
@@ -911,7 +882,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                         <div className="flex items-center gap-2">
                                             <span className="text-xs font-bold text-slate-600">Dòng #{i + 1}</span>
                                             {line.productId && (
-                                                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/15 text-[#0891B2] border border-emerald-500/30 inline-block whitespace-nowrap shrink-0">
+                                                <span className="text-[11px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/15 text-lys-teal-strong border border-emerald-500/30 inline-block whitespace-nowrap shrink-0">
                                                     {calc.totalBottles} chai
                                                 </span>
                                             )}
@@ -1012,11 +983,11 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                                             className="px-3 py-2 text-xs cursor-pointer rounded-lg hover:bg-white transition-colors flex items-center justify-between gap-2 border-b border-slate-200/20 last:border-b-0"
                                                         >
                                                             <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                                <span className="font-mono font-bold text-[#0891B2] shrink-0">[{p.skuCode}]</span>
+                                                                <span className="font-mono font-bold text-lys-teal-strong shrink-0">[{p.skuCode}]</span>
                                                                 <span className="font-semibold text-slate-900 truncate">{p.productName}</span>
                                                             </div>
                                                             {p.country && (
-                                                                <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 shrink-0">[{p.country}]</span>
+                                                                <span className="text-[11px] font-mono font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 shrink-0">[{p.country}]</span>
                                                             )}
                                                         </div>
                                                     ))
@@ -1029,7 +1000,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
                                         {/* Pack Type / UOM */}
                                         <div>
-                                            <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Quy cách đóng gói</label>
+                                            <label className="text-[11px] font-semibold text-slate-500 block mb-0.5">Quy cách đóng gói</label>
                                             <select
                                                 className={inputCls}
                                                 style={inputStyle}
@@ -1052,7 +1023,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
 
                                         {/* Pricing Mode */}
                                         <div>
-                                            <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Hình thức nhập giá</label>
+                                            <label className="text-[11px] font-semibold text-slate-500 block mb-0.5">Hình thức nhập giá</label>
                                             <select
                                                 className={inputCls}
                                                 style={{ ...inputStyle, opacity: line.packType === 'BOTTLE' ? 0.6 : 1 }}
@@ -1067,7 +1038,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
 
                                         {/* Quantity */}
                                         <div>
-                                            <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">
+                                            <label className="text-[11px] font-semibold text-slate-500 block mb-0.5">
                                                 Số lượng ({line.packType === 'BOTTLE' ? 'chai' : 'thùng'})
                                             </label>
                                             <input
@@ -1079,7 +1050,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                                 onChange={e => setLine(i, 'qtyInput', Math.max(1, Number(e.target.value)))}
                                             />
                                             {calc.isCase && (
-                                                <span className="text-[10px] font-mono text-[#0891B2] block mt-0.5">
+                                                <span className="text-[11px] font-mono text-lys-teal-strong block mt-0.5">
                                                     = {calc.totalBottles} chai
                                                 </span>
                                             )}
@@ -1087,7 +1058,7 @@ function CreatePODrawer({ open, onClose, onCreated }: {
 
                                         {/* Unit Price */}
                                         <div>
-                                            <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">
+                                            <label className="text-[11px] font-semibold text-slate-500 block mb-0.5">
                                                 {line.isFoc
                                                     ? (line.pricingMode === 'PER_CASE' && calc.isCase
                                                         ? `Giá danh nghĩa HQ/thùng (${currency})`
@@ -1106,11 +1077,11 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                                 onChange={e => setLine(i, 'priceInput', Number(e.target.value))}
                                             />
                                             {line.isFoc ? (
-                                                <span className="text-[10px] font-mono text-amber-700/80 block mt-0.5" title="Dùng cho tờ khai hải quan & tính thuế NK/TTĐB khi về cảng">
+                                                <span className="text-[11px] font-mono text-amber-700/80 block mt-0.5" title="Dùng cho tờ khai hải quan & tính thuế NK/TTĐB khi về cảng">
                                                     (HQ: {calc.customsValue.toFixed(2)} {currency})
                                                 </span>
                                             ) : calc.isCase && (
-                                                <span className="text-[10px] font-mono text-slate-600 block mt-0.5">
+                                                <span className="text-[11px] font-mono text-slate-600 block mt-0.5">
                                                     {line.pricingMode === 'PER_CASE'
                                                         ? `(≈ ${calc.unitPricePerBottle.toFixed(2)} ${currency}/chai)`
                                                         : `(≈ ${calc.unitPricePerCase.toFixed(2)} ${currency}/thùng)`}
@@ -1139,14 +1110,14 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                                             {line.isFoc ? (
                                                 <>
                                                     <span className="text-amber-700 mr-2">0.00 {currency}</span>
-                                                    <span className="text-[10px] text-slate-600 font-normal">
+                                                    <span className="text-[11px] text-slate-600 font-normal">
                                                         (Khai báo HQ: {calc.customsValue.toFixed(2)} {currency} ≈ {formatVND(calc.customsValue * exchangeRate)})
                                                     </span>
                                                 </>
                                             ) : (
                                                 <>
                                                     {calc.lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
-                                                    <span className="text-[10px] ml-1.5 text-[#0891B2]">
+                                                    <span className="text-[11px] ml-1.5 text-lys-teal-strong">
                                                         (≈ {formatVND(calc.lineTotal * exchangeRate)})
                                                     </span>
                                                 </>
@@ -1172,67 +1143,8 @@ function CreatePODrawer({ open, onClose, onCreated }: {
                             onChangeAmount={setDiscountAmount}
                         />
                     </div>
-                </div>
-
-                {/* Footer */}
-                <div className="p-4 border-t border-slate-200 flex-shrink-0 space-y-3" style={{ background: '#FFFFFF' }}>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs border-b border-slate-200/40 pb-2.5">
-                        <div>
-                            <p className="text-[10px] text-slate-500 uppercase font-bold">Tổng SL Chai</p>
-                            <p className="font-mono font-bold text-slate-900 text-sm">
-                                {totalAllBottles.toLocaleString('vi-VN')} chai
-                            </p>
-                            {totalFocBottles > 0 && (
-                                <p className="text-[10px] text-amber-700 font-medium">
-                                    ({totalPurchasedBottles} mua + {totalFocBottles} FOC)
-                                </p>
-                            )}
-                        </div>
-                        <div>
-                            <p className="text-[10px] text-slate-500 uppercase font-bold">Tiền Hàng (Subtotal)</p>
-                            <p className="font-mono font-bold text-slate-900 text-sm">
-                                {subtotalFOB.toLocaleString('en-US', { minimumFractionDigits: 2 })} {currency}
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-[10px] text-slate-500 uppercase font-bold">Giảm Giá / CK</p>
-                            <p className="font-mono font-bold text-amber-700 text-sm">
-                                {computedDiscount > 0 ? `-${computedDiscount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '0.00'} {currency}
-                            </p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-[10px] text-slate-500 uppercase font-bold">Phải Thanh Toán</p>
-                            <p className="font-mono font-bold text-[#0891B2] text-base">
-                                {formatVND(totalVND)}
-                            </p>
-                            <p className="text-[10px] font-mono text-slate-600">
-                                {finalPayableFOB.toLocaleString('en-US', { minimumFractionDigits: 2 })} {currency}
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                        <button type="button" onClick={onClose}
-                            className="px-4 py-2.5 rounded-lg text-xs font-semibold border border-slate-200 text-slate-600 hover:bg-white">
-                            Huỷ
-                        </button>
-                        <button type="button" onClick={() => handleSave(false)} disabled={saving}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold transition-all hover:bg-amber-500/25"
-                            style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}
-                            title="Lưu bản nháp để có thể xem lại và chỉnh sửa tiếp">
-                            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                            Lưu Bản Nháp
-                        </button>
-                        <button type="button" onClick={() => handleSave(true)} disabled={saving}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold transition-all shadow-sm hover:opacity-90"
-                            style={{ background: '#0E7490', color: '#FFFFFF' }}
-                            title="Tạo đơn và gửi trình duyệt ngay">
-                            {saving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                            Tạo & Gửi Trình Duyệt
-                        </button>
-                    </div>
-                </div>
             </div>
-        </div>
+        </Drawer>
     )
 }
 
@@ -1442,44 +1354,61 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
     const inputCls = "w-full px-3 py-2 rounded-lg text-xs outline-none transition-all"
     const inputStyle = { background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A' }
 
-    if (!open) return null
-
     return (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs" onClick={onClose}>
-            <div className="w-full sm:w-[760px] max-w-full h-full overflow-y-auto flex flex-col"
-                style={{ background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}
-                onClick={e => e.stopPropagation()}>
-
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 flex-shrink-0 border-b border-slate-200">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(180,83,9,0.15)' }}>
-                            <Pencil size={18} style={{ color: '#B45309' }} />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h3 className="font-bold text-base" style={{ color: '#0F172A' }}>
-                                    Chỉnh Sửa Đơn Nháp: <span className="font-mono text-[#0891B2]">{poNo}</span>
-                                </h3>
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-[#B45309] border border-amber-500/30 inline-block whitespace-nowrap shrink-0">
-                                    Bản Nháp
+        <Drawer
+            open={open}
+            onClose={onClose}
+            title={<>Chỉnh Sửa Đơn Nháp: <span className="font-mono text-lys-teal-strong">{poNo}</span></>}
+            description="Chỉnh sửa thông tin đơn hàng, số lượng, hàng FOC và chiết khấu"
+            headerExtra={<Badge tone="warning">Bản Nháp</Badge>}
+            size="xl"
+            className="bg-lys-bg"
+            footer={!loadingDetail ? (
+                <div className="flex w-full flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="min-w-0">
+                        <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+                            <span className="font-mono font-bold text-lys-primary text-xs">
+                                {totalAllBottles.toLocaleString('vi-VN')} chai
+                            </span>
+                            {totalFocBottles > 0 && (
+                                <span className="text-[11px] text-tone-warning-fg font-semibold">
+                                    ({totalPurchasedBottles} mua + {totalFocBottles} FOC)
                                 </span>
-                            </div>
-                            <p className="text-xs" style={{ color: '#64748B' }}>Chỉnh sửa thông tin đơn hàng, số lượng, hàng FOC và chiết khấu</p>
+                            )}
+                            <span className="text-lys-dim">·</span>
+                            <span className="font-mono font-bold text-lys-teal-strong text-sm">
+                                {formatVND(totalVND)}
+                            </span>
                         </div>
+                        <p className="text-[11px] font-mono text-lys-muted truncate">
+                            Subtotal {subtotalFOB.toLocaleString('en-US', { minimumFractionDigits: 2 })} {currency}
+                            {computedDiscount > 0 && ` · CK -${computedDiscount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+                            {` · Net ${finalPayableFOB.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${currency}`}
+                        </p>
                     </div>
-                    <button onClick={onClose} className="p-1.5 rounded-lg text-slate-600 hover:bg-white"><X size={18} /></button>
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        <Button type="button" variant="secondary" size="sm" onClick={onClose}>
+                            Đóng
+                        </Button>
+                        <Button type="button" variant="secondary" size="sm" className="bg-tone-warning-bg text-tone-warning-fg border-tone-warning-border hover:bg-amber-100" loading={saving} onClick={() => handleSave(false)} title="Lưu các thay đổi và tiếp tục giữ ở trạng thái Nháp">
+                            {!saving && <Save size={14} />}
+                            Lưu Bản Nháp
+                        </Button>
+                        <Button type="button" variant="primary" size="sm" loading={saving} onClick={() => handleSave(true)} title="Lưu thay đổi và gửi trình duyệt phê duyệt ngay">
+                            {!saving && <Send size={14} />}
+                            Lưu & Gửi Duyệt
+                        </Button>
+                    </div>
                 </div>
-
-                {loadingDetail ? (
-                    <div className="flex-1 flex items-center justify-center py-16 text-[#0891B2]">
-                        <Loader2 size={24} className="animate-spin mr-2" /> Đang tải thông tin PO...
-                    </div>
-                ) : (
-                    <>
-                        {/* Body */}
-                        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-                            <p className="text-[11px] uppercase tracking-wider font-bold text-[#0891B2]">── Thông Tin Chung</p>
+            ) : undefined}
+        >
+            {loadingDetail ? (
+                <div className="flex-1 flex items-center justify-center py-16 text-lys-teal-strong">
+                    <Loader2 size={24} className="animate-spin mr-2" /> Đang tải thông tin PO...
+                </div>
+            ) : (
+                <div className="space-y-4">
+                            <p className="text-[11px] uppercase tracking-wider font-bold text-lys-teal-strong">── Thông Tin Chung</p>
                             
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
@@ -1562,7 +1491,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
 
                             {/* Line Items */}
                             <div className="flex items-center justify-between pt-2">
-                                <p className="text-[11px] uppercase tracking-wider font-bold text-[#0891B2]">
+                                <p className="text-[11px] uppercase tracking-wider font-bold text-lys-teal-strong">
                                     ── Danh Sách Sản Phẩm ({lines.length})
                                 </p>
                                 <button onClick={addLine}
@@ -1582,7 +1511,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-xs font-bold text-slate-600">Dòng #{i + 1}</span>
                                                     {line.productId && (
-                                                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/15 text-[#0891B2] border border-emerald-500/30 inline-block whitespace-nowrap shrink-0">
+                                                        <span className="text-[11px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/15 text-lys-teal-strong border border-emerald-500/30 inline-block whitespace-nowrap shrink-0">
                                                             {calc.totalBottles} chai
                                                         </span>
                                                     )}
@@ -1683,11 +1612,11 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                                     className="px-3 py-2 text-xs cursor-pointer rounded-lg hover:bg-white transition-colors flex items-center justify-between gap-2 border-b border-slate-200/20 last:border-b-0"
                                                                 >
                                                                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                                        <span className="font-mono font-bold text-[#0891B2] shrink-0">[{p.skuCode}]</span>
+                                                                        <span className="font-mono font-bold text-lys-teal-strong shrink-0">[{p.skuCode}]</span>
                                                                         <span className="font-semibold text-slate-900 truncate">{p.productName}</span>
                                                                     </div>
                                                                     {p.country && (
-                                                                        <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 shrink-0">[{p.country}]</span>
+                                                                        <span className="text-[11px] font-mono font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 shrink-0">[{p.country}]</span>
                                                                     )}
                                                                 </div>
                                                             ))
@@ -1699,7 +1628,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                             {/* Row Controls: Quy cách đóng gói, Chế độ giá, Số lượng, Đơn giá */}
                                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
                                                 <div>
-                                                    <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Quy cách đóng gói</label>
+                                                    <label className="text-[11px] font-semibold text-slate-500 block mb-0.5">Quy cách đóng gói</label>
                                                     <select
                                                         className={inputCls}
                                                         style={inputStyle}
@@ -1721,7 +1650,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                 </div>
 
                                                 <div>
-                                                    <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Hình thức nhập giá</label>
+                                                    <label className="text-[11px] font-semibold text-slate-500 block mb-0.5">Hình thức nhập giá</label>
                                                     <select
                                                         className={inputCls}
                                                         style={{ ...inputStyle, opacity: line.packType === 'BOTTLE' ? 0.6 : 1 }}
@@ -1735,7 +1664,7 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                 </div>
 
                                                 <div>
-                                                    <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">
+                                                    <label className="text-[11px] font-semibold text-slate-500 block mb-0.5">
                                                         Số lượng ({line.packType === 'BOTTLE' ? 'chai' : 'thùng'})
                                                     </label>
                                                     <input
@@ -1747,14 +1676,14 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                         onChange={e => setLine(i, 'qtyInput', Math.max(1, Number(e.target.value)))}
                                                     />
                                                     {calc.isCase && (
-                                                        <span className="text-[10px] font-mono text-[#0891B2] block mt-0.5">
+                                                        <span className="text-[11px] font-mono text-lys-teal-strong block mt-0.5">
                                                             = {calc.totalBottles} chai
                                                         </span>
                                                     )}
                                                 </div>
 
                                                 <div>
-                                                    <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">
+                                                    <label className="text-[11px] font-semibold text-slate-500 block mb-0.5">
                                                         {line.isFoc
                                                             ? (line.pricingMode === 'PER_CASE' && calc.isCase
                                                                 ? `Giá danh nghĩa HQ/thùng (${currency})`
@@ -1773,11 +1702,11 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                         onChange={e => setLine(i, 'priceInput', Number(e.target.value))}
                                                     />
                                                     {line.isFoc ? (
-                                                        <span className="text-[10px] font-mono text-amber-700/80 block mt-0.5" title="Dùng cho tờ khai hải quan & tính thuế NK/TTĐB khi về cảng">
+                                                        <span className="text-[11px] font-mono text-amber-700/80 block mt-0.5" title="Dùng cho tờ khai hải quan & tính thuế NK/TTĐB khi về cảng">
                                                             (HQ: {calc.customsValue.toFixed(2)} {currency})
                                                         </span>
                                                     ) : calc.isCase && (
-                                                        <span className="text-[10px] font-mono text-slate-600 block mt-0.5">
+                                                        <span className="text-[11px] font-mono text-slate-600 block mt-0.5">
                                                             {line.pricingMode === 'PER_CASE'
                                                                 ? `(≈ ${calc.unitPricePerBottle.toFixed(2)} ${currency}/chai)`
                                                                 : `(≈ ${calc.unitPricePerCase.toFixed(2)} ${currency}/thùng)`}
@@ -1806,14 +1735,14 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                                     {line.isFoc ? (
                                                         <>
                                                             <span className="text-amber-700 mr-2">0.00 {currency}</span>
-                                                            <span className="text-[10px] text-slate-600 font-normal">
+                                                            <span className="text-[11px] text-slate-600 font-normal">
                                                                 (Khai báo HQ: {calc.customsValue.toFixed(2)} {currency} ≈ {formatVND(calc.customsValue * exchangeRate)})
                                                             </span>
                                                         </>
                                                     ) : (
                                                         <>
                                                             {calc.lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
-                                                            <span className="text-[10px] ml-1.5 text-[#0891B2]">
+                                                            <span className="text-[11px] ml-1.5 text-lys-teal-strong">
                                                                 (≈ {formatVND(calc.lineTotal * exchangeRate)})
                                                             </span>
                                                         </>
@@ -1839,69 +1768,9 @@ function EditPODrawer({ open, poId, onClose, onUpdated }: {
                                     onChangeAmount={setDiscountAmount}
                                 />
                             </div>
-                        </div>
-
-                        {/* Footer */}
-                        <div className="p-4 border-t border-slate-200 flex-shrink-0 space-y-3" style={{ background: '#FFFFFF' }}>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs border-b border-slate-200/40 pb-2.5">
-                                <div>
-                                    <p className="text-[10px] text-slate-500 uppercase font-bold">Tổng SL Chai</p>
-                                    <p className="font-mono font-bold text-slate-900 text-sm">
-                                        {totalAllBottles.toLocaleString('vi-VN')} chai
-                                    </p>
-                                    {totalFocBottles > 0 && (
-                                        <p className="text-[10px] text-amber-700 font-medium">
-                                            ({totalPurchasedBottles} mua + {totalFocBottles} FOC)
-                                        </p>
-                                    )}
-                                </div>
-                                <div>
-                                    <p className="text-[10px] text-slate-500 uppercase font-bold">Tiền Hàng (Subtotal)</p>
-                                    <p className="font-mono font-bold text-slate-900 text-sm">
-                                        {subtotalFOB.toLocaleString('en-US', { minimumFractionDigits: 2 })} {currency}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-[10px] text-slate-500 uppercase font-bold">Giảm Giá / CK</p>
-                                    <p className="font-mono font-bold text-amber-700 text-sm">
-                                        {computedDiscount > 0 ? `-${computedDiscount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '0.00'} {currency}
-                                    </p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-[10px] text-slate-500 uppercase font-bold">Phải Thanh Toán</p>
-                                    <p className="font-mono font-bold text-[#0891B2] text-base">
-                                        {formatVND(totalVND)}
-                                    </p>
-                                    <p className="text-[10px] font-mono text-slate-600">
-                                        {finalPayableFOB.toLocaleString('en-US', { minimumFractionDigits: 2 })} {currency}
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="flex gap-2.5">
-                                <button type="button" onClick={onClose}
-                                    className="px-4 py-2.5 rounded-lg text-xs font-semibold border border-slate-200 text-slate-600 hover:bg-white">
-                                    Đóng
-                                </button>
-                                <button type="button" onClick={() => handleSave(false)} disabled={saving}
-                                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold transition-all hover:bg-amber-500/25"
-                                    style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}
-                                    title="Lưu các thay đổi và tiếp tục giữ ở trạng thái Nháp">
-                                    {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                                    Lưu Bản Nháp
-                                </button>
-                                <button type="button" onClick={() => handleSave(true)} disabled={saving}
-                                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold transition-all shadow-sm hover:opacity-90"
-                                    style={{ background: '#0E7490', color: '#FFFFFF' }}
-                                    title="Lưu thay đổi và gửi trình duyệt phê duyệt ngay">
-                                    {saving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                                    Lưu & Gửi Duyệt
-                                </button>
-                            </div>
-                        </div>
-                    </>
-                )}
-            </div>
-        </div>
+                </div>
+            )}
+        </Drawer>
     )
 }
 
@@ -2224,107 +2093,114 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
         })
     }
 
+    const statusTabItems = TAB_ORDER
+        .filter(tab => tab === 'ALL' || tab === statusFilter || (statusCounts[tab] ?? 0) > 0)
+        .map(tab => ({
+            value: tab === 'ALL' ? '' : tab,
+            label: (dict.statusTabs as Record<string, string>)[tab] ?? PO_STATUS_LABELS[tab] ?? tab,
+            count: tab === 'ALL' ? (statusCounts.ALL ?? stats.total) : (statusCounts[tab] ?? 0),
+        }))
+
     return (
-        <div className="space-y-4 max-w-screen-2xl">
+        <PageContainer className="space-y-4">
             {/* Header with Inline Stats and Action Buttons */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                     {/* Inline Quick Stats matching SalesClient */}
-                    <div className="hidden lg:flex items-center gap-x-4 text-xs">
-                        <span style={{ color: '#475569' }}>
-                            {dict.stats.totalPO}: <strong className="font-mono text-sm ml-1" style={{ color: '#0891B2' }}>{stats.total}</strong>
+                    <div className="hidden lg:flex items-center gap-x-4 text-xs text-lys-secondary">
+                        <span>
+                            {dict.stats.totalPO}: <strong className="font-mono text-sm ml-1 text-lys-teal-strong">{stats.total}</strong>
                         </span>
-                        <span style={{ color: '#475569' }}>
-                            {dict.status.DRAFT}: <strong className="font-mono text-sm ml-1" style={{ color: '#B45309' }}>{statusCounts.DRAFT ?? stats.draft ?? 0}</strong>
+                        <span>
+                            {dict.status.DRAFT}: <strong className="font-mono text-sm ml-1 text-tone-warning-fg">{statusCounts.DRAFT ?? stats.draft ?? 0}</strong>
                         </span>
-                        <span style={{ color: '#475569' }}>
-                            {dict.status.PENDING_APPROVAL}: <strong className="font-mono text-sm ml-1" style={{ color: '#E5A93C' }}>{statusCounts.PENDING_APPROVAL ?? 0}</strong>
+                        <span>
+                            {dict.status.PENDING_APPROVAL}: <strong className="font-mono text-sm ml-1 text-amber-600">{statusCounts.PENDING_APPROVAL ?? 0}</strong>
                         </span>
-                        <span style={{ color: '#475569' }}>
-                            {dict.status.APPROVED}: <strong className="font-mono text-sm ml-1" style={{ color: '#15803D' }}>{stats.approved}</strong>
+                        <span>
+                            {dict.status.APPROVED}: <strong className="font-mono text-sm ml-1 text-tone-success-fg">{stats.approved}</strong>
                         </span>
-                        <span style={{ color: '#475569' }}>
-                            {dict.status.IN_TRANSIT}: <strong className="font-mono text-sm ml-1" style={{ color: '#1D4ED8' }}>{stats.inTransit}</strong>
+                        <span>
+                            {dict.status.IN_TRANSIT}: <strong className="font-mono text-sm ml-1 text-tone-info-fg">{stats.inTransit}</strong>
                         </span>
-                        <span style={{ color: '#475569' }}>
-                            {dict.status.RECEIVED}: <strong className="font-mono text-sm ml-1" style={{ color: '#0891B2' }}>{statusCounts.RECEIVED ?? 0}</strong>
+                        <span>
+                            {dict.status.RECEIVED}: <strong className="font-mono text-sm ml-1 text-lys-teal-strong">{statusCounts.RECEIVED ?? 0}</strong>
                         </span>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2 flex-wrap">
-                    <button onClick={() => setShowStats(!showStats)}
-                        className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md border ${
-                            showStats
-                                ? 'bg-[#0891B2]/8 text-[#0E7490] border-[#0891B2]/25'
-                                : 'bg-[#64748B]/10 hover:bg-[#64748B]/20 text-[#475569] border-[#64748B]/25'
-                        }`}>
+                    <Button
+                        variant={showStats ? 'primary' : 'secondary'}
+                        size="sm"
+                        onClick={() => setShowStats(!showStats)}
+                    >
                         {locale === 'en' ? 'KPIs' : 'Thống kê'}
-                    </button>
+                    </Button>
 
-                    <button onClick={() => setCashFlowModalOpen(true)}
-                        className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-bold transition-all rounded-md shadow-xs bg-[#0D9488]/10 hover:bg-[#0D9488]/20 text-[#0F766E] border border-[#0D9488]/30"
-                        title={dict.cashFlowModal.title}>
-                        <DollarSign size={14} /> {dict.actions.cashFlow}
-                    </button>
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setCashFlowModalOpen(true)}
+                        title={dict.cashFlowModal.title}
+                    >
+                        <DollarSign size={14} className="text-lys-teal-strong" /> {dict.actions.cashFlow}
+                    </Button>
 
-                    <button onClick={async () => { 
-                        setShowFxPanel(!showFxPanel); 
-                        if (!showFxPanel) { 
-                            setFxLoading(true); 
-                            const r = await getExchangeRateSummary(); 
-                            setFxSummary(r.currencies); 
-                            setFxLoading(false) 
-                        } 
-                    }}
-                        className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md bg-[#B45309]/10 hover:bg-[#B45309]/20 text-[#B45309] border border-[#B45309]/25">
-                        <Globe size={14} /> {dict.actions.fxPanel}
-                    </button>
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={async () => {
+                            setShowFxPanel(!showFxPanel)
+                            if (!showFxPanel) {
+                                setFxLoading(true)
+                                const r = await getExchangeRateSummary()
+                                setFxSummary(r.currencies)
+                                setFxLoading(false)
+                            }
+                        }}
+                    >
+                        <Globe size={14} className="text-tone-warning-fg" /> {dict.actions.fxPanel}
+                    </Button>
 
-                    <button onClick={handleExportExcel}
-                        className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold transition-all rounded-md bg-[#64748B]/10 hover:bg-[#64748B]/20 text-[#475569] border border-[#64748B]/25">
+                    <Button variant="secondary" size="sm" onClick={handleExportExcel}>
                         <Download size={14} /> {dict.actions.exportExcel}
-                    </button>
+                    </Button>
 
-                    <button onClick={() => setDrawerOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-md transition-all duration-150 bg-[#0E7490] hover:bg-[#155E75] text-white">
-                        <Plus size={16} /> {dict.actions.createPO}
-                    </button>
+                    <Button variant="primary" size="sm" onClick={() => setDrawerOpen(true)}>
+                        <Plus size={15} /> {dict.actions.createPO}
+                    </Button>
                 </div>
             </div>
 
             {/* Collapsible Stats Section matching Sales */}
             {showStats && (
-                <div className="space-y-2 animate-in slide-in-from-top-2 duration-150">
+                <div className="space-y-2 animate-fade-in">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#64748B' }}>
+                        <span className="text-xs font-bold uppercase tracking-wider text-lys-muted">
                             {locale === 'en' ? 'Purchase Order KPIs' : 'Thống Kê Chi Tiết Đơn Mua Hàng'}
                         </span>
-                        <button onClick={() => setShowStats(false)} className="text-xs font-semibold hover:underline flex items-center gap-1" style={{ color: '#0891B2' }}>
+                        <Button type="button" variant="link" size="sm" onClick={() => setShowStats(false)}>
                             {locale === 'en' ? 'Hide KPIs' : 'Thu gọn chỉ số'}
-                        </button>
+                        </Button>
                     </div>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        <POStatCard label={dict.stats.totalPO} value={stats.total} accent="#0E7490" />
-                        <POStatCard label={dict.stats.pendingApproval} value={stats.draft + (statusCounts.PENDING_APPROVAL || 0)} accent="#B45309" />
-                        <POStatCard label={dict.status.APPROVED} value={stats.approved} accent="#15803D" />
-                        <POStatCard label={dict.stats.inTransit} value={stats.inTransit} accent="#1D4ED8" />
-                    </div>
+                    <StatGrid cols={4}>
+                        <StatCard label={dict.stats.totalPO} value={stats.total} tone="brand" />
+                        <StatCard label={dict.stats.pendingApproval} value={stats.draft + (statusCounts.PENDING_APPROVAL || 0)} tone="warning" />
+                        <StatCard label={dict.status.APPROVED} value={stats.approved} tone="success" />
+                        <StatCard label={dict.stats.inTransit} value={stats.inTransit} tone="info" />
+                    </StatGrid>
                 </div>
             )}
 
-            {/* Toolbar: Tabs & Main Filters */}
-            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 pb-2 border-b border-slate-200/30">
-                {/* Left side: Quick Filter Tabs */}
-                <div className="flex-1 min-w-0 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-                    <FilterTabs active={statusFilter} counts={statusCounts} onChange={handleStatusTab} />
-                </div>
+            {/* Status Tabs + Main Filter Toolbar */}
+            <div className="space-y-3">
+                <StatusTabs items={statusTabItems} value={statusFilter} onChange={handleStatusTab} />
 
-                {/* Right side: Search + Date inputs + Filter button */}
-                <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                     {/* Search input */}
-                    <div className="relative w-full sm:w-48 xl:w-64">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748B' }} />
+                    <div className="relative w-full sm:w-64">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-lys-dim pointer-events-none" />
                         <input type="text" placeholder={dict.filters.searchPlaceholder}
                             value={search}
                             onChange={e => {
@@ -2332,62 +2208,60 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 setSearch(val)
                                 refresh({ search: val })
                             }}
-                            className="w-full pl-9 pr-3 py-1.5 text-xs outline-none"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
-                            onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                            onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
+                            className="w-full h-9 pl-9 pr-3 rounded-md border border-lys-border-strong bg-white text-xs text-lys-primary placeholder:text-lys-dim outline-none focus:border-lys-teal focus:ring-2 focus:ring-lys-teal/20" />
                     </div>
 
-                    {/* MISA-style Date Period Preset Dropdown */}
-                    <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 border border-slate-200 rounded-[4px]">
-                        <Calendar size={13} style={{ color: datePreset !== 'ALL' ? '#0E7490' : '#64748B' }} />
-                        <select
-                            value={datePreset}
-                            onChange={e => handleDatePresetChange(e.target.value as DatePresetKey)}
-                            className="bg-transparent border-none text-xs font-semibold outline-none cursor-pointer pr-1"
-                            style={{ color: datePreset !== 'ALL' ? '#0E7490' : '#0F172A' }}
-                        >
-                            {DATE_PRESET_OPTIONS.map(opt => (
-                                <option key={opt.key} value={opt.key} className="bg-slate-50 text-slate-900">
-                                    {(dict.datePresets as Record<string, string>)[opt.key] ?? opt.label}
-                                </option>
-                            ))}
-                        </select>
+                    {/* Date Preset + Filter Toggle */}
+                    <div className="flex flex-wrap items-center gap-2 ml-auto">
+                        {/* MISA-style Date Period Preset Dropdown */}
+                        <div className="flex items-center gap-1.5 h-9 bg-white px-2.5 border border-lys-border-strong rounded-md">
+                            <Calendar size={13} className={datePreset !== 'ALL' ? 'text-lys-teal-strong' : 'text-lys-muted'} />
+                            <select
+                                value={datePreset}
+                                onChange={e => handleDatePresetChange(e.target.value as DatePresetKey)}
+                                className={`bg-transparent border-none text-xs font-semibold outline-none cursor-pointer pr-1 ${datePreset !== 'ALL' ? 'text-lys-teal-strong' : 'text-lys-primary'}`}
+                            >
+                                {DATE_PRESET_OPTIONS.map(opt => (
+                                    <option key={opt.key} value={opt.key} className="bg-white text-lys-primary">
+                                        {(dict.datePresets as Record<string, string>)[opt.key] ?? opt.label}
+                                    </option>
+                                ))}
+                            </select>
 
-                        <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5 ml-0.5">
-                            <input type="date" value={dateFrom}
-                                onChange={e => {
-                                    setDatePreset('CUSTOM')
-                                    setDateFrom(e.target.value)
-                                    refresh({ dateFrom: e.target.value, dateTo })
-                                }}
-                                className="bg-transparent border-none text-[11px] text-slate-600 outline-none w-[95px] p-0" />
-                            <span className="text-[10px]" style={{ color: '#64748B' }}>→</span>
-                            <input type="date" value={dateTo}
-                                onChange={e => {
-                                    setDatePreset('CUSTOM')
-                                    setDateTo(e.target.value)
-                                    refresh({ dateFrom, dateTo: e.target.value })
-                                }}
-                                className="bg-transparent border-none text-[11px] text-slate-600 outline-none w-[95px] p-0" />
+                            <div className="flex items-center gap-1 border-l border-lys-border pl-1.5 ml-0.5">
+                                <input type="date" value={dateFrom}
+                                    onChange={e => {
+                                        setDatePreset('CUSTOM')
+                                        setDateFrom(e.target.value)
+                                        refresh({ dateFrom: e.target.value, dateTo })
+                                    }}
+                                    className="bg-transparent border-none text-[11px] text-lys-secondary outline-none w-[95px] p-0" />
+                                <span className="text-[11px] text-lys-muted">→</span>
+                                <input type="date" value={dateTo}
+                                    onChange={e => {
+                                        setDatePreset('CUSTOM')
+                                        setDateTo(e.target.value)
+                                        refresh({ dateFrom, dateTo: e.target.value })
+                                    }}
+                                    className="bg-transparent border-none text-[11px] text-lys-secondary outline-none w-[95px] p-0" />
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Filter Toggle Button */}
-                    <button onClick={() => setShowFilters(!showFilters)}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded transition-all"
-                        style={{
-                            background: (showFilters || hasActiveFilters) ? 'rgba(8, 145, 178, 0.08)' : '#FFFFFF',
-                            color: (showFilters || hasActiveFilters) ? '#0E7490' : '#475569',
-                            border: `1px solid ${(showFilters || hasActiveFilters) ? 'rgba(8, 145, 178, 0.25)' : '#E2E8F0'}`,
-                        }}
-                    >
-                        <Plus size={12} style={{ transform: showFilters ? 'rotate(45deg)' : 'none', transition: 'transform 0.15s ease' }} />
-                        {locale === 'en' ? 'Filters' : 'Bộ lọc'}
-                        {hasActiveFilters && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#0E7490]" />
-                        )}
-                    </button>
+                        {/* Filter Toggle Button */}
+                        <button type="button" onClick={() => setShowFilters(!showFilters)}
+                            className={`flex items-center gap-1.5 h-9 px-3 text-xs font-semibold rounded-md border transition-all cursor-pointer ${
+                                (showFilters || hasActiveFilters)
+                                    ? 'bg-lys-teal-soft text-lys-teal-strong border-tone-brand-border'
+                                    : 'bg-white text-lys-secondary border-lys-border-strong hover:text-lys-primary'
+                            }`}
+                        >
+                            <Plus size={12} style={{ transform: showFilters ? 'rotate(45deg)' : 'none', transition: 'transform 0.15s ease' }} />
+                            {locale === 'en' ? 'Filters' : 'Bộ lọc'}
+                            {hasActiveFilters && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-lys-teal-strong" />
+                            )}
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -2396,7 +2270,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3 p-3 rounded-lg animate-in slide-in-from-top-2 duration-150"
                     style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                     <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#64748B' }}>{dict.table.legalEntity}</label>
+                        <label className="text-[11px] font-bold uppercase block mb-1" style={{ color: '#64748B' }}>{dict.table.legalEntity}</label>
                         <select value={legalEntityFilter}
                             onChange={e => { setLegalEntityFilter(e.target.value); refresh({ legalEntityId: e.target.value }) }}
                             className="w-full px-2 py-1.5 text-xs outline-none font-semibold rounded"
@@ -2409,7 +2283,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                     </div>
 
                     <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#64748B' }}>Incoterms</label>
+                        <label className="text-[11px] font-bold uppercase block mb-1" style={{ color: '#64748B' }}>Incoterms</label>
                         <select value={incotermsFilter}
                             onChange={e => { setIncotermsFilter(e.target.value); refresh({ incoterms: e.target.value }) }}
                             className="w-full px-2 py-1.5 text-xs outline-none font-semibold rounded"
@@ -2423,7 +2297,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                     </div>
 
                     <div>
-                        <label className="text-[10px] font-bold uppercase block mb-1" style={{ color: '#64748B' }}>{dict.shipmentDrawer.costs.currency}</label>
+                        <label className="text-[11px] font-bold uppercase block mb-1" style={{ color: '#64748B' }}>{dict.shipmentDrawer.costs.currency}</label>
                         <select value={currencyFilter}
                             onChange={e => { setCurrencyFilter(e.target.value); refresh({ currency: e.target.value }) }}
                             className="w-full px-2 py-1.5 text-xs outline-none font-semibold rounded"
@@ -2450,12 +2324,11 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
             )}
 
             {/* Desktop Table — Multi-Line Compact ERP Layout */}
-            <div className="hidden md:block rounded-lg overflow-hidden shadow-sm"
-                style={{ border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+            <div className="hidden md:block rounded-lg overflow-hidden bg-lys-card border border-lys-border shadow-xs">
                 <div style={{ overflowX: 'auto' }}>
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
+                            <tr className="bg-lys-subtle border-b border-lys-border">
                                 <SortHeader label={dict.table.poNo} field="poNo" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '20%' }} />
                                 <SortHeader label={dict.table.supplier} field="supplier" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '20%' }} />
                                 <SortHeader label={dict.table.skuCount} field="totalQty" current={sortBy} dir={sortDir} onSort={handleSort} style={{ width: '15%' }} />
@@ -2468,14 +2341,14 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-200/40">
+                        <tbody className="divide-y divide-lys-border">
                             {loading ? (
                                 Array.from({ length: 4 }).map((_, i) => (
                                     <tr key={i} className="animate-pulse">
                                         {Array.from({ length: 6 }).map((_, j) => (
                                             <td key={j} className="px-4 py-3.5">
-                                                <div className="h-4 rounded bg-white w-3/4 mb-1.5" />
-                                                <div className="h-3 rounded bg-white/60 w-1/2" />
+                                                <div className="h-4 rounded bg-lys-subtle w-3/4 mb-1.5" />
+                                                <div className="h-3 rounded bg-lys-subtle/60 w-1/2" />
                                             </td>
                                         ))}
                                     </tr>
@@ -2496,26 +2369,24 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                     </td>
                                 </tr>
                             ) : sortedRows.map(row => {
-                                const incoCfg = INCOTERMS_CFG[row.incoterms || 'EXW'] || INCOTERMS_CFG.EXW
                                 const isSelected = selectedId === row.id
                                 const isReadyForGR = ['APPROVED', 'IN_TRANSIT', 'PARTIALLY_RECEIVED'].includes(row.status)
 
                                 return (
                                     <tr key={row.id}
                                         onClick={() => showDetail(row.id)}
-                                        className={`transition-colors cursor-pointer group ${isSelected ? 'bg-[#0891B2]/6' : 'bg-transparent hover:bg-[#0891B2]/3'}`}>
+                                        className={`transition-colors cursor-pointer group ${isSelected ? 'bg-lys-teal-soft' : 'bg-transparent hover:bg-lys-subtle/70'}`}>
                                         
                                         {/* Col 1: PO No & Shipping info */}
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-2">
-                                                <span className="text-xs font-extrabold font-mono text-[#0891B2]">
+                                                <span className="text-xs font-extrabold font-mono text-lys-teal-strong">
                                                     {row.poNo}
                                                 </span>
                                                 {row.incoterms && (
-                                                    <span className="inline-block text-[10px] font-extrabold px-1.5 py-0.2 rounded whitespace-nowrap shrink-0"
-                                                        style={{ background: incoCfg.bg, color: incoCfg.color, border: `1px solid ${incoCfg.border}` }}>
-                                                        {incoCfg.label}
-                                                    </span>
+                                                    <Badge tone={INCOTERMS_TONE[row.incoterms] ?? 'neutral'}>
+                                                        {row.incoterms}
+                                                    </Badge>
                                                 )}
                                             </div>
                                             {row.latestShipment ? (
@@ -2527,31 +2398,31 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                             {row.latestShipment.billOfLading}
                                                         </span>
                                                         {row.latestShipment.vesselName && (
-                                                            <span className="text-[10px] text-slate-600 truncate max-w-[100px]" title={row.latestShipment.vesselName}>
+                                                            <span className="text-[11px] text-slate-600 truncate max-w-[100px]" title={row.latestShipment.vesselName}>
                                                                 · {row.latestShipment.vesselName}
                                                             </span>
                                                         )}
                                                     </div>
                                                     {row.latestShipment.containerNo && (
-                                                        <p className="text-[10px] text-slate-500 font-mono">
+                                                        <p className="text-[11px] text-slate-500 font-mono">
                                                             Cont: {row.latestShipment.containerNo} {row.latestShipment.containerType ? `(${row.latestShipment.containerType})` : ''}
                                                         </p>
                                                     )}
                                                 </div>
                                             ) : (
-                                                <p className="text-[10px] mt-1 text-slate-500 italic">{dict.detailDrawer.shipments.empty}</p>
+                                                <p className="text-[11px] mt-1 text-slate-500 italic">{dict.detailDrawer.shipments.empty}</p>
                                             )}
                                         </td>
 
                                         {/* Col 2: Supplier & Legal Entity */}
                                         <td className="px-4 py-3">
                                             <p className="text-xs font-extrabold text-slate-900 truncate max-w-[230px]" title={row.supplierName}>
-                                                <span className="font-mono text-[10px] text-slate-500 font-bold mr-1.5 px-1 py-0.5 rounded bg-slate-100">[{row.supplierCountry || 'FR'}]</span>
+                                                <span className="font-mono text-[11px] text-slate-500 font-bold mr-1.5 px-1 py-0.5 rounded bg-slate-100">[{row.supplierCountry || 'FR'}]</span>
                                                 {row.supplierName}
                                             </p>
                                             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                                                 {row.legalEntityCode && (
-                                                    <span className="inline-block text-[10px] font-extrabold px-1.5 py-0.2 rounded whitespace-nowrap shrink-0"
+                                                    <span className="inline-block text-[11px] font-extrabold px-1.5 py-0.2 rounded whitespace-nowrap shrink-0"
                                                         style={{ 
                                                             background: row.legalEntityCode === 'TA' ? 'rgba(180,83,9,0.15)' : 'rgba(8, 145, 178, 0.08)', 
                                                             color: row.legalEntityCode === 'TA' ? '#B45309' : '#0E7490' 
@@ -2560,7 +2431,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                     </span>
                                                 )}
                                                 {row.paymentTerm && (
-                                                    <span className="text-[10px] text-slate-600 font-mono">
+                                                    <span className="text-[11px] text-slate-600 font-mono">
                                                         {row.paymentTerm}
                                                     </span>
                                                 )}
@@ -2574,19 +2445,19 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             </div>
                                             {row.hasFoc && (
                                                 <div className="mt-0.5">
-                                                    <span className="inline-block text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300 whitespace-nowrap shrink-0">
+                                                    <span className="inline-block text-[11px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300 whitespace-nowrap shrink-0">
                                                         FOC: {(row.totalFocQty ?? 0).toLocaleString('vi-VN')} {dict.table.bottleUnit}
                                                     </span>
                                                 </div>
                                             )}
                                             <div className="mt-1 space-y-0.5">
-                                                <div className="flex justify-between items-center text-[10px]">
+                                                <div className="flex justify-between items-center text-[11px]">
                                                     <span className="text-slate-500">{dict.detailDrawer.receivedQty}:</span>
-                                                    <span className="font-mono font-bold text-[#0891B2]">
+                                                    <span className="font-mono font-bold text-lys-teal-strong">
                                                         {row.totalQtyReceived.toLocaleString('vi-VN')}/{row.totalQty.toLocaleString('vi-VN')}
                                                     </span>
                                                 </div>
-                                                <div className="w-full h-1.5 bg-white rounded-full overflow-hidden">
+                                                <div className="w-full h-1.5 bg-lys-subtle rounded-full overflow-hidden">
                                                     <div className="h-full rounded-full transition-all"
                                                         style={{ 
                                                             width: `${row.receivedPercentage}%`, 
@@ -2602,14 +2473,14 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                 {row.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} {row.currency}
                                             </p>
                                             {row.discountAmount && row.discountAmount > 0 ? (
-                                                <p className="text-[10px] text-amber-700 font-mono">
+                                                <p className="text-[11px] text-amber-700 font-mono">
                                                     -{row.discountAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} {row.currency} {row.discountPct ? `(${row.discountPct}%)` : ''}
                                                 </p>
                                             ) : null}
-                                            <p className="text-[11px] font-bold font-mono text-[#0891B2] mt-0.5">
+                                            <p className="text-[11px] font-bold font-mono text-lys-teal-strong mt-0.5">
                                                 ≈ {formatVND(row.totalAmount * row.exchangeRate)}
                                             </p>
-                                            <p className="text-[10px] text-slate-500 font-mono">
+                                            <p className="text-[11px] text-slate-500 font-mono">
                                                 {dict.detailDrawer.exchangeRate}: {row.exchangeRate.toLocaleString('vi-VN')}
                                             </p>
                                         </td>
@@ -2619,19 +2490,19 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             <div>
                                                 <POStatusBadge status={row.status} />
                                             </div>
-                                            <div className="flex items-center gap-1.5 mt-1 text-[10px] flex-wrap">
+                                            <div className="flex items-center gap-1.5 mt-1 text-[11px] flex-wrap">
                                                 {row.creatorName && (
                                                     <span className="text-slate-600 font-medium">
                                                         {row.creatorName}
                                                     </span>
                                                 )}
                                                 {row.docCount && row.docCount > 0 ? (
-                                                    <span className="text-[#0891B2] flex items-center gap-0.5 font-mono">
+                                                    <span className="text-lys-teal-strong flex items-center gap-0.5 font-mono">
                                                         {row.docCount} docs
                                                     </span>
                                                 ) : null}
                                             </div>
-                                            <p className="text-[10px] text-slate-500 mt-0.5">
+                                            <p className="text-[11px] text-slate-500 mt-0.5">
                                                 {formatDate(row.createdAt)}
                                                 {row.estimatedDelivery && ` · ETA: ${formatDate(row.estimatedDelivery)}`}
                                             </p>
@@ -2641,7 +2512,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                         <td className="px-4 py-3 text-right whitespace-nowrap" onClick={e => e.stopPropagation()}>
                                             <div className="flex items-center justify-end gap-1.5 flex-nowrap whitespace-nowrap">
                                                 <button onClick={() => showDetail(row.id)}
-                                                    className="p-1.5 rounded-lg text-[#0891B2] hover:bg-white border border-emerald-500/20 flex-shrink-0"
+                                                    className="p-1.5 rounded-lg text-lys-teal-strong hover:bg-white border border-emerald-500/20 flex-shrink-0"
                                                     title={dict.detailDrawer.title}>
                                                     <Eye size={13} />
                                                 </button>
@@ -2650,7 +2521,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
                                                 {isReadyForGR && (
                                                     <Link href="/dashboard/warehouse"
-                                                        className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold text-[#0891B2] bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 flex-shrink-0"
+                                                        className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold text-lys-teal-strong bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 flex-shrink-0"
                                                         title={dict.detailDrawer.tabs.GR}>
                                                         <Box size={11} /> {dict.detailDrawer.tabs.GR}
                                                     </Link>
@@ -2669,28 +2540,24 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
             <div className="block md:hidden space-y-3">
                 {loading ? (
                     <div className="text-center py-12 text-xs text-slate-600">
-                        <Loader2 size={20} className="animate-spin inline text-[#0891B2] mr-2" /> {dict.table.loading}
+                        <Loader2 size={20} className="animate-spin inline text-lys-teal-strong mr-2" /> {dict.table.loading}
                     </div>
                 ) : rows.length === 0 ? (
                     <div className="text-center py-12 text-xs text-slate-500 rounded-lg border border-slate-200 bg-slate-50">
                         {dict.table.emptyTitle}
                     </div>
                 ) : rows.map(row => {
-                    const incoCfg = INCOTERMS_CFG[row.incoterms || 'EXW'] || INCOTERMS_CFG.EXW
-
                     return (
-                        <div key={row.id} onClick={() => showDetail(row.id)}
-                            className="p-3.5 rounded-lg space-y-2.5 cursor-pointer transition-all active:scale-[0.99]"
-                            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                        <Card key={row.id} onClick={() => showDetail(row.id)}
+                            className="p-3.5 space-y-2.5 cursor-pointer transition-all active:scale-[0.99]">
                             
                             <div className="flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-1.5">
-                                    <span className="text-xs font-bold font-mono text-[#0891B2]">{row.poNo}</span>
+                                    <span className="text-xs font-bold font-mono text-lys-teal-strong">{row.poNo}</span>
                                     {row.incoterms && (
-                                        <span className="inline-block text-[10px] font-extrabold px-1.5 py-0.2 rounded whitespace-nowrap shrink-0"
-                                            style={{ background: incoCfg.bg, color: incoCfg.color, border: `1px solid ${incoCfg.border}` }}>
-                                            {incoCfg.label}
-                                        </span>
+                                        <Badge tone={INCOTERMS_TONE[row.incoterms] ?? 'neutral'}>
+                                            {row.incoterms}
+                                        </Badge>
                                     )}
                                 </div>
                                 <POStatusBadge status={row.status} />
@@ -2698,7 +2565,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
                             <div className="text-xs">
                                 <p className="font-extrabold text-slate-900">
-                                    <span className="font-mono text-[10px] text-slate-500 font-bold mr-1.5 px-1 py-0.5 rounded bg-slate-100">[{row.supplierCountry || 'FR'}]</span>{row.supplierName}
+                                    <span className="font-mono text-[11px] text-slate-500 font-bold mr-1.5 px-1 py-0.5 rounded bg-slate-100">[{row.supplierCountry || 'FR'}]</span>{row.supplierName}
                                 </p>
                                 {row.latestShipment && (
                                     <p className="text-[11px] text-[#1D4ED8] font-mono mt-0.5 flex items-center gap-1">
@@ -2709,18 +2576,18 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
 
                             <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/40 text-xs">
                                 <div>
-                                    <span className="text-[10px] text-slate-500 block">{dict.detailDrawer.totalQty}:</span>
+                                    <span className="text-[11px] text-slate-500 block">{dict.detailDrawer.totalQty}:</span>
                                     <span className="font-mono text-slate-900 font-bold">{row.totalQty.toLocaleString('vi-VN')} {dict.table.bottleUnit}</span>
                                     {row.hasFoc && (
-                                        <span className="text-[10px] text-amber-700 font-bold ml-1">({(row.totalFocQty ?? 0).toLocaleString('vi-VN')} FOC)</span>
+                                        <span className="text-[11px] text-amber-700 font-bold ml-1">({(row.totalFocQty ?? 0).toLocaleString('vi-VN')} FOC)</span>
                                     )}
-                                    <span className="text-[10px] text-[#0891B2] ml-1">({row.receivedPercentage}%)</span>
+                                    <span className="text-[11px] text-lys-teal-strong ml-1">({row.receivedPercentage}%)</span>
                                 </div>
                                 <div className="text-right">
-                                    <span className="text-[10px] text-slate-500 block">{dict.table.vndEquiv}:</span>
-                                    <span className="font-mono text-[#0891B2] font-bold">{formatVND(row.totalAmount * row.exchangeRate)}</span>
+                                    <span className="text-[11px] text-slate-500 block">{dict.table.vndEquiv}:</span>
+                                    <span className="font-mono text-lys-teal-strong font-bold">{formatVND(row.totalAmount * row.exchangeRate)}</span>
                                     {row.discountAmount && row.discountAmount > 0 && (
-                                        <span className="text-[10px] text-amber-700 block font-mono">
+                                        <span className="text-[11px] text-amber-700 block font-mono">
                                             -{row.discountAmount.toLocaleString('vi-VN')} {row.currency}
                                         </span>
                                     )}
@@ -2731,94 +2598,109 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                     <StatusStepper current={row.status} poId={row.id} onUpdate={refresh} onEdit={(id) => { setEditPoId(id); setEditDrawerOpen(true); }} />
                                 </div>
-                                <button onClick={() => showDetail(row.id)}
-                                    className="px-2.5 py-1 text-xs font-bold rounded-lg text-[#0891B2] bg-white border border-emerald-500/20">
+                                <Button type="button" variant="secondary" size="sm" onClick={() => showDetail(row.id)}>
                                     {dict.detailDrawer.title}
-                                </button>
+                                </Button>
                             </div>
-                        </div>
+                        </Card>
                     )
                 })}
             </div>
 
-            {/* PO Detail Drawer (Slide-Over with Rich Tabs) */}
-            {selectedId && (
-                <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs" onClick={() => setSelectedId(null)}>
-                    <div className="w-full sm:w-[620px] max-w-full h-full overflow-y-auto flex flex-col"
-                        style={{ background: '#F8FAFC', borderLeft: '1px solid #E2E8F0' }}
-                        onClick={e => e.stopPropagation()}>
-
-                        {/* Drawer Header */}
-                        <div className="flex items-center justify-between p-5 border-b border-slate-200 flex-shrink-0">
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <h3 className="text-base font-extrabold text-slate-900">
-                                        {poDetail?.poNo ?? dict.detailDrawer.title}
-                                    </h3>
-                                    {poDetail && <POStatusBadge status={poDetail.status} />}
-                                </div>
-                                {poDetail && (
-                                    <p className="text-xs text-slate-600 mt-0.5">
-                                        {poDetail.supplierName} · {poDetail.currency} ({dict.detailDrawer.exchangeRate}: {poDetail.exchangeRate.toLocaleString('vi-VN')})
-                                    </p>
-                                )}
-                            </div>
+            {/* PO Detail Drawer */}
+            <Drawer
+                open={Boolean(selectedId)}
+                onClose={() => { if (!editDrawerOpen && !shipmentDrawerOpen) setSelectedId(null) }}
+                title={poDetail?.poNo ?? dict.detailDrawer.title}
+                description={poDetail ? `${poDetail.supplierName} · ${poDetail.currency} (${dict.detailDrawer.exchangeRate}: ${poDetail.exchangeRate.toLocaleString('vi-VN')})` : undefined}
+                headerExtra={poDetail ? <POStatusBadge status={poDetail.status} /> : undefined}
+                actions={
+                    <>
+                        {poDetail && poDetail.status === 'DRAFT' && selectedId && (
+                            <Button type="button" variant="secondary" size="sm" onClick={() => { setEditPoId(selectedId); setEditDrawerOpen(true) }} title={dict.actions.editDraft}>
+                                <Pencil size={13} /> {dict.actions.editDraft}
+                            </Button>
+                        )}
+                        {poDetail && poDetail.status === 'PENDING_APPROVAL' && selectedId && (
+                            <Button type="button" variant="secondary" size="sm" onClick={() => handleDrawerRevertToDraft(selectedId)} title={dict.actions.revertDraft}>
+                                <RotateCcw size={12} /> {dict.actions.revertDraft}
+                            </Button>
+                        )}
+                    </>
+                }
+                size="lg"
+                className="bg-lys-bg"
+                footer={poDetail && (poDetail.status === 'DRAFT' || poDetail.status === 'PENDING_APPROVAL') ? (
+                    poDetail.status === 'DRAFT' ? (
+                        <div className="flex w-full flex-wrap items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
-                                {poDetail && poDetail.status === 'DRAFT' && (
-                                    <button onClick={() => { setEditPoId(selectedId); setEditDrawerOpen(true); }}
-                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-all hover:bg-amber-500/25"
-                                        style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}
-                                        title={dict.actions.editDraft}>
-                                        <Pencil size={13} /> {dict.actions.editDraft}
-                                    </button>
-                                )}
-                                {poDetail && poDetail.status === 'PENDING_APPROVAL' && (
-                                    <button onClick={() => handleDrawerRevertToDraft(selectedId!)}
-                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-all hover:bg-amber-500/25"
-                                        style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}
-                                        title={dict.actions.revertDraft}>
-                                        <RotateCcw size={12} /> {dict.actions.revertDraft}
-                                    </button>
-                                )}
-                                <button onClick={() => setSelectedId(null)} className="p-1.5 rounded-lg text-slate-600 hover:bg-white">
-                                    <X size={18} />
-                                </button>
+                                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
+                                <div>
+                                    <p className="text-xs font-bold text-tone-warning-fg">Đơn hàng ở trạng thái Bản Nháp</p>
+                                    <p className="text-[11px] text-lys-muted">Có thể chỉnh sửa danh mục, giá, chiết khấu hoặc xoá</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 ml-auto">
+                                <Button type="button" variant="danger-outline" size="sm" disabled={approving} onClick={() => handleDrawerDelete(poDetail.id)} title="Xoá đơn mua hàng nháp">
+                                    <Trash2 size={13} /> Xoá Đơn
+                                </Button>
+                                <Button type="button" variant="secondary" size="sm" onClick={() => { setEditPoId(poDetail.id); setEditDrawerOpen(true) }}>
+                                    <Pencil size={13} /> Sửa Đơn Nháp
+                                </Button>
+                                <Button type="button" variant="primary" size="sm" loading={approving} onClick={() => handleDrawerSubmit(poDetail.id)}>
+                                    {!approving && <Send size={13} />} Gửi Trình Duyệt
+                                </Button>
                             </div>
                         </div>
-
+                    ) : (
+                        <div className="flex w-full flex-wrap items-center justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                                <Clock size={16} className="text-tone-warning-fg shrink-0" />
+                                <div>
+                                    <p className="text-xs font-bold text-tone-warning-fg">Đơn hàng đang chờ duyệt cấp {poDetail.currentApprovalStep || 1}</p>
+                                    <p className="text-[11px] text-lys-muted">Có thể thu hồi về trạng thái Nháp nếu cần chỉnh sửa lại trước khi duyệt</p>
+                                </div>
+                            </div>
+                            <Button type="button" variant="secondary" size="sm" disabled={approving} onClick={() => handleDrawerRevertToDraft(poDetail.id)} title="Thu hồi về Nháp để chỉnh sửa">
+                                <RotateCcw size={13} /> Thu Hồi Về Nháp
+                            </Button>
+                        </div>
+                    )
+                ) : undefined}
+            >
                         {detailLoading ? (
-                            <div className="flex-1 flex items-center justify-center py-16 text-[#0891B2]">
+                            <div className="flex-1 flex items-center justify-center py-16 text-lys-teal-strong">
                                 <Loader2 size={24} className="animate-spin mr-2" /> {dict.table.loading}
                             </div>
                         ) : poDetail ? (
                             <>
                                 {/* Quick Meta Bar */}
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-4 bg-white border-b border-slate-200 text-xs">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 mb-3 bg-white border border-lys-border rounded-lg shadow-xs text-xs">
                                     <div>
-                                        <span className="text-[10px] text-slate-500 block font-bold uppercase">{dict.detailDrawer.totalQty}</span>
-                                        <span className="font-mono font-bold text-slate-900">{poDetail.totalQty.toLocaleString('vi-VN')} {dict.table.bottleUnit}</span>
+                                        <span className="text-[11px] text-lys-muted block font-bold uppercase">{dict.detailDrawer.totalQty}</span>
+                                        <span className="font-mono font-bold text-lys-primary">{poDetail.totalQty.toLocaleString('vi-VN')} {dict.table.bottleUnit}</span>
                                         {Boolean(poDetail.totalFocQty && poDetail.totalFocQty > 0) && (
-                                            <span className="text-[10px] text-amber-700 font-bold ml-1">({poDetail.totalFocQty} FOC)</span>
+                                            <span className="text-[11px] text-tone-warning-fg font-bold ml-1">({poDetail.totalFocQty} FOC)</span>
                                         )}
-                                        <span className="text-[10px] text-[#0891B2] ml-1">({poDetail.totalQtyReceived} {dict.detailDrawer.receivedQty})</span>
+                                        <span className="text-[11px] text-lys-teal-strong ml-1">({poDetail.totalQtyReceived} {dict.detailDrawer.receivedQty})</span>
                                     </div>
                                     <div>
-                                        <span className="text-[10px] text-slate-500 block font-bold uppercase">{dict.detailDrawer.foreignAmount}</span>
-                                        <span className="font-mono font-bold text-slate-900">{poDetail.totalAmount.toLocaleString('vi-VN')} {poDetail.currency}</span>
+                                        <span className="text-[11px] text-lys-muted block font-bold uppercase">{dict.detailDrawer.foreignAmount}</span>
+                                        <span className="font-mono font-bold text-lys-primary">{poDetail.totalAmount.toLocaleString('vi-VN')} {poDetail.currency}</span>
                                         {Boolean(poDetail.discountAmount && poDetail.discountAmount > 0) && (
-                                            <span className="text-[10px] text-amber-700 block font-mono">
+                                            <span className="text-[11px] text-tone-warning-fg block font-mono">
                                                 ({dict.detailDrawer.discounted} {poDetail.discountAmount?.toLocaleString('vi-VN')} {poDetail.currency})
                                             </span>
                                         )}
                                     </div>
                                     <div className="sm:text-right">
-                                        <span className="text-[10px] text-slate-500 block font-bold uppercase">{dict.detailDrawer.vndAmount}</span>
-                                        <span className="font-mono font-bold text-[#0891B2]">{formatVND(poDetail.totalAmount * poDetail.exchangeRate)}</span>
+                                        <span className="text-[11px] text-lys-muted block font-bold uppercase">{dict.detailDrawer.vndAmount}</span>
+                                        <span className="font-mono font-bold text-lys-teal-strong">{formatVND(poDetail.totalAmount * poDetail.exchangeRate)}</span>
                                     </div>
                                 </div>
 
                                 {/* Drawer Tabs */}
-                                <div className="flex border-b border-slate-200 bg-white px-4 gap-1 overflow-x-auto">
+                                <div className="mb-4 flex border-b border-lys-border gap-1 overflow-x-auto">
                                     {[
                                         { key: 'LINES', label: `${dict.detailDrawer.tabs.LINES} (${poDetail.lines.length})` },
                                         { key: 'FINANCE', label: dict.detailDrawer.tabs.FINANCIAL },
@@ -2826,19 +2708,17 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                         { key: 'DOCS', label: `${dict.detailDrawer.tabs.DOCS} (${poDetail.documents?.length || 0})` },
                                         { key: 'APPROVAL', label: `${dict.detailDrawer.tabs.APPROVAL} (${poDetail.approvalHistory?.length || 0})` },
                                     ].map(t => (
-                                        <button key={t.key} onClick={() => setDetailTab(t.key as any)}
-                                            className="px-3 py-2.5 text-xs font-bold border-b-2 transition-all whitespace-nowrap"
-                                            style={{
-                                                borderColor: detailTab === t.key ? '#0E7490' : 'transparent',
-                                                color: detailTab === t.key ? '#0E7490' : '#64748B',
-                                            }}>
+                                        <button type="button" key={t.key} onClick={() => setDetailTab(t.key as any)}
+                                            className={`px-3 py-2.5 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
+                                                detailTab === t.key ? 'border-lys-teal-strong text-lys-teal-strong' : 'border-transparent text-lys-muted hover:text-lys-primary'
+                                            }`}>
                                             {t.label}
                                         </button>
                                     ))}
                                 </div>
 
                                 {/* Tab Content */}
-                                <div className="flex-1 p-5 space-y-4 overflow-y-auto">
+                                <div className="space-y-4">
                                     {detailTab === 'LINES' && (
                                         <div className="space-y-3">
                                             <div className="space-y-2">
@@ -2860,37 +2740,37 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                                 <div className="flex items-center gap-1.5 flex-wrap">
                                                                     <p className="font-extrabold text-slate-900">{line.productName}</p>
                                                                     {line.isFoc && (
-                                                                        <span className="inline-block text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300 whitespace-nowrap shrink-0">
+                                                                        <span className="inline-block text-[11px] font-extrabold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300 whitespace-nowrap shrink-0">
                                                                             FOC
                                                                         </span>
                                                                     )}
                                                                 </div>
-                                                                <p className="text-[10px] text-slate-500 font-mono mt-0.5">{line.skuCode}</p>
+                                                                <p className="text-[11px] text-slate-500 font-mono mt-0.5">{line.skuCode}</p>
                                                                 {line.isFoc && line.focNote && (
-                                                                    <p className="text-[10px] text-amber-700/90 italic mt-1 bg-amber-500/10 px-2 py-0.5 rounded inline-block whitespace-nowrap shrink-0">
+                                                                    <p className="text-[11px] text-amber-700/90 italic mt-1 bg-amber-500/10 px-2 py-0.5 rounded inline-block whitespace-nowrap shrink-0">
                                                                         Lý do FOC: {line.focNote}
                                                                     </p>
                                                                 )}
                                                             </div>
                                                             <div className="text-right shrink-0">
-                                                                <p className="font-mono font-bold text-[#0891B2]">{uomLabel}</p>
+                                                                <p className="font-mono font-bold text-lys-teal-strong">{uomLabel}</p>
                                                                 {line.isFoc ? (
                                                                     <>
                                                                         <p className="text-[11px] font-bold text-amber-700 font-mono">
                                                                             0.00 {poDetail.currency} (Miễn phí)
                                                                         </p>
                                                                         {line.declaredPrice ? (
-                                                                            <p className="text-[10px] text-slate-600 font-mono" title="Đơn giá khai báo hải quan">
+                                                                            <p className="text-[11px] text-slate-600 font-mono" title="Đơn giá khai báo hải quan">
                                                                                 Giá HQ: {line.declaredPrice.toFixed(2)} {poDetail.currency}/chai
                                                                             </p>
                                                                         ) : null}
                                                                     </>
                                                                 ) : (
                                                                     <>
-                                                                        <p className="text-[10px] text-slate-600 font-mono">
+                                                                        <p className="text-[11px] text-slate-600 font-mono">
                                                                             {line.unitPrice.toFixed(2)} {poDetail.currency} / chai
                                                                         </p>
-                                                                        <p className="text-[10px] text-slate-500 font-mono">
+                                                                        <p className="text-[11px] text-slate-500 font-mono">
                                                                             ≈ {formatVND(line.lineTotal * poDetail.exchangeRate)}
                                                                         </p>
                                                                     </>
@@ -2922,10 +2802,10 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                 <div className="flex justify-between items-center pt-2 border-t border-slate-200 font-bold">
                                                     <span className="text-slate-900">Tổng phải thanh toán:</span>
                                                     <div className="text-right">
-                                                        <span className="font-mono text-[#0891B2] text-sm">
+                                                        <span className="font-mono text-lys-teal-strong text-sm">
                                                             {poDetail.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} {poDetail.currency}
                                                         </span>
-                                                        <span className="text-[10px] text-slate-600 block font-mono">
+                                                        <span className="text-[11px] text-slate-600 block font-mono">
                                                             ≈ {formatVND(poDetail.totalAmount * poDetail.exchangeRate)}
                                                         </span>
                                                     </div>
@@ -2952,12 +2832,12 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                     <div key={s.id} onClick={() => { setSelectedShipmentId(s.id); setShipmentDrawerOpen(true) }}
                                                         className="p-3.5 rounded-lg bg-white border border-slate-200 cursor-pointer hover:border-emerald-500/40 transition-all space-y-2">
                                                         <div className="flex items-center justify-between">
-                                                            <span className="text-xs font-bold font-mono text-[#0891B2]">B/L: {s.billOfLading}</span>
-                                                            <span className="text-[10px] font-extrabold text-[#15803D]">{s.milestoneProgress}%</span>
+                                                            <span className="text-xs font-bold font-mono text-lys-teal-strong">B/L: {s.billOfLading}</span>
+                                                            <span className="text-[11px] font-extrabold text-[#15803D]">{s.milestoneProgress}%</span>
                                                         </div>
                                                         <div className="text-xs text-slate-600">
                                                             <p>Tàu: {s.vesselName || 'TBC'} {s.voyageNo ? `(${s.voyageNo})` : ''}</p>
-                                                            <p className="text-[10px] text-slate-500">Cont: {s.containerNo || '—'} · ETA: {s.eta ? formatDate(s.eta) : '—'}</p>
+                                                            <p className="text-[11px] text-slate-500">Cont: {s.containerNo || '—'} · ETA: {s.eta ? formatDate(s.eta) : '—'}</p>
                                                         </div>
                                                     </div>
                                                 ))
@@ -2969,7 +2849,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-between">
                                                 <p className="text-xs font-bold text-slate-600 uppercase">Tài liệu đính kèm (Invoice / Packing List / C/O)</p>
-                                                <label className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-bold cursor-pointer text-[#0891B2] bg-emerald-500/10 border border-emerald-500/30 whitespace-nowrap shrink-0">
+                                                <label className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-bold cursor-pointer text-lys-teal-strong bg-emerald-500/10 border border-emerald-500/30 whitespace-nowrap shrink-0">
                                                     {uploadingDoc ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
                                                     Upload
                                                     <input type="file" className="hidden" accept=".pdf,.png,.jpg,.jpeg,.xlsx" onChange={e => handleUpload(poDetail.id, e)} disabled={uploadingDoc} />
@@ -2980,9 +2860,9 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                     {poDetail.documents.map(d => (
                                                         <a key={d.id} href={d.fileUrl} target="_blank" rel="noreferrer"
                                                             className="flex items-center gap-2 p-2.5 rounded-lg bg-white border border-slate-200 text-xs hover:bg-white text-slate-900">
-                                                            <FileText size={14} className="text-[#0891B2]" />
+                                                            <FileText size={14} className="text-lys-teal-strong" />
                                                             <span className="truncate flex-1 font-medium">{d.name}</span>
-                                                            <span className="text-[10px] text-slate-500">{formatDate(d.uploadedAt)}</span>
+                                                            <span className="text-[11px] text-slate-500">{formatDate(d.uploadedAt)}</span>
                                                         </a>
                                                     ))}
                                                 </div>
@@ -2998,11 +2878,11 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             <div className="p-4 rounded-lg bg-white border border-slate-200 space-y-3">
                                                 <div className="flex items-center justify-between">
                                                     <span className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                                                        <ShieldCheck size={14} className="text-[#0891B2]" /> Quy Trình Phê Duyệt PO
+                                                        <ShieldCheck size={14} className="text-lys-teal-strong" /> Quy Trình Phê Duyệt PO
                                                     </span>
                                                     <div className="flex items-center gap-2">
                                                         <a href="/dashboard/settings/approval-matrix" target="_blank" rel="noreferrer"
-                                                            className="text-[10px] text-[#0891B2] hover:underline flex items-center gap-1 font-mono">
+                                                            className="text-[11px] text-lys-teal-strong hover:underline flex items-center gap-1 font-mono">
                                                             Ma trận duyệt
                                                         </a>
                                                         <POStatusBadge status={poDetail.status} />
@@ -3013,9 +2893,9 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                 <div className="grid gap-2 text-center text-[11px] pt-1"
                                                     style={{ gridTemplateColumns: `repeat(${1 + (poDetail.approvalSteps?.length || 3)}, minmax(0, 1fr))` }}>
                                                     {/* Step 0: Khởi Tạo */}
-                                                    <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-[#0891B2] font-bold">
+                                                    <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-lys-teal-strong font-bold">
                                                         <div className="flex items-center justify-center gap-1 mb-0.5"><CheckCircle2 size={12} /> Khởi Tạo</div>
-                                                        <span className="text-[9px] text-slate-600 font-normal block truncate">{poDetail.creatorName || 'Purchaser'}</span>
+                                                        <span className="text-[11px] text-slate-600 font-normal block truncate">{poDetail.creatorName || 'Purchaser'}</span>
                                                     </div>
 
                                                     {/* Configured Multi-level Approval Steps */}
@@ -3046,7 +2926,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                                     {isCompletedStep ? <CheckCircle2 size={12} /> : isActiveStep ? <Clock size={12} /> : <div className="w-3 h-3 rounded-full border border-current text-[8px] flex items-center justify-center">{st.level}</div>}
                                                                     Cấp {st.level}
                                                                 </div>
-                                                                <span className="text-[9px] block truncate font-medium">
+                                                                <span className="text-[11px] block truncate font-medium">
                                                                     {st.label || st.role}
                                                                 </span>
                                                             </div>
@@ -3067,11 +2947,10 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                             </p>
                                                         </div>
                                                     </div>
-                                                    <button onClick={() => handleDrawerSubmit(poDetail.id)} disabled={approving}
-                                                        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold text-slate-900 bg-[#0E7490] hover:bg-[#72b6a5] transition-all disabled:opacity-50">
-                                                        {approving ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+                                                    <Button type="button" variant="primary" className="w-full" loading={approving} onClick={() => handleDrawerSubmit(poDetail.id)}>
+                                                        {!approving && <Send size={13} />}
                                                         Gửi Trình Phê Duyệt PO (Bắt đầu Cấp 1)
-                                                    </button>
+                                                    </Button>
                                                 </div>
                                             )}
 
@@ -3081,7 +2960,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                         <span className="flex items-center gap-2">
                                                             <Clock size={15} /> Đang Chờ Duyệt Cấp {poDetail.currentApprovalStep || 1} / {poDetail.totalApprovalSteps || 3}
                                                         </span>
-                                                        <span className="text-[11px] text-[#0891B2] font-normal">
+                                                        <span className="text-[11px] text-lys-teal-strong font-normal">
                                                             {(poDetail.approvalSteps?.find(s => s.level === (poDetail.currentApprovalStep || 1))?.label) || 'Cấp Thẩm Quyền'}
                                                         </span>
                                                     </div>
@@ -3099,14 +2978,12 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                                 />
                                                             </div>
                                                             <div className="flex gap-2">
-                                                                <button onClick={() => setShowRejectForm(true)} disabled={approving}
-                                                                    className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-semibold text-[#B91C1C] bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 transition-all disabled:opacity-50">
+                                                                <Button type="button" variant="danger-outline" size="sm" className="flex-1" disabled={approving} onClick={() => setShowRejectForm(true)}>
                                                                     <XCircle size={13} /> Từ Chối PO
-                                                                </button>
-                                                                <button onClick={() => handleDrawerApprove(poDetail.id)} disabled={approving}
-                                                                    className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-bold text-slate-900 bg-[#15803D] hover:bg-[#4d977b] transition-all disabled:opacity-50">
-                                                                    {approving ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />} Phê Duyệt PO
-                                                                </button>
+                                                                </Button>
+                                                                <Button type="button" variant="primary" size="sm" className="flex-1 bg-tone-success-fg hover:bg-emerald-800" loading={approving} onClick={() => handleDrawerApprove(poDetail.id)}>
+                                                                    {!approving && <CheckCircle2 size={13} />} Phê Duyệt PO
+                                                                </Button>
                                                             </div>
                                                         </div>
                                                     ) : (
@@ -3148,7 +3025,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                             {/* Approval History Timeline */}
                                             <div className="space-y-2.5">
                                                 <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1">
-                                                    <Clock size={13} className="text-[#0891B2]" /> Lịch Sử Phê Duyệt & Audit Logs
+                                                    <Clock size={13} className="text-lys-teal-strong" /> Lịch Sử Phê Duyệt & Audit Logs
                                                 </h4>
                                                 {poDetail.approvalHistory && poDetail.approvalHistory.length > 0 ? (
                                                     <div className="space-y-2">
@@ -3161,14 +3038,14 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                                                                 <div key={item.id || idx} className="p-3 rounded-lg bg-white border border-slate-200 text-xs space-y-1">
                                                                     <div className="flex justify-between items-center">
                                                                         <div className="flex items-center gap-1.5">
-                                                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                                                            <span className={`px-1.5 py-0.5 rounded text-[11px] font-bold ${
                                                                                 isApprove ? 'bg-emerald-500/20 text-[#15803D]' : (isReject ? 'bg-red-500/20 text-[#B91C1C]' : 'bg-blue-500/20 text-[#1D4ED8]')
                                                                             }`}>
                                                                                 {isApprove ? 'Đã phê duyệt' : (isReject ? 'Đã từ chối' : (isSubmit ? 'Gửi duyệt' : item.action))}
                                                                             </span>
                                                                             <span className="font-bold text-slate-900">{item.actorName}</span>
                                                                         </div>
-                                                                        <span className="text-[10px] text-slate-500 font-mono">{formatDateTime(item.createdAt)}</span>
+                                                                        <span className="text-[11px] text-slate-500 font-mono">{formatDateTime(item.createdAt)}</span>
                                                                     </div>
                                                                     {item.comment && (
                                                                         <p className="text-[11px] text-slate-600 pl-1 border-l-2 border-slate-200 mt-1 italic">
@@ -3191,67 +3068,7 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                             </>
                         ) : null}
 
-                        {/* Sticky Action Footer for DRAFT PO in Detail Drawer */}
-                        {poDetail && poDetail.status === 'DRAFT' && (
-                            <div className="p-4 border-t border-slate-200 bg-white flex items-center justify-between gap-3 flex-shrink-0 shadow-lg">
-                                <div className="flex items-center gap-2">
-                                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
-                                    <div>
-                                        <p className="text-xs font-bold text-amber-800">Đơn hàng ở trạng thái Bản Nháp</p>
-                                        <p className="text-[10px] text-slate-600">Có thể chỉnh sửa danh mục, giá, chiết khấu hoặc xoá</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <button 
-                                        onClick={() => handleDrawerDelete(poDetail.id)}
-                                        disabled={approving}
-                                        className="flex items-center gap-1 px-2.5 py-2 text-xs font-semibold rounded-lg text-rose-700 hover:bg-rose-900/30 border border-rose-500/20 transition-all"
-                                        title="Xoá đơn mua hàng nháp">
-                                        <Trash2 size={13} /> Xoá Đơn
-                                    </button>
-                                    <button 
-                                        onClick={() => { setEditPoId(poDetail.id); setEditDrawerOpen(true); }}
-                                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg transition-all hover:bg-amber-500/25"
-                                        style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}>
-                                        <Pencil size={13} /> Sửa Đơn Nháp
-                                    </button>
-                                    <button 
-                                        onClick={() => handleDrawerSubmit(poDetail.id)}
-                                        disabled={approving}
-                                        className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-lg text-slate-900 transition-all shadow-sm hover:opacity-90 disabled:opacity-50"
-                                        style={{ background: '#0E7490' }}>
-                                        {approving ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
-                                        Gửi Trình Duyệt
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Sticky Action Footer for PENDING_APPROVAL PO in Detail Drawer */}
-                        {poDetail && poDetail.status === 'PENDING_APPROVAL' && (
-                            <div className="p-4 border-t border-slate-200 bg-white flex items-center justify-between gap-3 flex-shrink-0 shadow-lg">
-                                <div className="flex items-center gap-2">
-                                    <Clock size={16} className="text-[#B45309]" />
-                                    <div>
-                                        <p className="text-xs font-bold text-amber-800">Đơn hàng đang chờ duyệt cấp {poDetail.currentApprovalStep || 1}</p>
-                                        <p className="text-[10px] text-slate-600">Có thể thu hồi về trạng thái Nháp nếu cần chỉnh sửa lại trước khi duyệt</p>
-                                    </div>
-                                </div>
-                                <div>
-                                    <button 
-                                        onClick={() => handleDrawerRevertToDraft(poDetail.id)}
-                                        disabled={approving}
-                                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg transition-all hover:bg-amber-500/25"
-                                        style={{ background: 'rgba(180,83,9,0.15)', color: '#B45309', border: '1px solid rgba(180,83,9,0.3)' }}
-                                        title="Thu hồi về Nháp để chỉnh sửa">
-                                        <RotateCcw size={13} /> Thu Hồi Về Nháp
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
+            </Drawer>
 
             {/* Create PO Drawer */}
             <CreatePODrawer
@@ -3288,21 +3105,21 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
                             <Globe size={18} style={{ color: '#B45309' }} />
                             <h3 className="font-bold text-sm" style={{ color: '#0F172A' }}>Tổng Quan Tỷ Giá Ngoại Tệ & Quy Đổi VNĐ</h3>
                         </div>
-                        <button onClick={() => setShowFxPanel(false)} className="text-slate-600 hover:text-white"><X size={16} /></button>
+                        <button type="button" onClick={() => setShowFxPanel(false)} className="p-1 rounded-md text-lys-muted hover:text-lys-primary hover:bg-lys-subtle cursor-pointer" aria-label="Đóng"><X size={16} /></button>
                     </div>
                     {fxLoading ? (
-                        <div className="flex items-center gap-2 py-4 text-xs text-[#0891B2]"><Loader2 size={14} className="animate-spin" /> Đang tải tỷ giá...</div>
+                        <div className="flex items-center gap-2 py-4 text-xs text-lys-teal-strong"><Loader2 size={14} className="animate-spin" /> Đang tải tỷ giá...</div>
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             {fxSummary.map(fx => (
                                 <div key={fx.currency} className="p-3.5 rounded-lg bg-white border border-slate-200 text-xs space-y-1.5">
                                     <div className="flex justify-between items-center mb-1">
                                         <span className="font-bold text-slate-900">{fx.currency}</span>
-                                        <span className="inline-block text-[10px] px-1.5 py-0.2 rounded font-bold bg-amber-500/20 text-[#B45309] whitespace-nowrap shrink-0">{fx.poCount} PO</span>
+                                        <span className="inline-block text-[11px] px-1.5 py-0.2 rounded font-bold bg-amber-500/20 text-[#B45309] whitespace-nowrap shrink-0">{fx.poCount} PO</span>
                                     </div>
-                                    <div className="flex justify-between text-slate-500"><span>Trung bình:</span><strong className="text-[#0891B2] font-mono">{fx.avgRate.toLocaleString('vi-VN')}</strong></div>
+                                    <div className="flex justify-between text-slate-500"><span>Trung bình:</span><strong className="text-lys-teal-strong font-mono">{fx.avgRate.toLocaleString('vi-VN')}</strong></div>
                                     <div className="flex justify-between text-slate-500"><span>Tổng ngoại tệ:</span><strong className="text-slate-900 font-mono">{fx.totalForeignValue.toLocaleString('vi-VN')} {fx.currency}</strong></div>
-                                    <div className="flex justify-between text-slate-500 pt-1 border-t border-slate-200"><span>Quy VNĐ:</span><strong className="text-[#0891B2] font-mono">{formatVND(fx.totalVNDValue)}</strong></div>
+                                    <div className="flex justify-between text-slate-500 pt-1 border-t border-slate-200"><span>Quy VNĐ:</span><strong className="text-lys-teal-strong font-mono">{formatVND(fx.totalVNDValue)}</strong></div>
                                 </div>
                             ))}
                         </div>
@@ -3325,6 +3142,6 @@ export function ProcurementClient({ initialRows, initialTotal, stats }: Props) {
             />
 
             {confirmDialog}
-        </div>
+        </PageContainer>
     )
 }

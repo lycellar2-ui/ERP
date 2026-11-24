@@ -219,7 +219,7 @@ export function PipelineClient({ initialRows, stats }: Props) {
     }
 
     return (
-        <div className="space-y-4 max-w-screen-2xl">
+        <div className="space-y-4 max-w-screen-2xl w-full mx-auto">
             {/* Header */}
             <PageHeader
                 description={i18n.description}
@@ -293,7 +293,7 @@ export function PipelineClient({ initialRows, stats }: Props) {
             </StatGrid>
 
             {/* Kanban Board */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 min-h-[480px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-2.5 min-h-[480px]">
                 {STAGES.map(stage => {
                     const stageRows = filteredRows.filter(r => r.stage === stage.key)
                     const stageValue = stageRows.reduce((s, r) => s + r.expectedValue, 0)

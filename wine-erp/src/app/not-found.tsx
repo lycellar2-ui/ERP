@@ -1,52 +1,29 @@
 import Link from 'next/link'
-import { Wine } from 'lucide-react'
+import { Wine, ArrowLeft } from 'lucide-react'
+import { buttonVariants } from '@/components/ui'
 
 export default function NotFound() {
     return (
-        <div style={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#F8FAFC',
-        }}>
-            <div style={{
-                maxWidth: '480px',
-                textAlign: 'center',
-                padding: '48px 32px',
-                background: '#FFFFFF',
-                border: '1px solid #E2E8F0',
-                borderRadius: '8px',
-            }}>
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
-                    <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(8, 145, 178, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0E7490' }}>
-                        <Wine size={32} />
+        <div className="min-h-[100dvh] flex items-center justify-center p-4 bg-lys-bg">
+            <div className="w-full max-w-md text-center p-8 sm:p-10 bg-lys-surface border border-lys-border rounded-lg shadow-sm">
+                <div className="flex justify-center mb-4">
+                    <div className="w-16 h-16 rounded-lg bg-lys-teal-soft border border-tone-brand-border flex items-center justify-center text-lys-teal-strong">
+                        <Wine size={30} aria-hidden />
                     </div>
                 </div>
-                <h1 className="font-mono" style={{ color: '#0E7490', fontSize: '72px', fontWeight: 700, margin: '0 0 8px' }}>
+                <p className="font-mono text-6xl font-bold tracking-tight text-lys-teal-strong mb-2">
                     404
-                </h1>
-                <h2 style={{ color: '#0F172A', fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>
+                </p>
+                <h1 className="text-lg font-semibold text-lys-primary mb-2">
                     Trang không tồn tại
-                </h2>
-                <p style={{ color: '#64748B', fontSize: '14px', marginBottom: '24px', lineHeight: 1.6 }}>
+                </h1>
+                <p className="text-sm text-lys-muted mb-6 leading-relaxed">
                     Trang bạn tìm kiếm không có trong hệ thống LY&apos;s Cellars.
                 </p>
-                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                    <Link
-                        href="/dashboard"
-                        style={{
-                            padding: '10px 24px',
-                            background: 'rgba(8, 145, 178, 0.08)',
-                            color: '#0E7490',
-                            border: '1px solid rgba(8, 145, 178, 0.25)',
-                            borderRadius: '6px',
-                            fontSize: '14px',
-                            fontWeight: 600,
-                            textDecoration: 'none',
-                        }}
-                    >
-                        ← Về Dashboard
+                <div className="flex justify-center">
+                    <Link href="/dashboard" className={buttonVariants({ variant: 'primary' })}>
+                        <ArrowLeft size={15} aria-hidden />
+                        Về Dashboard
                     </Link>
                 </div>
             </div>

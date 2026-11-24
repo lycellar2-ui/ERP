@@ -1800,7 +1800,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
     const COL_COUNT = 8
 
     return (
-        <div className="flex flex-col gap-4 max-w-screen-2xl">
+        <div className="flex flex-col gap-4 max-w-screen-2xl w-full mx-auto">
             <PageHeader
                 description={
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 type-caption">
@@ -1841,7 +1841,7 @@ export function CustomersClient({ initialData, currentUser }: CustomersClientPro
             />
 
             {showStats && (
-                <StatGrid className="grid-cols-2 lg:grid-cols-5 animate-fade-in">
+                <StatGrid cols={5} className="animate-fade-in">
                     <StatCard icon={Users} tone="brand" label={L.header.statTotal} value={formatNumber(stats.total)} />
                     <StatCard icon={Building2} tone="success" label={L.header.statActive} value={formatNumber(stats.active)} />
                     <StatCard icon={ShoppingBag} tone="warning" label={L.header.statPending} value={formatNumber(stats.pendingApproval ?? 0)} />

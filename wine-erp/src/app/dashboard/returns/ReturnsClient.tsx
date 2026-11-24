@@ -102,7 +102,7 @@ export function ReturnsClient({ initialRows, stats }: {
     const returnTotal = returnLines.filter(l => l.qtyReturned > 0).reduce((s, l) => s + l.qtyReturned * l.unitPrice, 0)
 
     return (
-        <div className="flex flex-col gap-4 max-w-screen-2xl">
+        <div className="flex flex-col gap-4 max-w-screen-2xl w-full mx-auto">
             <PageHeader
                 description={L.header.description}
                 actions={

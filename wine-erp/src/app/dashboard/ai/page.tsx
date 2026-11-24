@@ -83,9 +83,8 @@ export default async function AIPage() {
         ])
     } catch { }
     return (
-        <div className="space-y-6 max-w-screen-2xl">
+        <div className="space-y-6 max-w-screen-2xl w-full mx-auto">
             <PageHeader
-                title="AI Features & Phân Tích Thông Minh"
                 description="Anomaly Detection • Demand Forecast • Smart Pricing • OCR Ready • Admin Control"
             />
 

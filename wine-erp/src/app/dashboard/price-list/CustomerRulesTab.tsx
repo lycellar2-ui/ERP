@@ -1303,7 +1303,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
             {/* ALL-IN-ONE DRAWER: CUSTOMER PRICING CONFIGURATION                      */}
             {/* ══════════════════════════════════════════════════════════════════════ */}
             {drawerCustomer && (
-                <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
+                <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/35 backdrop-blur-[2px] animate-in fade-in duration-150">
                     <div className="w-full max-w-4xl h-full bg-white border-l border-slate-200 shadow-2xl flex flex-col overflow-hidden">
                         {/* Drawer Header */}
                         <div className="px-5 py-4 bg-white border-b border-slate-200 flex items-center justify-between gap-3">
@@ -1934,7 +1934,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
             {/* MODAL: CLONE SPECIAL PRICE RULES TO TARGET BRANCHES                    */}
             {/* ══════════════════════════════════════════════════════════════════════ */}
             {cloneModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-[2px]">
                     <div className="w-full max-w-2xl bg-white border border-slate-200 rounded-lg shadow-2xl overflow-hidden">
                         <div className="p-4 bg-white border-b border-slate-200 flex items-center justify-between">
                             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -2049,7 +2049,7 @@ export function CustomerRulesTab({ currentUser }: Props) {
                 <div
                     role="dialog"
                     aria-modal="true"
-                    className="fixed inset-0 z-[70] bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4"
+                    className="fixed inset-0 z-[70] bg-slate-900/35 backdrop-blur-[2px] flex items-center justify-center p-4"
                     onClick={() => { if (!promptSubmitting) setPromptDialog(null) }}
                 >
                     <div

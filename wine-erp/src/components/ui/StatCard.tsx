@@ -24,20 +24,20 @@ export function StatCard({ label, value, sub, icon: Icon, tone = 'brand', trend,
             type={onClick ? 'button' : undefined}
             onClick={onClick}
             className={cn(
-                'flex items-center gap-3 p-4 text-left bg-lys-card border rounded-lg shadow-xs w-full select-none',
+                'flex items-center gap-3 p-3.5 text-left bg-lys-card border rounded-lg shadow-xs w-full select-none',
                 active ? 'border-lys-teal ring-1 ring-lys-teal' : 'border-lys-border',
                 onClick && 'cursor-pointer hover:border-lys-border-strong hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-[0.99] transition-all duration-150',
                 className,
             )}
         >
             {Icon && (
-                <div className={cn('flex items-center justify-center w-10 h-10 rounded-md border shrink-0', TONE_CLASS[tone])}>
-                    <Icon size={18} aria-hidden />
+                <div className={cn('flex items-center justify-center w-9 h-9 rounded-md border shrink-0', TONE_CLASS[tone])}>
+                    <Icon size={17} aria-hidden />
                 </div>
             )}
-            <div className="min-w-0">
-                <p className="type-caption uppercase tracking-wide text-lys-muted truncate">{label}</p>
-                <p className="text-xl font-bold leading-7 text-lys-primary type-number truncate">{value}</p>
+            <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-lys-muted truncate">{label}</p>
+                <p className="text-lg sm:text-xl font-bold leading-7 tracking-tight text-lys-primary type-number truncate">{value}</p>
                 {(sub || trend !== undefined) && (
                     <p className="flex items-center gap-1.5 type-caption text-lys-muted">
                         {trend !== undefined && (
@@ -54,6 +54,14 @@ export function StatCard({ label, value, sub, icon: Icon, tone = 'brand', trend,
     )
 }
 
-export function StatGrid({ children, className }: { children: ReactNode; className?: string }) {
-    return <div className={cn('grid grid-cols-2 lg:grid-cols-4 gap-3', className)}>{children}</div>
+const GRID_COLS = {
+    2: 'grid-cols-1 sm:grid-cols-2',
+    3: 'grid-cols-1 sm:grid-cols-3',
+    4: 'grid-cols-2 xl:grid-cols-4',
+    5: 'grid-cols-2 sm:grid-cols-3 xl:grid-cols-5',
+    6: 'grid-cols-2 sm:grid-cols-3 2xl:grid-cols-6',
+} as const
+
+export function StatGrid({ children, cols = 4, className }: { children: ReactNode; cols?: keyof typeof GRID_COLS; className?: string }) {
+    return <div className={cn('grid gap-3', GRID_COLS[cols], className)}>{children}</div>
 }

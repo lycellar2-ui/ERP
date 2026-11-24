@@ -1,11 +1,13 @@
 'use client'
 
+import type { ComponentType } from 'react'
 import { cn } from '@/lib/utils'
 
 export interface StatusTabItem<T extends string = string> {
     value: T
     label: string
     count?: number
+    icon?: ComponentType<{ size?: number; className?: string; 'aria-hidden'?: boolean }>
 }
 
 interface StatusTabsProps<T extends string> {
@@ -23,6 +25,7 @@ export function StatusTabs<T extends string>({ items, value, onChange, hideEmpty
         <div role="tablist" className={cn('flex gap-1 overflow-x-auto border-b border-lys-border [scrollbar-width:none]', className)}>
             {visible.map(tab => {
                 const active = tab.value === value
+                const Icon = tab.icon
                 return (
                     <button
                         key={tab.value}
@@ -38,6 +41,7 @@ export function StatusTabs<T extends string>({ items, value, onChange, hideEmpty
                                 : 'text-lys-muted hover:text-lys-primary after:bg-transparent after:opacity-0',
                         )}
                     >
+                        {Icon && <Icon size={14} className="shrink-0" aria-hidden />}
                         {tab.label}
                         {tab.count !== undefined && (
                             <span

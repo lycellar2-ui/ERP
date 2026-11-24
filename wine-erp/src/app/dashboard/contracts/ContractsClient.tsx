@@ -67,7 +67,7 @@ function CreateContractDrawer({ open, onClose, onCreated, t }: {
         getCounterparties().then(setCounterparties)
     }
 
-    const inputCls = 'w-full px-3 py-2 rounded-md text-xs bg-white border border-lys-border text-lys-title focus:border-lys-primary focus:outline-none transition-colors'
+    const inputCls = 'w-full px-3 py-2 rounded-md text-xs bg-white border border-lys-border text-lys-primary focus:border-lys-teal focus:outline-none transition-colors'
 
     const handleSave = async () => {
         if (!form.value || Number(form.value) <= 0) return setError(t.createDrawer.errValue)
@@ -162,8 +162,8 @@ function CreateContractDrawer({ open, onClose, onCreated, t }: {
                                 onClick={() => setForm(f => ({ ...f, counterpartyType: ct, supplierId: '', customerId: '' }))}
                                 className={`flex-1 py-1.5 text-xs font-semibold rounded-md border transition-colors ${
                                     form.counterpartyType === ct
-                                        ? 'bg-lys-primary/10 border-lys-primary text-lys-primary'
-                                        : 'bg-white border-lys-border text-lys-muted hover:border-lys-primary/40'
+                                        ? 'bg-lys-teal-soft border-lys-teal-strong text-lys-teal-strong'
+                                        : 'bg-white border-lys-border text-lys-muted hover:border-lys-teal/50'
                                 }`}
                             >
                                 {ct === 'supplier' ? t.createDrawer.supplier : t.createDrawer.customer}
@@ -319,7 +319,7 @@ function ContractMobileCard({
     const tone = STATUS_TONE[row.status] ?? 'neutral'
 
     return (
-        <div className="rounded-lg border border-lys-border bg-white p-3.5 shadow-2xs space-y-2.5 transition hover:border-lys-primary/40">
+        <div className="rounded-lg border border-lys-border bg-white p-3.5 shadow-2xs space-y-2.5 transition hover:border-lys-teal/50">
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5 min-w-0">
                     {row.isExpiringSoon && <AlertCircle size={14} className="text-amber-600 shrink-0" />}
@@ -330,20 +330,20 @@ function ContractMobileCard({
 
             <div>
                 <div className="flex items-center gap-2 mb-1">
-                    <span className="inline-block text-[11px] px-2 py-0.5 rounded font-medium bg-lys-primary/10 text-lys-primary whitespace-nowrap shrink-0">
+                    <span className="inline-block text-[11px] px-2 py-0.5 rounded font-medium bg-lys-teal-soft text-lys-teal-strong whitespace-nowrap shrink-0">
                         {t.type[row.type] ?? row.type}
                     </span>
                     <span className="text-[10px] text-lys-muted font-medium">
                         {row.counterpartyType === 'supplier' ? t.table.supplierFull : t.table.customerFull}
                     </span>
                 </div>
-                <p className="text-xs font-semibold text-lys-title line-clamp-1">{row.counterpartyName}</p>
+                <p className="text-xs font-semibold text-lys-primary line-clamp-1">{row.counterpartyName}</p>
             </div>
 
             <div className="flex items-center justify-between pt-2 border-t border-lys-border/70 text-xs">
                 <div>
                     <span className="text-[10px] uppercase font-semibold text-lys-muted block">{t.table.contractValueLabel}</span>
-                    <span className="font-bold text-lys-title">
+                    <span className="font-bold text-lys-primary">
                         {row.currency === 'VND' ? formatCurrency(row.value) : `$${row.value.toLocaleString('vi-VN')} ${row.currency}`}
                     </span>
                 </div>
@@ -494,7 +494,7 @@ export function ContractsClient({ initialRows, initialTotal: _initialTotal, stat
                         <select
                             value={statusFilter}
                             onChange={e => { setStatusFilter(e.target.value); reload(undefined, e.target.value) }}
-                            className="px-2.5 py-1.5 text-xs bg-white border border-lys-border rounded-md text-lys-title focus:border-lys-primary focus:outline-none"
+                            className="px-2.5 py-1.5 text-xs bg-white border border-lys-border rounded-md text-lys-primary focus:border-lys-teal focus:outline-none"
                         >
                             <option value="">{t.toolbar.allStatuses}</option>
                             {Object.entries(t.status).map(([k, v]) => (
@@ -563,7 +563,7 @@ export function ContractsClient({ initialRows, initialTotal: _initialTotal, stat
                             const isExpanded = selectedId === row.id
                             return (
                                 <React.Fragment key={row.id}>
-                                    <Tr className={`cursor-pointer transition-colors ${isExpanded ? 'bg-lys-primary/5' : ''}`}>
+                                    <Tr className={`cursor-pointer transition-colors ${isExpanded ? 'bg-lys-teal-soft/50' : ''}`}>
                                         <Td className="font-semibold text-lys-primary">
                                             <div className="flex items-center gap-2">
                                                 {row.isExpiringSoon && <AlertCircle size={14} className="text-amber-600 shrink-0" />}
@@ -571,17 +571,17 @@ export function ContractsClient({ initialRows, initialTotal: _initialTotal, stat
                                             </div>
                                         </Td>
                                         <Td>
-                                            <span className="inline-block text-[11px] px-2 py-0.5 rounded font-medium bg-lys-primary/10 text-lys-primary whitespace-nowrap shrink-0">
+                                            <span className="inline-block text-[11px] px-2 py-0.5 rounded font-medium bg-lys-teal-soft text-lys-teal-strong whitespace-nowrap shrink-0">
                                                 {t.type[row.type] ?? row.type}
                                             </span>
                                         </Td>
                                         <Td>
-                                            <p className="text-xs font-semibold text-lys-title">{row.counterpartyName}</p>
+                                            <p className="text-xs font-semibold text-lys-primary">{row.counterpartyName}</p>
                                             <p className="text-[10px] text-lys-muted">
                                                 {row.counterpartyType === 'supplier' ? t.table.supplierShort : t.table.customerFull}
                                             </p>
                                         </Td>
-                                        <Td align="right" className="font-semibold text-lys-title">
+                                        <Td align="right" className="font-semibold text-lys-primary">
                                             {row.currency === 'VND' ? formatCurrency(row.value) : `$${row.value.toLocaleString('vi-VN')} ${row.currency}`}
                                         </Td>
                                         <Td align="center">
@@ -618,8 +618,8 @@ export function ContractsClient({ initialRows, initialTotal: _initialTotal, stat
                                                                 {t.utilization.title}
                                                             </h4>
                                                             <div className="flex gap-4 text-xs text-lys-muted font-medium">
-                                                                <span>PO: <strong className="text-lys-title">{utilization.poCount}</strong> ({formatCurrency(utilization.poTotal)})</span>
-                                                                <span>SO: <strong className="text-lys-title">{utilization.soCount}</strong> ({formatCurrency(utilization.soTotal)})</span>
+                                                                <span>PO: <strong className="text-lys-primary">{utilization.poCount}</strong> ({formatCurrency(utilization.poTotal)})</span>
+                                                                <span>SO: <strong className="text-lys-primary">{utilization.soCount}</strong> ({formatCurrency(utilization.soTotal)})</span>
                                                             </div>
                                                         </div>
 
@@ -633,7 +633,7 @@ export function ContractsClient({ initialRows, initialTotal: _initialTotal, stat
                                                             ].map(x => (
                                                                 <div key={x.l} className="bg-lys-bg/50 p-2.5 rounded-md border border-lys-border">
                                                                     <p className="text-[10px] uppercase font-semibold text-lys-muted">{x.l}</p>
-                                                                    <p className="text-sm font-bold text-lys-title mt-0.5">{x.v}</p>
+                                                                    <p className="text-sm font-bold text-lys-primary mt-0.5">{x.v}</p>
                                                                 </div>
                                                             ))}
                                                         </div>
@@ -659,23 +659,23 @@ export function ContractsClient({ initialRows, initialTotal: _initialTotal, stat
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                                                                 <div className="p-3 rounded-md bg-lys-bg/40 border border-lys-border">
                                                                     <p className="text-[10px] uppercase font-bold text-lys-muted">{t.utilization.discountTerms}</p>
-                                                                    <p className="mt-1 font-medium text-lys-title">{utilization.discountTerms || t.utilization.notSpecified}</p>
+                                                                    <p className="mt-1 font-medium text-lys-primary">{utilization.discountTerms || t.utilization.notSpecified}</p>
                                                                 </div>
                                                                 <div className="p-3 rounded-md bg-lys-bg/40 border border-lys-border">
                                                                     <p className="text-[10px] uppercase font-bold text-lys-muted">{t.utilization.marketingBudget}</p>
-                                                                    <p className="mt-1 font-medium text-lys-title">{utilization.marketingBudget || t.utilization.notSpecified}</p>
+                                                                    <p className="mt-1 font-medium text-lys-primary">{utilization.marketingBudget || t.utilization.notSpecified}</p>
                                                                 </div>
                                                                 <div className="p-3 rounded-md bg-lys-bg/40 border border-lys-border">
                                                                     <p className="text-[10px] uppercase font-bold text-lys-muted">{t.utilization.priceTerm}</p>
-                                                                    <p className="mt-1 font-medium text-lys-title">{utilization.priceTerm || t.utilization.notSpecified}</p>
+                                                                    <p className="mt-1 font-medium text-lys-primary">{utilization.priceTerm || t.utilization.notSpecified}</p>
                                                                 </div>
                                                                 <div className="p-3 rounded-md bg-lys-bg/40 border border-lys-border">
                                                                     <p className="text-[10px] uppercase font-bold text-lys-muted">{t.utilization.stampVerification}</p>
-                                                                    <p className="mt-1 font-medium text-lys-title">{utilization.stampVerification || t.utilization.noVerificationNote}</p>
+                                                                    <p className="mt-1 font-medium text-lys-primary">{utilization.stampVerification || t.utilization.noVerificationNote}</p>
                                                                 </div>
                                                                 <div className="p-3 rounded-md bg-lys-bg/40 border border-lys-border md:col-span-2">
                                                                     <p className="text-[10px] uppercase font-bold text-lys-muted">{t.utilization.archiveStatus}</p>
-                                                                    <p className="mt-1 font-medium text-lys-title">{utilization.archiveStatus || t.utilization.noArchiveNote}</p>
+                                                                    <p className="mt-1 font-medium text-lys-primary">{utilization.archiveStatus || t.utilization.noArchiveNote}</p>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -686,7 +686,7 @@ export function ContractsClient({ initialRows, initialTotal: _initialTotal, stat
                                                                 <p className="text-[11px] font-bold uppercase tracking-wider text-lys-muted">
                                                                     {t.utilization.attachedDocs} ({utilization.documents?.length || 0})
                                                                 </p>
-                                                                <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold cursor-pointer bg-lys-primary/10 text-lys-primary border border-lys-primary/30 hover:bg-lys-primary/15 transition-colors whitespace-nowrap shrink-0">
+                                                                <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold cursor-pointer bg-lys-teal-soft text-lys-teal-strong border border-tone-brand-border hover:bg-lys-teal-soft/80 transition-colors whitespace-nowrap shrink-0">
                                                                     {uploadingDoc ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
                                                                     <span>{uploadingDoc ? t.utilization.uploading : t.utilization.uploadFile}</span>
                                                                     <input
@@ -707,11 +707,11 @@ export function ContractsClient({ initialRows, initialTotal: _initialTotal, stat
                                                                             href={doc.fileUrl}
                                                                             target="_blank"
                                                                             rel="noreferrer"
-                                                                            className="flex items-center gap-2.5 p-2.5 rounded-md bg-lys-bg/40 hover:bg-lys-primary/5 border border-lys-border transition-colors"
+                                                                            className="flex items-center gap-2.5 p-2.5 rounded-md bg-lys-bg/40 hover:bg-lys-teal-soft/50 border border-lys-border transition-colors"
                                                                         >
                                                                             <FileText size={18} className="text-lys-primary shrink-0" />
                                                                             <div className="overflow-hidden min-w-0">
-                                                                                <p className="text-xs font-semibold truncate text-lys-title">{doc.name}</p>
+                                                                                <p className="text-xs font-semibold truncate text-lys-primary">{doc.name}</p>
                                                                                 <p className="text-[10px] text-lys-muted">{formatDate(doc.uploadedAt)}</p>
                                                                             </div>
                                                                         </a>
@@ -817,8 +817,8 @@ export function ContractsClient({ initialRows, initialTotal: _initialTotal, stat
                                                         {t.utilization.titleShort}
                                                     </h4>
                                                     <div className="flex flex-wrap gap-3 text-xs text-lys-muted font-medium mt-1">
-                                                        <span>PO: <strong className="text-lys-title">{utilization.poCount}</strong> ({formatCurrency(utilization.poTotal)})</span>
-                                                        <span>SO: <strong className="text-lys-title">{utilization.soCount}</strong> ({formatCurrency(utilization.soTotal)})</span>
+                                                        <span>PO: <strong className="text-lys-primary">{utilization.poCount}</strong> ({formatCurrency(utilization.poTotal)})</span>
+                                                        <span>SO: <strong className="text-lys-primary">{utilization.soCount}</strong> ({formatCurrency(utilization.soTotal)})</span>
                                                     </div>
                                                 </div>
 
@@ -832,7 +832,7 @@ export function ContractsClient({ initialRows, initialTotal: _initialTotal, stat
                                                     ].map(x => (
                                                         <div key={x.l} className="bg-lys-bg/50 p-2 rounded-md border border-lys-border">
                                                             <p className="text-[10px] uppercase font-semibold text-lys-muted">{x.l}</p>
-                                                            <p className="text-xs font-bold text-lys-title mt-0.5">{x.v}</p>
+                                                            <p className="text-xs font-bold text-lys-primary mt-0.5">{x.v}</p>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -856,7 +856,7 @@ export function ContractsClient({ initialRows, initialTotal: _initialTotal, stat
                                                         <p className="text-[11px] font-bold uppercase tracking-wider text-lys-muted">
                                                             {t.utilization.docsShort} ({utilization.documents?.length || 0})
                                                         </p>
-                                                        <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold cursor-pointer bg-lys-primary/10 text-lys-primary border border-lys-primary/30">
+                                                        <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold cursor-pointer bg-lys-teal-soft text-lys-teal-strong border border-tone-brand-border">
                                                             {uploadingDoc ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
                                                             <span>{uploadingDoc ? t.utilization.uploading : t.utilization.uploadShort}</span>
                                                             <input

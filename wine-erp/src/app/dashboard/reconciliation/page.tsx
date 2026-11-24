@@ -6,7 +6,7 @@ export const metadata = {
 
 export default function ReconciliationPage() {
     return (
-        <div className="space-y-6 max-w-screen-2xl">
+        <div className="space-y-6 max-w-screen-2xl w-full mx-auto">
             <InvoiceReconciliationTab />
         </div>
     )

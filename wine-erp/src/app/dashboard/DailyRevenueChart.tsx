@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Calendar, TrendingUp, ShoppingBag, DollarSign, Award, Clock } from 'lucide-react'
-import { formatVND } from '@/lib/utils'
+import { TrendingUp, Award, Clock } from 'lucide-react'
+import { Badge, Card } from '@/components/ui'
 import { useAppLocale } from '@/lib/i18n'
 import { getDashboardDictionary } from './i18n'
 import type { DailyRevenueSummary, DailyRevenueItem } from './actions'
@@ -48,63 +48,56 @@ export function DailyRevenueChart({ data }: Props) {
     const isSingleDay = items.length === 1
 
     return (
-        <div
-            className="rounded-lg p-5 space-y-4"
-            style={{
-                background: '#FFFFFF',
-                border: '1px solid #E2E8F0',
-            }}
-        >
+        <Card className="p-5 space-y-4">
             {/* ─── Header ─── */}
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                    <TrendingUp size={16} className="text-[#0891B2]" />
-                    <h3 className="font-semibold text-sm text-slate-900">{t.dailyChart.title}</h3>
-                    <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#0E7490]/10 text-[#0891B2] border border-[#0E7490]/20 whitespace-nowrap shrink-0">
+                    <TrendingUp size={16} className="text-lys-teal-strong" aria-hidden />
+                    <h3 className="type-section-title text-lys-primary">{t.dailyChart.title}</h3>
+                    <Badge tone="brand">
                         {items.length} {t.dailyChart.daysUnit}
-                    </span>
+                    </Badge>
                 </div>
                 {peakDay && (
-                    <div className="inline-flex items-center gap-1.5 text-xs text-[#B45309] bg-[#B45309]/10 px-2.5 py-1 rounded-md border border-[#B45309]/25 font-medium whitespace-nowrap shrink-0">
-                        <Award size={13} />
+                    <Badge tone="warning" icon={Award} className="h-auto py-1 px-2.5 text-xs font-medium">
                         <span>{t.dailyChart.peakDay}</span>
                         <strong>{translateDayLabel(peakDay.label, isEn)}</strong>
                         <span>({formatCurrency(peakDay.revenue)})</span>
-                    </div>
+                    </Badge>
                 )}
             </div>
 
             {/* ─── 4 Quick Summary Pills ─── */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                <div className="bg-white p-3 rounded-md border border-slate-200">
-                    <span className="text-[10px] text-slate-500 uppercase font-semibold block mb-0.5">
+                <div className="bg-lys-bg/60 p-3 rounded-md border border-lys-border">
+                    <span className="text-[11px] text-lys-muted uppercase tracking-wide font-semibold block mb-0.5">
                         {t.dailyChart.totalRevenue}
                     </span>
-                    <span className="text-base font-bold text-[#0891B2] font-mono">
+                    <span className="text-base font-bold text-lys-teal-strong type-number">
                         {formatCurrency(totalRevenue)}
                     </span>
                 </div>
-                <div className="bg-white p-3 rounded-md border border-slate-200">
-                    <span className="text-[10px] text-slate-500 uppercase font-semibold block mb-0.5">
+                <div className="bg-lys-bg/60 p-3 rounded-md border border-lys-border">
+                    <span className="text-[11px] text-lys-muted uppercase tracking-wide font-semibold block mb-0.5">
                         {t.dailyChart.totalOrders}
                     </span>
-                    <span className="text-base font-bold text-slate-900 font-mono">
+                    <span className="text-base font-bold text-lys-primary type-number">
                         {totalOrders} {t.dailyChart.ordersUnit}
                     </span>
                 </div>
-                <div className="bg-white p-3 rounded-md border border-slate-200">
-                    <span className="text-[10px] text-slate-500 uppercase font-semibold block mb-0.5">
+                <div className="bg-lys-bg/60 p-3 rounded-md border border-lys-border">
+                    <span className="text-[11px] text-lys-muted uppercase tracking-wide font-semibold block mb-0.5">
                         {t.dailyChart.avgOrderValue}
                     </span>
-                    <span className="text-base font-bold text-[#B45309] font-mono">
+                    <span className="text-base font-bold text-tone-warning-fg type-number">
                         {formatCurrency(avgOrderValue)}
                     </span>
                 </div>
-                <div className="bg-white p-3 rounded-md border border-slate-200">
-                    <span className="text-[10px] text-slate-500 uppercase font-semibold block mb-0.5">
+                <div className="bg-lys-bg/60 p-3 rounded-md border border-lys-border">
+                    <span className="text-[11px] text-lys-muted uppercase tracking-wide font-semibold block mb-0.5">
                         {t.dailyChart.peakDate}
                     </span>
-                    <span className="text-base font-bold text-[#15803D] font-mono truncate block">
+                    <span className="text-base font-bold text-tone-success-fg type-number truncate block">
                         {peakDay ? translateDayLabel(peakDay.label, isEn) : '—'}
                     </span>
                 </div>
@@ -112,31 +105,31 @@ export function DailyRevenueChart({ data }: Props) {
 
             {/* ─── Main Chart Visual ─── */}
             {items.length === 0 ? (
-                <div className="py-12 text-center text-xs text-slate-500">
+                <div className="py-12 text-center text-xs text-lys-muted">
                     {t.dailyChart.noDataPeriod}
                 </div>
             ) : isSingleDay ? (
                 /* Single Day View (e.g. Today / Yesterday) */
-                <div className="bg-white p-5 rounded-lg border border-slate-200 text-center space-y-3">
-                    <p className="text-xs text-slate-600 font-medium">
+                <div className="bg-lys-bg/50 p-5 rounded-lg border border-lys-border text-center space-y-3">
+                    <p className="text-xs text-lys-secondary font-medium">
                         {isEn ? 'Date details' : 'Chi tiết ngày'}{' '}
-                        <strong className="text-slate-900">{items[0].label}</strong> ({translateDayLabel(items[0].dayOfWeek, isEn)})
+                        <strong className="text-lys-primary">{items[0].label}</strong> ({translateDayLabel(items[0].dayOfWeek, isEn)})
                     </p>
                     <div className="flex items-center justify-center gap-6">
                         <div>
-                            <span className="text-[10px] uppercase text-slate-500 block">
+                            <span className="text-[11px] uppercase text-lys-muted block">
                                 {isEn ? 'Day Revenue' : 'Doanh thu ngày'}
                             </span>
-                            <span className="text-2xl font-bold text-[#0891B2] font-mono">
+                            <span className="text-2xl font-bold text-lys-teal-strong type-number">
                                 {formatCurrency(items[0].revenue)}
                             </span>
                         </div>
-                        <div className="h-8 w-px bg-[#E2E8F0]" />
+                        <div className="h-8 w-px bg-lys-border" />
                         <div>
-                            <span className="text-[10px] uppercase text-slate-500 block">
+                            <span className="text-[11px] uppercase text-lys-muted block">
                                 {isEn ? 'Order Count' : 'Số đơn phát sinh'}
                             </span>
-                            <span className="text-2xl font-bold text-slate-900 font-mono">
+                            <span className="text-2xl font-bold text-lys-primary type-number">
                                 {items[0].orderCount} {t.dailyChart.ordersUnit}
                             </span>
                         </div>
@@ -151,17 +144,17 @@ export function DailyRevenueChart({ data }: Props) {
                             const heightPct = maxRevenue > 0 ? (it.revenue / maxRevenue) * 100 : 0
                             const barHeight = Math.max(it.revenue > 0 ? 8 : 2, (heightPct / 100) * 130)
 
-                            const barColor = isPeak
-                                ? '#B45309'
+                            const barClass = isPeak
+                                ? 'bg-tone-warning-fg shadow-xs'
                                 : heightPct > 60
-                                ? '#0E7490'
+                                ? 'bg-lys-teal-strong'
                                 : heightPct > 20
-                                ? '#15803D'
+                                ? 'bg-tone-success-fg'
                                 : it.revenue > 0
-                                ? '#1D4ED8'
+                                ? 'bg-tone-info-fg'
                                 : it.isWeekend
-                                ? '#E2E8F0'
-                                : '#F1F5F9'
+                                ? 'bg-lys-border'
+                                : 'bg-lys-subtle'
 
                             return (
                                 <div
@@ -170,13 +163,13 @@ export function DailyRevenueChart({ data }: Props) {
                                     onMouseLeave={() => setHoveredItem(null)}
                                     className="flex-1 min-w-[14px] flex flex-col items-center justify-end h-full group relative cursor-pointer"
                                 >
-                                    {/* Number pill above bar on hover / peak */}
+                                    {/* Number pill above bar */}
                                     <div
-                                        className={`text-[9px] font-mono font-bold transition-all mb-1 truncate text-center ${
+                                        className={`text-[11px] font-mono font-bold transition-all mb-1 truncate text-center ${
                                             isPeak
-                                                ? 'text-[#B45309]'
+                                                ? 'text-tone-warning-fg'
                                                 : it.revenue > 0
-                                                ? 'text-[#0891B2]'
+                                                ? 'text-lys-teal-strong'
                                                 : 'text-transparent'
                                         }`}
                                     >
@@ -185,24 +178,18 @@ export function DailyRevenueChart({ data }: Props) {
 
                                     {/* Bar element */}
                                     <div
-                                        className="w-full rounded-t-sm transition-all duration-300 group-hover:opacity-100 group-hover:scale-x-110"
-                                        style={{
-                                            height: `${barHeight}px`,
-                                            background: barColor,
-                                            boxShadow: isPeak
-                                                ? '0 0 10px rgba(180,83,9,0.35)'
-                                                : undefined,
-                                        }}
+                                        className={`w-full rounded-t-sm transition-all duration-300 group-hover:scale-x-110 ${barClass}`}
+                                        style={{ height: `${barHeight}px` }}
                                     />
 
                                     {/* Day label */}
                                     <span
-                                        className={`text-[9px] sm:text-[10px] mt-1.5 transition-colors text-center ${
-                                            it.isWeekend ? 'text-[#B45309]/70 font-medium' : 'text-slate-500'
-                                        } group-hover:text-slate-900`}
+                                        className={`text-[11px] mt-1.5 transition-colors text-center ${
+                                            it.isWeekend ? 'text-tone-warning-fg/80 font-medium' : 'text-lys-muted'
+                                        } group-hover:text-lys-primary`}
                                     >
                                         {items.length > 20
-                                            ? it.label.split('/')[0] // Only show day e.g. "01", "15"
+                                            ? it.label.split('/')[0]
                                             : it.label}
                                     </span>
                                 </div>
@@ -212,37 +199,33 @@ export function DailyRevenueChart({ data }: Props) {
 
                     {/* ── Hover Tooltip Banner ── */}
                     <div
-                        className="p-2.5 rounded-md border flex items-center justify-between text-xs min-h-[38px] transition-all"
-                        style={{
-                            background: '#FFFFFF',
-                            borderColor: hoveredItem ? '#0E7490' : '#E2E8F0',
-                        }}
+                        className={`p-2.5 rounded-md border bg-white flex items-center justify-between text-xs min-h-[38px] transition-colors ${
+                            hoveredItem ? 'border-lys-teal' : 'border-lys-border'
+                        }`}
                     >
                         {hoveredItem ? (
-                            <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center justify-between w-full gap-2">
                                 <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-slate-900">
+                                    <span className="font-semibold text-lys-primary">
                                         {translateDayLabel(hoveredItem.dayOfWeek, isEn)}, {hoveredItem.date}
                                     </span>
                                     {hoveredItem.isWeekend && (
-                                        <span className="inline-block text-[10px] px-1.5 py-0.2 rounded bg-[#B45309]/15 text-[#B45309] font-medium whitespace-nowrap shrink-0">
-                                            {isEn ? 'Weekend' : 'Cuối tuần'}
-                                        </span>
+                                        <Badge tone="warning">{isEn ? 'Weekend' : 'Cuối tuần'}</Badge>
                                     )}
                                 </div>
                                 <div className="flex items-center gap-4">
-                                    <span className="text-slate-600">
+                                    <span className="text-lys-secondary">
                                         {isEn ? 'Orders:' : 'Số đơn:'}{' '}
-                                        <strong className="text-slate-900">{hoveredItem.orderCount}</strong>
+                                        <strong className="text-lys-primary">{hoveredItem.orderCount}</strong>
                                     </span>
-                                    <span className="text-[#0891B2] font-bold text-sm font-mono">
+                                    <span className="text-lys-teal-strong font-bold text-sm type-number">
                                         {formatCurrency(hoveredItem.revenue)}
                                     </span>
                                 </div>
                             </div>
                         ) : (
-                            <div className="text-[11px] text-slate-500 italic flex items-center gap-1.5">
-                                <Clock size={12} />
+                            <div className="text-[11px] text-lys-muted italic flex items-center gap-1.5">
+                                <Clock size={12} aria-hidden />
                                 <span>
                                     {isEn
                                         ? 'Hover over any bar to view net sales and order volume for that date'
@@ -253,6 +236,6 @@ export function DailyRevenueChart({ data }: Props) {
                     </div>
                 </div>
             )}
-        </div>
+        </Card>
     )
 }

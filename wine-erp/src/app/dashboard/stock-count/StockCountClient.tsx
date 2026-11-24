@@ -22,6 +22,7 @@ import { ModernStockCountView } from './ModernStockCountView'
 import { CreateSessionModal } from './CreateSessionModal'
 import { formatFriendlyLocationName } from './location-names'
 import { toast } from 'sonner'
+import { PageContainer, PageHeader, StatGrid, StatCard, StatusTabs, Button, SearchInput } from '@/components/ui'
 import { useAppLocale } from '@/lib/i18n'
 import { getStockCountDict } from './i18n'
 
@@ -477,152 +478,113 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
     }
 
     return (
-        <div className="w-full space-y-4 max-w-screen-2xl">
+        <PageContainer>
             {/* Header & Quick Stats Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                    <h1 className="text-xl font-bold text-slate-900 tracking-tight">{t.client.title}</h1>
-
-                    {/* Inline Quick Stats */}
-                    <div className="hidden lg:flex items-center gap-x-4 text-xs border-l border-slate-200 pl-4">
-                        <span className="text-slate-500">{t.client.totalSessions} <strong className="font-mono text-sm ml-1 text-slate-900">{stats.total}</strong></span>
-                        <span className="text-slate-500">{t.client.inProgress} <strong className="font-mono text-sm ml-1 text-amber-600">{stats.inProgress}</strong></span>
-                        <span className="text-slate-500">{t.client.completed} <strong className="font-mono text-sm ml-1 text-emerald-600">{stats.completed}</strong></span>
-                        <span className="text-slate-500">{t.client.assignedToMe} <strong className="font-mono text-sm ml-1 text-cyan-700">{stats.assignedToMe || 0}</strong></span>
+            <PageHeader
+                description={
+                    <div className="hidden lg:flex items-center gap-x-4 text-xs text-lys-secondary">
+                        <span>{t.client.totalSessions} <strong className="font-mono text-sm ml-1 text-lys-primary">{stats.total}</strong></span>
+                        <span>{t.client.inProgress} <strong className="font-mono text-sm ml-1 text-tone-warning-fg">{stats.inProgress}</strong></span>
+                        <span>{t.client.completed} <strong className="font-mono text-sm ml-1 text-tone-success-fg">{stats.completed}</strong></span>
+                        <span>{t.client.assignedToMe} <strong className="font-mono text-sm ml-1 text-lys-teal-strong">{stats.assignedToMe || 0}</strong></span>
                     </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => setShowStats(!showStats)}
-                        className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md border transition-all cursor-pointer ${
-                            showStats
-                                ? 'bg-[#0E7490]/15 text-slate-900 border-[#0E7490]/40'
-                                : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                        }`}
-                    >
-                        <BarChart3 size={14} className="text-slate-600" /> {t.client.statsBtn}
-                    </button>
-                    <button
-                        onClick={() => setShowBarcodeLookup(true)}
-                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-all cursor-pointer"
-                    >
-                        <QrCode size={14} className="text-emerald-600" /> {t.client.barcodeLookupBtn}
-                    </button>
-                    {viewMode === 'SESSIONS' ? (
-                        <button
-                            onClick={() => {
-                                setCreateWizardStep(1)
-                                setShowCreateModal(true)
-                            }}
-                            className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-lys-teal-strong hover:bg-lys-teal-hover rounded-md transition-all cursor-pointer shadow-2xs active:scale-95"
+                }
+                actions={
+                    <>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setShowStats(!showStats)}
+                            aria-pressed={showStats}
+                            className={showStats ? 'border-lys-teal text-lys-teal-strong bg-lys-teal-soft hover:bg-lys-teal-soft' : undefined}
                         >
-                            <Plus size={15} /> {t.client.createSessionBtn}
-                        </button>
-                    ) : (
-                        <button
-                            type="button"
-                            onClick={() => {
-                                if (!cycleProgress || cycleProgress.uncountedProducts.length === 0) {
-                                    toast.info(t.client.emptyCycleCategory)
-                                    return
-                                }
-                                const topN = cycleProgress.uncountedProducts.slice(0, cycleProgress.dailySuggestedCount).map(p => p.skuCode)
-                                setSelectedDailySkus(topN)
-                                setBatchCountTitle(`${t.client.catCycleTitle} ${new Date().toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')} (${topN.length} ${t.common.skus}) - ${cycleProgress.warehouseName}`)
-                                setBatchSearchTerm('')
-                                setShowDailyBatchModal(true)
-                            }}
-                            className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-lys-teal-strong hover:bg-lys-teal-hover rounded-md transition-all cursor-pointer shadow-2xs active:scale-95"
+                            <BarChart3 size={14} /> {t.client.statsBtn}
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setShowBarcodeLookup(true)}
                         >
-                            <Zap size={14} /> {t.client.createTodayBatchBtn}
-                        </button>
-                    )}
-                </div>
-            </div>
+                            <QrCode size={14} className="text-tone-success-fg" /> {t.client.barcodeLookupBtn}
+                        </Button>
+                        {viewMode === 'SESSIONS' ? (
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() => {
+                                    setCreateWizardStep(1)
+                                    setShowCreateModal(true)
+                                }}
+                            >
+                                <Plus size={15} /> {t.client.createSessionBtn}
+                            </Button>
+                        ) : (
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() => {
+                                    if (!cycleProgress || cycleProgress.uncountedProducts.length === 0) {
+                                        toast.info(t.client.emptyCycleCategory)
+                                        return
+                                    }
+                                    const topN = cycleProgress.uncountedProducts.slice(0, cycleProgress.dailySuggestedCount).map(p => p.skuCode)
+                                    setSelectedDailySkus(topN)
+                                    setBatchCountTitle(`${t.client.catCycleTitle} ${new Date().toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')} (${topN.length} ${t.common.skus}) - ${cycleProgress.warehouseName}`)
+                                    setBatchSearchTerm('')
+                                    setShowDailyBatchModal(true)
+                                }}
+                            >
+                                <Zap size={14} /> {t.client.createTodayBatchBtn}
+                            </Button>
+                        )}
+                    </>
+                }
+            />
 
             {/* Collapsible Stats Cards */}
             {showStats && (
-                <div className="space-y-2 animate-in slide-in-from-top-2 duration-150">
+                <div className="space-y-2 animate-fade-in">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t.client.detailStatsTitle}</span>
-                        <button onClick={() => setShowStats(false)} className="text-xs font-semibold hover:underline flex items-center gap-1 text-[#0891B2]">
+                        <span className="text-xs font-bold uppercase tracking-wider text-lys-muted">{t.client.detailStatsTitle}</span>
+                        <Button variant="link" size="sm" onClick={() => setShowStats(false)}>
                             {t.client.collapseMetrics}
-                        </button>
+                        </Button>
                     </div>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div className="bg-white border border-slate-200 p-3.5 rounded-lg shadow-2xs">
-                            <span className="text-[10px] font-bold text-slate-500 uppercase block">{t.client.cardTotal}</span>
-                            <strong className="text-lg font-black text-slate-900 mt-0.5 block font-mono">{stats.total}</strong>
-                        </div>
-                        <div className="bg-white border border-slate-200 p-3.5 rounded-lg shadow-2xs">
-                            <span className="text-[10px] font-bold text-amber-600 uppercase block">{t.client.cardInProgress}</span>
-                            <strong className="text-lg font-black text-amber-600 mt-0.5 block font-mono">{stats.inProgress}</strong>
-                        </div>
-                        <div className="bg-white border border-slate-200 p-3.5 rounded-lg shadow-2xs">
-                            <span className="text-[10px] font-bold text-emerald-600 uppercase block">{t.client.cardCompleted}</span>
-                            <strong className="text-lg font-black text-emerald-600 mt-0.5 block font-mono">{stats.completed}</strong>
-                        </div>
-                        <div className="bg-white border border-slate-200 p-3.5 rounded-lg shadow-2xs">
-                            <span className="text-[10px] font-bold text-cyan-700 uppercase block">{t.client.cardAssigned}</span>
-                            <strong className="text-lg font-black text-cyan-700 mt-0.5 block font-mono">{stats.assignedToMe || 0}</strong>
-                        </div>
-                    </div>
+                    <StatGrid cols={4}>
+                        <StatCard label={t.client.cardTotal} value={stats.total} tone="neutral" />
+                        <StatCard label={t.client.cardInProgress} value={stats.inProgress} tone="warning" />
+                        <StatCard label={t.client.cardCompleted} value={stats.completed} tone="success" />
+                        <StatCard label={t.client.cardAssigned} value={stats.assignedToMe || 0} tone="brand" />
+                    </StatGrid>
                 </div>
             )}
 
-            {/* ═══ TOP NAVIGATION TABS: PHIẾU KIỂM KÊ vs KẾ HOẠCH CUỐN CHIẾU ═══ */}
-            <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-lg border border-slate-200 w-full sm:w-fit select-none">
-                <button
-                    type="button"
-                    onClick={() => setViewMode('SESSIONS')}
-                    className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-md text-xs font-bold transition-all cursor-pointer active:scale-95 ${
-                        viewMode === 'SESSIONS'
-                            ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/80 font-black'
-                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-                    }`}
-                >
-                    <ClipboardList size={15} className={viewMode === 'SESSIONS' ? 'text-lys-teal-strong' : 'text-slate-400'} />
-                    <span>{t.client.tabSessions}</span>
-                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                        viewMode === 'SESSIONS' ? 'bg-lys-teal-soft text-lys-teal-strong font-bold' : 'bg-slate-200 text-slate-700'
-                    }`}>
-                        {stats.total}
-                    </span>
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setViewMode('CYCLE_PLAN')}
-                    className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-md text-xs font-bold transition-all cursor-pointer active:scale-95 ${
-                        viewMode === 'CYCLE_PLAN'
-                            ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/80 font-black'
-                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-                    }`}
-                >
-                    <RotateCcw size={15} className={viewMode === 'CYCLE_PLAN' ? 'text-lys-teal-strong' : 'text-slate-400'} />
-                    <span>{t.client.tabCyclePlan}</span>
-                    {cycleProgress && (
-                        <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
-                            viewMode === 'CYCLE_PLAN' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'
-                        }`}>
-                            {cycleProgress.progressPercent}%
-                        </span>
-                    )}
-                </button>
-            </div>
+            {/* Top Navigation Tabs */}
+            <StatusTabs
+                items={[
+                    { value: 'SESSIONS' as const, label: t.client.tabSessions, icon: ClipboardList, count: stats.total },
+                    {
+                        value: 'CYCLE_PLAN' as const,
+                        label: cycleProgress ? `${t.client.tabCyclePlan} (${cycleProgress.progressPercent}%)` : t.client.tabCyclePlan,
+                        icon: RotateCcw,
+                    },
+                ]}
+                value={viewMode}
+                onChange={setViewMode}
+            />
 
             {/* ═══ TAB 2: KẾ HOẠCH KIỂM KÊ CUỐN CHIẾU ═══ */}
             {viewMode === 'CYCLE_PLAN' && (
                 <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-2xs space-y-4 animate-in fade-in-50 duration-150">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
                         <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-lys-teal-soft border border-lys-teal-subtle flex items-center justify-center shrink-0 mt-0.5">
+                            <div className="w-10 h-10 rounded-lg bg-lys-teal-soft border border-tone-brand-border flex items-center justify-center shrink-0 mt-0.5">
                                 <RotateCcw size={20} className="text-lys-teal-strong" />
                             </div>
                             <div>
                                 <h2 className="text-base font-bold text-slate-900 flex flex-wrap items-center gap-2">
                                     <span>{t.client.cycleTitle}</span>
-                                    <span className="inline-block text-[10px] font-bold text-lys-teal-strong bg-lys-teal-soft border border-lys-teal-subtle px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
+                                    <span className="inline-block text-[10px] font-bold text-lys-teal-strong bg-lys-teal-soft border border-tone-brand-border px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
                                         {cycleProgress?.dateFrom && cycleProgress?.dateTo ? (
                                             `${t.client.fromLabel} ${new Date(cycleProgress.dateFrom).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')} - ${new Date(cycleProgress.dateTo).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')} (${cycleProgress.daysWindow} ${t.client.daysUnit})`
                                         ) : (
@@ -772,7 +734,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                         {cycleProgress.uncountedProductCount} {t.common.skus}
                                     </span>
                                 </div>
-                                <div className="p-3.5 rounded-lg bg-lys-teal-soft border border-lys-teal-subtle">
+                                <div className="p-3.5 rounded-lg bg-lys-teal-soft border border-tone-brand-border">
                                     <span className="text-[10px] text-lys-teal-strong uppercase font-bold block">{t.client.metricDailySuggested}</span>
                                     <span className="text-lg font-black text-lys-teal-strong font-mono mt-1 block">
                                         ~{cycleProgress.dailySuggestedCount} {t.client.perDaySuffix}
@@ -1037,16 +999,11 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                 </div>
 
                 {/* Search input */}
-                <div className="relative w-full sm:w-64">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                        type="text"
-                        placeholder={t.client.searchSessionsPlaceholder}
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        className="w-full pl-9 pr-3 py-1.5 text-base sm:text-xs bg-white border border-slate-200 rounded-md outline-none focus:border-[#0E7490] focus:ring-1 focus:ring-[#0E7490] text-slate-900 placeholder-slate-400 shadow-2xs transition-all"
-                    />
-                </div>
+                <SearchInput
+                    placeholder={t.client.searchSessionsPlaceholder}
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                />
             </div>
 
             {/* Sessions Table — Matched with Sales Order Table UI */}
@@ -1301,7 +1258,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
             {/* Modal Phân Công Vị Trí / Khu Vực Cho Nhân Sự */}
             {showAssignModal && assignSessionDetail && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
+                <div className="fixed inset-0 bg-slate-900/35 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
                     <div className="bg-white border border-slate-200 rounded-lg max-w-lg w-full p-6 text-slate-900 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto animate-modal-in">
                         <div className="flex justify-between items-center pb-3 border-b border-slate-200">
                             <div>
@@ -1396,7 +1353,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
 
             {/* ═══ MODAL TẠO ĐỢT KIỂM KÊ CUỐN CHIẾU HÔM NAY (DAILY BATCH CYCLE COUNT) ═══ */}
             {showDailyBatchModal && cycleProgress && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
+                <div className="fixed inset-0 bg-slate-900/35 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
                     <div className="bg-white border border-slate-200 rounded-lg max-w-2xl w-full p-6 text-slate-900 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto animate-modal-in">
                         <div className="flex justify-between items-start pb-3 border-b border-slate-200">
                             <div>
@@ -1404,7 +1361,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                                     <h3 className="text-base font-extrabold text-slate-900">
                                         Tạo Đợt Kiểm Kê Cuốn Chiếu Hôm Nay
                                     </h3>
-                                    <span className="inline-block text-[11px] font-bold text-lys-teal-strong bg-lys-teal-soft border border-lys-teal-subtle px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
+                                    <span className="inline-block text-[11px] font-bold text-lys-teal-strong bg-lys-teal-soft border border-tone-brand-border px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
                                         {cycleProgress.warehouseName.startsWith('Kho') ? cycleProgress.warehouseName : `Kho ${cycleProgress.warehouseName}`}
                                     </span>
                                 </div>
@@ -1609,7 +1566,7 @@ export function StockCountClient({ initialList, initialRows = [], initialStats, 
                     </div>
                 </div>
             )}
-        </div>
+        </PageContainer>
     )
 }
 

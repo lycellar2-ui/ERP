@@ -1,6 +1,6 @@
 export default function SopLoading() {
     return (
-        <div className="space-y-6 max-w-screen-2xl animate-pulse p-4 md:p-6">
+        <div className="space-y-6 max-w-screen-2xl w-full mx-auto animate-pulse">
             {/* Header skeleton */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
                 <div className="space-y-2 w-full sm:w-auto">

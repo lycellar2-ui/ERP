@@ -8,7 +8,7 @@ import { QuotationRow, QuotationStatus, getQuotations, getQuotationDetail, updat
 import { getCustomersForSO, getSalesReps, getProductsWithStock } from '../sales/actions'
 import { getCustomerResolvedPrices, ResolvedPrice } from '@/app/dashboard/price-list/customer-rules-actions'
 import { DebouncedTextarea } from '@/components/DebouncedInput'
-import { useConfirmDialog, SearchInput, StatusTabs, Table, THead, TBody, Tr, Th, Td, TableMessageRow } from '@/components/ui'
+import { useConfirmDialog, PageContainer, PageHeader, StatGrid, StatCard, Button, SearchInput, StatusTabs, StatusBadge, EmptyState, Table, THead, TBody, Tr, Th, Td, TableMessageRow } from '@/components/ui'
 import { useAppLocale } from '@/lib/i18n'
 import { getQuotationsI18n } from './i18n'
 
@@ -405,85 +405,66 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
     ]
 
     return (
-        <div className="space-y-4 max-w-screen-2xl">
+        <PageContainer>
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                    <h2 className="text-xl md:text-2xl font-bold font-brand" style={{ color: '#0F172A' }}>
-                        {i18n.title}
-                    </h2>
-                    
-                    {/* Inline Quick Stats */}
-                    <div className="hidden lg:flex items-center gap-x-4 pl-4 border-l border-slate-200 text-xs">
-                        <span style={{ color: '#475569' }}>{i18n.inlineValue} <strong className="font-mono text-sm ml-1" style={{ color: '#0891B2' }}>₫{(stats.totalValue / 1e6).toFixed(0)}M</strong></span>
-                        <span style={{ color: '#475569' }}>{i18n.inlineQt} <strong className="font-mono text-sm ml-1" style={{ color: '#475569' }}>{stats.total}</strong></span>
-                        <span style={{ color: '#475569' }}>{i18n.inlineSent} <strong className="font-mono text-sm ml-1" style={{ color: '#B45309' }}>{stats.sent}</strong></span>
-                        <span style={{ color: '#475569' }}>{i18n.inlineAccepted} <strong className="font-mono text-sm ml-1" style={{ color: '#15803D' }}>{stats.accepted}</strong></span>
+            <PageHeader
+                description={
+                    <div className="hidden lg:flex items-center gap-x-4 text-xs text-lys-secondary">
+                        <span>{i18n.inlineValue} <strong className="font-mono text-sm ml-1 text-lys-teal-strong">₫{(stats.totalValue / 1e6).toFixed(0)}M</strong></span>
+                        <span>{i18n.inlineQt} <strong className="font-mono text-sm ml-1 text-lys-primary">{stats.total}</strong></span>
+                        <span>{i18n.inlineSent} <strong className="font-mono text-sm ml-1 text-tone-warning-fg">{stats.sent}</strong></span>
+                        <span>{i18n.inlineAccepted} <strong className="font-mono text-sm ml-1 text-tone-success-fg">{stats.accepted}</strong></span>
                     </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                    <button onClick={() => setShowStats(!showStats)}
-                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-all rounded-md"
-                        style={{ 
-                            background: showStats ? 'rgba(8, 145, 178, 0.08)' : 'rgba(100,116,139,0.1)', 
-                            color: showStats ? '#0E7490' : '#475569', 
-                            border: `1px solid ${showStats ? 'rgba(8, 145, 178, 0.25)' : 'rgba(100,116,139,0.25)'}` 
-                        }}
-                        onMouseEnter={e => {
-                            if (!showStats) e.currentTarget.style.background = 'rgba(100,116,139,0.2)'
-                        }}
-                        onMouseLeave={e => {
-                            if (!showStats) e.currentTarget.style.background = 'rgba(100,116,139,0.1)'
-                        }}
-                    >
-                        <BarChart3 size={13} className="inline mr-1" />
-                        <span>{i18n.statsBtn}</span>
-                    </button>
-                    <button onClick={openCreate}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all duration-150 rounded-md bg-[#0E7490] hover:bg-[#155E75] text-white">
-                        <Plus size={16} /> {i18n.createBtn}
-                    </button>
-                </div>
-            </div>
+                }
+                actions={
+                    <>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setShowStats(!showStats)}
+                            aria-pressed={showStats}
+                            className={showStats ? 'border-lys-teal text-lys-teal-strong bg-lys-teal-soft hover:bg-lys-teal-soft' : undefined}
+                        >
+                            <BarChart3 size={14} /> {i18n.statsBtn}
+                        </Button>
+                        <Button variant="primary" size="sm" onClick={openCreate}>
+                            <Plus size={15} /> {i18n.createBtn}
+                        </Button>
+                    </>
+                }
+            />
 
             {/* Collapsible Stats Section */}
             {showStats && (
-                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 animate-in slide-in-from-top-2 duration-150">
-                    {[
-                        { label: i18n.kpiTotalValue, value: `₫${(stats.totalValue / 1e6).toFixed(0)}M`, accent: '#0E7490' },
-                        { label: i18n.kpiTotalQt, value: stats.total, accent: '#475569' },
-                        { label: i18n.kpiSent, value: stats.sent, accent: '#B45309' },
-                        { label: i18n.kpiAccepted, value: stats.accepted, accent: '#15803D' },
-                        { label: i18n.kpiConverted, value: stats.converted, accent: '#0E7490' },
-                    ].map(s => (
-                        <div key={s.label} className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#64748B' }}>{s.label}</p>
-                            <p className="text-xl font-bold mt-1 font-mono" style={{ color: '#0F172A' }}>{s.value}</p>
-                        </div>
-                    ))}
-                </div>
+                <StatGrid cols={5} className="animate-fade-in">
+                    <StatCard label={i18n.kpiTotalValue} value={`₫${(stats.totalValue / 1e6).toFixed(0)}M`} tone="brand" />
+                    <StatCard label={i18n.kpiTotalQt} value={stats.total} tone="neutral" />
+                    <StatCard label={i18n.kpiSent} value={stats.sent} tone="warning" />
+                    <StatCard label={i18n.kpiAccepted} value={stats.accepted} tone="success" />
+                    <StatCard label={i18n.kpiConverted} value={stats.converted} tone="brand" />
+                </StatGrid>
             )}
 
-            {/* Toolbar: Status Tabs + Search */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-2 border-b border-slate-200/30">
+            {/* Status Tabs + Search Row */}
+            <div className="space-y-3">
                 <StatusTabs
                     value={statusFilter}
                     onChange={val => { setStatusFilter(val); setTimeout(reload, 50) }}
                     items={statusTabItems}
                 />
 
-                <div className="w-full sm:w-64">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                     <SearchInput
                         value={search}
                         onChange={e => { setSearch(e.target.value); setTimeout(reload, 300) }}
                         placeholder={i18n.searchPlaceholder}
+                        className="w-full sm:w-72"
                     />
                 </div>
             </div>
 
             {/* Table (Desktop View) */}
-            <div className="hidden md:block rounded-md overflow-hidden overflow-x-auto bg-white" style={{ border: '1px solid #E2E8F0' }}>
+            <div className="hidden md:block">
                 <Table>
                     <THead>
                         <tr>
@@ -497,35 +478,33 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
                             <TableMessageRow colSpan={8}>{i18n.loading}</TableMessageRow>
                         ) : rows.length === 0 ? (
                             <TableMessageRow colSpan={8}>
-                                <FileText size={32} className="mx-auto mb-3 text-slate-200" />
-                                <p className="text-sm">{i18n.emptyList}</p>
+                                <EmptyState icon={FileText} title={i18n.emptyList} />
                             </TableMessageRow>
                         ) : rows.map(row => {
-                            const cfg = STATUS_CFG[row.status]
                             const statusLabel = i18n.statusLabels[row.status] ?? row.status
                             const isExpired = new Date(row.validUntil) < new Date() && !['CONVERTED', 'CANCELLED', 'EXPIRED'].includes(row.status)
                             return (
-                                <Tr key={row.id} className="hover:bg-[#0891B2]/4 transition-colors">
+                                <Tr key={row.id} className="hover:bg-lys-subtle/60 transition-colors">
                                     <Td>
-                                        <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{row.quotationNo}</span>
+                                        <span className="text-xs font-bold text-lys-teal-strong font-mono">{row.quotationNo}</span>
                                     </Td>
                                     <Td>
-                                        <p className="text-sm font-medium" style={{ color: '#0F172A' }}>{row.customerName}</p>
-                                        <p className="text-xs" style={{ color: '#64748B' }}>{row.customerCode}</p>
+                                        <p className="text-sm font-medium text-lys-primary">{row.customerName}</p>
+                                        <p className="text-xs text-lys-muted">{row.customerCode}</p>
                                     </Td>
                                     <Td>
-                                        <span className="text-xs px-2 py-0.5 rounded-full font-medium inline-block whitespace-nowrap shrink-0" style={{ background: 'rgba(8,145,178,0.1)', color: '#475569' }}>{row.channel}</span>
+                                        <span className="text-xs px-2 py-0.5 rounded-full font-medium inline-block whitespace-nowrap shrink-0 bg-lys-teal-soft text-lys-secondary">{row.channel}</span>
                                     </Td>
                                     <Td>
-                                        <span className="text-sm font-bold" style={{ color: '#0F172A' }}>{formatCurrency(row.totalAmount)}</span>
+                                        <span className="text-sm font-bold text-lys-primary">{formatCurrency(row.totalAmount)}</span>
                                     </Td>
-                                    <Td className="text-sm" style={{ color: '#475569' }}>{row.salesRepName}</Td>
+                                    <Td className="text-sm text-lys-secondary">{row.salesRepName}</Td>
                                     <Td className="text-xs" style={{ color: isExpired ? '#B91C1C' : '#64748B' }}>
                                         {formatDate(row.validUntil)}
                                         {isExpired && <span className="ml-1 text-[10px] font-bold">{i18n.expiredBadge}</span>}
                                     </Td>
                                     <Td>
-                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full inline-block whitespace-nowrap shrink-0" style={{ color: cfg.color, background: cfg.bg }}>{statusLabel}</span>
+                                        <StatusBadge status={row.status} label={statusLabel} />
                                     </Td>
                                     <Td>
                                         <div className="flex items-center gap-1">
@@ -663,7 +642,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
             {/* Detail Drawer */}
             {detailId && (
                 <>
-                    <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={() => setDetailId(null)} />
+                    <div className="fixed inset-0 z-40 bg-slate-900/35 backdrop-blur-[2px] transition-opacity" onClick={() => setDetailId(null)} />
                     <div className="fixed top-0 right-0 h-full z-50 flex flex-col bg-white border-l border-slate-200 shadow-2xl animate-in slide-in-from-right duration-200" style={{ width: 'min(580px,95vw)' }}>
                         <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
                             <h3 className="text-lg font-semibold font-brand" style={{ color: '#0F172A' }}>
@@ -832,7 +811,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
             {/* Create Drawer */}
             {createOpen && (
                 <>
-                    <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={handleCloseCreateDrawer} />
+                    <div className="fixed inset-0 z-40 bg-slate-900/35 backdrop-blur-[2px] transition-opacity" onClick={handleCloseCreateDrawer} />
                     <div className="fixed top-0 right-0 h-full z-50 flex flex-col bg-white border-l border-slate-200 shadow-2xl animate-in slide-in-from-right duration-200" style={{ width: 'min(520px,95vw)' }}>
                         <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
                             <h3 className="text-lg font-semibold font-brand" style={{ color: '#0F172A' }}>{i18n.createDrawerTitle}</h3>
@@ -1102,7 +1081,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
             {/* Send Drawer */}
             {sendDrawerOpen && (
                 <>
-                    <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={() => setSendDrawerOpen(null)} />
+                    <div className="fixed inset-0 z-40 bg-slate-900/35 backdrop-blur-[2px] transition-opacity" onClick={() => setSendDrawerOpen(null)} />
                     <div className="fixed top-0 right-0 h-full z-50 flex flex-col bg-white border-l border-slate-200 shadow-2xl animate-in slide-in-from-right duration-200" style={{ width: 'min(420px,95vw)' }}>
                         <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #E2E8F0' }}>
                             <h3 className="text-lg font-semibold font-brand" style={{ color: '#0F172A' }}>{i18n.sendDrawerTitle}</h3>
@@ -1192,7 +1171,7 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
             {/* Quick Product Picker Modal */}
             {pickerOpen && (
                 <>
-                    <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={() => setPickerOpen(false)} />
+                    <div className="fixed inset-0 z-[60] bg-slate-900/35 backdrop-blur-[2px] transition-opacity" onClick={() => setPickerOpen(false)} />
                     <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] flex flex-col rounded-sm bg-slate-50 border border-slate-200 shadow-2xl"
                         style={{ width: 'min(780px,95vw)', height: 'min(620px,90vh)' }}>
                         
@@ -1373,6 +1352,6 @@ export function QuotationClient({ initialData, userRoles = [] }: Props) {
             )}
 
             {confirmDialog}
-        </div>
+        </PageContainer>
     )
 }

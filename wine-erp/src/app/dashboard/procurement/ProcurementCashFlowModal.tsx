@@ -264,7 +264,7 @@ export function ProcurementCashFlowModal({
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 md:p-6 overflow-hidden animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 backdrop-blur-[2px] p-3 md:p-6 overflow-hidden animate-in fade-in duration-200">
             <div className="bg-white w-full max-w-7xl max-h-[94vh] rounded-md shadow-2xl flex flex-col border border-slate-200 overflow-hidden">
                 
                 {/* ── HEADER ──────────────────────────────────────────────── */}

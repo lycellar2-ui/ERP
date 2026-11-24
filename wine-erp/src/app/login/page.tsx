@@ -10,6 +10,7 @@ export default function LoginPage() {
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
+    const [showForgotHelp, setShowForgotHelp] = useState(false)
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
@@ -25,27 +26,11 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-lys-bg">
-            {/* Subtle ambient glows — Navy/Teal */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div
-                    className="absolute -right-40 -top-40 w-96 h-96 rounded-full"
-                    style={{
-                        background: 'radial-gradient(circle, rgba(8,145,178,0.08), transparent)',
-                    }}
-                />
-                <div
-                    className="absolute -left-40 -bottom-40 w-96 h-96 rounded-full"
-                    style={{
-                        background: 'radial-gradient(circle, rgba(14,116,144,0.06), transparent)',
-                    }}
-                />
-            </div>
-
+        <div className="min-h-[100dvh] flex items-center justify-center p-4 bg-lys-bg">
             <div className="relative w-full max-w-md">
                 {/* Logo */}
-                <div className="text-center mb-8">
-                    <div className="flex justify-center mb-4">
+                <div className="text-center mb-7">
+                    <div className="flex justify-center mb-3">
                         <Image
                             src="/logo/Ly's Cellars - Logo_tagline blue green.png"
                             alt="LY's Cellars"
@@ -58,10 +43,10 @@ export default function LoginPage() {
                 </div>
 
                 {/* Card */}
-                <div className="bg-lys-surface border border-lys-border rounded-lg p-8 shadow-lg">
-                    <h2 className="text-xl font-semibold mb-6 text-lys-primary">
+                <div className="bg-lys-surface border border-lys-border border-t-2 border-t-lys-teal-strong rounded-lg p-6 sm:p-8 shadow-md">
+                    <h1 className="text-xl font-semibold mb-6 text-lys-primary">
                         Đăng nhập
-                    </h2>
+                    </h1>
 
                     {error && (
                         <div
@@ -86,7 +71,7 @@ export default function LoginPage() {
                                 autoComplete="email"
                                 required
                                 placeholder="ten@company.com"
-                                className="w-full h-11 px-3 text-sm rounded-md border border-lys-border-strong bg-white text-lys-primary placeholder:text-lys-dim focus:outline-none focus:border-lys-teal focus:ring-2 focus:ring-lys-teal/20 transition-colors"
+                                className="w-full h-11 px-3 text-base sm:text-sm rounded-md border border-lys-border-strong bg-white text-lys-primary placeholder:text-lys-dim focus:outline-none focus:border-lys-teal focus:ring-2 focus:ring-lys-teal/20 transition-colors"
                             />
                         </div>
 
@@ -96,9 +81,13 @@ export default function LoginPage() {
                                 <label className="block text-sm font-medium text-lys-secondary" htmlFor="password">
                                     Mật khẩu
                                 </label>
-                                <a href="/forgot-password" className="text-xs text-lys-teal-strong hover:underline">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowForgotHelp(v => !v)}
+                                    className="text-xs font-medium text-lys-teal-strong hover:underline cursor-pointer"
+                                >
                                     Quên mật khẩu?
-                                </a>
+                                </button>
                             </div>
                             <div className="relative">
                                 <input
@@ -108,7 +97,7 @@ export default function LoginPage() {
                                     autoComplete="current-password"
                                     required
                                     placeholder="••••••••"
-                                    className="w-full h-11 pl-3 pr-10 text-sm rounded-md border border-lys-border-strong bg-white text-lys-primary placeholder:text-lys-dim focus:outline-none focus:border-lys-teal focus:ring-2 focus:ring-lys-teal/20 transition-colors"
+                                    className="w-full h-11 pl-3 pr-10 text-base sm:text-sm rounded-md border border-lys-border-strong bg-white text-lys-primary placeholder:text-lys-dim focus:outline-none focus:border-lys-teal focus:ring-2 focus:ring-lys-teal/20 transition-colors"
                                 />
                                 <button
                                     type="button"
@@ -120,6 +109,12 @@ export default function LoginPage() {
                                 </button>
                             </div>
                         </div>
+
+                        {showForgotHelp && (
+                            <div className="bg-lys-teal-soft border border-tone-brand-border text-lys-teal-strong rounded-md p-3 text-xs leading-relaxed">
+                                Tài khoản nội bộ không tự đặt lại qua email. Vui lòng liên hệ Quản trị viên (Admin) hoặc Trợ lý CEO để được cấp lại mật khẩu mới.
+                            </div>
+                        )}
 
                         {/* Submit */}
                         <Button

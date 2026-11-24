@@ -123,7 +123,7 @@ export function SopDetailModal({ sop: initialSop, onClose, onUpdated }: SopDetai
     const attachedMdFiles = attachedForms.filter(f => f.fileName.toLowerCase().endsWith('.md'))
 
     return (
-        <div className="print-modal fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex justify-center p-3 sm:p-6 animate-in fade-in duration-150 print:static print:bg-white print:p-0 print:overflow-visible">
+        <div className="print-modal fixed inset-0 z-50 overflow-y-auto bg-slate-900/35 backdrop-blur-[2px] flex justify-center p-3 sm:p-6 animate-in fade-in duration-150 print:static print:bg-white print:p-0 print:overflow-visible">
             {/* Modal Container */}
             <div
                 className="print-keep bg-white w-full max-w-5xl rounded-lg shadow-2xl border border-slate-200 flex flex-col my-auto max-h-[92vh] overflow-hidden print:max-h-none print:shadow-none print:border-0"

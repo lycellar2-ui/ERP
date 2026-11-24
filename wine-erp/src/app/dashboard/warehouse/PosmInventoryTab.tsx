@@ -6,12 +6,12 @@ import {
     Sparkles, Plus, ArrowUpRight, ArrowDownLeft, Search, RefreshCw,
     AlertTriangle, Tag, History, X, Layers, Boxes, Edit2, ShieldAlert,
     CheckCircle2, DollarSign, Package, AlertCircle, Building2, Store,
-    Wine, Gift, BookOpen, Printer
+    Wine, Gift, BookOpen, Printer, Trash2
 } from 'lucide-react'
 import {
-    PosmProductItem, PosmTransactionItem, PosmStats,
-    getPosmProducts, getPosmTransactions, getPosmStats,
-    createPosmProduct, updatePosmProduct, createPosmTransaction
+    PosmProductItem, PosmTransactionItem, PosmStats, PosmLegalEntityOption,
+    getPosmProducts, getPosmTransactions, getPosmStats, getPosmLegalEntities,
+    createPosmProduct, updatePosmProduct, createPosmTransaction, createPosmBatchTransaction
 } from './actions-posm'
 import { formatVND, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -77,6 +77,7 @@ export function PosmInventoryTab() {
     const [products, setProducts] = useState<PosmProductItem[]>([])
     const [transactions, setTransactions] = useState<PosmTransactionItem[]>([])
     const [stats, setStats] = useState<PosmStats | null>(null)
+    const [legalEntities, setLegalEntities] = useState<PosmLegalEntityOption[]>([])
 
     // Filters
     const [search, setSearch] = useState('')
@@ -89,7 +90,8 @@ export function PosmInventoryTab() {
     const [showInboundModal, setShowInboundModal] = useState(false)
     const [showOutboundModal, setShowOutboundModal] = useState(false)
     const [showPrintVoucherModal, setShowPrintVoucherModal] = useState(false)
-    const [selectedVoucherForPrint, setSelectedVoucherForPrint] = useState<PosmTransactionItem | null>(null)
+    const [selectedVoucherLines, setSelectedVoucherLines] = useState<PosmTransactionItem[]>([])
+    const [printLegalEntityId, setPrintLegalEntityId] = useState('')
     const [targetProduct, setTargetProduct] = useState<PosmProductItem | null>(null)
 
     // Master Data Form
@@ -112,9 +114,9 @@ export function PosmInventoryTab() {
     const [inboundNotes, setInboundNotes] = useState('')
     const [inboundSubmitting, setInboundSubmitting] = useState(false)
 
-    // Outbound Form
-    const [outboundProductId, setOutboundProductId] = useState('')
-    const [outboundQty, setOutboundQty] = useState<number | string>(1)
+    // Outbound Form (hỗ trợ nhiều dòng POSM + chọn công ty)
+    const [outboundLegalEntityId, setOutboundLegalEntityId] = useState('')
+    const [outboundLines, setOutboundLines] = useState<{ key: string; posmProductId: string; qty: number | string }[]>([])
     const [outboundReason, setOutboundReason] = useState<PosmReason>('SALES_ALLOCATION')
     const [outboundRecipient, setOutboundRecipient] = useState('')
     const [outboundRequestedBy, setOutboundRequestedBy] = useState('')
@@ -125,18 +127,20 @@ export function PosmInventoryTab() {
     const loadData = useCallback(async () => {
         setLoading(true)
         try {
-            const [prods, txs, st] = await Promise.all([
+            const [prods, txs, st, entities] = await Promise.all([
                 getPosmProducts({
                     search: search || undefined,
                     category: categoryFilter,
                     lowStockOnly: lowStockFilter
                 }),
                 getPosmTransactions(),
-                getPosmStats()
+                getPosmStats(),
+                getPosmLegalEntities()
             ])
             setProducts(prods)
             setTransactions(txs)
             setStats(st)
+            setLegalEntities(entities)
         } catch (error: any) {
             toast.error(error?.message || 'Không thể tải dữ liệu kho POSM')
         } finally {
@@ -268,8 +272,10 @@ export function PosmInventoryTab() {
     // Open Quick Outbound
     const openOutbound = (item?: PosmProductItem) => {
         setTargetProduct(item || null)
-        setOutboundProductId(item ? item.id : products[0]?.id || '')
-        setOutboundQty(1)
+        const defaultProductId = item ? item.id : products[0]?.id || ''
+        setOutboundLines([{ key: `line-${Date.now()}`, posmProductId: defaultProductId, qty: 1 }])
+        const defaultEntity = legalEntities.find(e => e.code === 'LC') || legalEntities[0]
+        setOutboundLegalEntityId(defaultEntity?.id || '')
         setOutboundReason('SALES_ALLOCATION')
         setOutboundRecipient('')
         setOutboundRequestedBy('')
@@ -277,44 +283,69 @@ export function PosmInventoryTab() {
         setShowOutboundModal(true)
     }
 
-    const selectedOutboundProduct = useMemo(() => {
-        return products.find(p => p.id === outboundProductId)
-    }, [products, outboundProductId])
+    const addOutboundLine = () => {
+        const pickedIds = new Set(outboundLines.map(l => l.posmProductId))
+        const nextProduct = products.find(p => !pickedIds.has(p.id)) || products[0]
+        setOutboundLines(prev => [
+            ...prev,
+            { key: `line-${Date.now()}-${prev.length}`, posmProductId: nextProduct?.id || '', qty: 1 }
+        ])
+    }
 
-    const isDeficit = useMemo(() => {
-        if (!selectedOutboundProduct) return false
-        return Number(outboundQty) > selectedOutboundProduct.qtyOnHand
-    }, [selectedOutboundProduct, outboundQty])
+    const removeOutboundLine = (key: string) => {
+        setOutboundLines(prev => (prev.length > 1 ? prev.filter(l => l.key !== key) : prev))
+    }
+
+    const updateOutboundLine = (key: string, patch: Partial<{ posmProductId: string; qty: number | string }>) => {
+        setOutboundLines(prev => prev.map(l => (l.key === key ? { ...l, ...patch } : l)))
+    }
+
+    const deficitLines = useMemo(() => {
+        return outboundLines
+            .map(line => {
+                const prod = products.find(p => p.id === line.posmProductId)
+                const qtyNum = Number(line.qty)
+                if (!prod || isNaN(qtyNum) || qtyNum <= prod.qtyOnHand) return null
+                return { name: prod.name, qty: qtyNum, onHand: prod.qtyOnHand, unit: prod.unit }
+            })
+            .filter(Boolean) as { name: string; qty: number; onHand: number; unit: string }[]
+    }, [outboundLines, products])
 
     const handleSaveOutbound = async (openPrintVoucher = false) => {
-        if (!outboundProductId) {
+        if (outboundLines.length === 0 || outboundLines.some(l => !l.posmProductId)) {
             toast.error('Vui lòng chọn vật phẩm POSM cần xuất')
             return
         }
-        const qtyNum = Number(outboundQty)
-        if (isNaN(qtyNum) || qtyNum <= 0) {
-            toast.error('Số lượng xuất phải lớn hơn 0')
+        const parsedLines = outboundLines.map(l => ({
+            posmProductId: l.posmProductId,
+            qty: Number(l.qty),
+        }))
+        if (parsedLines.some(l => isNaN(l.qty) || l.qty <= 0)) {
+            toast.error('Số lượng xuất của mỗi dòng phải lớn hơn 0')
             return
         }
 
         setOutboundSubmitting(true)
         try {
-            const createdTx = await createPosmTransaction({
-                posmProductId: outboundProductId,
+            const createdItems = await createPosmBatchTransaction({
                 type: 'OUTBOUND',
                 reason: outboundReason,
-                qty: qtyNum,
+                legalEntityId: outboundLegalEntityId || null,
                 recipient: outboundRecipient || undefined,
                 requestedBy: outboundRequestedBy || undefined,
                 notes: outboundNotes || undefined,
-                allowDeficit: true
+                allowDeficit: true,
+                lines: parsedLines,
             })
-            toast.success(`Đã xuất ${qtyNum} vật phẩm khỏi Kho POSM (${createdTx.docNo})`)
+            const docNo = createdItems[0]?.docNo || ''
+            const totalQty = createdItems.reduce((s, item) => s + item.qty, 0)
+            toast.success(`Đã xuất ${totalQty} vật phẩm (${createdItems.length} dòng) khỏi Kho POSM (${docNo})`)
             setShowOutboundModal(false)
             await loadData()
 
-            if (openPrintVoucher && createdTx) {
-                setSelectedVoucherForPrint(createdTx)
+            if (openPrintVoucher && createdItems.length > 0) {
+                setSelectedVoucherLines(createdItems)
+                setPrintLegalEntityId(createdItems[0].legalEntityId || outboundLegalEntityId || legalEntities[0]?.id || '')
                 setShowPrintVoucherModal(true)
             }
         } catch (error: any) {
@@ -322,6 +353,15 @@ export function PosmInventoryTab() {
         } finally {
             setOutboundSubmitting(false)
         }
+    }
+
+    const openPrintVoucherForTx = (tx: PosmTransactionItem) => {
+        const sameDocLines = transactions.filter(item => item.docNo === tx.docNo)
+        const lines = sameDocLines.length > 0 ? sameDocLines : [tx]
+        setSelectedVoucherLines(lines)
+        const defaultEntity = legalEntities.find(e => e.code === 'LC') || legalEntities[0]
+        setPrintLegalEntityId(tx.legalEntityId || defaultEntity?.id || '')
+        setShowPrintVoucherModal(true)
     }
 
     return (
@@ -701,10 +741,7 @@ export function PosmInventoryTab() {
                                                 <td className="py-2.5 px-2.5 font-mono font-bold text-slate-900">
                                                     {isOut ? (
                                                         <button
-                                                            onClick={() => {
-                                                                setSelectedVoucherForPrint(tx)
-                                                                setShowPrintVoucherModal(true)
-                                                            }}
+                                                            onClick={() => openPrintVoucherForTx(tx)}
                                                             className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-bold font-mono"
                                                             title="Bấm để xem và in phiếu xuất kho POSM"
                                                         >
@@ -757,10 +794,7 @@ export function PosmInventoryTab() {
                                                 <td className="py-2.5 px-2.5 text-center">
                                                     {isOut ? (
                                                         <button
-                                                            onClick={() => {
-                                                                setSelectedVoucherForPrint(tx)
-                                                                setShowPrintVoucherModal(true)
-                                                            }}
+                                                            onClick={() => openPrintVoucherForTx(tx)}
                                                             className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition cursor-pointer"
                                                             title="In / Xem Phiếu Xuất Kho POSM"
                                                         >
@@ -783,7 +817,7 @@ export function PosmInventoryTab() {
 
             {/* ═══ MODAL 1: CREATE / EDIT POSM MASTER DATA ═══ */}
             {showCreateModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-[2px]">
                     <div className="bg-white rounded-md shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
                             <div className="flex items-center gap-2">
@@ -955,7 +989,7 @@ export function PosmInventoryTab() {
 
             {/* ═══ MODAL 2: INBOUND (NHẬP KHO POSM) ═══ */}
             {showInboundModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-[2px]">
                     <div className="bg-white rounded-md shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-emerald-50/50">
                             <div className="flex items-center gap-2">
@@ -1073,10 +1107,10 @@ export function PosmInventoryTab() {
                 </div>
             )}
 
-            {/* ═══ MODAL 3: OUTBOUND (XUẤT KHO POSM) ═══ */}
+            {/* ═══ MODAL 3: OUTBOUND (XUẤT KHO POSM — NHIỀU VẬT PHẨM) ═══ */}
             {showOutboundModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-                    <div className="bg-white rounded-md shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-[2px] overflow-y-auto">
+                    <div className="bg-white rounded-md shadow-2xl border border-slate-200 w-full max-w-2xl my-4 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-blue-50/50">
                             <div className="flex items-center gap-2">
                                 <span className="p-1.5 rounded-lg bg-blue-100 text-blue-700">
@@ -1094,25 +1128,24 @@ export function PosmInventoryTab() {
                             </button>
                         </div>
 
-                        <div className="p-5 space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">
-                                    Chọn vật phẩm POSM <span className="text-rose-500">*</span>
-                                </label>
-                                <select
-                                    value={outboundProductId}
-                                    onChange={e => setOutboundProductId(e.target.value)}
-                                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:border-blue-500 font-semibold"
-                                >
-                                    {products.map(p => (
-                                        <option key={p.id} value={p.id}>
-                                            [{p.posmCode}] {p.name} (Tồn: {p.qtyOnHand} {p.unit})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
+                        <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                                        Công ty / Pháp nhân xuất <span className="text-rose-500">*</span>
+                                    </label>
+                                    <select
+                                        value={outboundLegalEntityId}
+                                        onChange={e => setOutboundLegalEntityId(e.target.value)}
+                                        className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:border-blue-500 font-semibold"
+                                    >
+                                        {legalEntities.map(le => (
+                                            <option key={le.id} value={le.id}>
+                                                [{le.code}] {le.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                                 <div>
                                     <label className="block text-xs font-bold text-slate-700 mb-1">
                                         Mục đích xuất kho
@@ -1130,31 +1163,88 @@ export function PosmInventoryTab() {
                                         <option value="OTHER">Mục đích khác</option>
                                     </select>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                                        Số lượng xuất <span className="text-rose-500">*</span>
+                            </div>
+
+                            {/* Multi-POSM Item Lines */}
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <label className="block text-xs font-bold text-slate-700">
+                                        Danh sách vật phẩm POSM xuất ({outboundLines.length} dòng) <span className="text-rose-500">*</span>
                                     </label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        value={outboundQty}
-                                        onChange={e => setOutboundQty(e.target.value)}
-                                        className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:border-blue-500 font-bold"
-                                    />
+                                    <button
+                                        type="button"
+                                        onClick={addOutboundLine}
+                                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition cursor-pointer"
+                                    >
+                                        <Plus size={12} />
+                                        <span>Thêm vật phẩm POSM</span>
+                                    </button>
+                                </div>
+
+                                <div className="space-y-2 border border-slate-200 rounded-lg p-2.5 bg-slate-50/60">
+                                    {outboundLines.map((line, idx) => {
+                                        const prod = products.find(p => p.id === line.posmProductId)
+                                        const lineDeficit = prod && Number(line.qty) > prod.qtyOnHand
+                                        return (
+                                            <div key={line.key} className="flex flex-col sm:flex-row sm:items-center gap-2 bg-white p-2 rounded-md border border-slate-200">
+                                                <span className="text-[11px] font-mono font-bold text-slate-400 w-5 text-center shrink-0">
+                                                    {idx + 1}
+                                                </span>
+                                                <div className="flex-1 min-w-0">
+                                                    <select
+                                                        value={line.posmProductId}
+                                                        onChange={e => updateOutboundLine(line.key, { posmProductId: e.target.value })}
+                                                        className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-md text-slate-900 focus:outline-none focus:border-blue-500 font-semibold"
+                                                    >
+                                                        {products.map(p => (
+                                                            <option key={p.id} value={p.id}>
+                                                                [{p.posmCode}] {p.name} (Tồn: {p.qtyOnHand} {p.unit})
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        value={line.qty}
+                                                        onChange={e => updateOutboundLine(line.key, { qty: e.target.value })}
+                                                        className={`w-20 px-2.5 py-1.5 text-xs bg-slate-50 border rounded-md text-slate-900 focus:outline-none font-bold text-center ${
+                                                            lineDeficit ? 'border-amber-400 bg-amber-50/40' : 'border-slate-200 focus:border-blue-500'
+                                                        }`}
+                                                        aria-label={`Số lượng dòng ${idx + 1}`}
+                                                    />
+                                                    <span className="text-[11px] text-slate-500 w-10 truncate">
+                                                        {prod?.unit || 'Cái'}
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeOutboundLine(line.key)}
+                                                        disabled={outboundLines.length <= 1}
+                                                        className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                                                        title="Xóa dòng này"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
                                 </div>
                             </div>
 
-                            {/* Warning if deficit (as decided in Socratic Gate) */}
-                            {isDeficit && (
+                            {/* Warning if deficit */}
+                            {deficitLines.length > 0 && (
                                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2.5">
                                     <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
                                     <div className="text-[11px] text-amber-800 leading-relaxed">
-                                        <span className="font-bold">Cảnh báo thiếu tồn kho:</span> Số lượng xuất ({outboundQty}) vượt quá tồn thực tế ({selectedOutboundProduct?.qtyOnHand} {selectedOutboundProduct?.unit}). Hệ thống cho phép thủ kho xuất trước và làm phiếu nhập bù sau.
+                                        <span className="font-bold">Cảnh báo thiếu tồn kho:</span>{' '}
+                                        {deficitLines.map(d => `${d.name} (xuất ${d.qty}, tồn ${d.onHand} ${d.unit})`).join('; ')}. Hệ thống cho phép thủ kho xuất trước và làm phiếu nhập bù sau.
                                     </div>
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-700 mb-1">
                                         Người nhận / Đại lý
@@ -1224,7 +1314,13 @@ export function PosmInventoryTab() {
             )}
 
             {/* ═══ MODAL 4: PHIẾU XUẤT KHO POSM (PRINTABLE VOUCHER) ═══ */}
-            {showPrintVoucherModal && selectedVoucherForPrint && (() => {
+            {showPrintVoucherModal && selectedVoucherLines.length > 0 && (() => {
+                const headerTx = selectedVoucherLines[0]
+                const activeEntity = legalEntities.find(e => e.id === printLegalEntityId) || legalEntities[0]
+                const companyName = activeEntity?.name || headerTx.legalEntityName || "CÔNG TY TNHH HẦM RƯỢU LY'S"
+                const totalVoucherQty = selectedVoucherLines.reduce((sum, l) => sum + l.qty, 0)
+                const totalVoucherCost = selectedVoucherLines.reduce((sum, l) => sum + l.totalCost, 0)
+
                 const voucherPaper = (
                     <div
                         id="posm-print-voucher"
@@ -1235,23 +1331,30 @@ export function PosmInventoryTab() {
                         <div className="flex justify-between items-start border-b border-slate-300 pb-4">
                             <div>
                                 <h4 className="text-sm font-bold uppercase tracking-wide text-slate-900">
-                                    CÔNG TY TNHH LY&apos;S CELLAR
+                                    {companyName}
                                 </h4>
-                                <p className="text-[11px] text-slate-600">
-                                    Hệ Thống Nhập Khẩu & Phân Phối Vang Cao Cấp
-                                </p>
+                                {activeEntity?.taxId && (
+                                    <p className="text-[11px] text-slate-600">
+                                        MST: {activeEntity.taxId}
+                                    </p>
+                                )}
+                                {activeEntity?.address && (
+                                    <p className="text-[11px] text-slate-600">
+                                        Địa chỉ: {activeEntity.address}
+                                    </p>
+                                )}
                                 <p className="text-[11px] text-slate-600">
                                     Bộ Phận: Kho Vận & Tiếp Thị (WMS - Marketing POSM)
                                 </p>
                             </div>
-                            <div className="text-right text-[11px] space-y-0.5">
+                            <div className="text-right text-[11px] space-y-0.5 shrink-0">
                                 <p className="font-bold">Mẫu số: 02 - VT</p>
                                 <p className="italic text-slate-500">(Ban hành theo TT 200/2014/TT-BTC)</p>
                                 <p className="font-mono font-bold text-slate-900 mt-1">
-                                    Số: <span className="text-blue-900">{selectedVoucherForPrint.docNo}</span>
+                                    Số: <span className="text-blue-900">{headerTx.docNo}</span>
                                 </p>
                                 <p className="text-slate-600">
-                                    Ngày: {formatDate(selectedVoucherForPrint.performedAt)}
+                                    Ngày: {formatDate(headerTx.performedAt)}
                                 </p>
                             </div>
                         </div>
@@ -1270,23 +1373,23 @@ export function PosmInventoryTab() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-y-2 gap-x-4 text-xs">
                             <div>
                                 <span className="font-bold">Người nhận / Đơn vị: </span>
-                                <span>{selectedVoucherForPrint.recipient || '....................................................................'}</span>
+                                <span>{headerTx.recipient || '....................................................................'}</span>
                             </div>
                             <div>
                                 <span className="font-bold">Nhân viên đề xuất: </span>
-                                <span>{selectedVoucherForPrint.requestedBy || '....................................................................'}</span>
+                                <span>{headerTx.requestedBy || '....................................................................'}</span>
                             </div>
                             <div>
                                 <span className="font-bold">Mục đích xuất: </span>
-                                <span>{POSM_REASON_LABELS[selectedVoucherForPrint.reason]?.label || selectedVoucherForPrint.reason}</span>
+                                <span>{POSM_REASON_LABELS[headerTx.reason]?.label || headerTx.reason}</span>
                             </div>
                             <div>
-                                <span className="font-bold">Kho xuất: </span>
-                                <span>Kho Tổng Ly&apos;s Cellar (Khu Vực POSM)</span>
+                                <span className="font-bold">Đơn vị xuất: </span>
+                                <span>{companyName} (Kho POSM)</span>
                             </div>
                             <div className="sm:col-span-2 print:col-span-2">
                                 <span className="font-bold">Ghi chú / Đơn hàng liên quan: </span>
-                                <span>{selectedVoucherForPrint.notes || 'Cấp phát sử dụng theo quy định quản lý tiếp thị.'}</span>
+                                <span>{headerTx.notes || 'Cấp phát sử dụng theo quy định quản lý tiếp thị.'}</span>
                             </div>
                         </div>
 
@@ -1306,41 +1409,32 @@ export function PosmInventoryTab() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr className="border-b border-slate-300">
-                                        <td className="p-2 border-r border-slate-800 text-center">1</td>
-                                        <td className="p-2 border-r border-slate-800 font-mono font-bold text-center">
-                                            {selectedVoucherForPrint.posmProductCode}
-                                        </td>
-                                        <td className="p-2 border-r border-slate-800 font-semibold">
-                                            {selectedVoucherForPrint.posmProductName}
-                                        </td>
-                                        <td className="p-2 border-r border-slate-800 text-center">
-                                            {POSM_CATEGORY_CONFIG[selectedVoucherForPrint.category]?.label || selectedVoucherForPrint.category}
-                                        </td>
-                                        <td className="p-2 border-r border-slate-800 text-center">
-                                            {selectedVoucherForPrint.unit}
-                                        </td>
-                                        <td className="p-2 border-r border-slate-800 text-center font-bold">
-                                            {selectedVoucherForPrint.qty}
-                                        </td>
-                                        <td className="p-2 border-r border-slate-800 text-right font-mono">
-                                            {selectedVoucherForPrint.unitCost > 0 ? formatVND(selectedVoucherForPrint.unitCost) : '—'}
-                                        </td>
-                                        <td className="p-2 text-right font-mono font-bold">
-                                            {selectedVoucherForPrint.totalCost > 0 ? formatVND(selectedVoucherForPrint.totalCost) : '—'}
-                                        </td>
-                                    </tr>
-                                    {/* Filler row for classic form aesthetic */}
-                                    <tr className="border-b border-slate-200">
-                                        <td className="p-2 border-r border-slate-800 text-center text-slate-300">2</td>
-                                        <td className="p-2 border-r border-slate-800"></td>
-                                        <td className="p-2 border-r border-slate-800"></td>
-                                        <td className="p-2 border-r border-slate-800"></td>
-                                        <td className="p-2 border-r border-slate-800"></td>
-                                        <td className="p-2 border-r border-slate-800"></td>
-                                        <td className="p-2 border-r border-slate-800"></td>
-                                        <td className="p-2"></td>
-                                    </tr>
+                                    {selectedVoucherLines.map((line, index) => (
+                                        <tr key={line.id} className="border-b border-slate-300">
+                                            <td className="p-2 border-r border-slate-800 text-center">{index + 1}</td>
+                                            <td className="p-2 border-r border-slate-800 font-mono font-bold text-center">
+                                                {line.posmProductCode}
+                                            </td>
+                                            <td className="p-2 border-r border-slate-800 font-semibold">
+                                                {line.posmProductName}
+                                            </td>
+                                            <td className="p-2 border-r border-slate-800 text-center">
+                                                {POSM_CATEGORY_CONFIG[line.category]?.label || line.category}
+                                            </td>
+                                            <td className="p-2 border-r border-slate-800 text-center">
+                                                {line.unit}
+                                            </td>
+                                            <td className="p-2 border-r border-slate-800 text-center font-bold">
+                                                {line.qty}
+                                            </td>
+                                            <td className="p-2 border-r border-slate-800 text-right font-mono">
+                                                {line.unitCost > 0 ? formatVND(line.unitCost) : '—'}
+                                            </td>
+                                            <td className="p-2 text-right font-mono font-bold">
+                                                {line.totalCost > 0 ? formatVND(line.totalCost) : '—'}
+                                            </td>
+                                        </tr>
+                                    ))}
                                 </tbody>
                                 <tfoot>
                                     <tr className="font-bold border-t border-slate-800 bg-slate-50">
@@ -1348,11 +1442,11 @@ export function PosmInventoryTab() {
                                             Tổng cộng:
                                         </td>
                                         <td className="p-2 text-center border-r border-slate-800">
-                                            {selectedVoucherForPrint.qty}
+                                            {totalVoucherQty}
                                         </td>
                                         <td className="p-2 border-r border-slate-800"></td>
                                         <td className="p-2 text-right font-mono">
-                                            {selectedVoucherForPrint.totalCost > 0 ? formatVND(selectedVoucherForPrint.totalCost) : '—'}
+                                            {totalVoucherCost > 0 ? formatVND(totalVoucherCost) : '—'}
                                         </td>
                                     </tr>
                                 </tfoot>
@@ -1362,8 +1456,10 @@ export function PosmInventoryTab() {
                         {/* Amount in words & terms */}
                         <div className="space-y-1 text-xs">
                             <p>
-                                <span className="font-bold">Tổng số lượng (viết bằng chữ): </span>
-                                <span className="italic">{selectedVoucherForPrint.qty} ({selectedVoucherForPrint.unit})</span>
+                                <span className="font-bold">Tổng số lượng: </span>
+                                <span className="italic">
+                                    {totalVoucherQty} ({selectedVoucherLines.length === 1 ? selectedVoucherLines[0].unit : `${selectedVoucherLines.length} loại vật phẩm`})
+                                </span>
                             </p>
                             <p className="italic text-slate-600 text-[11px]">
                                 * Vật phẩm POSM bàn giao đúng quy cách, bên nhận có trách nhiệm bảo quản và sử dụng đúng mục đích.
@@ -1376,13 +1472,13 @@ export function PosmInventoryTab() {
                                 <p className="font-bold">Người Lập Phiếu</p>
                                 <p className="italic text-[10px] text-slate-500">(Ký, họ tên)</p>
                                 <div className="h-16"></div>
-                                <p className="font-semibold text-slate-700">{selectedVoucherForPrint.requestedBy || 'Người lập'}</p>
+                                <p className="font-semibold text-slate-700">{headerTx.requestedBy || 'Người lập'}</p>
                             </div>
                             <div>
                                 <p className="font-bold">Người Nhận Hàng</p>
                                 <p className="italic text-[10px] text-slate-500">(Ký, họ tên)</p>
                                 <div className="h-16"></div>
-                                <p className="font-semibold text-slate-700">{selectedVoucherForPrint.recipient || 'Người nhận'}</p>
+                                <p className="font-semibold text-slate-700">{headerTx.recipient || 'Người nhận'}</p>
                             </div>
                             <div>
                                 <p className="font-bold">Thủ Kho Xuất</p>
@@ -1391,10 +1487,10 @@ export function PosmInventoryTab() {
                                 <p className="font-semibold text-slate-700">Thủ kho</p>
                             </div>
                             <div>
-                                <p className="font-bold">Kế Toán / Quản Lý</p>
+                                <p className="font-bold">Kế Toán</p>
                                 <p className="italic text-[10px] text-slate-500">(Ký, họ tên)</p>
                                 <div className="h-16"></div>
-                                <p className="font-semibold text-slate-700">Quản lý kho</p>
+                                <p className="font-semibold text-slate-700">Kế toán</p>
                             </div>
                         </div>
                     </div>
@@ -1402,10 +1498,10 @@ export function PosmInventoryTab() {
 
                 return (
                     <>
-                        <div className="print-modal fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto no-print">
+                        <div className="print-modal fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/35 backdrop-blur-[2px] overflow-y-auto no-print">
                             <div className="bg-white rounded-lg shadow-2xl border border-slate-200 w-full max-w-3xl my-6 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                                 {/* Top Toolbar */}
-                                <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50">
+                                <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-3 border-b border-slate-200 bg-slate-50">
                                     <div className="flex items-center gap-2">
                                         <span className="p-1.5 rounded-lg bg-blue-100 text-blue-700">
                                             <Printer size={16} />
@@ -1415,11 +1511,25 @@ export function PosmInventoryTab() {
                                                 Phiếu Xuất Kho POSM & Biên Bản Bàn Giao
                                             </h3>
                                             <p className="text-[11px] text-slate-500 font-mono">
-                                                Mã số: {selectedVoucherForPrint.docNo}
+                                                Mã số: {headerTx.docNo} · {selectedVoucherLines.length} dòng vật phẩm
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        {legalEntities.length > 0 && (
+                                            <select
+                                                value={printLegalEntityId}
+                                                onChange={e => setPrintLegalEntityId(e.target.value)}
+                                                className="px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-slate-800 font-semibold focus:outline-none focus:border-blue-500"
+                                                aria-label="Chọn công ty hiển thị trên phiếu"
+                                            >
+                                                {legalEntities.map(le => (
+                                                    <option key={le.id} value={le.id}>
+                                                        [{le.code}] {le.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        )}
                                         <button
                                             onClick={() => window.print()}
                                             className="px-3.5 py-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow-2xs cursor-pointer flex items-center gap-1.5"

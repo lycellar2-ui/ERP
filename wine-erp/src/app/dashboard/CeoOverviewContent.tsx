@@ -9,6 +9,8 @@ import {
     Link as LinkIcon, Shield, AlertTriangle, FileText, Users, Wine, Trophy, AlertCircle, Clock, LineChart,
     CreditCard, ExternalLink, Archive, X,
 } from 'lucide-react'
+import { Badge, Button, Card, Modal, StatusBadge, Textarea } from '@/components/ui'
+import type { Tone } from '@/lib/ui/status'
 import { useAppLocale } from '@/lib/i18n'
 import { getDashboardDictionary } from './i18n'
 import { DailyRevenueChart } from './DailyRevenueChart'
@@ -46,22 +48,38 @@ function formatFriendlyVND(amount: number | null | undefined, isEn = false): str
     return isEn ? `${sign}${abs.toLocaleString('en-US')} VND` : `${sign}${abs.toLocaleString('vi-VN')} đ`
 }
 
-function KpiCard({ label, value, sub, trend, trendUp, accentColor = '#0E7490' }: {
+const KPI_ACCENT_BORDER: Record<Tone, string> = {
+    brand: 'border-l-lys-teal-strong',
+    warning: 'border-l-tone-warning-fg',
+    danger: 'border-l-tone-danger-fg',
+    info: 'border-l-tone-info-fg',
+    success: 'border-l-tone-success-fg',
+    neutral: 'border-l-lys-muted',
+}
+
+function KpiCard({ label, value, sub, trend, trendUp, tone = 'brand' }: {
     label: string; value: string; sub?: string
-    trend?: string; trendUp?: boolean; accentColor?: string
+    trend?: string; trendUp?: boolean; tone?: Tone
 }) {
     return (
-        <div className="rounded-md p-3.5 sm:p-5 relative overflow-hidden flex flex-col justify-between"
-            style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: `3px solid ${accentColor}` }}>
-            <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 sm:mb-2 truncate" style={{ color: '#64748B' }}>{label}</p>
-                <p className="text-xl sm:text-2xl font-bold mb-0.5 font-mono truncate" style={{ color: '#0F172A' }}>{value}</p>
-                {sub && <p className="text-[10px] sm:text-[11px] truncate" style={{ color: '#64748B' }}>{sub}</p>}
+        <div
+            className={`bg-lys-card border border-lys-border border-l-[3px] ${KPI_ACCENT_BORDER[tone]} rounded-lg shadow-xs p-3.5 sm:p-4 relative overflow-hidden flex flex-col justify-between`}
+        >
+            <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-lys-muted mb-1.5 truncate">{label}</p>
+                <p className="text-xl sm:text-2xl font-bold tracking-tight text-lys-primary type-number mb-0.5 truncate">{value}</p>
+                {sub && <p className="text-[11px] text-lys-muted truncate">{sub}</p>}
             </div>
             {trend && (
-                <div className="flex items-center gap-1 mt-1 sm:mt-1.5">
-                    {trendUp ? <TrendingUp size={12} style={{ color: '#15803D' }} /> : <TrendingDown size={12} style={{ color: '#B91C1C' }} />}
-                    <span className="text-[10px] sm:text-[11px] font-medium truncate" style={{ color: trendUp ? '#15803D' : '#B91C1C' }}>{trend}</span>
+                <div className="flex items-center gap-1 mt-1.5">
+                    {trendUp ? (
+                        <TrendingUp size={12} className="text-tone-success-fg shrink-0" aria-hidden />
+                    ) : (
+                        <TrendingDown size={12} className="text-tone-danger-fg shrink-0" aria-hidden />
+                    )}
+                    <span className={`text-[11px] font-medium truncate ${trendUp ? 'text-tone-success-fg' : 'text-tone-danger-fg'}`}>
+                        {trend}
+                    </span>
                 </div>
             )}
         </div>
@@ -70,10 +88,10 @@ function KpiCard({ label, value, sub, trend, trendUp, accentColor = '#0E7490' }:
 
 function SectionHead({ icon, title, badge, children }: { icon: React.ReactNode; title: string; badge?: React.ReactNode; children?: React.ReactNode }) {
     return (
-        <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2 mb-4">
+            <div className="flex items-center gap-2 min-w-0 flex-wrap">
                 {icon}
-                <h3 className="font-semibold text-sm" style={{ color: '#0F172A' }}>{title}</h3>
+                <h3 className="type-section-title text-lys-primary">{title}</h3>
                 {badge}
             </div>
             {children}
@@ -81,12 +99,20 @@ function SectionHead({ icon, title, badge, children }: { icon: React.ReactNode; 
     )
 }
 
-const SHIP_STATUS_TRANSLATIONS: Record<string, { vi: string; en: string; color: string }> = {
-    BOOKED: { vi: 'Đã đặt', en: 'Booked', color: '#1D4ED8' },
-    ON_VESSEL: { vi: 'Trên biển', en: 'On Vessel', color: '#0891B2' },
-    ARRIVED_PORT: { vi: 'Sắp đến cảng', en: 'Arrived Port', color: '#B45309' },
-    CUSTOMS_CLEARED: { vi: 'Đã thông quan', en: 'Customs Cleared', color: '#15803D' },
-    DELIVERED_TO_WAREHOUSE: { vi: 'Đã về kho', en: 'In Warehouse', color: '#64748B' },
+const SHIP_STATUS_LABELS: Record<string, { vi: string; en: string }> = {
+    BOOKED: { vi: 'Đã đặt', en: 'Booked' },
+    ON_VESSEL: { vi: 'Trên biển', en: 'On Vessel' },
+    ARRIVED_PORT: { vi: 'Sắp đến cảng', en: 'Arrived Port' },
+    CUSTOMS_CLEARED: { vi: 'Đã thông quan', en: 'Customs Cleared' },
+    DELIVERED_TO_WAREHOUSE: { vi: 'Đã về kho', en: 'In Warehouse' },
+}
+
+const SHIP_TONE_OVERRIDES: Record<string, Tone> = {
+    BOOKED: 'info',
+    ON_VESSEL: 'brand',
+    ARRIVED_PORT: 'warning',
+    CUSTOMS_CLEARED: 'success',
+    DELIVERED_TO_WAREHOUSE: 'neutral',
 }
 
 type ApprovalFilterTab = 'ALL' | 'SO' | 'PROPOSAL' | 'PAYMENT' | 'SYSTEM'
@@ -243,74 +269,74 @@ export function CeoOverviewContent({
         <div className="space-y-5">
             {/* ═══ LAYER 1 — ROLE-AWARE KPI CARDS ═══ */}
             {isWarehouseOnly ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
                     <KpiCard
                         label={t.warehouseOverview.totalBottles}
                         value={(warehouseData?.totalBottles ?? stats.stockQty).toLocaleString(isEn ? 'en-US' : 'vi-VN')}
                         sub={`${t.kpis.bottlesUnit} khả dụng`}
-                        accentColor="#0E7490"
+                        tone="brand"
                     />
                     <KpiCard
                         label={t.warehouseOverview.lowStockSKUs}
                         value={String(warehouseData?.lowStockSKUs ?? stats.lowStockCount)}
                         sub="Cần nhập thêm"
-                        accentColor="#B45309"
+                        tone="warning"
                     />
                     <KpiCard
                         label={t.warehouseOverview.quarantined}
                         value={String(warehouseData?.quarantinedLots ?? 0)}
                         sub="Chờ kiểm định"
-                        accentColor="#B91C1C"
+                        tone="danger"
                     />
                     <KpiCard
                         label={t.warehouseOverview.pendingGRs}
                         value={String(warehouseData?.pendingGoodsReceipts ?? 0)}
                         sub="Đang chờ vào kho"
-                        accentColor="#1D4ED8"
+                        tone="info"
                     />
                     <KpiCard
                         label={t.warehouseOverview.pendingDOs}
                         value={String(warehouseData?.pendingDeliveryOrders ?? 0)}
                         sub="Đang chờ xuất kho"
-                        accentColor="#15803D"
+                        tone="success"
                     />
                 </div>
             ) : isSalesOnly ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
                     <KpiCard
                         label={isEn ? 'My Revenue' : 'Doanh số của tôi'}
                         value={formatFriendlyVND(mySales?.totalRevenue ?? 0, isEn)}
                         sub={isEn ? 'This month sales' : 'Doanh số tháng này'}
-                        accentColor="#0E7490"
+                        tone="brand"
                     />
                     <KpiCard
                         label={isEn ? 'My Orders' : 'Đơn hàng của tôi'}
                         value={String(mySales?.orderCount ?? 0)}
                         sub={isEn ? 'Total orders' : 'Số đơn phát sinh'}
-                        accentColor="#B45309"
+                        tone="warning"
                     />
                     <KpiCard
                         label={isEn ? 'Pending Delivery' : 'Đơn chờ giao'}
                         value={String(mySales?.orders?.filter((o: any) => o.status === 'CONFIRMED').length ?? 0)}
                         sub={isEn ? 'Confirmed orders' : 'Chờ kho xuất'}
-                        accentColor="#1D4ED8"
+                        tone="info"
                     />
                     <KpiCard
                         label={isEn ? 'Completed Orders' : 'Đã hoàn tất'}
                         value={String(mySales?.orders?.filter((o: any) => o.status === 'PAID' || o.status === 'DELIVERED').length ?? 0)}
                         sub={isEn ? 'Delivered / Paid' : 'Đã thanh toán / giao'}
-                        accentColor="#15803D"
+                        tone="success"
                     />
                 </div>
             ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 2xl:grid-cols-6 gap-3">
                     <KpiCard
                         label={revenueKpiLabel}
                         value={formatFriendlyVND(primaryRevenue, isEn)}
                         sub={revenueSource}
                         trend={stats.revenueGrowth !== 0 ? `${stats.revenueGrowth > 0 ? '+' : ''}${stats.revenueGrowth.toFixed(1)}% ${t.kpis.vsPrevPeriod}` : undefined}
                         trendUp={stats.revenueGrowth >= 0}
-                        accentColor="#0E7490"
+                        tone="brand"
                     />
                     {canSeeFinancials ? (
                         <>
@@ -320,25 +346,25 @@ export function CeoOverviewContent({
                                 sub={`${t.kpis.margin}: ${pl.grossMargin.toFixed(1)}%`}
                                 trend={pl.grossMargin >= 25 ? t.kpis.good : t.kpis.fair}
                                 trendUp={pl.grossMargin >= 25}
-                                accentColor="#B45309"
+                                tone="warning"
                             />
                             <KpiCard
                                 label={t.kpis.netCashFlow}
                                 value={`${cash.netCashFlow >= 0 ? '+' : ''}${formatFriendlyVND(cash.netCashFlow, isEn)}`}
                                 sub={`${t.kpis.cashIn}: ${formatFriendlyVND(cash.cashIn, isEn)} · ${t.kpis.cashOut}: ${formatFriendlyVND(cash.cashOutAP + cash.cashOutExpenses, isEn)}`}
-                                accentColor={cash.netCashFlow >= 0 ? '#15803D' : '#B91C1C'}
+                                tone={cash.netCashFlow >= 0 ? 'success' : 'danger'}
                             />
                             <KpiCard
                                 label={t.kpis.inventoryValue}
                                 value={formatFriendlyVND(stats.stockTotalValue, isEn)}
                                 sub={`${stats.stockQty.toLocaleString(isEn ? 'en-US' : 'vi-VN')} ${t.kpis.bottlesUnit}`}
-                                accentColor="#1D4ED8"
+                                tone="info"
                             />
                             <KpiCard
                                 label={t.kpis.arOutstanding}
                                 value={formatFriendlyVND(ar.totalOutstanding, isEn)}
                                 sub={arOverdue > 0 ? `${formatFriendlyVND(arOverdue, isEn)} ${t.kpis.overdue}` : t.kpis.onTime}
-                                accentColor={arOverdue > 0 ? '#B91C1C' : '#15803D'}
+                                tone={arOverdue > 0 ? 'danger' : 'success'}
                             />
                         </>
                     ) : (
@@ -347,25 +373,25 @@ export function CeoOverviewContent({
                                 label={t.warehouseOverview.totalBottles}
                                 value={`${stats.stockQty.toLocaleString(isEn ? 'en-US' : 'vi-VN')} ${t.kpis.bottlesUnit}`}
                                 sub="Chai trong kho"
-                                accentColor="#1D4ED8"
+                                tone="info"
                             />
                             <KpiCard
                                 label="Lô hàng đang về"
                                 value={String(stats.inTransitShipments?.length ?? 0)}
                                 sub="Đang trên biển / Cảng"
-                                accentColor="#0E7490"
+                                tone="brand"
                             />
                             <KpiCard
                                 label="Cảnh báo tồn kho"
                                 value={String(stats.lowStockCount ?? 0)}
                                 sub="SKU dưới định mức"
-                                accentColor="#B45309"
+                                tone="warning"
                             />
                             <KpiCard
                                 label="Hàng cách ly"
                                 value={String(stats.quarantinedLots ?? 0)}
                                 sub="Chờ kiểm định"
-                                accentColor="#B91C1C"
+                                tone="danger"
                             />
                         </>
                     )}
@@ -373,7 +399,7 @@ export function CeoOverviewContent({
                         label={t.kpis.pendingApprovals}
                         value={String(totalPending)}
                         sub={pendingSub}
-                        accentColor="#B91C1C"
+                        tone="danger"
                     />
                 </div>
             )}
@@ -385,35 +411,35 @@ export function CeoOverviewContent({
             {canSeeFinancials && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {/* P&L Summary */}
-                    <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                    <Card className="p-5">
                         <SectionHead
-                            icon={<BarChart3 size={15} style={{ color: '#0891B2' }} />}
+                            icon={<BarChart3 size={15} className="text-lys-teal-strong" aria-hidden />}
                             title={preset === 'THIS_MONTH' ? t.pnl.monthlyTitle : `${t.pnl.periodTitle} (${displayRangeText})`}
                             badge={
-                                <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold ml-1 whitespace-nowrap shrink-0" style={{ background: pl.grossMargin >= 25 ? 'rgba(21,128,61,0.15)' : 'rgba(180,83,9,0.15)', color: pl.grossMargin >= 25 ? '#15803D' : '#B45309' }}>
+                                <Badge tone={pl.grossMargin >= 25 ? 'success' : 'warning'} className="ml-1">
                                     {t.pnl.marginBadge} {pl.grossMargin.toFixed(1)}%
-                                </span>
+                                </Badge>
                             }
                         />
                         <div className="space-y-2.5">
                             {[
-                                { label: t.pnl.netRevenue, value: primaryRevenue, color: '#0891B2', pct: primaryRevenue > 0 ? 100 : null },
-                                { label: t.pnl.cogs, value: -pl.cogs, color: '#B91C1C', neg: true, pct: primaryRevenue > 0 ? (pl.cogs / primaryRevenue) * 100 : null },
-                                { label: t.pnl.grossProfit, value: pl.grossProfit, color: pl.grossProfit >= 0 ? '#B45309' : '#B91C1C', bold: true, line: true, pct: primaryRevenue > 0 ? (pl.grossProfit / primaryRevenue) * 100 : null },
-                                { label: t.pnl.expenses, value: -pl.expenses, color: '#475569', neg: true, pct: primaryRevenue > 0 ? (pl.expenses / primaryRevenue) * 100 : null },
-                                { label: t.pnl.netProfit, value: pl.netProfit, color: pl.netProfit >= 0 ? '#15803D' : '#B91C1C', bold: true, line: true, pct: primaryRevenue > 0 ? (pl.netProfit / primaryRevenue) * 100 : null },
+                                { label: t.pnl.netRevenue, value: primaryRevenue, colorClass: 'text-lys-teal-strong', pct: primaryRevenue > 0 ? 100 : null },
+                                { label: t.pnl.cogs, value: -pl.cogs, colorClass: 'text-tone-danger-fg', neg: true, pct: primaryRevenue > 0 ? (pl.cogs / primaryRevenue) * 100 : null },
+                                { label: t.pnl.grossProfit, value: pl.grossProfit, colorClass: pl.grossProfit >= 0 ? 'text-tone-warning-fg' : 'text-tone-danger-fg', bold: true, line: true, pct: primaryRevenue > 0 ? (pl.grossProfit / primaryRevenue) * 100 : null },
+                                { label: t.pnl.expenses, value: -pl.expenses, colorClass: 'text-lys-secondary', neg: true, pct: primaryRevenue > 0 ? (pl.expenses / primaryRevenue) * 100 : null },
+                                { label: t.pnl.netProfit, value: pl.netProfit, colorClass: pl.netProfit >= 0 ? 'text-tone-success-fg' : 'text-tone-danger-fg', bold: true, line: true, pct: primaryRevenue > 0 ? (pl.netProfit / primaryRevenue) * 100 : null },
                             ].map((r, idx) => (
                                 <div key={idx}>
-                                    {r.line && <div className="mb-2" style={{ borderTop: '1px dashed #E2E8F0' }} />}
+                                    {r.line && <div className="mb-2 border-t border-dashed border-lys-border" />}
                                     <div className="flex justify-between items-center">
-                                        <span className={`text-xs ${r.bold ? 'font-bold' : ''}`} style={{ color: r.bold ? r.color : '#475569' }}>{r.label}</span>
+                                        <span className={`text-xs ${r.bold ? `font-bold ${r.colorClass}` : 'text-lys-secondary'}`}>{r.label}</span>
                                         <div className="flex items-center gap-2">
                                             {r.pct !== null && idx > 0 && (
-                                                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ background: '#F8FAFC', color: '#64748B', border: '1px solid #E2E8F0' }}>
+                                                <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-lys-bg text-lys-muted border border-lys-border">
                                                     {r.pct.toFixed(1)}%
                                                 </span>
                                             )}
-                                            <span className={`text-sm font-mono ${r.bold ? 'font-bold' : 'font-medium'}`} style={{ color: r.color }}>
+                                            <span className={`text-sm type-number ${r.bold ? 'font-bold' : 'font-medium'} ${r.colorClass}`}>
                                                 {r.value < 0 ? `− ${formatCurrency(Math.abs(r.value))}` : formatCurrency(r.value)}
                                             </span>
                                         </div>
@@ -421,67 +447,67 @@ export function CeoOverviewContent({
                                 </div>
                             ))}
                             {stats.revenueGrowth !== 0 && (
-                                <p className="text-[10px] text-right mt-1" style={{ color: '#64748B' }}>
+                                <p className="text-[11px] text-right mt-1 text-lys-muted">
                                     {t.kpis.vsPrevPeriod}: {stats.revenueGrowth > 0 ? '+' : ''}{stats.revenueGrowth.toFixed(1)}%
                                 </p>
                             )}
                         </div>
-                    </div>
+                    </Card>
 
                     {/* Cash Position */}
-                    <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <SectionHead icon={<Wallet size={15} style={{ color: '#0891B2' }} />} title={t.cashFlow.title} />
-                        <div className="p-3 rounded-md mb-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                            <p className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: '#64748B' }}>{t.cashFlow.periodNetCash}</p>
-                            <p className="text-xl font-bold font-mono" style={{ color: cash.netCashFlow >= 0 ? '#15803D' : '#B91C1C' }}>
+                    <Card className="p-5">
+                        <SectionHead icon={<Wallet size={15} className="text-lys-teal-strong" aria-hidden />} title={t.cashFlow.title} />
+                        <div className="p-3 rounded-md mb-3 bg-lys-bg/60 border border-lys-border">
+                            <p className="text-[11px] uppercase tracking-wider mb-0.5 text-lys-muted font-semibold">{t.cashFlow.periodNetCash}</p>
+                            <p className={`text-xl font-bold type-number ${cash.netCashFlow >= 0 ? 'text-tone-success-fg' : 'text-tone-danger-fg'}`}>
                                 {cash.netCashFlow >= 0 ? '+' : ''}{formatCurrency(cash.netCashFlow)}
                             </p>
                         </div>
                         <div className="space-y-2">
-                            <div className="flex items-center justify-between p-2.5 rounded" style={{ background: 'rgba(21,128,61,0.06)' }}>
+                            <div className="flex items-center justify-between p-2.5 rounded-md bg-tone-success-bg/60 border border-tone-success-border/60">
                                 <div className="flex items-center gap-2">
-                                    <ArrowDownLeft size={13} style={{ color: '#15803D' }} />
-                                    <span className="text-xs" style={{ color: '#15803D' }}>{t.cashFlow.inflowSub}</span>
+                                    <ArrowDownLeft size={13} className="text-tone-success-fg" aria-hidden />
+                                    <span className="text-xs text-tone-success-fg">{t.cashFlow.inflowSub}</span>
                                 </div>
-                                <span className="text-xs font-bold font-mono" style={{ color: '#15803D' }}>+{formatCurrency(cash.cashIn)}</span>
+                                <span className="text-xs font-bold type-number text-tone-success-fg">+{formatCurrency(cash.cashIn)}</span>
                             </div>
-                            <div className="flex items-center justify-between p-2.5 rounded" style={{ background: 'rgba(185,28,28,0.04)' }}>
+                            <div className="flex items-center justify-between p-2.5 rounded-md bg-tone-danger-bg/60 border border-tone-danger-border/60">
                                 <div className="flex items-center gap-2">
-                                    <ArrowUpRight size={13} style={{ color: '#B91C1C' }} />
-                                    <span className="text-xs" style={{ color: '#B91C1C' }}>{t.cashFlow.outflowAP}</span>
+                                    <ArrowUpRight size={13} className="text-tone-danger-fg" aria-hidden />
+                                    <span className="text-xs text-tone-danger-fg">{t.cashFlow.outflowAP}</span>
                                 </div>
-                                <span className="text-xs font-bold font-mono" style={{ color: '#B91C1C' }}>−{formatCurrency(cash.cashOutAP)}</span>
+                                <span className="text-xs font-bold type-number text-tone-danger-fg">−{formatCurrency(cash.cashOutAP)}</span>
                             </div>
-                            <div className="flex items-center justify-between p-2.5 rounded" style={{ background: 'rgba(185,28,28,0.04)' }}>
+                            <div className="flex items-center justify-between p-2.5 rounded-md bg-tone-warning-bg/60 border border-tone-warning-border/60">
                                 <div className="flex items-center gap-2">
-                                    <ArrowUpRight size={13} style={{ color: '#B45309' }} />
-                                    <span className="text-xs" style={{ color: '#B45309' }}>{t.cashFlow.outflowExpense}</span>
+                                    <ArrowUpRight size={13} className="text-tone-warning-fg" aria-hidden />
+                                    <span className="text-xs text-tone-warning-fg">{t.cashFlow.outflowExpense}</span>
                                 </div>
-                                <span className="text-xs font-bold font-mono" style={{ color: '#B45309' }}>−{formatCurrency(cash.cashOutExpenses)}</span>
+                                <span className="text-xs font-bold type-number text-tone-warning-fg">−{formatCurrency(cash.cashOutExpenses)}</span>
                             </div>
-                            <div style={{ borderTop: '1px solid #E2E8F0' }} className="pt-2 space-y-1.5 text-xs">
+                            <div className="pt-2 border-t border-lys-border space-y-1.5 text-xs">
                                 <div className="flex justify-between">
-                                    <span style={{ color: '#64748B' }}>{t.cashFlow.workingCapital}</span>
-                                    <span style={{ color: '#475569' }} className="font-mono">{formatCurrency(cash.arOutstanding)} / {formatCurrency(cash.apOutstanding)}</span>
+                                    <span className="text-lys-muted">{t.cashFlow.workingCapital}</span>
+                                    <span className="text-lys-secondary type-number">{formatCurrency(cash.arOutstanding)} / {formatCurrency(cash.apOutstanding)}</span>
                                 </div>
                                 {((cash.apDueWithin30d ?? 0) > 0 || (cash.pendingDisbursementPR ?? 0) > 0) && (
-                                    <div className="p-2 rounded space-y-1" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                        <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#B45309' }}>
+                                    <div className="p-2.5 rounded-md space-y-1 bg-lys-bg border border-lys-border">
+                                        <p className="text-[11px] font-semibold uppercase tracking-wider text-tone-warning-fg">
                                             {t.cashFlow.upcomingObligations}
                                         </p>
                                         <div className="flex justify-between text-[11px]">
-                                            <span style={{ color: '#64748B' }}>{t.cashFlow.apDue30d}</span>
-                                            <span className="font-mono font-semibold" style={{ color: '#B91C1C' }}>{formatFriendlyVND(cash.apDueWithin30d ?? 0, isEn)}</span>
+                                            <span className="text-lys-muted">{t.cashFlow.apDue30d}</span>
+                                            <span className="type-number font-semibold text-tone-danger-fg">{formatFriendlyVND(cash.apDueWithin30d ?? 0, isEn)}</span>
                                         </div>
                                         <div className="flex justify-between text-[11px]">
-                                            <span style={{ color: '#64748B' }}>{t.cashFlow.pendingPRDisbursement}</span>
-                                            <span className="font-mono font-semibold" style={{ color: '#B45309' }}>{formatFriendlyVND(cash.pendingDisbursementPR ?? 0, isEn)}</span>
+                                            <span className="text-lys-muted">{t.cashFlow.pendingPRDisbursement}</span>
+                                            <span className="type-number font-semibold text-tone-warning-fg">{formatFriendlyVND(cash.pendingDisbursementPR ?? 0, isEn)}</span>
                                         </div>
                                     </div>
                                 )}
                             </div>
                         </div>
-                    </div>
+                    </Card>
                 </div>
             )}
 
@@ -496,42 +522,46 @@ export function CeoOverviewContent({
                 } gap-4`}>
                     {/* Container Tracker */}
                     {showShipmentTracker && (
-                        <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                        <Card className="p-5">
                             <SectionHead
-                                icon={<Ship size={15} style={{ color: '#0891B2' }} />}
+                                icon={<Ship size={15} className="text-lys-teal-strong" aria-hidden />}
                                 title={t.containers.title}
-                                badge={<span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(29,78,216,0.15)', color: '#1D4ED8' }}>{stats.inTransitShipments.length}</span>}
+                                badge={<Badge tone="info">{stats.inTransitShipments.length}</Badge>}
                             >
                                 {stats.inTransitShipments.length > 0 && (
-                                    <span className="text-[10px] font-mono font-semibold" style={{ color: '#475569' }}>
+                                    <span className="text-[11px] font-mono font-semibold text-lys-secondary">
                                         {t.containers.totalCif}: ${stats.inTransitShipments.reduce((s: number, sh: any) => s + Number(sh.cifAmount ?? 0), 0).toLocaleString(isEn ? 'en-US' : 'vi-VN')}
                                     </span>
                                 )}
                             </SectionHead>
                             {stats.inTransitShipments.length === 0 ? (
                                 <div className="flex flex-col items-center py-6 gap-1">
-                                    <Package size={24} style={{ color: '#E2E8F0' }} />
-                                    <p className="text-xs" style={{ color: '#64748B' }}>{t.containers.empty}</p>
+                                    <Package size={24} className="text-lys-border-strong" aria-hidden />
+                                    <p className="text-xs text-lys-muted">{t.containers.empty}</p>
                                 </div>
                             ) : (
                                 <div className="space-y-2">
                                     {stats.inTransitShipments.map((s: any) => {
-                                        const cfg = SHIP_STATUS_TRANSLATIONS[s.status] ?? { vi: s.status, en: s.status, color: '#475569' }
-                                        const statusLabel = isEn ? (t.containers.statuses[s.status as keyof typeof t.containers.statuses] ?? cfg.en) : cfg.vi
+                                        const lbl = SHIP_STATUS_LABELS[s.status]
+                                        const statusLabel = isEn
+                                            ? (t.containers.statuses[s.status as keyof typeof t.containers.statuses] ?? lbl?.en ?? s.status)
+                                            : (lbl?.vi ?? s.status)
                                         return (
-                                            <div key={s.id} className="p-2.5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px' }}>
-                                                <div className="flex justify-between items-start">
+                                            <div key={s.id} className="p-2.5 bg-lys-bg/50 border border-lys-border rounded-md">
+                                                <div className="flex justify-between items-start gap-2">
                                                     <div>
-                                                        <p className="text-xs font-bold" style={{ color: '#0891B2' }}>{s.billOfLading}</p>
-                                                        <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>
+                                                        <p className="text-xs font-bold text-lys-teal-strong font-mono">{s.billOfLading}</p>
+                                                        <p className="text-[11px] mt-0.5 text-lys-muted">
                                                             {t.containers.eta}: {s.eta ? formatDate(s.eta) : '--'}
                                                         </p>
                                                     </div>
-                                                    <div className="text-right">
-                                                        <p className="text-xs font-bold font-mono" style={{ color: '#0F172A' }}>${s.cifAmount.toLocaleString(isEn ? 'en-US' : 'vi-VN')} {s.cifCurrency}</p>
-                                                        <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap shrink-0" style={{ background: `${cfg.color}20`, color: cfg.color }}>
-                                                            {statusLabel}
-                                                        </span>
+                                                    <div className="text-right space-y-1">
+                                                        <p className="text-xs font-bold type-number text-lys-primary">${s.cifAmount.toLocaleString(isEn ? 'en-US' : 'vi-VN')} {s.cifCurrency}</p>
+                                                        <StatusBadge
+                                                            status={s.status}
+                                                            label={statusLabel}
+                                                            toneOverrides={SHIP_TONE_OVERRIDES}
+                                                        />
                                                     </div>
                                                 </div>
                                             </div>
@@ -539,50 +569,50 @@ export function CeoOverviewContent({
                                     })}
                                 </div>
                             )}
-                        </div>
+                        </Card>
                     )}
 
                     {/* AR Aging */}
                     {canSeeArAging && (
-                        <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                        <Card className="p-5">
                             <SectionHead
-                                icon={<DollarSign size={15} style={{ color: '#0891B2' }} />}
+                                icon={<DollarSign size={15} className="text-lys-teal-strong" aria-hidden />}
                                 title={t.arAging.title}
-                                badge={<span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(29,78,216,0.15)', color: '#1D4ED8' }}>{ar.invoiceCount} {t.arAging.invoicesCount}</span>}
+                                badge={<Badge tone="info">{ar.invoiceCount} {t.arAging.invoicesCount}</Badge>}
                             />
-                            <div className="p-2.5 rounded mb-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                <p className="text-[10px] uppercase mb-0.5" style={{ color: '#64748B' }}>{t.arAging.totalOutstanding}</p>
-                                <p className="text-lg font-bold font-mono" style={{ color: '#B45309' }}>{formatCurrency(ar.totalOutstanding)}</p>
+                            <div className="p-2.5 rounded-md mb-3 bg-lys-bg border border-lys-border">
+                                <p className="text-[11px] uppercase mb-0.5 text-lys-muted font-semibold">{t.arAging.totalOutstanding}</p>
+                                <p className="text-lg font-bold type-number text-tone-warning-fg">{formatCurrency(ar.totalOutstanding)}</p>
                             </div>
                             <div className="space-y-2.5">
                                 {ar.buckets.map((b: any) => (
                                     <div key={b.label}>
                                         <div className="flex justify-between mb-0.5">
-                                            <span className="text-[11px]" style={{ color: '#475569' }}>{translateBucketLabel(b.label)}</span>
-                                            <span className="text-[11px] font-bold font-mono" style={{ color: b.color }}>{b.amount > 0 ? formatCurrency(b.amount) : '—'}</span>
+                                            <span className="text-[11px] text-lys-secondary">{translateBucketLabel(b.label)}</span>
+                                            <span className="text-[11px] font-bold type-number" style={{ color: b.color }}>{b.amount > 0 ? formatCurrency(b.amount) : '—'}</span>
                                         </div>
-                                        <div className="h-2 rounded-full" style={{ background: '#F1F5F9' }}>
+                                        <div className="h-2 rounded-full bg-lys-subtle">
                                             <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(b.amount > 0 ? 4 : 0, (b.amount / arMax) * 100)}%`, background: b.color }} />
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                        </div>
+                        </Card>
                     )}
 
                     {/* Top Customers & Top Products */}
                     {canSeeRankings && (
-                        <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                        <Card className="p-5">
                             <SectionHead
-                                icon={<Trophy size={15} style={{ color: '#B45309' }} />}
+                                icon={<Trophy size={15} className="text-tone-warning-fg" aria-hidden />}
                                 title={preset === 'THIS_MONTH' ? t.rankings.monthTitle : t.rankings.periodTitle}
                             />
                             {/* Top Customers (1-click drill-down to Customer 360) */}
-                            <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#64748B' }}>
-                                <Users size={11} className="inline mr-1" />{t.rankings.topCustomers}
+                            <p className="text-[11px] font-semibold uppercase tracking-wider mb-2 text-lys-muted flex items-center gap-1">
+                                <Users size={11} aria-hidden />{t.rankings.topCustomers}
                             </p>
                             {topCustomers.length === 0 ? (
-                                <p className="text-xs mb-3" style={{ color: '#64748B' }}>{t.noData}</p>
+                                <p className="text-xs mb-3 text-lys-muted">{t.noData}</p>
                             ) : (
                                 <div className="space-y-1 mb-4">
                                     {topCustomers.map((c: any, i: number) => {
@@ -593,47 +623,40 @@ export function CeoOverviewContent({
                                                 key={c.id || i}
                                                 onClick={() => router.push(custHref)}
                                                 title={t.rankings.clickCustomerHint}
-                                                className="group w-full text-left flex items-center justify-between py-1.5 px-2 rounded transition-colors hover:bg-sky-50/70 cursor-pointer"
-                                                style={{ background: i === 0 ? 'rgba(8,145,178,0.06)' : 'transparent' }}
+                                                className={`group w-full text-left flex items-center justify-between py-1.5 px-2 rounded-md transition-colors hover:bg-lys-teal-soft/70 cursor-pointer ${i === 0 ? 'bg-lys-teal-soft/50' : ''}`}
                                             >
                                                 <div className="flex items-center gap-2 min-w-0">
-                                                    <span className="text-[10px] font-bold w-4" style={{ color: i === 0 ? '#B45309' : '#64748B' }}>{i + 1}.</span>
-                                                    <span className="text-xs truncate group-hover:text-cyan-700 font-medium" style={{ color: '#0F172A' }}>{c.name}</span>
-                                                    <ExternalLink size={11} className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0" style={{ color: '#0891B2' }} />
+                                                    <span className={`text-[11px] font-bold w-4 ${i === 0 ? 'text-tone-warning-fg' : 'text-lys-muted'}`}>{i + 1}.</span>
+                                                    <span className="text-xs truncate group-hover:text-lys-teal-strong font-medium text-lys-primary">{c.name}</span>
+                                                    <ExternalLink size={11} className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 text-lys-teal-strong" aria-hidden />
                                                 </div>
-                                                <span className="text-[11px] font-bold font-mono flex-shrink-0" style={{ color: '#0891B2' }}>{formatFriendlyVND(c.revenue, isEn)}</span>
+                                                <span className="text-[11px] font-bold type-number flex-shrink-0 text-lys-teal-strong">{formatFriendlyVND(c.revenue, isEn)}</span>
                                             </button>
                                         )
                                     })}
                                 </div>
                             )}
                             {/* Top Products */}
-                            <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#64748B' }}>
-                                <Wine size={11} className="inline mr-1" />{t.rankings.topProducts}
+                            <p className="text-[11px] font-semibold uppercase tracking-wider mb-2 text-lys-muted flex items-center gap-1">
+                                <Wine size={11} aria-hidden />{t.rankings.topProducts}
                             </p>
                             {topProducts.length === 0 ? (
-                                <p className="text-xs" style={{ color: '#64748B' }}>{t.noData}</p>
+                                <p className="text-xs text-lys-muted">{t.noData}</p>
                             ) : (
                                 <div className="space-y-1">
                                     {topProducts.map((p: any, i: number) => (
-                                        <div key={p.sku || i} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: i === 0 ? 'rgba(180,83,9,0.06)' : 'transparent' }}>
+                                        <div key={p.sku || i} className={`flex items-center justify-between py-1.5 px-2 rounded-md ${i === 0 ? 'bg-tone-warning-bg/50' : ''}`}>
                                             <div className="flex items-center gap-2 min-w-0">
-                                                <span className="text-[10px] font-bold w-4" style={{ color: i === 0 ? '#B45309' : '#64748B' }}>{i + 1}.</span>
-                                                <button type="button" onClick={() => router.push(`/dashboard?tab=skus${p.id ? `&productId=${p.id}` : ''}`)} className="text-xs truncate hover:text-cyan-700 font-medium flex items-center gap-1 group cursor-pointer text-left" style={{ color: '#0F172A' }} title="Xem Báo Cáo Theo SKU (Nhà nào đang lấy)"><span className="truncate">{p.name}</span><ExternalLink size={11} className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0" style={{ color: '#0891B2' }} /></button>
+                                                <span className={`text-[11px] font-bold w-4 ${i === 0 ? 'text-tone-warning-fg' : 'text-lys-muted'}`}>{i + 1}.</span>
+                                                <button type="button" onClick={() => router.push(`/dashboard?tab=skus${p.id ? `&productId=${p.id}` : ''}`)} className="text-xs truncate hover:text-lys-teal-strong font-medium flex items-center gap-1 group cursor-pointer text-left text-lys-primary" title="Xem Báo Cáo Theo SKU (Nhà nào đang lấy)"><span className="truncate">{p.name}</span><ExternalLink size={11} className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 text-lys-teal-strong" aria-hidden /></button>
                                             </div>
                                             <div className="flex items-center gap-1.5 flex-shrink-0">
                                                 {typeof p.marginPct === 'number' && (
-                                                    <span
-                                                        className="text-[9px] font-mono font-bold px-1 py-0.5 rounded"
-                                                        style={{
-                                                            background: p.marginPct >= 25 ? 'rgba(21,128,61,0.12)' : 'rgba(180,83,9,0.12)',
-                                                            color: p.marginPct >= 25 ? '#15803D' : '#B45309',
-                                                        }}
-                                                    >
+                                                    <Badge tone={p.marginPct >= 25 ? 'success' : 'warning'} className="px-1.5 py-0 type-number">
                                                         GM {p.marginPct}%
-                                                    </span>
+                                                    </Badge>
                                                 )}
-                                                <span className="text-[10px] font-mono" style={{ color: '#475569' }}>
+                                                <span className="text-[11px] type-number text-lys-secondary">
                                                     {p.qty} {t.rankings.bottlesSold} &middot; {formatFriendlyVND(p.revenue, isEn)}
                                                 </span>
                                             </div>
@@ -641,23 +664,21 @@ export function CeoOverviewContent({
                                     ))}
                                 </div>
                             )}
-                        </div>
+                        </Card>
                     )}
                 </div>
             )}
 
             {/* ═══ LAYER 4 — UNIFIED CEO ACTION HUB ═══ */}
             {canSeePendingApprovals && (
-                <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                <Card className="p-5">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                         <div className="flex items-center gap-2">
-                            <Clock size={15} style={{ color: '#B91C1C' }} />
-                            <h3 className="font-semibold text-sm" style={{ color: '#0F172A' }}>
+                            <Clock size={15} className="text-tone-danger-fg" aria-hidden />
+                            <h3 className="type-section-title text-lys-primary">
                                 {t.approvals.title}
                             </h3>
-                            <span className="inline-block px-2 py-0.5 text-xs font-bold rounded-full whitespace-nowrap shrink-0" style={{ background: 'rgba(185,28,28,0.18)', color: '#B91C1C' }}>
-                                {totalPending}
-                            </span>
+                            <Badge tone="danger">{totalPending}</Badge>
                         </div>
 
                         {/* Filter Pills */}
@@ -676,12 +697,11 @@ export function CeoOverviewContent({
                                             key={tab.key}
                                             type="button"
                                             onClick={() => setApprovalFilter(tab.key)}
-                                            className="px-2.5 py-1 text-[11px] font-semibold rounded transition-colors cursor-pointer"
-                                            style={{
-                                                background: active ? '#0F172A' : '#F8FAFC',
-                                                color: active ? '#FFFFFF' : '#475569',
-                                                border: `1px solid ${active ? '#0F172A' : '#E2E8F0'}`,
-                                            }}
+                                            className={`px-2.5 py-1 text-[11px] font-semibold rounded-md border transition-colors cursor-pointer ${
+                                                active
+                                                    ? 'bg-lys-teal-strong text-white border-lys-teal-strong'
+                                                    : 'bg-lys-subtle text-lys-secondary border-lys-border hover:bg-white'
+                                            }`}
                                         >
                                             {tab.label} ({tab.count})
                                         </button>
@@ -692,9 +712,9 @@ export function CeoOverviewContent({
                     </div>
 
                     {actionError && (
-                        <div className="mb-3 p-2.5 rounded text-xs flex items-center justify-between" style={{ background: 'rgba(185,28,28,0.08)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.2)' }}>
+                        <div className="mb-3 p-2.5 rounded-md text-xs flex items-center justify-between bg-tone-danger-bg text-tone-danger-fg border border-tone-danger-border">
                             <span>{actionError}</span>
-                            <button type="button" onClick={() => setActionError(null)} className="cursor-pointer">
+                            <button type="button" onClick={() => setActionError(null)} aria-label="Đóng" className="cursor-pointer">
                                 <X size={13} />
                             </button>
                         </div>
@@ -702,50 +722,49 @@ export function CeoOverviewContent({
 
                     {totalPending === 0 ? (
                         <div className="flex flex-col items-center py-6 gap-1">
-                            <CheckCircle2 size={24} style={{ color: '#15803D' }} />
-                            <p className="text-xs" style={{ color: '#64748B' }}>
+                            <CheckCircle2 size={24} className="text-tone-success-fg" aria-hidden />
+                            <p className="text-xs text-lys-muted">
                                 {t.approvals.noPending}
                             </p>
                         </div>
                     ) : (
                         <div className="space-y-2">
-                            {/* Pending Sales Orders (with Margin %, Discount %, Rep, Payment Term, Bottles) */}
+                            {/* Pending Sales Orders */}
                             {(approvalFilter === 'ALL' || approvalFilter === 'SO') && stats.pendingSOs.map((so: any) => {
-                                const marginColor = (so.estimatedMarginPct ?? 0) >= 25 ? '#15803D' : (so.estimatedMarginPct ?? 0) >= 15 ? '#B45309' : '#B91C1C'
+                                const marginTone: Tone = (so.estimatedMarginPct ?? 0) >= 25 ? 'success' : (so.estimatedMarginPct ?? 0) >= 15 ? 'warning' : 'danger'
                                 return (
-                                    <div key={so.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 py-2.5 px-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px', borderLeft: '3px solid #0891B2' }}>
+                                    <div key={so.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 py-2.5 px-3 bg-white border border-lys-border border-l-[3px] border-l-lys-teal-strong rounded-md">
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                                                <AlertCircle size={13} style={{ color: '#0891B2' }} />
-                                                <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(8, 145, 178, 0.1)', color: '#0891B2' }}>SO</span>
-                                                <button type="button" onClick={() => router.push('/dashboard/sales')} className="text-xs font-bold hover:underline cursor-pointer" style={{ color: '#0F172A' }}>{so.soNo}</button>
-                                                <span className="text-xs font-medium truncate" style={{ color: '#334155' }}>&middot; {so.customerName}</span>
+                                                <AlertCircle size={13} className="text-lys-teal-strong shrink-0" aria-hidden />
+                                                <Badge tone="brand">SO</Badge>
+                                                <button type="button" onClick={() => router.push('/dashboard/sales')} className="text-xs font-bold hover:underline cursor-pointer text-lys-teal-strong font-mono">{so.soNo}</button>
+                                                <span className="text-xs font-medium truncate text-lys-secondary">&middot; {so.customerName}</span>
                                                 {typeof so.estimatedMarginPct === 'number' && (
-                                                    <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-mono font-bold whitespace-nowrap" style={{ background: `${marginColor}18`, color: marginColor }}>
+                                                    <Badge tone={marginTone} className="type-number">
                                                         {t.approvals.margin}: {so.estimatedMarginPct}%
-                                                    </span>
+                                                    </Badge>
                                                 )}
                                                 {(so.effectiveDiscountPct ?? 0) > 0 && (
-                                                    <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-mono font-bold whitespace-nowrap" style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C' }}>
+                                                    <Badge tone="danger" className="type-number">
                                                         {t.approvals.discount}: -{so.effectiveDiscountPct}%
-                                                    </span>
+                                                    </Badge>
                                                 )}
                                             </div>
-                                            <div className="flex items-center gap-3 text-[11px]" style={{ color: '#64748B' }}>
-                                                <span>{t.approvals.salesRep}: <strong style={{ color: '#475569' }}>{so.salesRepName}</strong></span>
-                                                <span>&middot; {t.approvals.paymentTerm}: <strong style={{ color: '#475569' }}>{so.paymentTerm}</strong></span>
+                                            <div className="flex items-center gap-3 text-[11px] text-lys-muted">
+                                                <span>{t.approvals.salesRep}: <strong className="text-lys-secondary">{so.salesRepName}</strong></span>
+                                                <span>&middot; {t.approvals.paymentTerm}: <strong className="text-lys-secondary">{so.paymentTerm}</strong></span>
                                                 {so.bottleCount > 0 && <span>&middot; {so.bottleCount} {t.kpis.bottlesUnit}</span>}
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0">
-                                            <p className="text-sm font-bold font-mono" style={{ color: '#0F172A' }}>{formatCurrency(so.amount)}</p>
+                                            <p className="text-sm font-bold type-number text-lys-primary">{formatCurrency(so.amount)}</p>
                                             <div className="flex gap-1.5">
                                                 <button
                                                     type="button"
                                                     disabled={isPendingAction}
                                                     onClick={() => handleApproveItem('SO', so.id)}
-                                                    className="px-2.5 py-1 text-xs font-semibold cursor-pointer disabled:opacity-50"
-                                                    style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)', borderRadius: '4px' }}
+                                                    className="px-2.5 py-1 text-xs font-semibold rounded-md bg-tone-success-bg text-tone-success-fg border border-tone-success-border hover:bg-emerald-100/70 transition-colors cursor-pointer disabled:opacity-50"
                                                 >
                                                     {t.approvals.approve}
                                                 </button>
@@ -753,8 +772,7 @@ export function CeoOverviewContent({
                                                     type="button"
                                                     disabled={isPendingAction}
                                                     onClick={() => setRejectTarget({ type: 'SO', id: so.id, code: so.soNo })}
-                                                    className="px-2.5 py-1 text-xs font-semibold cursor-pointer disabled:opacity-50"
-                                                    style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.25)', borderRadius: '4px' }}
+                                                    className="px-2.5 py-1 text-xs font-semibold rounded-md bg-tone-danger-bg text-tone-danger-fg border border-tone-danger-border hover:bg-red-100/70 transition-colors cursor-pointer disabled:opacity-50"
                                                 >
                                                     {t.approvals.reject}
                                                 </button>
@@ -767,29 +785,30 @@ export function CeoOverviewContent({
                             {/* Proposals */}
                             {(approvalFilter === 'ALL' || approvalFilter === 'PROPOSAL') && pendingProposals.map((p: any) => {
                                 const prioCfg = PRIORITY_LABELS[p.priority] ?? PRIORITY_LABELS.NORMAL
+                                const prioTone: Tone = p.priority === 'URGENT' ? 'danger' : p.priority === 'HIGH' ? 'warning' : 'neutral'
+                                const borderLeftClass = p.priority === 'URGENT' ? 'border-l-tone-danger-fg' : p.priority === 'HIGH' ? 'border-l-tone-warning-fg' : 'border-l-lys-teal-strong'
                                 return (
-                                    <div key={p.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 py-2.5 px-3" style={{ background: 'rgba(180,83,9,0.03)', border: '1px solid rgba(180,83,9,0.15)', borderRadius: '6px', borderLeft: `3px solid ${prioCfg.color}` }}>
+                                    <div key={p.id} className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 py-2.5 px-3 bg-tone-warning-bg/30 border border-tone-warning-border/60 border-l-[3px] ${borderLeftClass} rounded-md`}>
                                         <div className="flex items-start gap-2 min-w-0 flex-1">
-                                            <FileText size={14} style={{ color: '#B45309' }} className="flex-shrink-0 mt-0.5" />
+                                            <FileText size={14} className="text-tone-warning-fg flex-shrink-0 mt-0.5" aria-hidden />
                                             <div className="min-w-0">
                                                 <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                                                    <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: prioCfg.bg, color: prioCfg.color }}>{prioCfg.label}</span>
-                                                    <span className="inline-block text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: 'rgba(29,78,216,0.1)', color: '#1D4ED8' }}>{CATEGORY_LABELS[p.category] ?? p.category}</span>
-                                                    <button type="button" onClick={() => router.push('/dashboard/proposals')} className="text-xs font-bold hover:underline cursor-pointer" style={{ color: '#0891B2' }}>{p.proposalNo}</button>
+                                                    <Badge tone={prioTone}>{prioCfg.label}</Badge>
+                                                    <Badge tone="info">{CATEGORY_LABELS[p.category] ?? p.category}</Badge>
+                                                    <button type="button" onClick={() => router.push('/dashboard/proposals')} className="text-xs font-bold hover:underline cursor-pointer text-lys-teal-strong font-mono">{p.proposalNo}</button>
                                                 </div>
-                                                <p className="text-sm truncate font-medium" style={{ color: '#0F172A' }}>{p.title}</p>
-                                                <span className="text-[10px]" style={{ color: '#64748B' }}>{p.creatorName}</span>
+                                                <p className="text-sm truncate font-medium text-lys-primary">{p.title}</p>
+                                                <span className="text-[11px] text-lys-muted">{p.creatorName}</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0">
-                                            {p.estimatedAmount && <span className="text-sm font-bold font-mono" style={{ color: '#0F172A' }}>{formatCurrency(p.estimatedAmount)}</span>}
+                                            {p.estimatedAmount && <span className="text-sm font-bold type-number text-lys-primary">{formatCurrency(p.estimatedAmount)}</span>}
                                             <div className="flex gap-1.5">
                                                 <button
                                                     type="button"
                                                     disabled={isPendingAction}
                                                     onClick={() => handleApproveItem('PROPOSAL', p.id)}
-                                                    className="px-2.5 py-1 text-xs font-semibold cursor-pointer disabled:opacity-50"
-                                                    style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)', borderRadius: '4px' }}
+                                                    className="px-2.5 py-1 text-xs font-semibold rounded-md bg-tone-success-bg text-tone-success-fg border border-tone-success-border hover:bg-emerald-100/70 transition-colors cursor-pointer disabled:opacity-50"
                                                 >
                                                     {t.approvals.approve}
                                                 </button>
@@ -797,8 +816,7 @@ export function CeoOverviewContent({
                                                     type="button"
                                                     disabled={isPendingAction}
                                                     onClick={() => setRejectTarget({ type: 'PROPOSAL', id: p.id, code: p.proposalNo })}
-                                                    className="px-2.5 py-1 text-xs font-semibold cursor-pointer disabled:opacity-50"
-                                                    style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.25)', borderRadius: '4px' }}
+                                                    className="px-2.5 py-1 text-xs font-semibold rounded-md bg-tone-danger-bg text-tone-danger-fg border border-tone-danger-border hover:bg-red-100/70 transition-colors cursor-pointer disabled:opacity-50"
                                                 >
                                                     {t.approvals.reject}
                                                 </button>
@@ -810,36 +828,31 @@ export function CeoOverviewContent({
 
                             {/* Payment Requests */}
                             {(approvalFilter === 'ALL' || approvalFilter === 'PAYMENT') && pendingPaymentRequests.map((pr: any) => (
-                                <div key={pr.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 py-2.5 px-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px', borderLeft: '3px solid #1D4ED8' }}>
+                                <div key={pr.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 py-2.5 px-3 bg-white border border-lys-border border-l-[3px] border-l-tone-info-fg rounded-md">
                                     <div className="flex items-start gap-2 min-w-0 flex-1">
-                                        <CreditCard size={14} style={{ color: '#1D4ED8' }} className="flex-shrink-0 mt-0.5" />
+                                        <CreditCard size={14} className="text-tone-info-fg flex-shrink-0 mt-0.5" aria-hidden />
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                                                <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(29,78,216,0.12)', color: '#1D4ED8' }}>
-                                                    {t.approvals.paymentReqBadge}
-                                                </span>
-                                                <span className="inline-block text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: '#F1F5F9', color: '#475569' }}>
-                                                    {pr.purposeLabel}
-                                                </span>
-                                                <button type="button" onClick={() => router.push('/dashboard/payment-requests')} className="text-xs font-bold hover:underline cursor-pointer" style={{ color: '#0F172A' }}>
+                                                <Badge tone="info">{t.approvals.paymentReqBadge}</Badge>
+                                                <Badge tone="neutral">{pr.purposeLabel}</Badge>
+                                                <button type="button" onClick={() => router.push('/dashboard/payment-requests')} className="text-xs font-bold hover:underline cursor-pointer text-lys-teal-strong font-mono">
                                                     {pr.requestNo}
                                                 </button>
                                             </div>
-                                            <p className="text-xs truncate font-medium" style={{ color: '#0F172A' }}>{pr.beneficiary}</p>
-                                            <span className="text-[10px]" style={{ color: '#64748B' }}>
+                                            <p className="text-xs truncate font-medium text-lys-primary">{pr.beneficiary}</p>
+                                            <span className="text-[11px] text-lys-muted">
                                                 {pr.requesterName} &middot; {formatDate(pr.dueDate)}
                                             </span>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0">
-                                        <span className="text-sm font-bold font-mono" style={{ color: '#0F172A' }}>{formatCurrency(pr.amount)}</span>
+                                        <span className="text-sm font-bold type-number text-lys-primary">{formatCurrency(pr.amount)}</span>
                                         <div className="flex gap-1.5">
                                             <button
                                                 type="button"
                                                 disabled={isPendingAction}
                                                 onClick={() => handleApproveItem('PAYMENT', pr.id)}
-                                                className="px-2.5 py-1 text-xs font-semibold cursor-pointer disabled:opacity-50"
-                                                style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)', borderRadius: '4px' }}
+                                                className="px-2.5 py-1 text-xs font-semibold rounded-md bg-tone-success-bg text-tone-success-fg border border-tone-success-border hover:bg-emerald-100/70 transition-colors cursor-pointer disabled:opacity-50"
                                             >
                                                 {t.approvals.approve}
                                             </button>
@@ -847,8 +860,7 @@ export function CeoOverviewContent({
                                                 type="button"
                                                 disabled={isPendingAction}
                                                 onClick={() => setRejectTarget({ type: 'PAYMENT', id: pr.id, code: pr.requestNo })}
-                                                className="px-2.5 py-1 text-xs font-semibold cursor-pointer disabled:opacity-50"
-                                                style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.25)', borderRadius: '4px' }}
+                                                className="px-2.5 py-1 text-xs font-semibold rounded-md bg-tone-danger-bg text-tone-danger-fg border border-tone-danger-border hover:bg-red-100/70 transition-colors cursor-pointer disabled:opacity-50"
                                             >
                                                 {t.approvals.reject}
                                             </button>
@@ -859,20 +871,19 @@ export function CeoOverviewContent({
 
                             {/* System Approval Engine */}
                             {(approvalFilter === 'ALL' || approvalFilter === 'SYSTEM') && Array.isArray(pendingApprovalReqs) && pendingApprovalReqs.map((arItem: any) => (
-                                <div key={arItem.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 py-2.5 px-3" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px' }}>
-                                    <div className="flex items-center gap-2 min-w-0">
-                                        <ClipboardCheck size={13} style={{ color: '#0891B2' }} />
-                                        <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0" style={{ background: 'rgba(180,83,9,0.12)', color: '#B45309' }}>{arItem.docType}</span>
-                                        <span className="text-xs font-medium truncate" style={{ color: '#0F172A' }}>{arItem.templateName}</span>
-                                        <span className="text-[10px]" style={{ color: '#64748B' }}>({t.approvals.step} {arItem.currentStep} &middot; {arItem.requestedBy})</span>
+                                <div key={arItem.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 py-2.5 px-3 bg-white border border-lys-border rounded-md">
+                                    <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                                        <ClipboardCheck size={13} className="text-lys-teal-strong shrink-0" aria-hidden />
+                                        <Badge tone="warning">{arItem.docType}</Badge>
+                                        <span className="text-xs font-medium truncate text-lys-primary">{arItem.templateName}</span>
+                                        <span className="text-[11px] text-lys-muted">({t.approvals.step} {arItem.currentStep} &middot; {arItem.requestedBy})</span>
                                     </div>
                                     <div className="flex items-center justify-end gap-1.5 flex-shrink-0">
                                         <button
                                             type="button"
                                             disabled={isPendingAction}
                                             onClick={() => handleApproveItem('SYSTEM', arItem.id)}
-                                            className="px-2.5 py-1 text-xs font-semibold cursor-pointer disabled:opacity-50"
-                                            style={{ background: 'rgba(21,128,61,0.15)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)', borderRadius: '4px' }}
+                                            className="px-2.5 py-1 text-xs font-semibold rounded-md bg-tone-success-bg text-tone-success-fg border border-tone-success-border hover:bg-emerald-100/70 transition-colors cursor-pointer disabled:opacity-50"
                                         >
                                             {t.approvals.approve}
                                         </button>
@@ -880,8 +891,7 @@ export function CeoOverviewContent({
                                             type="button"
                                             disabled={isPendingAction}
                                             onClick={() => setRejectTarget({ type: 'SYSTEM', id: arItem.id, code: `${arItem.docType} #${arItem.docId?.slice(-6) ?? ''}` })}
-                                            className="px-2.5 py-1 text-xs font-semibold cursor-pointer disabled:opacity-50"
-                                            style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C', border: '1px solid rgba(185,28,28,0.25)', borderRadius: '4px' }}
+                                            className="px-2.5 py-1 text-xs font-semibold rounded-md bg-tone-danger-bg text-tone-danger-fg border border-tone-danger-border hover:bg-red-100/70 transition-colors cursor-pointer disabled:opacity-50"
                                         >
                                             {t.approvals.reject}
                                         </button>
@@ -890,143 +900,138 @@ export function CeoOverviewContent({
                             ))}
                         </div>
                     )}
-                </div>
+                </Card>
             )}
 
             {/* Reject Reason Modal */}
-            {rejectTarget && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15, 23, 42, 0.45)' }}>
-                    <div className="w-full max-w-md rounded-md p-5 shadow-xl" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                        <div className="flex items-center justify-between mb-3">
-                            <h4 className="text-sm font-bold" style={{ color: '#0F172A' }}>
-                                {t.approvals.rejectReasonTitle}: <span style={{ color: '#B91C1C' }}>{rejectTarget.code}</span>
-                            </h4>
-                            <button type="button" onClick={() => { setRejectTarget(null); setRejectReason('') }} className="cursor-pointer" style={{ color: '#64748B' }}>
-                                <X size={15} />
-                            </button>
-                        </div>
-                        <textarea
-                            rows={3}
-                            value={rejectReason}
-                            onChange={e => setRejectReason(e.target.value)}
-                            placeholder={t.approvals.rejectReasonPlaceholder}
-                            className="w-full rounded p-2.5 text-xs mb-3 focus:outline-none"
-                            style={{ border: '1px solid #CBD5E1', color: '#0F172A' }}
-                        />
-                        <div className="flex justify-end gap-2">
-                            <button
-                                type="button"
-                                onClick={() => { setRejectTarget(null); setRejectReason('') }}
-                                className="px-3 py-1.5 text-xs font-medium rounded cursor-pointer"
-                                style={{ background: '#F1F5F9', color: '#475569' }}
-                            >
-                                {t.approvals.cancel}
-                            </button>
-                            <button
-                                type="button"
-                                disabled={isPendingAction}
-                                onClick={handleConfirmReject}
-                                className="px-3 py-1.5 text-xs font-semibold rounded cursor-pointer disabled:opacity-50"
-                                style={{ background: '#B91C1C', color: '#FFFFFF' }}
-                            >
-                                {t.approvals.confirmReject}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <Modal
+                open={!!rejectTarget}
+                onClose={() => { setRejectTarget(null); setRejectReason('') }}
+                title={
+                    <span>
+                        {t.approvals.rejectReasonTitle}:{' '}
+                        <span className="text-tone-danger-fg font-mono">{rejectTarget?.code}</span>
+                    </span>
+                }
+                footer={
+                    <>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => { setRejectTarget(null); setRejectReason('') }}
+                        >
+                            {t.approvals.cancel}
+                        </Button>
+                        <Button
+                            variant="danger"
+                            size="sm"
+                            loading={isPendingAction}
+                            onClick={handleConfirmReject}
+                        >
+                            {t.approvals.confirmReject}
+                        </Button>
+                    </>
+                }
+            >
+                <Textarea
+                    rows={3}
+                    value={rejectReason}
+                    onChange={e => setRejectReason(e.target.value)}
+                    placeholder={t.approvals.rejectReasonPlaceholder}
+                />
+            </Modal>
 
             {/* ═══ LAYER 5 — DEEP ANALYSIS (Grid of cards) ═══ */}
             {hasLayer5 && (
                 <div className="space-y-4">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5" style={{ color: '#64748B' }}>
-                        <LineChart size={13} style={{ color: '#64748B' }} />
+                    <h3 className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 text-lys-muted">
+                        <LineChart size={13} className="text-lys-muted" aria-hidden />
                         <span>{t.inDepth.title}</span>
                     </h3>
 
                     {/* KPI Progress + Channel Breakdown */}
                     {(hasKpis || hasChannels) && (
-                        <div className={hasKpis && hasChannels ? "grid grid-cols-1 lg:grid-cols-5 gap-4" : "space-y-4"}>
-                            {/* KPI Targets — 3 cols (or full if only KPIs) */}
+                        <div className={hasKpis && hasChannels ? 'grid grid-cols-1 xl:grid-cols-5 gap-4' : 'space-y-4'}>
+                            {/* KPI Targets */}
                             {hasKpis && (
-                                <div className={hasChannels ? "lg:col-span-3 rounded-md p-5" : "w-full rounded-md p-5"} style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                <Card className={hasChannels ? 'xl:col-span-3 p-5' : 'w-full p-5'}>
                                     <SectionHead
-                                        icon={<Target size={15} style={{ color: '#0891B2' }} />}
+                                        icon={<Target size={15} className="text-lys-teal-strong" aria-hidden />}
                                         title={t.inDepth.monthlyKpiTargets}
                                         badge={
-                                            <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0" style={{ background: 'rgba(8, 145, 178, 0.08)', color: '#0891B2' }}>
+                                            <Badge tone="brand">
                                                 {kpis.filter((k: any) => k.progressPct >= 100).length}/{kpis.length} {t.inDepth.achieved}
-                                            </span>
+                                            </Badge>
                                         }
                                     />
-                                    <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-3">
                                         {kpis.map((kpi: any) => {
                                             const pct = Math.min(kpi.progressPct, 100)
-                                            const sc = kpi.status === 'ON_TRACK' ? '#15803D' : kpi.status === 'AT_RISK' ? '#B45309' : '#B91C1C'
+                                            const kpiTone: Tone = kpi.status === 'ON_TRACK' ? 'success' : kpi.status === 'AT_RISK' ? 'warning' : 'danger'
                                             const sl = kpi.status === 'ON_TRACK' ? t.inDepth.onTrack : kpi.status === 'AT_RISK' ? t.inDepth.atRisk : t.inDepth.behind
                                             return (
                                                 <div key={kpi.metric} className="space-y-1.5">
-                                                    <div className="flex items-center justify-between">
-                                                        <p className="text-[10px] font-semibold truncate" style={{ color: '#475569' }}>{kpi.label}</p>
-                                                        <span className="inline-block text-[10px] px-1 py-0.5 rounded font-bold whitespace-nowrap shrink-0" style={{ background: `${sc}18`, color: sc }}>{sl}</span>
+                                                    <div className="flex items-center justify-between gap-1">
+                                                        <p className="text-[11px] font-semibold truncate text-lys-secondary">{kpi.label}</p>
+                                                        <Badge tone={kpiTone} className="px-1.5 py-0">{sl}</Badge>
                                                     </div>
-                                                    <div className="h-2 rounded-full" style={{ background: '#F1F5F9' }}>
+                                                    <div className="h-2 rounded-full bg-lys-subtle">
                                                         <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: kpi.color ?? '#0E7490' }} />
                                                     </div>
-                                                    <div className="flex justify-between font-mono">
-                                                        <span className="text-[10px] font-bold" style={{ color: '#0F172A' }}>
+                                                    <div className="flex justify-between type-number text-[11px]">
+                                                        <span className="font-bold text-lys-primary">
                                                             {kpi.unit === 'VND' ? formatFriendlyVND(kpi.actual, isEn) : kpi.actual}
                                                         </span>
-                                                        <span className="text-[10px]" style={{ color: '#64748B' }}>/ {kpi.unit === 'VND' ? formatFriendlyVND(kpi.target, isEn) : kpi.target}</span>
+                                                        <span className="text-lys-muted">/ {kpi.unit === 'VND' ? formatFriendlyVND(kpi.target, isEn) : kpi.target}</span>
                                                     </div>
                                                 </div>
                                             )
                                         })}
                                     </div>
-                                </div>
+                                </Card>
                             )}
 
-                            {/* Channel Breakdown — 2 cols (or full if only Channels) */}
+                            {/* Channel Breakdown */}
                             {hasChannels && (
-                                <div className={hasKpis ? "lg:col-span-2 rounded-md p-5" : "w-full rounded-md p-5"} style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                    <SectionHead icon={<BarChart3 size={15} style={{ color: '#B45309' }} />} title={t.rankings.channelTitle} />
+                                <Card className={hasKpis ? 'xl:col-span-2 p-5' : 'w-full p-5'}>
+                                    <SectionHead icon={<BarChart3 size={15} className="text-tone-warning-fg" aria-hidden />} title={t.rankings.channelTitle} />
                                     <div className="space-y-2.5">
                                         {channels.channels.map((ch: any) => (
                                             <div key={ch.channel}>
                                                 <div className="flex justify-between mb-0.5">
-                                                    <span className="text-xs" style={{ color: '#475569' }}>{ch.label}</span>
+                                                    <span className="text-xs text-lys-secondary">{ch.label}</span>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-[10px] font-bold font-mono" style={{ color: ch.color }}>{formatFriendlyVND(ch.revenue, isEn)}</span>
-                                                        <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0" style={{ background: `${ch.color}18`, color: ch.color }}>{ch.pct}%</span>
+                                                        <span className="text-[11px] font-bold type-number" style={{ color: ch.color }}>{formatFriendlyVND(ch.revenue, isEn)}</span>
+                                                        <span className="inline-block text-[11px] px-1.5 py-0.5 rounded-md font-bold whitespace-nowrap shrink-0 type-number" style={{ background: `${ch.color}18`, color: ch.color }}>{ch.pct}%</span>
                                                     </div>
                                                 </div>
-                                                <div className="h-2 rounded-full" style={{ background: '#F1F5F9' }}>
+                                                <div className="h-2 rounded-full bg-lys-subtle">
                                                     <div className="h-full rounded-full transition-all" style={{ width: `${ch.pct}%`, background: ch.color }} />
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
-                                </div>
+                                </Card>
                             )}
                         </div>
                     )}
 
                     {/* Revenue YoY + Cost Waterfall */}
                     {(hasYoy || hasWf) && (
-                        <div className={hasYoy && hasWf ? "grid grid-cols-1 lg:grid-cols-2 gap-4" : "space-y-4"}>
+                        <div className={hasYoy && hasWf ? 'grid grid-cols-1 lg:grid-cols-2 gap-4' : 'space-y-4'}>
                             {/* Revenue YoY */}
                             {hasYoy && (() => {
                                 const yoyMax = Math.max(...yoyData.current.map((m: any) => m.revenue), ...yoyData.previous.map((m: any) => m.revenue), 1)
                                 const cm = new Date().getMonth() + 1
                                 return (
-                                    <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                                    <Card className="p-5">
                                         <SectionHead
-                                            icon={<TrendingUp size={15} style={{ color: '#0891B2' }} />}
+                                            icon={<TrendingUp size={15} className="text-lys-teal-strong" aria-hidden />}
                                             title={`${t.inDepth.revenueYoY} ${yoyData.thisYear} vs ${yoyData.lastYear}`}
                                         >
-                                            <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0" style={{ background: yoyData.yoyGrowth >= 0 ? 'rgba(21,128,61,0.15)' : 'rgba(185,28,28,0.15)', color: yoyData.yoyGrowth >= 0 ? '#15803D' : '#B91C1C' }}>
+                                            <Badge tone={yoyData.yoyGrowth >= 0 ? 'success' : 'danger'} className="type-number">
                                                 {yoyData.yoyGrowth >= 0 ? '↑' : '↓'}{Math.abs(yoyData.yoyGrowth).toFixed(1)}% YoY
-                                            </span>
+                                            </Badge>
                                         </SectionHead>
                                         <div className="flex items-end gap-0.5 h-32 mb-2">
                                             {yoyData.current.map((m: any, i: number) => {
@@ -1035,38 +1040,43 @@ export function CeoOverviewContent({
                                                 const prevH = Math.max(2, (prev.revenue / yoyMax) * 110)
                                                 return (
                                                     <div key={m.month} className="flex-1 flex flex-col items-center gap-0.5">
-                                                        <div className="w-full flex gap-px" style={{ height: 110, alignItems: 'flex-end' }}>
-                                                            <div className="flex-1 rounded-t-sm" style={{ height: prevH, background: '#E2E8F0' }} />
-                                                            <div className="flex-1 rounded-t-sm" style={{ height: m.month > cm ? 0 : curH, background: m.month > cm ? 'transparent' : m.revenue > prev.revenue ? '#0E7490' : '#B45309' }} />
+                                                        <div className="w-full flex gap-px h-[110px] items-end">
+                                                            <div className="flex-1 rounded-t-sm bg-lys-border" style={{ height: prevH }} />
+                                                            <div
+                                                                className={`flex-1 rounded-t-sm ${
+                                                                    m.month > cm ? 'bg-transparent' : m.revenue > prev.revenue ? 'bg-lys-teal-strong' : 'bg-tone-warning-fg'
+                                                                }`}
+                                                                style={{ height: m.month > cm ? 0 : curH }}
+                                                            />
                                                         </div>
-                                                        <span className="text-[10px]" style={{ color: m.month === cm ? '#0891B2' : '#64748B', fontWeight: m.month === cm ? 'bold' : 'normal' }}>
+                                                        <span className={`text-[11px] ${m.month === cm ? 'text-lys-teal-strong font-bold' : 'text-lys-muted'}`}>
                                                             {m.label}
                                                         </span>
                                                     </div>
                                                 )
                                             })}
                                         </div>
-                                        <div className="flex justify-center gap-6 pt-2" style={{ borderTop: '1px solid #E2E8F0' }}>
+                                        <div className="flex justify-center gap-6 pt-2 border-t border-lys-border">
                                             <div className="text-center">
-                                                <p className="text-[10px] uppercase font-semibold" style={{ color: '#64748B' }}>{yoyData.thisYear}</p>
-                                                <p className="text-xs font-bold font-mono" style={{ color: '#0891B2' }}>{formatCurrency(yoyData.totalCurrent)}</p>
+                                                <p className="text-[11px] uppercase font-semibold text-lys-muted">{yoyData.thisYear}</p>
+                                                <p className="text-xs font-bold type-number text-lys-teal-strong">{formatCurrency(yoyData.totalCurrent)}</p>
                                             </div>
                                             <div className="text-center">
-                                                <p className="text-[10px] uppercase font-semibold" style={{ color: '#64748B' }}>{yoyData.lastYear}</p>
-                                                <p className="text-xs font-bold font-mono" style={{ color: '#64748B' }}>{formatCurrency(yoyData.totalPrevious)}</p>
+                                                <p className="text-[11px] uppercase font-semibold text-lys-muted">{yoyData.lastYear}</p>
+                                                <p className="text-xs font-bold type-number text-lys-muted">{formatCurrency(yoyData.totalPrevious)}</p>
                                             </div>
                                         </div>
-                                    </div>
+                                    </Card>
                                 )
                             })()}
 
                             {/* Cost Waterfall */}
                             {hasWf && (
-                                <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                    <SectionHead icon={<BarChart3 size={15} style={{ color: '#B45309' }} />} title={t.waterfall.title}>
-                                        <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0" style={{ background: wf.netProfit >= 0 ? 'rgba(21,128,61,0.15)' : 'rgba(185,28,28,0.15)', color: wf.netProfit >= 0 ? '#15803D' : '#B91C1C' }}>
+                                <Card className="p-5">
+                                    <SectionHead icon={<BarChart3 size={15} className="text-tone-warning-fg" aria-hidden />} title={t.waterfall.title}>
+                                        <Badge tone={wf.netProfit >= 0 ? 'success' : 'danger'} className="type-number">
                                             Net {wf.revenue > 0 ? ((wf.netProfit / wf.revenue) * 100).toFixed(1) : 0}%
-                                        </span>
+                                        </Badge>
                                     </SectionHead>
                                     <div className="flex items-end gap-1.5 h-36 mb-3">
                                         {wf.bars.map((bar: WaterfallBar) => {
@@ -1074,70 +1084,66 @@ export function CeoOverviewContent({
                                             const barH = Math.max(6, (Math.abs(bar.value) / absMax) * 120)
                                             return (
                                                 <div key={bar.label} className="flex-1 flex flex-col items-center gap-0.5">
-                                                    <span className="text-[10px] font-bold font-mono" style={{ color: bar.color }}>
+                                                    <span className="text-[11px] font-bold type-number" style={{ color: bar.color }}>
                                                         {bar.value !== 0 ? formatFriendlyVND(Math.abs(bar.value), isEn) : (isEn ? '0 VND' : '0 đ')}
                                                     </span>
-                                                    <div className="w-full relative" style={{ height: 120 }}>
+                                                    <div className="w-full relative h-[120px]">
                                                         <div className="absolute bottom-0 w-full rounded-t-sm" style={{ height: barH, background: `${bar.color}${bar.type === 'negative' ? '35' : '60'}`, borderLeft: `2px solid ${bar.color}`, borderTop: `2px solid ${bar.color}`, borderRight: `2px solid ${bar.color}` }} />
                                                     </div>
-                                                    <p className="text-[10px] text-center leading-tight truncate w-full" style={{ color: '#475569' }}>
+                                                    <p className="text-[11px] text-center leading-tight truncate w-full text-lys-secondary">
                                                         {bar.label.split(' (')[0]}
                                                     </p>
                                                 </div>
                                             )
                                         })}
                                     </div>
-                                    <div className="flex items-center justify-center gap-4 pt-2" style={{ borderTop: '1px solid #E2E8F0' }}>
+                                    <div className="flex flex-wrap items-center justify-center gap-4 pt-2 border-t border-lys-border">
                                         {[
-                                            { label: t.waterfall.revenue, color: '#15803D', val: wf.revenue },
-                                            { label: 'COGS', color: '#B91C1C', val: wf.cogs },
-                                            { label: isEn ? 'OPEX' : 'CP', color: '#B45309', val: wf.totalExpenses },
-                                            { label: t.waterfall.netProfit, color: wf.netProfit >= 0 ? '#15803D' : '#B91C1C', val: wf.netProfit },
+                                            { label: t.waterfall.revenue, dotClass: 'bg-tone-success-fg', textClass: 'text-tone-success-fg', val: wf.revenue },
+                                            { label: 'COGS', dotClass: 'bg-tone-danger-fg', textClass: 'text-tone-danger-fg', val: wf.cogs },
+                                            { label: isEn ? 'OPEX' : 'CP', dotClass: 'bg-tone-warning-fg', textClass: 'text-tone-warning-fg', val: wf.totalExpenses },
+                                            { label: t.waterfall.netProfit, dotClass: wf.netProfit >= 0 ? 'bg-tone-success-fg' : 'bg-tone-danger-fg', textClass: wf.netProfit >= 0 ? 'text-tone-success-fg' : 'text-tone-danger-fg', val: wf.netProfit },
                                         ].map(l => (
                                             <div key={l.label} className="flex items-center gap-1">
-                                                <div className="w-1.5 h-1.5 rounded-full" style={{ background: l.color }} />
-                                                <span className="text-[10px]" style={{ color: '#64748B' }}>{l.label}</span>
-                                                <span className="text-[10px] font-bold font-mono" style={{ color: l.color }}>{formatCurrency(Math.abs(l.val))}</span>
+                                                <div className={`w-1.5 h-1.5 rounded-full ${l.dotClass}`} />
+                                                <span className="text-[11px] text-lys-muted">{l.label}</span>
+                                                <span className={`text-[11px] font-bold type-number ${l.textClass}`}>{formatCurrency(Math.abs(l.val))}</span>
                                             </div>
                                         ))}
                                     </div>
-                                </div>
+                                </Card>
                             )}
                         </div>
                     )}
 
-                    {/* SKU Replenishment & Stock Alert Priority Queue (Sorted Top-to-Bottom) */}
+                    {/* SKU Replenishment & Stock Alert Priority Queue */}
                     {hasReplenishmentAlerts && (
-                        <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                        <Card className="p-5">
                             <SectionHead
-                                icon={<Package size={15} style={{ color: '#B91C1C' }} />}
+                                icon={<Package size={15} className="text-tone-danger-fg" aria-hidden />}
                                 title={
                                     isEn
                                         ? 'SKU Stock Alert & Replenishment Priority Queue (Sorted by Urgency)'
                                         : 'Cảnh Báo Tồn Kho & Đề Xuất Mua Hàng Theo SKU (Sắp Xếp Từ Trên Xuống Dưới)'
                                 }
                                 badge={
-                                    <span
-                                        className="inline-block px-2.5 py-0.5 text-[10px] font-bold rounded-full whitespace-nowrap shrink-0"
-                                        style={{ background: 'rgba(185,28,28,0.12)', color: '#B91C1C' }}
-                                    >
+                                    <Badge tone="danger">
                                         {replenishmentAlerts.length} {isEn ? 'SKUs to Reorder' : 'SKU cần mua thêm'}
-                                    </span>
+                                    </Badge>
                                 }
                             >
                                 <Link
                                     href="/dashboard?tab=skus"
-                                    className="text-[11px] font-semibold px-2.5 py-1 rounded whitespace-nowrap"
-                                    style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}
+                                    className="text-[11px] font-semibold px-2.5 py-1 rounded-md bg-lys-teal-soft text-lys-teal-strong border border-tone-brand-border hover:bg-cyan-100/70 transition-colors whitespace-nowrap"
                                 >
                                     {isEn ? 'Open SKU 360°' : 'Mở Báo Cáo SKU 360°'}
                                 </Link>
                             </SectionHead>
 
-                            <div className="overflow-x-auto border border-slate-200 rounded-md max-h-[340px] overflow-y-auto">
+                            <div className="overflow-x-auto border border-lys-border rounded-lg max-h-[340px] overflow-y-auto">
                                 <table className="w-full text-xs text-left border-collapse">
                                     <thead className="sticky top-0 z-10">
-                                        <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase text-slate-500 whitespace-nowrap">
+                                        <tr className="bg-lys-subtle border-b border-lys-border text-[11px] font-semibold uppercase text-lys-secondary whitespace-nowrap">
                                             <th className="py-2 px-3 w-10">#</th>
                                             <th className="py-2 px-3">{isEn ? 'Priority' : 'Mức Độ Ưu Tiên'}</th>
                                             <th className="py-2 px-3">{isEn ? 'SKU & Wine Name' : 'Mã SKU & Tên Rượu'}</th>
@@ -1148,64 +1154,55 @@ export function CeoOverviewContent({
                                             <th className="py-2 px-3 text-right">{isEn ? 'Est. Capital' : 'Dự Toán Vốn'}</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-100">
+                                    <tbody className="divide-y divide-lys-border">
                                         {replenishmentAlerts.slice(0, 20).map((item, idx) => {
-                                            const badgeStyle =
+                                            const tierTone: Tone =
                                                 item.urgencyTier === 'OUT_OF_STOCK'
-                                                    ? 'bg-red-50 text-red-700 border-red-200/90'
+                                                    ? 'danger'
                                                     : item.urgencyTier === 'CRITICAL'
-                                                    ? 'bg-amber-50 text-amber-800 border-amber-200/90'
+                                                    ? 'warning'
                                                     : item.urgencyTier === 'LOW'
-                                                    ? 'bg-cyan-50 text-cyan-800 border-cyan-200/90'
-                                                    : 'bg-slate-100 text-slate-700 border-slate-200/90'
-                                            const dotColor =
-                                                item.urgencyTier === 'OUT_OF_STOCK'
-                                                    ? 'bg-red-600'
-                                                    : item.urgencyTier === 'CRITICAL'
-                                                    ? 'bg-amber-500'
-                                                    : item.urgencyTier === 'LOW'
-                                                    ? 'bg-cyan-600'
-                                                    : 'bg-slate-400'
+                                                    ? 'brand'
+                                                    : 'neutral'
                                             return (
-                                                <tr key={item.id} className="hover:bg-slate-50/80 transition-colors whitespace-nowrap">
-                                                    <td className="py-2 px-3 font-mono text-slate-400 tabular-nums">{idx + 1}</td>
+                                                <tr key={item.id} className="hover:bg-lys-subtle/60 transition-colors whitespace-nowrap">
+                                                    <td className="py-2 px-3 font-mono text-lys-muted tabular-nums">{idx + 1}</td>
                                                     <td className="py-2 px-3">
-                                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap ${badgeStyle}`}>
-                                                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
-                                                            <span>{isEn ? item.urgencyLabelEn : item.urgencyLabelVi}</span>
-                                                        </span>
+                                                        <Badge tone={tierTone}>
+                                                            {isEn ? item.urgencyLabelEn : item.urgencyLabelVi}
+                                                        </Badge>
                                                     </td>
                                                     <td className="py-2 px-3">
                                                         <Link
                                                             href={`/dashboard?tab=skus&productId=${item.id}`}
                                                             className="flex items-center gap-2 group"
                                                         >
-                                                            <span className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 border border-slate-200/80">
+                                                            <span className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded bg-lys-subtle text-lys-primary border border-lys-border">
                                                                 {item.skuCode}
                                                             </span>
-                                                            <span className="font-semibold text-slate-900 group-hover:text-cyan-700 truncate max-w-[260px]">
+                                                            <span className="font-semibold text-lys-primary group-hover:text-lys-teal-strong truncate max-w-[260px]">
                                                                 {item.productName}
                                                             </span>
-                                                            <ExternalLink size={12} className="text-slate-400 group-hover:text-cyan-600 shrink-0" />
+                                                            <ExternalLink size={12} className="text-lys-dim group-hover:text-lys-teal-strong shrink-0" aria-hidden />
                                                         </Link>
                                                     </td>
-                                                    <td className="py-2 px-3 text-right font-mono tabular-nums">
-                                                        <span className={`font-bold ${item.totalStock <= 0 ? 'text-red-600' : 'text-slate-900'}`}>
+                                                    <td className="py-2 px-3 text-right type-number">
+                                                        <span className={`font-bold ${item.totalStock <= 0 ? 'text-tone-danger-fg' : 'text-lys-primary'}`}>
                                                             {item.totalStock.toLocaleString('vi-VN')} {isEn ? 'btls' : 'chai'}
                                                         </span>
                                                     </td>
-                                                    <td className="py-2 px-3 text-right font-mono font-semibold text-slate-800 tabular-nums">
+                                                    <td className="py-2 px-3 text-right font-semibold text-lys-primary type-number">
                                                         {item.avgMonthlySales.toLocaleString('vi-VN')} {isEn ? 'btls/mo' : 'chai/tháng'}
                                                     </td>
-                                                    <td className="py-2 px-3 text-right font-mono font-bold tabular-nums">
-                                                        <span className={item.mosCurrent < 2 ? 'text-red-600' : item.mosCurrent < 3.5 ? 'text-amber-700' : 'text-slate-800'}>
+                                                    <td className="py-2 px-3 text-right font-bold type-number">
+                                                        <span className={item.mosCurrent < 2 ? 'text-tone-danger-fg' : item.mosCurrent < 3.5 ? 'text-tone-warning-fg' : 'text-lys-primary'}>
                                                             {item.mosCurrent} {isEn ? 'mos' : 'tháng'}
                                                         </span>
                                                     </td>
-                                                    <td className="py-2 px-3 text-right font-mono font-bold text-cyan-700 tabular-nums">
+                                                    <td className="py-2 px-3 text-right font-bold text-lys-teal-strong type-number">
                                                         {item.suggestedReorderBottles.toLocaleString('vi-VN')} {isEn ? 'btls' : 'chai'} ({item.suggestedReorderCases} {isEn ? 'cs' : 'thùng'})
                                                     </td>
-                                                    <td className="py-2 px-3 text-right font-mono font-semibold text-slate-900 tabular-nums">
+                                                    <td className="py-2 px-3 text-right font-semibold text-lys-primary type-number">
                                                         {item.estimatedReorderCostVnd > 0 ? formatCurrency(item.estimatedReorderCostVnd) : '—'}
                                                     </td>
                                                 </tr>
@@ -1214,7 +1211,7 @@ export function CeoOverviewContent({
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
+                        </Card>
                     )}
 
                     {/* Slow-Moving & Dead Stock Capital Alert */}
@@ -1223,160 +1220,160 @@ export function CeoOverviewContent({
                         const slowLots = slowMovingStock.filter((l: any) => l.status === 'SLOW')
                         const totalTiedCapital = slowMovingStock.reduce((s: number, l: any) => s + Number(l.stockValue ?? 0), 0)
                         return (
-                            <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                            <Card className="p-5">
                                 <SectionHead
-                                    icon={<Archive size={15} style={{ color: '#B45309' }} />}
+                                    icon={<Archive size={15} className="text-tone-warning-fg" aria-hidden />}
                                     title={t.slowStock.title}
                                     badge={
-                                        <span className="inline-block px-2 py-0.5 text-[10px] font-bold rounded-full whitespace-nowrap shrink-0" style={{ background: deadLots.length > 0 ? 'rgba(185,28,28,0.16)' : 'rgba(180,83,9,0.16)', color: deadLots.length > 0 ? '#B91C1C' : '#B45309' }}>
+                                        <Badge tone={deadLots.length > 0 ? 'danger' : 'warning'}>
                                             {t.slowStock.tiedCapital}: {formatFriendlyVND(totalTiedCapital, isEn)}
-                                        </span>
+                                        </Badge>
                                     }
                                 >
-                                    <div className="flex items-center gap-2 text-[10px] font-semibold">
-                                        <span className="px-1.5 py-0.5 rounded" style={{ background: 'rgba(185,28,28,0.1)', color: '#B91C1C' }}>
-                                            {t.slowStock.deadLabel}: {deadLots.length}
-                                        </span>
-                                        <span className="px-1.5 py-0.5 rounded" style={{ background: 'rgba(180,83,9,0.1)', color: '#B45309' }}>
-                                            {t.slowStock.slowLabel}: {slowLots.length}
-                                        </span>
+                                    <div className="flex items-center gap-2 text-[11px] font-semibold">
+                                        <Badge tone="danger">{t.slowStock.deadLabel}: {deadLots.length}</Badge>
+                                        <Badge tone="warning">{t.slowStock.slowLabel}: {slowLots.length}</Badge>
                                     </div>
                                 </SectionHead>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                                     {slowMovingStock.slice(0, 6).map((lot: any) => {
                                         const isDead = lot.status === 'DEAD'
                                         return (
-                                            <div key={lot.lotId} className="p-2.5 rounded flex items-center justify-between gap-2" style={{ background: isDead ? 'rgba(185,28,28,0.04)' : '#F8FAFC', border: `1px solid ${isDead ? 'rgba(185,28,28,0.2)' : '#E2E8F0'}` }}>
+                                            <div key={lot.lotId} className={`p-2.5 rounded-md border flex items-center justify-between gap-2 ${isDead ? 'bg-tone-danger-bg/40 border-tone-danger-border' : 'bg-lys-bg border-lys-border'}`}>
                                                 <div className="min-w-0">
-                                                    <p className="text-xs font-semibold truncate" style={{ color: '#0F172A' }}>{lot.productName}</p>
-                                                    <p className="text-[10px] font-mono truncate" style={{ color: '#64748B' }}>
+                                                    <p className="text-xs font-semibold truncate text-lys-primary">{lot.productName}</p>
+                                                    <p className="text-[11px] font-mono truncate text-lys-muted">
                                                         {lot.sku} &middot; {lot.locationCode} &middot; {lot.qtyRemaining} {t.kpis.bottlesUnit}
                                                     </p>
                                                 </div>
-                                                <div className="text-right shrink-0">
-                                                    <p className="text-xs font-bold font-mono" style={{ color: isDead ? '#B91C1C' : '#B45309' }}>
+                                                <div className="text-right shrink-0 space-y-0.5">
+                                                    <p className={`text-xs font-bold type-number ${isDead ? 'text-tone-danger-fg' : 'text-tone-warning-fg'}`}>
                                                         {formatFriendlyVND(lot.stockValue, isEn)}
                                                     </p>
-                                                    <span className="inline-block text-[10px] px-1.5 py-0.5 rounded font-mono font-bold" style={{ background: isDead ? 'rgba(185,28,28,0.15)' : 'rgba(180,83,9,0.15)', color: isDead ? '#B91C1C' : '#B45309' }}>
+                                                    <Badge tone={isDead ? 'danger' : 'warning'} className="type-number">
                                                         {lot.daysInStock} {t.slowStock.daysInStock}
-                                                    </span>
+                                                    </Badge>
                                                 </div>
                                             </div>
                                         )
                                     })}
                                 </div>
-                            </div>
+                            </Card>
                         )
                     })()}
 
                     {/* Legal Compliance */}
                     {hasCompliance && (
-                        <div className="rounded-md p-5" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                        <Card className="p-5">
                             <SectionHead
-                                icon={<Shield size={15} style={{ color: '#B45309' }} />}
+                                icon={<Shield size={15} className="text-tone-warning-fg" aria-hidden />}
                                 title={t.compliance.title}
                                 badge={
-                                    <span className="inline-block px-2 py-0.5 text-[10px] font-bold rounded-full whitespace-nowrap shrink-0" style={{ background: complianceWarnings.some((w: any) => w.severity === 'critical') ? 'rgba(185,28,28,0.2)' : 'rgba(180,83,9,0.2)', color: complianceWarnings.some((w: any) => w.severity === 'critical') ? '#B91C1C' : '#B45309' }}>
+                                    <Badge tone={complianceWarnings.some((w: any) => w.severity === 'critical') ? 'danger' : 'warning'}>
                                         {complianceWarnings.length} {t.compliance.documents}
-                                    </span>
+                                    </Badge>
                                 }
                             >
-                                <Link href="/dashboard/contracts" className="text-[10px] px-2 py-1 rounded" style={{ background: 'rgba(8,145,178,0.1)', color: '#0891B2' }}>
+                                <Link href="/dashboard/contracts" className="text-[11px] font-semibold px-2.5 py-1 rounded-md bg-lys-teal-soft text-lys-teal-strong border border-tone-brand-border hover:bg-cyan-100/70 transition-colors">
                                     {t.compliance.viewAll}
                                 </Link>
                             </SectionHead>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {complianceWarnings.slice(0, 6).map((w: any) => {
-                                    const sev = w.severity === 'critical' ? { bg: 'rgba(185,28,28,0.06)', border: 'rgba(185,28,28,0.2)', c: '#B91C1C' } : w.severity === 'warning' ? { bg: 'rgba(180,83,9,0.06)', border: 'rgba(180,83,9,0.2)', c: '#B45309' } : { bg: 'rgba(8,145,178,0.06)', border: 'rgba(8, 145, 178, 0.15)', c: '#0E7490' }
+                                    const sevClass = w.severity === 'critical'
+                                        ? 'bg-tone-danger-bg/50 border-tone-danger-border text-tone-danger-fg'
+                                        : w.severity === 'warning'
+                                        ? 'bg-tone-warning-bg/50 border-tone-warning-border text-tone-warning-fg'
+                                        : 'bg-lys-teal-soft/50 border-tone-brand-border text-lys-teal-strong'
                                     return (
-                                        <div key={w.id} className="flex items-center justify-between p-2.5 rounded" style={{ background: sev.bg, border: `1px solid ${sev.border}` }}>
+                                        <div key={w.id} className={`flex items-center justify-between p-2.5 rounded-md border ${sevClass}`}>
                                             <div className="flex items-center gap-2 min-w-0">
-                                                <AlertTriangle size={13} style={{ color: sev.c }} />
+                                                <AlertTriangle size={13} className="shrink-0" aria-hidden />
                                                 <div className="min-w-0">
-                                                    <p className="text-xs truncate font-medium" style={{ color: '#0F172A' }}>{w.name}</p>
-                                                    <p className="text-[10px]" style={{ color: '#64748B' }}>{REG_DOC_TYPE_LABELS[w.type] ?? w.type}</p>
+                                                    <p className="text-xs truncate font-medium text-lys-primary">{w.name}</p>
+                                                    <p className="text-[11px] text-lys-muted">{REG_DOC_TYPE_LABELS[w.type] ?? w.type}</p>
                                                 </div>
                                             </div>
-                                            <span className="text-[10px] font-bold flex-shrink-0" style={{ color: sev.c }}>
+                                            <span className="text-[11px] font-bold flex-shrink-0 type-number">
                                                 {w.daysRemaining !== null && w.daysRemaining <= 0 ? `${t.compliance.overdue} ${Math.abs(w.daysRemaining)}d` : `${w.daysRemaining}${t.compliance.daysRemaining}`}
                                             </span>
                                         </div>
                                     )
                                 })}
                             </div>
-                        </div>
+                        </Card>
                     )}
                 </div>
             )}
 
             {/* ═══ QUICK LINKS (Bottom) ═══ */}
             {dashConfig.quickLinks.length > 0 && (
-                <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#64748B' }}>
+                <Card className="p-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider mb-2 text-lys-muted">
                         {t.quickAccess.title}
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                         {dashConfig.quickLinks.map((link: any) => (
-                            <Link key={link.href} href={link.href} className="flex items-center gap-2 p-2.5 rounded hover:border-[#0891B2] transition-all" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                <div className="w-7 h-7 rounded flex items-center justify-center shrink-0" style={{ background: 'rgba(8,145,178,0.1)' }}>
-                                    <LinkIcon size={12} style={{ color: '#0891B2' }} />
+                            <Link key={link.href} href={link.href} className="flex items-center gap-2 p-2.5 rounded-md bg-white border border-lys-border hover:border-lys-teal hover:bg-lys-teal-soft/30 transition-all">
+                                <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 bg-lys-teal-soft text-lys-teal-strong">
+                                    <LinkIcon size={12} aria-hidden />
                                 </div>
-                                <span className="text-xs font-medium truncate" style={{ color: '#0F172A' }}>{link.label}</span>
+                                <span className="text-xs font-medium truncate text-lys-primary">{link.label}</span>
                             </Link>
                         ))}
                     </div>
-                </div>
+                </Card>
             )}
 
             {/* ═══ ROLE-SPECIFIC: My Sales ═══ */}
             {mySales && (
-                <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+                <Card className="p-4">
                     <div className="flex items-center justify-between mb-3">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5" style={{ color: '#B45309' }}>
-                            <BarChart3 size={13} style={{ color: '#B45309' }} />
+                        <p className="text-[11px] font-semibold uppercase tracking-wider flex items-center gap-1.5 text-tone-warning-fg">
+                            <BarChart3 size={13} aria-hidden />
                             <span>{t.mySales.title}</span>
                         </p>
-                        <div className="flex items-center gap-3 font-mono">
-                            <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{mySales.orderCount} {t.mySales.orders}</span>
-                            <span className="text-sm font-bold" style={{ color: '#0F172A' }}>{formatCurrency(mySales.totalRevenue)}</span>
+                        <div className="flex items-center gap-3 type-number">
+                            <span className="text-xs font-bold text-lys-teal-strong">{mySales.orderCount} {t.mySales.orders}</span>
+                            <span className="text-sm font-bold text-lys-primary">{formatCurrency(mySales.totalRevenue)}</span>
                         </div>
                     </div>
                     <div className="space-y-1 max-h-[200px] overflow-y-auto">
                         {mySales.orders.map((o: any) => (
-                            <div key={o.soNo} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ background: '#FFFFFF', border: '1px solid #F1F5F9' }}>
-                                <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{o.soNo}</span>
-                                <span className="text-xs" style={{ color: '#475569' }}>{o.customerName}</span>
-                                <span className="inline-block text-[10px] px-1 py-0.5 rounded whitespace-nowrap shrink-0" style={{ background: o.status === 'PAID' ? 'rgba(21,128,61,0.15)' : 'rgba(100,116,139,0.15)', color: o.status === 'PAID' ? '#15803D' : '#475569' }}>{o.status}</span>
-                                <span className="text-xs font-bold font-mono" style={{ color: '#0F172A' }}>{formatCurrency(o.amount)}</span>
+                            <div key={o.soNo} className="flex items-center justify-between py-1.5 px-2.5 rounded-md bg-lys-bg/50 border border-lys-border">
+                                <span className="text-xs font-bold text-lys-teal-strong font-mono">{o.soNo}</span>
+                                <span className="text-xs text-lys-secondary">{o.customerName}</span>
+                                <StatusBadge status={o.status} />
+                                <span className="text-xs font-bold type-number text-lys-primary">{formatCurrency(o.amount)}</span>
                             </div>
                         ))}
-                        {mySales.orders.length === 0 && <p className="text-xs text-center py-3" style={{ color: '#64748B' }}>{t.noData}</p>}
+                        {mySales.orders.length === 0 && <p className="text-xs text-center py-3 text-lys-muted">{t.noData}</p>}
                     </div>
-                </div>
+                </Card>
             )}
 
             {/* ═══ ROLE-SPECIFIC: Warehouse ═══ */}
             {warehouseData && (
-                <div className="p-4 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider mb-3 flex items-center gap-1.5" style={{ color: '#1D4ED8' }}>
-                        <Package size={13} style={{ color: '#1D4ED8' }} />
+                <Card className="p-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider mb-3 flex items-center gap-1.5 text-tone-info-fg">
+                        <Package size={13} aria-hidden />
                         <span>{t.warehouseOverview.title}</span>
                     </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2">
                         {[
-                            { label: t.warehouseOverview.totalBottles, value: warehouseData.totalBottles.toLocaleString(isEn ? 'en-US' : 'vi-VN'), color: '#0891B2' },
-                            { label: t.warehouseOverview.lowStockSKUs, value: warehouseData.lowStockSKUs, color: '#B45309' },
-                            { label: t.warehouseOverview.quarantined, value: warehouseData.quarantinedLots, color: '#B91C1C' },
-                            { label: t.warehouseOverview.pendingGRs, value: warehouseData.pendingGoodsReceipts, color: '#1D4ED8' },
-                            { label: t.warehouseOverview.pendingDOs, value: warehouseData.pendingDeliveryOrders, color: '#15803D' },
+                            { label: t.warehouseOverview.totalBottles, value: warehouseData.totalBottles.toLocaleString(isEn ? 'en-US' : 'vi-VN'), textClass: 'text-lys-teal-strong' },
+                            { label: t.warehouseOverview.lowStockSKUs, value: warehouseData.lowStockSKUs, textClass: 'text-tone-warning-fg' },
+                            { label: t.warehouseOverview.quarantined, value: warehouseData.quarantinedLots, textClass: 'text-tone-danger-fg' },
+                            { label: t.warehouseOverview.pendingGRs, value: warehouseData.pendingGoodsReceipts, textClass: 'text-tone-info-fg' },
+                            { label: t.warehouseOverview.pendingDOs, value: warehouseData.pendingDeliveryOrders, textClass: 'text-tone-success-fg' },
                         ].map(s => (
-                            <div key={s.label} className="text-center p-2.5 rounded" style={{ background: '#FFFFFF', border: '1px solid #F1F5F9' }}>
-                                <p className="text-lg font-bold font-mono" style={{ color: s.color }}>{s.value}</p>
-                                <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>{s.label}</p>
+                            <div key={s.label} className="text-center p-2.5 rounded-md bg-lys-bg/60 border border-lys-border">
+                                <p className={`text-lg font-bold type-number ${s.textClass}`}>{s.value}</p>
+                                <p className="text-[11px] mt-0.5 text-lys-muted">{s.label}</p>
                             </div>
                         ))}
                     </div>
-                </div>
+                </Card>
             )}
         </div>
     )

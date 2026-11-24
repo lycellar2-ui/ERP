@@ -234,7 +234,7 @@ export function ReplenishmentTab() {
                     </div>
                 </div>
 
-                <div className="p-3.5 rounded-lg border bg-lys-teal-soft/60 border-lys-teal-subtle shadow-xs">
+                <div className="p-3.5 rounded-lg border bg-lys-teal-soft/60 border-tone-brand-border shadow-xs">
                     <div className="flex items-center justify-between text-xs font-semibold text-lys-primary mb-1">
                         <span>Quy Cách Điều Chuyển</span>
                         <Boxes size={15} className="text-lys-teal-strong" />

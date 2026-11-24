@@ -113,11 +113,11 @@ function CreateWarehouseModal({ open, onClose, onCreated }: {
                 ))}
 
                 <div className="flex justify-end gap-3 pt-2">
-                    <button onClick={onClose} className="px-4 py-2.5 rounded-lg text-sm font-semibold"
-                        style={{ color: '#475569', border: '1px solid #CBD5E1', background: '#F1F5F9' }}>{t.cancel}</button>
-                    <button onClick={handleSave} disabled={saving}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold shadow-md"
-                        style={{ background: '#D97706', color: '#FFFFFF' }}>
+                    <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-semibold text-lys-secondary border border-lys-border bg-lys-subtle hover:bg-lys-surface transition-colors">
+                        {t.cancel}
+                    </button>
+                    <button type="button" onClick={handleSave} disabled={saving}
+                        className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold shadow-sm bg-lys-teal-strong hover:bg-lys-teal-hover text-white disabled:opacity-50 transition-colors">
                         {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                         {saving ? t.saving : t.save}
                     </button>
@@ -425,7 +425,7 @@ function StockTable({
                                                         'inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-md truncate max-w-full transition-all cursor-pointer border',
                                                         isLocActive
                                                             ? 'bg-lys-teal-strong text-white border-lys-teal-strong shadow-2xs'
-                                                            : 'bg-slate-100 text-slate-700 border-slate-200/80 hover:bg-lys-teal-soft hover:text-lys-teal-strong hover:border-lys-teal-subtle'
+                                                            : 'bg-slate-100 text-slate-700 border-slate-200/80 hover:bg-lys-teal-soft hover:text-lys-teal-strong hover:border-tone-brand-border'
                                                     )}
                                                 >
                                                     <MapPin size={11} className="shrink-0 opacity-75" />
@@ -1488,20 +1488,20 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
     const activeModule = wmsFeatureModules.find(m => m.key === activeTab)
 
     return (
-        <div className="space-y-4 max-w-screen-2xl">
+        <div className="space-y-4 max-w-screen-2xl w-full mx-auto">
             {/* Mobile Top Header (< 768px) */}
             <div className="block md:hidden bg-white border border-slate-200 rounded-lg p-3 shadow-2xs space-y-2.5">
                 {/* Row 1: Title / Navigation & Compact Warehouse Selector */}
                 <div className="flex items-center justify-between gap-2">
                     {viewMode === 'grid' ? (
                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-lys-teal-soft border border-lys-teal-subtle flex items-center justify-center shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-lys-teal-soft border border-tone-brand-border flex items-center justify-center shrink-0">
                                 <Warehouse size={18} className="text-lys-teal-strong" />
                             </div>
                             <div>
                                 <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-1.5 leading-none">
                                     {t.pageTitle}
-                                    <span className="text-[10px] bg-lys-teal-soft text-lys-teal-strong font-bold px-2 py-0.5 rounded-full border border-lys-teal-subtle max-w-[120px] truncate inline-block align-middle">
+                                    <span className="text-[10px] bg-lys-teal-soft text-lys-teal-strong font-bold px-2 py-0.5 rounded-full border border-tone-brand-border max-w-[120px] truncate inline-block align-middle">
                                         {selectedWH ? warehouses.find(w => w.id === selectedWH)?.name ?? 'Kho' : t.allWarehousesCompact}
                                     </span>
                                 </h2>
@@ -1512,7 +1512,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                             <button
                                 onClick={() => setViewMode('grid')}
-                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle text-xs font-bold shrink-0 shadow-2xs active:scale-95 transition cursor-pointer select-none"
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-lys-teal-soft text-lys-teal-strong border border-tone-brand-border text-xs font-bold shrink-0 shadow-2xs active:scale-95 transition cursor-pointer select-none"
                             >
                                 <ArrowLeft size={14} /> {t.mobileMenuBtn}
                             </button>
@@ -1520,7 +1520,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                                 <select
                                     value={activeTab}
                                     onChange={e => handleTabChange(e.target.value as WMSTab)}
-                                    className="w-full appearance-none pl-2.5 pr-6 py-1.5 text-base sm:text-xs font-bold text-lys-teal-strong bg-lys-teal-soft border border-lys-teal-subtle rounded-lg cursor-pointer outline-none truncate active:scale-95 transition"
+                                    className="w-full appearance-none pl-2.5 pr-6 py-1.5 text-base sm:text-xs font-bold text-lys-teal-strong bg-lys-teal-soft border border-tone-brand-border rounded-lg cursor-pointer outline-none truncate active:scale-95 transition"
                                 >
                                     {wmsFeatureModules.map(m => (
                                         <option key={m.key} value={m.key} className="text-slate-900 bg-white font-medium">
@@ -1589,122 +1589,116 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                 )}
             </div>
 
-            {/* Desktop Top Header (>= 768px) */}
-            <div className="hidden md:block p-3.5 rounded-lg shadow-2xs bg-white border border-slate-200">
-                <div className="flex flex-row items-center justify-between gap-3">
-                    {/* Left: Title & Active Breadcrumb */}
-                    <div className="flex items-center gap-2.5 shrink-0">
-                        <button
-                            onClick={() => setViewMode('grid')}
-                            className="text-base font-extrabold flex items-center gap-2 hover:opacity-85 transition cursor-pointer text-slate-900"
-                            title="Về Bảng Chức Năng Kho"
-                        >
-                            <div className="w-8 h-8 rounded-lg bg-lys-teal-soft border border-lys-teal-subtle flex items-center justify-center shrink-0">
-                                <Warehouse size={18} className="text-lys-teal-strong" />
-                            </div>
-                            <span>{t.pageTitle}</span>
-                        </button>
-
-                        <Badge tone="neutral" className="text-xs font-semibold">
-                            {selectedWH ? warehouses.find(w => w.id === selectedWH)?.name ?? 'Kho' : t.allWarehousesCompact}
-                        </Badge>
-
-                        {viewMode === 'workspace' && (
-                            <div className="flex items-center gap-2 ml-1">
-                                <ChevronRight size={14} className="text-slate-400" />
-                                <div className="relative">
-                                    <select
-                                        value={activeTab}
-                                        onChange={e => handleTabChange(e.target.value as WMSTab)}
-                                        className="appearance-none pl-2.5 pr-7 py-1 text-xs font-bold text-lys-teal-strong bg-lys-teal-soft border border-lys-teal-subtle rounded-lg cursor-pointer outline-none hover:bg-lys-teal-soft/80 transition active:scale-95"
-                                    >
-                                        {wmsFeatureModules.map(m => (
-                                            <option key={m.key} value={m.key} className="text-slate-900 bg-white font-medium">
-                                                {m.title}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown size={13} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-lys-teal-strong" />
-                                </div>
-                                <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    onClick={() => setViewMode('grid')}
-                                    className="ml-1 text-xs gap-1 active:scale-95 transition-all select-none"
-                                >
-                                    <ArrowLeft size={13} /> {t.backToMenu}
-                                </Button>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Right Action Group: Warehouse Selector Dropdown, Notification Alert Toggle & Create Warehouse */}
-                    <div className="flex items-center gap-2 shrink-0">
-                        {(viewMode === 'grid' || activeTab === 'do') && (
-                            <button
-                                onClick={toggleAudioNotify}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold shadow-2xs transition-all cursor-pointer border ${
-                                    audioNotifyEnabled
-                                        ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-700 hover:bg-emerald-500/20'
-                                        : 'bg-slate-100 border-slate-300 text-slate-600 hover:bg-slate-200'
-                                }`}
-                                title={audioNotifyEnabled ? t.notifications.tooltipOn : t.notifications.tooltipOff}
-                            >
-                                {audioNotifyEnabled ? (
-                                    <>
-                                        <BellRing size={14} className="text-emerald-600 animate-pulse shrink-0" />
-                                        <span>{t.notifications.titleOn}</span>
-                                        {pendingDOCount > 0 && (
-                                            <span className="inline-block bg-emerald-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-mono font-extrabold ml-0.5 whitespace-nowrap shrink-0">
-                                                {pendingDOCount}
-                                            </span>
-                                        )}
-                                    </>
-                                ) : (
-                                    <>
-                                        <BellOff size={14} className="text-slate-400 shrink-0" />
-                                        <span>{t.notifications.titleOff}</span>
-                                    </>
-                                )}
-                            </button>
-                        )}
-
-                        <div className="relative">
-                            <select
-                                value={selectedWH ?? ''}
-                                onChange={e => {
-                                    const val = e.target.value
-                                    selectWarehouse(val || null)
-                                }}
-                                className="appearance-none pl-3 pr-8 py-1.5 rounded-lg text-xs font-semibold outline-none cursor-pointer bg-slate-50 border border-slate-300 text-slate-900 focus:border-lys-teal-strong max-w-[210px] xl:max-w-[280px] truncate"
-                            >
-                                <option value="">{t.allWarehousesCount(stats.warehouses)}</option>
-                                {warehouses.map(w => (
-                                    <option key={w.id} value={w.id}>
-                                        {w.name} {w.allowSales === false ? '[Chỉ Điều Chuyển]' : w.isDefault ? '[Mặc Định]' : ''} ({w.totalStock.toLocaleString('vi-VN')} {t.bottlesUnit})
-                                    </option>
-                                ))}
-                            </select>
-                            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500" />
-                        </div>
-
-                        {viewMode === 'grid' && (
+            {/* Desktop Top Bar (>= 768px) */}
+            <div className="hidden md:flex flex-wrap items-center justify-between gap-3">
+                {/* Left: Breadcrumb / Context */}
+                <div className="flex items-center gap-2 flex-wrap">
+                    {viewMode === 'grid' ? (
+                        <>
+                            <span className="text-[13px] text-lys-muted">{t.pageSubtitle}</span>
+                            <Badge tone="brand">
+                                {selectedWH ? warehouses.find(w => w.id === selectedWH)?.name ?? 'Kho' : t.allWarehousesCompact}
+                            </Badge>
+                        </>
+                    ) : (
+                        <>
                             <Button
                                 variant="secondary"
                                 size="sm"
-                                onClick={() => setCreateWHOpen(true)}
-                                className="gap-1.5"
+                                onClick={() => setViewMode('grid')}
+                                className="gap-1"
                             >
-                                <Plus size={14} /> {t.createWarehouseBtn}
+                                <ArrowLeft size={13} /> {t.backToMenu}
                             </Button>
-                        )}
+                            <ChevronRight size={14} className="text-lys-dim" aria-hidden />
+                            <div className="relative">
+                                <select
+                                    value={activeTab}
+                                    onChange={e => handleTabChange(e.target.value as WMSTab)}
+                                    className="appearance-none h-8 pl-2.5 pr-7 text-xs font-semibold text-lys-teal-strong bg-lys-teal-soft border border-tone-brand-border rounded-md cursor-pointer outline-none hover:bg-lys-teal-soft/80 transition"
+                                >
+                                    {wmsFeatureModules.map(m => (
+                                        <option key={m.key} value={m.key} className="text-lys-primary bg-white font-medium">
+                                            {m.title}
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown size={13} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-lys-teal-strong" />
+                            </div>
+                            <Badge tone="neutral">
+                                {selectedWH ? warehouses.find(w => w.id === selectedWH)?.name ?? 'Kho' : t.allWarehousesCompact}
+                            </Badge>
+                        </>
+                    )}
+                </div>
+
+                {/* Right Action Group: Notification Alert Toggle, Warehouse Selector & Create Warehouse */}
+                <div className="flex items-center gap-2 shrink-0">
+                    {(viewMode === 'grid' || activeTab === 'do') && (
+                        <button
+                            type="button"
+                            onClick={toggleAudioNotify}
+                            className={`flex items-center gap-1.5 h-8 px-3 rounded-md text-xs font-semibold transition-all cursor-pointer border ${
+                                audioNotifyEnabled
+                                    ? 'bg-tone-success-bg border-tone-success-border text-tone-success-fg hover:bg-emerald-100/70'
+                                    : 'bg-white border-lys-border-strong text-lys-secondary hover:text-lys-primary'
+                            }`}
+                            title={audioNotifyEnabled ? t.notifications.tooltipOn : t.notifications.tooltipOff}
+                        >
+                            {audioNotifyEnabled ? (
+                                <>
+                                    <BellRing size={13} className="text-tone-success-fg animate-pulse shrink-0" />
+                                    <span>{t.notifications.titleOn}</span>
+                                    {pendingDOCount > 0 && (
+                                        <span className="inline-block bg-tone-success-fg text-white text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold ml-0.5 whitespace-nowrap shrink-0">
+                                            {pendingDOCount}
+                                        </span>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    <BellOff size={13} className="text-lys-dim shrink-0" />
+                                    <span>{t.notifications.titleOff}</span>
+                                </>
+                            )}
+                        </button>
+                    )}
+
+                    <div className="relative">
+                        <select
+                            value={selectedWH ?? ''}
+                            onChange={e => {
+                                const val = e.target.value
+                                selectWarehouse(val || null)
+                            }}
+                            className="appearance-none h-8 pl-3 pr-8 rounded-md text-xs font-semibold outline-none cursor-pointer bg-white border border-lys-border-strong text-lys-primary focus:border-lys-teal max-w-[210px] xl:max-w-[280px] truncate"
+                        >
+                            <option value="">{t.allWarehousesCount(stats.warehouses)}</option>
+                            {warehouses.map(w => (
+                                <option key={w.id} value={w.id}>
+                                    {w.name} {w.allowSales === false ? '[Chỉ Điều Chuyển]' : w.isDefault ? '[Mặc Định]' : ''} ({w.totalStock.toLocaleString('vi-VN')} {t.bottlesUnit})
+                                </option>
+                            ))}
+                        </select>
+                        <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-lys-muted" />
                     </div>
+
+                    {viewMode === 'grid' && (
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => setCreateWHOpen(true)}
+                            className="gap-1.5"
+                        >
+                            <Plus size={14} /> {t.createWarehouseBtn}
+                        </Button>
+                    )}
                 </div>
             </div>
 
             {/* Desktop Stats Row (>= 768px, on main grid view) */}
             {viewMode === 'grid' && (
-                <div className="hidden md:grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                <StatGrid cols={6} className="hidden md:grid">
                     {statCards.map(s => (
                         <StatCard
                             key={s.label}
@@ -1713,10 +1707,9 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                             sub={s.sub}
                             icon={s.icon}
                             tone={s.tone}
-                            className="p-3 [&_.text-xl]:text-base sm:[&_.text-xl]:text-lg [&_.text-xl]:leading-tight"
                         />
                     ))}
-                </div>
+                </StatGrid>
             )}
 
             {/* View Mode 1: Central Features Menu */}
@@ -1728,7 +1721,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                             <p className="text-xs uppercase tracking-wider font-extrabold text-slate-500">
                                 {t.menuTitle}
                             </p>
-                            <span className="inline-block text-[10px] font-bold text-lys-teal-strong bg-lys-teal-soft border border-lys-teal-subtle px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
+                            <span className="inline-block text-[10px] font-bold text-lys-teal-strong bg-lys-teal-soft border border-tone-brand-border px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
                                 {t.modulesCount(wmsFeatureModules.length)}
                             </span>
                         </div>
@@ -1977,7 +1970,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-4 rounded-lg bg-white border border-slate-200 shadow-2xs">
                                     <div className="flex flex-wrap items-center gap-3">
                                         <div className="flex items-center gap-2.5">
-                                            <div className="w-9 h-9 rounded-lg bg-lys-teal-soft border border-lys-teal-subtle flex items-center justify-center shrink-0">
+                                            <div className="w-9 h-9 rounded-lg bg-lys-teal-soft border border-tone-brand-border flex items-center justify-center shrink-0">
                                                 <Package size={18} className="text-lys-teal-strong" />
                                             </div>
                                             <div>
@@ -1985,7 +1978,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                                                     <h3 className="text-sm sm:text-base font-extrabold text-slate-900">
                                                         Tồn Kho Theo SKU, Vintage & Vị Trí
                                                     </h3>
-                                                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle">
+                                                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-lys-teal-soft text-lys-teal-strong border border-tone-brand-border">
                                                         {uniqueFilteredSkus} SKU · {filteredLots.length} vị trí
                                                     </span>
                                                 </div>
@@ -2232,9 +2225,9 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                                             </div>
 
                                             {/* Row 2: Multi-dimension Filter Controls (SKU, Vintage, Location, Warehouse, WineType, Country) */}
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2.5">
                                                 {/* 1. Search Input (SKU, Product, Location, Vintage) */}
-                                                <div className="relative sm:col-span-2 lg:col-span-2">
+                                                <div className="relative sm:col-span-2 xl:col-span-2">
                                                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                                                     <input
                                                         type="text"
@@ -2366,7 +2359,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                                                     </span>
 
                                                     {skuFilter && (
-                                                        <span className="inline-flex items-center gap-1 text-[11px] font-bold font-mono px-2 py-0.5 rounded-md bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle">
+                                                        <span className="inline-flex items-center gap-1 text-[11px] font-bold font-mono px-2 py-0.5 rounded-md bg-lys-teal-soft text-lys-teal-strong border border-tone-brand-border">
                                                             SKU: {skuFilter}
                                                             <button type="button" onClick={() => setSkuFilter('')} className="hover:opacity-75 cursor-pointer"><X size={11} /></button>
                                                         </span>
@@ -2380,7 +2373,7 @@ export function WarehouseClient({ initialWarehouses, initialStats, isAdmin, canS
                                                     )}
 
                                                     {locationFilter && (
-                                                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle">
+                                                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-lys-teal-soft text-lys-teal-strong border border-tone-brand-border">
                                                             <MapPin size={10} />
                                                             Vị trí: {formatFriendlyLocationName({ locationCode: locationFilter })}
                                                             <button type="button" onClick={() => setLocationFilter('')} className="hover:opacity-75 cursor-pointer"><X size={11} /></button>

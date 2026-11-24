@@ -403,7 +403,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
                 <div className="space-y-4">
                     {/* KPI Cards for Warehouse Summary */}
                     {summaryStats && (
-                        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
                             <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs space-y-1">
                                 <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500">
                                     <span>Tổng SKU</span>
@@ -703,7 +703,7 @@ export function StockMovementTab({ warehouses, selectedWarehouseId }: { warehous
 
                     {/* Detail Summary Cards */}
                     {detailSummary && (
-                        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
                             <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
                                 <p className="text-[10px] uppercase font-bold text-slate-500">Tồn Đầu Kỳ ({formatDate(dateFrom)})</p>
                                 <p className="text-lg font-extrabold font-mono mt-1 text-amber-600">{detailSummary.openingBalance.toLocaleString('vi-VN')} chai</p>

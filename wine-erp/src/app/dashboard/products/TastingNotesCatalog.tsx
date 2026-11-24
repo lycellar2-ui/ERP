@@ -1051,7 +1051,7 @@ export function TastingNotesCatalog({
                 typeof document !== 'undefined' &&
                 createPortal(
                     <div
-                        className="fixed inset-0 z-[110] flex justify-end bg-slate-950/60 backdrop-blur-xs"
+                        className="fixed inset-0 z-[110] flex justify-end bg-slate-900/35 backdrop-blur-[2px]"
                         onClick={() => setDossierProductId(null)}
                     >
                         <div

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { DollarSign, TrendingDown, AlertCircle, Clock, CheckCircle2, ReceiptText, ArrowUpRight, ArrowDownRight, BookOpen, BarChart3, Wallet, Lock, Skull, Banknote, Table2, Search, FileCheck2, Building2, FileSpreadsheet, RefreshCw } from 'lucide-react'
+import { TrendingDown, AlertCircle, Clock, ReceiptText, ArrowUpRight, ArrowDownRight, BookOpen, BarChart3, Wallet, Lock, Skull, Banknote, Table2, Search, FileCheck2, Building2, FileSpreadsheet, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { ARRow, APRow, getARInvoices, getAPInvoices, recordARPayment, recordAPPayment } from './actions'
 import { syncKnbsTaPaymentsAction } from './actions-knbs-sync'
@@ -10,8 +10,11 @@ import { JournalEntryTab, ProfitLossTab, ExpenseTab, PeriodCloseTab, BalanceShee
 import { InvoiceReconciliationTab } from './InvoiceReconciliationTab'
 import { BankReconciliationTab } from './BankReconciliationTab'
 import { ParentPaymentImportTab } from './ParentPaymentImportTab'
-import { FilterBar } from '@/components/FilterBar'
-import { PageHeader, Pagination } from '@/components/ui'
+import {
+    PageContainer, PageHeader, StatGrid, StatCard, Card, Badge, StatusBadge, StatusTabs,
+    Button, Toolbar, SearchInput, Select, Modal, Field, Input,
+    Table, THead, TBody, Tr, Th, Td, TableMessageRow, EmptyState, Pagination,
+} from '@/components/ui'
 import { useAppLocale } from '@/lib/i18n'
 import { getFinanceLabels } from './i18n'
 
@@ -25,38 +28,19 @@ const AR_STATUS: Record<string, { label: string; labelEn: string; color: string 
     CANCELLED: { label: 'Huỷ', labelEn: 'Cancelled', color: '#64748B' },
 }
 
-function FinKpiCard({ label, value, sub, accent, icon: Icon }: {
-    label: string; value: string; sub?: string; accent: string; icon: React.FC<any>
-}) {
-    return (
-        <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: `3px solid ${accent}` }}>
-            <div className="flex items-start justify-between">
-                <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>{label}</p>
-                    <p className="text-2xl font-bold font-mono" style={{ color: '#0F172A' }}>{value}</p>
-                    {sub && <p className="text-xs mt-1" style={{ color: accent }}>{sub}</p>}
-                </div>
-                <div className="w-10 h-10 rounded-md flex items-center justify-center" style={{ background: `${accent}18` }}>
-                    <Icon size={20} style={{ color: accent }} />
-                </div>
-            </div>
-        </div>
-    )
-}
-
 function AgingBars({ buckets, isEn }: { buckets: Record<string, number>; isEn?: boolean }) {
     const total = Object.values(buckets).reduce((a, b) => a + b, 0)
     const bars = [
-        { label: isEn ? 'Current' : 'Chưa Đến Hạn', key: 'current', color: '#15803D' },
-        { label: isEn ? '1–30 Days' : '1–30 Ngày', key: 'd30', color: '#B45309' },
-        { label: isEn ? '31–60 Days' : '31–60 Ngày', key: 'd60', color: '#D4833A' },
-        { label: isEn ? '61–90 Days' : '61–90 Ngày', key: 'd90', color: '#B45309' },
-        { label: isEn ? '> 90 Days' : '> 90 Ngày', key: 'over90', color: '#B91C1C' },
+        { label: isEn ? 'Current' : 'Chưa Đến Hạn', key: 'current', barClass: 'bg-tone-success-fg', textClass: 'text-tone-success-fg' },
+        { label: isEn ? '1–30 Days' : '1–30 Ngày', key: 'd30', barClass: 'bg-tone-warning-fg', textClass: 'text-tone-warning-fg' },
+        { label: isEn ? '31–60 Days' : '31–60 Ngày', key: 'd60', barClass: 'bg-amber-600', textClass: 'text-tone-warning-fg' },
+        { label: isEn ? '61–90 Days' : '61–90 Ngày', key: 'd90', barClass: 'bg-orange-600', textClass: 'text-tone-warning-fg' },
+        { label: isEn ? '> 90 Days' : '> 90 Ngày', key: 'over90', barClass: 'bg-tone-danger-fg', textClass: 'text-tone-danger-fg' },
     ]
 
     return (
-        <div className="p-5 rounded-md" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-            <h3 className="font-semibold mb-4" style={{ color: '#0F172A' }}>
+        <Card className="p-5">
+            <h3 className="text-sm font-semibold text-lys-primary mb-4">
                 {isEn ? 'AR Aging Report – Receivables Aging Analysis' : 'AR Aging Report – Phân Tầng Công Nợ'}
             </h3>
             <div className="space-y-3">
@@ -66,93 +50,89 @@ function AgingBars({ buckets, isEn }: { buckets: Record<string, number>; isEn?: 
                     return (
                         <div key={b.key}>
                             <div className="flex justify-between mb-1">
-                                <span className="text-xs" style={{ color: '#475569' }}>{b.label}</span>
+                                <span className="text-xs text-lys-secondary">{b.label}</span>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-xs font-bold" style={{ color: '#0F172A' }}>
+                                    <span className="text-xs font-bold font-mono text-lys-primary">
                                         {formatVND(val)}
                                     </span>
-                                    <span className="text-xs w-12 text-right" style={{ color: b.color }}>{pct.toFixed(1)}%</span>
+                                    <span className={`text-xs font-mono w-12 text-right ${b.textClass}`}>{pct.toFixed(1)}%</span>
                                 </div>
                             </div>
-                            <div className="h-2 rounded-full overflow-hidden" style={{ background: '#E2E8F0' }}>
-                                <div className="h-full rounded-full transition-all duration-500"
-                                    style={{ width: `${pct}%`, background: b.color }} />
+                            <div className="h-2 rounded-full overflow-hidden bg-lys-border">
+                                <div className={`h-full rounded-full transition-all duration-500 ${b.barClass}`}
+                                    style={{ width: `${pct}%` }} />
                             </div>
                         </div>
                     )
                 })}
             </div>
-            <div className="flex justify-between pt-4 mt-4" style={{ borderTop: '1px solid #E2E8F0' }}>
-                <span className="text-sm font-semibold" style={{ color: '#475569' }}>
+            <div className="flex justify-between pt-4 mt-4 border-t border-lys-border">
+                <span className="text-sm font-semibold text-lys-secondary">
                     {isEn ? 'Total AR Outstanding' : 'Tổng AR Outstanding'}
                 </span>
-                <span className="text-sm font-bold" style={{ color: '#0891B2' }}>
+                <span className="text-sm font-bold font-mono text-lys-teal-strong">
                     {formatVND(total)}
                 </span>
             </div>
-        </div>
+        </Card>
     )
 }
 
 function ARMobileCard({ row, onPayment, isEn }: { row: ARRow; onPayment: (id: string) => void; isEn?: boolean }) {
     const st = AR_STATUS[row.status]
     return (
-        <div className={`p-3.5 rounded-lg border bg-white shadow-xs space-y-2.5 ${row.isOverdue ? 'border-rose-300' : 'border-slate-200'}`}>
+        <Card className={`p-3.5 space-y-2.5 ${row.isOverdue ? 'border-tone-danger-border' : ''}`}>
             <div className="flex items-start justify-between gap-2">
                 <div>
                     <div className="flex items-center gap-1.5">
-                        {row.isOverdue && <AlertCircle size={13} className="text-rose-600 shrink-0" />}
-                        <span className="font-mono font-bold text-xs text-[#0891B2]">{row.invoiceNo}</span>
-                        {row.soNo && <span className="text-[11px] text-slate-500">• SO: {row.soNo}</span>}
+                        {row.isOverdue && <AlertCircle size={13} className="text-tone-danger-fg shrink-0" />}
+                        <span className="font-mono font-bold text-xs text-lys-teal-strong">{row.invoiceNo}</span>
+                        {row.soNo && <span className="text-[11px] text-lys-muted">• SO: {row.soNo}</span>}
                     </div>
-                    <p className="font-semibold text-xs text-slate-900 mt-0.5">{row.customerName}</p>
-                    <p className="text-[10px] text-slate-500">{row.customerCode}</p>
+                    <p className="font-semibold text-xs text-lys-primary mt-0.5">{row.customerName}</p>
+                    <p className="text-[11px] text-lys-muted">{row.customerCode}</p>
                 </div>
                 {st && (
-                    <span
-                        className="inline-block text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0"
-                        style={{ color: st.color, background: `${st.color}18` }}
-                    >
-                        {isEn ? st.labelEn : st.label}
-                    </span>
+                    <StatusBadge
+                        status={row.status}
+                        label={isEn ? st.labelEn : st.label}
+                        toneOverrides={{ UNPAID: 'warning', OVERDUE: 'danger' }}
+                    />
                 )}
             </div>
 
-            <div className="grid grid-cols-3 gap-2 text-xs pt-1 border-t border-slate-100">
+            <div className="grid grid-cols-3 gap-2 text-xs pt-2 border-t border-lys-border">
                 <div>
-                    <span className="text-slate-400 block text-[10px]">{isEn ? 'Total' : 'Tổng HĐ'}</span>
-                    <span className="font-bold text-slate-900 text-xs">{formatVND(row.amount)}</span>
+                    <span className="text-lys-muted block text-[11px]">{isEn ? 'Total' : 'Tổng HĐ'}</span>
+                    <span className="font-bold text-lys-primary text-xs font-mono">{formatVND(row.amount)}</span>
                 </div>
                 <div>
-                    <span className="text-slate-400 block text-[10px]">{isEn ? 'Collected' : 'Đã thu'}</span>
-                    <span className="font-medium text-emerald-700 text-xs">{formatVND(row.paidAmount)}</span>
+                    <span className="text-lys-muted block text-[11px]">{isEn ? 'Collected' : 'Đã thu'}</span>
+                    <span className="font-medium text-tone-success-fg text-xs font-mono">{formatVND(row.paidAmount)}</span>
                 </div>
                 <div>
-                    <span className="text-slate-400 block text-[10px]">{isEn ? 'Remaining' : 'Còn lại'}</span>
-                    <span className={`font-bold text-xs ${row.outstanding > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
+                    <span className="text-lys-muted block text-[11px]">{isEn ? 'Remaining' : 'Còn lại'}</span>
+                    <span className={`font-bold text-xs font-mono ${row.outstanding > 0 ? 'text-tone-warning-fg' : 'text-tone-success-fg'}`}>
                         {formatVND(row.outstanding)}
                     </span>
                 </div>
             </div>
 
-            <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
+            <div className="flex items-center justify-between pt-2 border-t border-lys-border text-xs">
                 <div className="text-[11px]">
-                    <span className="text-slate-500">{isEn ? 'Due: ' : 'Hạn TT: '}</span>
-                    <span className={row.isOverdue ? 'font-bold text-rose-600' : 'text-slate-700'}>
+                    <span className="text-lys-muted">{isEn ? 'Due: ' : 'Hạn TT: '}</span>
+                    <span className={row.isOverdue ? 'font-bold text-tone-danger-fg' : 'text-lys-secondary'}>
                         {formatDate(row.dueDate)}
                         {row.isOverdue && row.daysOverdue > 0 && ` (+${row.daysOverdue}d)`}
                     </span>
                 </div>
                 {row.outstanding > 0 && row.status !== 'CANCELLED' && (
-                    <button
-                        onClick={() => onPayment(row.id)}
-                        className="px-3 py-1 text-xs font-semibold rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 transition-colors cursor-pointer"
-                    >
+                    <Button type="button" variant="secondary" size="sm" onClick={() => onPayment(row.id)}>
                         {isEn ? 'Collect' : 'Ghi Thu'}
-                    </button>
+                    </Button>
                 )}
             </div>
-        </div>
+        </Card>
     )
 }
 
@@ -165,9 +145,7 @@ function ARTable({ rows, onPayment, isEn }: { rows: ARRow[]; onPayment: (id: str
             {/* Mobile View */}
             <div className="block md:hidden space-y-3">
                 {rows.length === 0 ? (
-                    <div className="text-center py-12 text-sm bg-white rounded-md border border-slate-200" style={{ color: '#64748B' }}>
-                        {isEn ? 'No AR invoices found' : 'Không có hóa đơn nào'}
-                    </div>
+                    <Card><EmptyState title={isEn ? 'No AR invoices found' : 'Không có hóa đơn nào'} /></Card>
                 ) : (
                     rows.map(row => (
                         <ARMobileCard key={row.id} row={row} onPayment={onPayment} isEn={isEn} />
@@ -176,70 +154,66 @@ function ARTable({ rows, onPayment, isEn }: { rows: ARRow[]; onPayment: (id: str
             </div>
 
             {/* Desktop Table View */}
-            <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-                <div style={{ maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
-                    <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                        <thead>
-                            <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0, zIndex: 10 }}>
-                                {headers.map(h => (
-                                    <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {rows.length === 0 ? (
-                                <tr><td colSpan={9} className="text-center py-12 text-sm" style={{ color: '#64748B' }}>
-                                    {isEn ? 'No AR invoices found' : 'Không có hóa đơn nào'}
-                                </td></tr>
-                            ) : rows.map(row => (
-                                <tr key={row.id}
-                                    className={`transition-colors hover:bg-[#0891B2]/4 ${row.isOverdue ? 'bg-[#B91C1C]/4' : ''}`}
-                                    style={{ borderBottom: '1px solid #E2E8F0' }}
-                                >
-                                    <td className="px-3 py-3">
-                                        <div className="flex items-center gap-1.5">
-                                            {row.isOverdue && <AlertCircle size={12} style={{ color: '#B91C1C' }} />}
-                                            <span className="text-xs font-bold" style={{ color: '#0891B2' }}>{row.invoiceNo}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-3 py-3">
-                                        <p className="text-sm font-medium" style={{ color: '#0F172A' }}>{row.customerName}</p>
-                                        <p className="text-xs" style={{ color: '#64748B' }}>{row.customerCode}</p>
-                                    </td>
-                                    <td className="px-3 py-3 text-xs" style={{ color: '#475569' }}>{row.soNo ?? '–'}</td>
-                                    <td className="px-3 py-3 text-sm font-bold" style={{ color: '#0F172A' }}>{formatVND(row.amount)}</td>
-                                    <td className="px-3 py-3 text-sm" style={{ color: '#15803D' }}>{formatVND(row.paidAmount)}</td>
-                                    <td className="px-3 py-3 text-sm font-bold" style={{ color: row.outstanding > 0 ? '#B45309' : '#15803D' }}>
-                                        {formatVND(row.outstanding)}
-                                    </td>
-                                    <td className="px-3 py-3 text-xs" style={{ color: row.isOverdue ? '#B91C1C' : '#475569' }}>
-                                        {formatDate(row.dueDate)}
-                                        {row.isOverdue && row.daysOverdue > 0 && (
-                                            <p className="font-bold" style={{ color: '#B91C1C' }}>+{row.daysOverdue}d</p>
-                                        )}
-                                    </td>
-                                    <td className="px-3 py-3">
-                                        {AR_STATUS[row.status] && (
-                                            <span className="inline-block text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap shrink-0"
-                                                style={{ color: AR_STATUS[row.status].color, background: `${AR_STATUS[row.status].color}18` }}>
-                                                {isEn ? AR_STATUS[row.status].labelEn : AR_STATUS[row.status].label}
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td className="px-3 py-3">
-                                        {row.outstanding > 0 && row.status !== 'CANCELLED' && (
-                                            <button onClick={() => onPayment(row.id)}
-                                                className="px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer rounded bg-[#15803D]/15 hover:bg-[#15803D]/25 text-[#15803D] border border-[#15803D]/30"
-                                            >
-                                                {isEn ? 'Collect' : 'Ghi Thu'}
-                                            </button>
-                                        )}
-                                    </td>
-                                </tr>
+            <div className="hidden md:block [&>div]:max-h-[calc(100vh-420px)]">
+                <Table>
+                    <THead>
+                        <tr>
+                            {headers.map((h, i) => (
+                                <Th key={h || 'actions'} align={i >= 3 && i <= 5 ? 'right' : i === 8 ? 'right' : 'left'}>{h}</Th>
                             ))}
-                        </tbody>
-                    </table>
-                </div>
+                        </tr>
+                    </THead>
+                    <TBody>
+                        {rows.length === 0 ? (
+                            <TableMessageRow colSpan={9}>
+                                <EmptyState title={isEn ? 'No AR invoices found' : 'Không có hóa đơn nào'} />
+                            </TableMessageRow>
+                        ) : rows.map(row => (
+                            <Tr key={row.id} className={row.isOverdue ? 'bg-tone-danger-bg/40' : undefined}>
+                                <Td>
+                                    <div className="flex items-center gap-1.5">
+                                        {row.isOverdue && <AlertCircle size={13} className="text-tone-danger-fg shrink-0" />}
+                                        <span className="text-xs font-bold font-mono text-lys-teal-strong">{row.invoiceNo}</span>
+                                    </div>
+                                </Td>
+                                <Td>
+                                    <p className="text-[13px] font-medium text-lys-primary">{row.customerName}</p>
+                                    <p className="text-[11px] text-lys-muted">{row.customerCode}</p>
+                                </Td>
+                                <Td className="text-xs text-lys-secondary font-mono">{row.soNo ?? '–'}</Td>
+                                <Td align="right" className="font-bold text-lys-primary">{formatVND(row.amount)}</Td>
+                                <Td align="right" className="text-tone-success-fg">{formatVND(row.paidAmount)}</Td>
+                                <Td align="right" className={`font-bold ${row.outstanding > 0 ? 'text-tone-warning-fg' : 'text-tone-success-fg'}`}>
+                                    {formatVND(row.outstanding)}
+                                </Td>
+                                <Td className={`text-xs ${row.isOverdue ? 'text-tone-danger-fg' : 'text-lys-secondary'}`}>
+                                    {formatDate(row.dueDate)}
+                                    {row.isOverdue && row.daysOverdue > 0 && (
+                                        <p className="text-[11px] font-bold text-tone-danger-fg">+{row.daysOverdue}d</p>
+                                    )}
+                                </Td>
+                                <Td>
+                                    {AR_STATUS[row.status] && (
+                                        <StatusBadge
+                                            status={row.status}
+                                            label={isEn ? AR_STATUS[row.status].labelEn : AR_STATUS[row.status].label}
+                                            toneOverrides={{ UNPAID: 'warning', OVERDUE: 'danger' }}
+                                        />
+                                    )}
+                                </Td>
+                                <Td align="right">
+                                    {row.outstanding > 0 && row.status !== 'CANCELLED' && (
+                                        <button type="button" onClick={() => onPayment(row.id)}
+                                            className="px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer rounded-md bg-tone-success-bg hover:bg-emerald-100 text-tone-success-fg border border-tone-success-border"
+                                        >
+                                            {isEn ? 'Collect' : 'Ghi Thu'}
+                                        </button>
+                                    )}
+                                </Td>
+                            </Tr>
+                        ))}
+                    </TBody>
+                </Table>
             </div>
         </div>
     )
@@ -248,69 +222,61 @@ function ARTable({ rows, onPayment, isEn }: { rows: ARRow[]; onPayment: (id: str
 function APMobileCard({ row, onPayment, isEn }: { row: APRow; onPayment: (id: string, outstanding: number) => void; isEn?: boolean }) {
     const isMultiCurrency = row.currency !== 'VND'
     const fmtFx = (val: number) => `${row.currency === 'USD' ? '$' : row.currency === 'EUR' ? '€' : row.currency + ' '}${val.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
+    const apTone = row.status === 'PAID' ? 'success' : row.status === 'PARTIALLY_PAID' ? 'info' : row.isOverdue ? 'danger' : 'warning'
+    const apLabel = row.status === 'PAID'
+        ? (isEn ? 'Paid' : 'Đã Trả')
+        : row.status === 'PARTIALLY_PAID'
+        ? (isEn ? 'Partially Paid' : 'Trả 1 Phần')
+        : row.isOverdue
+        ? (isEn ? 'Overdue' : 'Quá Hạn')
+        : (isEn ? 'Unpaid' : 'Chưa Trả')
 
     return (
-        <div className={`p-3.5 rounded-lg border bg-white shadow-xs space-y-2.5 ${row.isOverdue ? 'border-rose-300' : 'border-slate-200'}`}>
+        <Card className={`p-3.5 space-y-2.5 ${row.isOverdue ? 'border-tone-danger-border' : ''}`}>
             <div className="flex items-start justify-between gap-2">
                 <div>
                     <div className="flex items-center gap-1.5">
-                        {row.isOverdue && <AlertCircle size={13} className="text-rose-600 shrink-0" />}
-                        <span className="font-mono font-bold text-xs text-[#0891B2]">{row.invoiceNo}</span>
-                        {row.poNo && <span className="text-[11px] text-slate-500">• PO: {row.poNo}</span>}
+                        {row.isOverdue && <AlertCircle size={13} className="text-tone-danger-fg shrink-0" />}
+                        <span className="font-mono font-bold text-xs text-lys-teal-strong">{row.invoiceNo}</span>
+                        {row.poNo && <span className="text-[11px] text-lys-muted">• PO: {row.poNo}</span>}
                     </div>
-                    <p className="font-semibold text-xs text-slate-900 mt-0.5">{row.supplierName}</p>
-                    <p className="text-[10px] text-slate-500">{row.supplierCode}</p>
+                    <p className="font-semibold text-xs text-lys-primary mt-0.5">{row.supplierName}</p>
+                    <p className="text-[11px] text-lys-muted">{row.supplierCode}</p>
                 </div>
-                <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0 ${
-                    row.status === 'PAID' ? 'bg-emerald-100 text-emerald-800' :
-                    row.status === 'PARTIALLY_PAID' ? 'bg-blue-100 text-blue-800' :
-                    row.isOverdue ? 'bg-rose-100 text-rose-800' :
-                    'bg-amber-100 text-amber-800'
-                }`}>
-                    {row.status === 'PAID'
-                        ? (isEn ? 'Paid' : 'Đã Trả')
-                        : row.status === 'PARTIALLY_PAID'
-                        ? (isEn ? 'Partially Paid' : 'Trả 1 Phần')
-                        : row.isOverdue
-                        ? (isEn ? 'Overdue' : 'Quá Hạn')
-                        : (isEn ? 'Unpaid' : 'Chưa Trả')}
-                </span>
+                <Badge tone={apTone}>{apLabel}</Badge>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100">
+            <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-lys-border">
                 <div>
-                    <span className="text-slate-400 block text-[10px]">{isEn ? 'Invoice Amount' : 'Giá trị hóa đơn'}</span>
-                    <p className="font-bold text-slate-900 text-xs">{isMultiCurrency ? fmtFx(row.amount) : formatVND(row.amount)}</p>
-                    {isMultiCurrency && <p className="text-[10px] text-slate-500">≈ {formatVND(row.amountVND)}</p>}
+                    <span className="text-lys-muted block text-[11px]">{isEn ? 'Invoice Amount' : 'Giá trị hóa đơn'}</span>
+                    <p className="font-bold text-lys-primary text-xs font-mono">{isMultiCurrency ? fmtFx(row.amount) : formatVND(row.amount)}</p>
+                    {isMultiCurrency && <p className="text-[11px] text-lys-muted font-mono">≈ {formatVND(row.amountVND)}</p>}
                 </div>
                 <div>
-                    <span className="text-slate-400 block text-[10px]">{isEn ? 'Remaining Payable' : 'Còn phải trả'}</span>
-                    <p className={`font-bold text-xs ${row.outstanding > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
+                    <span className="text-lys-muted block text-[11px]">{isEn ? 'Remaining Payable' : 'Còn phải trả'}</span>
+                    <p className={`font-bold text-xs font-mono ${row.outstanding > 0 ? 'text-tone-warning-fg' : 'text-tone-success-fg'}`}>
                         {isMultiCurrency ? fmtFx(row.outstanding) : formatVND(row.outstanding)}
                     </p>
                     {isMultiCurrency && row.outstanding > 0 && (
-                        <p className="text-[10px] text-slate-500">≈ {formatVND(row.outstandingVND)}</p>
+                        <p className="text-[11px] text-lys-muted font-mono">≈ {formatVND(row.outstandingVND)}</p>
                     )}
                 </div>
             </div>
 
-            <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
+            <div className="flex items-center justify-between pt-2 border-t border-lys-border text-xs">
                 <div className="text-[11px]">
-                    <span className="text-slate-500">{isEn ? 'Due: ' : 'Hạn TT: '}</span>
-                    <span className={row.isOverdue ? 'font-bold text-rose-600' : 'text-slate-700'}>
+                    <span className="text-lys-muted">{isEn ? 'Due: ' : 'Hạn TT: '}</span>
+                    <span className={row.isOverdue ? 'font-bold text-tone-danger-fg' : 'text-lys-secondary'}>
                         {formatDate(row.dueDate)}
                     </span>
                 </div>
                 {row.outstanding > 0 && (
-                    <button
-                        onClick={() => onPayment(row.id, row.outstanding)}
-                        className="px-3 py-1 text-xs font-semibold rounded bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 transition-colors cursor-pointer"
-                    >
+                    <Button type="button" variant="secondary" size="sm" onClick={() => onPayment(row.id, row.outstanding)}>
                         {isEn ? 'Pay' : 'Ghi Trả'}
-                    </button>
+                    </Button>
                 )}
             </div>
-        </div>
+        </Card>
     )
 }
 
@@ -471,112 +437,117 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
         { key: 'baddebt', label: L.tabBadDebt, icon: Skull, group: 'acct' },
     ]
 
+    const opsTabs = tabs.filter(t => t.group === 'ops')
+    const acctTabs = tabs.filter(t => t.group === 'acct')
+    const activeGroup: 'ops' | 'acct' = tabs.find(t => t.key === tab)?.group ?? 'ops'
+
     const apHeaders = isEn
         ? ['Invoice No.', 'Supplier', 'PO', 'Amount', 'FX Rate', 'Remaining', 'Due Date', 'Status', '']
         : ['Số HĐ', 'Nhà Cung Cấp', 'PO', 'Giá Trị', 'Tỷ Giá', 'Còn Lại', 'Hạn TT', 'Trạng Thái', '']
 
     return (
-        <div className="space-y-6 max-w-screen-2xl">
+        <PageContainer>
             {/* Header */}
             <PageHeader
-                title={L.headerTitle}
                 description={L.headerSubtitle}
                 actions={
-                    <div className="flex flex-wrap items-center gap-2.5">
-                        <button
-                            onClick={handleKnbsSync}
-                            disabled={knbsSyncing}
-                            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md transition-colors disabled:opacity-60"
-                            style={{
-                                background: '#0891B2',
-                                color: '#FFFFFF',
-                            }}
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Badge
+                            tone="warning"
+                            title={isEn ? 'Export GL entries → Accounting SW' : 'Xuất bút toán → Phần mềm kế toán'}
                         >
-                            <RefreshCw size={14} className={knbsSyncing ? 'animate-spin' : ''} />
+                            Export-Only
+                        </Badge>
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            loading={knbsSyncing}
+                            onClick={handleKnbsSync}
+                        >
+                            {!knbsSyncing && <RefreshCw size={14} />}
                             {knbsSyncing
                                 ? (isEn ? 'Syncing KNBS...' : 'Đang đồng bộ KNBS...')
                                 : (isEn ? 'Sync KNBS (Thang An)' : 'Đồng bộ KNBS (Thắng Ân)')}
-                        </button>
-                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-amber-50 border border-amber-200">
-                            <div className="w-2 h-2 rounded-full bg-amber-600" />
-                            <div>
-                                <p className="text-xs font-bold text-amber-800">Export-Only</p>
-                                <p className="text-[10px] text-slate-500">
-                                    {isEn ? 'Export GL entries → Accounting SW' : 'Xuất bút toán → PM kế toán'}
-                                </p>
-                            </div>
-                        </div>
+                        </Button>
                     </div>
                 }
             />
 
             {/* KPIs */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                <FinKpiCard label={L.tabAr} value={`₫${(stats.arTotal / 1e9).toFixed(2)}T`} accent="#0E7490" icon={ArrowUpRight} />
-                <FinKpiCard label={isEn ? 'AR Overdue' : 'AR Quá Hạn'} value={`₫${(stats.arOverdue / 1e6).toFixed(0)}M`} sub={`${stats.arOverdueCount} ${isEn ? 'invoices' : 'hóa đơn'}`} accent="#B91C1C" icon={AlertCircle} />
-                <FinKpiCard label={L.tabAp} value={`₫${(stats.apTotal / 1e9).toFixed(2)}T`} accent="#B45309" icon={ArrowDownRight} />
-                <FinKpiCard label={isEn ? 'AP Overdue' : 'AP Quá Hạn'} value={`₫${(stats.apOverdue / 1e6).toFixed(0)}M`} sub={`${stats.apOverdueCount} ${isEn ? 'invoices' : 'hóa đơn'}`} accent="#B45309" icon={AlertCircle} />
-                <FinKpiCard label={isEn ? 'Monthly Revenue' : 'Doanh Thu Tháng'} value={`₫${(stats.monthRevenue / 1e9).toFixed(2)}T`} accent="#15803D" icon={TrendingDown} />
-            </div>
+            <StatGrid cols={5}>
+                <StatCard label={L.tabAr} value={`₫${(stats.arTotal / 1e9).toFixed(2)}T`} tone="brand" icon={ArrowUpRight} />
+                <StatCard label={isEn ? 'AR Overdue' : 'AR Quá Hạn'} value={`₫${(stats.arOverdue / 1e6).toFixed(0)}M`} sub={`${stats.arOverdueCount} ${isEn ? 'invoices' : 'hóa đơn'}`} tone="danger" icon={AlertCircle} />
+                <StatCard label={L.tabAp} value={`₫${(stats.apTotal / 1e9).toFixed(2)}T`} tone="warning" icon={ArrowDownRight} />
+                <StatCard label={isEn ? 'AP Overdue' : 'AP Quá Hạn'} value={`₫${(stats.apOverdue / 1e6).toFixed(0)}M`} sub={`${stats.apOverdueCount} ${isEn ? 'invoices' : 'hóa đơn'}`} tone="warning" icon={AlertCircle} />
+                <StatCard label={isEn ? 'Monthly Revenue' : 'Doanh Thu Tháng'} value={`₫${(stats.monthRevenue / 1e9).toFixed(2)}T`} tone="success" icon={TrendingDown} />
+            </StatGrid>
 
-            {/* Tabs — 2 groups: Operational | Accounting */}
-            <div className="overflow-x-auto pb-1" style={{ scrollbarWidth: 'thin', scrollbarColor: '#E2E8F0 transparent' }}>
-                <div className="flex items-center gap-1 p-1 rounded-md" style={{ background: '#F1F5F9', border: '1px solid #E2E8F0', width: 'max-content', minWidth: '100%' }}>
-                    {/* Group: Operational */}
-                    <span className="text-xs font-bold uppercase tracking-wider px-2" style={{ color: '#64748B' }}>
-                        {isEn ? 'Operations' : 'Vận hành'}
-                    </span>
-                    {tabs.filter(t => t.group === 'ops').map(t => {
-                        const Icon = t.icon
-                        return (
-                            <button key={t.key} onClick={() => setTab(t.key)}
-                                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-all rounded whitespace-nowrap"
-                                style={{
-                                    background: tab === t.key ? '#FFFFFF' : 'transparent',
-                                    color: tab === t.key ? '#0E7490' : '#64748B',
-                                }}>
-                                <Icon size={13} />
-                                {t.label}
-                            </button>
-                        )
-                    })}
-                    {/* Divider */}
-                    <div className="w-px h-6 mx-1" style={{ background: '#E2E8F0' }} />
-                    {/* Group: Accounting */}
-                    <span className="text-xs font-bold uppercase tracking-wider px-2" style={{ color: '#64748B' }}>
-                        {isEn ? 'Accounting' : 'Kế toán'}
-                    </span>
-                    {tabs.filter(t => t.group === 'acct').map(t => {
-                        const Icon = t.icon
-                        return (
-                            <button key={t.key} onClick={() => setTab(t.key)}
-                                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-all rounded whitespace-nowrap"
-                                style={{
-                                    background: tab === t.key ? '#FFFFFF' : 'transparent',
-                                    color: tab === t.key ? '#B45309' : '#64748B',
-                                }}>
-                                <Icon size={13} />
-                                {t.label}
-                            </button>
-                        )
-                    })}
+            {/* 2-Tier Navigation: Domain Switch + Group Tabs */}
+            <div className="space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="inline-flex items-center p-0.5 rounded-lg bg-lys-subtle border border-lys-border">
+                        <button
+                            type="button"
+                            onClick={() => { if (activeGroup !== 'ops') setTab('ar') }}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md transition-all cursor-pointer ${
+                                activeGroup === 'ops'
+                                    ? 'bg-white text-lys-teal-strong font-semibold shadow-xs'
+                                    : 'text-lys-muted hover:text-lys-primary font-medium'
+                            }`}
+                        >
+                            <span>{isEn ? 'Operations & AR/AP' : 'Vận hành & Công nợ'}</span>
+                            <span className="text-[11px] opacity-75">({opsTabs.length})</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => { if (activeGroup !== 'acct') setTab('journal') }}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md transition-all cursor-pointer ${
+                                activeGroup === 'acct'
+                                    ? 'bg-white text-lys-teal-strong font-semibold shadow-xs'
+                                    : 'text-lys-muted hover:text-lys-primary font-medium'
+                            }`}
+                        >
+                            <span>{isEn ? 'Accounting & Reports' : 'Kế toán & Báo cáo'}</span>
+                            <span className="text-[11px] opacity-75">({acctTabs.length})</span>
+                        </button>
+                    </div>
                 </div>
+                <StatusTabs
+                    items={(activeGroup === 'ops' ? opsTabs : acctTabs).map(t => ({ value: t.key, label: t.label, icon: t.icon }))}
+                    value={tab}
+                    onChange={setTab}
+                />
             </div>
 
             {/* Content */}
             {tab === 'ar' && (
                 <div className="space-y-3">
-                    <FilterBar
-                        searchValue={arSearch}
-                        searchPlaceholder={L.searchArPlaceholder}
-                        onSearchChange={v => { setArSearch(v); setArPage(1); reloadAR(v, undefined, 1) }}
-                        filters={[{
-                            key: 'arStatus', label: L.allStatuses,
-                            options: Object.entries(AR_STATUS).map(([k, v]) => ({ value: k, label: isEn ? v.labelEn : v.label })),
-                            value: arStatus,
-                            onChange: v => { setArStatus(v); setArPage(1); reloadAR(undefined, v, 1) },
-                        }]}
-                        onClearAll={() => { setArSearch(''); setArStatus(''); setArPage(1); reloadAR('', '', 1) }}
+                    <Toolbar
+                        left={
+                            <div className="flex flex-wrap items-center gap-2">
+                                <SearchInput
+                                    value={arSearch}
+                                    onChange={e => { const v = e.target.value; setArSearch(v); setArPage(1); reloadAR(v, undefined, 1) }}
+                                    placeholder={L.searchArPlaceholder}
+                                    className="w-full sm:w-72"
+                                />
+                                <Select
+                                    value={arStatus}
+                                    onChange={e => { const v = e.target.value; setArStatus(v); setArPage(1); reloadAR(undefined, v, 1) }}
+                                    className="w-full sm:w-44"
+                                >
+                                    <option value="">{L.allStatuses}</option>
+                                    {Object.entries(AR_STATUS).map(([k, v]) => (
+                                        <option key={k} value={k}>{isEn ? v.labelEn : v.label}</option>
+                                    ))}
+                                </Select>
+                            </div>
+                        }
+                        right={(arSearch || arStatus) ? (
+                            <Button variant="ghost" size="sm" onClick={() => { setArSearch(''); setArStatus(''); setArPage(1); reloadAR('', '', 1) }}>
+                                {isEn ? 'Clear' : 'Xóa lọc'}
+                            </Button>
+                        ) : undefined}
                     />
                     <ARTable rows={arRows} onPayment={setPaymentModal} isEn={isEn} />
                     <Pagination page={arPage} pageSize={25} total={arTotal}
@@ -586,28 +557,37 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
 
             {tab === 'ap' && (
                 <div className="space-y-3">
-                    <FilterBar
-                        searchValue={apSearch}
-                        searchPlaceholder={L.searchApPlaceholder}
-                        onSearchChange={v => { setApSearch(v); setApPage(1); reloadAP(v, undefined, 1) }}
-                        filters={[{
-                            key: 'apStatus', label: L.allStatuses,
-                            options: [
-                                { value: 'UNPAID', label: L.apStatusUnpaid },
-                                { value: 'PARTIALLY_PAID', label: L.apStatusPartial },
-                                { value: 'PAID', label: L.apStatusPaid },
-                            ],
-                            value: apStatus,
-                            onChange: v => { setApStatus(v); setApPage(1); reloadAP(undefined, v, 1) },
-                        }]}
-                        onClearAll={() => { setApSearch(''); setApStatus(''); setApPage(1); reloadAP('', '', 1) }}
+                    <Toolbar
+                        left={
+                            <div className="flex flex-wrap items-center gap-2">
+                                <SearchInput
+                                    value={apSearch}
+                                    onChange={e => { const v = e.target.value; setApSearch(v); setApPage(1); reloadAP(v, undefined, 1) }}
+                                    placeholder={L.searchApPlaceholder}
+                                    className="w-full sm:w-72"
+                                />
+                                <Select
+                                    value={apStatus}
+                                    onChange={e => { const v = e.target.value; setApStatus(v); setApPage(1); reloadAP(undefined, v, 1) }}
+                                    className="w-full sm:w-44"
+                                >
+                                    <option value="">{L.allStatuses}</option>
+                                    <option value="UNPAID">{L.apStatusUnpaid}</option>
+                                    <option value="PARTIALLY_PAID">{L.apStatusPartial}</option>
+                                    <option value="PAID">{L.apStatusPaid}</option>
+                                </Select>
+                            </div>
+                        }
+                        right={(apSearch || apStatus) ? (
+                            <Button variant="ghost" size="sm" onClick={() => { setApSearch(''); setApStatus(''); setApPage(1); reloadAP('', '', 1) }}>
+                                {isEn ? 'Clear' : 'Xóa lọc'}
+                            </Button>
+                        ) : undefined}
                     />
                     {/* Mobile AP Cards */}
                     <div className="block md:hidden space-y-3">
                         {apRows.length === 0 ? (
-                            <div className="text-center py-12 text-sm bg-white rounded-md border border-slate-200" style={{ color: '#64748B' }}>
-                                {L.emptyApTitle}
-                            </div>
+                            <Card><EmptyState title={L.emptyApTitle} /></Card>
                         ) : (
                             apRows.map(row => (
                                 <APMobileCard
@@ -624,91 +604,84 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                     </div>
 
                     {/* Desktop AP Table */}
-                    <div className="hidden md:block rounded-md overflow-hidden" style={{ border: '1px solid #E2E8F0' }}>
-                        <div style={{ maxHeight: 'calc(100vh - 420px)', overflowY: 'auto' }}>
-                            <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                                <thead>
-                                    <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0, zIndex: 10 }}>
-                                        {apHeaders.map(h => (
-                                            <th key={h} className="px-3 py-3 text-xs uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>{h}</th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {apRows.length === 0 ? (
-                                        <tr><td colSpan={9} className="text-center py-12 text-sm" style={{ color: '#64748B' }}>{L.emptyApTitle}</td></tr>
-                                    ) : apRows.map(row => {
-                                        const isMultiCurrency = row.currency !== 'VND'
-                                        const fmtFx = (val: number) => `${row.currency === 'USD' ? '$' : row.currency === 'EUR' ? '€' : row.currency + ' '}${val.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
-                                        return (
-                                            <tr key={row.id}
-                                                className={`transition-colors hover:bg-[#0891B2]/4 ${row.isOverdue ? 'bg-[#B91C1C]/4' : ''}`}
-                                                style={{ borderBottom: '1px solid #E2E8F0' }}
-                                            >
-                                                <td className="px-3 py-3 text-xs font-bold" style={{ color: '#0891B2' }}>{row.invoiceNo}</td>
-                                                <td className="px-3 py-3">
-                                                    <p className="text-sm font-medium" style={{ color: '#0F172A' }}>{row.supplierName}</p>
-                                                    <p className="text-xs" style={{ color: '#64748B' }}>{row.supplierCode}</p>
-                                                </td>
-                                                <td className="px-3 py-3 text-xs" style={{ color: '#475569' }}>{row.poNo ?? '–'}</td>
-                                                <td className="px-3 py-3">
-                                                    <p className="text-sm font-bold" style={{ color: '#0F172A' }}>
-                                                        {isMultiCurrency ? fmtFx(row.amount) : formatVND(row.amount)}
+                    <div className="hidden md:block [&>div]:max-h-[calc(100vh-420px)]">
+                        <Table>
+                            <THead>
+                                <tr>
+                                    {apHeaders.map((h, i) => (
+                                        <Th key={h || 'actions'} align={i === 3 || i === 5 || i === 8 ? 'right' : 'left'}>{h}</Th>
+                                    ))}
+                                </tr>
+                            </THead>
+                            <TBody>
+                                {apRows.length === 0 ? (
+                                    <TableMessageRow colSpan={9}>
+                                        <EmptyState title={L.emptyApTitle} />
+                                    </TableMessageRow>
+                                ) : apRows.map(row => {
+                                    const isMultiCurrency = row.currency !== 'VND'
+                                    const fmtFx = (val: number) => `${row.currency === 'USD' ? '$' : row.currency === 'EUR' ? '€' : row.currency + ' '}${val.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
+                                    const apTone = row.status === 'PAID' ? 'success' : row.status === 'PARTIALLY_PAID' ? 'info' : row.isOverdue ? 'danger' : 'warning'
+                                    const apLabel = row.status === 'PAID'
+                                        ? L.apStatusPaid
+                                        : row.status === 'PARTIALLY_PAID'
+                                        ? L.apStatusPartial
+                                        : row.isOverdue
+                                        ? L.apStatusOverdue
+                                        : L.apStatusUnpaid
+                                    return (
+                                        <Tr key={row.id} className={row.isOverdue ? 'bg-tone-danger-bg/40' : undefined}>
+                                            <Td className="text-xs font-bold font-mono text-lys-teal-strong">{row.invoiceNo}</Td>
+                                            <Td>
+                                                <p className="text-[13px] font-medium text-lys-primary">{row.supplierName}</p>
+                                                <p className="text-[11px] text-lys-muted">{row.supplierCode}</p>
+                                            </Td>
+                                            <Td className="text-xs text-lys-secondary font-mono">{row.poNo ?? '–'}</Td>
+                                            <Td align="right">
+                                                <p className="text-[13px] font-bold text-lys-primary font-mono">
+                                                    {isMultiCurrency ? fmtFx(row.amount) : formatVND(row.amount)}
+                                                </p>
+                                                {isMultiCurrency && (
+                                                    <p className="text-[11px] text-lys-muted font-mono">
+                                                        ≈ {formatVND(row.amountVND)}
                                                     </p>
-                                                    {isMultiCurrency && (
-                                                        <p className="text-xs" style={{ color: '#64748B' }}>
-                                                             ≈ {formatVND(row.amountVND)}
-                                                        </p>
-                                                    )}
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    <span className="text-xs font-bold" style={{ color: '#B45309' }}>{row.currency}</span>
-                                                    {isMultiCurrency && (
-                                                        <p className="text-xs" style={{ color: '#64748B' }}>
-                                                            ×{row.exchangeRate.toLocaleString('vi-VN')}
-                                                        </p>
-                                                    )}
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    <p className="text-sm font-bold" style={{ color: row.outstanding > 0 ? '#B45309' : '#15803D' }}>
-                                                        {isMultiCurrency ? fmtFx(row.outstanding) : formatVND(row.outstanding)}
+                                                )}
+                                            </Td>
+                                            <Td>
+                                                <span className="text-xs font-bold text-tone-warning-fg">{row.currency}</span>
+                                                {isMultiCurrency && (
+                                                    <p className="text-[11px] text-lys-muted font-mono">
+                                                        ×{row.exchangeRate.toLocaleString('vi-VN')}
                                                     </p>
-                                                    {isMultiCurrency && row.outstanding > 0 && (
-                                                        <p className="text-xs" style={{ color: '#64748B' }}>
-                                                             ≈ {formatVND(row.outstandingVND)}
-                                                        </p>
-                                                    )}
-                                                </td>
-                                                <td className="px-3 py-3 text-xs" style={{ color: row.isOverdue ? '#B91C1C' : '#475569' }}>{formatDate(row.dueDate)}</td>
-                                                <td className="px-3 py-3">
-                                                    <span className="inline-block text-xs px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
-                                                        style={{
-                                                            background: row.status === 'PAID' ? 'rgba(21,128,61,0.15)' : row.isOverdue ? 'rgba(185,28,28,0.15)' : 'rgba(180,83,9,0.15)',
-                                                            color: row.status === 'PAID' ? '#15803D' : row.isOverdue ? '#B91C1C' : '#B45309',
-                                                        }}>
-                                                        {row.status === 'PAID'
-                                                            ? L.apStatusPaid
-                                                            : row.status === 'PARTIALLY_PAID'
-                                                            ? L.apStatusPartial
-                                                            : row.isOverdue
-                                                            ? L.apStatusOverdue
-                                                            : L.apStatusUnpaid}
-                                                    </span>
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    {row.outstanding > 0 && (
-                                                        <button onClick={() => { setApPaymentModal(row.id); setPayAmount(String(Math.round(row.outstanding))); }}
-                                                            className="px-2.5 py-1 text-xs font-semibold cursor-pointer rounded bg-[#B45309]/15 hover:bg-[#B45309]/25 text-[#B45309] border border-[#B45309]/30">
-                                                            {isEn ? 'Pay' : 'Ghi Trả'}
-                                                        </button>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        )
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
+                                                )}
+                                            </Td>
+                                            <Td align="right">
+                                                <p className={`text-[13px] font-bold font-mono ${row.outstanding > 0 ? 'text-tone-warning-fg' : 'text-tone-success-fg'}`}>
+                                                    {isMultiCurrency ? fmtFx(row.outstanding) : formatVND(row.outstanding)}
+                                                </p>
+                                                {isMultiCurrency && row.outstanding > 0 && (
+                                                    <p className="text-[11px] text-lys-muted font-mono">
+                                                        ≈ {formatVND(row.outstandingVND)}
+                                                    </p>
+                                                )}
+                                            </Td>
+                                            <Td className={`text-xs ${row.isOverdue ? 'text-tone-danger-fg font-semibold' : 'text-lys-secondary'}`}>
+                                                {formatDate(row.dueDate)}
+                                            </Td>
+                                            <Td><Badge tone={apTone}>{apLabel}</Badge></Td>
+                                            <Td align="right">
+                                                {row.outstanding > 0 && (
+                                                    <button type="button" onClick={() => { setApPaymentModal(row.id); setPayAmount(String(Math.round(row.outstanding))); }}
+                                                        className="px-2.5 py-1 text-xs font-semibold cursor-pointer rounded-md bg-tone-warning-bg hover:bg-amber-100 text-tone-warning-fg border border-tone-warning-border">
+                                                        {isEn ? 'Pay' : 'Ghi Trả'}
+                                                    </button>
+                                                )}
+                                            </Td>
+                                        </Tr>
+                                    )
+                                })}
+                            </TBody>
+                        </Table>
                     </div>
                     <Pagination page={apPage} pageSize={25} total={apTotal}
                         onPageChange={p => { setApPage(p); reloadAP(undefined, undefined, p) }} />
@@ -718,7 +691,7 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
             {tab === 'aging' && (
                 <div className="space-y-3">
                     <div className="flex justify-end">
-                        <button onClick={async () => {
+                        <Button variant="secondary" size="sm" onClick={async () => {
                             try {
                                 const { exportARAgingExcel } = await import('./actions')
                                 const base64 = await exportARAgingExcel()
@@ -730,10 +703,9 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
                                 URL.revokeObjectURL(url)
                                 toast.success(isEn ? 'Exported AR Aging Excel' : 'Đã xuất AR Aging Excel')
                             } catch { toast.error(isEn ? 'Failed to export Excel' : 'Lỗi xuất Excel') }
-                        }} className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-md font-semibold"
-                            style={{ border: '1px solid #E2E8F0', color: '#B45309' }}>
+                        }}>
                             <ArrowDownRight size={13} /> Export AR Aging Excel
-                        </button>
+                        </Button>
                     </div>
                     <AgingBars buckets={agingBuckets} isEn={isEn} />
                 </div>
@@ -764,109 +736,95 @@ export function FinanceClient({ initialAR, initialARTotal, initialAP, initialAPT
             {tab === 'ledger' && <AccountLedgerTab />}
 
             {/* AR Payment modal */}
-            {paymentModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15, 23, 42, 0.45)' }}>
-                    <div className="w-full max-w-sm max-h-[90vh] overflow-y-auto p-5 sm:p-6 rounded-md"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 24px 64px rgba(15, 23, 42, 0.45)' }}>
-                        <h3 className="text-lg font-bold mb-4" style={{ color: '#0F172A' }}>{L.modalArPaymentTitle}</h3>
-                        <div className="space-y-3">
-                            <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.fieldCollectAmount}</label>
-                                <input type="number" value={payAmount} onChange={e => setPayAmount(e.target.value)}
-                                    className="w-full px-3 py-2.5 text-sm outline-none"
-                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
-                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                                    onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
-                                />
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.fieldPaymentMethod}</label>
-                                    <select value={payMethod} onChange={e => setPayMethod(e.target.value)}
-                                        className="w-full px-3 py-2.5 text-sm outline-none"
-                                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}>
-                                        <option value="BANK_TRANSFER">{L.methodBankTransfer}</option>
-                                        <option value="CASH">{L.methodCash}</option>
-                                        <option value="COD">COD</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{isEn ? 'Payment Date' : 'Ngày Thanh Toán'}</label>
-                                    <input type="date" value={payDate} onChange={e => setPayDate(e.target.value)}
-                                        className="w-full px-3 py-2.5 text-sm outline-none"
-                                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }} />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.fieldReference}</label>
-                                <input type="text" value={payReference} onChange={e => setPayReference(e.target.value)}
-                                    placeholder={isEn ? 'Bank reference, Tx ID...' : 'Số chứng từ NH, mã GD...'}
-                                    className="w-full px-3 py-2.5 text-sm outline-none"
-                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
-                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                                    onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                            </div>
-                        </div>
-                        <div className="flex justify-end gap-3 mt-5">
-                            <button onClick={() => { setPaymentModal(null); setPayReference(''); setPayDate(new Date().toISOString().slice(0, 10)) }} className="px-4 py-2 text-sm"
-                                style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '6px' }}>{L.cancelBtn}</button>
-                            <button onClick={handlePayment} disabled={payLoading || !payAmount}
-                                className="px-5 py-2 text-sm font-semibold transition-all"
-                                style={{ background: '#0E7490', color: '#FFFFFF', borderRadius: '6px' }}>
-                                {payLoading ? L.processingText : L.confirmCollectBtn}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* AP Payment modal */}
-            {apPaymentModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15, 23, 42, 0.45)' }}>
-                    <div className="w-full max-w-sm max-h-[90vh] overflow-y-auto p-5 sm:p-6 rounded-md"
-                        style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 24px 64px rgba(15, 23, 42, 0.45)' }}>
-                        <h3 className="text-lg font-bold mb-4" style={{ color: '#0F172A' }}>{L.modalApPaymentTitle}</h3>
-                        <div className="space-y-3">
-                            <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.fieldPayAmount}</label>
-                                <input type="number" value={payAmount} onChange={e => setPayAmount(e.target.value)}
-                                    className="w-full px-3 py-2.5 text-sm outline-none"
-                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
-                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                                    onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                            </div>
-                            <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.fieldPaymentMethod}</label>
-                                <select value={payMethod} onChange={e => setPayMethod(e.target.value)}
-                                    className="w-full px-3 py-2.5 text-sm outline-none"
-                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}>
+            <Modal
+                open={Boolean(paymentModal)}
+                onClose={() => { setPaymentModal(null); setPayReference(''); setPayDate(new Date().toISOString().slice(0, 10)) }}
+                title={L.modalArPaymentTitle}
+                size="sm"
+                footer={
+                    <>
+                        <Button variant="ghost" onClick={() => { setPaymentModal(null); setPayReference(''); setPayDate(new Date().toISOString().slice(0, 10)) }}>
+                            {L.cancelBtn}
+                        </Button>
+                        <Button variant="primary" loading={payLoading} disabled={!payAmount} onClick={handlePayment}>
+                            {payLoading ? L.processingText : L.confirmCollectBtn}
+                        </Button>
+                    </>
+                }
+            >
+                <div className="space-y-3">
+                    <Field label={L.fieldCollectAmount}>
+                        {id => <Input id={id} type="number" value={payAmount} onChange={e => setPayAmount(e.target.value)} />}
+                    </Field>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Field label={L.fieldPaymentMethod}>
+                            {id => (
+                                <Select id={id} value={payMethod} onChange={e => setPayMethod(e.target.value)}>
                                     <option value="BANK_TRANSFER">{L.methodBankTransfer}</option>
                                     <option value="CASH">{L.methodCash}</option>
-                                    <option value="CHECK">{L.methodCheck}</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: '#64748B' }}>{L.fieldReference}</label>
-                                <input type="text" value={payReference} onChange={e => setPayReference(e.target.value)}
-                                    placeholder={isEn ? 'Document no., Tx ID...' : 'Số chứng từ, mã GD...'}
-                                    className="w-full px-3 py-2.5 text-sm outline-none"
-                                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#0F172A', borderRadius: '4px' }}
-                                    onFocus={e => (e.currentTarget.style.borderColor = '#0891B2')}
-                                    onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')} />
-                            </div>
-                        </div>
-                        <div className="flex justify-end gap-3 mt-5">
-                            <button onClick={() => setApPaymentModal(null)} className="px-4 py-2 text-sm"
-                                style={{ color: '#475569', border: '1px solid #E2E8F0', borderRadius: '6px' }}>{L.cancelBtn}</button>
-                            <button onClick={handleAPPayment} disabled={payLoading || !payAmount}
-                                className="px-5 py-2 text-sm font-semibold"
-                                style={{ background: '#D97706', color: '#FFFFFF', borderRadius: '6px' }}>
-                                {payLoading ? L.processingText : L.confirmPayBtn}
-                            </button>
-                        </div>
+                                    <option value="COD">COD</option>
+                                </Select>
+                            )}
+                        </Field>
+                        <Field label={isEn ? 'Payment Date' : 'Ngày Thanh Toán'}>
+                            {id => <Input id={id} type="date" value={payDate} onChange={e => setPayDate(e.target.value)} />}
+                        </Field>
                     </div>
+                    <Field label={L.fieldReference}>
+                        {id => (
+                            <Input
+                                id={id}
+                                type="text"
+                                value={payReference}
+                                onChange={e => setPayReference(e.target.value)}
+                                placeholder={isEn ? 'Bank reference, Tx ID...' : 'Số chứng từ NH, mã GD...'}
+                            />
+                        )}
+                    </Field>
                 </div>
-            )}
-        </div>
+            </Modal>
+
+            {/* AP Payment modal */}
+            <Modal
+                open={Boolean(apPaymentModal)}
+                onClose={() => setApPaymentModal(null)}
+                title={L.modalApPaymentTitle}
+                size="sm"
+                footer={
+                    <>
+                        <Button variant="ghost" onClick={() => setApPaymentModal(null)}>{L.cancelBtn}</Button>
+                        <Button variant="primary" loading={payLoading} disabled={!payAmount} onClick={handleAPPayment}>
+                            {payLoading ? L.processingText : L.confirmPayBtn}
+                        </Button>
+                    </>
+                }
+            >
+                <div className="space-y-3">
+                    <Field label={L.fieldPayAmount}>
+                        {id => <Input id={id} type="number" value={payAmount} onChange={e => setPayAmount(e.target.value)} />}
+                    </Field>
+                    <Field label={L.fieldPaymentMethod}>
+                        {id => (
+                            <Select id={id} value={payMethod} onChange={e => setPayMethod(e.target.value)}>
+                                <option value="BANK_TRANSFER">{L.methodBankTransfer}</option>
+                                <option value="CASH">{L.methodCash}</option>
+                                <option value="CHECK">{L.methodCheck}</option>
+                            </Select>
+                        )}
+                    </Field>
+                    <Field label={L.fieldReference}>
+                        {id => (
+                            <Input
+                                id={id}
+                                type="text"
+                                value={payReference}
+                                onChange={e => setPayReference(e.target.value)}
+                                placeholder={isEn ? 'Document no., Tx ID...' : 'Số chứng từ, mã GD...'}
+                            />
+                        )}
+                    </Field>
+                </div>
+            </Modal>
+        </PageContainer>
     )
 }

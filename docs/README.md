@@ -245,4 +245,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-11-21 | Wine ERP v12.53 - KNBS Thắng Ân Cash-In Payment Sync & VAT Buyer Name*
+*Last updated: 2026-11-24 | Wine ERP v12.56 - Pure Light Design System v4.5 (UI/UX Audit Đợt 3)*

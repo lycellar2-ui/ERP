@@ -2,8 +2,8 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, Calendar, Printer, FileX2, RotateCcw, AlertCircle, CloudUpload, ShieldCheck, ExternalLink, BarChart3, SlidersHorizontal, Check } from 'lucide-react'
-import { Badge, Button, Card, Drawer, EmptyState, Field, FilterPanel, PageHeader, Pagination, SearchInput, Select, StatCard, StatGrid, StatusTabs, Table, TableMessageRow, TableSkeleton, TBody, Td, Th, THead, Toolbar, Tr, useConfirmDialog } from '@/components/ui'
+import { Plus, FileText, CheckCircle2, XCircle, Clock, Truck, ReceiptText, DollarSign, Eye, Loader2, X, AlertTriangle, TrendingUp, TrendingDown, Pencil, Copy, Download, Calendar, Printer, FileX2, RotateCcw, AlertCircle, CloudUpload, ShieldCheck, ExternalLink, BarChart3, SlidersHorizontal, Check, ChevronDown } from 'lucide-react'
+import { Badge, Button, Card, Drawer, EmptyState, Field, FilterPanel, PageContainer, PageHeader, Pagination, SearchInput, Select, StatCard, StatGrid, StatusTabs, Table, TableMessageRow, TableSkeleton, TBody, Td, Th, THead, Tr, useConfirmDialog } from '@/components/ui'
 import { getStatusTone, type Tone } from '@/lib/ui/status'
 import { toast } from 'sonner'
 import { SalesOrderRow, SOStatus, SOType, confirmSalesOrder, cancelSalesOrder, getSalesOrderDetailWithMargin, getSalesOrderDetailWithMarginAndTimeline, SOMarginData, approveSalesOrder, rejectSalesOrder, getSOTimeline, SOTimelineEvent, cloneSalesOrder, exportSalesOrdersExcel, exportMisaSmeExcel, exportVnptInvoiceExcel, accountingApproveSO, accountingRejectSO, getLegalEntities, LegalEntityRow, deleteSalesOrder, getSalesPageData, getAvailableVintagesForProducts, getSimpleWarehouses, getSalesOrderDetail, getCustomersForSO, getProductsWithStock, createARInvoiceForSO, updateARInvoiceNo, deleteARInvoice, SalesChannel, toggleInvoiceExempt, markSalesOrderPaid } from './actions'
@@ -1691,7 +1691,7 @@ function SODetailDrawer({
 
             {/* Modal Cảnh Báo Lệch Ngày Xuất Hóa Đơn (Nghị định 123 / Nghị định 70) */}
             {dateWarningModal && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 animate-fade-in">
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-[2px] animate-fade-in">
                     <div 
                         className="relative w-full max-w-lg rounded-md overflow-hidden shadow-2xl border bg-white border-slate-200"
                     >
@@ -2275,6 +2275,18 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
     const [detailId, setDetailId] = useState<string | null>(null)
     const [showStats, setShowStats] = useState(false)
     const [showFilters, setShowFilters] = useState(false)
+    const [exportMenuOpen, setExportMenuOpen] = useState(false)
+    const exportMenuRef = useRef<HTMLDivElement>(null)
+    useEffect(() => {
+        if (!exportMenuOpen) return
+        const handleOutside = (e: MouseEvent) => {
+            if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+                setExportMenuOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleOutside)
+        return () => document.removeEventListener('mousedown', handleOutside)
+    }, [exportMenuOpen])
     const [editId, setEditId] = useState<string | null>(null)
     const [legalEntities, setLegalEntities] = useState<LegalEntityRow[]>([])
     const [acctModalId, setAcctModalId] = useState<string | null>(null)
@@ -2837,7 +2849,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
     }
 
     return (
-        <div className="flex flex-col gap-4 max-w-screen-2xl">
+        <PageContainer>
             {/* Header: inline summary + actions */}
             <PageHeader
                 description={
@@ -2883,23 +2895,45 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                         >
                             <BarChart3 size={14} /> {isEn ? 'Stats' : 'Thống Kê'}
                         </Button>
-                        <Button variant="secondary" onClick={handleExport}>
-                            <Download size={14} /> Excel
-                        </Button>
-                        <Button
-                            variant="secondary"
-                            onClick={() => handleExportMisaSme()}
-                            title={isEn ? 'Export MISA SME Excel' : 'Xuất file Excel chuẩn MISA SME.NET Offline để Kế toán Import nhanh'}
-                        >
-                            <Download size={14} /> {isEn ? 'MISA SME' : 'Xuất MISA SME'}
-                        </Button>
-                        <Button
-                            variant="secondary"
-                            onClick={() => handleExportVnptInvoice()}
-                            title={isEn ? 'Export VNPT E-Invoice Excel' : 'Xuất file Excel Hóa Đơn Điện Tử VNPT'}
-                        >
-                            <Download size={14} /> {isEn ? 'VNPT E-Invoice' : 'VNPT HĐĐT'}
-                        </Button>
+                        <div className="relative" ref={exportMenuRef}>
+                            <Button
+                                variant="secondary"
+                                onClick={() => setExportMenuOpen(v => !v)}
+                                aria-expanded={exportMenuOpen}
+                            >
+                                <Download size={14} />
+                                <span>{isEn ? 'Export' : 'Xuất dữ liệu'}</span>
+                                <ChevronDown size={13} className="text-lys-muted" aria-hidden />
+                            </Button>
+                            {exportMenuOpen && (
+                                <div className="absolute right-0 mt-1.5 min-w-[195px] bg-white border border-lys-border rounded-lg shadow-lg py-1 z-30 animate-fade-in">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setExportMenuOpen(false); handleExport() }}
+                                        className="w-full px-3 py-2 text-left text-xs font-medium text-lys-primary hover:bg-lys-subtle flex items-center gap-2 cursor-pointer"
+                                    >
+                                        <Download size={13} className="text-lys-teal-strong shrink-0" />
+                                        <span>{isEn ? 'Sales Orders Excel' : 'Excel Đơn Hàng'}</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setExportMenuOpen(false); handleExportMisaSme() }}
+                                        className="w-full px-3 py-2 text-left text-xs font-medium text-lys-primary hover:bg-lys-subtle flex items-center gap-2 cursor-pointer"
+                                    >
+                                        <Download size={13} className="text-tone-info-fg shrink-0" />
+                                        <span>{isEn ? 'MISA SME Offline' : 'Xuất MISA SME'}</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setExportMenuOpen(false); handleExportVnptInvoice() }}
+                                        className="w-full px-3 py-2 text-left text-xs font-medium text-lys-primary hover:bg-lys-subtle flex items-center gap-2 cursor-pointer"
+                                    >
+                                        <Download size={13} className="text-tone-warning-fg shrink-0" />
+                                        <span>{isEn ? 'VNPT E-Invoice' : 'VNPT HĐĐT'}</span>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                         {canCreateSO && (
                             <Button onClick={() => { setCloneData(null); setCreateOpen(true) }}>
                                 <Plus size={16} /> {sI18n.newOrder}
@@ -2920,7 +2954,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                             {isEn ? 'Collapse' : 'Thu gọn'} <X size={12} />
                         </Button>
                     </div>
-                    <StatGrid className="sm:grid-cols-3 lg:grid-cols-6">
+                    <StatGrid cols={6}>
                         <StatCard icon={DollarSign} tone="brand" label={sI18n.stats.totalRevenue} value={isEn ? `${(stats.monthRevenue / 1e9).toFixed(2)}B VND` : `₫${(stats.monthRevenue / 1e9).toFixed(2)}T`} sub={isEn ? 'Includes 100% VAT' : 'Bao gồm 100% VAT'} />
                         <StatCard icon={ReceiptText} tone="success" label={isEn ? 'Invoiced Revenue' : 'Doanh Thu Có HĐ'} value={isEn ? `${((stats.revenueWithInvoice || 0) / 1e9).toFixed(2)}B VND` : `₫${((stats.revenueWithInvoice || 0) / 1e9).toFixed(2)}T`} sub={isEn ? `${stats.ordersWithInvoice || 0} invoiced orders` : `${stats.ordersWithInvoice || 0} đơn có HĐ`} />
                         <StatCard icon={FileX2} tone="warning" label={isEn ? 'Non-Invoiced Revenue' : 'DT Không Xuất HĐ'} value={isEn ? `${((stats.revenueExemptInvoice || 0) / 1e9).toFixed(2)}B VND` : `₫${((stats.revenueExemptInvoice || 0) / 1e9).toFixed(2)}T`} sub={isEn ? `${stats.ordersExemptInvoice || 0} exempt orders` : `${stats.ordersExemptInvoice || 0} đơn miễn HĐ`} />
@@ -2931,31 +2965,31 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                 </div>
             )}
 
-            {/* Toolbar: Tabs & Main Filters */}
+            {/* Status Tabs + Main Filter Row */}
             {(() => {
                 const hasAdvancedFilters = !!(salesRepFilter || channelFilter || legalEntityFilter || warehouseFilter || paymentTermFilter || pendingActionFilter || (orderTypeFilter && orderTypeFilter !== 'ALL') || (invoiceFilter && invoiceFilter !== 'ALL'))
                 const filtersActive = showFilters || hasAdvancedFilters
                 return (
-                    <Toolbar
-                        left={<FilterTabs active={statusFilter} counts={counts} onChange={handleStatusTab} />}
-                        right={
-                            <>
-                                <SearchInput
-                                    placeholder={sI18n.searchPlaceholder}
-                                    value={searchInput}
-                                    onChange={e => {
-                                        const val = e.target.value
-                                        setSearchInput(val)
-                                        if (debounceRef.current) clearTimeout(debounceRef.current)
-                                        debounceRef.current = setTimeout(() => {
-                                            setSearch(val)
-                                            setPage(1)
-                                            reload({ search: val, page: 1 }, true)
-                                        }, 300)
-                                    }}
-                                    className="sm:w-48 xl:w-64"
-                                />
+                    <div className="space-y-3">
+                        <FilterTabs active={statusFilter} counts={counts} onChange={handleStatusTab} />
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <SearchInput
+                                placeholder={sI18n.searchPlaceholder}
+                                value={searchInput}
+                                onChange={e => {
+                                    const val = e.target.value
+                                    setSearchInput(val)
+                                    if (debounceRef.current) clearTimeout(debounceRef.current)
+                                    debounceRef.current = setTimeout(() => {
+                                        setSearch(val)
+                                        setPage(1)
+                                        reload({ search: val, page: 1 }, true)
+                                    }, 300)
+                                }}
+                                className="w-full sm:w-64"
+                            />
 
+                            <div className="flex flex-wrap items-center gap-2 ml-auto">
                                 {/* Date Period Preset + custom range */}
                                 <div className="flex items-center gap-1.5 h-11 sm:h-9 px-2.5 bg-white border border-lys-border-strong rounded-md">
                                     <Calendar size={13} className={datePreset !== 'ALL' ? 'text-lys-teal' : 'text-lys-muted'} aria-hidden />
@@ -3004,9 +3038,9 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
                                     {isEn ? 'Filters' : 'Bộ lọc'}
                                     {hasAdvancedFilters && <span className="w-1.5 h-1.5 rounded-full bg-lys-teal" aria-hidden />}
                                 </Button>
-                            </>
-                        }
-                    />
+                            </div>
+                        </div>
+                    </div>
                 )
             })()}
 
@@ -3415,7 +3449,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
 
                 return (
                     <>
-                        <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={closeAcctModal} />
+                        <div className="fixed inset-0 z-40 bg-slate-900/35 backdrop-blur-[2px] transition-opacity" onClick={closeAcctModal} />
                         <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg p-6 rounded-lg bg-white border border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
                             {showEntityConfirm ? (
                                 /* Confirmation View When Entity Differs */
@@ -3597,7 +3631,7 @@ export function SalesClient({ initialData, userId, userRoles, userPermissions = 
             })()}
 
             {confirmDialog}
-        </div>
+        </PageContainer>
     )
 }
 
@@ -3710,7 +3744,7 @@ function ApproveSOModal({ soId, onClose, onApproved }: ApproveSOModalProps) {
 
     return (
         <>
-            <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity" onClick={onClose} />
+            <div className="fixed inset-0 z-40 bg-slate-900/35 backdrop-blur-[2px] transition-opacity" onClick={onClose} />
             <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg p-6 rounded-lg bg-white border border-slate-200 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
                 <div className="flex items-center justify-between mb-4 border-b border-slate-200 pb-3">
                     <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">

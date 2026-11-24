@@ -141,7 +141,7 @@ export default function POSClient() {
     }
 
     return (
-        <div className="flex h-[calc(100vh-60px)] bg-lys-bg overflow-hidden -m-4 sm:-m-6 relative">
+        <div className="flex h-[calc(100dvh-48px)] bg-lys-bg overflow-hidden -m-3 sm:-m-4 lg:-m-5 relative">
             {/* LEFT: Product Catalog */}
             <div className={cn('flex-1 flex flex-col p-3 sm:p-5 overflow-hidden', mobileView === 'CART' ? 'hidden md:flex' : 'flex')}>
                 {/* Shift Stats Bar */}

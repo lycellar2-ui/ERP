@@ -264,7 +264,7 @@ export function LandedCostTab() {
                         </div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
                                 {[
                                     { label: 'CIF', value: detail.cifAmount, tone: 'text-lys-secondary', suffix: ` ${detail.cifCurrency}` },
                                     { label: i18n.importTax, value: detail.totalImportTax, tone: 'text-tone-warning-fg' },

@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { BarChart3, Users, Wine, Download, Sparkles, RefreshCw, X, Loader2 } from 'lucide-react'
+import { Badge, Button } from '@/components/ui'
 import { useAppLocale } from '@/lib/i18n'
 import { getDashboardDictionary } from './i18n'
 
@@ -16,14 +17,13 @@ interface DashboardHeaderNavProps {
 }
 
 export function DashboardHeaderNav({
-    userName,
     roles,
     currentTab,
     currentPreset,
     currentEntity,
     exportAction,
 }: DashboardHeaderNavProps) {
-    const { locale, isEn } = useAppLocale()
+    const { locale } = useAppLocale()
     const t = getDashboardDictionary(locale)
 
     const [isExporting, setIsExporting] = useState(false)
@@ -93,40 +93,64 @@ export function DashboardHeaderNav({
     }
 
     return (
-        <div className="space-y-4">
-            {/* Top Title & Actions */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                    <h2 className="text-xl font-bold tracking-tight text-slate-900">
-                        {t.dashboardTitle}
-                    </h2>
-                    <p className="text-xs text-slate-500">
-                        {userName ?? 'Dashboard'} &middot; {roles.join(', ')} &bull; {new Date().toLocaleDateString(isEn ? 'en-US' : 'vi-VN')}
-                    </p>
+        <div className="space-y-3">
+            {/* Unified Tab Bar + Executive Actions */}
+            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-lys-border">
+                <div className="flex items-center gap-1 overflow-x-auto no-scrollbar whitespace-nowrap -mb-px">
+                    <Link
+                        href={`/dashboard?tab=overview${queryString}`}
+                        className={`relative flex items-center gap-2 px-3 pb-2.5 pt-1 text-[13px] font-semibold transition-colors border-b-2 whitespace-nowrap ${
+                            currentTab === 'overview'
+                                ? 'border-lys-teal text-lys-teal-strong'
+                                : 'border-transparent text-lys-muted hover:text-lys-primary'
+                        }`}
+                    >
+                        <BarChart3 size={15} className={currentTab === 'overview' ? 'text-lys-teal-strong' : 'text-lys-dim'} />
+                        <span>{t.executiveOverview}</span>
+                    </Link>
+                    <Link
+                        href={`/dashboard?tab=customers${queryString}`}
+                        className={`relative flex items-center gap-2 px-3 pb-2.5 pt-1 text-[13px] font-semibold transition-colors border-b-2 whitespace-nowrap ${
+                            currentTab === 'customers'
+                                ? 'border-lys-teal text-lys-teal-strong'
+                                : 'border-transparent text-lys-muted hover:text-lys-primary'
+                        }`}
+                    >
+                        <Users size={15} className={currentTab === 'customers' ? 'text-lys-teal-strong' : 'text-lys-dim'} />
+                        <span>{t.customerAnalytics}</span>
+                        <Badge tone={currentTab === 'customers' ? 'brand' : 'neutral'}>{t.customerAnalyticsBadge}</Badge>
+                    </Link>
+                    <Link
+                        href={`/dashboard?tab=skus${queryString}`}
+                        className={`relative flex items-center gap-2 px-3 pb-2.5 pt-1 text-[13px] font-semibold transition-colors border-b-2 whitespace-nowrap ${
+                            currentTab === 'skus'
+                                ? 'border-lys-teal text-lys-teal-strong'
+                                : 'border-transparent text-lys-muted hover:text-lys-primary'
+                        }`}
+                    >
+                        <Wine size={15} className={currentTab === 'skus' ? 'text-lys-teal-strong' : 'text-lys-dim'} />
+                        <span>{t.skuAnalytics}</span>
+                        <Badge tone={currentTab === 'skus' ? 'brand' : 'neutral'}>{t.skuAnalyticsBadge}</Badge>
+                    </Link>
                 </div>
-                <div className="flex items-center gap-2">
+
+                <div className="flex items-center gap-2 pb-2 shrink-0">
                     {isExecutive && (
-                        <button
-                            type="button"
+                        <Button
+                            size="sm"
+                            variant={aiOpen ? 'primary' : 'secondary'}
                             onClick={() => handleFetchAiBriefing(false)}
-                            disabled={aiLoading}
-                            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md transition-colors cursor-pointer disabled:opacity-60"
-                            style={{
-                                background: aiOpen ? '#0891B2' : 'rgba(8,145,178,0.1)',
-                                color: aiOpen ? '#FFFFFF' : '#0891B2',
-                                border: '1px solid rgba(8,145,178,0.28)',
-                            }}
+                            loading={aiLoading}
                         >
-                            {aiLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                            {!aiLoading && <Sparkles size={14} className={aiOpen ? 'text-white' : 'text-lys-teal-strong'} aria-hidden />}
                             <span>{t.aiBriefing.buttonLabel}</span>
-                        </button>
+                        </Button>
                     )}
                     <button
                         type="button"
                         onClick={handleExportExcel}
                         disabled={isExporting}
-                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md transition-colors cursor-pointer disabled:opacity-60"
-                        style={{ background: 'rgba(21,128,61,0.12)', color: '#15803D', border: '1px solid rgba(21,128,61,0.3)' }}
+                        className="inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold rounded-md bg-tone-success-bg text-tone-success-fg border border-tone-success-border hover:bg-emerald-100/70 transition-colors cursor-pointer disabled:opacity-50"
                     >
                         {isExporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
                         <span>{isExporting ? t.exportingExcel : t.exportExcel}</span>
@@ -136,33 +160,30 @@ export function DashboardHeaderNav({
 
             {/* AI Executive Briefing Collapsible Panel */}
             {aiOpen && (
-                <div
-                    className="rounded-md p-4 transition-all"
-                    style={{ background: '#F8FAFC', border: '1px solid #BAE6FD', borderLeft: '3px solid #0891B2' }}
-                >
+                <div className="bg-lys-card border border-tone-brand-border border-l-[3px] border-l-lys-teal-strong rounded-lg shadow-xs p-4 transition-all">
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                            <Sparkles size={14} style={{ color: '#0891B2' }} />
-                            <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: '#0F172A' }}>
+                            <Sparkles size={14} className="text-lys-teal-strong" aria-hidden />
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-lys-primary">
                                 {t.aiBriefing.panelTitle}
                             </h3>
                         </div>
                         <div className="flex items-center gap-1.5">
-                            <button
-                                type="button"
+                            <Button
+                                size="sm"
+                                variant="secondary"
                                 onClick={() => handleFetchAiBriefing(true)}
                                 disabled={aiLoading}
-                                className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded cursor-pointer disabled:opacity-50"
-                                style={{ background: '#FFFFFF', color: '#0891B2', border: '1px solid #E2E8F0' }}
+                                className="h-7 px-2 text-[11px]"
                             >
                                 <RefreshCw size={12} className={aiLoading ? 'animate-spin' : ''} />
                                 <span>{t.aiBriefing.refresh}</span>
-                            </button>
+                            </Button>
                             <button
                                 type="button"
                                 onClick={() => setAiOpen(false)}
-                                className="p-1 rounded cursor-pointer hover:bg-slate-200/60"
-                                style={{ color: '#64748B' }}
+                                aria-label={t.aiBriefing.close}
+                                className="p-1.5 rounded-md text-lys-muted hover:text-lys-primary hover:bg-lys-subtle transition-colors cursor-pointer"
                                 title={t.aiBriefing.close}
                             >
                                 <X size={14} />
@@ -170,62 +191,19 @@ export function DashboardHeaderNav({
                         </div>
                     </div>
                     {aiLoading ? (
-                        <div className="flex items-center gap-2 py-4 text-xs" style={{ color: '#475569' }}>
-                            <Loader2 size={14} className="animate-spin" style={{ color: '#0891B2' }} />
+                        <div className="flex items-center gap-2 py-4 text-xs text-lys-secondary">
+                            <Loader2 size={14} className="animate-spin text-lys-teal-strong" />
                             <span>{t.aiBriefing.loading}</span>
                         </div>
                     ) : aiError ? (
-                        <p className="text-xs py-2" style={{ color: '#B91C1C' }}>{aiError}</p>
+                        <p className="text-xs py-2 text-tone-danger-fg">{aiError}</p>
                     ) : (
-                        <div className="text-xs leading-relaxed whitespace-pre-line" style={{ color: '#1E293B' }}>
+                        <div className="text-xs leading-relaxed whitespace-pre-line text-lys-primary">
                             {aiSummary}
                         </div>
                     )}
                 </div>
             )}
-
-            {/* Tab Navigation - Sleek Underline Tabs */}
-            <div className="flex items-center gap-6 border-b border-slate-200 overflow-x-auto no-scrollbar whitespace-nowrap">
-                <Link
-                    href={`/dashboard?tab=overview${queryString}`}
-                    className={`flex items-center gap-2 pb-2.5 text-xs font-semibold transition-all border-b-2 whitespace-nowrap ${
-                        currentTab === 'overview'
-                            ? 'border-slate-900 text-slate-900 font-bold'
-                            : 'border-transparent text-slate-500 hover:text-slate-800'
-                    }`}
-                >
-                    <BarChart3 size={15} className={currentTab === 'overview' ? 'text-slate-900' : 'text-slate-400'} />
-                    <span>{t.executiveOverview}</span>
-                </Link>
-                <Link
-                    href={`/dashboard?tab=customers${queryString}`}
-                    className={`flex items-center gap-2 pb-2.5 text-xs font-semibold transition-all border-b-2 whitespace-nowrap ${
-                        currentTab === 'customers'
-                            ? 'border-slate-900 text-slate-900 font-bold'
-                            : 'border-transparent text-slate-500 hover:text-slate-800'
-                    }`}
-                >
-                    <Users size={15} className={currentTab === 'customers' ? 'text-slate-900' : 'text-slate-400'} />
-                    <span>{t.customerAnalytics}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-mono font-normal">
-                        {t.customerAnalyticsBadge}
-                    </span>
-                </Link>
-                <Link
-                    href={`/dashboard?tab=skus${queryString}`}
-                    className={`flex items-center gap-2 pb-2.5 text-xs font-semibold transition-all border-b-2 whitespace-nowrap ${
-                        currentTab === 'skus'
-                            ? 'border-slate-900 text-slate-900 font-bold'
-                            : 'border-transparent text-slate-500 hover:text-slate-800'
-                    }`}
-                >
-                    <Wine size={15} className={currentTab === 'skus' ? 'text-slate-900' : 'text-slate-400'} />
-                    <span>{t.skuAnalytics}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-50 text-cyan-700 font-mono font-normal">
-                        {t.skuAnalyticsBadge}
-                    </span>
-                </Link>
-            </div>
         </div>
     )
 }

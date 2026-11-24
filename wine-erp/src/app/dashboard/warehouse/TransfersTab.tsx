@@ -191,7 +191,7 @@ export function TransfersTab() {
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-4 rounded-lg bg-white border border-slate-200 shadow-2xs">
                 <div className="flex flex-wrap items-center gap-3">
                     <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-lg bg-lys-teal-soft border border-lys-teal-subtle flex items-center justify-center shrink-0">
+                        <div className="w-9 h-9 rounded-lg bg-lys-teal-soft border border-tone-brand-border flex items-center justify-center shrink-0">
                             <ArrowRightLeft size={18} className="text-lys-teal-strong" />
                         </div>
                         <div>
@@ -199,7 +199,7 @@ export function TransfersTab() {
                                 <h3 className="text-sm sm:text-base font-extrabold text-slate-900">
                                     Điều Chuyển Kho Nội Bộ & Bổ Sung Tồn
                                 </h3>
-                                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-lys-teal-soft text-lys-teal-strong border border-lys-teal-subtle">
+                                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-lys-teal-soft text-lys-teal-strong border border-tone-brand-border">
                                     {rows.length} phiếu
                                 </span>
                             </div>

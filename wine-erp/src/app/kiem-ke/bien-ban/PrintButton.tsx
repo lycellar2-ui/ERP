@@ -2,7 +2,11 @@
 
 export function PrintButton() {
     return (
-        <button onClick={() => window.print()} className="rounded-lg bg-lys-teal-strong px-4 py-2.5 font-semibold text-white">
+        <button
+            type="button"
+            onClick={() => window.print()}
+            className="rounded-md bg-lys-teal-strong hover:bg-lys-teal-hover active:scale-[0.98] transition-all cursor-pointer px-4 py-2 text-sm font-semibold text-white"
+        >
             In / Lưu PDF
         </button>
     )

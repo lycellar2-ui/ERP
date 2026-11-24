@@ -151,7 +151,7 @@ function CreateRegDocDrawer({ open, onClose, onCreated, renewFrom, r }: {
 
     return (
         <>
-            <div className="fixed inset-0 z-40 bg-slate-900/40" onClick={onClose} />
+            <div className="fixed inset-0 z-40 bg-slate-900/35 backdrop-blur-[2px]" onClick={onClose} />
             <div className="fixed top-0 right-0 h-full z-50 flex flex-col bg-slate-50 border-l border-slate-200" style={{ width: 'min(560px,95vw)' }}>
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white">
                     <div className="flex items-center gap-3">
@@ -492,7 +492,7 @@ export function RegDocsTab({ initialRows, stats }: Props) {
     return (
         <div className="space-y-4">
             {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
                 {[
                     { label: r.stats.total, value: stats.total, icon: Shield, accent: '#0E7490' },
                     { label: r.stats.active, value: stats.active, icon: CheckCircle2, accent: '#15803D' },

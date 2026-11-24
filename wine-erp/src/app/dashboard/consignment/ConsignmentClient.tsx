@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
-    PageHeader, StatGrid, StatCard, Button, SearchInput, StatusTabs,
+    PageContainer, PageHeader, StatGrid, StatCard, Button, SearchInput, StatusBadge, StatusTabs,
     Table, THead, TBody, Tr, Th, Td, TableMessageRow
 } from '@/components/ui'
 import { useAppLocale } from '@/lib/i18n'
@@ -161,18 +161,12 @@ export function ConsignmentClient({ initialRows, stats: initialStats, userId = '
     )
 
     return (
-        <div className="space-y-6 max-w-screen-2xl">
+        <PageContainer>
             {/* Page Header */}
             <PageHeader
-                title={i18n.header.title}
                 description={i18n.header.description}
                 actions={
                     <div className="flex flex-wrap items-center gap-2">
-                        {canCreateConsignmentOrder && (
-                            <Button variant="primary" size="sm" onClick={() => setCreateCSGOrderOpen(true)}>
-                                <Plus size={14} /> {isEn ? '+ Create Consignment Order' : '+ Tạo Đơn Ký Gửi'}
-                            </Button>
-                        )}
                         {canManageWarehouseAndDispatch && (
                             <Button variant="secondary" size="sm" onClick={() => setCreateWHOpen(true)}>
                                 <WarehouseIcon size={14} /> {i18n.header.createWarehouseBtn}
@@ -186,6 +180,11 @@ export function ConsignmentClient({ initialRows, stats: initialStats, userId = '
                         {canSellFromConsignment && (
                             <Button variant="secondary" size="sm" onClick={() => { setPreselectedWarehouseId(''); setCreateSaleOpen(true); }}>
                                 <ShoppingCart size={14} /> {i18n.header.createSaleBtn}
+                            </Button>
+                        )}
+                        {canCreateConsignmentOrder && (
+                            <Button variant="primary" size="sm" onClick={() => setCreateCSGOrderOpen(true)}>
+                                <Plus size={14} /> {isEn ? 'Create Consignment Order' : 'Tạo Đơn Ký Gửi'}
                             </Button>
                         )}
                     </div>
@@ -217,26 +216,14 @@ export function ConsignmentClient({ initialRows, stats: initialStats, userId = '
 
             {/* TAB 0: CONSIGNMENT ORDERS (Full SalesOrder format) */}
             {mainTab === 'orders' && (
-                <div className="space-y-4">
-                    <div className="p-4 rounded-lg border border-slate-200 bg-white flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                            <h3 className="text-sm font-bold text-slate-900">
-                                {isEn ? 'Consignment Orders & Consumption Settlements' : 'Danh Sách Đơn Hàng Ký Gửi (Đầy Đủ Đơn Giá, Chiết Khấu, VAT & Giao Nhận)'}
-                            </h3>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                                {isEn
-                                    ? 'Create full Consignment Orders with customer pricing, delivery info, and A4 print identical to standard Sales Orders.'
-                                    : 'Tạo Đơn Ký Gửi với đầy đủ thông tin khách hàng, địa chỉ giao nhận, đơn giá thỏa thuận, chiết khấu, VAT và in mẫu A4 chuẩn như Đơn Bán Hàng.'}
-                            </p>
-                        </div>
-                        {canCreateConsignmentOrder && (
-                            <Button variant="primary" size="sm" onClick={() => setCreateCSGOrderOpen(true)}>
-                                <Plus size={14} /> {isEn ? 'Create Consignment Order' : 'Tạo Đơn Ký Gửi Mới'}
-                            </Button>
-                        )}
-                    </div>
+                <div className="space-y-3">
+                    <p className="text-xs text-lys-muted">
+                        {isEn
+                            ? 'Full Consignment Orders with customer pricing, delivery info, VAT and A4 print identical to standard Sales Orders.'
+                            : 'Đơn Ký Gửi với đầy đủ thông tin khách hàng, địa chỉ giao nhận, đơn giá thỏa thuận, VAT và mẫu in A4 chuẩn như Đơn Bán Hàng.'}
+                    </p>
 
-                    <div className="hidden md:block rounded-lg overflow-hidden border border-slate-200 bg-white shadow-xs">
+                    <div className="hidden md:block">
                         <Table>
                             <THead>
                                 <tr>
@@ -307,9 +294,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats, userId = '
                                                     <div className="text-[11px] text-slate-400">{formatDate(ord.createdAt)}</div>
                                                 </Td>
                                                 <Td>
-                                                    <span className="inline-block text-xs px-2 py-0.5 rounded font-bold bg-slate-100 text-slate-800 border border-slate-200">
-                                                        {ord.status}
-                                                    </span>
+                                                    <StatusBadge status={ord.status} />
                                                 </Td>
                                                 <Td>
                                                     <div className="flex items-center gap-1.5">
@@ -376,7 +361,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats, userId = '
                     </div>
 
                     {/* Desktop Table */}
-                    <div className="hidden md:block rounded-lg overflow-hidden border border-slate-200 bg-white shadow-xs">
+                    <div className="hidden md:block">
                         <Table>
                             <THead>
                                 <tr>
@@ -525,7 +510,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats, userId = '
                     </div>
 
                     {/* Desktop Table */}
-                    <div className="hidden md:block rounded-lg overflow-hidden border border-slate-200 bg-white shadow-xs">
+                    <div className="hidden md:block">
                         <Table>
                             <THead>
                                 <tr>
@@ -852,7 +837,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats, userId = '
                     )}
 
                     {/* Desktop Table */}
-                    <div className="hidden md:block rounded-lg overflow-hidden border border-slate-200 bg-white shadow-xs">
+                    <div className="hidden md:block">
                         <Table>
                             <THead>
                                 <tr>
@@ -1022,7 +1007,7 @@ export function ConsignmentClient({ initialRows, stats: initialStats, userId = '
             {/* MODAL / DRAWER: CREATE & INSPECT AGREEMENT */}
             <CreateDrawer open={createAgreementOpen} i18n={i18n} onClose={() => setCreateAgreementOpen(false)} onCreated={loadAll} />
             <DetailDrawer agreement={selectedAgreement} i18n={i18n} onClose={() => setSelectedAgreement(null)} />
-        </div>
+        </PageContainer>
     )
 }
 
@@ -1083,7 +1068,7 @@ function CreateConsignmentWarehouseModal({ open, i18n, onClose, onSuccess }: {
 
     if (!open) return null
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-[2px]">
             <div className="w-full max-w-lg rounded-lg overflow-hidden shadow-2xl bg-slate-50 border border-slate-200">
                 <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-white">
                     <div className="flex items-center gap-2">
@@ -1255,7 +1240,7 @@ function CreateConsignmentTransferModal({
 
     if (!open) return null
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-[2px]">
             <div className="w-full max-w-2xl rounded-lg overflow-hidden shadow-2xl bg-slate-50 border border-slate-200 flex flex-col max-h-[90vh]">
                 <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-white">
                     <div className="flex items-center gap-2">
@@ -1500,7 +1485,7 @@ function CreateConsignmentSaleModal({
 
     if (!open) return null
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-[2px]">
             <div className="w-full max-w-2xl rounded-lg overflow-hidden shadow-2xl bg-slate-50 border border-slate-200 flex flex-col max-h-[90vh]">
                 <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-white">
                     <div className="flex items-center gap-2">
@@ -1697,7 +1682,7 @@ function CreateDrawer({ open, i18n, onClose, onCreated }: {
 
     if (!open) return null
     return (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/50">
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/35 backdrop-blur-[2px]">
             <div className="w-full max-w-[480px] h-full overflow-y-auto bg-slate-50 border-l border-slate-200">
                 <div className="flex items-center justify-between p-5 border-b border-slate-200 bg-white">
                     <h3 className="text-lg font-bold text-slate-900">{m.createTitle}</h3>
@@ -1777,7 +1762,7 @@ function DetailDrawer({ agreement, i18n, onClose }: {
 
     if (!agreement) return null
     return (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/50">
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/35 backdrop-blur-[2px]">
             <div className="w-full max-w-[540px] h-full overflow-y-auto bg-slate-50 border-l border-slate-200 flex flex-col">
                 <div className="flex items-center justify-between p-5 border-b border-slate-200 bg-white">
                     <div>

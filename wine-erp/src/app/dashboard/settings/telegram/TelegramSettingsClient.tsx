@@ -63,7 +63,7 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
     }
 
     return (
-        <div className="p-4 sm:p-6 max-w-4xl space-y-6">
+        <div className="max-w-4xl w-full mx-auto space-y-5">
             {/* Header */}
             <div>
                 <Link
@@ -73,13 +73,10 @@ export function TelegramSettingsClient({ status }: { status: BotStatus }) {
                     <ArrowLeft size={14} />
                     <span>Quay lại Cài Đặt</span>
                 </Link>
-                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2.5">
-                    <Bot size={26} className="text-[#0891B2]" />
-                    <span>Telegram Bot</span>
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                    Quản lý kết nối Telegram Bot cho CEO Dashboard & thông báo tự động
-                </p>
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-lys-muted">
+                    <Bot size={16} className="text-lys-teal shrink-0" />
+                    <p>Quản lý kết nối Telegram Bot cho CEO Dashboard & thông báo tự động</p>
+                </div>
             </div>
 
             {/* Status Cards Grid */}

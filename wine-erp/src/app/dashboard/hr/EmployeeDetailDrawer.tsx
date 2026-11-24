@@ -78,7 +78,7 @@ export function EmployeeDetailDrawer({ employee, isOpen, onClose, onEdit, onRefr
     }
 
     return (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/35 backdrop-blur-[2px]">
             <div className="absolute inset-y-0 right-0 flex max-w-full pl-0 sm:pl-10">
                 <div className="w-screen max-w-2xl bg-white border-l border-slate-200 shadow-2xl flex flex-col">
                     {/* Drawer Header */}

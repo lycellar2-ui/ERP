@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { FileSignature, Shield, Scale, BookOpen } from 'lucide-react'
-import { PageHeader } from '@/components/ui'
+import { PageContainer, PageHeader, Badge, StatusTabs } from '@/components/ui'
 import { useAppLocale } from '@/lib/i18n'
 import { getContractsDict } from './i18n'
 import { ContractsClient } from './ContractsClient'
@@ -38,7 +38,7 @@ export function ContractsPage({
     const [selectedTemplateCode, setSelectedTemplateCode] = useState<string | undefined>()
     const [refreshKey, setRefreshKey] = useState(0)
 
-    const tabs: Array<{ key: TabKey; label: string; icon: React.ComponentType<{ size?: number }> }> = [
+    const tabs: Array<{ key: TabKey; label: string; icon: React.ComponentType<{ size?: number; className?: string; 'aria-hidden'?: boolean }> }> = [
         { key: 'contracts', label: t.page.tabs.contracts, icon: FileSignature },
         { key: 'templates', label: t.page.tabs.templates, icon: BookOpen },
         { key: 'regdocs', label: t.page.tabs.regdocs, icon: Shield },
@@ -62,47 +62,31 @@ export function ContractsPage({
     }
 
     return (
-        <div className="space-y-4 max-w-screen-2xl">
+        <PageContainer>
             {/* Header */}
             <PageHeader
-                title={t.page.title}
                 description={t.page.description}
                 actions={
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md bg-lys-primary/10 text-lys-primary border border-lys-primary/20 whitespace-nowrap shrink-0">
-                        <Scale size={14} /> {t.page.badge}
-                    </span>
+                    <Badge tone="brand" className="gap-1.5 py-1 px-2.5 whitespace-nowrap shrink-0">
+                        <Scale size={13} aria-hidden /> {t.page.badge}
+                    </Badge>
                 }
             />
 
             {/* Tab Navigation */}
-            <div className="flex gap-1 p-1 bg-white rounded-lg border border-lys-border w-fit max-w-full overflow-x-auto">
-                {tabs.map(tab => {
-                    const Icon = tab.icon
-                    const isActive = activeTab === tab.key
+            <StatusTabs
+                items={tabs.map(tab => {
                     const badge = tab.key === 'contracts' ? contractBadge : tab.key === 'regdocs' ? regDocBadge : null
-                    return (
-                        <button
-                            key={tab.key}
-                            onClick={() => setActiveTab(tab.key)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
-                                isActive
-                                    ? 'bg-lys-primary/10 text-lys-primary border-b-2 border-lys-primary'
-                                    : 'text-lys-muted hover:text-lys-title hover:bg-lys-bg'
-                            }`}
-                        >
-                            <Icon size={15} />
-                            {tab.label}
-                            {badge !== null && badge > 0 && (
-                                <span className={`ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full ${
-                                    tab.key === 'regdocs' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
-                                }`}>
-                                    {badge}
-                                </span>
-                            )}
-                        </button>
-                    )
+                    return {
+                        value: tab.key,
+                        label: tab.label,
+                        icon: tab.icon,
+                        count: (badge !== null && badge > 0) ? badge : undefined,
+                    }
                 })}
-            </div>
+                value={activeTab}
+                onChange={setActiveTab}
+            />
 
             {/* Tab Content */}
             {activeTab === 'contracts' && (
@@ -134,6 +118,6 @@ export function ContractsPage({
                 onClose={() => setTemplateDrawerOpen(false)}
                 onSuccess={handleTemplateCreated}
             />
-        </div>
+        </PageContainer>
     )
 }

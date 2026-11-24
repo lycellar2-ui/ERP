@@ -181,7 +181,7 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
     })
 
     return (
-        <div className="space-y-4 max-w-7xl mx-auto">
+        <div className="space-y-4 w-full">
 
             {/* ═══ TOP CONTROL BAR: SEARCH, TIME SELECTOR & QUICK PICKS (FLAT & INTEGRATED) ═══ */}
             <div className="space-y-2.5 pb-3 border-b border-slate-200">

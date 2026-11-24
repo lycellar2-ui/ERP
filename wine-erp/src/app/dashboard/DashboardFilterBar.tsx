@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { Calendar, Building2, Filter, Loader2, Check, ArrowRight } from 'lucide-react'
+import { Calendar, Building2, Loader2, ArrowRight } from 'lucide-react'
+import { Button } from '@/components/ui'
 import { useAppLocale } from '@/lib/i18n'
 import { getDashboardDictionary } from './i18n'
 
@@ -35,7 +36,7 @@ export function DashboardFilterBar({
     const pathname = usePathname()
     const searchParams = useSearchParams()
     const [isPending, startTransition] = useTransition()
-    const { locale, setLocale, isEn } = useAppLocale()
+    const { locale, isEn } = useAppLocale()
     const t = getDashboardDictionary(locale)
 
     const [preset, setPreset] = useState<PresetKey>(currentPreset)
@@ -100,19 +101,10 @@ export function DashboardFilterBar({
     }
 
     return (
-        <div
-            className="rounded-lg p-3.5 space-y-3 transition-all relative overflow-hidden"
-            style={{
-                background: '#FFFFFF',
-                border: '1px solid #E2E8F0',
-            }}
-        >
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                {/* ── Preset Buttons ── */}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[11px] font-semibold uppercase tracking-wider mr-1 text-slate-500 flex items-center gap-1">
-                        <Filter size={12} /> {t.filters.period}
-                    </span>
+        <div className="bg-lys-card border border-lys-border rounded-lg shadow-xs px-3 py-2 space-y-2 transition-all">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                {/* ── Segmented Preset Buttons ── */}
+                <div className="inline-flex flex-wrap items-center p-0.5 rounded-md bg-lys-subtle border border-lys-border gap-0.5">
                     {PRESETS.map((item) => {
                         const active = preset === item.key
                         return (
@@ -120,70 +112,47 @@ export function DashboardFilterBar({
                                 key={item.key}
                                 type="button"
                                 onClick={() => handlePresetClick(item.key)}
-                                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${
+                                className={`px-2.5 py-1 text-xs rounded transition-all cursor-pointer ${
                                     active
-                                        ? 'bg-[#0E7490]/20 text-[#0891B2] border border-[#0E7490]/40 shadow-xs font-bold'
-                                        : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900 hover:border-slate-300'
+                                        ? 'bg-white text-lys-teal-strong shadow-xs font-semibold'
+                                        : 'text-lys-secondary hover:text-lys-primary font-medium'
                                 }`}
                             >
-                                {active && <Check size={11} className="text-[#0891B2]" />}
                                 {item.label}
                             </button>
                         )
                     })}
                 </div>
 
-                {/* ── Legal Entity Filter, Quick Language Switcher & Status ── */}
-                <div className="flex items-center gap-2.5 ml-auto flex-wrap">
-                    <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-md border border-slate-200">
-                        <Building2 size={13} className="text-[#0891B2]" />
-                        <span className="text-xs text-slate-600 font-medium hidden sm:inline">{t.filters.entity}</span>
+                {/* ── Active Period Pill + Legal Entity Filter & Loading Status ── */}
+                <div className="flex items-center gap-2 ml-auto flex-wrap">
+                    <div className="hidden xl:inline-flex items-center gap-1.5 text-[11px] text-lys-muted px-2 py-1 rounded-md bg-lys-subtle/60">
+                        <Calendar size={12} className="text-lys-teal-strong shrink-0" aria-hidden />
+                        <strong className="text-lys-primary font-medium">{displayRangeText}</strong>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 bg-white h-8 px-2.5 rounded-md border border-lys-border-strong">
+                        <Building2 size={13} className="text-lys-teal-strong shrink-0" aria-hidden />
+                        <span className="text-xs text-lys-secondary font-medium hidden sm:inline">{t.filters.entity}</span>
                         <select
+                            aria-label={t.filters.entity}
                             value={entity}
                             onChange={handleEntityChange}
-                            className="bg-transparent text-xs font-semibold text-slate-900 focus:outline-none cursor-pointer"
+                            className="bg-transparent text-xs font-semibold text-lys-primary focus:outline-none cursor-pointer"
                         >
-                            <option value="ALL" className="bg-white text-slate-900">
+                            <option value="ALL" className="bg-white text-lys-primary">
                                 {t.filters.allEntities}
                             </option>
                             {legalEntities.map((le) => (
-                                <option key={le.id} value={le.id} className="bg-white text-slate-900">
+                                <option key={le.id} value={le.id} className="bg-white text-lys-primary">
                                     [{le.code}] {le.name}
                                 </option>
                             ))}
                         </select>
                     </div>
 
-                    {/* Quick VI / EN Switcher on Filter Bar */}
-                    <div className="flex items-center p-0.5 rounded-md bg-slate-100 border border-slate-200 text-[10px] font-bold">
-                        <button
-                            type="button"
-                            onClick={() => setLocale('vi')}
-                            className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
-                                locale === 'vi'
-                                    ? 'bg-[#0E7490] text-white font-black shadow-xs'
-                                    : 'text-slate-600 hover:text-slate-900'
-                            }`}
-                            title="Tiếng Việt"
-                        >
-                            VI
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setLocale('en')}
-                            className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
-                                locale === 'en'
-                                    ? 'bg-[#0E7490] text-white font-black shadow-xs'
-                                    : 'text-slate-600 hover:text-slate-900'
-                            }`}
-                            title="English"
-                        >
-                            EN
-                        </button>
-                    </div>
-
                     {isPending && (
-                        <div className="inline-flex items-center gap-1 text-[11px] text-[#0891B2] font-medium animate-pulse px-2 py-0.5 rounded bg-[#0E7490]/10 whitespace-nowrap shrink-0">
+                        <div className="inline-flex items-center gap-1 text-[11px] text-lys-teal-strong font-medium animate-pulse px-2 py-1 rounded-md bg-lys-teal-soft border border-tone-brand-border whitespace-nowrap shrink-0">
                             <Loader2 size={12} className="animate-spin" /> {isEn ? 'Loading...' : 'Đang tải...'}
                         </div>
                     )}
@@ -194,66 +163,44 @@ export function DashboardFilterBar({
             {showCustomModal && (
                 <form
                     onSubmit={handleApplyCustom}
-                    className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200 text-xs"
+                    className="flex flex-wrap items-center gap-2 pt-2 border-t border-lys-border text-xs"
                 >
-                    <span className="text-slate-600 font-medium flex items-center gap-1">
-                        <Calendar size={13} className="text-[#B45309]" /> {isEn ? 'Date range:' : 'Khoảng ngày:'}
+                    <span className="text-lys-secondary font-medium flex items-center gap-1">
+                        <Calendar size={13} className="text-tone-warning-fg" aria-hidden /> {isEn ? 'Date range:' : 'Khoảng ngày:'}
                     </span>
                     <input
                         type="date"
                         value={customFrom}
                         onChange={(e) => setCustomFrom(e.target.value)}
                         required
-                        className="bg-white border border-slate-200 text-slate-900 px-2 py-1 rounded text-xs focus:border-[#0E7490] focus:outline-none"
+                        className="bg-white border border-lys-border-strong text-lys-primary px-2.5 py-1.5 rounded-md text-base sm:text-xs focus:border-lys-teal focus:outline-none"
                     />
-                    <ArrowRight size={12} className="text-slate-500" />
+                    <ArrowRight size={12} className="text-lys-muted" aria-hidden />
                     <input
                         type="date"
                         value={customTo}
                         onChange={(e) => setCustomTo(e.target.value)}
                         required
-                        className="bg-white border border-slate-200 text-slate-900 px-2 py-1 rounded text-xs focus:border-[#0E7490] focus:outline-none"
+                        className="bg-white border border-lys-border-strong text-lys-primary px-2.5 py-1.5 rounded-md text-base sm:text-xs focus:border-lys-teal focus:outline-none"
                     />
-                    <button
-                        type="submit"
-                        className="px-3 py-1 rounded bg-[#0E7490] hover:bg-[#155E75] text-white font-semibold text-xs transition-all cursor-pointer"
-                    >
+                    <Button type="submit" size="sm">
                         {t.apply}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => {
                             setShowCustomModal(false)
                             if (preset === 'CUSTOM') {
                                 handlePresetClick('THIS_MONTH')
                             }
                         }}
-                        className="px-2 py-1 text-xs text-slate-600 hover:text-slate-900"
                     >
                         {t.close}
-                    </button>
+                    </Button>
                 </form>
             )}
-
-            {/* ── Current Filter Status Pill ── */}
-            <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#0E7490]" />
-                    <span>{isEn ? 'Filtered by:' : 'Dữ liệu đang lọc theo:'}</span>
-                    <strong className="text-[#0891B2]">{displayRangeText}</strong>
-                    {entity !== 'ALL' && (
-                        <span>
-                            · {isEn ? 'Entity:' : 'Pháp nhân:'}{' '}
-                            <strong className="text-[#B45309]">
-                                {legalEntities.find((le) => le.id === entity)?.name ?? entity}
-                            </strong>
-                        </span>
-                    )}
-                </div>
-                <span className="text-[10px] hidden md:inline">
-                    {isEn ? 'Revenue calculated by valid sales order dates' : 'Doanh thu tính theo ngày tạo đơn hàng hợp lệ'}
-                </span>
-            </div>
         </div>
     )
 }

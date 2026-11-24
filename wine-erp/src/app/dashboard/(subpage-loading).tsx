@@ -1,6 +1,6 @@
 export default function SubPageLoading() {
     return (
-        <div className="space-y-6 max-w-screen-2xl animate-pulse">
+        <div className="space-y-6 max-w-screen-2xl w-full mx-auto animate-pulse">
             {/* Title skeleton */}
             <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
@@ -11,7 +11,7 @@ export default function SubPageLoading() {
             </div>
 
             {/* Stat cards skeleton */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
                 {[1, 2, 3, 4, 5].map(i => (
                     <div key={i} className="p-4 rounded-lg flex items-center gap-4 bg-white border border-lys-border">
                         <div className="w-10 h-10 rounded-md bg-slate-100" />

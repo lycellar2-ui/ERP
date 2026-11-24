@@ -105,7 +105,7 @@ export function KpiClient({ summaries: initialSummaries, year, month }: Props) {
     const behind = summaries.filter(s => s.status === 'BEHIND').length
 
     return (
-        <div className="flex flex-col gap-4 max-w-screen-2xl">
+        <div className="flex flex-col gap-4 max-w-screen-2xl w-full mx-auto">
             <PageHeader
                 description={L.header.description(month, year)}
                 actions={

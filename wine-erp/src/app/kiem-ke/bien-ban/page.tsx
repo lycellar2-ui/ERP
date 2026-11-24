@@ -48,7 +48,7 @@ export default async function BienBanPage({ searchParams }: { searchParams: Prom
                 <span className="ml-2 text-lys-muted">Khu vực:</span>
                 {groups.map(x => (
                     <Link key={x} href={`/kiem-ke/bien-ban?g=${encodeURIComponent(x)}`}
-                        className={`rounded-full border px-3 py-1 ${x === report.group ? 'border-lys-teal-strong bg-lys-teal-strong text-white' : 'border-lys-border'}`}>{x}</Link>
+                        className={`rounded-md border px-3 py-1 transition-colors ${x === report.group ? 'border-lys-teal-strong bg-lys-teal-strong text-white' : 'border-lys-border hover:bg-lys-subtle'}`}>{x}</Link>
                 ))}
                 <span className="flex-1" />
                 <PrintButton />

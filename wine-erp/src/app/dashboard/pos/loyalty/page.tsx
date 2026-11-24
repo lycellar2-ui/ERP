@@ -4,7 +4,7 @@ export const metadata = { title: 'POS — Loyalty Program' }
 
 export default function LoyaltyPage() {
     return (
-        <div className="space-y-6 max-w-screen-lg p-6">
+        <div className="space-y-5 max-w-screen-xl w-full mx-auto">
             <LoyaltyPanel />
         </div>
     )

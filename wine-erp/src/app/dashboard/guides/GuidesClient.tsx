@@ -2,10 +2,14 @@
 
 import { useState, useMemo, useRef } from 'react'
 import {
-    PlayCircle, Upload, Search, Trash2, Pencil, Film, Clock,
-    HardDrive, Layers, X, CheckCircle2, EyeOff, Plus, MonitorPlay
+    PlayCircle, Upload, Trash2, Pencil, Film, Clock,
+    HardDrive, Layers, CheckCircle2, EyeOff, Plus
 } from 'lucide-react'
 import { toast } from 'sonner'
+import {
+    Badge, Button, Card, EmptyState, Field, Input, Modal,
+    PageContainer, PageHeader, SearchInput, Select, Textarea, useConfirmDialog,
+} from '@/components/ui'
 import { useAppLocale } from '@/lib/i18n'
 import { GUIDE_SCREENS } from './constants'
 import {
@@ -103,6 +107,7 @@ export function GuidesClient({ initialGuides, canManage }: GuidesClientProps) {
     const [uploadProgress, setUploadProgress] = useState<number>(0)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const { confirm, dialog: confirmDialog } = useConfirmDialog()
 
     // Build screen list combining preset GUIDE_SCREENS + any custom screens in DB
     const screenTabs = useMemo(() => {
@@ -300,73 +305,58 @@ export function GuidesClient({ initialGuides, canManage }: GuidesClientProps) {
         }
     }
 
-    const handleDelete = async (guide: VideoGuideDTO) => {
-        const confirmed = window.confirm(
-            isEn
-                ? `Delete "${guide.title}" from R2 and database?`
-                : `Xóa video "${guide.title}" khỏi R2 và hệ thống?`
-        )
-        if (!confirmed) return
-
-        const res = await deleteVideoGuideAction(guide.id)
-        if (!res.success) {
-            toast.error(res.error || 'Không thể xóa video')
-            return
-        }
-        setGuides((prev) => prev.filter((g) => g.id !== guide.id))
-        if (activeVideoId === guide.id) {
-            setActiveVideoId(null)
-        }
-        toast.success(isEn ? 'Deleted video guide' : 'Đã xóa video hướng dẫn')
+    const handleDelete = (guide: VideoGuideDTO) => {
+        confirm({
+            title: isEn ? 'Delete Video Guide' : 'Xóa Video Hướng Dẫn',
+            message: isEn
+                ? `Are you sure you want to delete "${guide.title}" from R2 and database?`
+                : `Bạn có chắc chắn muốn xóa video "${guide.title}" khỏi R2 và hệ thống?`,
+            confirmLabel: isEn ? 'Delete' : 'Xóa',
+            cancelLabel: isEn ? 'Cancel' : 'Hủy',
+            danger: true,
+            onConfirm: async () => {
+                const res = await deleteVideoGuideAction(guide.id)
+                if (!res.success) {
+                    toast.error(res.error || 'Không thể xóa video')
+                    return
+                }
+                setGuides((prev) => prev.filter((g) => g.id !== guide.id))
+                if (activeVideoId === guide.id) {
+                    setActiveVideoId(null)
+                }
+                toast.success(isEn ? 'Deleted video guide' : 'Đã xóa video hướng dẫn')
+            },
+        })
     }
 
     return (
-        <div className="p-4 md:p-6 max-w-[1440px] mx-auto space-y-5">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-lys-border">
-                <div>
-                    <div className="flex items-center gap-2">
-                        <MonitorPlay size={20} className="text-lys-teal-strong" />
-                        <h1 className="text-xl font-semibold text-lys-primary tracking-tight">
-                            {isEn ? 'Video User Guides (R2)' : 'Video Hướng Dẫn Sử Dụng'}
-                        </h1>
-                    </div>
-                    <p className="text-xs text-lys-muted mt-1">
-                        {isEn
-                            ? 'Screen-by-screen walkthrough videos stored and streamed directly from Cloudflare R2.'
-                            : 'Thư viện video hướng dẫn thao tác chia theo từng màn hình ERP, phát trực tiếp từ Cloudflare R2.'}
-                    </p>
-                </div>
-
-                {canManage && (
-                    <button
-                        type="button"
-                        onClick={openUploadModal}
-                        className="inline-flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-semibold bg-lys-teal-strong text-white hover:opacity-95 transition-opacity cursor-pointer shadow-xs self-start sm:self-auto"
-                    >
-                        <Upload size={15} />
-                        <span>{isEn ? 'Upload Video to R2' : 'Tải Video Lên R2'}</span>
-                    </button>
-                )}
-            </div>
+        <PageContainer>
+            <PageHeader
+                description={
+                    isEn
+                        ? 'Screen-by-screen walkthrough videos stored and streamed directly from Cloudflare R2.'
+                        : 'Thư viện video hướng dẫn thao tác chia theo từng màn hình ERP, phát trực tiếp từ Cloudflare R2.'
+                }
+                actions={
+                    canManage ? (
+                        <Button size="sm" onClick={openUploadModal}>
+                            <Upload size={14} aria-hidden />
+                            <span>{isEn ? 'Upload Video to R2' : 'Tải Video Lên R2'}</span>
+                        </Button>
+                    ) : undefined
+                }
+            />
 
             {/* Main 2-column layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
                 {/* Left: Screen Categories */}
-                <aside className="lg:col-span-3 bg-lys-surface border border-lys-border rounded-lg p-3 space-y-3">
-                    <div className="relative">
-                        <Search
-                            size={14}
-                            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-lys-muted"
-                        />
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder={isEn ? 'Search video...' : 'Tìm video hướng dẫn...'}
-                            className="w-full pl-8 pr-3 py-1.5 text-xs bg-lys-subtle border border-lys-border rounded-md text-lys-primary placeholder:text-lys-muted focus:outline-none focus:border-lys-teal-strong"
-                        />
-                    </div>
+                <Card className="lg:col-span-3 p-3 space-y-3">
+                    <SearchInput
+                        className="w-full sm:w-full"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder={isEn ? 'Search video...' : 'Tìm video hướng dẫn...'}
+                    />
 
                     <div className="space-y-1">
                         <button
@@ -379,12 +369,10 @@ export function GuidesClient({ initialGuides, canManage }: GuidesClientProps) {
                             }`}
                         >
                             <span className="flex items-center gap-2">
-                                <Layers size={14} />
+                                <Layers size={14} aria-hidden />
                                 <span>{isEn ? 'All Screens' : 'Tất cả màn hình'}</span>
                             </span>
-                            <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px] font-medium">
-                                {guides.length}
-                            </span>
+                            <Badge tone={selectedScreen === 'ALL' ? 'brand' : 'neutral'}>{guides.length}</Badge>
                         </button>
 
                         <div className="pt-1 border-t border-lys-border space-y-0.5">
@@ -404,10 +392,10 @@ export function GuidesClient({ initialGuides, canManage }: GuidesClientProps) {
                                     >
                                         <span className="truncate pr-2">{screen.label}</span>
                                         <span
-                                            className={`px-1.5 py-0.5 rounded text-[11px] font-medium shrink-0 ${
+                                            className={`px-1.5 py-0.5 rounded text-[11px] font-medium type-number shrink-0 ${
                                                 screen.count > 0
-                                                    ? 'bg-slate-100 text-slate-700'
-                                                    : 'text-slate-400'
+                                                    ? 'bg-lys-subtle text-lys-secondary'
+                                                    : 'text-lys-dim'
                                             }`}
                                         >
                                             {screen.count}
@@ -417,12 +405,12 @@ export function GuidesClient({ initialGuides, canManage }: GuidesClientProps) {
                             })}
                         </div>
                     </div>
-                </aside>
+                </Card>
 
                 {/* Right: Video Player + Playlist */}
-                <div className="lg:col-span-9 space-y-5">
+                <div className="lg:col-span-9 space-y-4">
                     {activeVideo ? (
-                        <div className="bg-lys-surface border border-lys-border rounded-lg overflow-hidden">
+                        <Card className="overflow-hidden">
                             <div className="bg-slate-950">
                                 <video
                                     key={activeVideo.id}
@@ -436,58 +424,55 @@ export function GuidesClient({ initialGuides, canManage }: GuidesClientProps) {
 
                             <div className="p-4 md:p-5 space-y-2.5">
                                 <div className="flex flex-wrap items-start justify-between gap-3">
-                                    <div className="space-y-1">
+                                    <div className="space-y-1.5">
                                         <div className="flex flex-wrap items-center gap-2">
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-lys-teal-soft text-lys-teal-strong">
-                                                {activeVideo.screenLabel}
-                                            </span>
+                                            <Badge tone="brand">{activeVideo.screenLabel}</Badge>
                                             {!activeVideo.isPublished && (
-                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                                                    <EyeOff size={11} />
+                                                <Badge tone="warning" icon={EyeOff}>
                                                     {isEn ? 'Hidden' : 'Đang ẩn'}
-                                                </span>
+                                                </Badge>
                                             )}
                                         </div>
-                                        <h2 className="text-base font-semibold text-lys-primary">
+                                        <h2 className="type-section-title text-lys-primary">
                                             {activeVideo.title}
                                         </h2>
                                     </div>
 
                                     {canManage && (
                                         <div className="flex items-center gap-1.5">
-                                            <button
-                                                type="button"
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
                                                 onClick={() => openEditModal(activeVideo)}
-                                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded border border-lys-border text-xs text-lys-secondary hover:text-lys-primary hover:bg-lys-subtle cursor-pointer"
                                             >
-                                                <Pencil size={13} />
+                                                <Pencil size={13} aria-hidden />
                                                 <span>{isEn ? 'Edit' : 'Sửa'}</span>
-                                            </button>
-                                            <button
-                                                type="button"
+                                            </Button>
+                                            <Button
+                                                variant="danger-outline"
+                                                size="sm"
                                                 onClick={() => handleDelete(activeVideo)}
-                                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded border border-lys-border text-xs text-red-600 hover:bg-red-50 cursor-pointer"
                                             >
-                                                <Trash2 size={13} />
+                                                <Trash2 size={13} aria-hidden />
                                                 <span>{isEn ? 'Delete' : 'Xóa'}</span>
-                                            </button>
+                                            </Button>
                                         </div>
                                     )}
                                 </div>
 
                                 {activeVideo.description && (
-                                    <p className="text-xs text-lys-secondary leading-relaxed whitespace-pre-line">
+                                    <p className="type-body text-lys-secondary leading-relaxed whitespace-pre-line">
                                         {activeVideo.description}
                                     </p>
                                 )}
 
-                                <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-lys-border text-[11px] text-lys-muted">
-                                    <span className="inline-flex items-center gap-1">
-                                        <Clock size={12} />
+                                <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-lys-border text-xs text-lys-muted">
+                                    <span className="inline-flex items-center gap-1 type-number">
+                                        <Clock size={12} aria-hidden />
                                         {formatDuration(activeVideo.durationSec)}
                                     </span>
-                                    <span className="inline-flex items-center gap-1">
-                                        <HardDrive size={12} />
+                                    <span className="inline-flex items-center gap-1 type-number">
+                                        <HardDrive size={12} aria-hidden />
                                         {formatBytes(activeVideo.fileSize)}
                                     </span>
                                     {activeVideo.uploadedByName && (
@@ -497,42 +482,40 @@ export function GuidesClient({ initialGuides, canManage }: GuidesClientProps) {
                                     )}
                                 </div>
                             </div>
-                        </div>
+                        </Card>
                     ) : (
-                        <div className="bg-lys-surface border border-dashed border-lys-border rounded-lg p-10 text-center space-y-3">
-                            <Film size={32} className="mx-auto text-lys-muted" />
-                            <div className="space-y-1">
-                                <p className="text-sm font-medium text-lys-primary">
-                                    {isEn
+                        <Card>
+                            <EmptyState
+                                icon={Film}
+                                title={
+                                    isEn
                                         ? 'No tutorial videos for this screen yet'
-                                        : 'Chưa có video hướng dẫn cho màn hình này'}
-                                </p>
-                                <p className="text-xs text-lys-muted">
-                                    {canManage
+                                        : 'Chưa có video hướng dẫn cho màn hình này'
+                                }
+                                description={
+                                    canManage
                                         ? isEn
                                             ? 'Click "Upload Video to R2" to add the first walkthrough.'
                                             : 'Bấm "Tải Video Lên R2" để thêm video hướng dẫn đầu tiên.'
                                         : isEn
                                           ? 'Select another screen on the left to watch available guides.'
-                                          : 'Chọn màn hình khác ở danh sách bên trái để xem video hiện có.'}
-                                </p>
-                            </div>
-                            {canManage && (
-                                <button
-                                    type="button"
-                                    onClick={openUploadModal}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-lys-teal-strong text-white hover:opacity-95 cursor-pointer"
-                                >
-                                    <Plus size={14} />
-                                    <span>{isEn ? 'Upload Video' : 'Tải Video Lên'}</span>
-                                </button>
-                            )}
-                        </div>
+                                          : 'Chọn màn hình khác ở danh sách bên trái để xem video hiện có.'
+                                }
+                                action={
+                                    canManage ? (
+                                        <Button size="sm" onClick={openUploadModal}>
+                                            <Plus size={14} aria-hidden />
+                                            <span>{isEn ? 'Upload Video' : 'Tải Video Lên'}</span>
+                                        </Button>
+                                    ) : undefined
+                                }
+                            />
+                        </Card>
                     )}
 
                     {/* Playlist */}
                     {filteredGuides.length > 0 && (
-                        <div className="bg-lys-surface border border-lys-border rounded-lg p-4 space-y-3">
+                        <Card className="p-4 space-y-3">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-xs font-semibold uppercase tracking-wider text-lys-muted">
                                     {isEn
@@ -569,12 +552,12 @@ export function GuidesClient({ initialGuides, canManage }: GuidesClientProps) {
                                                     <span className="truncate max-w-[140px]">
                                                         {video.screenLabel}
                                                     </span>
-                                                    <span>•</span>
-                                                    <span>{formatDuration(video.durationSec)}</span>
-                                                    <span>•</span>
-                                                    <span>{formatBytes(video.fileSize)}</span>
+                                                    <span>·</span>
+                                                    <span className="type-number">{formatDuration(video.durationSec)}</span>
+                                                    <span>·</span>
+                                                    <span className="type-number">{formatBytes(video.fileSize)}</span>
                                                     {!video.isPublished && (
-                                                        <span className="text-amber-600 font-medium">
+                                                        <span className="text-tone-warning-fg font-medium">
                                                             ({isEn ? 'Hidden' : 'Ẩn'})
                                                         </span>
                                                     )}
@@ -584,217 +567,193 @@ export function GuidesClient({ initialGuides, canManage }: GuidesClientProps) {
                                     )
                                 })}
                             </div>
-                        </div>
+                        </Card>
                     )}
                 </div>
             </div>
 
             {/* Upload / Edit Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                    <div className="bg-lys-surface border border-lys-border rounded-lg w-full max-w-lg shadow-xl overflow-hidden">
-                        <div className="flex items-center justify-between px-5 py-3.5 border-b border-lys-border">
-                            <h3 className="text-sm font-semibold text-lys-primary">
-                                {editingGuide
-                                    ? isEn
-                                        ? 'Edit Video Guide'
-                                        : 'Chỉnh Sửa Video Hướng Dẫn'
-                                    : isEn
-                                      ? 'Upload Tutorial Video to R2'
-                                      : 'Tải Video Hướng Dẫn Lên R2'}
-                            </h3>
-                            <button
-                                type="button"
-                                onClick={() => !isSubmitting && setIsModalOpen(false)}
-                                className="p-1 rounded text-lys-muted hover:text-lys-primary cursor-pointer"
+            <Modal
+                open={isModalOpen}
+                onClose={() => { if (!isSubmitting) setIsModalOpen(false) }}
+                size="lg"
+                title={
+                    editingGuide
+                        ? (isEn ? 'Edit Video Guide' : 'Chỉnh Sửa Video Hướng Dẫn')
+                        : (isEn ? 'Upload Tutorial Video to R2' : 'Tải Video Hướng Dẫn Lên R2')
+                }
+                footer={
+                    <>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            disabled={isSubmitting}
+                            onClick={() => setIsModalOpen(false)}
+                        >
+                            {isEn ? 'Cancel' : 'Hủy'}
+                        </Button>
+                        <Button
+                            type="submit"
+                            form="guide-upload-form"
+                            size="sm"
+                            loading={isSubmitting}
+                        >
+                            {!isSubmitting && <CheckCircle2 size={14} aria-hidden />}
+                            <span>
+                                {isSubmitting
+                                    ? (isEn ? 'Processing...' : 'Đang xử lý...')
+                                    : editingGuide
+                                      ? (isEn ? 'Save Changes' : 'Lưu Thay Đổi')
+                                      : (isEn ? 'Upload & Save' : 'Tải Lên & Lưu')}
+                            </span>
+                        </Button>
+                    </>
+                }
+            >
+                <form id="guide-upload-form" onSubmit={handleSubmitModal} className="space-y-4">
+                    <Field label={isEn ? 'Screen / Module' : 'Màn hình / Phân hệ'}>
+                        {id => (
+                            <Select
+                                id={id}
+                                value={formScreenKey}
+                                onChange={(e) => setFormScreenKey(e.target.value)}
                             >
-                                <X size={16} />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSubmitModal} className="p-5 space-y-4">
-                            <div>
-                                <label className="block text-xs font-medium text-lys-secondary mb-1">
-                                    {isEn ? 'Screen / Module' : 'Màn hình / Phân hệ'}
-                                </label>
-                                <select
-                                    value={formScreenKey}
-                                    onChange={(e) => setFormScreenKey(e.target.value)}
-                                    className="w-full px-3 py-2 text-xs bg-lys-subtle border border-lys-border rounded-md text-lys-primary focus:outline-none focus:border-lys-teal-strong"
-                                >
-                                    {GUIDE_SCREENS.map((s) => (
-                                        <option key={s.key} value={s.key}>
-                                            {isEn ? s.labelEn : s.label}
-                                        </option>
-                                    ))}
-                                    <option value="__custom__">
-                                        {isEn ? '+ Custom screen name...' : '+ Tự nhập tên màn hình khác...'}
+                                {GUIDE_SCREENS.map((s) => (
+                                    <option key={s.key} value={s.key}>
+                                        {isEn ? s.labelEn : s.label}
                                     </option>
-                                </select>
-                            </div>
+                                ))}
+                                <option value="__custom__">
+                                    {isEn ? '+ Custom screen name...' : '+ Tự nhập tên màn hình khác...'}
+                                </option>
+                            </Select>
+                        )}
+                    </Field>
 
-                            {formScreenKey === '__custom__' && (
-                                <div>
-                                    <label className="block text-xs font-medium text-lys-secondary mb-1">
-                                        {isEn ? 'Custom Screen Name' : 'Tên màn hình mới'}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={customScreenLabel}
-                                        onChange={(e) => setCustomScreenLabel(e.target.value)}
-                                        placeholder={isEn ? 'e.g. Stock Count Mobile' : 'Ví dụ: Kiểm kê kho trên điện thoại'}
-                                        className="w-full px-3 py-2 text-xs bg-lys-subtle border border-lys-border rounded-md text-lys-primary focus:outline-none focus:border-lys-teal-strong"
-                                    />
-                                </div>
-                            )}
-
-                            <div>
-                                <label className="block text-xs font-medium text-lys-secondary mb-1">
-                                    {isEn ? 'Video Title' : 'Tiêu đề video'} *
-                                </label>
-                                <input
+                    {formScreenKey === '__custom__' && (
+                        <Field label={isEn ? 'Custom Screen Name' : 'Tên màn hình mới'} required>
+                            {id => (
+                                <Input
+                                    id={id}
                                     type="text"
                                     required
-                                    value={formTitle}
-                                    onChange={(e) => setFormTitle(e.target.value)}
-                                    placeholder={
-                                        isEn
-                                            ? 'e.g. How to create a Sales Quotation'
-                                            : 'Ví dụ: Hướng dẫn tạo Báo giá & gửi PDF cho khách'
-                                    }
-                                    className="w-full px-3 py-2 text-xs bg-lys-subtle border border-lys-border rounded-md text-lys-primary focus:outline-none focus:border-lys-teal-strong"
+                                    value={customScreenLabel}
+                                    onChange={(e) => setCustomScreenLabel(e.target.value)}
+                                    placeholder={isEn ? 'e.g. Stock Count Mobile' : 'Ví dụ: Kiểm kê kho trên điện thoại'}
                                 />
-                            </div>
+                            )}
+                        </Field>
+                    )}
 
-                            <div>
-                                <label className="block text-xs font-medium text-lys-secondary mb-1">
-                                    {isEn ? 'Description / Notes' : 'Mô tả ngắn / Ghi chú'}
-                                </label>
-                                <textarea
-                                    rows={3}
-                                    value={formDescription}
-                                    onChange={(e) => setFormDescription(e.target.value)}
-                                    placeholder={
-                                        isEn
-                                            ? 'Key steps covered in this video...'
-                                            : 'Tóm tắt các bước thao tác trong video...'
-                                    }
-                                    className="w-full px-3 py-2 text-xs bg-lys-subtle border border-lys-border rounded-md text-lys-primary focus:outline-none focus:border-lys-teal-strong"
+                    <Field label={isEn ? 'Video Title' : 'Tiêu đề video'} required>
+                        {id => (
+                            <Input
+                                id={id}
+                                type="text"
+                                required
+                                value={formTitle}
+                                onChange={(e) => setFormTitle(e.target.value)}
+                                placeholder={
+                                    isEn
+                                        ? 'e.g. How to create a Sales Quotation'
+                                        : 'Ví dụ: Hướng dẫn tạo Báo giá & gửi PDF cho khách'
+                                }
+                            />
+                        )}
+                    </Field>
+
+                    <Field label={isEn ? 'Description / Notes' : 'Mô tả ngắn / Ghi chú'}>
+                        {id => (
+                            <Textarea
+                                id={id}
+                                rows={3}
+                                value={formDescription}
+                                onChange={(e) => setFormDescription(e.target.value)}
+                                placeholder={
+                                    isEn
+                                        ? 'Key steps covered in this video...'
+                                        : 'Tóm tắt các bước thao tác trong video...'
+                                }
+                            />
+                        )}
+                    </Field>
+
+                    {!editingGuide && (
+                        <Field label={isEn ? 'Video File (MP4, WebM, MOV — max 500MB)' : 'File Video (MP4, WebM, MOV — tối đa 500MB)'} required>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="video/mp4,video/webm,video/quicktime,video/x-m4v,.mp4,.webm,.mov,.m4v"
+                                onChange={(e) => handleSelectFile(e.target.files?.[0] || null)}
+                                className="hidden"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="w-full flex items-center justify-between px-3 py-2.5 rounded-md border border-dashed border-lys-border-strong bg-lys-subtle/60 hover:border-lys-teal-strong text-xs cursor-pointer transition-colors"
+                            >
+                                <span className="truncate text-lys-primary">
+                                    {selectedFile
+                                        ? `${selectedFile.name} (${formatBytes(selectedFile.size)})`
+                                        : isEn
+                                          ? 'Click to choose video file...'
+                                          : 'Bấm để chọn file video từ máy tính...'}
+                                </span>
+                                <Upload size={14} className="text-lys-teal-strong shrink-0 ml-2" aria-hidden />
+                            </button>
+                        </Field>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                        <Field label={isEn ? 'Display Order' : 'Thứ tự hiển thị'}>
+                            {id => (
+                                <Input
+                                    id={id}
+                                    type="number"
+                                    value={formSortOrder}
+                                    onChange={(e) => setFormSortOrder(Number(e.target.value) || 0)}
                                 />
-                            </div>
-
-                            {!editingGuide && (
-                                <div>
-                                    <label className="block text-xs font-medium text-lys-secondary mb-1">
-                                        {isEn ? 'Video File (MP4, WebM, MOV — max 500MB)' : 'File Video (MP4, WebM, MOV — tối đa 500MB)'} *
-                                    </label>
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept="video/mp4,video/webm,video/quicktime,video/x-m4v,.mp4,.webm,.mov,.m4v"
-                                        onChange={(e) => handleSelectFile(e.target.files?.[0] || null)}
-                                        className="hidden"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-md border border-dashed border-lys-border bg-lys-subtle hover:border-lys-teal-strong text-xs cursor-pointer"
-                                    >
-                                        <span className="truncate text-lys-primary">
-                                            {selectedFile
-                                                ? `${selectedFile.name} (${formatBytes(selectedFile.size)})`
-                                                : isEn
-                                                  ? 'Click to choose video file...'
-                                                  : 'Bấm để chọn file video từ máy tính...'}
-                                        </span>
-                                        <Upload size={14} className="text-lys-teal-strong shrink-0 ml-2" />
-                                    </button>
-                                </div>
                             )}
-
-                            <div className="grid grid-cols-2 gap-3 items-center">
-                                <div>
-                                    <label className="block text-xs font-medium text-lys-secondary mb-1">
-                                        {isEn ? 'Display Order' : 'Thứ tự hiển thị'}
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={formSortOrder}
-                                        onChange={(e) => setFormSortOrder(Number(e.target.value) || 0)}
-                                        className="w-full px-3 py-1.5 text-xs bg-lys-subtle border border-lys-border rounded-md text-lys-primary focus:outline-none focus:border-lys-teal-strong"
-                                    />
-                                </div>
-                                <label className="flex items-center gap-2 pt-4 text-xs text-lys-primary cursor-pointer select-none">
-                                    <input
-                                        type="checkbox"
-                                        checked={formPublished}
-                                        onChange={(e) => setFormPublished(e.target.checked)}
-                                        className="rounded border-lys-border text-lys-teal-strong"
-                                    />
-                                    <span>{isEn ? 'Published to all users' : 'Hiển thị cho mọi nhân viên'}</span>
-                                </label>
-                            </div>
-
-                            {isSubmitting && !editingGuide && (
-                                <div className="space-y-1.5">
-                                    <div className="flex items-center justify-between text-[11px] text-lys-muted">
-                                        <span>
-                                            {uploadProgress < 100
-                                                ? isEn
-                                                    ? 'Uploading to Cloudflare R2...'
-                                                    : 'Đang đẩy video lên Cloudflare R2...'
-                                                : isEn
-                                                  ? 'Saving metadata...'
-                                                  : 'Đang lưu thông tin...'}
-                                        </span>
-                                        <span className="font-semibold text-lys-teal-strong">
-                                            {uploadProgress}%
-                                        </span>
-                                    </div>
-                                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-lys-teal-strong transition-all duration-200"
-                                            style={{ width: `${uploadProgress}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="flex items-center justify-end gap-2 pt-2 border-t border-lys-border">
-                                <button
-                                    type="button"
-                                    disabled={isSubmitting}
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="px-3.5 py-1.5 rounded-md border border-lys-border text-xs text-lys-secondary hover:bg-lys-subtle cursor-pointer disabled:opacity-50"
-                                >
-                                    {isEn ? 'Cancel' : 'Hủy'}
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-lys-teal-strong text-white text-xs font-semibold hover:opacity-95 cursor-pointer disabled:opacity-50"
-                                >
-                                    <CheckCircle2 size={14} />
-                                    <span>
-                                        {isSubmitting
-                                            ? isEn
-                                                ? 'Processing...'
-                                                : 'Đang xử lý...'
-                                            : editingGuide
-                                              ? isEn
-                                                  ? 'Save Changes'
-                                                  : 'Lưu Thay Đổi'
-                                              : isEn
-                                                ? 'Upload & Save'
-                                                : 'Tải Lên & Lưu'}
-                                    </span>
-                                </button>
-                            </div>
-                        </form>
+                        </Field>
+                        <label className="flex items-center gap-2 sm:pt-5 text-xs text-lys-primary cursor-pointer select-none">
+                            <input
+                                type="checkbox"
+                                checked={formPublished}
+                                onChange={(e) => setFormPublished(e.target.checked)}
+                                className="rounded border-lys-border-strong text-lys-teal-strong"
+                            />
+                            <span>{isEn ? 'Published to all users' : 'Hiển thị cho mọi nhân viên'}</span>
+                        </label>
                     </div>
-                </div>
-            )}
-        </div>
+
+                    {isSubmitting && !editingGuide && (
+                        <div className="space-y-1.5">
+                            <div className="flex items-center justify-between text-[11px] text-lys-muted">
+                                <span>
+                                    {uploadProgress < 100
+                                        ? isEn
+                                            ? 'Uploading to Cloudflare R2...'
+                                            : 'Đang đẩy video lên Cloudflare R2...'
+                                        : isEn
+                                          ? 'Saving metadata...'
+                                          : 'Đang lưu thông tin...'}
+                                </span>
+                                <span className="font-semibold text-lys-teal-strong type-number">
+                                    {uploadProgress}%
+                                </span>
+                            </div>
+                            <div className="w-full h-1.5 bg-lys-subtle rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-lys-teal-strong transition-all duration-200"
+                                    style={{ width: `${uploadProgress}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
+                </form>
+            </Modal>
+
+            {confirmDialog}
+        </PageContainer>
     )
 }

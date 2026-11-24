@@ -271,7 +271,7 @@ export function PriceListClient({ initialLists, currentUser }: Props) {
     }, [detail, skuFilterMode, lineSearch])
 
     return (
-        <div className="flex flex-col gap-4 max-w-screen-2xl">
+        <div className="flex flex-col gap-4 max-w-screen-2xl w-full mx-auto">
             <PageHeader
                 description={activeTab === 'general' ? i18n.tabs.descGeneral : i18n.tabs.descCustomer}
                 actions={activeTab === 'general' && (

@@ -502,7 +502,7 @@ export function DeliveryClient({ initialRows, stats: initStats }: Props) {
     }
 
     return (
-        <div className="flex flex-col gap-4 max-w-screen-2xl">
+        <div className="flex flex-col gap-4 max-w-screen-2xl w-full mx-auto">
             <PageHeader
                 description={i18n.description}
                 actions={

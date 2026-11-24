@@ -119,7 +119,7 @@ export function AICRMAnalysis() {
                 {stats && !loading && (
                     <div className="px-5 pt-4">
                         {/* Row 1: Core KPIs */}
-                        <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 mb-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 2xl:grid-cols-6 gap-2 mb-3">
                             <div className="text-center p-2 rounded" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                                 <div className="flex items-center justify-center gap-1 mb-0.5"><Users size={11} style={{ color: '#0891B2' }} /></div>
                                 <p className="text-lg font-bold" style={{ color: '#0891B2' }}>{stats.totalCustomers}</p>

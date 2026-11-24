@@ -58,7 +58,7 @@ export function QRCodeClient({ initialData, stats }: {
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
 
     return (
-        <div className="flex flex-col gap-4 max-w-screen-2xl">
+        <div className="flex flex-col gap-4 max-w-screen-2xl w-full mx-auto">
             <PageHeader
                 description={L.header.description}
                 actions={

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Shield, Save, ChevronRight, AlertTriangle, Settings2, DollarSign, Percent, FileText, Loader2, Plus, Trash2, UserCheck, Layers, Edit3, X, Check, Package } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowLeft, Save, ChevronRight, AlertTriangle, Settings2, DollarSign, Percent, FileText, Loader2, Plus, Trash2, UserCheck, Layers, Edit3, X, Check, Package } from 'lucide-react'
 import { toast } from 'sonner'
 import { CATEGORY_LABELS } from '../../proposals/constants'
 import { 
@@ -149,23 +150,19 @@ export function ApprovalMatrixClient({ initialData }: Props) {
     }
 
     return (
-        <div className="space-y-8 max-w-screen-xl">
+        <div className="space-y-6 max-w-screen-xl w-full mx-auto">
             {/* Header */}
-            <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-lg flex items-center justify-center"
-                        style={{ background: 'rgba(8, 145, 178, 0.08)', border: '1px solid rgba(8, 145, 178, 0.25)' }}>
-                        <Shield size={24} style={{ color: '#0891B2' }} />
-                    </div>
-                    <div>
-                        <h2 className="text-2xl font-bold" style={{ color: '#0F172A' }}>
-                            Ma Trận Phân Quyền & Luồng Duyệt
-                        </h2>
-                        <p className="text-sm mt-0.5" style={{ color: '#64748B' }}>
-                            Chủ động tùy chỉnh số cấp duyệt, phân quyền Role Tạo & Role Duyệt cho từng loại Tờ trình
-                        </p>
-                    </div>
-                </div>
+            <div className="space-y-1.5">
+                <Link
+                    href="/dashboard/settings"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-lys-muted hover:text-lys-primary transition-colors"
+                >
+                    <ArrowLeft size={14} />
+                    <span>Quay lại Cài Đặt</span>
+                </Link>
+                <p className="text-[13px] text-lys-muted">
+                    Chủ động tùy chỉnh số cấp duyệt, phân quyền Role Tạo & Role Duyệt cho từng loại Tờ trình
+                </p>
             </div>
 
             {/* ═══ Section 1: Proposal Routing Matrix ═══ */}
@@ -491,7 +488,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
 
             {/* ═══ Edit Route Modal ═══ */}
             {editDraft && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-[2px]">
                     <div className="w-full max-w-2xl rounded-lg shadow-xl overflow-hidden flex flex-col max-h-[90vh] bg-white border border-slate-200">
                         {/* Modal Header */}
                         <div className="flex items-center justify-between p-5 bg-slate-50/80 border-b border-slate-200">
@@ -643,7 +640,7 @@ export function ApprovalMatrixClient({ initialData }: Props) {
 
             {/* ═══ Edit PO Route Modal ═══ */}
             {editingPoModal && poDraft && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-[2px]">
                     <div className="w-full max-w-2xl rounded-lg shadow-xl overflow-hidden flex flex-col max-h-[90vh] bg-white border border-slate-200">
                         {/* Modal Header */}
                         <div className="flex items-center justify-between p-5 bg-slate-50/80 border-b border-slate-200">

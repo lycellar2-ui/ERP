@@ -911,7 +911,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
             {/* MODAL 1: QUICK CALL LOGGER FORM */}
             {/* ============================================================== */}
             {loggerOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/35 backdrop-blur-[2px] animate-in fade-in duration-150">
                     <div
                         className="w-full max-w-lg bg-white rounded-lg shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150"
                         onClick={e => e.stopPropagation()}
@@ -1173,7 +1173,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
             {/* MODAL 2: SET SALES QUOTA & TARGETS (MANAGER ONLY) */}
             {/* ============================================================== */}
             {quotaModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/35 backdrop-blur-[2px] animate-in fade-in duration-150">
                     <div
                         className="w-full max-w-md bg-white rounded-lg shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-150"
                         onClick={e => e.stopPropagation()}
@@ -1300,7 +1300,7 @@ export function TelesalesProspectingPanel({ initialData }: TelesalesProspectingP
             {/* MODAL 3: CONVERT PROSPECT TO ACTIVE CUSTOMER */}
             {/* ============================================================== */}
             {convertModalOpen && convertingLog && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/35 backdrop-blur-[2px] animate-in fade-in duration-150">
                     <div
                         className="w-full max-w-md bg-white rounded-lg shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-150"
                         onClick={e => e.stopPropagation()}

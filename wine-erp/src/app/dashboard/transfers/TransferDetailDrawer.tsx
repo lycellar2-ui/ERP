@@ -1255,7 +1255,7 @@ export function TransferDetailDrawer({ transferId, onClose, onRefresh, currentUs
 
             {/* Modal Kiểm Đếm Thực Nhận & Chọn Vị Trí Kệ */}
             {showReceiveModal && detail && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-[2px] animate-in fade-in duration-150">
                     <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
                         {/* Header */}
                         <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">

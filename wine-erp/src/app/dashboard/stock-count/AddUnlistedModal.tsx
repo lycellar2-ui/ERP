@@ -127,7 +127,7 @@ export function AddUnlistedModal({
     ).slice(0, 8)
 
     return (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-900/35 backdrop-blur-[2px] z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in">
             <div className="bg-white border border-slate-200 rounded-t-lg sm:rounded-lg max-w-lg w-full p-4 sm:p-6 text-slate-900 shadow-2xl space-y-3.5 max-h-[92vh] overflow-y-auto animate-modal-in">
                 <div className="flex justify-between items-start pb-2.5 border-b border-slate-200">
                     <div>

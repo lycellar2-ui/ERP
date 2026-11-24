@@ -3,9 +3,8 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useCallback, useRef, useState, useMemo } from 'react'
+import { useCallback, useRef, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { signOut } from '@/app/login/actions'
 import type { SessionUser } from '@/lib/session'
 
 function hasClientPermission(user: SessionUser, module: string, action: string): boolean {
@@ -33,11 +32,11 @@ function hasClientPermission(user: SessionUser, module: string, action: string):
 }
 import {
     LayoutDashboard, Package, Users, ShoppingCart, Warehouse,
-    Truck, DollarSign, FileText, BarChart3, Settings, ChevronLeft,
-    ChevronRight, Building2, FileSignature, Globe, Briefcase,
-    Layers, Brain, LogOut, Target, Calculator, Handshake, Stamp, Tag,
-    ArrowRightLeft, RotateCcw, ClipboardList, TrendingUp, Wine, QrCode,
-    Image as ImageIcon, Megaphone, Ship, ClipboardCheck, Shield, ScrollText, MapPin,
+    DollarSign, FileText, BarChart3, Settings, ChevronLeft,
+    ChevronRight, Building2, FileSignature, Briefcase,
+    Brain, Target, Calculator, Handshake, Stamp, Tag,
+    ArrowRightLeft, RotateCcw, ClipboardList, Wine,
+    Ship, ClipboardCheck, ScrollText, MapPin,
     FileCheck2, CreditCard, BookOpen, X, PlayCircle
 } from 'lucide-react'
 
@@ -125,13 +124,6 @@ const NAV_GROUPS: NavGroup[] = [
         ]
     },
     {
-        label: 'Marketing',
-        labelEn: 'Marketing',
-        items: [
-            // { href: '/dashboard/media', icon: ImageIcon, label: 'Thư Viện Ảnh', permission: 'MDM:READ' },
-        ]
-    },
-    {
         label: 'Hệ Thống',
         labelEn: 'System',
         items: [
@@ -196,7 +188,7 @@ const DATA_PREFETCH_MAP: Record<string, (qc: any) => void> = {
 function LysLogo({ collapsed, isMobile, onCloseMobile }: { collapsed: boolean; isMobile?: boolean; onCloseMobile?: () => void }) {
     if (collapsed && !isMobile) {
         return (
-            <div className="flex items-center justify-center w-full h-[42px] border-b border-lys-border shrink-0">
+            <div className="flex items-center justify-center w-full h-12 border-b border-lys-border shrink-0">
                 <Image
                     src="/logo/Ly's Cellars - Logo_icon blue green.png"
                     alt="LY's Cellars"
@@ -210,7 +202,7 @@ function LysLogo({ collapsed, isMobile, onCloseMobile }: { collapsed: boolean; i
     }
 
     return (
-        <div className="flex items-center justify-between px-4 w-full h-[42px] border-b border-lys-border shrink-0">
+        <div className="flex items-center justify-between px-4 w-full h-12 border-b border-lys-border shrink-0">
             <Image
                 src="/logo/Ly's Cellars - Logo_tagline blue green.png"
                 alt="LY's Cellars"
@@ -224,7 +216,7 @@ function LysLogo({ collapsed, isMobile, onCloseMobile }: { collapsed: boolean; i
                     type="button"
                     onClick={onCloseMobile}
                     aria-label="Đóng menu"
-                    className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                    className="w-9 h-9 flex items-center justify-center rounded-md text-lys-muted hover:text-lys-primary hover:bg-lys-subtle transition-colors cursor-pointer"
                 >
                     <X size={18} />
                 </button>
@@ -248,8 +240,7 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate, isMobile
     const queryClient = useQueryClient()
     const prefetchedRef = useRef(new Set<string>())
     const dataPrefetchedRef = useRef(new Set<string>())
-    const [isLoggingOut, setIsLoggingOut] = useState(false)
-    const { locale, setLocale } = useAppLocale()
+    const { locale } = useAppLocale()
 
     const filteredGroups = useMemo(() => {
         return NAV_GROUPS.map(group => {
@@ -338,19 +329,6 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate, isMobile
         return best
     }, [pathname, filteredGroups])
 
-    const handleLogout = useCallback(async () => {
-        setIsLoggingOut(true)
-        try {
-            await signOut()
-        } catch (err) {
-            // Next.js redirect throws an error internally. Catching it and forcing
-            // a hard client-side redirect ensures the Next.js router cache is fully cleared.
-            window.location.href = '/login'
-            return
-        }
-        window.location.href = '/login'
-    }, [])
-
     // Smart prefetch: prefetch route + data on hover only (prevents 30-route SSR/DB storm on mount)
     const handlePrefetch = useCallback((href: string) => {
         if (!prefetchedRef.current.has(href)) {
@@ -369,7 +347,7 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate, isMobile
 
     return (
         <aside
-            className={`flex flex-col h-screen sticky top-0 transition-all duration-200 bg-lys-surface border-r border-lys-border select-none ${
+            className={`flex flex-col h-[100dvh] sticky top-0 transition-all duration-200 bg-lys-surface border-r border-lys-border select-none ${
                 isMobile
                     ? 'w-[280px] max-w-[85vw]'
                     : (collapsed ? 'w-[64px]' : 'w-[240px]')
@@ -379,13 +357,16 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate, isMobile
             <LysLogo collapsed={effectiveCollapsed} isMobile={isMobile} onCloseMobile={onCloseMobile} />
 
             {/* Navigation */}
-            <nav className="flex-1 overflow-y-auto py-3">
-                {filteredGroups.map((group) => {
+            <nav className="flex-1 overflow-y-auto py-2.5">
+                {filteredGroups.map((group, groupIdx) => {
                     const groupLabel = (locale === 'en' && group.labelEn) ? group.labelEn : group.label
                     return (
                         <div key={group.label} className="mb-1">
+                            {effectiveCollapsed && groupIdx > 0 && (
+                                <div className="mx-3 my-2 border-t border-lys-border" aria-hidden />
+                            )}
                             {!effectiveCollapsed && (
-                                <p className="px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-lys-muted">
+                                <p className={`px-3.5 ${groupIdx === 0 ? 'pt-1' : 'pt-4'} pb-1 text-[11px] font-semibold uppercase tracking-wider text-lys-dim`}>
                                     {groupLabel}
                                 </p>
                             )}
@@ -402,21 +383,16 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate, isMobile
                                         title={effectiveCollapsed ? itemLabel : undefined}
                                         onClick={onNavigate}
                                         aria-current={isActive ? 'page' : undefined}
-                                        className={`group relative flex items-center gap-3 mx-2 px-3 py-2 mb-0.5 rounded-md border-l-2 transition-all duration-150 active:scale-[0.98] select-none ${
+                                        className={`group relative flex items-center ${effectiveCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} mx-2 py-2 mb-0.5 rounded-md transition-all duration-150 active:scale-[0.98] select-none ${
                                             isActive
-                                                ? 'bg-lys-teal-soft text-lys-teal-strong border-lys-teal-strong font-semibold'
-                                                : 'text-lys-secondary border-transparent hover:bg-lys-subtle hover:text-lys-primary'
+                                                ? 'bg-lys-teal-soft text-lys-teal-strong font-semibold'
+                                                : 'text-lys-secondary hover:bg-lys-subtle hover:text-lys-primary'
                                         }`}
                                         onMouseEnter={() => handlePrefetch(item.href)}
                                     >
                                         <Icon size={18} className="flex-shrink-0" />
                                         {!effectiveCollapsed && (
                                             <span className="text-[13px] truncate">{itemLabel}</span>
-                                        )}
-                                        {effectiveCollapsed && (
-                                            <span className="pointer-events-none absolute left-full ml-2.5 z-50 hidden md:group-hover:flex items-center px-2.5 py-1 text-xs font-medium text-white bg-slate-900 rounded-md shadow-lg whitespace-nowrap">
-                                                {itemLabel}
-                                            </span>
                                         )}
                                     </Link>
                                 )
@@ -426,9 +402,8 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate, isMobile
                 })}
             </nav>
 
-            {/* Bottom: Video Guides + Language Switcher + Logout + Toggle */}
+            {/* Bottom: Video Guides + Collapse Toggle */}
             <div className="border-t border-lys-border">
-                {/* Video Guides Link */}
                 <Link
                     href="/dashboard/guides"
                     prefetch={false}
@@ -436,7 +411,7 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate, isMobile
                     onMouseEnter={() => handlePrefetch('/dashboard/guides')}
                     title={effectiveCollapsed ? (locale === 'en' ? 'Video Guides' : 'Hướng dẫn sử dụng') : undefined}
                     aria-current={pathname.startsWith('/dashboard/guides') ? 'page' : undefined}
-                    className={`flex items-center gap-2.5 border-b border-lys-border transition-colors duration-150 ${
+                    className={`flex items-center gap-2.5 transition-colors duration-150 ${
                         effectiveCollapsed ? 'justify-center py-2.5 px-1' : 'px-4 py-2.5'
                     } ${
                         pathname.startsWith('/dashboard/guides')
@@ -452,67 +427,12 @@ export function Sidebar({ currentUser, collapsed, onToggle, onNavigate, isMobile
                     )}
                 </Link>
 
-                {/* Language Switcher */}
-                <div
-                    className={`flex items-center transition-all border-b border-lys-border bg-lys-subtle/60 ${
-                        effectiveCollapsed ? 'justify-center py-2 px-1' : 'justify-between px-4 py-2.5'
-                    }`}
-                >
-                    {!effectiveCollapsed && (
-                        <div className="flex items-center gap-2 text-xs font-semibold text-lys-muted">
-                            <Globe size={14} className="text-lys-teal-strong" />
-                            <span>{locale === 'en' ? 'Language' : 'Ngôn ngữ'}</span>
-                        </div>
-                    )}
-                    <div className="flex items-center p-0.5 rounded bg-slate-100 border border-slate-200 text-[11px] font-bold shadow-2xs">
-                        <button
-                            type="button"
-                            onClick={() => setLocale('vi')}
-                            className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
-                                locale === 'vi'
-                                    ? 'bg-lys-teal-strong text-white shadow-xs'
-                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-                            }`}
-                            title="Tiếng Việt (VI)"
-                        >
-                            VI
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setLocale('en')}
-                            className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
-                                locale === 'en'
-                                    ? 'bg-lys-teal-strong text-white shadow-xs'
-                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-                            }`}
-                            title="English (EN)"
-                        >
-                            EN
-                        </button>
-                    </div>
-                </div>
-
-                <button
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                    className="flex items-center gap-3 w-full px-5 py-3 transition-colors duration-150 disabled:opacity-50 cursor-pointer text-lys-muted enabled:hover:text-tone-danger-fg"
-                    title={effectiveCollapsed ? (locale === 'en' ? 'Log Out' : 'Đăng Xuất') : undefined}
-                >
-                    <LogOut size={16} className={`flex-shrink-0 ${isLoggingOut ? 'animate-spin' : ''}`} />
-                    {!effectiveCollapsed && (
-                        <span className="text-sm">
-                            {locale === 'en'
-                                ? (isLoggingOut ? 'Logging Out...' : 'Log Out')
-                                : (isLoggingOut ? 'Đang Đăng Xuất...' : 'Đăng Xuất')
-                            }
-                        </span>
-                    )}
-                </button>
-
                 {!isMobile && (
                     <button
+                        type="button"
                         onClick={onToggle}
-                        className="hidden md:flex items-center justify-center w-full py-2 transition-colors duration-150 cursor-pointer text-lys-muted hover:text-lys-teal-strong border-t border-lys-border"
+                        aria-label={collapsed ? (locale === 'en' ? 'Expand sidebar' : 'Mở rộng menu') : (locale === 'en' ? 'Collapse sidebar' : 'Thu gọn menu')}
+                        className="hidden md:flex items-center justify-center w-full py-2.5 transition-colors duration-150 cursor-pointer text-lys-muted hover:text-lys-teal-strong hover:bg-lys-subtle/60 border-t border-lys-border"
                         title={collapsed ? (locale === 'en' ? 'Expand sidebar' : 'Mở rộng menu') : (locale === 'en' ? 'Collapse sidebar' : 'Thu gọn menu')}
                     >
                         {collapsed

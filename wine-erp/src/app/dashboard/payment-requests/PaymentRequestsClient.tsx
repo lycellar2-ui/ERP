@@ -20,7 +20,13 @@ import {
 import { PaymentRequestDetailModal } from './PaymentRequestDetailModal'
 import { CreatePaymentRequestDrawer } from './CreatePaymentRequestDrawer'
 import { PrintablePaymentRequest } from './PrintablePaymentRequest'
-import { useConfirmDialog } from '@/components/ui'
+import {
+    Badge, Button, Card, EmptyState, Field, Input, Modal,
+    PageContainer, PageHeader, SearchInput, Select, StatCard, StatGrid,
+    StatusBadge, StatusTabs, Table, TableMessageRow, TBody, Td, Textarea, Th, THead, Toolbar, Tr,
+    useConfirmDialog,
+} from '@/components/ui'
+import type { Tone } from '@/lib/ui/status'
 import { useAppLocale } from '@/lib/i18n'
 
 interface PaymentRequestsClientProps {
@@ -51,15 +57,20 @@ const CATEGORY_LABEL_MAP: Record<string, { vi: string; en: string }> = {
     OTHER: { vi: 'Chi phí khác', en: 'Other Expenses' },
 }
 
-const STATUS_CONFIG: Record<string, { label: string; labelEn: string; bg: string; color: string }> = {
-    DRAFT: { label: 'Bản Nháp', labelEn: 'Draft', bg: '#F1F5F9', color: '#475569' },
-    SUBMITTED: { label: 'Chờ TP Duyệt (C1)', labelEn: 'Pending Manager (L1)', bg: '#EFF6FF', color: '#1D4ED8' },
-    REVIEWING_L1: { label: 'Chờ Kế Toán (C2)', labelEn: 'Pending Accounting (L2)', bg: '#FEF3C7', color: '#B45309' },
-    REVIEWING_L2: { label: 'Chờ CEO (C3)', labelEn: 'Pending CEO (L3)', bg: '#ECFEFF', color: '#0E7490' },
-    APPROVED: { label: 'Đã Duyệt (Chờ Chi)', labelEn: 'Approved (Pending Payout)', bg: '#ECFDF5', color: '#047857' },
-    PAID: { label: 'Đã Giải Ngân', labelEn: 'Disbursed', bg: '#F0FDF4', color: '#15803D' },
-    REJECTED: { label: 'Bị Từ Chối', labelEn: 'Rejected', bg: '#FEF2F2', color: '#B91C1C' },
-    CANCELLED: { label: 'Đã Hủy', labelEn: 'Cancelled', bg: '#F8FAFC', color: '#64748B' },
+const STATUS_LABEL_MAP: Record<string, { label: string; labelEn: string }> = {
+    DRAFT: { label: 'Bản Nháp', labelEn: 'Draft' },
+    SUBMITTED: { label: 'Chờ TP Duyệt (C1)', labelEn: 'Pending Manager (L1)' },
+    REVIEWING_L1: { label: 'Chờ Kế Toán (C2)', labelEn: 'Pending Accounting (L2)' },
+    REVIEWING_L2: { label: 'Chờ CEO (C3)', labelEn: 'Pending CEO (L3)' },
+    APPROVED: { label: 'Đã Duyệt (Chờ Chi)', labelEn: 'Approved (Pending Payout)' },
+    PAID: { label: 'Đã Giải Ngân', labelEn: 'Disbursed' },
+    REJECTED: { label: 'Bị Từ Chối', labelEn: 'Rejected' },
+    CANCELLED: { label: 'Đã Hủy', labelEn: 'Cancelled' },
+}
+
+const PR_TONE_OVERRIDES: Record<string, Tone> = {
+    REVIEWING_L2: 'brand',
+    APPROVED: 'brand',
 }
 
 const GROUP_LABELS: Record<string, { vi: string; en: string }> = {
@@ -70,13 +81,13 @@ const GROUP_LABELS: Record<string, { vi: string; en: string }> = {
     CAPEX: { vi: 'Đầu Tư Tài Sản (CAPEX)', en: 'Capital Expenditure (CAPEX)' },
 }
 
-const SUPPLIER_TYPE_MAP: Record<string, { label: string; labelEn: string; bg: string; color: string }> = {
-    DISTRIBUTOR: { label: 'Nhà Phân Phối', labelEn: 'Distributor', bg: '#EFF6FF', color: '#1D4ED8' },
-    WINERY: { label: 'Hãng Rượu (Winery)', labelEn: 'Winery', bg: '#FDF2F8', color: '#9D174D' },
-    FORWARDER: { label: 'Forwarder / Vận Tải', labelEn: 'Forwarder / Freight', bg: '#F0FDF4', color: '#15803D' },
-    LOGISTICS: { label: 'Kho Bãi Logistics', labelEn: 'Logistics', bg: '#FEF3C7', color: '#B45309' },
-    LOCAL_VENDOR: { label: 'NCC Dịch Vụ', labelEn: 'Local Vendor', bg: '#F1F5F9', color: '#475569' },
-    OTHER: { label: 'Khác', labelEn: 'Other', bg: '#F8FAFC', color: '#64748B' },
+const SUPPLIER_TYPE_MAP: Record<string, { label: string; labelEn: string; tone: Tone }> = {
+    DISTRIBUTOR: { label: 'Nhà Phân Phối', labelEn: 'Distributor', tone: 'info' },
+    WINERY: { label: 'Hãng Rượu (Winery)', labelEn: 'Winery', tone: 'warning' },
+    FORWARDER: { label: 'Forwarder / Vận Tải', labelEn: 'Forwarder / Freight', tone: 'success' },
+    LOGISTICS: { label: 'Kho Bãi Logistics', labelEn: 'Logistics', tone: 'brand' },
+    LOCAL_VENDOR: { label: 'NCC Dịch Vụ', labelEn: 'Local Vendor', tone: 'neutral' },
+    OTHER: { label: 'Khác', labelEn: 'Other', tone: 'neutral' },
 }
 
 function parseBankInfo(raw: string | null) {
@@ -105,95 +116,101 @@ function PaymentRequestMobileCard({
     onPrint: (id: string) => void
     onDelete: (id: string, requestNo: string) => void
 }) {
-    const status = STATUS_CONFIG[item.status] || STATUS_CONFIG.DRAFT
+    const status = STATUS_LABEL_MAP[item.status] || STATUS_LABEL_MAP.DRAFT
     const catObj = CATEGORY_LABEL_MAP[item.category]
 
     return (
-        <div className="rounded-lg border border-slate-200 bg-white p-3.5 shadow-2xs space-y-2.5 transition hover:border-slate-300">
+        <Card className="p-3.5 space-y-2.5 transition-colors hover:border-lys-border-strong">
             <div className="flex items-center justify-between gap-2">
                 <button
+                    type="button"
                     onClick={() => onOpenDetail(item.id)}
-                    className="font-mono font-bold text-sm text-[#B91C1C] hover:underline"
+                    className="font-mono font-bold text-sm text-lys-teal-strong hover:underline cursor-pointer"
                 >
                     {item.requestNo}
                 </button>
-                <span
-                    className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold inline-block whitespace-nowrap shrink-0"
-                    style={{ backgroundColor: status.bg, color: status.color }}
-                >
-                    {isEn ? status.labelEn : status.label}
-                </span>
+                <StatusBadge
+                    status={item.status}
+                    label={isEn ? status.labelEn : status.label}
+                    toneOverrides={PR_TONE_OVERRIDES}
+                />
             </div>
 
             <div>
-                <p className="font-semibold text-slate-900 text-xs line-clamp-2" title={item.title}>
+                <p className="font-semibold text-lys-primary text-xs line-clamp-2" title={item.title}>
                     {item.title}
                 </p>
-                <div className="flex flex-wrap items-center gap-1.5 mt-1 text-[11px] text-slate-500">
-                    <span className="font-medium text-slate-700">{item.beneficiaryName}</span>
+                <div className="flex flex-wrap items-center gap-1.5 mt-1 text-[11px] text-lys-muted">
+                    <span className="font-medium text-lys-secondary">{item.beneficiaryName}</span>
                     {item.beneficiaryBank && (
                         <>
-                            <span>•</span>
-                            <span className="truncate max-w-[160px] text-slate-400">{item.beneficiaryBank}</span>
+                            <span>·</span>
+                            <span className="truncate max-w-[160px] text-lys-dim">{item.beneficiaryBank}</span>
                         </>
                     )}
                 </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                <span className="rounded bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
+                <Badge tone="neutral">
                     {catObj ? (isEn ? catObj.en : catObj.vi) : item.category}
-                </span>
-                <span className="text-slate-400">
-                    {isEn ? `${item.itemCount} items • ${item.attachmentCount} docs` : `${item.itemCount} khoản • ${item.attachmentCount} chứng từ`}
+                </Badge>
+                <span className="text-lys-muted">
+                    {isEn ? `${item.itemCount} items · ${item.attachmentCount} docs` : `${item.itemCount} khoản · ${item.attachmentCount} chứng từ`}
                 </span>
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-between pt-2 border-t border-lys-border">
                 <div>
-                    <span className="text-[10px] text-slate-400 block">{isEn ? 'Requested Amount' : 'Số tiền đề nghị'}</span>
-                    <span className="font-mono font-bold text-slate-900 text-sm">
+                    <span className="text-[11px] text-lys-muted block">{isEn ? 'Requested Amount' : 'Số tiền đề nghị'}</span>
+                    <span className="type-number font-bold text-lys-primary text-sm">
                         {formatVND(item.totalAmountVND)}
                     </span>
                 </div>
                 <div className="text-right">
-                    <span className="text-[10px] text-slate-400 block">{isEn ? 'Due Date' : 'Hạn TT'}</span>
-                    <span className="text-xs text-slate-600 font-medium">
+                    <span className="text-[11px] text-lys-muted block">{isEn ? 'Due Date' : 'Hạn TT'}</span>
+                    <span className="text-xs text-lys-secondary font-medium">
                         {item.dueDate ? formatDate(item.dueDate) : '—'}
                     </span>
                 </div>
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
-                <div className="text-slate-500 truncate max-w-[45%]">
-                    {item.creatorName} {item.departmentName ? `• ${item.departmentName}` : ''}
+            <div className="flex items-center justify-between pt-2 border-t border-lys-border text-[11px]">
+                <div className="text-lys-muted truncate max-w-[45%]">
+                    {item.creatorName} {item.departmentName ? `· ${item.departmentName}` : ''}
                 </div>
                 <div className="flex items-center gap-1.5">
-                    <button
+                    <Button
+                        size="sm"
+                        variant="secondary"
                         onClick={() => onOpenDetail(item.id)}
-                        className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1 text-slate-700 font-medium hover:bg-[#B91C1C] hover:text-white transition"
                     >
-                        <Eye className="h-3 w-3" /> {isEn ? 'Details' : 'Chi tiết'}
-                    </button>
-                    <button
+                        <Eye className="h-3.5 w-3.5" aria-hidden /> {isEn ? 'Details' : 'Chi tiết'}
+                    </Button>
+                    <Button
+                        size="icon-sm"
+                        variant="secondary"
                         onClick={() => onPrint(item.id)}
-                        className="rounded-md border border-slate-200 bg-white p-1 text-slate-600 hover:bg-slate-100 transition"
+                        aria-label={isEn ? 'Print request' : 'In đề nghị'}
                         title={isEn ? 'Print request' : 'In đề nghị'}
                     >
-                        <Printer className="h-3.5 w-3.5 text-[#B91C1C]" />
-                    </button>
+                        <Printer className="h-3.5 w-3.5 text-lys-teal-strong" aria-hidden />
+                    </Button>
                     {['DRAFT', 'REJECTED'].includes(item.status) && (
-                        <button
+                        <Button
+                            size="icon-sm"
+                            variant="ghost"
                             onClick={() => onDelete(item.id, item.requestNo)}
-                            className="rounded-md p-1 text-slate-400 hover:text-red-600 transition"
+                            aria-label={isEn ? 'Delete request' : 'Xóa phiếu'}
                             title={isEn ? 'Delete request' : 'Xóa phiếu'}
+                            className="text-lys-muted hover:text-tone-danger-fg hover:bg-tone-danger-bg"
                         >
-                            <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                            <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                        </Button>
                     )}
                 </div>
             </div>
-        </div>
+        </Card>
     )
 }
 
@@ -212,86 +229,71 @@ function SupplierPaymentMobileCard({
     const bankParsed = parseBankInfo(supplier.bankAccountInfo)
 
     return (
-        <div className="rounded-lg border border-slate-200 bg-white p-3.5 shadow-2xs space-y-2.5 transition hover:border-slate-300">
+        <Card className="p-3.5 space-y-2.5 transition-colors hover:border-lys-border-strong">
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-xs text-slate-900">{supplier.code}</span>
-                    <span
-                        className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                        style={{ backgroundColor: typeBadge.bg, color: typeBadge.color }}
-                    >
+                    <span className="font-mono font-bold text-xs text-lys-primary">{supplier.code}</span>
+                    <Badge tone={typeBadge.tone}>
                         {isEn ? typeBadge.labelEn : typeBadge.label}
-                    </span>
+                    </Badge>
                 </div>
                 {supplier.paymentTerm && (
-                    <span className="rounded bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800 border border-amber-200">
-                        {supplier.paymentTerm}
-                    </span>
+                    <Badge tone="warning">{supplier.paymentTerm}</Badge>
                 )}
             </div>
 
             <div>
-                <p className="font-bold text-slate-900 text-xs" title={supplier.name}>
+                <p className="font-bold text-lys-primary text-xs" title={supplier.name}>
                     {supplier.name}
                 </p>
                 {supplier.taxId && (
-                    <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                    <p className="text-[11px] text-lys-muted font-mono mt-0.5">
                         {isEn ? 'Tax ID' : 'MST'}: {supplier.taxId}
                     </p>
                 )}
             </div>
 
-            <div className="rounded bg-slate-50 p-2 text-[11px] text-slate-700 space-y-0.5">
+            <div className="rounded-md bg-lys-bg border border-lys-border p-2 text-[11px] text-lys-secondary space-y-0.5">
                 {bankParsed ? (
                     <>
-                        <div className="font-mono font-bold text-slate-900">
+                        <div className="font-mono font-bold text-lys-primary">
                             {isEn ? 'Acc' : 'STK'}: {bankParsed.stk || '—'}
                         </div>
-                        <div className="text-[10px] text-slate-500 truncate">
+                        <div className="text-[11px] text-lys-muted truncate">
                             {bankParsed.bankName} {bankParsed.accountName ? `(${bankParsed.accountName})` : ''}
                         </div>
                     </>
                 ) : supplier.bankAccountInfo ? (
-                    <div className="font-mono text-[10px] text-slate-700 line-clamp-2">
+                    <div className="font-mono text-[11px] text-lys-secondary line-clamp-2">
                         {supplier.bankAccountInfo}
                     </div>
                 ) : (
-                    <span className="text-slate-400 italic">{isEn ? 'No bank account info' : 'Chưa có thông tin tài khoản ngân hàng'}</span>
+                    <span className="text-lys-dim italic">{isEn ? 'No bank account info' : 'Chưa có thông tin tài khoản ngân hàng'}</span>
                 )}
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
+            <div className="flex items-center justify-between pt-2 border-t border-lys-border text-[11px]">
                 <div className="flex items-center gap-1.5">
-                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-700 font-medium">
-                        {supplier.openPOCount} PO
-                    </span>
-                    <span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-700 font-medium">
-                        {supplier.unpaidInvoiceCount} {isEn ? 'Inv' : 'HĐ'}
-                    </span>
+                    <Badge tone="neutral">{supplier.openPOCount} PO</Badge>
+                    <Badge tone="info">{supplier.unpaidInvoiceCount} {isEn ? 'Inv' : 'HĐ'}</Badge>
                 </div>
                 <div className="text-right">
-                    <span className="text-[10px] text-slate-400 block">{isEn ? 'Total Paid' : 'Đã thanh toán'}</span>
-                    <span className="font-mono font-bold text-xs text-[#B91C1C]">
+                    <span className="text-[11px] text-lys-muted block">{isEn ? 'Total Paid' : 'Đã thanh toán'}</span>
+                    <span className="type-number font-bold text-xs text-lys-teal-strong">
                         {supplier.totalPaidVND > 0 ? formatVND(supplier.totalPaidVND) : '0 ₫'}
                     </span>
                 </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                <button
-                    onClick={() => onEditPayment(supplier)}
-                    className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                >
-                    <Edit3 className="h-3 w-3" /> {isEn ? 'Edit Bank' : 'Sửa TK'}
-                </button>
-                <button
-                    onClick={() => onCreatePayment(supplier.id)}
-                    className="inline-flex items-center gap-1 rounded-md bg-[#B91C1C] px-3 py-1 text-xs font-bold text-white shadow-2xs hover:bg-[#721526]"
-                >
-                    <Plus className="h-3 w-3" /> {isEn ? 'New Request' : 'Lập Đề Nghị'}
-                </button>
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-lys-border">
+                <Button size="sm" variant="secondary" onClick={() => onEditPayment(supplier)}>
+                    <Edit3 className="h-3 w-3" aria-hidden /> {isEn ? 'Edit Bank' : 'Sửa TK'}
+                </Button>
+                <Button size="sm" variant="primary" onClick={() => onCreatePayment(supplier.id)}>
+                    <Plus className="h-3 w-3" aria-hidden /> {isEn ? 'New Request' : 'Lập Đề Nghị'}
+                </Button>
             </div>
-        </div>
+        </Card>
     )
 }
 
@@ -658,351 +660,269 @@ export function PaymentRequestsClient({
     const totalUnpaidInvoices = suppliersList.reduce((sum, s) => sum + (s.unpaidInvoiceCount || 0), 0)
 
     return (
-        <div className="space-y-6">
-            {/* ═══ Page Header ═══ */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2.5">
-                        <CreditCard className="h-6 w-6 sm:h-7 sm:w-7 text-[#B91C1C] shrink-0" />
-                        <span className="truncate">
-                            {isEn ? 'Payment Requests & Budget Control' : 'Đề Nghị Thanh Toán & Quản Lý Ngân Sách'}
-                        </span>
-                    </h1>
-                    <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                        {isEn
-                            ? 'Multi-level threshold approval workflow, Supplier master data, Cloudflare R2 document storage & expense budget control'
-                            : 'Hệ thống phê duyệt đa cấp theo hạn mức, quản lý master data Nhà cung cấp, lưu trữ chứng từ Cloudflare R2 và kiểm soát ngân sách chi phí'}
-                    </p>
-                </div>
+        <PageContainer>
+            <PageHeader
+                description={
+                    isEn
+                        ? 'Multi-level threshold approval workflow, Supplier master data, Cloudflare R2 document storage & expense budget control'
+                        : 'Hệ thống phê duyệt đa cấp theo hạn mức, quản lý master data Nhà cung cấp, lưu trữ chứng từ Cloudflare R2 và kiểm soát ngân sách chi phí'
+                }
+                actions={
+                    <>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setShowBlankPrint(true)}
+                            title={isEn ? 'Print blank payment request form for wet signature' : 'In mẫu phôi tờ trình / đề nghị thanh toán trắng để ký tay'}
+                        >
+                            <Printer className="h-4 w-4 text-lys-teal-strong" aria-hidden />
+                            {isEn ? 'Print Blank Form' : 'In Phôi Mẫu Trắng'}
+                        </Button>
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => {
+                                setDrawerInitialSupplierId(undefined)
+                                setShowCreateDrawer(true)
+                            }}
+                        >
+                            <Plus className="h-4 w-4" aria-hidden />
+                            {isEn ? 'New Payment Request' : 'Lập Đề Nghị Mới'}
+                        </Button>
+                    </>
+                }
+            />
 
-                <div className="flex items-center gap-2 flex-wrap">
-                    <button
-                        type="button"
-                        onClick={() => setShowBlankPrint(true)}
-                        className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-slate-900 transition flex-1 sm:flex-initial"
-                        title={isEn ? 'Print blank payment request form for wet signature' : 'In mẫu phôi tờ trình / đề nghị thanh toán trắng để ký tay'}
-                    >
-                        <Printer className="h-4 w-4 text-[#B91C1C]" /> {isEn ? 'Print Blank Form' : 'In Phôi Mẫu Trắng'}
-                    </button>
-                    <button
-                        onClick={() => {
-                            setDrawerInitialSupplierId(undefined)
-                            setShowCreateDrawer(true)
-                        }}
-                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#B91C1C] px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#721526] transition flex-1 sm:flex-initial"
-                    >
-                        <Plus className="h-4 w-4" /> {isEn ? 'New Payment Request' : 'Lập Đề Nghị Mới'}
-                    </button>
-                </div>
-            </div>
-
-            {/* ═══ Main Tab Navigation ═══ */}
-            <div className="border-b border-slate-200 overflow-x-auto no-scrollbar">
-                <nav className="-mb-px flex space-x-4 sm:space-x-6 min-w-max">
-                    <button
-                        onClick={() => setActiveTab('REQUESTS')}
-                        className={`flex items-center gap-2 border-b-2 py-3 px-1 text-sm font-semibold transition ${
-                            activeTab === 'REQUESTS'
-                                ? 'border-[#B91C1C] text-[#B91C1C]'
-                                : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
-                        }`}
-                    >
-                        <CreditCard className="h-4 w-4" />
-                        {isEn ? 'Payment Requests' : 'Phiếu Đề Nghị Thanh Toán'}
-                        <span className="inline-block ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700 whitespace-nowrap shrink-0">
-                            {stats.totalCount}
-                        </span>
-                    </button>
-
-                    <button
-                        onClick={() => setActiveTab('SUPPLIERS')}
-                        className={`flex items-center gap-2 border-b-2 py-3 px-1 text-sm font-semibold transition ${
-                            activeTab === 'SUPPLIERS'
-                                ? 'border-[#B91C1C] text-[#B91C1C]'
-                                : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
-                        }`}
-                    >
-                        <Building2 className="h-4 w-4" />
-                        {isEn ? 'Supplier Directory' : 'Danh Mục Nhà Cung Cấp'}
-                        <span className="inline-block ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700 whitespace-nowrap shrink-0">
-                            {suppliersList.length}
-                        </span>
-                    </button>
-
-                    <button
-                        onClick={() => setActiveTab('CATEGORIES')}
-                        className={`flex items-center gap-2 border-b-2 py-3 px-1 text-sm font-semibold transition ${
-                            activeTab === 'CATEGORIES'
-                                ? 'border-[#B91C1C] text-[#B91C1C]'
-                                : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
-                        }`}
-                    >
-                        <FolderKanban className="h-4 w-4" />
-                        {isEn ? 'Expense Categories' : 'Cấu Hình Hạng Mục Chi Phí'}
-                        <span className="inline-block ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700 whitespace-nowrap shrink-0">
-                            {categories.length}
-                        </span>
-                    </button>
-
-                    <button
-                        onClick={() => setActiveTab('BUDGETS')}
-                        className={`flex items-center gap-2 border-b-2 py-3 px-1 text-sm font-semibold transition ${
-                            activeTab === 'BUDGETS'
-                                ? 'border-[#B91C1C] text-[#B91C1C]'
-                                : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
-                        }`}
-                    >
-                        <PieChart className="h-4 w-4" />
-                        {isEn ? 'Budget Management & Tracking' : 'Quản Lý & Theo Dõi Ngân Sách'}
-                    </button>
-                </nav>
-            </div>
+            <StatusTabs
+                value={activeTab}
+                onChange={setActiveTab}
+                items={[
+                    { value: 'REQUESTS', label: isEn ? 'Payment Requests' : 'Phiếu Đề Nghị Thanh Toán', count: stats.totalCount, icon: CreditCard },
+                    { value: 'SUPPLIERS', label: isEn ? 'Supplier Directory' : 'Danh Mục Nhà Cung Cấp', count: suppliersList.length, icon: Building2 },
+                    { value: 'CATEGORIES', label: isEn ? 'Expense Categories' : 'Cấu Hình Hạng Mục Chi Phí', count: categories.length, icon: FolderKanban },
+                    { value: 'BUDGETS', label: isEn ? 'Budget Management & Tracking' : 'Quản Lý & Theo Dõi Ngân Sách', icon: PieChart },
+                ]}
+            />
 
             {/* ═══════════════════════════════════════════════════════ */}
             {/* TAB 1: PHIẾU ĐỀ NGHỊ THANH TOÁN                        */}
             {/* ═══════════════════════════════════════════════════════ */}
             {activeTab === 'REQUESTS' && (
-                <div className="space-y-6">
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <div className="rounded-md border border-slate-200 bg-white p-4 shadow-2xs">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-semibold uppercase text-slate-500">
-                                    {isEn ? 'Total Requests (YTD)' : 'Tổng Đề Nghị Năm Nay'}
-                                </span>
-                                <div className="rounded-lg bg-slate-100 p-2 text-slate-600">
-                                    <FileText className="h-4 w-4" />
-                                </div>
-                            </div>
-                            <div className="mt-2 text-2xl font-bold text-slate-900">{stats.totalCount}</div>
-                            <p className="mt-1 text-xs text-slate-400">
-                                {isEn ? 'All payment requests created' : 'Tất cả các khoản chi đã khởi tạo'}
-                            </p>
-                        </div>
-
-                        <div className="rounded-md border border-amber-200 bg-amber-50/50 p-4 shadow-2xs">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-semibold uppercase text-amber-700">
-                                    {isEn ? 'Pending Approval' : 'Đang Chờ Duyệt'}
-                                </span>
-                                <div className="rounded-lg bg-amber-100 p-2 text-amber-700">
-                                    <Clock className="h-4 w-4" />
-                                </div>
-                            </div>
-                            <div className="mt-2 text-2xl font-bold text-amber-900">{stats.pendingCount}</div>
-                            <p className="mt-1 text-xs font-mono font-medium text-amber-700">
-                                {formatVND(stats.totalPendingVND)}
-                            </p>
-                        </div>
-
-                        <div className="rounded-md border border-blue-200 bg-blue-50/50 p-4 shadow-2xs">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-semibold uppercase text-blue-700">
-                                    {isEn ? 'Approved (Pending Payout)' : 'Đã Duyệt (Chờ Chi)'}
-                                </span>
-                                <div className="rounded-lg bg-blue-100 p-2 text-blue-700">
-                                    <CheckCircle2 className="h-4 w-4" />
-                                </div>
-                            </div>
-                            <div className="mt-2 text-2xl font-bold text-blue-900">{stats.approvedCount}</div>
-                            <p className="mt-1 text-xs text-blue-600">
-                                {isEn ? 'Ready for Accounting UNC payout' : 'Sẵn sàng để Kế toán lập UNC'}
-                            </p>
-                        </div>
-
-                        <div className="rounded-md border border-emerald-200 bg-emerald-50/50 p-4 shadow-2xs">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-semibold uppercase text-emerald-700">
-                                    {isEn ? 'Disbursed' : 'Đã Giải Ngân'}
-                                </span>
-                                <div className="rounded-lg bg-emerald-100 p-2 text-emerald-700">
-                                    <DollarSign className="h-4 w-4" />
-                                </div>
-                            </div>
-                            <div className="mt-2 text-2xl font-bold text-emerald-900">{stats.paidCount}</div>
-                            <p className="mt-1 text-xs font-mono font-medium text-emerald-700">
-                                {formatVND(stats.totalPaidVND)}
-                            </p>
-                        </div>
-                    </div>
+                <div className="space-y-4">
+                    <StatGrid cols={4}>
+                        <StatCard
+                            label={isEn ? 'Total Requests (YTD)' : 'Tổng Đề Nghị Năm Nay'}
+                            value={stats.totalCount}
+                            sub={isEn ? 'All payment requests created' : 'Tất cả các khoản chi đã khởi tạo'}
+                            icon={FileText}
+                            tone="neutral"
+                        />
+                        <StatCard
+                            label={isEn ? 'Pending Approval' : 'Đang Chờ Duyệt'}
+                            value={stats.pendingCount}
+                            sub={formatVND(stats.totalPendingVND)}
+                            icon={Clock}
+                            tone="warning"
+                        />
+                        <StatCard
+                            label={isEn ? 'Approved (Pending Payout)' : 'Đã Duyệt (Chờ Chi)'}
+                            value={stats.approvedCount}
+                            sub={isEn ? 'Ready for Accounting UNC payout' : 'Sẵn sàng để Kế toán lập UNC'}
+                            icon={CheckCircle2}
+                            tone="brand"
+                        />
+                        <StatCard
+                            label={isEn ? 'Disbursed' : 'Đã Giải Ngân'}
+                            value={stats.paidCount}
+                            sub={formatVND(stats.totalPaidVND)}
+                            icon={DollarSign}
+                            tone="success"
+                        />
+                    </StatGrid>
 
                     {/* Filter and Search Bar */}
-                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between rounded-md border border-slate-200 bg-white p-3 shadow-2xs">
-                        <div className="flex flex-col sm:flex-row flex-1 items-stretch sm:items-center gap-2">
-                            <div className="relative flex-1">
-                                <input
-                                    type="text"
-                                    placeholder={isEn ? 'Search request no, beneficiary, description...' : 'Tìm mã phiếu, người nhận, nội dung...'}
-                                    value={search}
-                                    onChange={e => setSearch(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && refreshRequests()}
-                                    className="w-full rounded-lg border border-slate-300 pl-9 pr-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#B91C1C] focus:outline-none"
-                                />
-                                <Search className="absolute left-3 top-2 h-3.5 w-3.5 text-slate-400" />
-                            </div>
+                    <Card className="p-3">
+                        <Toolbar
+                            left={
+                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                    <SearchInput
+                                        className="w-full sm:flex-1 sm:max-w-sm"
+                                        placeholder={isEn ? 'Search request no, beneficiary, description...' : 'Tìm mã phiếu, người nhận, nội dung...'}
+                                        value={search}
+                                        onChange={e => setSearch(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && refreshRequests()}
+                                    />
 
-                            <select
-                                value={statusFilter}
-                                onChange={e => handleFilterChange(e.target.value, undefined)}
-                                className="rounded-lg border border-slate-300 p-2 sm:p-1.5 text-xs text-slate-700 focus:border-[#B91C1C] focus:outline-none"
-                            >
-                                <option value="ALL">{isEn ? 'All Statuses' : 'Tất cả trạng thái'}</option>
-                                <option value="SUBMITTED">{isEn ? 'Pending Manager (L1)' : 'Chờ Trưởng phòng (Cấp 1)'}</option>
-                                <option value="REVIEWING_L1">{isEn ? 'Pending Accounting (L2)' : 'Chờ Kế toán (Cấp 2)'}</option>
-                                <option value="REVIEWING_L2">{isEn ? 'Pending CEO (L3)' : 'Chờ CEO (Cấp 3)'}</option>
-                                <option value="APPROVED">{isEn ? 'Approved (Pending Payout)' : 'Đã duyệt (Chờ chi)'}</option>
-                                <option value="PAID">{isEn ? 'Disbursed' : 'Đã giải ngân'}</option>
-                                <option value="REJECTED">{isEn ? 'Rejected' : 'Bị từ chối'}</option>
-                            </select>
+                                    <Select
+                                        value={statusFilter}
+                                        onChange={e => handleFilterChange(e.target.value, undefined)}
+                                        className="sm:w-52"
+                                    >
+                                        <option value="ALL">{isEn ? 'All Statuses' : 'Tất cả trạng thái'}</option>
+                                        <option value="SUBMITTED">{isEn ? 'Pending Manager (L1)' : 'Chờ Trưởng phòng (Cấp 1)'}</option>
+                                        <option value="REVIEWING_L1">{isEn ? 'Pending Accounting (L2)' : 'Chờ Kế toán (Cấp 2)'}</option>
+                                        <option value="REVIEWING_L2">{isEn ? 'Pending CEO (L3)' : 'Chờ CEO (Cấp 3)'}</option>
+                                        <option value="APPROVED">{isEn ? 'Approved (Pending Payout)' : 'Đã duyệt (Chờ chi)'}</option>
+                                        <option value="PAID">{isEn ? 'Disbursed' : 'Đã giải ngân'}</option>
+                                        <option value="REJECTED">{isEn ? 'Rejected' : 'Bị từ chối'}</option>
+                                    </Select>
 
-                            <select
-                                value={categoryFilter}
-                                onChange={e => handleFilterChange(undefined, e.target.value)}
-                                className="rounded-lg border border-slate-300 p-2 sm:p-1.5 text-xs text-slate-700 focus:border-[#B91C1C] focus:outline-none"
-                            >
-                                <option value="ALL">{isEn ? 'All Expense Groups' : 'Tất cả nhóm chi phí'}</option>
-                                <option value="VENDOR_PAYMENT">{isEn ? 'Vendor Payment' : 'Tiền hàng Nhà cung cấp'}</option>
-                                <option value="IMPORT_TAX_LOGISTICS">{isEn ? 'Import Tax & Logistics' : 'Thuế NK & Logistics'}</option>
-                                <option value="OPERATIONS_OFFICE">{isEn ? 'Operations & Warehouse' : 'Vận hành & Kho bãi'}</option>
-                                <option value="TASTING_MARKETING">{isEn ? 'Tasting & Marketing' : 'Tasting & Tiếp khách'}</option>
-                                <option value="EMPLOYEE_ADVANCE">{isEn ? 'Employee Advance' : 'Tạm ứng / Hoàn ứng'}</option>
-                                <option value="OTHER">{isEn ? 'Other Expenses' : 'Chi phí khác'}</option>
-                            </select>
-                        </div>
-
-                        <button
-                            onClick={refreshRequests}
-                            disabled={isPending}
-                            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition self-end sm:self-auto"
-                        >
-                            <RefreshCw className={`h-3.5 w-3.5 ${isPending ? 'animate-spin' : ''}`} />
-                            {isEn ? 'Refresh' : 'Làm mới'}
-                        </button>
-                    </div>
+                                    <Select
+                                        value={categoryFilter}
+                                        onChange={e => handleFilterChange(undefined, e.target.value)}
+                                        className="sm:w-52"
+                                    >
+                                        <option value="ALL">{isEn ? 'All Expense Groups' : 'Tất cả nhóm chi phí'}</option>
+                                        <option value="VENDOR_PAYMENT">{isEn ? 'Vendor Payment' : 'Tiền hàng Nhà cung cấp'}</option>
+                                        <option value="IMPORT_TAX_LOGISTICS">{isEn ? 'Import Tax & Logistics' : 'Thuế NK & Logistics'}</option>
+                                        <option value="OPERATIONS_OFFICE">{isEn ? 'Operations & Warehouse' : 'Vận hành & Kho bãi'}</option>
+                                        <option value="TASTING_MARKETING">{isEn ? 'Tasting & Marketing' : 'Tasting & Tiếp khách'}</option>
+                                        <option value="EMPLOYEE_ADVANCE">{isEn ? 'Employee Advance' : 'Tạm ứng / Hoàn ứng'}</option>
+                                        <option value="OTHER">{isEn ? 'Other Expenses' : 'Chi phí khác'}</option>
+                                    </Select>
+                                </div>
+                            }
+                            right={
+                                <Button variant="secondary" size="sm" onClick={refreshRequests} disabled={isPending}>
+                                    <RefreshCw className={`h-3.5 w-3.5 ${isPending ? 'animate-spin' : ''}`} aria-hidden />
+                                    {isEn ? 'Refresh' : 'Làm mới'}
+                                </Button>
+                            }
+                        />
+                    </Card>
 
                     {/* Table of Requests (Desktop) */}
-                    <div className="hidden md:block overflow-hidden rounded-md border border-slate-200 bg-white shadow-2xs">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-xs">
-                                <thead className="border-b border-slate-200 bg-slate-50 font-semibold text-slate-600">
-                                    <tr>
-                                        <th className="p-3.5">{isEn ? 'Request No' : 'Mã Phiếu'}</th>
-                                        <th className="p-3.5">{isEn ? 'Description' : 'Nội Dung Đề Nghị'}</th>
-                                        <th className="p-3.5">{isEn ? 'Expense Group' : 'Nhóm Chi Phí'}</th>
-                                        <th className="p-3.5">{isEn ? 'Beneficiary' : 'Đơn Vị Thụ Hưởng'}</th>
-                                        <th className="p-3.5 text-right">{isEn ? 'Amount (VND)' : 'Số Tiền (VNĐ)'}</th>
-                                        <th className="p-3.5">{isEn ? 'Requester' : 'Người Tạo'}</th>
-                                        <th className="p-3.5">{isEn ? 'Status' : 'Trạng Thái'}</th>
-                                        <th className="p-3.5">{isEn ? 'Due Date' : 'Hạn TT'}</th>
-                                        <th className="p-3.5 text-center">{isEn ? 'Actions' : 'Thao Tác'}</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {requests.length > 0 ? (
-                                        requests.map(r => {
-                                            const status = STATUS_CONFIG[r.status] || STATUS_CONFIG.DRAFT
-                                            const catObj = CATEGORY_LABEL_MAP[r.category]
-                                            return (
-                                                <tr key={r.id} className="hover:bg-slate-50/80 transition">
-                                                    <td className="p-3.5 font-mono font-bold text-slate-900">
-                                                        <button
+                    <div className="hidden md:block">
+                        <Table>
+                            <THead>
+                                <Tr>
+                                    <Th>{isEn ? 'Request No' : 'Mã Phiếu'}</Th>
+                                    <Th>{isEn ? 'Description' : 'Nội Dung Đề Nghị'}</Th>
+                                    <Th>{isEn ? 'Expense Group' : 'Nhóm Chi Phí'}</Th>
+                                    <Th>{isEn ? 'Beneficiary' : 'Đơn Vị Thụ Hưởng'}</Th>
+                                    <Th align="right">{isEn ? 'Amount (VND)' : 'Số Tiền (VNĐ)'}</Th>
+                                    <Th>{isEn ? 'Requester' : 'Người Tạo'}</Th>
+                                    <Th>{isEn ? 'Status' : 'Trạng Thái'}</Th>
+                                    <Th>{isEn ? 'Due Date' : 'Hạn TT'}</Th>
+                                    <Th align="center">{isEn ? 'Actions' : 'Thao Tác'}</Th>
+                                </Tr>
+                            </THead>
+                            <TBody>
+                                {requests.length > 0 ? (
+                                    requests.map(r => {
+                                        const status = STATUS_LABEL_MAP[r.status] || STATUS_LABEL_MAP.DRAFT
+                                        const catObj = CATEGORY_LABEL_MAP[r.category]
+                                        return (
+                                            <Tr key={r.id}>
+                                                <Td className="font-mono font-bold">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openDetail(r.id)}
+                                                        className="text-lys-teal-strong hover:underline cursor-pointer"
+                                                    >
+                                                        {r.requestNo}
+                                                    </button>
+                                                </Td>
+                                                <Td className="max-w-xs">
+                                                    <div className="font-semibold text-lys-primary line-clamp-1" title={r.title}>
+                                                        {r.title}
+                                                    </div>
+                                                    <div className="flex items-center gap-2 mt-0.5 text-[11px] text-lys-muted">
+                                                        <span>{isEn ? `${r.itemCount} items` : `${r.itemCount} khoản mục`}</span>
+                                                        <span>·</span>
+                                                        <span className="flex items-center gap-0.5">
+                                                            <FileText className="h-3 w-3" aria-hidden /> {isEn ? `${r.attachmentCount} docs` : `${r.attachmentCount} chứng từ`}
+                                                        </span>
+                                                    </div>
+                                                </Td>
+                                                <Td>
+                                                    <Badge tone="neutral">
+                                                        {catObj ? (isEn ? catObj.en : catObj.vi) : r.category}
+                                                    </Badge>
+                                                </Td>
+                                                <Td>
+                                                    <div className="font-medium text-lys-primary">{r.beneficiaryName}</div>
+                                                    {r.beneficiaryBank && (
+                                                        <div className="text-[11px] text-lys-muted truncate max-w-[160px]">
+                                                            {r.beneficiaryBank}
+                                                        </div>
+                                                    )}
+                                                </Td>
+                                                <Td align="right" className="font-bold text-lys-primary text-sm">
+                                                    {formatVND(r.totalAmountVND)}
+                                                </Td>
+                                                <Td>
+                                                    <div className="font-medium text-lys-secondary">{r.creatorName}</div>
+                                                    <div className="text-[11px] text-lys-muted">{r.departmentName || 'N/A'}</div>
+                                                </Td>
+                                                <Td>
+                                                    <StatusBadge
+                                                        status={r.status}
+                                                        label={isEn ? status.labelEn : status.label}
+                                                        toneOverrides={PR_TONE_OVERRIDES}
+                                                    />
+                                                </Td>
+                                                <Td className="text-lys-muted">
+                                                    {r.dueDate ? formatDate(r.dueDate) : '—'}
+                                                </Td>
+                                                <Td align="center">
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        <Button
+                                                            size="icon-sm"
+                                                            variant="ghost"
                                                             onClick={() => openDetail(r.id)}
-                                                            className="hover:text-[#B91C1C] hover:underline"
+                                                            aria-label={isEn ? 'View details' : 'Xem chi tiết'}
+                                                            title={isEn ? 'View details & Scanned docs' : 'Xem chi tiết & Chứng từ scan'}
+                                                            className="text-lys-secondary hover:text-lys-teal-strong hover:bg-lys-teal-soft"
                                                         >
-                                                            {r.requestNo}
-                                                        </button>
-                                                    </td>
-                                                    <td className="p-3.5 max-w-xs">
-                                                        <div className="font-semibold text-slate-800 line-clamp-1" title={r.title}>
-                                                            {r.title}
-                                                        </div>
-                                                        <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-400">
-                                                            <span>{isEn ? `${r.itemCount} items` : `${r.itemCount} khoản mục`}</span>
-                                                            <span>•</span>
-                                                            <span className="flex items-center gap-0.5">
-                                                                <FileText className="h-3 w-3" /> {isEn ? `${r.attachmentCount} docs` : `${r.attachmentCount} chứng từ`}
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="p-3.5 text-slate-600">
-                                                        <span className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 inline-block whitespace-nowrap shrink-0">
-                                                            {catObj ? (isEn ? catObj.en : catObj.vi) : r.category}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-3.5">
-                                                        <div className="font-medium text-slate-800">{r.beneficiaryName}</div>
-                                                        {r.beneficiaryBank && (
-                                                            <div className="text-[10px] text-slate-400 truncate max-w-[140px]">
-                                                                {r.beneficiaryBank}
-                                                            </div>
+                                                            <Eye className="h-3.5 w-3.5" aria-hidden />
+                                                        </Button>
+                                                        <Button
+                                                            size="icon-sm"
+                                                            variant="ghost"
+                                                            onClick={async () => {
+                                                                setLoadingDetail(true)
+                                                                try {
+                                                                    const d = await getPaymentRequestDetail(r.id)
+                                                                    if (d) setPrintDetail(d)
+                                                                } finally {
+                                                                    setLoadingDetail(false)
+                                                                }
+                                                            }}
+                                                            aria-label={isEn ? 'Print Payment Request Form' : 'In Tờ trình'}
+                                                            title={isEn ? 'Print Payment Request Form' : 'In Tờ trình / Giấy đề nghị thanh toán'}
+                                                            className="text-lys-teal-strong hover:bg-lys-teal-soft"
+                                                        >
+                                                            <Printer className="h-3.5 w-3.5" aria-hidden />
+                                                        </Button>
+                                                        {['DRAFT', 'REJECTED'].includes(r.status) && (
+                                                            <Button
+                                                                size="icon-sm"
+                                                                variant="ghost"
+                                                                onClick={() => handleDeleteRequest(r.id, r.requestNo)}
+                                                                aria-label={isEn ? 'Delete request' : 'Xóa phiếu'}
+                                                                title={isEn ? 'Delete request' : 'Xóa phiếu'}
+                                                                className="text-lys-muted hover:text-tone-danger-fg hover:bg-tone-danger-bg"
+                                                            >
+                                                                <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                                                            </Button>
                                                         )}
-                                                    </td>
-                                                    <td className="p-3.5 text-right font-mono font-bold text-slate-900 text-sm">
-                                                        {formatVND(r.totalAmountVND)}
-                                                    </td>
-                                                    <td className="p-3.5">
-                                                        <div className="font-medium text-slate-700">{r.creatorName}</div>
-                                                        <div className="text-[10px] text-slate-400">{r.departmentName || 'N/A'}</div>
-                                                    </td>
-                                                    <td className="p-3.5">
-                                                        <span
-                                                            className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold inline-block whitespace-nowrap"
-                                                            style={{ backgroundColor: status.bg, color: status.color }}
-                                                        >
-                                                            {isEn ? status.labelEn : status.label}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-3.5 text-slate-500">
-                                                        {r.dueDate ? formatDate(r.dueDate) : '—'}
-                                                    </td>
-                                                    <td className="p-3.5 text-center">
-                                                        <div className="flex items-center justify-center gap-1.5">
-                                                            <button
-                                                                onClick={() => openDetail(r.id)}
-                                                                className="rounded-md bg-slate-100 p-1.5 text-slate-600 hover:bg-[#B91C1C] hover:text-white transition"
-                                                                title={isEn ? 'View details & Scanned docs' : 'Xem chi tiết & Chứng từ scan'}
-                                                            >
-                                                                <Eye className="h-3.5 w-3.5" />
-                                                            </button>
-                                                            <button
-                                                                onClick={async () => {
-                                                                    setLoadingDetail(true)
-                                                                    try {
-                                                                        const d = await getPaymentRequestDetail(r.id)
-                                                                        if (d) setPrintDetail(d)
-                                                                    } finally {
-                                                                        setLoadingDetail(false)
-                                                                    }
-                                                                }}
-                                                                className="rounded-md bg-slate-100 p-1.5 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition"
-                                                                title={isEn ? 'Print Payment Request Form' : 'In Tờ trình / Giấy đề nghị thanh toán'}
-                                                            >
-                                                                <Printer className="h-3.5 w-3.5 text-[#B91C1C]" />
-                                                            </button>
-                                                            {['DRAFT', 'REJECTED'].includes(r.status) && (
-                                                                <button
-                                                                    onClick={() => handleDeleteRequest(r.id, r.requestNo)}
-                                                                    className="rounded-md p-1.5 text-slate-400 hover:text-red-600 transition"
-                                                                    title={isEn ? 'Delete request' : 'Xóa phiếu'}
-                                                                >
-                                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            )
-                                        })
-                                    ) : (
-                                        <tr>
-                                            <td colSpan={9} className="p-8 text-center text-slate-400">
-                                                {isEn ? 'No payment requests match your filters' : 'Không có đề nghị thanh toán nào phù hợp với bộ lọc'}
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                                                    </div>
+                                                </Td>
+                                            </Tr>
+                                        )
+                                    })
+                                ) : (
+                                    <TableMessageRow colSpan={9}>
+                                        <EmptyState
+                                            icon={CreditCard}
+                                            title={isEn ? 'No payment requests found' : 'Không có đề nghị thanh toán nào'}
+                                            description={isEn ? 'Adjust filters or create a new payment request.' : 'Thử thay đổi bộ lọc hoặc lập đề nghị thanh toán mới.'}
+                                        />
+                                    </TableMessageRow>
+                                )}
+                            </TBody>
+                        </Table>
                     </div>
 
                     {/* Mobile Card List for Requests */}
@@ -1027,9 +947,12 @@ export function PaymentRequestsClient({
                                 />
                             ))
                         ) : (
-                            <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-xs text-slate-400">
-                                {isEn ? 'No payment requests match your filters' : 'Không có đề nghị thanh toán nào phù hợp với bộ lọc'}
-                            </div>
+                            <Card>
+                                <EmptyState
+                                    icon={CreditCard}
+                                    title={isEn ? 'No payment requests match your filters' : 'Không có đề nghị thanh toán nào phù hợp với bộ lọc'}
+                                />
+                            </Card>
                         )}
                     </div>
                 </div>
@@ -1039,246 +962,200 @@ export function PaymentRequestsClient({
             {/* TAB 4: DANH MỤC NHÀ CUNG CẤP (MASTER DATA)             */}
             {/* ═══════════════════════════════════════════════════════ */}
             {activeTab === 'SUPPLIERS' && (
-                <div className="space-y-6">
-                    {/* Master Data Stats Grid */}
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <div className="rounded-md border border-slate-200 bg-white p-4 shadow-2xs">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-semibold uppercase text-slate-500">
-                                    {isEn ? 'Total Suppliers' : 'Tổng Nhà Cung Cấp'}
-                                </span>
-                                <div className="rounded-lg bg-slate-100 p-2 text-slate-700">
-                                    <Building2 className="h-4 w-4" />
-                                </div>
-                            </div>
-                            <div className="mt-2 text-2xl font-bold text-slate-900">{totalSuppliers}</div>
-                            <p className="mt-1 text-xs text-slate-400">
-                                {isEn ? 'Active in system' : 'Đang hoạt động trong hệ thống'}
-                            </p>
-                        </div>
-
-                        <div className="rounded-md border border-emerald-200 bg-emerald-50/50 p-4 shadow-2xs">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-semibold uppercase text-emerald-700">
-                                    {isEn ? 'Cumulative Paid' : 'Lũy Kế Đã Thanh Toán'}
-                                </span>
-                                <div className="rounded-lg bg-emerald-100 p-2 text-emerald-700">
-                                    <DollarSign className="h-4 w-4" />
-                                </div>
-                            </div>
-                            <div className="mt-2 text-2xl font-bold text-emerald-950 font-mono">
-                                {formatVND(totalPaidToSuppliersVND)}
-                            </div>
-                            <p className="mt-1 text-xs text-emerald-600">
-                                {isEn ? 'Total disbursed to suppliers' : 'Tổng tiền đã giải ngân cho NCC'}
-                            </p>
-                        </div>
-
-                        <div className="rounded-md border border-amber-200 bg-amber-50/50 p-4 shadow-2xs">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-semibold uppercase text-amber-700">
-                                    {isEn ? 'Open POs' : 'Đơn Hàng PO Mở'}
-                                </span>
-                                <div className="rounded-lg bg-amber-100 p-2 text-amber-700">
-                                    <Package className="h-4 w-4" />
-                                </div>
-                            </div>
-                            <div className="mt-2 text-2xl font-bold text-amber-900">{totalOpenPOs}</div>
-                            <p className="mt-1 text-xs text-amber-700">
-                                {isEn ? 'Pending or receiving purchase orders' : 'Đơn hàng đang chờ hoặc đang nhận'}
-                            </p>
-                        </div>
-
-                        <div className="rounded-md border border-blue-200 bg-blue-50/50 p-4 shadow-2xs">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-semibold uppercase text-blue-700">
-                                    {isEn ? 'Unpaid AP Invoices' : 'Hóa Đơn AP Chưa Tất Toán'}
-                                </span>
-                                <div className="rounded-lg bg-blue-100 p-2 text-blue-700">
-                                    <Receipt className="h-4 w-4" />
-                                </div>
-                            </div>
-                            <div className="mt-2 text-2xl font-bold text-blue-900">{totalUnpaidInvoices}</div>
-                            <p className="mt-1 text-xs text-blue-600">
-                                {isEn ? 'Payable invoices awaiting settlement' : 'Hóa đơn công nợ cần thanh toán'}
-                            </p>
-                        </div>
-                    </div>
+                <div className="space-y-4">
+                    <StatGrid cols={4}>
+                        <StatCard
+                            label={isEn ? 'Total Suppliers' : 'Tổng Nhà Cung Cấp'}
+                            value={totalSuppliers}
+                            sub={isEn ? 'Active in system' : 'Đang hoạt động trong hệ thống'}
+                            icon={Building2}
+                            tone="neutral"
+                        />
+                        <StatCard
+                            label={isEn ? 'Cumulative Paid' : 'Lũy Kế Đã Thanh Toán'}
+                            value={formatVND(totalPaidToSuppliersVND)}
+                            sub={isEn ? 'Total disbursed to suppliers' : 'Tổng tiền đã giải ngân cho NCC'}
+                            icon={DollarSign}
+                            tone="success"
+                        />
+                        <StatCard
+                            label={isEn ? 'Open POs' : 'Đơn Hàng PO Mở'}
+                            value={totalOpenPOs}
+                            sub={isEn ? 'Pending or receiving purchase orders' : 'Đơn hàng đang chờ hoặc đang nhận'}
+                            icon={Package}
+                            tone="warning"
+                        />
+                        <StatCard
+                            label={isEn ? 'Unpaid AP Invoices' : 'Hóa Đơn AP Chưa Tất Toán'}
+                            value={totalUnpaidInvoices}
+                            sub={isEn ? 'Payable invoices awaiting settlement' : 'Hóa đơn công nợ cần thanh toán'}
+                            icon={Receipt}
+                            tone="info"
+                        />
+                    </StatGrid>
 
                     {/* Filter and Action Bar */}
-                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between rounded-md border border-slate-200 bg-white p-3 shadow-2xs">
-                        <div className="flex flex-col sm:flex-row flex-1 items-stretch sm:items-center gap-2">
-                            <div className="relative flex-1">
-                                <input
-                                    type="text"
-                                    placeholder={isEn ? 'Search by supplier name, code, Tax ID or bank account...' : 'Tìm theo tên NCC, mã NCC, MST hoặc số tài khoản...'}
-                                    value={supplierSearchText}
-                                    onChange={e => setSupplierSearchText(e.target.value)}
-                                    className="w-full rounded-lg border border-slate-300 pl-9 pr-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#B91C1C] focus:outline-none"
-                                />
-                                <Search className="absolute left-3 top-2 h-3.5 w-3.5 text-slate-400" />
-                            </div>
-
-                            <select
-                                value={supplierTypeFilter}
-                                onChange={e => setSupplierTypeFilter(e.target.value)}
-                                className="rounded-lg border border-slate-300 p-2 sm:p-1.5 text-xs text-slate-700 focus:border-[#B91C1C] focus:outline-none"
-                            >
-                                <option value="ALL">{isEn ? 'All Supplier Types' : 'Tất cả phân loại NCC'}</option>
-                                <option value="DISTRIBUTOR">{isEn ? 'Distributor' : 'Nhà phân phối (Distributor)'}</option>
-                                <option value="WINERY">{isEn ? 'Winery' : 'Hãng rượu (Winery)'}</option>
-                                <option value="FORWARDER">{isEn ? 'Forwarder / Freight' : 'Forwarder / Cước tàu'}</option>
-                                <option value="LOGISTICS">{isEn ? 'Warehousing & Logistics' : 'Kho bãi & Vận tải'}</option>
-                                <option value="LOCAL_VENDOR">{isEn ? 'Local Service Vendor' : 'NCC Dịch vụ nội địa'}</option>
-                                <option value="OTHER">{isEn ? 'Other' : 'Khác'}</option>
-                            </select>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={() => setShowQuickAddSupplierModal(true)}
-                            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#B91C1C] px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#721526] transition self-start sm:self-auto"
-                        >
-                            <Plus className="h-4 w-4" /> {isEn ? 'Add New Supplier' : 'Thêm Nhà Cung Cấp Mới'}
-                        </button>
-                    </div>
+                    <Card className="p-3">
+                        <Toolbar
+                            left={
+                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                    <SearchInput
+                                        className="w-full sm:flex-1 sm:max-w-sm"
+                                        placeholder={isEn ? 'Search by supplier name, code, Tax ID or bank account...' : 'Tìm theo tên NCC, mã NCC, MST hoặc số tài khoản...'}
+                                        value={supplierSearchText}
+                                        onChange={e => setSupplierSearchText(e.target.value)}
+                                    />
+                                    <Select
+                                        value={supplierTypeFilter}
+                                        onChange={e => setSupplierTypeFilter(e.target.value)}
+                                        className="sm:w-52"
+                                    >
+                                        <option value="ALL">{isEn ? 'All Supplier Types' : 'Tất cả phân loại NCC'}</option>
+                                        <option value="DISTRIBUTOR">{isEn ? 'Distributor' : 'Nhà phân phối (Distributor)'}</option>
+                                        <option value="WINERY">{isEn ? 'Winery' : 'Hãng rượu (Winery)'}</option>
+                                        <option value="FORWARDER">{isEn ? 'Forwarder / Freight' : 'Forwarder / Cước tàu'}</option>
+                                        <option value="LOGISTICS">{isEn ? 'Warehousing & Logistics' : 'Kho bãi & Vận tải'}</option>
+                                        <option value="LOCAL_VENDOR">{isEn ? 'Local Service Vendor' : 'NCC Dịch vụ nội địa'}</option>
+                                        <option value="OTHER">{isEn ? 'Other' : 'Khác'}</option>
+                                    </Select>
+                                </div>
+                            }
+                            right={
+                                <Button variant="primary" size="sm" onClick={() => setShowQuickAddSupplierModal(true)}>
+                                    <Plus className="h-4 w-4" aria-hidden /> {isEn ? 'Add New Supplier' : 'Thêm Nhà Cung Cấp Mới'}
+                                </Button>
+                            }
+                        />
+                    </Card>
 
                     {/* Master Data Table (Desktop) */}
-                    <div className="hidden md:block overflow-hidden rounded-md border border-slate-200 bg-white shadow-2xs">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-xs">
-                                <thead className="border-b border-slate-200 bg-slate-50 font-semibold text-slate-600">
-                                    <tr>
-                                        <th className="p-3.5">{isEn ? 'Code & Type' : 'Mã & Loại NCC'}</th>
-                                        <th className="p-3.5">{isEn ? 'Supplier Name' : 'Tên Nhà Cung Cấp'}</th>
-                                        <th className="p-3.5">{isEn ? 'Tax ID' : 'Mã Số Thuế'}</th>
-                                        <th className="p-3.5">{isEn ? 'Terms' : 'Điều Khoản TT'}</th>
-                                        <th className="p-3.5">{isEn ? 'Beneficiary Bank Account' : 'Tài Khoản Ngân Hàng Thụ Hưởng'}</th>
-                                        <th className="p-3.5 text-center">{isEn ? 'Transactions' : 'Giao Dịch'}</th>
-                                        <th className="p-3.5 text-right">{isEn ? 'Cumulative Paid (VND)' : 'Lũy Kế Đã Chi (VNĐ)'}</th>
-                                        <th className="p-3.5 text-center">{isEn ? 'Actions' : 'Thao Tác'}</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {filteredSuppliers.length > 0 ? (
-                                        filteredSuppliers.map(s => {
-                                            const typeBadge = SUPPLIER_TYPE_MAP[s.type] || SUPPLIER_TYPE_MAP.OTHER
-                                            const bankParsed = parseBankInfo(s.bankAccountInfo)
+                    <div className="hidden md:block">
+                        <Table>
+                            <THead>
+                                <Tr>
+                                    <Th>{isEn ? 'Code & Type' : 'Mã & Loại NCC'}</Th>
+                                    <Th>{isEn ? 'Supplier Name' : 'Tên Nhà Cung Cấp'}</Th>
+                                    <Th>{isEn ? 'Tax ID' : 'Mã Số Thuế'}</Th>
+                                    <Th>{isEn ? 'Terms' : 'Điều Khoản TT'}</Th>
+                                    <Th>{isEn ? 'Beneficiary Bank Account' : 'Tài Khoản Ngân Hàng Thụ Hưởng'}</Th>
+                                    <Th align="center">{isEn ? 'Transactions' : 'Giao Dịch'}</Th>
+                                    <Th align="right">{isEn ? 'Cumulative Paid (VND)' : 'Lũy Kế Đã Chi (VNĐ)'}</Th>
+                                    <Th align="center">{isEn ? 'Actions' : 'Thao Tác'}</Th>
+                                </Tr>
+                            </THead>
+                            <TBody>
+                                {filteredSuppliers.length > 0 ? (
+                                    filteredSuppliers.map(s => {
+                                        const typeBadge = SUPPLIER_TYPE_MAP[s.type] || SUPPLIER_TYPE_MAP.OTHER
+                                        const bankParsed = parseBankInfo(s.bankAccountInfo)
 
-                                            return (
-                                                <tr key={s.id} className="hover:bg-slate-50/80 transition">
-                                                    <td className="p-3.5">
-                                                        <div className="font-mono font-bold text-slate-900">{s.code}</div>
-                                                        <span
-                                                            className="mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                                                            style={{ backgroundColor: typeBadge.bg, color: typeBadge.color }}
+                                        return (
+                                            <Tr key={s.id}>
+                                                <Td>
+                                                    <div className="font-mono font-bold text-lys-primary">{s.code}</div>
+                                                    <Badge tone={typeBadge.tone} className="mt-1">
+                                                        {isEn ? typeBadge.labelEn : typeBadge.label}
+                                                    </Badge>
+                                                </Td>
+                                                <Td className="max-w-xs">
+                                                    <div className="font-bold text-lys-primary line-clamp-1" title={s.name}>
+                                                        {s.name}
+                                                    </div>
+                                                    {s.country && (
+                                                        <div className="flex items-center gap-1 mt-0.5 text-[11px] text-lys-muted">
+                                                            <Globe className="h-3 w-3" aria-hidden /> {s.country}
+                                                        </div>
+                                                    )}
+                                                </Td>
+                                                <Td className="font-mono text-lys-secondary font-medium">
+                                                    {s.taxId ? (
+                                                        <Badge tone="neutral">{s.taxId}</Badge>
+                                                    ) : (
+                                                        <span className="text-lys-dim italic">{isEn ? 'No Tax ID' : 'Chưa có MST'}</span>
+                                                    )}
+                                                </Td>
+                                                <Td className="font-semibold">
+                                                    {s.paymentTerm ? (
+                                                        <Badge tone="warning">{s.paymentTerm}</Badge>
+                                                    ) : (
+                                                        <span className="text-lys-muted">NET30</span>
+                                                    )}
+                                                </Td>
+                                                <Td className="max-w-sm">
+                                                    {bankParsed ? (
+                                                        <div className="space-y-0.5">
+                                                            <div className="font-mono font-bold text-lys-primary">
+                                                                {isEn ? 'Acc' : 'STK'}: {bankParsed.stk || '—'}
+                                                            </div>
+                                                            <div className="text-[11px] text-lys-muted truncate">
+                                                                {bankParsed.bankName} {bankParsed.accountName ? `(${bankParsed.accountName})` : ''}
+                                                            </div>
+                                                        </div>
+                                                    ) : s.bankAccountInfo ? (
+                                                        <div className="font-mono text-[11px] text-lys-secondary line-clamp-2">
+                                                            {s.bankAccountInfo}
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleOpenEditSupplier(s)}
+                                                            className="text-[11px] text-lys-teal-strong hover:underline font-medium flex items-center gap-1 cursor-pointer"
                                                         >
-                                                            {isEn ? typeBadge.labelEn : typeBadge.label}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-3.5 max-w-xs">
-                                                        <div className="font-bold text-slate-900 line-clamp-1" title={s.name}>
-                                                            {s.name}
-                                                        </div>
-                                                        {s.country && (
-                                                            <div className="flex items-center gap-1 mt-0.5 text-[11px] text-slate-400">
-                                                                <Globe className="h-3 w-3" /> {s.country}
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                    <td className="p-3.5 font-mono text-slate-700 font-medium">
-                                                        {s.taxId ? (
-                                                            <span className="rounded bg-slate-100 px-2 py-0.5">{s.taxId}</span>
-                                                        ) : (
-                                                            <span className="text-slate-400 italic">{isEn ? 'No Tax ID' : 'Chưa có MST'}</span>
-                                                        )}
-                                                    </td>
-                                                    <td className="p-3.5 font-semibold text-slate-800">
-                                                        {s.paymentTerm ? (
-                                                            <span className="rounded-md bg-amber-50 px-2 py-0.5 text-amber-800 border border-amber-200 inline-block whitespace-nowrap shrink-0">
-                                                                {s.paymentTerm}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-slate-400">NET30</span>
-                                                        )}
-                                                    </td>
-                                                    <td className="p-3.5 max-w-sm">
-                                                        {bankParsed ? (
-                                                            <div className="space-y-0.5">
-                                                                <div className="font-mono font-bold text-slate-900">
-                                                                    {isEn ? 'Acc' : 'STK'}: {bankParsed.stk || '—'}
-                                                                </div>
-                                                                <div className="text-[11px] text-slate-600 truncate">
-                                                                    {bankParsed.bankName} {bankParsed.accountName ? `(${bankParsed.accountName})` : ''}
-                                                                </div>
-                                                            </div>
-                                                        ) : s.bankAccountInfo ? (
-                                                            <div className="font-mono text-[11px] text-slate-700 line-clamp-2">
-                                                                {s.bankAccountInfo}
-                                                            </div>
-                                                        ) : (
-                                                            <button
-                                                                onClick={() => handleOpenEditSupplier(s)}
-                                                                className="text-[11px] text-[#B91C1C] hover:underline font-medium flex items-center gap-1"
-                                                            >
-                                                                <Plus className="h-3 w-3" /> {isEn ? 'Add bank account' : 'Thêm TK ngân hàng'}
-                                                            </button>
-                                                        )}
-                                                    </td>
-                                                    <td className="p-3.5 text-center">
-                                                        <div className="flex items-center justify-center gap-1.5 text-[11px]">
-                                                            <span
-                                                                className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-700 font-medium"
-                                                                title={isEn ? 'Open PO count' : 'Số lượng đơn hàng PO'}
-                                                            >
-                                                                {s.openPOCount} PO
-                                                            </span>
-                                                            <span
-                                                                className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-700 font-medium"
-                                                                title={isEn ? 'Unpaid invoice count' : 'Số lượng hóa đơn chưa thanh toán'}
-                                                            >
-                                                                {s.unpaidInvoiceCount} {isEn ? 'Inv' : 'HĐ'}
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="p-3.5 text-right font-mono font-bold text-slate-900 text-sm">
-                                                        {s.totalPaidVND > 0 ? (
-                                                            <span className="text-[#B91C1C]">{formatVND(s.totalPaidVND)}</span>
-                                                        ) : (
-                                                            <span className="text-slate-400">0 ₫</span>
-                                                        )}
-                                                    </td>
-                                                    <td className="p-3.5 text-center">
-                                                        <div className="flex items-center justify-center gap-1.5">
-                                                            <button
-                                                                onClick={() => handleCreatePaymentForSupplier(s.id)}
-                                                                className="inline-flex items-center gap-1 rounded-md bg-[#B91C1C] px-2.5 py-1.5 text-[11px] font-bold text-white shadow-2xs hover:bg-[#721526] transition"
-                                                                title={isEn ? 'Create Payment Request for this Supplier' : 'Lập Đề Nghị Thanh Toán cho Nhà Cung Cấp này'}
-                                                            >
-                                                                <Plus className="h-3 w-3" /> {isEn ? 'New Request' : 'Lập Đề Nghị'}
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleOpenEditSupplier(s)}
-                                                                className="rounded-md border border-slate-200 bg-white p-1.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition"
-                                                                title={isEn ? 'Edit bank & payment info' : 'Chỉnh sửa thông tin ngân hàng & thanh toán'}
-                                                            >
-                                                                <Edit3 className="h-3.5 w-3.5" />
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            )
-                                        })
-                                    ) : (
-                                        <tr>
-                                            <td colSpan={8} className="p-8 text-center text-slate-400">
-                                                {isEn ? 'No matching Suppliers found' : 'Không tìm thấy Nhà Cung Cấp nào phù hợp'}
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                                                            <Plus className="h-3 w-3" aria-hidden /> {isEn ? 'Add bank account' : 'Thêm TK ngân hàng'}
+                                                        </button>
+                                                    )}
+                                                </Td>
+                                                <Td align="center">
+                                                    <div className="flex items-center justify-center gap-1.5">
+                                                        <Badge tone="neutral" title={isEn ? 'Open PO count' : 'Số lượng đơn hàng PO'}>
+                                                            {s.openPOCount} PO
+                                                        </Badge>
+                                                        <Badge tone="info" title={isEn ? 'Unpaid invoice count' : 'Số lượng hóa đơn chưa thanh toán'}>
+                                                            {s.unpaidInvoiceCount} {isEn ? 'Inv' : 'HĐ'}
+                                                        </Badge>
+                                                    </div>
+                                                </Td>
+                                                <Td align="right" className="font-bold text-sm">
+                                                    {s.totalPaidVND > 0 ? (
+                                                        <span className="text-lys-teal-strong">{formatVND(s.totalPaidVND)}</span>
+                                                    ) : (
+                                                        <span className="text-lys-dim">0 ₫</span>
+                                                    )}
+                                                </Td>
+                                                <Td align="center">
+                                                    <div className="flex items-center justify-center gap-1.5">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="primary"
+                                                            onClick={() => handleCreatePaymentForSupplier(s.id)}
+                                                            title={isEn ? 'Create Payment Request for this Supplier' : 'Lập Đề Nghị Thanh Toán cho Nhà Cung Cấp này'}
+                                                        >
+                                                            <Plus className="h-3 w-3" aria-hidden /> {isEn ? 'New Request' : 'Lập Đề Nghị'}
+                                                        </Button>
+                                                        <Button
+                                                            size="icon-sm"
+                                                            variant="secondary"
+                                                            onClick={() => handleOpenEditSupplier(s)}
+                                                            aria-label={isEn ? 'Edit bank & payment info' : 'Chỉnh sửa thông tin ngân hàng & thanh toán'}
+                                                            title={isEn ? 'Edit bank & payment info' : 'Chỉnh sửa thông tin ngân hàng & thanh toán'}
+                                                        >
+                                                            <Edit3 className="h-3.5 w-3.5" aria-hidden />
+                                                        </Button>
+                                                    </div>
+                                                </Td>
+                                            </Tr>
+                                        )
+                                    })
+                                ) : (
+                                    <TableMessageRow colSpan={8}>
+                                        <EmptyState
+                                            icon={Building2}
+                                            title={isEn ? 'No matching Suppliers found' : 'Không tìm thấy Nhà Cung Cấp nào phù hợp'}
+                                        />
+                                    </TableMessageRow>
+                                )}
+                            </TBody>
+                        </Table>
                     </div>
 
                     {/* Mobile Card List for Suppliers */}
@@ -1294,9 +1171,12 @@ export function PaymentRequestsClient({
                                 />
                             ))
                         ) : (
-                            <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-xs text-slate-400">
-                                {isEn ? 'No matching Suppliers found' : 'Không tìm thấy Nhà Cung Cấp nào phù hợp'}
-                            </div>
+                            <Card>
+                                <EmptyState
+                                    icon={Building2}
+                                    title={isEn ? 'No matching Suppliers found' : 'Không tìm thấy Nhà Cung Cấp nào phù hợp'}
+                                />
+                            </Card>
                         )}
                     </div>
                 </div>
@@ -1306,20 +1186,21 @@ export function PaymentRequestsClient({
             {/* TAB 2: CẤU HÌNH HẠNG MỤC CHI PHÍ                       */}
             {/* ═══════════════════════════════════════════════════════ */}
             {activeTab === 'CATEGORIES' && (
-                <div className="space-y-6">
+                <div className="space-y-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="text-xs font-semibold text-slate-500">{isEn ? 'Group:' : 'Nhóm:'}</span>
+                            <span className="text-xs font-semibold text-lys-muted">{isEn ? 'Group:' : 'Nhóm:'}</span>
                             {['ALL', 'COST_OF_SALES', 'OPERATING', 'MARKETING', 'ADMINISTRATIVE', 'CAPEX'].map(grp => {
                                 const grpObj = GROUP_LABELS[grp]
                                 return (
                                     <button
                                         key={grp}
+                                        type="button"
                                         onClick={() => setSelectedGroupFilter(grp)}
-                                        className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                                        className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
                                             selectedGroupFilter === grp
-                                                ? 'bg-[#0E7490] text-white'
-                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                                ? 'bg-lys-teal-strong text-white shadow-xs'
+                                                : 'bg-white border border-lys-border text-lys-secondary hover:bg-lys-subtle'
                                         }`}
                                     >
                                         {grp === 'ALL' ? (isEn ? 'All' : 'Tất Cả') : grpObj ? (isEn ? grpObj.en : grpObj.vi) : grp}
@@ -1328,7 +1209,9 @@ export function PaymentRequestsClient({
                             })}
                         </div>
 
-                        <button
+                        <Button
+                            size="sm"
+                            variant="primary"
                             onClick={() => setCategoryModalData({
                                 open: true,
                                 isEdit: false,
@@ -1338,60 +1221,60 @@ export function PaymentRequestsClient({
                                 defaultAccount: '642',
                                 description: '',
                             })}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-[#0E7490] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#155E75] transition"
                         >
-                            <Plus className="h-3.5 w-3.5" /> {isEn ? 'Add Category' : 'Thêm Hạng Mục'}
-                        </button>
+                            <Plus className="h-3.5 w-3.5" aria-hidden /> {isEn ? 'Add Category' : 'Thêm Hạng Mục'}
+                        </Button>
                     </div>
 
                     {/* Categories Table (Desktop) */}
-                    <div className="hidden md:block overflow-x-auto rounded-md border border-slate-200 bg-white shadow-2xs">
-                        <table className="w-full text-left text-xs">
-                            <thead className="border-b border-slate-200 bg-slate-50 font-semibold text-slate-600">
-                                <tr>
-                                    <th className="p-3.5">{isEn ? 'Category Code' : 'Mã Hạng Mục'}</th>
-                                    <th className="p-3.5">{isEn ? 'Category Name' : 'Tên Hạng Mục Chi Phí'}</th>
-                                    <th className="p-3.5">{isEn ? 'Expense Group' : 'Nhóm Chi Phí'}</th>
-                                    <th className="p-3.5">{isEn ? 'Default VAS Account' : 'Tài Khoản VAS Mặc Định'}</th>
-                                    <th className="p-3.5">{isEn ? 'Description' : 'Diễn Giải Nghiệp Vụ'}</th>
-                                    <th className="p-3.5 text-center">{isEn ? 'Status' : 'Trạng Thái'}</th>
-                                    <th className="p-3.5 text-center">{isEn ? 'Actions' : 'Thao Tác'}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
+                    <div className="hidden md:block">
+                        <Table>
+                            <THead>
+                                <Tr>
+                                    <Th>{isEn ? 'Category Code' : 'Mã Hạng Mục'}</Th>
+                                    <Th>{isEn ? 'Category Name' : 'Tên Hạng Mục Chi Phí'}</Th>
+                                    <Th>{isEn ? 'Expense Group' : 'Nhóm Chi Phí'}</Th>
+                                    <Th>{isEn ? 'Default VAS Account' : 'Tài Khoản VAS Mặc Định'}</Th>
+                                    <Th>{isEn ? 'Description' : 'Diễn Giải Nghiệp Vụ'}</Th>
+                                    <Th align="center">{isEn ? 'Status' : 'Trạng Thái'}</Th>
+                                    <Th align="center">{isEn ? 'Actions' : 'Thao Tác'}</Th>
+                                </Tr>
+                            </THead>
+                            <TBody>
                                 {categories
                                     .filter(c => selectedGroupFilter === 'ALL' || c.group === selectedGroupFilter)
                                     .map(cat => {
                                         const grpObj = GROUP_LABELS[cat.group]
                                         return (
-                                            <tr key={cat.id} className="hover:bg-slate-50/80">
-                                                <td className="p-3.5 font-mono font-bold text-slate-800">
+                                            <Tr key={cat.id}>
+                                                <Td className="font-mono font-bold text-lys-primary">
                                                     {cat.code}
-                                                </td>
-                                                <td className="p-3.5 font-semibold text-slate-900">
+                                                </Td>
+                                                <Td className="font-semibold text-lys-primary">
                                                     {cat.name}
-                                                </td>
-                                                <td className="p-3.5 text-slate-600">
-                                                    <span className="inline-block rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 whitespace-nowrap shrink-0">
+                                                </Td>
+                                                <Td>
+                                                    <Badge tone="neutral">
                                                         {grpObj ? (isEn ? grpObj.en : grpObj.vi) : cat.group}
-                                                    </span>
-                                                </td>
-                                                <td className="p-3.5 font-mono font-medium text-slate-700">
+                                                    </Badge>
+                                                </Td>
+                                                <Td className="font-mono font-medium text-lys-secondary">
                                                     {cat.defaultAccount || '—'}
-                                                </td>
-                                                <td className="p-3.5 text-slate-500 max-w-xs truncate" title={cat.description || ''}>
+                                                </Td>
+                                                <Td className="text-lys-muted max-w-xs truncate" title={cat.description || ''}>
                                                     {cat.description || '—'}
-                                                </td>
-                                                <td className="p-3.5 text-center">
-                                                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                                                        cat.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
-                                                    }`}>
+                                                </Td>
+                                                <Td align="center">
+                                                    <Badge tone={cat.isActive ? 'success' : 'neutral'}>
                                                         {cat.isActive ? (isEn ? 'Active' : 'Đang Sử Dụng') : (isEn ? 'Hidden' : 'Tạm Ẩn')}
-                                                    </span>
-                                                </td>
-                                                <td className="p-3.5 text-center">
-                                                    <div className="flex items-center justify-center gap-1.5">
-                                                        <button
+                                                    </Badge>
+                                                </Td>
+                                                <Td align="center">
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        <Button
+                                                            size="icon-sm"
+                                                            variant="ghost"
+                                                            aria-label={isEn ? 'Edit category' : 'Sửa hạng mục'}
                                                             onClick={() => setCategoryModalData({
                                                                 open: true,
                                                                 isEdit: true,
@@ -1402,23 +1285,25 @@ export function PaymentRequestsClient({
                                                                 defaultAccount: cat.defaultAccount || '',
                                                                 description: cat.description || '',
                                                             })}
-                                                            className="rounded p-1 text-slate-400 hover:text-slate-700"
                                                         >
-                                                            <Edit3 className="h-3.5 w-3.5" />
-                                                        </button>
-                                                        <button
+                                                            <Edit3 className="h-3.5 w-3.5" aria-hidden />
+                                                        </Button>
+                                                        <Button
+                                                            size="icon-sm"
+                                                            variant="ghost"
+                                                            aria-label={isEn ? 'Delete category' : 'Xóa hạng mục'}
                                                             onClick={() => handleDeleteCategory(cat.id, cat.name)}
-                                                            className="rounded p-1 text-slate-400 hover:text-red-600"
+                                                            className="text-lys-muted hover:text-tone-danger-fg hover:bg-tone-danger-bg"
                                                         >
-                                                            <Trash2 className="h-3.5 w-3.5" />
-                                                        </button>
+                                                            <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                                                        </Button>
                                                     </div>
-                                                </td>
-                                            </tr>
+                                                </Td>
+                                            </Tr>
                                         )
                                     })}
-                            </tbody>
-                        </table>
+                            </TBody>
+                        </Table>
                     </div>
 
                     {/* Mobile Cards for Categories */}
@@ -1428,26 +1313,27 @@ export function PaymentRequestsClient({
                             .map(cat => {
                                 const grpObj = GROUP_LABELS[cat.group]
                                 return (
-                                    <div key={cat.id} className="rounded-lg border border-slate-200 bg-white p-3.5 shadow-2xs space-y-2">
+                                    <Card key={cat.id} className="p-3.5 space-y-2">
                                         <div className="flex items-center justify-between gap-2">
-                                            <span className="font-mono font-bold text-xs text-slate-800">{cat.code}</span>
-                                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                                                cat.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
-                                            }`}>
+                                            <span className="font-mono font-bold text-xs text-lys-primary">{cat.code}</span>
+                                            <Badge tone={cat.isActive ? 'success' : 'neutral'}>
                                                 {cat.isActive ? (isEn ? 'Active' : 'Đang Sử Dụng') : (isEn ? 'Hidden' : 'Tạm Ẩn')}
-                                            </span>
+                                            </Badge>
                                         </div>
-                                        <p className="font-semibold text-xs text-slate-900">{cat.name}</p>
-                                        {cat.description && <p className="text-[11px] text-slate-500 line-clamp-2">{cat.description}</p>}
-                                        <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
+                                        <p className="font-semibold text-xs text-lys-primary">{cat.name}</p>
+                                        {cat.description && <p className="text-[11px] text-lys-muted line-clamp-2">{cat.description}</p>}
+                                        <div className="flex items-center justify-between pt-2 border-t border-lys-border text-[11px]">
                                             <div className="flex items-center gap-2">
-                                                <span className="rounded bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
+                                                <Badge tone="neutral">
                                                     {grpObj ? (isEn ? grpObj.en : grpObj.vi) : cat.group}
-                                                </span>
-                                                <span className="font-mono text-slate-600">VAS: {cat.defaultAccount || '—'}</span>
+                                                </Badge>
+                                                <span className="font-mono text-lys-secondary">VAS: {cat.defaultAccount || '—'}</span>
                                             </div>
-                                            <div className="flex items-center gap-1.5">
-                                                <button
+                                            <div className="flex items-center gap-1">
+                                                <Button
+                                                    size="icon-sm"
+                                                    variant="ghost"
+                                                    aria-label={isEn ? 'Edit' : 'Sửa'}
                                                     onClick={() => setCategoryModalData({
                                                         open: true,
                                                         isEdit: true,
@@ -1458,19 +1344,21 @@ export function PaymentRequestsClient({
                                                         defaultAccount: cat.defaultAccount || '',
                                                         description: cat.description || '',
                                                     })}
-                                                    className="rounded p-1 text-slate-500 hover:bg-slate-100"
                                                 >
-                                                    <Edit3 className="h-3.5 w-3.5" />
-                                                </button>
-                                                <button
+                                                    <Edit3 className="h-3.5 w-3.5" aria-hidden />
+                                                </Button>
+                                                <Button
+                                                    size="icon-sm"
+                                                    variant="ghost"
+                                                    aria-label={isEn ? 'Delete' : 'Xóa'}
                                                     onClick={() => handleDeleteCategory(cat.id, cat.name)}
-                                                    className="rounded p-1 text-slate-400 hover:text-red-600"
+                                                    className="text-lys-muted hover:text-tone-danger-fg hover:bg-tone-danger-bg"
                                                 >
-                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                </button>
+                                                    <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                                                </Button>
                                             </div>
                                         </div>
-                                    </div>
+                                    </Card>
                                 )
                             })}
                     </div>
@@ -1481,89 +1369,91 @@ export function PaymentRequestsClient({
             {/* TAB 3: QUẢN LÝ & THEO DÕI NGÂN SÁCH                    */}
             {/* ═══════════════════════════════════════════════════════ */}
             {activeTab === 'BUDGETS' && (
-                <div className="space-y-6">
-                    <div className="rounded-md border border-slate-200 bg-white p-4 shadow-2xs">
+                <div className="space-y-4">
+                    <Card className="p-4">
                         <div className="flex items-center justify-between mb-4">
                             <div>
-                                <h3 className="text-sm font-bold text-slate-900">
+                                <h3 className="type-section-title text-lys-primary">
                                     {isEn ? '2026 Budget Utilization Progress' : 'Tiến Độ Tiêu Thụ Ngân Sách Năm 2026'}
                                 </h3>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-xs text-lys-muted">
                                     {isEn
                                         ? 'Compare actual disbursed & pending amounts against approved budget limits per category'
                                         : 'So sánh số tiền thực chi & chờ duyệt với định mức ngân sách của từng hạng mục'}
                                 </p>
                             </div>
-                            <span className="text-xs text-slate-400">{isEn ? 'Currency: VND' : 'Đơn vị tính: VNĐ'}</span>
+                            <span className="text-xs text-lys-muted">{isEn ? 'Currency: VND' : 'Đơn vị tính: VNĐ'}</span>
                         </div>
 
                         {/* Desktop Table */}
-                        <div className="hidden md:block overflow-x-auto">
-                            <table className="w-full text-left text-xs">
-                                <thead className="border-b border-slate-200 bg-slate-50 font-semibold text-slate-600">
-                                    <tr>
-                                        <th className="p-3">{isEn ? 'Expense Category' : 'Hạng Mục Chi Phí'}</th>
-                                        <th className="p-3">{isEn ? 'Group' : 'Nhóm'}</th>
-                                        <th className="p-3 text-right">{isEn ? 'Approved Budget' : 'Ngân Sách Được Duyệt'}</th>
-                                        <th className="p-3 text-right">{isEn ? 'Disbursed' : 'Đã Giải Ngân'}</th>
-                                        <th className="p-3 text-right">{isEn ? 'Pending' : 'Đang Chờ Duyệt'}</th>
-                                        <th className="p-3 text-right">{isEn ? 'Remaining' : 'Còn Lại'}</th>
-                                        <th className="p-3 w-[22%]">{isEn ? 'Utilization' : 'Tiến Độ Tiêu Thụ'}</th>
-                                        <th className="p-3 text-center">{isEn ? 'Actions' : 'Thao Tác'}</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
+                        <div className="hidden md:block">
+                            <Table>
+                                <THead>
+                                    <Tr>
+                                        <Th>{isEn ? 'Expense Category' : 'Hạng Mục Chi Phí'}</Th>
+                                        <Th>{isEn ? 'Group' : 'Nhóm'}</Th>
+                                        <Th align="right">{isEn ? 'Approved Budget' : 'Ngân Sách Được Duyệt'}</Th>
+                                        <Th align="right">{isEn ? 'Disbursed' : 'Đã Giải Ngân'}</Th>
+                                        <Th align="right">{isEn ? 'Pending' : 'Đang Chờ Duyệt'}</Th>
+                                        <Th align="right">{isEn ? 'Remaining' : 'Còn Lại'}</Th>
+                                        <Th className="w-[22%]">{isEn ? 'Utilization' : 'Tiến Độ Tiêu Thụ'}</Th>
+                                        <Th align="center">{isEn ? 'Actions' : 'Thao Tác'}</Th>
+                                    </Tr>
+                                </THead>
+                                <TBody>
                                     {budgets.map(b => {
                                         const isOver = b.isOverBudget
                                         const isAlert = b.isAlert
-                                        const barColor = isOver ? 'bg-red-600' : isAlert ? 'bg-amber-500' : b.utilizationPct > 60 ? 'bg-blue-600' : 'bg-emerald-600'
+                                        const barColor = isOver ? 'bg-tone-danger-fg' : isAlert ? 'bg-tone-warning-fg' : b.utilizationPct > 60 ? 'bg-tone-info-fg' : 'bg-tone-success-fg'
                                         const grpObj = GROUP_LABELS[b.categoryGroup]
 
                                         return (
-                                            <tr key={b.id} className="hover:bg-slate-50/80">
-                                                <td className="p-3">
-                                                    <div className="font-semibold text-slate-800">{b.categoryName}</div>
-                                                    <div className="font-mono text-[10px] text-slate-400">{b.categoryCode}</div>
-                                                </td>
-                                                <td className="p-3 text-slate-600">
-                                                    <span className="inline-block rounded bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700 whitespace-nowrap shrink-0">
+                                            <Tr key={b.id}>
+                                                <Td>
+                                                    <div className="font-semibold text-lys-primary">{b.categoryName}</div>
+                                                    <div className="font-mono text-[11px] text-lys-muted">{b.categoryCode}</div>
+                                                </Td>
+                                                <Td>
+                                                    <Badge tone="neutral">
                                                         {grpObj ? (isEn ? grpObj.en : grpObj.vi) : b.categoryGroup}
-                                                    </span>
-                                                </td>
-                                                <td className="p-3 text-right font-mono font-bold text-slate-900">
-                                                    {b.allocatedAmount > 0 ? formatVND(b.allocatedAmount) : <span className="text-slate-400 italic">{isEn ? 'Not set' : 'Chưa cài đặt'}</span>}
-                                                </td>
-                                                <td className="p-3 text-right font-mono text-emerald-700 font-semibold">
+                                                    </Badge>
+                                                </Td>
+                                                <Td align="right" className="font-bold text-lys-primary">
+                                                    {b.allocatedAmount > 0 ? formatVND(b.allocatedAmount) : <span className="text-lys-dim italic font-normal">{isEn ? 'Not set' : 'Chưa cài đặt'}</span>}
+                                                </Td>
+                                                <Td align="right" className="text-tone-success-fg font-semibold">
                                                     {formatVND(b.spentAmount)}
-                                                </td>
-                                                <td className="p-3 text-right font-mono text-amber-700">
+                                                </Td>
+                                                <Td align="right" className="text-tone-warning-fg">
                                                     {formatVND(b.pendingAmount)}
-                                                </td>
-                                                <td className="p-3 text-right font-mono font-semibold">
-                                                    <span className={b.remainingAmount < 0 ? 'text-red-600' : 'text-slate-700'}>
+                                                </Td>
+                                                <Td align="right" className="font-semibold">
+                                                    <span className={b.remainingAmount < 0 ? 'text-tone-danger-fg' : 'text-lys-secondary'}>
                                                         {formatVND(b.remainingAmount)}
                                                     </span>
-                                                </td>
-                                                <td className="p-3">
+                                                </Td>
+                                                <Td>
                                                     <div className="space-y-1">
                                                         <div className="flex justify-between text-[11px]">
-                                                            <span className="font-semibold text-slate-700">{b.utilizationPct}%</span>
+                                                            <span className="font-semibold text-lys-secondary type-number">{b.utilizationPct}%</span>
                                                             {isOver ? (
-                                                                <span className="text-[10px] font-bold text-red-600">{isEn ? 'OVER BUDGET' : 'VƯỢT HẠN MỨC'}</span>
+                                                                <span className="text-[11px] font-bold text-tone-danger-fg">{isEn ? 'OVER BUDGET' : 'VƯỢT HẠN MỨC'}</span>
                                                             ) : isAlert ? (
-                                                                <span className="text-[10px] font-bold text-amber-600">{isEn ? 'NEAR LIMIT' : 'SẮP CHẠM NGƯỠNG'}</span>
+                                                                <span className="text-[11px] font-bold text-tone-warning-fg">{isEn ? 'NEAR LIMIT' : 'SẮP CHẠM NGƯỠNG'}</span>
                                                             ) : null}
                                                         </div>
-                                                        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                                                        <div className="h-2 w-full overflow-hidden rounded-full bg-lys-subtle">
                                                             <div
                                                                 className={`h-full rounded-full transition-all duration-300 ${barColor}`}
                                                                 style={{ width: `${Math.min(100, b.utilizationPct)}%` }}
                                                             />
                                                         </div>
                                                     </div>
-                                                </td>
-                                                <td className="p-3 text-center">
-                                                    <button
+                                                </Td>
+                                                <Td align="center">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="secondary"
                                                         onClick={() => setBudgetModalData({
                                                             open: true,
                                                             categoryId: b.categoryId,
@@ -1573,16 +1463,15 @@ export function PaymentRequestsClient({
                                                             warningThresholdPct: b.warningThresholdPct,
                                                             notes: b.notes || '',
                                                         })}
-                                                        className="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-[#B91C1C] hover:text-white transition"
                                                     >
                                                         {isEn ? 'Set Limit' : 'Cài Hạn Mức'}
-                                                    </button>
-                                                </td>
-                                            </tr>
+                                                    </Button>
+                                                </Td>
+                                            </Tr>
                                         )
                                     })}
-                                </tbody>
-                            </table>
+                                </TBody>
+                            </Table>
                         </div>
 
                         {/* Mobile Cards for Budgets */}
@@ -1590,53 +1479,53 @@ export function PaymentRequestsClient({
                             {budgets.map(b => {
                                 const isOver = b.isOverBudget
                                 const isAlert = b.isAlert
-                                const barColor = isOver ? 'bg-red-600' : isAlert ? 'bg-amber-500' : b.utilizationPct > 60 ? 'bg-blue-600' : 'bg-emerald-600'
+                                const barColor = isOver ? 'bg-tone-danger-fg' : isAlert ? 'bg-tone-warning-fg' : b.utilizationPct > 60 ? 'bg-tone-info-fg' : 'bg-tone-success-fg'
                                 const grpObj = GROUP_LABELS[b.categoryGroup]
                                 return (
-                                    <div key={b.id} className="rounded-lg border border-slate-200 bg-slate-50/40 p-3.5 space-y-2.5">
+                                    <div key={b.id} className="rounded-lg border border-lys-border bg-lys-bg/50 p-3.5 space-y-2.5">
                                         <div className="flex items-start justify-between gap-2">
                                             <div>
-                                                <p className="font-semibold text-xs text-slate-800">{b.categoryName}</p>
-                                                <span className="font-mono text-[10px] text-slate-400">{b.categoryCode}</span>
+                                                <p className="font-semibold text-xs text-lys-primary">{b.categoryName}</p>
+                                                <span className="font-mono text-[11px] text-lys-muted">{b.categoryCode}</span>
                                             </div>
-                                            <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700">
+                                            <Badge tone="neutral">
                                                 {grpObj ? (isEn ? grpObj.en : grpObj.vi) : b.categoryGroup}
-                                            </span>
+                                            </Badge>
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-2 text-[11px] pt-1">
                                             <div>
-                                                <span className="text-slate-400 block">{isEn ? 'Approved Budget' : 'Ngân sách duyệt'}</span>
-                                                <span className="font-mono font-bold text-slate-900">
+                                                <span className="text-lys-muted block">{isEn ? 'Approved Budget' : 'Ngân sách duyệt'}</span>
+                                                <span className="type-number font-bold text-lys-primary">
                                                     {b.allocatedAmount > 0 ? formatVND(b.allocatedAmount) : (isEn ? 'Not set' : 'Chưa cài đặt')}
                                                 </span>
                                             </div>
                                             <div className="text-right">
-                                                <span className="text-slate-400 block">{isEn ? 'Remaining' : 'Còn lại'}</span>
-                                                <span className={`font-mono font-bold ${b.remainingAmount < 0 ? 'text-red-600' : 'text-slate-800'}`}>
+                                                <span className="text-lys-muted block">{isEn ? 'Remaining' : 'Còn lại'}</span>
+                                                <span className={`type-number font-bold ${b.remainingAmount < 0 ? 'text-tone-danger-fg' : 'text-lys-primary'}`}>
                                                     {formatVND(b.remainingAmount)}
                                                 </span>
                                             </div>
                                             <div>
-                                                <span className="text-slate-400 block">{isEn ? 'Disbursed' : 'Đã giải ngân'}</span>
-                                                <span className="font-mono text-emerald-700 font-semibold">{formatVND(b.spentAmount)}</span>
+                                                <span className="text-lys-muted block">{isEn ? 'Disbursed' : 'Đã giải ngân'}</span>
+                                                <span className="type-number text-tone-success-fg font-semibold">{formatVND(b.spentAmount)}</span>
                                             </div>
                                             <div className="text-right">
-                                                <span className="text-slate-400 block">{isEn ? 'Pending' : 'Đang chờ duyệt'}</span>
-                                                <span className="font-mono text-amber-700">{formatVND(b.pendingAmount)}</span>
+                                                <span className="text-lys-muted block">{isEn ? 'Pending' : 'Đang chờ duyệt'}</span>
+                                                <span className="type-number text-tone-warning-fg">{formatVND(b.pendingAmount)}</span>
                                             </div>
                                         </div>
 
                                         <div className="space-y-1 pt-1">
                                             <div className="flex justify-between text-[11px]">
-                                                <span className="font-semibold text-slate-700">{b.utilizationPct}%</span>
+                                                <span className="font-semibold text-lys-secondary type-number">{b.utilizationPct}%</span>
                                                 {isOver ? (
-                                                    <span className="text-[10px] font-bold text-red-600">{isEn ? 'OVER BUDGET' : 'VƯỢT HẠN MỨC'}</span>
+                                                    <span className="text-[11px] font-bold text-tone-danger-fg">{isEn ? 'OVER BUDGET' : 'VƯỢT HẠN MỨC'}</span>
                                                 ) : isAlert ? (
-                                                    <span className="text-[10px] font-bold text-amber-600">{isEn ? 'NEAR LIMIT' : 'SẮP CHẠM NGƯỠNG'}</span>
+                                                    <span className="text-[11px] font-bold text-tone-warning-fg">{isEn ? 'NEAR LIMIT' : 'SẮP CHẠM NGƯỠNG'}</span>
                                                 ) : null}
                                             </div>
-                                            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+                                            <div className="h-2 w-full overflow-hidden rounded-full bg-lys-subtle">
                                                 <div
                                                     className={`h-full rounded-full transition-all duration-300 ${barColor}`}
                                                     style={{ width: `${Math.min(100, b.utilizationPct)}%` }}
@@ -1645,7 +1534,9 @@ export function PaymentRequestsClient({
                                         </div>
 
                                         <div className="flex justify-end pt-1">
-                                            <button
+                                            <Button
+                                                size="sm"
+                                                variant="secondary"
                                                 onClick={() => setBudgetModalData({
                                                     open: true,
                                                     categoryId: b.categoryId,
@@ -1655,16 +1546,15 @@ export function PaymentRequestsClient({
                                                     warningThresholdPct: b.warningThresholdPct,
                                                     notes: b.notes || '',
                                                 })}
-                                                className="rounded-md bg-white border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-[#B91C1C] hover:text-white transition"
                                             >
                                                 {isEn ? 'Set Limit' : 'Cài Hạn Mức'}
-                                            </button>
+                                            </Button>
                                         </div>
                                     </div>
                                 )
                             })}
                         </div>
-                    </div>
+                    </Card>
                 </div>
             )}
 
@@ -1705,539 +1595,484 @@ export function PaymentRequestsClient({
             )}
 
             {/* ═══ Modal Cấu Hình Hạng Mục Chi Phí ═══ */}
-            {categoryModalData.open && (
-                <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-md bg-white p-5 sm:p-6 shadow-xl border border-slate-200">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-base font-bold text-slate-900">
-                                {categoryModalData.isEdit
-                                    ? (isEn ? 'Edit Expense Category' : 'Chỉnh Sửa Hạng Mục Chi Phí')
-                                    : (isEn ? 'Add New Expense Category' : 'Thêm Hạng Mục Chi Phí Mới')}
-                            </h3>
-                            <button
-                                onClick={() => setCategoryModalData(prev => ({ ...prev, open: false }))}
-                                className="rounded p-1 text-slate-400 hover:bg-slate-100"
-                            >
-                                <X className="h-4 w-4" />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSaveCategory} className="space-y-4 text-xs">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block font-medium text-slate-700 mb-1">
-                                        {isEn ? 'Category Code *' : 'Mã Hạng Mục *'}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        required
-                                        placeholder="e.g. MKT_TASTING"
-                                        value={categoryModalData.code}
-                                        onChange={e => setCategoryModalData(prev => ({ ...prev, code: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 font-mono uppercase text-xs focus:border-[#B91C1C] focus:outline-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block font-medium text-slate-700 mb-1">
-                                        {isEn ? 'Expense Group' : 'Nhóm Chi Phí'}
-                                    </label>
-                                    <select
-                                        value={categoryModalData.group}
-                                        onChange={e => setCategoryModalData(prev => ({ ...prev, group: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
-                                    >
-                                        <option value="COST_OF_SALES">{isEn ? 'Cost of Sales & Imports' : 'Tiền Hàng & Nhập Khẩu'}</option>
-                                        <option value="OPERATING">{isEn ? 'Operations & Warehousing' : 'Vận Hành & Kho Bãi'}</option>
-                                        <option value="MARKETING">{isEn ? 'Marketing & Sales' : 'Tiếp Thị & Bán Hàng'}</option>
-                                        <option value="ADMINISTRATIVE">{isEn ? 'Admin & HR' : 'Hành Chính & Nhân Sự'}</option>
-                                        <option value="CAPEX">{isEn ? 'Capital Expenditure (CAPEX)' : 'Đầu Tư Tài Sản (CAPEX)'}</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block font-medium text-slate-700 mb-1">
-                                    {isEn ? 'Category Name *' : 'Tên Hạng Mục *'}
-                                </label>
-                                <input
+            <Modal
+                open={categoryModalData.open}
+                onClose={() => setCategoryModalData(prev => ({ ...prev, open: false }))}
+                size="lg"
+                title={
+                    categoryModalData.isEdit
+                        ? (isEn ? 'Edit Expense Category' : 'Chỉnh Sửa Hạng Mục Chi Phí')
+                        : (isEn ? 'Add New Expense Category' : 'Thêm Hạng Mục Chi Phí Mới')
+                }
+                footer={
+                    <>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setCategoryModalData(prev => ({ ...prev, open: false }))}
+                        >
+                            {isEn ? 'Cancel' : 'Hủy'}
+                        </Button>
+                        <Button type="submit" form="pr-category-form" variant="primary" size="sm">
+                            {isEn ? 'Save Category' : 'Lưu Hạng Mục'}
+                        </Button>
+                    </>
+                }
+            >
+                <form id="pr-category-form" onSubmit={handleSaveCategory} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Field label={isEn ? 'Category Code' : 'Mã Hạng Mục'} required>
+                            {id => (
+                                <Input
+                                    id={id}
                                     type="text"
                                     required
-                                    placeholder={isEn ? 'e.g. Wine Tasting & Hospitality Expenses' : 'Vd: Chi phí Thử nếm rượu (Wine Tasting) & Tiếp khách'}
-                                    value={categoryModalData.name}
-                                    onChange={e => setCategoryModalData(prev => ({ ...prev, name: e.target.value }))}
-                                    className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
+                                    placeholder="e.g. MKT_TASTING"
+                                    value={categoryModalData.code}
+                                    onChange={e => setCategoryModalData(prev => ({ ...prev, code: e.target.value }))}
+                                    className="font-mono uppercase"
                                 />
-                            </div>
-
-                            <div>
-                                <label className="block font-medium text-slate-700 mb-1">
-                                    {isEn ? 'Default Accounting Account (VAS)' : 'Tài Khoản Kế Toán Mặc Định (VAS)'}
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder={isEn ? 'e.g. 641 - Selling expenses / 642 - G&A expenses' : 'Vd: 641 - Chi phí bán hàng / 642 - Chi phí quản lý'}
-                                    value={categoryModalData.defaultAccount}
-                                    onChange={e => setCategoryModalData(prev => ({ ...prev, defaultAccount: e.target.value }))}
-                                    className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block font-medium text-slate-700 mb-1">
-                                    {isEn ? 'Business Description' : 'Diễn Giải Nghiệp Vụ'}
-                                </label>
-                                <textarea
-                                    rows={2}
-                                    placeholder={isEn ? 'Describe the purpose of this expense category...' : 'Mô tả mục đích sử dụng khoản chi này...'}
-                                    value={categoryModalData.description}
-                                    onChange={e => setCategoryModalData(prev => ({ ...prev, description: e.target.value }))}
-                                    className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
-                                />
-                            </div>
-
-                            <div className="mt-5 flex justify-end gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setCategoryModalData(prev => ({ ...prev, open: false }))}
-                                    className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                            )}
+                        </Field>
+                        <Field label={isEn ? 'Expense Group' : 'Nhóm Chi Phí'}>
+                            {id => (
+                                <Select
+                                    id={id}
+                                    value={categoryModalData.group}
+                                    onChange={e => setCategoryModalData(prev => ({ ...prev, group: e.target.value }))}
                                 >
-                                    {isEn ? 'Cancel' : 'Hủy'}
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="rounded-lg bg-[#B91C1C] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#721526]"
-                                >
-                                    {isEn ? 'Save Category' : 'Lưu Hạng Mục'}
-                                </button>
-                            </div>
-                        </form>
+                                    <option value="COST_OF_SALES">{isEn ? 'Cost of Sales & Imports' : 'Tiền Hàng & Nhập Khẩu'}</option>
+                                    <option value="OPERATING">{isEn ? 'Operations & Warehousing' : 'Vận Hành & Kho Bãi'}</option>
+                                    <option value="MARKETING">{isEn ? 'Marketing & Sales' : 'Tiếp Thị & Bán Hàng'}</option>
+                                    <option value="ADMINISTRATIVE">{isEn ? 'Admin & HR' : 'Hành Chính & Nhân Sự'}</option>
+                                    <option value="CAPEX">{isEn ? 'Capital Expenditure (CAPEX)' : 'Đầu Tư Tài Sản (CAPEX)'}</option>
+                                </Select>
+                            )}
+                        </Field>
                     </div>
-                </div>
-            )}
+
+                    <Field label={isEn ? 'Category Name' : 'Tên Hạng Mục'} required>
+                        {id => (
+                            <Input
+                                id={id}
+                                type="text"
+                                required
+                                placeholder={isEn ? 'e.g. Wine Tasting & Hospitality Expenses' : 'Vd: Chi phí Thử nếm rượu (Wine Tasting) & Tiếp khách'}
+                                value={categoryModalData.name}
+                                onChange={e => setCategoryModalData(prev => ({ ...prev, name: e.target.value }))}
+                            />
+                        )}
+                    </Field>
+
+                    <Field label={isEn ? 'Default Accounting Account (VAS)' : 'Tài Khoản Kế Toán Mặc Định (VAS)'}>
+                        {id => (
+                            <Input
+                                id={id}
+                                type="text"
+                                placeholder={isEn ? 'e.g. 641 - Selling expenses / 642 - G&A expenses' : 'Vd: 641 - Chi phí bán hàng / 642 - Chi phí quản lý'}
+                                value={categoryModalData.defaultAccount}
+                                onChange={e => setCategoryModalData(prev => ({ ...prev, defaultAccount: e.target.value }))}
+                            />
+                        )}
+                    </Field>
+
+                    <Field label={isEn ? 'Business Description' : 'Diễn Giải Nghiệp Vụ'}>
+                        {id => (
+                            <Textarea
+                                id={id}
+                                rows={2}
+                                placeholder={isEn ? 'Describe the purpose of this expense category...' : 'Mô tả mục đích sử dụng khoản chi này...'}
+                                value={categoryModalData.description}
+                                onChange={e => setCategoryModalData(prev => ({ ...prev, description: e.target.value }))}
+                            />
+                        )}
+                    </Field>
+                </form>
+            </Modal>
 
             {/* ═══ Modal Thiết Lập Ngân Sách ═══ */}
-            {budgetModalData.open && (
-                <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-md bg-white p-5 sm:p-6 shadow-xl border border-slate-200">
-                        <div className="flex items-center justify-between mb-4">
-                            <div>
-                                <h3 className="text-base font-bold text-slate-900">
-                                    {isEn ? 'Set Budget Limit' : 'Thiết Lập Hạn Mức Ngân Sách'}
-                                </h3>
-                                <p className="text-xs font-semibold text-[#B91C1C]">{budgetModalData.categoryName}</p>
-                            </div>
-                            <button
-                                onClick={() => setBudgetModalData(prev => ({ ...prev, open: false }))}
-                                className="rounded p-1 text-slate-400 hover:bg-slate-100"
-                            >
-                                <X className="h-4 w-4" />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSaveBudget} className="space-y-4 text-xs">
-                            <div>
-                                <label className="block font-medium text-slate-700 mb-1">
-                                    {isEn ? 'Budget Year' : 'Năm Ngân Sách'}
-                                </label>
-                                <input
-                                    type="number"
-                                    required
-                                    value={budgetModalData.year}
-                                    onChange={e => setBudgetModalData(prev => ({ ...prev, year: Number(e.target.value) }))}
-                                    className="w-full rounded-lg border border-slate-300 p-2 font-mono text-xs focus:border-[#B91C1C] focus:outline-none"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block font-medium text-slate-700 mb-1">
-                                    {isEn ? 'Approved Budget Limit (VND) *' : 'Hạn Mức Ngân Sách Được Duyệt (VNĐ) *'}
-                                </label>
-                                <input
-                                    type="number"
-                                    required
-                                    min="0"
-                                    value={budgetModalData.allocatedAmount}
-                                    onChange={e => setBudgetModalData(prev => ({ ...prev, allocatedAmount: Number(e.target.value) }))}
-                                    className="w-full rounded-lg border border-slate-300 p-2 font-mono text-sm font-bold text-slate-900 focus:border-[#B91C1C] focus:outline-none"
-                                />
-                                <p className="mt-1 text-[11px] text-slate-500">
-                                    {isEn ? 'Amount: ' : 'Thành tiền: '}<span className="font-bold text-[#B91C1C]">{formatVND(budgetModalData.allocatedAmount)}</span>
-                                </p>
-                            </div>
-
-                            <div>
-                                <label className="block font-medium text-slate-700 mb-1">
-                                    {isEn ? 'Warning Threshold (%)' : 'Ngưỡng Báo Động Vàng (%)'}
-                                </label>
-                                <input
-                                    type="number"
-                                    min="50"
-                                    max="100"
-                                    value={budgetModalData.warningThresholdPct}
-                                    onChange={e => setBudgetModalData(prev => ({ ...prev, warningThresholdPct: Number(e.target.value) }))}
-                                    className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
-                                />
-                                <p className="mt-1 text-[11px] text-slate-400">
-                                    {isEn ? 'System will show an amber warning when spending reaches this percentage' : 'Hệ thống sẽ hiển thị cảnh báo vàng khi chi tiêu đạt mức này'}
-                                </p>
-                            </div>
-
-                            <div className="mt-5 flex justify-end gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setBudgetModalData(prev => ({ ...prev, open: false }))}
-                                    className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100"
-                                >
-                                    {isEn ? 'Cancel' : 'Hủy'}
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="rounded-lg bg-[#B91C1C] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#721526]"
-                                >
-                                    {isEn ? 'Save Limit' : 'Lưu Hạn Mức'}
-                                </button>
-                            </div>
-                        </form>
+            <Modal
+                open={budgetModalData.open}
+                onClose={() => setBudgetModalData(prev => ({ ...prev, open: false }))}
+                size="md"
+                title={
+                    <div>
+                        <span>{isEn ? 'Set Budget Limit' : 'Thiết Lập Hạn Mức Ngân Sách'}</span>
+                        <span className="block text-xs font-medium text-lys-teal-strong mt-0.5">{budgetModalData.categoryName}</span>
                     </div>
-                </div>
-            )}
+                }
+                footer={
+                    <>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setBudgetModalData(prev => ({ ...prev, open: false }))}
+                        >
+                            {isEn ? 'Cancel' : 'Hủy'}
+                        </Button>
+                        <Button type="submit" form="pr-budget-form" variant="primary" size="sm">
+                            {isEn ? 'Save Limit' : 'Lưu Hạn Mức'}
+                        </Button>
+                    </>
+                }
+            >
+                <form id="pr-budget-form" onSubmit={handleSaveBudget} className="space-y-4">
+                    <Field label={isEn ? 'Budget Year' : 'Năm Ngân Sách'}>
+                        {id => (
+                            <Input
+                                id={id}
+                                type="number"
+                                required
+                                value={budgetModalData.year}
+                                onChange={e => setBudgetModalData(prev => ({ ...prev, year: Number(e.target.value) }))}
+                                className="font-mono"
+                            />
+                        )}
+                    </Field>
+
+                    <Field
+                        label={isEn ? 'Approved Budget Limit (VND)' : 'Hạn Mức Ngân Sách Được Duyệt (VNĐ)'}
+                        required
+                        hint={
+                            <span>
+                                {isEn ? 'Amount: ' : 'Thành tiền: '}
+                                <strong className="text-lys-teal-strong type-number">{formatVND(budgetModalData.allocatedAmount)}</strong>
+                            </span>
+                        }
+                    >
+                        {id => (
+                            <Input
+                                id={id}
+                                type="number"
+                                required
+                                min="0"
+                                value={budgetModalData.allocatedAmount}
+                                onChange={e => setBudgetModalData(prev => ({ ...prev, allocatedAmount: Number(e.target.value) }))}
+                                className="font-mono font-bold"
+                            />
+                        )}
+                    </Field>
+
+                    <Field
+                        label={isEn ? 'Warning Threshold (%)' : 'Ngưỡng Báo Động Vàng (%)'}
+                        hint={isEn ? 'System will show an amber warning when spending reaches this percentage' : 'Hệ thống sẽ hiển thị cảnh báo vàng khi chi tiêu đạt mức này'}
+                    >
+                        {id => (
+                            <Input
+                                id={id}
+                                type="number"
+                                min="50"
+                                max="100"
+                                value={budgetModalData.warningThresholdPct}
+                                onChange={e => setBudgetModalData(prev => ({ ...prev, warningThresholdPct: Number(e.target.value) }))}
+                            />
+                        )}
+                    </Field>
+                </form>
+            </Modal>
 
             {/* ═══ Modal Chỉnh Sửa Thông Tin Thanh Toán NCC ═══ */}
-            {editSupplierModal.open && editSupplierModal.supplier && (
-                <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg bg-white p-5 sm:p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-                            <div>
-                                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                    <Edit3 className="h-4 w-4 text-[#B91C1C]" /> {isEn ? 'Update Payment & Bank Information' : 'Cập Nhật Thông Tin Thanh Toán & Ngân Hàng'}
-                                </h3>
-                                <p className="text-xs font-semibold text-[#B91C1C] mt-0.5">
-                                    [{editSupplierModal.supplier.code}] {editSupplierModal.supplier.name}
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => setEditSupplierModal(prev => ({ ...prev, open: false }))}
-                                className="rounded p-1 text-slate-400 hover:bg-slate-100"
-                            >
-                                <X className="h-4 w-4" />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSaveEditSupplier} className="space-y-3.5 text-xs">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block font-medium text-slate-700 mb-1">
-                                        {isEn ? 'Tax ID (MST)' : 'Mã Số Thuế (MST)'}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. 0312345678"
-                                        value={editSupplierModal.taxId}
-                                        onChange={e => setEditSupplierModal(prev => ({ ...prev, taxId: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 font-mono text-xs focus:border-[#B91C1C] focus:outline-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block font-medium text-slate-700 mb-1">
-                                        {isEn ? 'Payment Terms' : 'Điều Khoản Thanh Toán'}
-                                    </label>
-                                    <select
-                                        value={editSupplierModal.paymentTerm}
-                                        onChange={e => setEditSupplierModal(prev => ({ ...prev, paymentTerm: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
-                                    >
-                                        <option value="COD">{isEn ? 'Cash on Delivery (COD)' : 'Thanh toán ngay khi giao (COD)'}</option>
-                                        <option value="NET15">{isEn ? 'Net 15 Days (NET15)' : 'Công nợ 15 ngày (NET15)'}</option>
-                                        <option value="NET30">{isEn ? 'Net 30 Days (NET30)' : 'Công nợ 30 ngày (NET30)'}</option>
-                                        <option value="NET45">{isEn ? 'Net 45 Days (NET45)' : 'Công nợ 45 ngày (NET45)'}</option>
-                                        <option value="NET60">{isEn ? 'Net 60 Days (NET60)' : 'Công nợ 60 ngày (NET60)'}</option>
-                                        <option value="ADVANCE_50">{isEn ? '50% Advance - Balance after delivery' : 'Tạm ứng 50% - Còn lại sau giao hàng'}</option>
-                                        <option value="LC">{isEn ? 'Letter of Credit (L/C)' : 'Tín dụng thư (L/C)'}</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Bank details card */}
-                            <div className="rounded-md border border-slate-200 bg-slate-50/70 p-3.5 space-y-2.5">
-                                <span className="font-semibold text-slate-800 block text-xs">
-                                    {isEn ? 'Supplier Beneficiary Bank Account' : 'Tài Khoản Ngân Hàng Thụ Hưởng Của Nhà Cung Cấp'}
-                                </span>
-
-                                <div>
-                                    <label className="block text-[11px] text-slate-600 mb-0.5">
-                                        {isEn ? 'Bank Name & Branch' : 'Tên Ngân Hàng & Chi Nhánh'}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        placeholder={isEn ? 'e.g. Vietcombank Ky Dong / BIDV HCMC' : 'Vd: Vietcombank CN Kỳ Đồng / BIDV CN TP.HCM'}
-                                        value={editSupplierModal.bankName}
-                                        onChange={e => setEditSupplierModal(prev => ({ ...prev, bankName: e.target.value }))}
-                                        className="w-full rounded border border-slate-300 p-2 text-xs bg-white focus:border-[#B91C1C] focus:outline-none"
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    <div>
-                                        <label className="block text-[11px] text-slate-600 mb-0.5">
-                                            {isEn ? 'Account Number' : 'Số Tài Khoản (STK)'}
-                                        </label>
-                                        <input
-                                            type="text"
-                                            placeholder="e.g. 0071001234567"
-                                            value={editSupplierModal.bankAccountNo}
-                                            onChange={e => setEditSupplierModal(prev => ({ ...prev, bankAccountNo: e.target.value }))}
-                                            className="w-full rounded border border-slate-300 p-2 text-xs font-mono font-bold bg-white focus:border-[#B91C1C] focus:outline-none"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[11px] text-slate-600 mb-0.5">
-                                            {isEn ? 'Account Holder Name' : 'Tên Chủ Tài Khoản'}
-                                        </label>
-                                        <input
-                                            type="text"
-                                            placeholder="e.g. ABC DISTRIBUTION CO., LTD"
-                                            value={editSupplierModal.bankAccountName}
-                                            onChange={e => setEditSupplierModal(prev => ({ ...prev, bankAccountName: e.target.value }))}
-                                            className="w-full rounded border border-slate-300 p-2 text-xs font-medium uppercase bg-white focus:border-[#B91C1C] focus:outline-none"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block font-medium text-slate-700 mb-1">
-                                    {isEn ? 'Operational Notes' : 'Ghi Chú Nghiệp Vụ'}
-                                </label>
-                                <textarea
-                                    rows={2}
-                                    placeholder={isEn ? 'Additional notes on invoicing, accounting contact...' : 'Ghi chú thêm về thông tin xuất hóa đơn, đầu mối kế toán của NCC...'}
-                                    value={editSupplierModal.notes}
-                                    onChange={e => setEditSupplierModal(prev => ({ ...prev, notes: e.target.value }))}
-                                    className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
-                                />
-                            </div>
-
-                            <div className="mt-5 flex justify-end gap-2 pt-2 border-t border-slate-100">
-                                <button
-                                    type="button"
-                                    onClick={() => setEditSupplierModal(prev => ({ ...prev, open: false }))}
-                                    className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100"
-                                >
-                                    {isEn ? 'Cancel' : 'Hủy'}
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={savingEditSupplier}
-                                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#B91C1C] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#721526] transition disabled:opacity-50"
-                                >
-                                    {savingEditSupplier && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                                    {isEn ? 'Save Info' : 'Lưu Thông Tin'}
-                                </button>
-                            </div>
-                        </form>
+            <Modal
+                open={editSupplierModal.open && !!editSupplierModal.supplier}
+                onClose={() => setEditSupplierModal(prev => ({ ...prev, open: false }))}
+                size="lg"
+                title={
+                    <div>
+                        <span className="inline-flex items-center gap-2">
+                            <Edit3 className="h-4 w-4 text-lys-teal-strong" aria-hidden />
+                            {isEn ? 'Update Payment & Bank Information' : 'Cập Nhật Thông Tin Thanh Toán & Ngân Hàng'}
+                        </span>
+                        {editSupplierModal.supplier && (
+                            <span className="block text-xs font-medium text-lys-teal-strong mt-0.5">
+                                [{editSupplierModal.supplier.code}] {editSupplierModal.supplier.name}
+                            </span>
+                        )}
                     </div>
-                </div>
-            )}
+                }
+                footer={
+                    <>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setEditSupplierModal(prev => ({ ...prev, open: false }))}
+                        >
+                            {isEn ? 'Cancel' : 'Hủy'}
+                        </Button>
+                        <Button type="submit" form="pr-edit-supplier-form" variant="primary" size="sm" loading={savingEditSupplier}>
+                            {isEn ? 'Save Info' : 'Lưu Thông Tin'}
+                        </Button>
+                    </>
+                }
+            >
+                <form id="pr-edit-supplier-form" onSubmit={handleSaveEditSupplier} className="space-y-3.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Field label={isEn ? 'Tax ID (MST)' : 'Mã Số Thuế (MST)'}>
+                            {id => (
+                                <Input
+                                    id={id}
+                                    type="text"
+                                    placeholder="e.g. 0312345678"
+                                    value={editSupplierModal.taxId}
+                                    onChange={e => setEditSupplierModal(prev => ({ ...prev, taxId: e.target.value }))}
+                                    className="font-mono"
+                                />
+                            )}
+                        </Field>
+                        <Field label={isEn ? 'Payment Terms' : 'Điều Khoản Thanh Toán'}>
+                            {id => (
+                                <Select
+                                    id={id}
+                                    value={editSupplierModal.paymentTerm}
+                                    onChange={e => setEditSupplierModal(prev => ({ ...prev, paymentTerm: e.target.value }))}
+                                >
+                                    <option value="COD">{isEn ? 'Cash on Delivery (COD)' : 'Thanh toán ngay khi giao (COD)'}</option>
+                                    <option value="NET15">{isEn ? 'Net 15 Days (NET15)' : 'Công nợ 15 ngày (NET15)'}</option>
+                                    <option value="NET30">{isEn ? 'Net 30 Days (NET30)' : 'Công nợ 30 ngày (NET30)'}</option>
+                                    <option value="NET45">{isEn ? 'Net 45 Days (NET45)' : 'Công nợ 45 ngày (NET45)'}</option>
+                                    <option value="NET60">{isEn ? 'Net 60 Days (NET60)' : 'Công nợ 60 ngày (NET60)'}</option>
+                                    <option value="ADVANCE_50">{isEn ? '50% Advance - Balance after delivery' : 'Tạm ứng 50% - Còn lại sau giao hàng'}</option>
+                                    <option value="LC">{isEn ? 'Letter of Credit (L/C)' : 'Tín dụng thư (L/C)'}</option>
+                                </Select>
+                            )}
+                        </Field>
+                    </div>
+
+                    <div className="rounded-md border border-lys-border bg-lys-bg p-3.5 space-y-3">
+                        <span className="font-semibold text-lys-primary block text-xs">
+                            {isEn ? 'Supplier Beneficiary Bank Account' : 'Tài Khoản Ngân Hàng Thụ Hưởng Của Nhà Cung Cấp'}
+                        </span>
+
+                        <Field label={isEn ? 'Bank Name & Branch' : 'Tên Ngân Hàng & Chi Nhánh'}>
+                            {id => (
+                                <Input
+                                    id={id}
+                                    type="text"
+                                    placeholder={isEn ? 'e.g. Vietcombank Ky Dong / BIDV HCMC' : 'Vd: Vietcombank CN Kỳ Đồng / BIDV CN TP.HCM'}
+                                    value={editSupplierModal.bankName}
+                                    onChange={e => setEditSupplierModal(prev => ({ ...prev, bankName: e.target.value }))}
+                                />
+                            )}
+                        </Field>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <Field label={isEn ? 'Account Number' : 'Số Tài Khoản (STK)'}>
+                                {id => (
+                                    <Input
+                                        id={id}
+                                        type="text"
+                                        placeholder="e.g. 0071001234567"
+                                        value={editSupplierModal.bankAccountNo}
+                                        onChange={e => setEditSupplierModal(prev => ({ ...prev, bankAccountNo: e.target.value }))}
+                                        className="font-mono font-bold"
+                                    />
+                                )}
+                            </Field>
+                            <Field label={isEn ? 'Account Holder Name' : 'Tên Chủ Tài Khoản'}>
+                                {id => (
+                                    <Input
+                                        id={id}
+                                        type="text"
+                                        placeholder="e.g. ABC DISTRIBUTION CO., LTD"
+                                        value={editSupplierModal.bankAccountName}
+                                        onChange={e => setEditSupplierModal(prev => ({ ...prev, bankAccountName: e.target.value }))}
+                                        className="uppercase"
+                                    />
+                                )}
+                            </Field>
+                        </div>
+                    </div>
+
+                    <Field label={isEn ? 'Operational Notes' : 'Ghi Chú Nghiệp Vụ'}>
+                        {id => (
+                            <Textarea
+                                id={id}
+                                rows={2}
+                                placeholder={isEn ? 'Additional notes on invoicing, accounting contact...' : 'Ghi chú thêm về thông tin xuất hóa đơn, đầu mối kế toán của NCC...'}
+                                value={editSupplierModal.notes}
+                                onChange={e => setEditSupplierModal(prev => ({ ...prev, notes: e.target.value }))}
+                            />
+                        )}
+                    </Field>
+                </form>
+            </Modal>
 
             {/* ═══ Modal Thêm NCC Mới Từ Tab Master ═══ */}
-            {showQuickAddSupplierModal && (
-                <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 p-4">
-                    <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg bg-white p-5 sm:p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-                            <div>
-                                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                    <Building2 className="h-5 w-5 text-[#B91C1C]" /> {isEn ? 'Add New Supplier' : 'Thêm Nhà Cung Cấp Mới'}
-                                </h3>
-                                <p className="text-xs text-slate-500">
-                                    {isEn ? 'Quickly create Supplier profile & bank account for payments' : 'Khởi tạo nhanh hồ sơ Nhà Cung Cấp & tài khoản ngân hàng để phục vụ thanh toán'}
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => setShowQuickAddSupplierModal(false)}
-                                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
-                            >
-                                <X className="h-4 w-4" />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleQuickAddSupplierSubmit} className="space-y-3.5 text-xs">
-                            <div>
-                                <label className="block font-medium text-slate-700 mb-1">
-                                    {isEn ? 'Supplier Name *' : 'Tên Nhà Cung Cấp *'}
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    placeholder={isEn ? 'e.g. Wine Import Co., Ltd A' : 'Vd: Công ty TNHH Nhập Khẩu Rượu Vang A'}
-                                    value={quickSupplierForm.name}
-                                    onChange={e => setQuickSupplierForm(prev => ({ ...prev, name: e.target.value }))}
-                                    className="w-full rounded-lg border border-slate-300 p-2 text-xs font-medium focus:border-[#B91C1C] focus:outline-none"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block font-medium text-slate-700 mb-1">
-                                        {isEn ? 'Supplier Code (Blank for auto)' : 'Mã NCC (Để trống sẽ tự sinh)'}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. NCC-0088"
-                                        value={quickSupplierForm.code}
-                                        onChange={e => setQuickSupplierForm(prev => ({ ...prev, code: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs uppercase focus:border-[#B91C1C] focus:outline-none"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block font-medium text-slate-700 mb-1">
-                                        {isEn ? 'Supplier Type' : 'Phân loại NCC'}
-                                    </label>
-                                    <select
-                                        value={quickSupplierForm.type}
-                                        onChange={e => setQuickSupplierForm(prev => ({ ...prev, type: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
-                                    >
-                                        <option value="DISTRIBUTOR">{isEn ? 'Distributor' : 'Nhà phân phối (Distributor)'}</option>
-                                        <option value="WINERY">{isEn ? 'Winery / Producer' : 'Nhà làm rượu (Winery / Hãng rượu)'}</option>
-                                        <option value="FORWARDER">{isEn ? 'Freight Forwarder' : 'Hãng tàu / Giao nhận (Forwarder)'}</option>
-                                        <option value="LOGISTICS">{isEn ? 'Warehousing / Domestic Logistics' : 'Kho bãi / Vận tải nội địa'}</option>
-                                        <option value="LOCAL_VENDOR">{isEn ? 'Local Service Vendor' : 'Nhà cung cấp dịch vụ trong nước'}</option>
-                                        <option value="OTHER">{isEn ? 'Other' : 'Khác'}</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block font-medium text-slate-700 mb-1">
-                                        {isEn ? 'Tax ID (MST)' : 'Mã số thuế (MST)'}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. 0312345678"
-                                        value={quickSupplierForm.taxId}
-                                        onChange={e => setQuickSupplierForm(prev => ({ ...prev, taxId: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs font-mono focus:border-[#B91C1C] focus:outline-none"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block font-medium text-slate-700 mb-1">
-                                        {isEn ? 'Payment Terms' : 'Điều khoản thanh toán'}
-                                    </label>
-                                    <select
-                                        value={quickSupplierForm.paymentTerm}
-                                        onChange={e => setQuickSupplierForm(prev => ({ ...prev, paymentTerm: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
-                                    >
-                                        <option value="COD">{isEn ? 'Cash on Delivery (COD)' : 'Thanh toán ngay khi giao (COD)'}</option>
-                                        <option value="NET15">{isEn ? 'Net 15 Days (NET15)' : 'Công nợ 15 ngày (NET15)'}</option>
-                                        <option value="NET30">{isEn ? 'Net 30 Days (NET30)' : 'Công nợ 30 ngày (NET30)'}</option>
-                                        <option value="NET45">{isEn ? 'Net 45 Days (NET45)' : 'Công nợ 45 ngày (NET45)'}</option>
-                                        <option value="NET60">{isEn ? 'Net 60 Days (NET60)' : 'Công nợ 60 ngày (NET60)'}</option>
-                                        <option value="ADVANCE_50">{isEn ? '50% Advance - Balance after delivery' : 'Tạm ứng 50% - Còn lại sau giao hàng'}</option>
-                                        <option value="LC">{isEn ? 'Letter of Credit (L/C)' : 'Tín dụng thư (L/C)'}</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Bank Details */}
-                            <div className="rounded-md border border-slate-200 bg-slate-50/70 p-3 space-y-2.5">
-                                <span className="font-semibold text-slate-700 block">
-                                    {isEn ? 'Beneficiary Bank Account' : 'Tài khoản ngân hàng thụ hưởng'}
-                                </span>
-                                
-                                <div>
-                                    <label className="block text-[11px] text-slate-600 mb-0.5">
-                                        {isEn ? 'Bank Name & Branch' : 'Tên Ngân Hàng & Chi Nhánh'}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        placeholder={isEn ? 'e.g. Vietcombank - Ky Dong Branch' : 'Vd: Vietcombank - CN Kỳ Đồng'}
-                                        value={quickSupplierForm.bankName}
-                                        onChange={e => setQuickSupplierForm(prev => ({ ...prev, bankName: e.target.value }))}
-                                        className="w-full rounded border border-slate-300 p-1.5 text-xs bg-white focus:border-[#B91C1C] focus:outline-none"
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <label className="block text-[11px] text-slate-600 mb-0.5">
-                                            {isEn ? 'Account Number' : 'Số Tài Khoản (STK)'}
-                                        </label>
-                                        <input
-                                            type="text"
-                                            placeholder="e.g. 0071001234567"
-                                            value={quickSupplierForm.bankAccountNo}
-                                            onChange={e => setQuickSupplierForm(prev => ({ ...prev, bankAccountNo: e.target.value }))}
-                                            className="w-full rounded border border-slate-300 p-1.5 text-xs font-mono font-bold bg-white focus:border-[#B91C1C] focus:outline-none"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[11px] text-slate-600 mb-0.5">
-                                            {isEn ? 'Account Holder Name' : 'Tên Chủ Tài Khoản'}
-                                        </label>
-                                        <input
-                                            type="text"
-                                            placeholder="e.g. ABC CO., LTD"
-                                            value={quickSupplierForm.bankAccountName}
-                                            onChange={e => setQuickSupplierForm(prev => ({ ...prev, bankAccountName: e.target.value }))}
-                                            className="w-full rounded border border-slate-300 p-1.5 text-xs font-medium uppercase bg-white focus:border-[#B91C1C] focus:outline-none"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Contact info */}
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block font-medium text-slate-700 mb-1">
-                                        {isEn ? 'Phone Number' : 'Số điện thoại'}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. 028 3822 xxxx"
-                                        value={quickSupplierForm.phone}
-                                        onChange={e => setQuickSupplierForm(prev => ({ ...prev, phone: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block font-medium text-slate-700 mb-1">
-                                        {isEn ? 'Contact Email' : 'Email liên hệ'}
-                                    </label>
-                                    <input
-                                        type="email"
-                                        placeholder="e.g. accounting@supplier.com"
-                                        value={quickSupplierForm.email}
-                                        onChange={e => setQuickSupplierForm(prev => ({ ...prev, email: e.target.value }))}
-                                        className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#B91C1C] focus:outline-none"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="mt-4 flex justify-end gap-2 pt-2 border-t border-slate-100">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowQuickAddSupplierModal(false)}
-                                    className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100"
-                                >
-                                    {isEn ? 'Cancel' : 'Hủy'}
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={savingQuickSupplier}
-                                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#B91C1C] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#721526] transition disabled:opacity-50"
-                                >
-                                    {savingQuickSupplier && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                                    {isEn ? 'Save Supplier' : 'Lưu Nhà Cung Cấp'}
-                                </button>
-                            </div>
-                        </form>
+            <Modal
+                open={showQuickAddSupplierModal}
+                onClose={() => setShowQuickAddSupplierModal(false)}
+                size="lg"
+                title={
+                    <div>
+                        <span className="inline-flex items-center gap-2">
+                            <Building2 className="h-4 w-4 text-lys-teal-strong" aria-hidden />
+                            {isEn ? 'Add New Supplier' : 'Thêm Nhà Cung Cấp Mới'}
+                        </span>
+                        <span className="block text-xs font-normal text-lys-muted mt-0.5">
+                            {isEn ? 'Quickly create Supplier profile & bank account for payments' : 'Khởi tạo nhanh hồ sơ Nhà Cung Cấp & tài khoản ngân hàng để phục vụ thanh toán'}
+                        </span>
                     </div>
-                </div>
-            )}
+                }
+                footer={
+                    <>
+                        <Button variant="secondary" size="sm" onClick={() => setShowQuickAddSupplierModal(false)}>
+                            {isEn ? 'Cancel' : 'Hủy'}
+                        </Button>
+                        <Button type="submit" form="pr-quick-add-supplier-form" variant="primary" size="sm" loading={savingQuickSupplier}>
+                            {isEn ? 'Save Supplier' : 'Lưu Nhà Cung Cấp'}
+                        </Button>
+                    </>
+                }
+            >
+                <form id="pr-quick-add-supplier-form" onSubmit={handleQuickAddSupplierSubmit} className="space-y-3.5">
+                    <Field label={isEn ? 'Supplier Name' : 'Tên Nhà Cung Cấp'} required>
+                        {id => (
+                            <Input
+                                id={id}
+                                type="text"
+                                required
+                                placeholder={isEn ? 'e.g. Wine Import Co., Ltd A' : 'Vd: Công ty TNHH Nhập Khẩu Rượu Vang A'}
+                                value={quickSupplierForm.name}
+                                onChange={e => setQuickSupplierForm(prev => ({ ...prev, name: e.target.value }))}
+                            />
+                        )}
+                    </Field>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Field label={isEn ? 'Supplier Code (Blank for auto)' : 'Mã NCC (Để trống sẽ tự sinh)'}>
+                            {id => (
+                                <Input
+                                    id={id}
+                                    type="text"
+                                    placeholder="e.g. NCC-0088"
+                                    value={quickSupplierForm.code}
+                                    onChange={e => setQuickSupplierForm(prev => ({ ...prev, code: e.target.value }))}
+                                    className="uppercase"
+                                />
+                            )}
+                        </Field>
+
+                        <Field label={isEn ? 'Supplier Type' : 'Phân loại NCC'}>
+                            {id => (
+                                <Select
+                                    id={id}
+                                    value={quickSupplierForm.type}
+                                    onChange={e => setQuickSupplierForm(prev => ({ ...prev, type: e.target.value }))}
+                                >
+                                    <option value="DISTRIBUTOR">{isEn ? 'Distributor' : 'Nhà phân phối (Distributor)'}</option>
+                                    <option value="WINERY">{isEn ? 'Winery / Producer' : 'Nhà làm rượu (Winery / Hãng rượu)'}</option>
+                                    <option value="FORWARDER">{isEn ? 'Freight Forwarder' : 'Hãng tàu / Giao nhận (Forwarder)'}</option>
+                                    <option value="LOGISTICS">{isEn ? 'Warehousing / Domestic Logistics' : 'Kho bãi / Vận tải nội địa'}</option>
+                                    <option value="LOCAL_VENDOR">{isEn ? 'Local Service Vendor' : 'Nhà cung cấp dịch vụ trong nước'}</option>
+                                    <option value="OTHER">{isEn ? 'Other' : 'Khác'}</option>
+                                </Select>
+                            )}
+                        </Field>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Field label={isEn ? 'Tax ID (MST)' : 'Mã số thuế (MST)'}>
+                            {id => (
+                                <Input
+                                    id={id}
+                                    type="text"
+                                    placeholder="e.g. 0312345678"
+                                    value={quickSupplierForm.taxId}
+                                    onChange={e => setQuickSupplierForm(prev => ({ ...prev, taxId: e.target.value }))}
+                                    className="font-mono"
+                                />
+                            )}
+                        </Field>
+
+                        <Field label={isEn ? 'Payment Terms' : 'Điều khoản thanh toán'}>
+                            {id => (
+                                <Select
+                                    id={id}
+                                    value={quickSupplierForm.paymentTerm}
+                                    onChange={e => setQuickSupplierForm(prev => ({ ...prev, paymentTerm: e.target.value }))}
+                                >
+                                    <option value="COD">{isEn ? 'Cash on Delivery (COD)' : 'Thanh toán ngay khi giao (COD)'}</option>
+                                    <option value="NET15">{isEn ? 'Net 15 Days (NET15)' : 'Công nợ 15 ngày (NET15)'}</option>
+                                    <option value="NET30">{isEn ? 'Net 30 Days (NET30)' : 'Công nợ 30 ngày (NET30)'}</option>
+                                    <option value="NET45">{isEn ? 'Net 45 Days (NET45)' : 'Công nợ 45 ngày (NET45)'}</option>
+                                    <option value="NET60">{isEn ? 'Net 60 Days (NET60)' : 'Công nợ 60 ngày (NET60)'}</option>
+                                    <option value="ADVANCE_50">{isEn ? '50% Advance - Balance after delivery' : 'Tạm ứng 50% - Còn lại sau giao hàng'}</option>
+                                    <option value="LC">{isEn ? 'Letter of Credit (L/C)' : 'Tín dụng thư (L/C)'}</option>
+                                </Select>
+                            )}
+                        </Field>
+                    </div>
+
+                    <div className="rounded-md border border-lys-border bg-lys-bg p-3 space-y-2.5">
+                        <span className="font-semibold text-lys-primary block text-xs">
+                            {isEn ? 'Beneficiary Bank Account' : 'Tài khoản ngân hàng thụ hưởng'}
+                        </span>
+
+                        <Field label={isEn ? 'Bank Name & Branch' : 'Tên Ngân Hàng & Chi Nhánh'}>
+                            {id => (
+                                <Input
+                                    id={id}
+                                    type="text"
+                                    placeholder={isEn ? 'e.g. Vietcombank - Ky Dong Branch' : 'Vd: Vietcombank - CN Kỳ Đồng'}
+                                    value={quickSupplierForm.bankName}
+                                    onChange={e => setQuickSupplierForm(prev => ({ ...prev, bankName: e.target.value }))}
+                                />
+                            )}
+                        </Field>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <Field label={isEn ? 'Account Number' : 'Số Tài Khoản (STK)'}>
+                                {id => (
+                                    <Input
+                                        id={id}
+                                        type="text"
+                                        placeholder="e.g. 0071001234567"
+                                        value={quickSupplierForm.bankAccountNo}
+                                        onChange={e => setQuickSupplierForm(prev => ({ ...prev, bankAccountNo: e.target.value }))}
+                                        className="font-mono font-bold"
+                                    />
+                                )}
+                            </Field>
+                            <Field label={isEn ? 'Account Holder Name' : 'Tên Chủ Tài Khoản'}>
+                                {id => (
+                                    <Input
+                                        id={id}
+                                        type="text"
+                                        placeholder="e.g. ABC CO., LTD"
+                                        value={quickSupplierForm.bankAccountName}
+                                        onChange={e => setQuickSupplierForm(prev => ({ ...prev, bankAccountName: e.target.value }))}
+                                        className="uppercase"
+                                    />
+                                )}
+                            </Field>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Field label={isEn ? 'Phone Number' : 'Số điện thoại'}>
+                            {id => (
+                                <Input
+                                    id={id}
+                                    type="text"
+                                    placeholder="e.g. 028 3822 xxxx"
+                                    value={quickSupplierForm.phone}
+                                    onChange={e => setQuickSupplierForm(prev => ({ ...prev, phone: e.target.value }))}
+                                />
+                            )}
+                        </Field>
+                        <Field label={isEn ? 'Contact Email' : 'Email liên hệ'}>
+                            {id => (
+                                <Input
+                                    id={id}
+                                    type="email"
+                                    placeholder="e.g. accounting@supplier.com"
+                                    value={quickSupplierForm.email}
+                                    onChange={e => setQuickSupplierForm(prev => ({ ...prev, email: e.target.value }))}
+                                />
+                            )}
+                        </Field>
+                    </div>
+                </form>
+            </Modal>
 
             {/* Printable Proposal / Payment Request Form */}
             {showBlankPrint && (
@@ -2259,6 +2094,6 @@ export function PaymentRequestsClient({
                 />
             )}
             {dialog}
-        </div>
+        </PageContainer>
     )
 }

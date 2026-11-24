@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import {
     Plus, Building2, Globe, Clock, X, Save, Loader2, AlertCircle, Award, Copy, Upload,
-    Download, Search, Edit2, Trash2, Eye, Factory, CheckCircle2, User, CreditCard, Package, Flag,
+    Download, Edit2, Trash2, Eye, Factory, CheckCircle2, User, CreditCard, Package, Flag,
 } from 'lucide-react'
 import {
     SupplierRow, SupplierInput, SupplierStats, SupplierFilters,
@@ -14,7 +14,7 @@ import {
 } from './actions'
 import { ExcelImportDialog } from '@/components/ExcelImportDialog'
 import { SupplierDetailDrawer } from './SupplierDetailDrawer'
-import { PageHeader, StatGrid, StatCard, Button, useConfirmDialog } from '@/components/ui'
+import { PageContainer, PageHeader, StatGrid, StatCard, StatusTabs, Button, SearchInput, Select, useConfirmDialog } from '@/components/ui'
 import { useAppLocale } from '@/lib/i18n'
 import { SUPPLIERS_I18N } from './i18n'
 import { toast } from 'sonner'
@@ -152,7 +152,7 @@ function SupplierDrawer({ open, editingId, onClose, onSaved }: {
     return (
         <>
             <div
-                className={`fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+                className={`fixed inset-0 z-40 bg-slate-900/35 backdrop-blur-[2px] transition-opacity duration-300 ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
                 onClick={onClose}
             />
             <div
@@ -601,10 +601,9 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
     }
 
     return (
-        <div className="space-y-6 max-w-screen-2xl">
+        <PageContainer>
             {/* Header */}
             <PageHeader
-                title={i18n.pageTitle}
                 description={i18n.pageDesc(stats.total)}
                 actions={
                     <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
@@ -651,24 +650,19 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
             </StatGrid>
 
             {/* Tabs */}
-            <div className="flex gap-1 p-1 rounded-lg" style={{ background: '#F1F5F9', border: '1px solid #E2E8F0' }}>
-                {([
-                    { key: 'list', label: i18n.tabList, icon: Building2 },
-                    { key: 'scorecard', label: i18n.tabScorecard, icon: Award },
-                    { key: 'duplicates', label: i18n.tabDuplicates, icon: Copy },
-                ] as const).map(tab => (
-                    <button key={tab.key}
-                        onClick={() => tab.key === 'scorecard' ? loadScorecards() : tab.key === 'duplicates' ? loadDuplicates() : setActiveTab('list')}
-                        className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer"
-                        style={{
-                            background: activeTab === tab.key ? '#FFFFFF' : 'transparent',
-                            color: activeTab === tab.key ? '#0E7490' : '#64748B',
-                            border: activeTab === tab.key ? '1px solid #E2E8F0' : '1px solid transparent',
-                        }}>
-                        <tab.icon size={13} /> {tab.label}
-                    </button>
-                ))}
-            </div>
+            <StatusTabs
+                items={[
+                    { value: 'list' as const, label: i18n.tabList, icon: Building2 },
+                    { value: 'scorecard' as const, label: i18n.tabScorecard, icon: Award },
+                    { value: 'duplicates' as const, label: i18n.tabDuplicates, icon: Copy },
+                ]}
+                value={activeTab}
+                onChange={v => {
+                    if (v === 'scorecard') loadScorecards()
+                    else if (v === 'duplicates') loadDuplicates()
+                    else setActiveTab('list')
+                }}
+            />
 
             {/* Tab: NCC List */}
             {activeTab === 'list' && (<>
@@ -724,15 +718,18 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-3">
-                        <div className="relative flex-1 w-full sm:w-auto sm:min-w-[200px]">
-                            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                            <input type="text" placeholder={i18n.searchPlaceholder}
-                                value={search} onChange={e => { setSearch(e.target.value); setPage(1); reload(e.target.value, undefined, undefined, 1) }}
-                                className="w-full pl-9 pr-4 py-2 rounded-md text-sm outline-none transition-colors border border-slate-200 bg-white text-slate-900 focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600" />
-                        </div>
-                        <select value={typeFilter} onChange={e => { setTypeFilter(e.target.value); setPage(1); reload(undefined, e.target.value, undefined, 1) }}
-                            className="px-3 py-2 rounded-md text-sm outline-none cursor-pointer border border-slate-200 bg-white text-slate-900 focus:border-cyan-600">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <SearchInput
+                            placeholder={i18n.searchPlaceholder}
+                            value={search}
+                            onChange={e => { setSearch(e.target.value); setPage(1); reload(e.target.value, undefined, undefined, 1) }}
+                            className="w-full sm:w-72"
+                        />
+                        <Select
+                            value={typeFilter}
+                            onChange={e => { setTypeFilter(e.target.value); setPage(1); reload(undefined, e.target.value, undefined, 1) }}
+                            className="w-full sm:w-56"
+                        >
                             <option value="">{i18n.allTypes(Object.keys(SUPPLIER_TYPE_STYLE).length)}</option>
                             <optgroup label={i18n.groupDomesticServices}>
                                 <option value="LOGISTICS">{i18n.types.LOGISTICS}</option>
@@ -749,15 +746,24 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                                 <option value="FORWARDER">{i18n.types.FORWARDER}</option>
                                 <option value="CUSTOMS_BROKER">{i18n.types.CUSTOMS_BROKER}</option>
                             </optgroup>
-                        </select>
-                        <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); reload(undefined, undefined, e.target.value, 1) }}
-                            className="px-3 py-2 rounded-md text-sm outline-none cursor-pointer border border-slate-200 bg-white text-slate-900 focus:border-cyan-600">
+                        </Select>
+                        <Select
+                            value={statusFilter}
+                            onChange={e => { setStatusFilter(e.target.value); setPage(1); reload(undefined, undefined, e.target.value, 1) }}
+                            className="w-full sm:w-44"
+                        >
                             <option value="">{i18n.allStatuses}</option>
                             <option value="ACTIVE">{i18n.statusActive}</option><option value="INACTIVE">{i18n.statusInactive}</option><option value="BLACKLISTED">{i18n.statusBlacklisted}</option>
-                        </select>
+                        </Select>
                         {(search || typeFilter || statusFilter || regionScope !== 'ALL') && (
-                            <button onClick={() => { setSearch(''); setTypeFilter(''); setStatusFilter(''); setRegionScope('ALL'); setPage(1); reload('', '', '', 1, 'ALL') }}
-                                className="px-3 py-2 rounded-md text-sm text-red-600 border border-red-200 hover:bg-red-50 transition-colors cursor-pointer">{i18n.clearFilter}</button>
+                            <Button
+                                type="button"
+                                variant="danger-outline"
+                                size="sm"
+                                onClick={() => { setSearch(''); setTypeFilter(''); setStatusFilter(''); setRegionScope('ALL'); setPage(1); reload('', '', '', 1, 'ALL') }}
+                            >
+                                {i18n.clearFilter}
+                            </Button>
                         )}
                     </div>
                 </div>
@@ -1049,6 +1055,6 @@ export function SuppliersClient({ initialRows, initialTotal, stats }: { initialR
                 ]}
                 onImport={bulkImportSuppliers} onComplete={() => reload()} />
             {confirmDialog}
-        </div>
+        </PageContainer>
     )
 }

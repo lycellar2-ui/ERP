@@ -20,7 +20,11 @@ export function PageHeader({ title, description, actions, className }: PageHeade
         <div className={cn('flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between', className)} data-page-header>
             <div className="min-w-0">
                 {title && <h1 className="type-page-title text-lys-primary">{title}</h1>}
-                {description && <div className={cn('type-body text-lys-muted', title && 'mt-0.5')}>{description}</div>}
+                {description && (
+                    <div className={cn(title ? 'type-body text-lys-muted mt-0.5' : 'text-[13px] text-lys-muted leading-relaxed')}>
+                        {description}
+                    </div>
+                )}
             </div>
             {actions && <div className="flex flex-wrap items-center gap-2 shrink-0">{actions}</div>}
         </div>
@@ -29,5 +33,5 @@ export function PageHeader({ title, description, actions, className }: PageHeade
 
 /** Standard vertical rhythm for a dashboard page. */
 export function PageContainer({ children, className }: { children: ReactNode; className?: string }) {
-    return <div className={cn('flex flex-col gap-4', className)}>{children}</div>
+    return <div className={cn('flex flex-col gap-4 max-w-screen-2xl w-full mx-auto', className)}>{children}</div>
 }

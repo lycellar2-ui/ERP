@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { Plus, Upload, Download, SlidersHorizontal, X, Package, FileText, Tag, Save, Loader2 } from 'lucide-react'
-import { Button, PageHeader, SearchInput, Select, StatusBadge, Toolbar, useConfirmDialog } from '@/components/ui'
+import { Button, PageHeader, SearchInput, Select, StatusBadge, StatusTabs, Toolbar, useConfirmDialog } from '@/components/ui'
 import { ProductRow, ProductFilters, ProductStats, bulkImportProducts, deleteProduct, exportProductsData, getProducts, getProductViewDetails, getProductsPageData, getProductStats, getProductCountries, getProducers, getProductEditDetails, getAppellations, getSuppliers, updateProductQuickPrices } from './actions'
 import { ProductTable } from './ProductTable'
 import { TastingNotesCatalog } from './TastingNotesCatalog'
@@ -246,7 +246,7 @@ export function ProductsClient({
     }
 
     return (
-        <div className="flex flex-col gap-4 max-w-screen-2xl">
+        <div className="flex flex-col gap-4 max-w-screen-2xl w-full mx-auto">
             <PageHeader
                 description={
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 type-caption">
@@ -292,32 +292,14 @@ export function ProductsClient({
             />
 
             {/* Clean View Switcher Tabs */}
-            <div className="flex items-center gap-1 border-b border-lys-border">
-                <button
-                    type="button"
-                    onClick={() => setActiveTab('CATALOG')}
-                    className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
-                        activeTab === 'CATALOG'
-                            ? 'border-lys-teal-strong text-lys-teal-strong bg-white rounded-t-md'
-                            : 'border-transparent text-slate-500 hover:text-slate-800'
-                    }`}
-                >
-                    <Package size={14} />
-                    {L.tabs.catalog}
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setActiveTab('TASTING_NOTES')}
-                    className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
-                        activeTab === 'TASTING_NOTES'
-                            ? 'border-lys-teal-strong text-lys-teal-strong bg-white rounded-t-md'
-                            : 'border-transparent text-slate-500 hover:text-slate-800'
-                    }`}
-                >
-                    <FileText size={14} />
-                    {L.tabs.tastingNotes}
-                </button>
-            </div>
+            <StatusTabs
+                items={[
+                    { value: 'CATALOG', label: L.tabs.catalog, icon: Package },
+                    { value: 'TASTING_NOTES', label: L.tabs.tastingNotes, icon: FileText },
+                ]}
+                value={activeTab}
+                onChange={setActiveTab}
+            />
 
             {activeTab === 'CATALOG' ? (
                 <>

@@ -80,7 +80,7 @@ export function MarketPriceClient({ initialRows, stats }: {
     const belowCostCount = rows.filter(r => r.isBelowCost).length
 
     return (
-        <div className="flex flex-col gap-4 max-w-screen-2xl">
+        <div className="flex flex-col gap-4 max-w-screen-2xl w-full mx-auto">
             <PageHeader
                 description={L.header.description}
                 actions={

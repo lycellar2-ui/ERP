@@ -408,7 +408,7 @@ export function CreateTransferDrawer({ open, onClose, onSuccess, initialData }: 
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/35 backdrop-blur-[2px] transition-opacity animate-in fade-in duration-200">
             <div className="w-full sm:max-w-3xl lg:max-w-4xl h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-200 bg-white border-l border-slate-200">
                 
                 {/* Header (Matching CreateSODrawer) */}

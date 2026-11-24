@@ -289,7 +289,7 @@ export function AgencyClient() {
     ]
 
     return (
-        <div className="space-y-6 max-w-screen-2xl">
+        <div className="space-y-6 max-w-screen-2xl w-full mx-auto">
             <PageHeader
                 description={i18n.description}
             />
