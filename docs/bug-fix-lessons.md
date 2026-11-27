@@ -105,6 +105,7 @@
 96. [BUG-161: Audit Toàn Hệ Thống — Native Confirm/Prompt Còn Sót, Sinh Mã count()+1, Thiếu requireAuth() & Bare toLocaleString()](#bug-161-audit-toàn-hệ-thống--native-confirmprompt-còn-sót-sinh-mã-count1-thiếu-requireauth--bare-tolocalestring)
 97. [BUG-162: Bản In Phiếu Xuất POSM Bị Trắng Trang 1/1 Do visibility:hidden + position:fixed Trong DashboardShell](#bug-162-bản-in-phiếu-xuất-posm-bị-trắng-trang-11-do-visibilityhidden--positionfixed-trong-dashboardshell)
 98. [BUG-163: Phiếu Xuất Kho POSM Sai Tên Pháp Nhân Do Thiếu Commit actions-posm.ts/schema.prisma & Bản In Trắng Trang Trên Cốc Cốc/Chromium](#bug-163-phiếu-xuất-kho-posm-sai-tên-pháp-nhân-do-thiếu-commit-actions-posmtsschemaprisma--bản-in-trắng-trang-trên-cốc-cốcchromium)
+99. [BUG-164: Production Stuck Trên Bản Cũ Vì vercel.json Thêm Cron Thứ 3 Dưới 1 Ngày (Tái Diễn BUG-110) & Route In POSM Độc Lập](#bug-164-production-stuck-trên-bản-cũ-vì-verceljson-thêm-cron-thứ-3-dưới-1-ngày-tái-diễn-bug-110--route-in-posm-độc-lập)
 
 ---
 
@@ -4695,3 +4696,26 @@ Qua đợt kiểm tra chuyên sâu toàn bộ 38 routes và tất cả component
 
 ### Bài học
 > **RULE 163: Khi thêm export mới ở Server Actions (`actions-*.ts`) hoặc trường mới ở `schema.prisma` được UI import, PHẢI commit/push đồng bộ cùng với Client Component và kiểm tra `npm run build` trước khi kết thúc. Với modal in phiếu A4 chuẩn 02-VT, ưu tiên Isolated Hidden `<iframe>` tự chứa HTML+CSS thay vì chia sẻ DOM/CSS với `DashboardShell`.**
+
+---
+
+## BUG-164: Production Stuck Trên Bản Cũ Vì vercel.json Thêm Cron Thứ 3 Dưới 1 Ngày (Tái Diễn BUG-110) & Route In POSM Độc Lập
+
+**Ngày:** 2026-11-27
+**Severity:** High — Toàn bộ các commit từ 21/11 đến 27/11 (gồm sửa tên pháp nhân và sửa in POSM) không được Vercel deploy lên `lyscellars.io.vn`
+
+### Triệu chứng
+- Dù đã commit và push bản sửa `PosmInventoryTab.tsx` và `actions-posm.ts` lên `origin/main`, trang production `https://www.lyscellars.io.vn` vẫn phục vụ build cũ từ 19/11/2026 (`age: ~682,428s`), dẫn đến Phiếu Xuất Kho POSM vẫn hiển thị `CÔNG TY TNHH LY'S CELLAR` và lỗi trắng trang khi in.
+- Ngoài ra, hidden iframe kích thước `0x0` với `opacity: 0` có nguy cơ bị Cốc Cốc/Chromium render khung in rỗng khi chặn viewport `0px`.
+
+### Nguyên nhân gốc
+1. **Tái diễn `BUG-110`**: Commit `d4d36d0` (21/11/2026) thêm cron job thứ 3 là `/api/cron/sync-knbs` với lịch `0 */2 * * *` (chạy mỗi 2 giờ) vào `wine-erp/vercel.json`. Gói Vercel Hobby giới hạn tối đa 2 cron jobs và mỗi cron chỉ chạy tối đa 1 lần/ngày nên Vercel Config Validator chặn toàn bộ deployment mới trước bước build.
+2. Nút **In Phiếu Xuất (Print)** chưa mở route HTML độc lập chuyên dụng như các phân hệ Báo Giá / Phiếu Xuất Kho rượu (`/dashboard/warehouse/print`, `/api/export/quotation-pdf`).
+
+### Cách fix
+1. Gỡ `/api/cron/sync-knbs` khỏi `wine-erp/vercel.json`, chỉ giữ lại 2 daily crons (`/api/cron/compliance` và `/api/cron/reports`) hợp lệ trên gói Vercel Hobby.
+2. Tạo template dùng chung `wine-erp/src/app/dashboard/warehouse/posm-print-template.ts` và route in độc lập `GET /api/export/posm-voucher` (`wine-erp/src/app/api/export/posm-voucher/route.ts`) có kiểm tra `requireAuth()`, truy vấn `LegalEntity` (`LC` `CÔNG TY TNHH HẦM RƯỢU LY'S` / `TA` `CÔNG TY CỔ PHẦN THƯƠNG MẠI THẮNG ÂN`) và tự động bật hộp thoại in.
+3. Cập nhật `PosmInventoryTab.tsx`: bấm **In Phiếu Xuất (Print)** mở `/api/export/posm-voucher?docNo=...&legalEntityId=...` ở tab mới, kèm fallback offscreen iframe kích thước A4 đầy đủ (`794px × 1123px`, `left: -10000px`, `opacity: 1`) nếu trình duyệt chặn popup.
+
+### Bài học
+> **RULE 164: Trước khi kết luận một bản sửa đã lên production, PHẢI xác minh trực tiếp bằng HTTP response/route mới trên domain thật (`lyscellars.io.vn`). Không bao giờ thêm cron thứ 3 hoặc lịch `< 1 ngày` vào `wine-erp/vercel.json` trên gói Hobby; và với in phiếu A4 ổn định đa trình duyệt (Cốc Cốc/Chrome/Edge), ưu tiên route HTML độc lập `/api/export/...` kèm fallback iframe full-A4.**

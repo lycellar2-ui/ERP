@@ -15,6 +15,7 @@ import {
 import { formatVND, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
 import { PosmCategory, PosmReason } from '@prisma/client'
+import { buildPosmVoucherPrintHtml } from './posm-print-template'
 
 // ── POSM Category Visual Configurations ──────────────────────
 export const POSM_CATEGORY_CONFIG: Record<PosmCategory, { label: string; color: string; bg: string; border: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = {
@@ -69,328 +70,19 @@ export const POSM_REASON_LABELS: Record<PosmReason, { label: string; type: 'IN' 
     OTHER: { label: 'Mục đích khác', type: 'OUT' }
 }
 
-function escapeHtml(value: string | number | null | undefined): string {
-    return String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;')
-}
-
-function buildPosmVoucherPrintHtml(params: {
-    companyName: string
-    companyTaxId: string | null
-    companyAddress: string | null
-    headerTx: PosmTransactionItem
-    lines: PosmTransactionItem[]
-    totalQty: number
-    totalCost: number
-}): string {
-    const { companyName, companyTaxId, companyAddress, headerTx, lines, totalQty, totalCost } = params
-    const reasonLabel = POSM_REASON_LABELS[headerTx.reason]?.label || headerTx.reason
-    const totalUnitLabel = lines.length === 1 ? lines[0].unit : `${lines.length} loại vật phẩm`
-
-    const rowsHtml = lines.map((line, index) => {
-        const categoryLabel = POSM_CATEGORY_CONFIG[line.category]?.label || line.category
-        const unitCostText = line.unitCost > 0 ? formatVND(line.unitCost) : '—'
-        const totalCostText = line.totalCost > 0 ? formatVND(line.totalCost) : '—'
-        return `
-            <tr>
-                <td class="text-center">${index + 1}</td>
-                <td class="text-center font-bold">${escapeHtml(line.posmProductCode)}</td>
-                <td class="font-semibold">${escapeHtml(line.posmProductName)}</td>
-                <td class="text-center">${escapeHtml(categoryLabel)}</td>
-                <td class="text-center">${escapeHtml(line.unit)}</td>
-                <td class="text-center font-bold">${escapeHtml(line.qty)}</td>
-                <td class="text-right">${escapeHtml(unitCostText)}</td>
-                <td class="text-right font-bold">${escapeHtml(totalCostText)}</td>
-            </tr>
-        `
-    }).join('')
-
-    return `<!doctype html>
-<html lang="vi">
-<head>
-<meta charset="utf-8" />
-<title>Phiếu Xuất Kho POSM - ${escapeHtml(headerTx.docNo)}</title>
-<style>
-  @page {
-    size: A4 portrait;
-    margin: 15mm 12mm;
-  }
-  * {
-    box-sizing: border-box;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  html, body {
-    margin: 0;
-    padding: 0;
-    background: #ffffff;
-    color: #0f172a;
-    font-family: 'Times New Roman', Times, serif;
-    font-size: 12px;
-    line-height: 1.45;
-  }
-  .voucher {
-    width: 100%;
-    background: #ffffff;
-    color: #0f172a;
-  }
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 16px;
-    border-bottom: 1px solid #cbd5e1;
-    padding-bottom: 12px;
-    margin-bottom: 18px;
-  }
-  .company-name {
-    margin: 0 0 3px 0;
-    font-size: 14px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    color: #0f172a;
-  }
-  .company-meta {
-    margin: 2px 0 0 0;
-    font-size: 11px;
-    color: #475569;
-  }
-  .form-meta {
-    text-align: right;
-    font-size: 11px;
-    flex-shrink: 0;
-  }
-  .form-meta p {
-    margin: 2px 0;
-  }
-  .doc-no {
-    margin-top: 4px !important;
-    font-weight: 700;
-    color: #0f172a;
-  }
-  .doc-no span {
-    color: #1e3a8a;
-  }
-  .title-block {
-    text-align: center;
-    margin: 8px 0 18px 0;
-  }
-  .title-block h1 {
-    margin: 0;
-    font-size: 20px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: #0f172a;
-  }
-  .title-block p {
-    margin: 4px 0 0 0;
-    font-style: italic;
-    color: #475569;
-    font-size: 12px;
-  }
-  .meta-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px 16px;
-    margin-bottom: 18px;
-    font-size: 12px;
-  }
-  .meta-full {
-    grid-column: span 2;
-  }
-  .table-wrap {
-    border: 1px solid #1e293b;
-    margin-bottom: 16px;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-  }
-  thead {
-    display: table-header-group;
-  }
-  tr {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-  th, td {
-    padding: 7px 8px;
-    border-right: 1px solid #1e293b;
-    vertical-align: middle;
-  }
-  th:last-child, td:last-child {
-    border-right: none;
-  }
-  thead tr {
-    background: #f1f5f9;
-    border-bottom: 1px solid #1e293b;
-    font-weight: 700;
-    text-align: center;
-  }
-  tbody tr {
-    border-bottom: 1px solid #cbd5e1;
-  }
-  tfoot tr {
-    background: #f8fafc;
-    border-top: 1px solid #1e293b;
-    font-weight: 700;
-  }
-  .text-center { text-align: center; }
-  .text-right { text-align: right; }
-  .font-bold { font-weight: 700; }
-  .font-semibold { font-weight: 600; }
-  .summary {
-    margin-bottom: 18px;
-    font-size: 12px;
-  }
-  .summary p {
-    margin: 3px 0;
-  }
-  .summary-note {
-    font-style: italic;
-    color: #475569;
-    font-size: 11px;
-  }
-  .signatures {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    padding-top: 16px;
-    text-align: center;
-    font-size: 12px;
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-  .signatures p {
-    margin: 2px 0;
-  }
-  .sig-hint {
-    font-style: italic;
-    font-size: 10px;
-    color: #64748b;
-  }
-  .sig-space {
-    height: 60px;
-  }
-  .sig-name {
-    font-weight: 600;
-    color: #334155;
-  }
-</style>
-</head>
-<body>
-  <div class="voucher">
-    <div class="header">
-      <div>
-        <h4 class="company-name">${escapeHtml(companyName)}</h4>
-        ${companyTaxId ? `<p class="company-meta">MST: ${escapeHtml(companyTaxId)}</p>` : ''}
-        ${companyAddress ? `<p class="company-meta">Địa chỉ: ${escapeHtml(companyAddress)}</p>` : ''}
-        <p class="company-meta">Bộ Phận: Kho Vận &amp; Tiếp Thị (WMS - Marketing POSM)</p>
-      </div>
-      <div class="form-meta">
-        <p class="font-bold">Mẫu số: 02 - VT</p>
-        <p style="font-style: italic; color: #64748b;">(Ban hành theo TT 200/2014/TT-BTC)</p>
-        <p class="doc-no">Số: <span>${escapeHtml(headerTx.docNo)}</span></p>
-        <p style="color: #475569;">Ngày: ${escapeHtml(formatDate(headerTx.performedAt))}</p>
-      </div>
-    </div>
-
-    <div class="title-block">
-      <h1>PHIẾU XUẤT KHO VẬT PHẨM POSM</h1>
-      <p>(Kiêm Biên Bản Bàn Giao Vật Phẩm Tiếp Thị &amp; Quà Tặng)</p>
-    </div>
-
-    <div class="meta-grid">
-      <div><strong>Người nhận / Đơn vị: </strong><span>${escapeHtml(headerTx.recipient || '....................................................................')}</span></div>
-      <div><strong>Nhân viên đề xuất: </strong><span>${escapeHtml(headerTx.requestedBy || '....................................................................')}</span></div>
-      <div><strong>Mục đích xuất: </strong><span>${escapeHtml(reasonLabel)}</span></div>
-      <div><strong>Đơn vị xuất: </strong><span>${escapeHtml(companyName)} (Kho POSM)</span></div>
-      <div class="meta-full"><strong>Ghi chú / Đơn hàng liên quan: </strong><span>${escapeHtml(headerTx.notes || 'Cấp phát sử dụng theo quy định quản lý tiếp thị.')}</span></div>
-    </div>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 36px;">STT</th>
-            <th style="width: 96px;">Mã POSM</th>
-            <th>Tên Vật Phẩm Tiếp Thị</th>
-            <th style="width: 105px;">Danh Mục</th>
-            <th style="width: 58px;">ĐVT</th>
-            <th style="width: 72px;">Số Lượng</th>
-            <th style="width: 92px;">Đơn Giá</th>
-            <th style="width: 102px;">Thành Tiền</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rowsHtml}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="5" class="text-right">Tổng cộng:</td>
-            <td class="text-center">${escapeHtml(totalQty)}</td>
-            <td></td>
-            <td class="text-right">${escapeHtml(totalCost > 0 ? formatVND(totalCost) : '—')}</td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-
-    <div class="summary">
-      <p><strong>Tổng số lượng: </strong><span style="font-style: italic;">${escapeHtml(totalQty)} (${escapeHtml(totalUnitLabel)})</span></p>
-      <p class="summary-note">* Vật phẩm POSM bàn giao đúng quy cách, bên nhận có trách nhiệm bảo quản và sử dụng đúng mục đích.</p>
-    </div>
-
-    <div class="signatures">
-      <div>
-        <p class="font-bold">Người Lập Phiếu</p>
-        <p class="sig-hint">(Ký, họ tên)</p>
-        <div class="sig-space"></div>
-        <p class="sig-name">${escapeHtml(headerTx.requestedBy || 'Người lập')}</p>
-      </div>
-      <div>
-        <p class="font-bold">Người Nhận Hàng</p>
-        <p class="sig-hint">(Ký, họ tên)</p>
-        <div class="sig-space"></div>
-        <p class="sig-name">${escapeHtml(headerTx.recipient || 'Người nhận')}</p>
-      </div>
-      <div>
-        <p class="font-bold">Thủ Kho Xuất</p>
-        <p class="sig-hint">(Ký, họ tên)</p>
-        <div class="sig-space"></div>
-        <p class="sig-name">Thủ kho</p>
-      </div>
-      <div>
-        <p class="font-bold">Kế Toán</p>
-        <p class="sig-hint">(Ký, họ tên)</p>
-        <div class="sig-space"></div>
-        <p class="sig-name">Kế toán</p>
-      </div>
-    </div>
-  </div>
-</body>
-</html>`
-}
-
-function printPosmVoucher(html: string): boolean {
+function printPosmVoucherFallback(html: string): boolean {
     if (typeof document === 'undefined') return false
 
     const iframe = document.createElement('iframe')
     iframe.setAttribute('aria-hidden', 'true')
     iframe.style.position = 'fixed'
-    iframe.style.right = '0'
-    iframe.style.bottom = '0'
-    iframe.style.width = '0'
-    iframe.style.height = '0'
+    iframe.style.left = '-10000px'
+    iframe.style.top = '0'
+    iframe.style.width = '794px'
+    iframe.style.height = '1123px'
     iframe.style.border = '0'
-    iframe.style.opacity = '0'
+    iframe.style.opacity = '1'
+    iframe.style.visibility = 'visible'
     iframe.style.pointerEvents = 'none'
     document.body.appendChild(iframe)
 
@@ -423,7 +115,7 @@ function printPosmVoucher(html: string): boolean {
             cleanup()
             window.print()
         }
-    }, 50)
+    }, 100)
 
     return true
 }
@@ -1685,16 +1377,34 @@ export function PosmInventoryTab() {
                 const totalVoucherCost = selectedVoucherLines.reduce((sum, l) => sum + l.totalCost, 0)
 
                 const handlePrintVoucher = () => {
-                    const html = buildPosmVoucherPrintHtml({
-                        companyName,
-                        companyTaxId,
-                        companyAddress,
-                        headerTx,
-                        lines: selectedVoucherLines,
-                        totalQty: totalVoucherQty,
-                        totalCost: totalVoucherCost,
-                    })
-                    if (!printPosmVoucher(html)) {
+                    const printUrl = `/api/export/posm-voucher?docNo=${encodeURIComponent(headerTx.docNo)}&legalEntityId=${encodeURIComponent(activeEntity?.id || '')}`
+                    const popup = window.open(printUrl, '_blank')
+                    if (popup) return
+
+                    const html = buildPosmVoucherPrintHtml(
+                        {
+                            companyName,
+                            companyTaxId,
+                            companyAddress,
+                            docNo: headerTx.docNo,
+                            performedAt: headerTx.performedAt,
+                            reason: headerTx.reason,
+                            recipient: headerTx.recipient,
+                            requestedBy: headerTx.requestedBy,
+                            notes: headerTx.notes,
+                            lines: selectedVoucherLines.map(l => ({
+                                posmProductCode: l.posmProductCode,
+                                posmProductName: l.posmProductName,
+                                category: l.category,
+                                unit: l.unit,
+                                qty: l.qty,
+                                unitCost: l.unitCost,
+                                totalCost: l.totalCost,
+                            })),
+                        },
+                        { showToolbar: false, autoPrint: false }
+                    )
+                    if (!printPosmVoucherFallback(html)) {
                         toast.error('Không thể khởi tạo khung in, vui lòng thử lại')
                     }
                 }
