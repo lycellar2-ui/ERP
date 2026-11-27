@@ -38,6 +38,14 @@ export interface PosmStats {
     monthlyOutboundQty: number
 }
 
+export interface PosmLegalEntityOption {
+    id: string
+    code: string
+    name: string
+    taxId: string | null
+    address: string | null
+}
+
 export interface PosmTransactionItem {
     id: string
     docNo: string
@@ -51,10 +59,28 @@ export interface PosmTransactionItem {
     qty: number
     unitCost: number
     totalCost: number
+    legalEntityId: string | null
+    legalEntityCode: string | null
+    legalEntityName: string | null
     recipient: string | null
     requestedBy: string | null
     performedAt: Date
     notes: string | null
+}
+
+// ── 0. Fetch Legal Entities (2 công ty) ───────────────────────
+export async function getPosmLegalEntities(): Promise<PosmLegalEntityOption[]> {
+    await requireAuth()
+    return prisma.legalEntity.findMany({
+        orderBy: { code: 'asc' },
+        select: {
+            id: true,
+            code: true,
+            name: true,
+            taxId: true,
+            address: true,
+        },
+    })
 }
 
 // ── 1. Fetch POSM Master Data / Products ──────────────────────
@@ -291,41 +317,62 @@ export async function deletePosmProduct(id: string) {
     return serialize(deleted)
 }
 
-// ── 6. Create POSM Transaction (Inbound / Outbound / Adjust) ──
-export async function createPosmTransaction(data: {
+// ── 6. Create POSM Transaction (Single or Multi-Line Voucher) ─
+export interface PosmBatchLineInput {
     posmProductId: string
-    type: 'INBOUND' | 'OUTBOUND' | 'ADJUSTMENT'
-    reason: PosmReason
     qty: number
     unitCost?: number
+}
+
+function mapPosmTxItem(tx: any): PosmTransactionItem {
+    return {
+        id: tx.id,
+        docNo: tx.docNo,
+        type: tx.type,
+        reason: tx.reason,
+        posmProductId: tx.posmProductId,
+        posmProductCode: tx.posmProduct.posmCode,
+        posmProductName: tx.posmProduct.name,
+        category: tx.posmProduct.category,
+        unit: tx.posmProduct.unit,
+        qty: Number(tx.qty),
+        unitCost: Number(tx.unitCost),
+        totalCost: Number(tx.totalCost),
+        legalEntityId: tx.legalEntityId ?? null,
+        legalEntityCode: tx.legalEntity?.code ?? null,
+        legalEntityName: tx.legalEntity?.name ?? null,
+        recipient: tx.recipient,
+        requestedBy: tx.requestedBy,
+        performedAt: tx.performedAt,
+        notes: tx.notes,
+    }
+}
+
+export async function createPosmBatchTransaction(data: {
+    type: 'INBOUND' | 'OUTBOUND' | 'ADJUSTMENT'
+    reason: PosmReason
+    legalEntityId?: string | null
     recipient?: string
     requestedBy?: string
     notes?: string
-    allowDeficit?: boolean // Chấp nhận xuất kho khi thiếu tồn (theo Socratic Gate)
-}) {
+    allowDeficit?: boolean
+    lines: PosmBatchLineInput[]
+}): Promise<PosmTransactionItem[]> {
     await requireAuth()
-    const { posmProductId, type, reason, qty, unitCost = 0, recipient, requestedBy, notes, allowDeficit = true } = data
+    const { type, reason, legalEntityId, recipient, requestedBy, notes, allowDeficit = true, lines } = data
 
-    if (qty <= 0) throw new Error('Số lượng giao dịch phải lớn hơn 0')
+    if (!lines || lines.length === 0) {
+        throw new Error('Vui lòng chọn ít nhất 1 vật phẩm POSM')
+    }
+    for (const line of lines) {
+        if (!line.posmProductId) throw new Error('Vui lòng chọn vật phẩm POSM hợp lệ')
+        if (line.qty <= 0) throw new Error('Số lượng giao dịch phải lớn hơn 0')
+    }
 
     const year = new Date().getFullYear()
     const prefix = type === 'INBOUND' ? `PIR-${year}-` : type === 'OUTBOUND' ? `PIO-${year}-` : `PAD-${year}-`
 
     return prisma.$transaction(async (tx) => {
-        const item = await tx.posmProduct.findUnique({
-            where: { id: posmProductId },
-        })
-
-        if (!item) throw new Error('Không tìm thấy vật phẩm POSM')
-
-        const currentQty = Number(item.qtyOnHand)
-        const cost = unitCost > 0 ? unitCost : Number(item.costPrice)
-
-        if (type === 'OUTBOUND' && qty > currentQty && !allowDeficit) {
-            throw new Error(`Số lượng xuất (${qty}) vượt quá tồn kho hiện tại (${currentQty} ${item.unit})`)
-        }
-
-        // Auto-generate docNo
         const lastTx = await tx.posmTransaction.findFirst({
             where: { docNo: { startsWith: prefix } },
             orderBy: { docNo: 'desc' },
@@ -334,67 +381,103 @@ export async function createPosmTransaction(data: {
         const nextSeq = lastTx ? parseInt(lastTx.docNo.slice(-4), 10) + 1 : 1
         const docNo = `${prefix}${String(nextSeq).padStart(4, '0')}`
 
-        // Calculate new qtyOnHand
-        let newQty = currentQty
-        if (type === 'INBOUND') {
-            newQty = currentQty + qty
-        } else if (type === 'OUTBOUND') {
-            newQty = currentQty - qty
-        } else if (type === 'ADJUSTMENT') {
-            newQty = qty
-        }
+        const createdItems: PosmTransactionItem[] = []
 
-        const totalCost = qty * cost
+        for (const line of lines) {
+            const item = await tx.posmProduct.findUnique({
+                where: { id: line.posmProductId },
+            })
+            if (!item) throw new Error('Không tìm thấy vật phẩm POSM')
 
-        const transaction = await tx.posmTransaction.create({
-            data: {
-                docNo,
-                type: type as PosmTxType,
-                reason,
-                posmProductId,
-                qty,
-                unitCost: cost,
-                totalCost,
-                recipient: recipient?.trim() || null,
-                requestedBy: requestedBy?.trim() || null,
-                notes: notes?.trim() || null,
-            },
-            include: {
-                posmProduct: {
-                    select: {
-                        posmCode: true,
-                        name: true,
-                        category: true,
-                        unit: true,
+            const currentQty = Number(item.qtyOnHand)
+            const cost = (line.unitCost ?? 0) > 0 ? Number(line.unitCost) : Number(item.costPrice)
+
+            if (type === 'OUTBOUND' && line.qty > currentQty && !allowDeficit) {
+                throw new Error(`Số lượng xuất (${line.qty}) của "${item.name}" vượt quá tồn kho hiện tại (${currentQty} ${item.unit})`)
+            }
+
+            let newQty = currentQty
+            if (type === 'INBOUND') {
+                newQty = currentQty + line.qty
+            } else if (type === 'OUTBOUND') {
+                newQty = currentQty - line.qty
+            } else if (type === 'ADJUSTMENT') {
+                newQty = line.qty
+            }
+
+            const totalCost = line.qty * cost
+
+            const transaction = await tx.posmTransaction.create({
+                data: {
+                    docNo,
+                    type: type as PosmTxType,
+                    reason,
+                    posmProductId: line.posmProductId,
+                    legalEntityId: legalEntityId || null,
+                    qty: line.qty,
+                    unitCost: cost,
+                    totalCost,
+                    recipient: recipient?.trim() || null,
+                    requestedBy: requestedBy?.trim() || null,
+                    notes: notes?.trim() || null,
+                },
+                include: {
+                    posmProduct: {
+                        select: {
+                            posmCode: true,
+                            name: true,
+                            category: true,
+                            unit: true,
+                        },
+                    },
+                    legalEntity: {
+                        select: {
+                            code: true,
+                            name: true,
+                        },
                     },
                 },
-            },
-        })
+            })
 
-        await tx.posmProduct.update({
-            where: { id: posmProductId },
-            data: { qtyOnHand: newQty },
-        })
+            await tx.posmProduct.update({
+                where: { id: line.posmProductId },
+                data: { qtyOnHand: newQty },
+            })
 
-        return {
-            id: transaction.id,
-            docNo: transaction.docNo,
-            type: transaction.type,
-            reason: transaction.reason,
-            posmProductId: transaction.posmProductId,
-            posmProductCode: transaction.posmProduct.posmCode,
-            posmProductName: transaction.posmProduct.name,
-            category: transaction.posmProduct.category,
-            unit: transaction.posmProduct.unit,
-            qty: Number(transaction.qty),
-            unitCost: Number(transaction.unitCost),
-            totalCost: Number(transaction.totalCost),
-            recipient: transaction.recipient,
-            requestedBy: transaction.requestedBy,
-            performedAt: transaction.performedAt,
-            notes: transaction.notes,
+            createdItems.push(mapPosmTxItem(transaction))
         }
+
+        return createdItems
     })
+}
+
+export async function createPosmTransaction(data: {
+    posmProductId: string
+    type: 'INBOUND' | 'OUTBOUND' | 'ADJUSTMENT'
+    reason: PosmReason
+    qty: number
+    unitCost?: number
+    legalEntityId?: string | null
+    recipient?: string
+    requestedBy?: string
+    notes?: string
+    allowDeficit?: boolean
+}): Promise<PosmTransactionItem> {
+    const items = await createPosmBatchTransaction({
+        type: data.type,
+        reason: data.reason,
+        legalEntityId: data.legalEntityId,
+        recipient: data.recipient,
+        requestedBy: data.requestedBy,
+        notes: data.notes,
+        allowDeficit: data.allowDeficit,
+        lines: [{
+            posmProductId: data.posmProductId,
+            qty: data.qty,
+            unitCost: data.unitCost,
+        }],
+    })
+    return items[0]
 }
 
 // ── 7. Get Single POSM Transaction (For Voucher Printing) ─────
@@ -411,27 +494,16 @@ export async function getPosmTransactionById(id: string): Promise<PosmTransactio
                     unit: true,
                 },
             },
+            legalEntity: {
+                select: {
+                    code: true,
+                    name: true,
+                },
+            },
         },
     })
     if (!tx) return null
-    return {
-        id: tx.id,
-        docNo: tx.docNo,
-        type: tx.type,
-        reason: tx.reason,
-        posmProductId: tx.posmProductId,
-        posmProductCode: tx.posmProduct.posmCode,
-        posmProductName: tx.posmProduct.name,
-        category: tx.posmProduct.category,
-        unit: tx.posmProduct.unit,
-        qty: Number(tx.qty),
-        unitCost: Number(tx.unitCost),
-        totalCost: Number(tx.totalCost),
-        recipient: tx.recipient,
-        requestedBy: tx.requestedBy,
-        performedAt: tx.performedAt,
-        notes: tx.notes,
-    }
+    return mapPosmTxItem(tx)
 }
 
 // ── 8. Fetch POSM Transactions History ────────────────────────
@@ -478,27 +550,16 @@ export async function getPosmTransactions(filters?: {
                     unit: true,
                 },
             },
+            legalEntity: {
+                select: {
+                    code: true,
+                    name: true,
+                },
+            },
         },
         orderBy: { performedAt: 'desc' },
         take: filters?.limit ?? 100,
     })
 
-    return items.map(tx => ({
-        id: tx.id,
-        docNo: tx.docNo,
-        type: tx.type,
-        reason: tx.reason,
-        posmProductId: tx.posmProductId,
-        posmProductCode: tx.posmProduct.posmCode,
-        posmProductName: tx.posmProduct.name,
-        category: tx.posmProduct.category,
-        unit: tx.posmProduct.unit,
-        qty: Number(tx.qty),
-        unitCost: Number(tx.unitCost),
-        totalCost: Number(tx.totalCost),
-        recipient: tx.recipient,
-        requestedBy: tx.requestedBy,
-        performedAt: tx.performedAt,
-        notes: tx.notes,
-    }))
+    return items.map(mapPosmTxItem)
 }

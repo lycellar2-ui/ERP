@@ -485,6 +485,7 @@ erDiagram
         type            enum
         reason          enum
         posm_product_id uuid FK
+        legal_entity_id uuid FK
         qty             decimal
         unit_cost       decimal
         total_cost      decimal

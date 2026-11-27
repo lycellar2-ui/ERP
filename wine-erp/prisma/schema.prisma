@@ -37,6 +37,7 @@ model LegalEntity {
   stockLots         StockLot[]
   warehouses        Warehouse[]
   bankAccounts      BankAccount[]
+  posmTransactions  PosmTransaction[]
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 
@@ -1814,11 +1815,13 @@ model PosmProduct {
 
 model PosmTransaction {
   id            String       @id @default(cuid())
-  docNo         String       @unique // PIR-2026-0001 (Nhập), PIO-2026-0001 (Xuất), PAD-2026-0001
+  docNo         String       // PIR-2026-0001 (Nhập), PIO-2026-0001 (Xuất), PAD-2026-0001 (cùng docNo cho phép nhiều dòng POSM)
   type          PosmTxType
   reason        PosmReason
   posmProductId String
   posmProduct   PosmProduct  @relation(fields: [posmProductId], references: [id])
+  legalEntityId String?
+  legalEntity   LegalEntity? @relation(fields: [legalEntityId], references: [id])
   qty           Decimal
   unitCost      Decimal      @default(0)
   totalCost     Decimal      @default(0)
@@ -1828,6 +1831,7 @@ model PosmTransaction {
   notes         String?
   createdAt     DateTime     @default(now())
 
+  @@index([docNo])
   @@map("posm_transactions")
 }
 

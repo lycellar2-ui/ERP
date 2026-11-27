@@ -104,6 +104,7 @@
 95. [BUG-160: Sai Lệch Thuế VAT Kênh Bán Lẻ, Bỏ Sót orderDiscount, Kẹt ERR:13 Khi Đẩy Lại Nháp VNPT & Rủi Ro Thuế 8% Tên Tự Công Bố](#bug-160-sai-lệch-thuế-vat-kênh-bán-lẻ-bỏ-sót-orderdiscount-kẹt-err13-khi-đẩy-lại-nháp-vnpt--rủi-ro-thuế-8-tên-tự-công-bố)
 96. [BUG-161: Audit Toàn Hệ Thống — Native Confirm/Prompt Còn Sót, Sinh Mã count()+1, Thiếu requireAuth() & Bare toLocaleString()](#bug-161-audit-toàn-hệ-thống--native-confirmprompt-còn-sót-sinh-mã-count1-thiếu-requireauth--bare-tolocalestring)
 97. [BUG-162: Bản In Phiếu Xuất POSM Bị Trắng Trang 1/1 Do visibility:hidden + position:fixed Trong DashboardShell](#bug-162-bản-in-phiếu-xuất-posm-bị-trắng-trang-11-do-visibilityhidden--positionfixed-trong-dashboardshell)
+98. [BUG-163: Phiếu Xuất Kho POSM Sai Tên Pháp Nhân Do Thiếu Commit actions-posm.ts/schema.prisma & Bản In Trắng Trang Trên Cốc Cốc/Chromium](#bug-163-phiếu-xuất-kho-posm-sai-tên-pháp-nhân-do-thiếu-commit-actions-posmtsschemaprisma--bản-in-trắng-trang-trên-cốc-cốcchromium)
 
 ---
 
@@ -4672,3 +4673,25 @@ Qua đợt kiểm tra chuyên sâu toàn bộ 38 routes và tất cả component
 
 ### Bài học
 > **RULE 162: Tuyệt đối KHÔNG dùng `body * { visibility: hidden }` kết hợp `position: fixed` bên trong `DashboardShell` (`h-screen overflow-hidden`) để in modal. Hãy dùng `createPortal` gắn vùng in trực tiếp vào `document.body` với `.print-portal-root`, hoặc đặt `print:static print:inset-auto print:overflow-visible` đồng bộ từ `DashboardShell` xuống modal in.**
+
+---
+
+## BUG-163: Phiếu Xuất Kho POSM Sai Tên Pháp Nhân Do Thiếu Commit actions-posm.ts/schema.prisma & Bản In Trắng Trang Trên Cốc Cốc/Chromium
+
+**Ngày:** 2026-11-26
+**Severity:** High — Sai pháp nhân trên Phiếu Xuất Kho POSM (`CÔNG TY TNHH LY'S CELLAR` thay vì `CÔNG TY TNHH HẦM RƯỢU LY'S`) và bản in vẫn trắng trang 1/1 trên trình duyệt Cốc Cốc/Chromium
+
+### Triệu chứng
+- Trên production (`lyscellars.io.vn/dashboard/warehouse`), Phiếu Xuất Kho POSM hiển thị tên pháp nhân sai (`CÔNG TY TNHH LY'S CELLAR`) và đơn vị xuất `Kho Tổng Ly's Cellar (Khu Vực POSM)` thay vì dữ liệu pháp nhân thật từ `LegalEntity` (`CÔNG TY TNHH HẦM RƯỢU LY'S` / `CÔNG TY CỔ PHẦN THƯƠNG MẠI THẮNG ÂN`).
+- Khi bấm **In Phiếu Xuất (Print)** trên trình duyệt Cốc Cốc/Chromium, Print Preview vẫn hiển thị trắng trang 1/1 dù đã dùng `.print-portal-root` trong commit `83ebd00`.
+
+### Nguyên nhân gốc
+1. Commit `d9fc945` cập nhật `PosmInventoryTab.tsx` để gọi `getPosmLegalEntities` và `createPosmBatchTransaction`, nhưng bỏ sót `wine-erp/src/app/dashboard/warehouse/actions-posm.ts` và `wine-erp/prisma/schema.prisma` ở trạng thái chưa commit/push, khiến Vercel build fail và production giữ nguyên bản deploy cũ với tên công ty hardcode sai.
+2. Cơ chế in `window.print()` kết hợp `body:has(.print-portal-root)` và `globals.css` vẫn phụ thuộc chặt vào layout/CSS toàn trang (`DashboardShell`, Tailwind v4 `@media print`, `:has()` selector, trùng `id`), dẫn đến trắng trang trên Cốc Cốc/một số phiên bản Chromium.
+
+### Cách fix
+1. Cập nhật `wine-erp/src/app/dashboard/warehouse/PosmInventoryTab.tsx`: thay cơ chế `createPortal` + `window.print()` bằng **Isolated Hidden Iframe A4 Print Engine** (`buildPosmVoucherPrintHtml` + `printPosmVoucher` ghi tài liệu HTML5/CSS `@page` độc lập vào `<iframe>` ẩn và gọi `frameWindow.print()`), đồng thời escape HTML toàn bộ dữ liệu động và ưu tiên pháp nhân `LC` (`CÔNG TY TNHH HẦM RƯỢU LY'S`, MST `0109902863`) hoặc `TA`.
+2. Bổ sung `await requireAuth()` cho `getPosmLegalEntities()` trong `wine-erp/src/app/dashboard/warehouse/actions-posm.ts` và đồng bộ `actions-posm.ts` + `schema.prisma` để triển khai production không bị thiếu export.
+
+### Bài học
+> **RULE 163: Khi thêm export mới ở Server Actions (`actions-*.ts`) hoặc trường mới ở `schema.prisma` được UI import, PHẢI commit/push đồng bộ cùng với Client Component và kiểm tra `npm run build` trước khi kết thúc. Với modal in phiếu A4 chuẩn 02-VT, ưu tiên Isolated Hidden `<iframe>` tự chứa HTML+CSS thay vì chia sẻ DOM/CSS với `DashboardShell`.**
