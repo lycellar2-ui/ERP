@@ -4,10 +4,12 @@ import { useState, useEffect, useRef, useTransition } from 'react'
 import {
     searchCustomersForDashboard,
     getCustomerPurchaseHistory,
+    exportCustomerDetailExcel,
     type DashboardCustomerSearchItem,
     type CustomerPurchaseHistoryResult,
     type CustomerHistorySOItem,
     type CustomerSpecialPriceRuleItem,
+    type CustomerHistoryTimeRange,
 } from './actions'
 import {
     Search, Users, Wine, Calendar, DollarSign, Package, TrendingUp,
@@ -15,8 +17,10 @@ import {
     CheckCircle2, Truck, AlertCircle, Clock, X, ArrowUpRight,
     Store, Building2, User, RefreshCw, BarChart2, ShieldAlert,
     Tag, Award, Phone, MapPin, AlertTriangle, Sparkles, Filter,
-    Check, ArrowRight, Percent, Info, ShoppingCart, CreditCard
+    Check, ArrowRight, Percent, Info, ShoppingCart, CreditCard,
+    FileSpreadsheet, Loader2
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { formatVND } from '@/lib/utils'
 import Link from 'next/link'
 import { useAppLocale } from '@/lib/i18n'
@@ -36,7 +40,7 @@ interface Props {
     initialCustomerId?: string
 }
 
-type TimeRangeKey = 'ALL' | 'THIS_YEAR' | 'LAST_6_MONTHS' | 'THIS_MONTH'
+type TimeRangeKey = CustomerHistoryTimeRange
 
 function formatFriendlyVND(amount: number | null | undefined): string {
     if (!amount || amount === 0) return '0 đ'
@@ -84,16 +88,24 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
 
     const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(initialCustomerId ?? null)
     const [timeRange, setTimeRange] = useState<TimeRangeKey>('ALL')
+    const defaultFromDate = `${new Date().getFullYear()}-01-01`
+    const defaultToDate = new Date().toISOString().slice(0, 10)
+    const [customFrom, setCustomFrom] = useState<string>(defaultFromDate)
+    const [customTo, setCustomTo] = useState<string>(defaultToDate)
+    const [appliedCustomFrom, setAppliedCustomFrom] = useState<string>(defaultFromDate)
+    const [appliedCustomTo, setAppliedCustomTo] = useState<string>(defaultToDate)
+    const [isExporting, setIsExporting] = useState(false)
     const [activeTab, setActiveTab] = useState<'ORDERS' | 'WINES' | 'TREND'>('ORDERS')
     const [expandedSoId, setExpandedSoId] = useState<string | null>(null)
     const [orderFilter, setOrderFilter] = useState<'ALL' | 'COMMERCIAL' | 'TASTING' | 'UNPAID' | 'DELIVERED'>('ALL')
     const [wineSearch, setWineSearch] = useState<string>('')
 
     const timeRangeOptions: { key: TimeRangeKey; label: string }[] = [
-        { key: 'ALL', label: isEn ? 'All time' : 'Toàn bộ thời gian' },
-        { key: 'THIS_YEAR', label: isEn ? 'This year (2026)' : 'Năm nay (2026)' },
-        { key: 'LAST_6_MONTHS', label: isEn ? 'Last 6 months' : '6 tháng qua' },
-        { key: 'THIS_MONTH', label: isEn ? 'This month' : 'Tháng này' },
+        { key: 'ALL', label: t.customer360.filterAllTime },
+        { key: 'THIS_YEAR', label: t.customer360.filterThisYear },
+        { key: 'LAST_6_MONTHS', label: t.customer360.filter6Months },
+        { key: 'THIS_MONTH', label: t.customer360.filterThisMonth },
+        { key: 'CUSTOM', label: t.customer360.filterCustom },
     ]
 
     // Search state
@@ -147,7 +159,12 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
         if (!selectedCustomerId) return
         let isCancelled = false
         setIsLoadingHistory(true)
-        getCustomerPurchaseHistory(selectedCustomerId, timeRange)
+        getCustomerPurchaseHistory(
+            selectedCustomerId,
+            timeRange,
+            timeRange === 'CUSTOM' ? appliedCustomFrom : undefined,
+            timeRange === 'CUSTOM' ? appliedCustomTo : undefined
+        )
             .then(res => {
                 if (!isCancelled) {
                     setHistoryData(res)
@@ -161,7 +178,46 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
         return () => {
             isCancelled = true
         }
-    }, [selectedCustomerId, timeRange])
+    }, [selectedCustomerId, timeRange, appliedCustomFrom, appliedCustomTo])
+
+    const handleExportCustomerReport = async () => {
+        if (!selectedCustomerId || isExporting) return
+        setIsExporting(true)
+        try {
+            const res = await exportCustomerDetailExcel({
+                customerId: selectedCustomerId,
+                timeRange,
+                customFrom: timeRange === 'CUSTOM' ? appliedCustomFrom : undefined,
+                customTo: timeRange === 'CUSTOM' ? appliedCustomTo : undefined,
+            })
+            if (res.success && res.base64 && res.fileName) {
+                const binaryString = window.atob(res.base64)
+                const bytes = new Uint8Array(binaryString.length)
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i)
+                }
+                const blob = new Blob([bytes], {
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = res.fileName
+                document.body.appendChild(a)
+                a.click()
+                document.body.removeChild(a)
+                URL.revokeObjectURL(url)
+                toast.success(t.customer360.exportSuccess)
+            } else {
+                toast.error(res.error || t.customer360.exportError)
+            }
+        } catch (err) {
+            console.error('Failed to export customer detail report:', err)
+            toast.error(t.customer360.exportError)
+        } finally {
+            setIsExporting(false)
+        }
+    }
 
     // Filter orders
     const filteredOrders = (historyData?.orders ?? []).filter(o => {
@@ -266,24 +322,71 @@ export function CustomerAnalyticsDashboard({ topCustomers = [], initialCustomerI
                         )}
                     </div>
 
-                    {/* Time Range Selector */}
-                    <div className="flex items-center gap-0.5 bg-slate-100 p-0.5 rounded-md self-start sm:self-auto overflow-x-auto max-w-full">
-                        {timeRangeOptions.map(opt => (
-                            <button
-                                key={opt.key}
-                                type="button"
-                                onClick={() => setTimeRange(opt.key)}
-                                className={`text-xs px-2.5 py-1 rounded transition-all whitespace-nowrap ${
-                                    timeRange === opt.key
-                                        ? 'bg-white text-slate-900 font-semibold shadow-2xs'
-                                        : 'text-slate-600 hover:text-slate-900'
-                                }`}
-                            >
-                                {opt.label}
-                            </button>
-                        ))}
+                    {/* Time Range Selector + Export Excel */}
+                    <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto max-w-full">
+                        <div className="flex items-center gap-0.5 bg-slate-100 p-0.5 rounded-md overflow-x-auto max-w-full">
+                            {timeRangeOptions.map(opt => (
+                                <button
+                                    key={opt.key}
+                                    type="button"
+                                    onClick={() => setTimeRange(opt.key)}
+                                    className={`text-xs px-2.5 py-1 rounded transition-all whitespace-nowrap cursor-pointer ${
+                                        timeRange === opt.key
+                                            ? 'bg-white text-slate-900 font-semibold shadow-2xs'
+                                            : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={handleExportCustomerReport}
+                            disabled={!selectedCustomerId || isLoadingHistory || isExporting}
+                            className="inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shrink-0"
+                        >
+                            {isExporting ? <Loader2 size={14} className="animate-spin" /> : <FileSpreadsheet size={14} />}
+                            <span>{isExporting ? t.customer360.exportingReport : t.customer360.exportReport}</span>
+                        </button>
                     </div>
                 </div>
+
+                {/* Custom Date Range Inline Bar */}
+                {timeRange === 'CUSTOM' && (
+                    <div className="flex flex-wrap items-center gap-2 p-2 rounded-md bg-slate-50 border border-slate-200 text-xs">
+                        <Calendar size={14} className="text-slate-500 shrink-0" />
+                        <label className="flex items-center gap-1.5 text-slate-600 font-medium">
+                            <span>{t.customer360.fromDate}:</span>
+                            <input
+                                type="date"
+                                value={customFrom}
+                                onChange={e => setCustomFrom(e.target.value)}
+                                className="px-2 py-1 text-xs rounded border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-cyan-600"
+                            />
+                        </label>
+                        <label className="flex items-center gap-1.5 text-slate-600 font-medium">
+                            <span>{t.customer360.toDate}:</span>
+                            <input
+                                type="date"
+                                value={customTo}
+                                onChange={e => setCustomTo(e.target.value)}
+                                className="px-2 py-1 text-xs rounded border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-cyan-600"
+                            />
+                        </label>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setAppliedCustomFrom(customFrom)
+                                setAppliedCustomTo(customTo)
+                            }}
+                            className="px-3 py-1 text-xs font-semibold rounded bg-[#0E7490] text-white hover:bg-[#0c637a] transition-colors cursor-pointer"
+                        >
+                            {t.customer360.applyRange}
+                        </button>
+                    </div>
+                )}
 
                 {/* Quick picks from Top Customers */}
                 {topCustomers.length > 0 && (

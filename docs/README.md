@@ -245,4 +245,4 @@ docs/
 6. **Schema change** → Cập nhật `architecture/database-schema.md`
 
 ---
-*Last updated: 2026-11-27 | Wine ERP v12.58 - Fix Vercel Hobby Cron Blocker & Standalone POSM Print Route*
+*Last updated: 2026-11-28 | Wine ERP v12.59 - Customer 360° Detailed Bilingual Multi-Sheet Excel Export & Custom Date Range*

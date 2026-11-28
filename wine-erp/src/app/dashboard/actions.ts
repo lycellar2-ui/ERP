@@ -1785,6 +1785,7 @@ export interface CustomerOrderBreakdown {
 export interface CustomerPreferenceInfo {
     wineTypes: Array<{ type: string; label: string; bottles: number; revenue: number; pct: number }>
     priceBrackets: Array<{ label: string; bottles: number; revenue: number; pct: number }>
+    countries: Array<{ country: string; bottles: number; revenue: number; pct: number }>
 }
 
 export interface CustomerHistorySOItem {
@@ -1792,6 +1793,8 @@ export interface CustomerHistorySOItem {
     soNo: string
     createdAt: string
     orderType: string
+    orderDiscountPct: number
+    legalEntityName?: string | null
     totalAmount: number
     paidAmount: number
     unpaidAmount: number
@@ -1812,9 +1815,15 @@ export interface CustomerHistorySOItem {
         skuCode: string
         productName: string
         wineType: string | null
+        country: string | null
+        vintage: number | null
+        listPrice: number | null
         qtyOrdered: number
         unitPrice: number
         lineDiscountPct: number
+        orderDiscountPct: number
+        effectiveDiscountPct: number
+        discountAmount: number
         lineTotal: number
     }>
 }
@@ -1825,8 +1834,10 @@ export interface CustomerHistoryTopProduct {
     name: string
     wineType: string | null
     originCountry: string | null
+    orderCount: number
     totalQty: number
     totalSpend: number
+    avgNetPrice: number
     lastUnitPrice: number
     lastPurchasedAt: string
 }
@@ -1836,8 +1847,12 @@ export interface CustomerHistoryMonthlyTrend {
     label: string
     revenue: number
     bottles: number
+    commercialBottles: number
+    tastingBottles: number
     orders: number
 }
+
+export type CustomerHistoryTimeRange = 'ALL' | 'THIS_YEAR' | 'LAST_6_MONTHS' | 'THIS_MONTH' | 'CUSTOM'
 
 export interface CustomerPurchaseHistoryResult {
     customer: {
@@ -1881,7 +1896,9 @@ export interface CustomerPurchaseHistoryResult {
 
 export async function getCustomerPurchaseHistory(
     customerId: string,
-    timeRange: 'ALL' | 'THIS_YEAR' | 'LAST_6_MONTHS' | 'THIS_MONTH' = 'ALL'
+    timeRange: CustomerHistoryTimeRange = 'ALL',
+    customFrom?: string,
+    customTo?: string
 ): Promise<CustomerPurchaseHistoryResult | null> {
     if (!customerId) return null
 
@@ -1921,6 +1938,17 @@ export async function getCustomerPurchaseHistory(
         dateFilter = { gte: subMonths(now, 6), lte: endOfMonth(now) }
     } else if (timeRange === 'THIS_YEAR') {
         dateFilter = { gte: startOfYear(now), lte: endOfYear(now) }
+    } else if (timeRange === 'CUSTOM') {
+        const parsedFrom = customFrom ? new Date(`${customFrom}T00:00:00.000`) : undefined
+        const parsedTo = customTo ? new Date(`${customTo}T23:59:59.999`) : undefined
+        const validFrom = parsedFrom && !Number.isNaN(parsedFrom.getTime()) ? parsedFrom : undefined
+        const validTo = parsedTo && !Number.isNaN(parsedTo.getTime()) ? parsedTo : undefined
+        if (validFrom || validTo) {
+            dateFilter = {
+                ...(validFrom ? { gte: validFrom } : {}),
+                ...(validTo ? { lte: validTo } : {}),
+            }
+        }
     }
 
     // 1. Fetch Orders with lines, shipping, delivery, and AR
@@ -1933,6 +1961,7 @@ export async function getCustomerPurchaseHistory(
         orderBy: { createdAt: 'desc' },
         include: {
             customer: { select: { id: true, code: true, name: true } },
+            legalEntity: { select: { name: true, code: true } },
             salesRep: { select: { name: true } },
             shippingAddress: { select: { label: true, address: true } },
             lines: {
@@ -2127,6 +2156,7 @@ export async function getCustomerPurchaseHistory(
         name: string
         wineType: string | null
         originCountry: string | null
+        orderIds: Set<string>
         totalQty: number
         totalSpend: number
         lastUnitPrice: number
@@ -2134,13 +2164,14 @@ export async function getCustomerPurchaseHistory(
     }>()
 
     const wineTypeMap = new Map<string, { bottles: number; revenue: number }>()
+    const countryMap = new Map<string, { bottles: number; revenue: number }>()
     const priceBrackets = {
         under500k: { label: 'Phổ thông (< 500k)', bottles: 0, revenue: 0 },
         mid500k_1500k: { label: 'Trung cấp (500k – 1.5M)', bottles: 0, revenue: 0 },
         grandCru: { label: 'Cao cấp (> 1.5M)', bottles: 0, revenue: 0 },
     }
 
-    const monthlyMap = new Map<string, { month: string; label: string; revenue: number; bottles: number; orders: number }>()
+    const monthlyMap = new Map<string, { month: string; label: string; revenue: number; bottles: number; commercialBottles: number; tastingBottles: number; orders: number }>()
 
     for (const so of orders) {
         const amt = Number(so.totalAmount)
@@ -2151,6 +2182,7 @@ export async function getCustomerPurchaseHistory(
 
         const isTasting = (so as any).orderType === 'TASTING'
         const isSample = (so as any).orderType === 'SAMPLE'
+        const orderDiscPct = Number((so as any).orderDiscount ?? 0)
         const orderBottles = so.lines.reduce((s, l) => s + Number(l.qtyOrdered), 0)
 
         if (isTasting || isSample) {
@@ -2165,16 +2197,24 @@ export async function getCustomerPurchaseHistory(
         const orderDate = new Date(so.createdAt)
         const mKey = `${orderDate.getFullYear()}-${String(orderDate.getMonth() + 1).padStart(2, '0')}`
         const mLabel = `T${orderDate.getMonth() + 1}/${String(orderDate.getFullYear()).slice(-2)}`
-        const mCurr = monthlyMap.get(mKey) ?? { month: mKey, label: mLabel, revenue: 0, bottles: 0, orders: 0 }
+        const mCurr = monthlyMap.get(mKey) ?? { month: mKey, label: mLabel, revenue: 0, bottles: 0, commercialBottles: 0, tastingBottles: 0, orders: 0 }
         mCurr.revenue += amt
         mCurr.orders += 1
 
         for (const l of so.lines) {
             const qty = Number(l.qtyOrdered)
             const price = Number(l.unitPrice)
-            const lineSpend = qty * price * (1 - (Number(l.lineDiscountPct ?? 0) / 100))
+            const lineDisc = Number(l.lineDiscountPct ?? 0)
+            const gross = qty * price
+            const afterLine = gross * (1 - lineDisc / 100)
+            const lineSpend = afterLine * (1 - orderDiscPct / 100)
             totalBottles += qty
             mCurr.bottles += qty
+            if (isTasting || isSample) {
+                mCurr.tastingBottles += qty
+            } else {
+                mCurr.commercialBottles += qty
+            }
 
             // Wine type breakdown
             const wt = l.product?.wineType || 'OTHER'
@@ -2182,6 +2222,13 @@ export async function getCustomerPurchaseHistory(
             curWt.bottles += qty
             curWt.revenue += lineSpend
             wineTypeMap.set(wt, curWt)
+
+            // Country breakdown
+            const cty = l.product?.country?.trim() || 'Khác / Other'
+            const curCty = countryMap.get(cty) ?? { bottles: 0, revenue: 0 }
+            curCty.bottles += qty
+            curCty.revenue += lineSpend
+            countryMap.set(cty, curCty)
 
             // Price tier breakdown
             if (price < 500_000) {
@@ -2199,6 +2246,7 @@ export async function getCustomerPurchaseHistory(
                 const pid = l.product.id
                 const pCurr = productMap.get(pid)
                 if (pCurr) {
+                    pCurr.orderIds.add(so.id)
                     pCurr.totalQty += qty
                     pCurr.totalSpend += lineSpend
                     if (new Date(so.createdAt) > new Date(pCurr.lastPurchasedAt)) {
@@ -2212,6 +2260,7 @@ export async function getCustomerPurchaseHistory(
                         name: l.product.productName,
                         wineType: l.product.wineType,
                         originCountry: l.product.country,
+                        orderIds: new Set([so.id]),
                         totalQty: qty,
                         totalSpend: lineSpend,
                         lastUnitPrice: price,
@@ -2233,22 +2282,16 @@ export async function getCustomerPurchaseHistory(
         customerCode: string | null
         totalAmount: number
         totalBottles: number
-        lines: Array<{
-            id: string
-            skuCode: string
-            productName: string
-            wineType: string | null
-            qtyOrdered: number
-            unitPrice: number
-            lineDiscountPct: number
-            lineTotal: number
-        }>
+        lines: CustomerHistorySOItem['lines']
     }>()
 
     for (const h of histCustomerSales) {
         const qty = Number(h.qty)
         const price = Number(h.unitPrice)
-        const lineSpend = Number(h.totalAmount) || Math.round(qty * price)
+        const gross = qty * price
+        const lineSpend = Number(h.totalAmount) || Math.round(gross)
+        const discAmt = gross > lineSpend + 1 ? Math.round(gross - lineSpend) : 0
+        const effDiscPct = gross > 0 && discAmt > 0 ? Number(((discAmt / gross) * 100).toFixed(2)) : 0
         const invDate = new Date(h.invoiceDate)
 
         totalRevenue += lineSpend
@@ -2259,20 +2302,27 @@ export async function getCustomerPurchaseHistory(
 
         const invNoDisplay = h.invoiceNo ? `HĐ-${h.invoiceNo}` : (h.voucherNo || `HIST-${h.month}`)
         const grpKey = `${h.month}|${invNoDisplay}`
+        const lineObj: CustomerHistorySOItem['lines'][number] = {
+            id: h.id,
+            skuCode: h.product?.skuCode ?? h.skuCode,
+            productName: h.product?.productName ?? h.productName ?? h.skuCode,
+            wineType: h.product?.wineType ?? null,
+            country: h.product?.country ?? null,
+            vintage: null,
+            listPrice: null,
+            qtyOrdered: qty,
+            unitPrice: price,
+            lineDiscountPct: effDiscPct,
+            orderDiscountPct: 0,
+            effectiveDiscountPct: effDiscPct,
+            discountAmount: discAmt,
+            lineTotal: lineSpend,
+        }
         const existingGrp = histInvoiceGroups.get(grpKey)
         if (existingGrp) {
             existingGrp.totalAmount += lineSpend
             existingGrp.totalBottles += qty
-            existingGrp.lines.push({
-                id: h.id,
-                skuCode: h.product?.skuCode ?? h.skuCode,
-                productName: h.product?.productName ?? h.productName ?? h.skuCode,
-                wineType: h.product?.wineType ?? null,
-                qtyOrdered: qty,
-                unitPrice: price,
-                lineDiscountPct: 0,
-                lineTotal: lineSpend,
-            })
+            existingGrp.lines.push(lineObj)
         } else {
             histInvoiceGroups.set(grpKey, {
                 id: h.id,
@@ -2283,16 +2333,7 @@ export async function getCustomerPurchaseHistory(
                 customerCode: h.customerCode ?? null,
                 totalAmount: lineSpend,
                 totalBottles: qty,
-                lines: [{
-                    id: h.id,
-                    skuCode: h.product?.skuCode ?? h.skuCode,
-                    productName: h.product?.productName ?? h.productName ?? h.skuCode,
-                    wineType: h.product?.wineType ?? null,
-                    qtyOrdered: qty,
-                    unitPrice: price,
-                    lineDiscountPct: 0,
-                    lineTotal: lineSpend,
-                }],
+                lines: [lineObj],
             })
         }
 
@@ -2301,6 +2342,12 @@ export async function getCustomerPurchaseHistory(
         curWt.bottles += qty
         curWt.revenue += lineSpend
         wineTypeMap.set(wt, curWt)
+
+        const cty = h.product?.country?.trim() || 'Khác / Other'
+        const curCty = countryMap.get(cty) ?? { bottles: 0, revenue: 0 }
+        curCty.bottles += qty
+        curCty.revenue += lineSpend
+        countryMap.set(cty, curCty)
 
         if (price < 500_000) {
             priceBrackets.under500k.bottles += qty
@@ -2316,6 +2363,7 @@ export async function getCustomerPurchaseHistory(
         const pid = h.product?.id ?? `sku:${h.skuCode}`
         const pCurr = productMap.get(pid)
         if (pCurr) {
+            pCurr.orderIds.add(grpKey)
             pCurr.totalQty += qty
             pCurr.totalSpend += lineSpend
             if (invDate > new Date(pCurr.lastPurchasedAt)) {
@@ -2329,6 +2377,7 @@ export async function getCustomerPurchaseHistory(
                 name: h.product?.productName ?? h.productName ?? h.skuCode,
                 wineType: h.product?.wineType ?? null,
                 originCountry: h.product?.country ?? null,
+                orderIds: new Set([grpKey]),
                 totalQty: qty,
                 totalSpend: lineSpend,
                 lastUnitPrice: price,
@@ -2341,9 +2390,10 @@ export async function getCustomerPurchaseHistory(
     for (const grp of histInvoiceGroups.values()) {
         const mKey = `${grp.createdAt.getFullYear()}-${String(grp.createdAt.getMonth() + 1).padStart(2, '0')}`
         const mLabel = `T${grp.createdAt.getMonth() + 1}/${String(grp.createdAt.getFullYear()).slice(-2)}`
-        const mCurr = monthlyMap.get(mKey) ?? { month: mKey, label: mLabel, revenue: 0, bottles: 0, orders: 0 }
+        const mCurr = monthlyMap.get(mKey) ?? { month: mKey, label: mLabel, revenue: 0, bottles: 0, commercialBottles: 0, tastingBottles: 0, orders: 0 }
         mCurr.revenue += grp.totalAmount
         mCurr.bottles += grp.totalBottles
+        mCurr.commercialBottles += grp.totalBottles
         mCurr.orders += 1
         monthlyMap.set(mKey, mCurr)
     }
@@ -2355,12 +2405,19 @@ export async function getCustomerPurchaseHistory(
     let healthLabel = 'Khách mới'
     let delayDays = 0
 
-    if (orders.length > 0) {
-        const latestDate = new Date(orders[0].createdAt)
-        daysSinceLastOrder = Math.max(0, Math.floor((now.getTime() - latestDate.getTime()) / 86400000))
+    const sortedHistDates = Array.from(histInvoiceGroups.values())
+        .map(g => new Date(g.createdAt).getTime())
+        .sort((a, b) => b - a)
+    const cycleTimestampsDesc = orders.length > 0
+        ? orders.map(o => new Date(o.createdAt).getTime())
+        : sortedHistDates
 
-        if (orders.length >= 2) {
-            const timestamps = orders.map(o => new Date(o.createdAt).getTime()).reverse()
+    if (cycleTimestampsDesc.length > 0) {
+        const latestTs = cycleTimestampsDesc[0]
+        daysSinceLastOrder = Math.max(0, Math.floor((now.getTime() - latestTs) / 86400000))
+
+        if (cycleTimestampsDesc.length >= 2) {
+            const timestamps = [...cycleTimestampsDesc].reverse()
             let totalDiffDays = 0
             for (let i = 1; i < timestamps.length; i++) {
                 totalDiffDays += (timestamps[i] - timestamps[i - 1]) / 86400000
@@ -2402,6 +2459,13 @@ export async function getCustomerPurchaseHistory(
         pct: totalBottles > 0 ? Math.round((v.bottles / totalBottles) * 100) : 0,
     })).sort((a, b) => b.bottles - a.bottles)
 
+    const countryPreferences = Array.from(countryMap.entries()).map(([country, v]) => ({
+        country,
+        bottles: v.bottles,
+        revenue: v.revenue,
+        pct: totalBottles > 0 ? Math.round((v.bottles / totalBottles) * 100) : 0,
+    })).sort((a, b) => b.bottles - a.bottles)
+
     const priceTierPreferences = [
         { ...priceBrackets.under500k, pct: totalBottles > 0 ? Math.round((priceBrackets.under500k.bottles / totalBottles) * 100) : 0 },
         { ...priceBrackets.mid500k_1500k, pct: totalBottles > 0 ? Math.round((priceBrackets.mid500k_1500k.bottles / totalBottles) * 100) : 0 },
@@ -2409,6 +2473,19 @@ export async function getCustomerPurchaseHistory(
     ]
 
     const topProducts = Array.from(productMap.values())
+        .map(p => ({
+            productId: p.productId,
+            skuCode: p.skuCode,
+            name: p.name,
+            wineType: p.wineType,
+            originCountry: p.originCountry,
+            orderCount: p.orderIds.size,
+            totalQty: p.totalQty,
+            totalSpend: Math.round(p.totalSpend),
+            avgNetPrice: p.totalQty > 0 ? Math.round(p.totalSpend / p.totalQty) : 0,
+            lastUnitPrice: p.lastUnitPrice,
+            lastPurchasedAt: p.lastPurchasedAt,
+        }))
         .sort((a, b) => b.totalQty - a.totalQty)
 
     const monthlyTrend = Array.from(monthlyMap.values())
@@ -2419,6 +2496,8 @@ export async function getCustomerPurchaseHistory(
         soNo: grp.soNo,
         createdAt: grp.createdAt.toISOString(),
         orderType: 'STANDARD',
+        orderDiscountPct: 0,
+        legalEntityName: grp.legalEntity,
         totalAmount: Math.round(grp.totalAmount),
         paidAmount: Math.round(grp.totalAmount),
         unpaidAmount: 0,
@@ -2450,12 +2529,15 @@ export async function getCustomerPurchaseHistory(
         const soTotal = Number(o.totalAmount)
         const soPaid = o.arInvoices.reduce((s, inv) => s + Number(inv.paidAmount ?? 0), 0)
         const soUnpaid = Math.max(0, soTotal - soPaid)
+        const orderDiscPct = Number((o as any).orderDiscount ?? 0)
 
         return {
             id: o.id,
             soNo: o.soNo,
             createdAt: o.createdAt.toISOString(),
             orderType: (o as any).orderType || 'STANDARD',
+            orderDiscountPct: orderDiscPct,
+            legalEntityName: (o as any).legalEntity?.name ?? null,
             totalAmount: soTotal,
             paidAmount: soPaid,
             unpaidAmount: soUnpaid,
@@ -2474,20 +2556,40 @@ export async function getCustomerPurchaseHistory(
             lines: o.lines.map(l => {
                 const qty = Number(l.qtyOrdered)
                 const price = Number(l.unitPrice)
-                const disc = Number(l.lineDiscountPct ?? 0)
+                const lineDisc = Number(l.lineDiscountPct ?? 0)
+                const gross = qty * price
+                const afterLine = gross * (1 - lineDisc / 100)
+                const net = afterLine * (1 - orderDiscPct / 100)
+                const discAmt = Math.max(0, gross - net)
+                const effDiscPct = gross > 0 ? Number(((discAmt / gross) * 100).toFixed(2)) : 0
+                const listPrice = l.product?.marginPrice?.wholesalePrice
+                    ? Number(l.product.marginPrice.wholesalePrice)
+                    : l.product?.marginPrice?.retailPrice
+                    ? Number(l.product.marginPrice.retailPrice)
+                    : null
                 return {
                     id: l.id,
                     skuCode: l.product?.skuCode ?? '',
                     productName: l.product?.productName ?? '',
                     wineType: l.product?.wineType ?? null,
+                    country: l.product?.country ?? null,
+                    vintage: l.vintage ?? null,
+                    listPrice,
                     qtyOrdered: qty,
                     unitPrice: price,
-                    lineDiscountPct: disc,
-                    lineTotal: qty * price * (1 - (disc / 100)),
+                    lineDiscountPct: lineDisc,
+                    orderDiscountPct: orderDiscPct,
+                    effectiveDiscountPct: effDiscPct,
+                    discountAmount: Math.round(discAmt),
+                    lineTotal: Math.round(net),
                 }
             }),
         }
     })
+
+    const mergedOrders = [...formattedOrders, ...histFormattedOrders].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
 
     return serialize({
         customer: {
@@ -2512,10 +2614,10 @@ export async function getCustomerPurchaseHistory(
         },
         kpis: {
             totalRevenue,
-            totalOrders: formattedOrders.length + histFormattedOrders.length,
+            totalOrders: mergedOrders.length,
             totalBottles,
-            lastOrderDate: formattedOrders[0]?.createdAt ?? histFormattedOrders[0]?.createdAt ?? null,
-            lastOrderNo: formattedOrders[0]?.soNo ?? histFormattedOrders[0]?.soNo ?? null,
+            lastOrderDate: mergedOrders[0]?.createdAt ?? null,
+            lastOrderNo: mergedOrders[0]?.soNo ?? null,
             totalPaidAmount,
             totalArDebt,
             overdueArDebt,
@@ -2543,14 +2645,65 @@ export async function getCustomerPurchaseHistory(
         preferences: {
             wineTypes: wineTypePreferences,
             priceBrackets: priceTierPreferences,
+            countries: countryPreferences,
         },
-        orders: [...formattedOrders, ...histFormattedOrders],
+        orders: mergedOrders,
         topProducts: topProducts.map(p => ({
             ...p,
             lastPurchasedAt: p.lastPurchasedAt.toISOString(),
         })),
         monthlyTrend,
     })
+}
+
+export async function exportCustomerDetailExcel(params: {
+    customerId: string
+    timeRange?: CustomerHistoryTimeRange
+    customFrom?: string
+    customTo?: string
+}): Promise<{ success: boolean; base64?: string; fileName?: string; error?: string }> {
+    try {
+        await requireAuth()
+        if (!params.customerId) {
+            return { success: false, error: 'Vui lòng chọn khách hàng trước khi xuất báo cáo' }
+        }
+
+        const timeRange = params.timeRange ?? 'ALL'
+        const data = await getCustomerPurchaseHistory(
+            params.customerId,
+            timeRange,
+            params.customFrom,
+            params.customTo
+        )
+        if (!data) {
+            return { success: false, error: 'Không tìm thấy dữ liệu khách hàng' }
+        }
+
+        const { buildCustomerDetailExcelBuffer } = await import('@/lib/customer-report-excel')
+        const buffer = await buildCustomerDetailExcelBuffer(data, {
+            timeRange,
+            customFrom: params.customFrom,
+            customTo: params.customTo,
+        })
+
+        const safeCode = (data.customer.code || 'CUSTOMER').replace(/[^a-zA-Z0-9_-]/g, '_')
+        const periodSlug =
+            timeRange === 'CUSTOM' && (params.customFrom || params.customTo)
+                ? `${(params.customFrom || 'start').replace(/-/g, '')}_${(params.customTo || 'end').replace(/-/g, '')}`
+                : timeRange
+        const dateStamp = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+        const fileName = `Customer_Report_${safeCode}_${periodSlug}_${dateStamp}.xlsx`
+
+        return {
+            success: true,
+            base64: buffer.toString('base64'),
+            fileName,
+        }
+    } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Lỗi không xác định khi xuất báo cáo'
+        console.error('[exportCustomerDetailExcel]', err)
+        return { success: false, error: msg }
+    }
 }
 
 

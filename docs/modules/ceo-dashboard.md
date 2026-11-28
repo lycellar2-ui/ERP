@@ -554,4 +554,21 @@ Nâng cấp `/dashboard` thành trung tâm điều hành 3 Tab độc lập (`?t
   - Đồng bộ hóa alias role (`SALES_ADMIN`, `SALE_ADMIN`, `Sales Admin`, `Sale Admin`, `sale admin`) trong `src/lib/session.ts`, `Sidebar.tsx` và `src/app/dashboard/actions.ts` (`ROLE_DASHBOARD.SALES_ADMIN` & `DASHBOARD_ROLE_MATCHERS`).
   - Cấp đầy đủ quyền truy cập cho `Sale Admin` vào cả 3 tab của Dashboard (`/dashboard` Tổng quan, `/dashboard?tab=customers` Customer 360°, `/dashboard?tab=skus` SKU 360°) kèm các phân khu: `kpi_cards`, `recent_orders`, `pending_approvals` (duyệt nhanh đơn hàng ngay từ Dashboard), `revenue_chart`, `ar_aging`, `shipment_tracker`, `kpi_targets`, `top_products` và `stock_alerts` (bảng cảnh báo tồn kho & SKU cần mua hàng).
 
+---
+
+## 13. Tính Năng v7 — "Customer 360° Detailed Excel Export & Custom Date Range" (28/11/2026)
+
+Bổ sung tính năng xuất báo cáo chi tiết khách hàng định dạng Excel (`.xlsx`) song ngữ Anh - Việt trực tiếp từ tab **Khách Hàng & Bảng Giá Riêng** (`/dashboard?tab=customers`):
+
+### 1. Bộ Lọc Ngày Tùy Chỉnh (`CustomerAnalyticsDashboard.tsx` & `getCustomerPurchaseHistory`)
+- Hỗ trợ 5 chế độ lọc thời gian: `Toàn bộ thời gian` (`ALL`), `Năm nay` (`THIS_YEAR`), `6 tháng qua` (`LAST_6_MONTHS`), `Tháng này` (`THIS_MONTH`), và `Từ – Đến` (`CUSTOM` với date picker `customFrom` / `customTo`).
+- Tự động tổng hợp dữ liệu cho cả Công ty Mẹ + chi nhánh con, đơn hàng ERP live và hóa đơn lịch sử trước T8/2026 (`historical_customer_sku_sales`), đồng thời tính chuẩn xác chiết khấu kết hợp (chiết khấu dòng + chiết khấu đơn hàng `orderDiscount`), tỷ trọng theo quốc gia xuất xứ và tần suất đặt hàng theo từng SKU.
+- Ẩn nút xuất Excel tổng quan CEO tại `DashboardHeaderNav.tsx` khi đang ở tab `customers` để tránh nhầm lẫn với nút **Xuất Báo Cáo Excel** theo từng khách hàng.
+
+### 2. Workbook Excel 4 Sheet Song Ngữ (`src/lib/customer-report-excel.ts` & `exportCustomerDetailExcel`)
+- **Sheet 1 — `Overview & Insights`**: Hồ sơ khách hàng, chỉ số tài chính & công nợ (Tổng doanh thu thuần, Doanh thu bán thương mại, AOV, Giá TB/chai, Đã thu, Tỷ lệ thu hồi, Dư nợ AR & Quá hạn, Hạn mức tín dụng), Nhịp độ mua hàng (`Buying Health`), Cơ cấu gu rượu (theo Loại vang, Phân khúc giá, Quốc gia xuất xứ) và Top 10 rượu hay lấy nhất.
+- **Sheet 2 — `Purchase Detail`**: Bảng chi tiết từng dòng giao dịch với 6 cột cốt lõi (`Date / Ngày`, `Code / Mã SKU`, `Product / Tên Sản Phẩm`, `Quantity / Số Lượng`, `Price / Đơn Giá`, `Discount (%) / Chiết Khấu`) kèm Tiền giảm, Thành tiền thuần, Số đơn, Loại đơn (tách rõ `Sales` vs `Tasting`), Loại vang, Xuất xứ, Chi nhánh, Trạng thái và Hóa đơn; đi kèm AutoFilter, freeze header và khối Tổng cộng dùng công thức Excel `SUM` / `SUMIF`.
+- **Sheet 3 — `Top Wines & Pricing`**: Toàn bộ danh mục rượu khách đã mua (số lần đặt, tổng chai, % sản lượng, giá TB, giá gần nhất, tổng chi tiêu, % doanh thu), Chính sách giá & Bảng giá riêng từng SKU (`CustomerPriceRule`), và các Tờ trình duyệt giá đã phê duyệt.
+- **Sheet 4 — `Monthly Trend`**: Thống kê theo từng tháng (Số đơn, Chai bán thương mại, Chai Tasting, Tổng chai, Doanh thu thuần, GT đơn TB, Giá TB/chai và Tăng trưởng MoM %).
+
 

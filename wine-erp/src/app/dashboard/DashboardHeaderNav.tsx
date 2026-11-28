@@ -146,15 +146,17 @@ export function DashboardHeaderNav({
                             <span>{t.aiBriefing.buttonLabel}</span>
                         </Button>
                     )}
-                    <button
-                        type="button"
-                        onClick={handleExportExcel}
-                        disabled={isExporting}
-                        className="inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold rounded-md bg-tone-success-bg text-tone-success-fg border border-tone-success-border hover:bg-emerald-100/70 transition-colors cursor-pointer disabled:opacity-50"
-                    >
-                        {isExporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-                        <span>{isExporting ? t.exportingExcel : t.exportExcel}</span>
-                    </button>
+                    {currentTab !== 'customers' && (
+                        <button
+                            type="button"
+                            onClick={handleExportExcel}
+                            disabled={isExporting}
+                            className="inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold rounded-md bg-tone-success-bg text-tone-success-fg border border-tone-success-border hover:bg-emerald-100/70 transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                            {isExporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                            <span>{isExporting ? t.exportingExcel : t.exportExcel}</span>
+                        </button>
+                    )}
                 </div>
             </div>
 
