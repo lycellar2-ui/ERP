@@ -95,8 +95,8 @@ export function DashboardHeaderNav({
     return (
         <div className="space-y-3">
             {/* Unified Tab Bar + Executive Actions */}
-            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-lys-border">
-                <div className="flex items-center gap-1 overflow-x-auto no-scrollbar whitespace-nowrap -mb-px">
+            <div className="flex flex-wrap xl:flex-nowrap items-end justify-between gap-3 border-b border-lys-border">
+                <div className="flex items-center gap-1 overflow-x-auto no-scrollbar whitespace-nowrap -mb-px min-w-0">
                     <Link
                         href={`/dashboard?tab=overview${queryString}`}
                         className={`relative flex items-center gap-2 px-3 pb-2.5 pt-1 text-[13px] font-semibold transition-colors border-b-2 whitespace-nowrap ${
@@ -118,7 +118,9 @@ export function DashboardHeaderNav({
                     >
                         <Users size={15} className={currentTab === 'customers' ? 'text-lys-teal-strong' : 'text-lys-dim'} />
                         <span>{t.customerAnalytics}</span>
-                        <Badge tone={currentTab === 'customers' ? 'brand' : 'neutral'}>{t.customerAnalyticsBadge}</Badge>
+                        <span className="hidden 2xl:inline-flex">
+                            <Badge tone={currentTab === 'customers' ? 'brand' : 'neutral'}>{t.customerAnalyticsBadge}</Badge>
+                        </span>
                     </Link>
                     <Link
                         href={`/dashboard?tab=skus${queryString}`}
@@ -130,7 +132,9 @@ export function DashboardHeaderNav({
                     >
                         <Wine size={15} className={currentTab === 'skus' ? 'text-lys-teal-strong' : 'text-lys-dim'} />
                         <span>{t.skuAnalytics}</span>
-                        <Badge tone={currentTab === 'skus' ? 'brand' : 'neutral'}>{t.skuAnalyticsBadge}</Badge>
+                        <span className="hidden 2xl:inline-flex">
+                            <Badge tone={currentTab === 'skus' ? 'brand' : 'neutral'}>{t.skuAnalyticsBadge}</Badge>
+                        </span>
                     </Link>
                 </div>
 

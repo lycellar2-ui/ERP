@@ -278,7 +278,7 @@ export const DASHBOARD_I18N = {
         // Customer 360 Analytics
         customer360: {
             searchPlaceholder: 'Tìm kiếm khách hàng theo tên, mã khách (HR...), SĐT, người liên hệ...',
-            quickPickTitle: 'Khách hàng trọng điểm (Doanh số cao):',
+            quickPickTitle: 'Khách hàng trọng điểm (Tháng này)',
             customerInfo: 'Hồ Sơ Khách Hàng',
             customerCode: 'Mã khách hàng:',
             channel: 'Phân kênh:',
@@ -606,7 +606,7 @@ export const DASHBOARD_I18N = {
         // Customer 360 Analytics
         customer360: {
             searchPlaceholder: 'Search customer by name, code (HR...), phone, contact person...',
-            quickPickTitle: 'Key Accounts (Top Volume):',
+            quickPickTitle: 'Key Accounts (This Month)',
             customerInfo: 'Customer Profile',
             customerCode: 'Customer Code:',
             channel: 'Channel:',

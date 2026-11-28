@@ -43,7 +43,7 @@ const WINE_TYPE_BADGE: Record<string, { vi: string; en: string; bg: string; colo
     WHITE: { vi: 'Vang Trắng', en: 'White Wine', bg: 'rgba(180, 83, 9, 0.08)', color: '#B45309', border: 'rgba(180, 83, 9, 0.25)' },
     SPARKLING: { vi: 'Vang Nổ / Champagne', en: 'Sparkling', bg: 'rgba(8, 145, 178, 0.08)', color: '#0891B2', border: 'rgba(8, 145, 178, 0.25)' },
     ROSE: { vi: 'Vang Hồng', en: 'Rosé Wine', bg: 'rgba(190, 24, 93, 0.08)', color: '#BE185D', border: 'rgba(190, 24, 93, 0.25)' },
-    FORTIFIED: { vi: 'Vang Cường Hóa', en: 'Fortified', bg: 'rgba(109, 40, 217, 0.08)', color: '#475569', border: 'rgba(71, 85, 105, 0.25)' },
+    FORTIFIED: { vi: 'Vang Cường Hóa', en: 'Fortified', bg: 'rgba(71, 85, 105, 0.08)', color: '#475569', border: 'rgba(71, 85, 105, 0.25)' },
     DESSERT: { vi: 'Vang Ngọt', en: 'Dessert', bg: 'rgba(217, 119, 6, 0.08)', color: '#D97706', border: 'rgba(217, 119, 6, 0.25)' },
 }
 
